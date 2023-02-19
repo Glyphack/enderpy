@@ -87,7 +87,7 @@ impl Lexer {
         let kind = self.read_next_kind();
         let end = self.offset();
 
-        while kind == Kind::WhiteSpace {
+        if kind == Kind::WhiteSpace {
             return self.read_next_token();
         }
 
