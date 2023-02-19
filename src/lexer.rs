@@ -4,19 +4,125 @@ pub struct Token {
     pub value: TokenValue,
 }
 
+// TODO: remove this after implementing all the tokens
+#[allow(dead_code)]
+// https://docs.python.org/3/reference/lexical_analysis.html
 #[derive(Debug, PartialEq)]
 pub enum Kind {
-    Plus,
-    Eq,
-    AddAssign,
-    Integer,
+    // Line structure
+    NewLine, // \n
+    Indent,  // \t
+    Dedent,  // \t
 
-    If,
-    Else,
-    Elif,
-
+    // Identifiers
     Identifier,
 
+    // Keywords
+    False,    // False
+    None,     // None
+    True,     // True
+    And,      // and
+    As,       // as
+    Assert,   // assert
+    Async,    // async
+    Await,    // await
+    Break,    // break
+    Class,    // class
+    Continue, // continue
+    Def,      // def
+    Del,      // del
+    Elif,     // elif
+    Else,     // else
+    Except,   // except
+    Finally,  // finally
+    For,      // for
+    From,     // from
+    Global,   // global
+    If,       // if
+    Import,   // import
+    In,       // in
+    Is,       // is
+    Lambda,   // lambda
+    Nonlocal, // nonlocal
+    Not,      // not
+    Or,       // or
+    Pass,     // pass
+    Raise,    // raise
+    Return,   // return
+    Try,      // try
+    While,    // while
+    With,     // with
+    Yield,    // yield
+
+    // Literals
+    String,    // "string"
+    Integer,   // 123
+    Float,     // 123.456
+    Imaginary, // 123j
+
+    // Operators
+    Plus,       // +
+    Minus,      // -
+    Mul,        // *
+    Pow,        // **
+    Div,        // /
+    IntDiv,     // //
+    Mod,        // %
+    MatrixMul,  // @
+    LeftShift,  // <<
+    RightShift, // >>
+    BitAnd,     // &
+    BitOr,      // |
+    BitXor,     // ^
+    BitNot,     // ~
+    Walrus,     // :=
+    Less,       // <
+    More,       // >
+    LessEq,     // <=
+    MoreEq,     // >=
+    Eq,         // ==
+    NotEq,      // !=
+
+    // Delimiters
+    LeftParen,           // (
+    RightParen,          // )
+    LeftBrace,           // [
+    RightBrace,          // ]
+    LeftBracket,         // {
+    RightBracket,        // }
+    Comma,               // ,
+    Colon,               // :
+    Dot,                 // .
+    SemiColon,           // ;
+    At,                  // @
+    Assign,              // =
+    Arrow,               // ->
+    AddAssign,           // +=
+    SubAssign,           // -=
+    MulAssign,           // *=
+    DivAssign,           // /=
+    IntDivAssign,        // //=
+    ModAssign,           // %=
+    MatrixMulAssign,     // @=
+    BitAndAssign,        // &=
+    BitOrAssign,         // |=
+    BitXorAssign,        // ^=
+    BitShiftLeftAssign,  // <<=
+    BitShiftRightAssign, // >>=
+    PowAssign,           // **=
+
+    // Special
+    SingleQuote, // '
+    DoubleQuote, // "
+    Sharp,       // #
+    BackSlash,   // \
+
+    // Unconditional error
+    Dollar,       // $
+    QuestionMark, // ?
+    BackTick,     // `
+
+    // Others
     WhiteSpace,
     Eof,
 }
