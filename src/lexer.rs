@@ -1,4 +1,4 @@
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Token {
     pub kind: Kind,
     pub value: TokenValue,
@@ -7,7 +7,7 @@ pub struct Token {
 // TODO: remove this after implementing all the tokens
 #[allow(dead_code)]
 // https://docs.python.org/3/reference/lexical_analysis.html
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Kind {
     // Line structure
     NewLine, // \n
@@ -94,19 +94,18 @@ pub enum Kind {
     Colon,               // :
     Dot,                 // .
     SemiColon,           // ;
-    At,                  // @
     Assign,              // =
     Arrow,               // ->
     AddAssign,           // +=
     SubAssign,           // -=
     MulAssign,           // *=
     DivAssign,           // /=
-    IntDivAssign,        // //=
     ModAssign,           // %=
     MatrixMulAssign,     // @=
     BitAndAssign,        // &=
     BitOrAssign,         // |=
     BitXorAssign,        // ^=
+    IntDivAssign,        // //=
     BitShiftLeftAssign,  // <<=
     BitShiftRightAssign, // >>=
     PowAssign,           // **=
@@ -123,11 +122,12 @@ pub enum Kind {
     BackTick,     // `
 
     // Others
+    Comment,
     WhiteSpace,
     Eof,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum TokenValue {
     None,
     Integer(i64),
@@ -158,16 +158,9 @@ impl Lexer {
             }
 
             match c {
-                '+' => match self.peek() {
-                    Some('=') => {
-                        self.remaining = self.remaining[c.len_utf8()..].to_string();
-                        return Kind::AddAssign;
-                    }
-                    _ => return Kind::Plus,
-                },
-                // match a number
+                // Numbers
                 '0'..='9' => return Kind::Integer,
-                // match keywords
+                // Keywords
                 'a'..='z' | 'A'..='Z' | '_' => {
                     let mut ident = String::new();
                     ident.push(c);
@@ -175,13 +168,86 @@ impl Lexer {
                         match c {
                             'a'..='z' | 'A'..='Z' | '0'..='9' | '_' => {
                                 ident.push(c);
-                                self.remaining = self.remaining[c.len_utf8()..].to_string();
+                                self.next_char();
                             }
                             _ => break,
                         }
                     }
                     return self.match_keyword(&ident);
                 }
+                // Operators
+                '+' => match self.peek() {
+                    Some('=') => {
+                        self.next_char();
+                        return Kind::AddAssign;
+                    }
+                    _ => return Kind::Plus,
+                },
+                '-' => match self.peek() {
+                    Some('>') => {
+                        self.next_char();
+                        return Arrow;
+                    }
+                    Some('=') => {
+                        self.next_char();
+                        return SubAssign;
+                    }
+                    _ => return Minus,
+                },
+                '*' => match self.peek() {
+                    Some('=') => {
+                        self.next_char();
+                        return MulAssign;
+                    }
+                    _ => return Mul,
+                },
+                '/' => match self.peek() {
+                    Some('/') => {
+                        self.next_char();
+                        return Comment;
+                    }
+                    Some('=') => {
+                        self.next_char();
+                        return DivAssign;
+                    }
+                    _ => return Div,
+                },
+                '%' => match self.peek() {
+                    Some('=') => {
+                        self.next_char();
+                        return ModAssign;
+                    }
+                    _ => return Mod,
+                },
+                '@' => match self.peek() {
+                    Some('=') => {
+                        self.next_char();
+                        return MatrixMulAssign;
+                    }
+                    _ => return MatrixMul,
+                },
+                '&' => match self.peek() {
+                    Some('=') => {
+                        self.next_char();
+                        return BitAndAssign;
+                    }
+                    _ => return BitAnd,
+                },
+                '|' => match self.peek() {
+                    Some('=') => {
+                        self.next_char();
+                        return BitOrAssign;
+                    }
+                    _ => return BitOr,
+                },
+                '^' => match self.peek() {
+                    Some('=') => {
+                        self.next_char();
+                        return BitXorAssign;
+                    }
+                    _ => return BitXor,
+                },
+                // Delimiters
                 '(' => return LeftParen,
                 ')' => return RightParen,
                 '[' => return LeftBrace,
@@ -192,7 +258,6 @@ impl Lexer {
                 ':' => return Colon,
                 '.' => return Dot,
                 ';' => return SemiColon,
-                '@' => return At,
                 '=' => return Assign,
                 '\'' => return SingleQuote,
                 '"' => return DoubleQuote,
@@ -236,6 +301,14 @@ impl Lexer {
         self.source.len() - self.remaining.chars().as_str().len()
     }
 
+    fn next_char(&mut self) -> Option<char> {
+        let c = self.remaining.chars().next();
+        if let Some(c) = c {
+            self.remaining = self.remaining[c.len_utf8()..].to_string();
+        }
+        c
+    }
+
     fn peek(&self) -> Option<char> {
         self.remaining.chars().next()
     }
@@ -254,92 +327,97 @@ impl Lexer {
 mod tests {
     use super::Kind;
     use super::Lexer;
-    use super::TokenValue;
 
     #[test]
     fn test_num_plus_num() {
-        let mut lexer = Lexer::new("1+2");
-        let token = lexer.read_next_token();
-        assert_eq!(token.kind, Kind::Integer);
-        let token = lexer.read_next_token();
-        assert_eq!(token.kind, Kind::Plus);
-        let token = lexer.read_next_token();
-        assert_eq!(token.kind, Kind::Integer);
-        let token = lexer.read_next_token();
-        assert_eq!(token.kind, Kind::Eof);
+        test_kinds(
+            "1+2",
+            vec![Kind::Integer, Kind::Plus, Kind::Integer, Kind::Eof],
+        );
     }
 
     #[test]
     fn test_add_assign() {
-        let mut lexer = Lexer::new("+=2");
-        let token = lexer.read_next_token();
-        assert_eq!(token.kind, Kind::AddAssign);
-        let token = lexer.read_next_token();
-        assert_eq!(token.kind, Kind::Integer);
-        let token = lexer.read_next_token();
-        assert_eq!(token.kind, Kind::Eof);
+        test_kinds("+=2", vec![Kind::AddAssign, Kind::Integer, Kind::Eof]);
     }
 
     #[test]
     fn test_assign() {
-        let mut lexer = Lexer::new("xX = 2");
-        let token = lexer.read_next_token();
-        assert_eq!(token.kind, Kind::Identifier);
-        if let TokenValue::String(value) = token.value {
-            assert_eq!(value, "xX");
-        }
-        let token = lexer.read_next_token();
-        assert_eq!(token.kind, Kind::Eq);
-        let token = lexer.read_next_token();
-        assert_eq!(token.kind, Kind::Integer);
-        if let TokenValue::Integer(value) = token.value {
-            assert_eq!(value, 2);
-        }
-        let token = lexer.read_next_token();
-        assert_eq!(token.kind, Kind::Eof);
+        test_kinds(
+            "xX = 2",
+            vec![Kind::Identifier, Kind::Assign, Kind::Integer, Kind::Eof],
+        );
     }
 
     #[test]
     fn test_keywords() {
-        let mut lexer = Lexer::new("if else elif");
-        let token = lexer.read_next_token();
-        assert_eq!(token.kind, Kind::If);
-        let token = lexer.read_next_token();
-        assert_eq!(token.kind, Kind::Else);
-        let token = lexer.read_next_token();
-        assert_eq!(token.kind, Kind::Elif);
-        let token = lexer.read_next_token();
-        assert_eq!(token.kind, Kind::Eof);
+        test_kinds(
+            "if else elif",
+            vec![Kind::If, Kind::Else, Kind::Elif, Kind::Eof],
+        );
     }
 
     #[test]
     fn test_single_delimiters() {
-        let mut lexer = Lexer::new("()[]{}:.,;@='\"#\\$?`");
-        let kinds = vec![
-            Kind::LeftParen,
-            Kind::RightParen,
-            Kind::LeftBrace,
-            Kind::RightBrace,
-            Kind::LeftBracket,
-            Kind::RightBracket,
-            Kind::Colon,
-            Kind::Dot,
-            Kind::Comma,
-            Kind::SemiColon,
-            Kind::At,
-            Kind::Assign,
-            Kind::SingleQuote,
-            Kind::DoubleQuote,
-            Kind::Sharp,
-            Kind::BackSlash,
-            Kind::Dollar,
-            Kind::QuestionMark,
-            Kind::BackTick,
-            Kind::Eof,
-        ];
-        for kind in kinds {
-            let token = lexer.read_next_token();
-            assert_eq!(token.kind, kind);
+        test_kinds(
+            "()[]{}:.,;@ ='\"#\\$?`",
+            vec![
+                Kind::LeftParen,
+                Kind::RightParen,
+                Kind::LeftBrace,
+                Kind::RightBrace,
+                Kind::LeftBracket,
+                Kind::RightBracket,
+                Kind::Colon,
+                Kind::Dot,
+                Kind::Comma,
+                Kind::SemiColon,
+                Kind::MatrixMul,
+                Kind::Assign,
+                Kind::SingleQuote,
+                Kind::DoubleQuote,
+                Kind::Sharp,
+                Kind::BackSlash,
+                Kind::Dollar,
+                Kind::QuestionMark,
+                Kind::BackTick,
+                Kind::Eof,
+            ],
+        );
+    }
+
+    #[test]
+    fn test_two_char_delimiters() {
+        test_kinds(
+            "-> += -= *= /= %= @= &= |= ^=",
+            vec![
+                Kind::Arrow,
+                Kind::AddAssign,
+                Kind::SubAssign,
+                Kind::MulAssign,
+                Kind::DivAssign,
+                Kind::ModAssign,
+                Kind::MatrixMulAssign,
+                Kind::BitAndAssign,
+                Kind::BitOrAssign,
+                Kind::BitXorAssign,
+                Kind::Eof,
+            ],
+        );
+    }
+
+    fn test_kinds(source: &str, kinds: Vec<Kind>) {
+        let mut lexer = Lexer::new(source);
+        let mut tokens = Vec::new();
+        let mut token = lexer.read_next_token();
+        tokens.push(token.clone());
+        while token.kind != Kind::Eof {
+            token = lexer.read_next_token();
+            tokens.push(token.clone());
         }
+        assert_eq!(
+            tokens.into_iter().map(|t| t.kind).collect::<Vec<Kind>>(),
+            kinds
+        )
     }
 }
