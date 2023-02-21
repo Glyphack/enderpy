@@ -55,10 +55,10 @@ pub enum Kind {
     Yield,    // yield
 
     // Literals
-    String,    // "string"
-    Integer,   // 123
-    Float,     // 123.456
-    Imaginary, // 123j
+    StringLiteral, // "string"
+    Integer,       // 123
+    Float,         // 123.456
+    Imaginary,     // 123j
 
     // Operators
     Plus,       // +
@@ -148,6 +148,8 @@ impl Lexer {
     }
 
     fn read_next_kind(&mut self) -> Kind {
+        use Kind::*;
+
         while let Some(c) = self.remaining.chars().next() {
             self.remaining = self.remaining[c.len_utf8()..].to_string();
 
@@ -163,7 +165,6 @@ impl Lexer {
                     }
                     _ => return Kind::Plus,
                 },
-                '=' => return Kind::Eq,
                 // match a number
                 '0'..='9' => return Kind::Integer,
                 // match keywords
@@ -181,6 +182,25 @@ impl Lexer {
                     }
                     return self.match_keyword(&ident);
                 }
+                '(' => return LeftParen,
+                ')' => return RightParen,
+                '[' => return LeftBrace,
+                ']' => return RightBrace,
+                '{' => return LeftBracket,
+                '}' => return RightBracket,
+                ',' => return Comma,
+                ':' => return Colon,
+                '.' => return Dot,
+                ';' => return SemiColon,
+                '@' => return At,
+                '=' => return Assign,
+                '\'' => return SingleQuote,
+                '"' => return DoubleQuote,
+                '#' => return Sharp,
+                '\\' => return BackSlash,
+                '$' => return Dollar,
+                '?' => return QuestionMark,
+                '`' => return BackTick,
                 _ => {}
             }
         }
@@ -290,5 +310,36 @@ mod tests {
         assert_eq!(token.kind, Kind::Elif);
         let token = lexer.read_next_token();
         assert_eq!(token.kind, Kind::Eof);
+    }
+
+    #[test]
+    fn test_single_delimiters() {
+        let mut lexer = Lexer::new("()[]{}:.,;@='\"#\\$?`");
+        let kinds = vec![
+            Kind::LeftParen,
+            Kind::RightParen,
+            Kind::LeftBrace,
+            Kind::RightBrace,
+            Kind::LeftBracket,
+            Kind::RightBracket,
+            Kind::Colon,
+            Kind::Dot,
+            Kind::Comma,
+            Kind::SemiColon,
+            Kind::At,
+            Kind::Assign,
+            Kind::SingleQuote,
+            Kind::DoubleQuote,
+            Kind::Sharp,
+            Kind::BackSlash,
+            Kind::Dollar,
+            Kind::QuestionMark,
+            Kind::BackTick,
+            Kind::Eof,
+        ];
+        for kind in kinds {
+            let token = lexer.read_next_token();
+            assert_eq!(token.kind, kind);
+        }
     }
 }
