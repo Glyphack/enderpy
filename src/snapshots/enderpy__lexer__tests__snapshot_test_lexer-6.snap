@@ -1,0 +1,18 @@
+---
+source: src/lexer.rs
+description: if else elif
+---
+[
+    Token {
+        kind: If,
+        value: None,
+    },
+    Token {
+        kind: Else,
+        value: None,
+    },
+    Token {
+        kind: Elif,
+        value: None,
+    },
+]

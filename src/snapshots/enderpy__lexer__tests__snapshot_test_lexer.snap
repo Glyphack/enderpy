@@ -1,0 +1,22 @@
+---
+source: src/lexer.rs
+description: 1+2
+---
+[
+    Token {
+        kind: Integer,
+        value: Integer(
+            1,
+        ),
+    },
+    Token {
+        kind: Plus,
+        value: None,
+    },
+    Token {
+        kind: Integer,
+        value: Integer(
+            2,
+        ),
+    },
+]

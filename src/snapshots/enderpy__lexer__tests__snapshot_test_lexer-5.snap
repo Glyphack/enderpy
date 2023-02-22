@@ -1,0 +1,22 @@
+---
+source: src/lexer.rs
+description: xX = 2
+---
+[
+    Token {
+        kind: Identifier,
+        value: String(
+            "xX",
+        ),
+    },
+    Token {
+        kind: Assign,
+        value: None,
+    },
+    Token {
+        kind: Integer,
+        value: Integer(
+            2,
+        ),
+    },
+]

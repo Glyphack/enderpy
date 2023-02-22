@@ -327,97 +327,63 @@ impl Lexer {
 mod tests {
     use super::Kind;
     use super::Lexer;
+    use insta::assert_debug_snapshot;
 
-    #[test]
-    fn test_num_plus_num() {
-        test_kinds(
-            "1+2",
-            vec![Kind::Integer, Kind::Plus, Kind::Integer, Kind::Eof],
-        );
-    }
-
-    #[test]
-    fn test_add_assign() {
-        test_kinds("+=2", vec![Kind::AddAssign, Kind::Integer, Kind::Eof]);
-    }
-
-    #[test]
-    fn test_assign() {
-        test_kinds(
-            "xX = 2",
-            vec![Kind::Identifier, Kind::Assign, Kind::Integer, Kind::Eof],
-        );
-    }
-
-    #[test]
-    fn test_keywords() {
-        test_kinds(
-            "if else elif",
-            vec![Kind::If, Kind::Else, Kind::Elif, Kind::Eof],
-        );
-    }
-
-    #[test]
-    fn test_single_delimiters() {
-        test_kinds(
-            "()[]{}:.,;@ ='\"#\\$?`",
-            vec![
-                Kind::LeftParen,
-                Kind::RightParen,
-                Kind::LeftBrace,
-                Kind::RightBrace,
-                Kind::LeftBracket,
-                Kind::RightBracket,
-                Kind::Colon,
-                Kind::Dot,
-                Kind::Comma,
-                Kind::SemiColon,
-                Kind::MatrixMul,
-                Kind::Assign,
-                Kind::SingleQuote,
-                Kind::DoubleQuote,
-                Kind::Sharp,
-                Kind::BackSlash,
-                Kind::Dollar,
-                Kind::QuestionMark,
-                Kind::BackTick,
-                Kind::Eof,
-            ],
-        );
-    }
-
-    #[test]
-    fn test_two_char_delimiters() {
-        test_kinds(
-            "-> += -= *= /= %= @= &= |= ^=",
-            vec![
-                Kind::Arrow,
-                Kind::AddAssign,
-                Kind::SubAssign,
-                Kind::MulAssign,
-                Kind::DivAssign,
-                Kind::ModAssign,
-                Kind::MatrixMulAssign,
-                Kind::BitAndAssign,
-                Kind::BitOrAssign,
-                Kind::BitXorAssign,
-                Kind::Eof,
-            ],
-        );
-    }
-
-    fn test_kinds(source: &str, kinds: Vec<Kind>) {
-        let mut lexer = Lexer::new(source);
-        let mut tokens = Vec::new();
-        let mut token = lexer.read_next_token();
-        tokens.push(token.clone());
-        while token.kind != Kind::Eof {
-            token = lexer.read_next_token();
-            tokens.push(token.clone());
+    fn snapshot_test_lexer(inputs: &[&str]) {
+        for input in inputs.iter() {
+            let mut lexer = Lexer::new(input);
+            let mut tokens = vec![];
+            loop {
+                let token = lexer.read_next_token();
+                if token.kind == Kind::Eof {
+                    break;
+                }
+                tokens.push(token);
+            }
+            insta::with_settings!({
+                description => input.to_string(), // the template source code
+                omit_expression => true // do not include the default expression
+            }, {
+                    assert_debug_snapshot!(tokens);
+            });
         }
-        assert_eq!(
-            tokens.into_iter().map(|t| t.kind).collect::<Vec<Kind>>(),
-            kinds
-        )
+    }
+
+    #[test]
+    fn test_lexer() {
+        snapshot_test_lexer(&[
+            "1+2",
+            "a+b",
+            "a + b",
+            "+=2",
+            "xX = 2",
+            "if else elif",
+            "()",
+            "[]",
+            "{}:",
+            ".",
+            ",",
+            ";",
+            "@",
+            "=",
+            "'",
+            "\\",
+            "\"",
+            "#",
+            "\\",
+            "$",
+            "?",
+            "`",
+            "->",
+            "+=",
+            "-=",
+            "*=",
+            "/=",
+            "%=",
+            "@=",
+            "&=",
+            "|=",
+            "^=",
+        ]);
     }
 }
