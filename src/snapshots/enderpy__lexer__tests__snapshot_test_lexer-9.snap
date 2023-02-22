@@ -1,0 +1,18 @@
+---
+source: src/lexer.rs
+description: "{}:"
+---
+[
+    Token {
+        kind: LeftBracket,
+        value: None,
+    },
+    Token {
+        kind: RightBracket,
+        value: None,
+    },
+    Token {
+        kind: Colon,
+        value: None,
+    },
+]

@@ -1,0 +1,14 @@
+---
+source: src/lexer.rs
+description: ()
+---
+[
+    Token {
+        kind: LeftParen,
+        value: None,
+    },
+    Token {
+        kind: RightParen,
+        value: None,
+    },
+]

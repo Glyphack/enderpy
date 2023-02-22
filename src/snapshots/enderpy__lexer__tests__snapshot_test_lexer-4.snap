@@ -1,0 +1,16 @@
+---
+source: src/lexer.rs
+description: +=2
+---
+[
+    Token {
+        kind: AddAssign,
+        value: None,
+    },
+    Token {
+        kind: Integer,
+        value: Integer(
+            2,
+        ),
+    },
+]

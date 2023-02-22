@@ -1,0 +1,14 @@
+---
+source: src/lexer.rs
+description: "[]"
+---
+[
+    Token {
+        kind: LeftBrace,
+        value: None,
+    },
+    Token {
+        kind: RightBrace,
+        value: None,
+    },
+]
