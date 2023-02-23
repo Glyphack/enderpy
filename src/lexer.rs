@@ -168,7 +168,7 @@ impl Lexer {
                         match c {
                             'a'..='z' | 'A'..='Z' | '0'..='9' | '_' => {
                                 ident.push(c);
-                                self.next_char();
+                                self.next();
                             }
                             _ => break,
                         }
@@ -178,71 +178,85 @@ impl Lexer {
                 // Operators
                 '+' => match self.peek() {
                     Some('=') => {
-                        self.next_char();
+                        self.next();
                         return Kind::AddAssign;
                     }
                     _ => return Kind::Plus,
                 },
                 '-' => match self.peek() {
                     Some('>') => {
-                        self.next_char();
+                        self.next();
                         return Arrow;
                     }
                     Some('=') => {
-                        self.next_char();
+                        self.next();
                         return SubAssign;
                     }
                     _ => return Minus,
                 },
                 '*' => match self.peek() {
                     Some('=') => {
-                        self.next_char();
+                        self.next();
                         return MulAssign;
                     }
+                    Some('*') => match self.double_peek() {
+                        Some('=') => {
+                            self.double_next();
+                            return PowAssign;
+                        }
+                        _ => {}
+                    },
                     _ => return Mul,
                 },
                 '/' => match self.peek() {
                     Some('/') => {
-                        self.next_char();
+                        match self.double_peek() {
+                            Some('=') => {
+                                self.double_next();
+                                return IntDivAssign;
+                            }
+                            _ => {}
+                        }
+                        self.next();
                         return Comment;
                     }
                     Some('=') => {
-                        self.next_char();
+                        self.next();
                         return DivAssign;
                     }
                     _ => return Div,
                 },
                 '%' => match self.peek() {
                     Some('=') => {
-                        self.next_char();
+                        self.next();
                         return ModAssign;
                     }
                     _ => return Mod,
                 },
                 '@' => match self.peek() {
                     Some('=') => {
-                        self.next_char();
+                        self.next();
                         return MatrixMulAssign;
                     }
                     _ => return MatrixMul,
                 },
                 '&' => match self.peek() {
                     Some('=') => {
-                        self.next_char();
+                        self.next();
                         return BitAndAssign;
                     }
                     _ => return BitAnd,
                 },
                 '|' => match self.peek() {
                     Some('=') => {
-                        self.next_char();
+                        self.next();
                         return BitOrAssign;
                     }
                     _ => return BitOr,
                 },
                 '^' => match self.peek() {
                     Some('=') => {
-                        self.next_char();
+                        self.next();
                         return BitXorAssign;
                     }
                     _ => return BitXor,
@@ -266,6 +280,26 @@ impl Lexer {
                 '$' => return Dollar,
                 '?' => return QuestionMark,
                 '`' => return BackTick,
+                '<' => match self.peek() {
+                    Some('<') => match self.double_peek() {
+                        Some('=') => {
+                            self.double_next();
+                            return BitShiftLeftAssign;
+                        }
+                        _ => {}
+                    },
+                    _ => {}
+                },
+                '>' => match self.peek() {
+                    Some('>') => match self.double_peek() {
+                        Some('=') => {
+                            self.double_next();
+                            return BitShiftRightAssign;
+                        }
+                        _ => {}
+                    },
+                    _ => {}
+                },
                 _ => {}
             }
         }
@@ -301,7 +335,7 @@ impl Lexer {
         self.source.len() - self.remaining.chars().as_str().len()
     }
 
-    fn next_char(&mut self) -> Option<char> {
+    fn next(&mut self) -> Option<char> {
         let c = self.remaining.chars().next();
         if let Some(c) = c {
             self.remaining = self.remaining[c.len_utf8()..].to_string();
@@ -309,8 +343,17 @@ impl Lexer {
         c
     }
 
+    fn double_next(&mut self) -> Option<char> {
+        self.next();
+        self.next()
+    }
+
     fn peek(&self) -> Option<char> {
         self.remaining.chars().next()
+    }
+
+    fn double_peek(&self) -> Option<char> {
+        self.remaining.chars().nth(1)
     }
 
     fn match_keyword(&self, ident: &str) -> Kind {
@@ -384,6 +427,10 @@ mod tests {
             "&=",
             "|=",
             "^=",
+            "//=",
+            "<<=",
+            ">>=",
+            "**=",
         ]);
     }
 }
