@@ -221,7 +221,7 @@ impl Lexer {
                             _ => {}
                         }
                         self.next();
-                        return Comment;
+                        return IntDiv;
                     }
                     Some('=') => {
                         self.next();
@@ -435,6 +435,7 @@ mod tests {
             ">>=",
             "**=",
             "**",
+            "//",
         ]);
     }
 }
