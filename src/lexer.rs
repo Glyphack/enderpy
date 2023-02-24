@@ -77,38 +77,38 @@ pub enum Kind {
     BitNot,     // ~
     Walrus,     // :=
     Less,       // <
-    More,       // >
+    Greater,    // >
     LessEq,     // <=
-    MoreEq,     // >=
+    GreaterEq,  // >=
     Eq,         // ==
     NotEq,      // !=
 
     // Delimiters
-    LeftParen,           // (
-    RightParen,          // )
-    LeftBrace,           // [
-    RightBrace,          // ]
-    LeftBracket,         // {
-    RightBracket,        // }
-    Comma,               // ,
-    Colon,               // :
-    Dot,                 // .
-    SemiColon,           // ;
-    Assign,              // =
-    Arrow,               // ->
-    AddAssign,           // +=
-    SubAssign,           // -=
-    MulAssign,           // *=
-    DivAssign,           // /=
-    ModAssign,           // %=
-    MatrixMulAssign,     // @=
-    BitAndAssign,        // &=
-    BitOrAssign,         // |=
-    BitXorAssign,        // ^=
-    IntDivAssign,        // //=
-    BitShiftLeftAssign,  // <<=
-    BitShiftRightAssign, // >>=
-    PowAssign,           // **=
+    LeftParen,        // (
+    RightParen,       // )
+    LeftBrace,        // [
+    RightBrace,       // ]
+    LeftBracket,      // {
+    RightBracket,     // }
+    Comma,            // ,
+    Colon,            // :
+    Dot,              // .
+    SemiColon,        // ;
+    Assign,           // =
+    Arrow,            // ->
+    AddAssign,        // +=
+    SubAssign,        // -=
+    MulAssign,        // *=
+    DivAssign,        // /=
+    ModAssign,        // %=
+    MatrixMulAssign,  // @=
+    BitAndAssign,     // &=
+    BitOrAssign,      // |=
+    BitXorAssign,     // ^=
+    IntDivAssign,     // //=
+    ShiftLeftAssign,  // <<=
+    ShiftRightAssign, // >>=
+    PowAssign,        // **=
 
     // Special
     SingleQuote, // '
@@ -150,9 +150,7 @@ impl Lexer {
     fn read_next_kind(&mut self) -> Kind {
         use Kind::*;
 
-        while let Some(c) = self.remaining.chars().next() {
-            self.remaining = self.remaining[c.len_utf8()..].to_string();
-
+        while let Some(c) = self.next() {
             if c.is_whitespace() {
                 return Kind::WhiteSpace;
             }
@@ -204,7 +202,10 @@ impl Lexer {
                             self.double_next();
                             return PowAssign;
                         }
-                        _ => {}
+                        _ => {
+                            self.next();
+                            return Pow;
+                        }
                     },
                     _ => return Mul,
                 },
@@ -218,7 +219,7 @@ impl Lexer {
                             _ => {}
                         }
                         self.next();
-                        return Comment;
+                        return IntDiv;
                     }
                     Some('=') => {
                         self.next();
@@ -261,6 +262,21 @@ impl Lexer {
                     }
                     _ => return BitXor,
                 },
+                '~' => return BitNot,
+                ':' => match self.peek() {
+                    Some('=') => {
+                        self.next();
+                        return Walrus;
+                    }
+                    _ => return Colon,
+                },
+                '!' => match self.peek() {
+                    Some('=') => {
+                        self.next();
+                        return NotEq;
+                    }
+                    _ => {}
+                },
                 // Delimiters
                 '(' => return LeftParen,
                 ')' => return RightParen,
@@ -269,10 +285,15 @@ impl Lexer {
                 '{' => return LeftBracket,
                 '}' => return RightBracket,
                 ',' => return Comma,
-                ':' => return Colon,
                 '.' => return Dot,
                 ';' => return SemiColon,
-                '=' => return Assign,
+                '=' => match self.peek() {
+                    Some('=') => {
+                        self.next();
+                        return Eq;
+                    }
+                    _ => return Assign,
+                },
                 '\'' => return SingleQuote,
                 '"' => return DoubleQuote,
                 '#' => return Sharp,
@@ -284,21 +305,35 @@ impl Lexer {
                     Some('<') => match self.double_peek() {
                         Some('=') => {
                             self.double_next();
-                            return BitShiftLeftAssign;
+                            return ShiftLeftAssign;
                         }
-                        _ => {}
+                        _ => {
+                            self.next();
+                            return LeftShift;
+                        }
                     },
-                    _ => {}
+                    Some('=') => {
+                        self.next();
+                        return LessEq;
+                    }
+                    _ => return Less,
                 },
                 '>' => match self.peek() {
                     Some('>') => match self.double_peek() {
                         Some('=') => {
                             self.double_next();
-                            return BitShiftRightAssign;
+                            return ShiftRightAssign;
                         }
-                        _ => {}
+                        _ => {
+                            self.next();
+                            return RightShift;
+                        }
                     },
-                    _ => {}
+                    Some('=') => {
+                        self.next();
+                        return GreaterEq;
+                    }
+                    _ => return Greater,
                 },
                 _ => {}
             }
@@ -431,6 +466,31 @@ mod tests {
             "<<=",
             ">>=",
             "**=",
+            "**",
+            "//",
+            "<<",
+            ">>",
+            "+",
+            "-",
+            "*",
+            "**",
+            "/",
+            "//",
+            "%",
+            "@",
+            "<<",
+            ">>",
+            "&",
+            "|",
+            "^",
+            "~",
+            ":=",
+            "<",
+            ">",
+            "<=",
+            ">=",
+            "==",
+            "!=",
         ]);
     }
 }
