@@ -204,7 +204,10 @@ impl Lexer {
                             self.double_next();
                             return PowAssign;
                         }
-                        _ => {}
+                        _ => {
+                            self.next();
+                            return Pow;
+                        }
                     },
                     _ => return Mul,
                 },
@@ -431,6 +434,7 @@ mod tests {
             "<<=",
             ">>=",
             "**=",
+            "**",
         ]);
     }
 }

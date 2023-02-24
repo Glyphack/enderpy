@@ -1,0 +1,10 @@
+---
+source: src/lexer.rs
+description: "**"
+---
+[
+    Token {
+        kind: Pow,
+        value: None,
+    },
+]
