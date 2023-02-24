@@ -4,7 +4,7 @@ description: ">>="
 ---
 [
     Token {
-        kind: BitShiftRightAssign,
+        kind: ShiftRightAssign,
         value: None,
     },
 ]

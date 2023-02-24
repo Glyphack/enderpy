@@ -84,31 +84,31 @@ pub enum Kind {
     NotEq,      // !=
 
     // Delimiters
-    LeftParen,           // (
-    RightParen,          // )
-    LeftBrace,           // [
-    RightBrace,          // ]
-    LeftBracket,         // {
-    RightBracket,        // }
-    Comma,               // ,
-    Colon,               // :
-    Dot,                 // .
-    SemiColon,           // ;
-    Assign,              // =
-    Arrow,               // ->
-    AddAssign,           // +=
-    SubAssign,           // -=
-    MulAssign,           // *=
-    DivAssign,           // /=
-    ModAssign,           // %=
-    MatrixMulAssign,     // @=
-    BitAndAssign,        // &=
-    BitOrAssign,         // |=
-    BitXorAssign,        // ^=
-    IntDivAssign,        // //=
-    BitShiftLeftAssign,  // <<=
-    BitShiftRightAssign, // >>=
-    PowAssign,           // **=
+    LeftParen,        // (
+    RightParen,       // )
+    LeftBrace,        // [
+    RightBrace,       // ]
+    LeftBracket,      // {
+    RightBracket,     // }
+    Comma,            // ,
+    Colon,            // :
+    Dot,              // .
+    SemiColon,        // ;
+    Assign,           // =
+    Arrow,            // ->
+    AddAssign,        // +=
+    SubAssign,        // -=
+    MulAssign,        // *=
+    DivAssign,        // /=
+    ModAssign,        // %=
+    MatrixMulAssign,  // @=
+    BitAndAssign,     // &=
+    BitOrAssign,      // |=
+    BitXorAssign,     // ^=
+    IntDivAssign,     // //=
+    ShiftLeftAssign,  // <<=
+    ShiftRightAssign, // >>=
+    PowAssign,        // **=
 
     // Special
     SingleQuote, // '
@@ -287,7 +287,7 @@ impl Lexer {
                     Some('<') => match self.double_peek() {
                         Some('=') => {
                             self.double_next();
-                            return BitShiftLeftAssign;
+                            return ShiftLeftAssign;
                         }
                         _ => {
                             self.next();
@@ -300,7 +300,7 @@ impl Lexer {
                     Some('>') => match self.double_peek() {
                         Some('=') => {
                             self.double_next();
-                            return BitShiftRightAssign;
+                            return ShiftRightAssign;
                         }
                         _ => {}
                     },
