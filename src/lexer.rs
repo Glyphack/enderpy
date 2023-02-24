@@ -302,7 +302,10 @@ impl Lexer {
                             self.double_next();
                             return ShiftRightAssign;
                         }
-                        _ => {}
+                        _ => {
+                            self.next();
+                            return RightShift;
+                        }
                     },
                     _ => {}
                 },
@@ -440,6 +443,7 @@ mod tests {
             "**",
             "//",
             "<<",
+            ">>",
         ]);
     }
 }
