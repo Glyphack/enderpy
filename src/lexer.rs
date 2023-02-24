@@ -77,9 +77,9 @@ pub enum Kind {
     BitNot,     // ~
     Walrus,     // :=
     Less,       // <
-    More,       // >
+    Greater,    // >
     LessEq,     // <=
-    MoreEq,     // >=
+    GreaterEq,  // >=
     Eq,         // ==
     NotEq,      // !=
 
@@ -150,9 +150,7 @@ impl Lexer {
     fn read_next_kind(&mut self) -> Kind {
         use Kind::*;
 
-        while let Some(c) = self.remaining.chars().next() {
-            self.remaining = self.remaining[c.len_utf8()..].to_string();
-
+        while let Some(c) = self.next() {
             if c.is_whitespace() {
                 return Kind::WhiteSpace;
             }
@@ -264,6 +262,21 @@ impl Lexer {
                     }
                     _ => return BitXor,
                 },
+                '~' => return BitNot,
+                ':' => match self.peek() {
+                    Some('=') => {
+                        self.next();
+                        return Walrus;
+                    }
+                    _ => return Colon,
+                },
+                '!' => match self.peek() {
+                    Some('=') => {
+                        self.next();
+                        return NotEq;
+                    }
+                    _ => {}
+                },
                 // Delimiters
                 '(' => return LeftParen,
                 ')' => return RightParen,
@@ -272,10 +285,15 @@ impl Lexer {
                 '{' => return LeftBracket,
                 '}' => return RightBracket,
                 ',' => return Comma,
-                ':' => return Colon,
                 '.' => return Dot,
                 ';' => return SemiColon,
-                '=' => return Assign,
+                '=' => match self.peek() {
+                    Some('=') => {
+                        self.next();
+                        return Eq;
+                    }
+                    _ => return Assign,
+                },
                 '\'' => return SingleQuote,
                 '"' => return DoubleQuote,
                 '#' => return Sharp,
@@ -294,7 +312,11 @@ impl Lexer {
                             return LeftShift;
                         }
                     },
-                    _ => {}
+                    Some('=') => {
+                        self.next();
+                        return LessEq;
+                    }
+                    _ => return Less,
                 },
                 '>' => match self.peek() {
                     Some('>') => match self.double_peek() {
@@ -307,7 +329,11 @@ impl Lexer {
                             return RightShift;
                         }
                     },
-                    _ => {}
+                    Some('=') => {
+                        self.next();
+                        return GreaterEq;
+                    }
+                    _ => return Greater,
                 },
                 _ => {}
             }
@@ -444,6 +470,27 @@ mod tests {
             "//",
             "<<",
             ">>",
+            "+",
+            "-",
+            "*",
+            "**",
+            "/",
+            "//",
+            "%",
+            "@",
+            "<<",
+            ">>",
+            "&",
+            "|",
+            "^",
+            "~",
+            ":=",
+            "<",
+            ">",
+            "<=",
+            ">=",
+            "==",
+            "!=",
         ]);
     }
 }
