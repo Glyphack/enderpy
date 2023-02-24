@@ -289,7 +289,10 @@ impl Lexer {
                             self.double_next();
                             return BitShiftLeftAssign;
                         }
-                        _ => {}
+                        _ => {
+                            self.next();
+                            return LeftShift;
+                        }
                     },
                     _ => {}
                 },
@@ -436,6 +439,7 @@ mod tests {
             "**=",
             "**",
             "//",
+            "<<",
         ]);
     }
 }
