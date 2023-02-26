@@ -1,0 +1,12 @@
+---
+source: src/lexer.rs
+description: _a
+---
+[
+    Token {
+        kind: Identifier,
+        value: String(
+            "_a",
+        ),
+    },
+]

@@ -148,6 +148,7 @@ impl Lexer {
     }
 
     fn read_next_kind(&mut self) -> Kind {
+        use unicode_id_start::{is_id_continue, is_id_start};
         use Kind::*;
 
         while let Some(c) = self.next() {
@@ -168,7 +169,16 @@ impl Lexer {
                                 ident.push(c);
                                 self.next();
                             }
-                            _ => break,
+                            _ => {
+                                // Some unicode characters are valid in identifiers
+                                // https://boshen.github.io/javascript-parser-in-rust/docs/lexer/#identifiers-and-unicode
+                                if is_id_start(c) & is_id_continue(c) {
+                                    ident.push(c);
+                                    self.next();
+                                } else {
+                                    break;
+                                }
+                            }
                         }
                     }
                     return self.match_keyword(&ident);
@@ -524,6 +534,7 @@ mod tests {
             "==",
             "!=",
         ]);
+
         // keywords
         snapshot_test_lexer(&[
             "False None True and as assert async await",
@@ -531,5 +542,10 @@ mod tests {
             "finally for from global if import in is lambda",
             "nonlocal not or pass raise return try while with yield",
         ]);
+
+        // Test identifiers
+        snapshot_test_lexer(&["a", "a_a", "_a", "a_", "a_a_a", "a_a_", "ಠ_ಠ"]);
+        // Invalid identifiers
+        snapshot_test_lexer(&["🦀"])
     }
 }

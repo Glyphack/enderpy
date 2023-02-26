@@ -1,0 +1,12 @@
+---
+source: src/lexer.rs
+description: ಠ_ಠ
+---
+[
+    Token {
+        kind: Identifier,
+        value: String(
+            "ಠ_ಠ",
+        ),
+    },
+]
