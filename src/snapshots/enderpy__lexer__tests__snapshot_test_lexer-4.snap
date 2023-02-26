@@ -9,8 +9,8 @@ description: +=2
     },
     Token {
         kind: Integer,
-        value: Integer(
-            2,
+        value: Number(
+            "2",
         ),
     },
 ]

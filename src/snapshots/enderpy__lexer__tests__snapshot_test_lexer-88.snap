@@ -1,0 +1,11 @@
+---
+source: src/lexer.rs
+---
+[
+    Token {
+        kind: Octal,
+        value: Number(
+            "0o6",
+        ),
+    },
+]

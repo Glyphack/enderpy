@@ -1,0 +1,12 @@
+---
+source: src/lexer.rs
+description: "0x4"
+---
+[
+    Token {
+        kind: Hexadecimal,
+        value: Number(
+            "0x4",
+        ),
+    },
+]

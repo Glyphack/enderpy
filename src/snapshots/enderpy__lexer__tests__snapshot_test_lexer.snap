@@ -5,8 +5,8 @@ description: 1+2
 [
     Token {
         kind: Integer,
-        value: Integer(
-            1,
+        value: Number(
+            "1",
         ),
     },
     Token {
@@ -15,8 +15,8 @@ description: 1+2
     },
     Token {
         kind: Integer,
-        value: Integer(
-            2,
+        value: Number(
+            "2",
         ),
     },
 ]
