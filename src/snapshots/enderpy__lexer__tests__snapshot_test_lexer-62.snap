@@ -1,0 +1,38 @@
+---
+source: src/lexer.rs
+description: False None True and as assert async await
+---
+[
+    Token {
+        kind: False,
+        value: None,
+    },
+    Token {
+        kind: None,
+        value: None,
+    },
+    Token {
+        kind: True,
+        value: None,
+    },
+    Token {
+        kind: And,
+        value: None,
+    },
+    Token {
+        kind: As,
+        value: None,
+    },
+    Token {
+        kind: Assert,
+        value: None,
+    },
+    Token {
+        kind: Async,
+        value: None,
+    },
+    Token {
+        kind: Await,
+        value: None,
+    },
+]

@@ -1,0 +1,38 @@
+---
+source: src/lexer.rs
+description: break class continue def del elif else except
+---
+[
+    Token {
+        kind: Break,
+        value: None,
+    },
+    Token {
+        kind: Class,
+        value: None,
+    },
+    Token {
+        kind: Continue,
+        value: None,
+    },
+    Token {
+        kind: Def,
+        value: None,
+    },
+    Token {
+        kind: Del,
+        value: None,
+    },
+    Token {
+        kind: Elif,
+        value: None,
+    },
+    Token {
+        kind: Else,
+        value: None,
+    },
+    Token {
+        kind: Except,
+        value: None,
+    },
+]

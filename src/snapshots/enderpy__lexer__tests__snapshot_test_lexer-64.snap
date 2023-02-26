@@ -1,0 +1,42 @@
+---
+source: src/lexer.rs
+description: finally for from global if import in is lambda
+---
+[
+    Token {
+        kind: Finally,
+        value: None,
+    },
+    Token {
+        kind: For,
+        value: None,
+    },
+    Token {
+        kind: From,
+        value: None,
+    },
+    Token {
+        kind: Global,
+        value: None,
+    },
+    Token {
+        kind: If,
+        value: None,
+    },
+    Token {
+        kind: Import,
+        value: None,
+    },
+    Token {
+        kind: In,
+        value: None,
+    },
+    Token {
+        kind: Is,
+        value: None,
+    },
+    Token {
+        kind: Lambda,
+        value: None,
+    },
+]
