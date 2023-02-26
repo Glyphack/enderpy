@@ -393,9 +393,41 @@ impl Lexer {
 
     fn match_keyword(&self, ident: &str) -> Kind {
         match ident {
-            "if" => Kind::If,
-            "else" => Kind::Else,
+            "False" => Kind::False,
+            "None" => Kind::None,
+            "True" => Kind::True,
+            "and" => Kind::And,
+            "as" => Kind::As,
+            "assert" => Kind::Assert,
+            "async" => Kind::Async,
+            "await" => Kind::Await,
+            "break" => Kind::Break,
+            "class" => Kind::Class,
+            "continue" => Kind::Continue,
+            "def" => Kind::Def,
+            "del" => Kind::Del,
             "elif" => Kind::Elif,
+            "else" => Kind::Else,
+            "except" => Kind::Except,
+            "finally" => Kind::Finally,
+            "for" => Kind::For,
+            "from" => Kind::From,
+            "global" => Kind::Global,
+            "if" => Kind::If,
+            "import" => Kind::Import,
+            "in" => Kind::In,
+            "is" => Kind::Is,
+            "lambda" => Kind::Lambda,
+            "nonlocal" => Kind::Nonlocal,
+            "not" => Kind::Not,
+            "or" => Kind::Or,
+            "pass" => Kind::Pass,
+            "raise" => Kind::Raise,
+            "return" => Kind::Return,
+            "try" => Kind::Try,
+            "while" => Kind::While,
+            "with" => Kind::With,
+            "yield" => Kind::Yield,
             _ => Kind::Identifier,
         }
     }
@@ -491,6 +523,16 @@ mod tests {
             ">=",
             "==",
             "!=",
+        ]);
+    }
+
+    #[test]
+    fn test_lexer_keywords() {
+        snapshot_test_lexer(&[
+            "False None True and as assert async await",
+            "break class continue def del elif else except",
+            "finally for from global if import in is lambda",
+            "nonlocal not or pass raise return try while with yield",
         ]);
     }
 }
