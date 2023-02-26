@@ -524,10 +524,7 @@ mod tests {
             "==",
             "!=",
         ]);
-    }
-
-    #[test]
-    fn test_lexer_keywords() {
+        // keywords
         snapshot_test_lexer(&[
             "False None True and as assert async await",
             "break class continue def del elif else except",

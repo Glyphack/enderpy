@@ -1,0 +1,46 @@
+---
+source: src/lexer.rs
+description: nonlocal not or pass raise return try while with yield
+---
+[
+    Token {
+        kind: Nonlocal,
+        value: None,
+    },
+    Token {
+        kind: Not,
+        value: None,
+    },
+    Token {
+        kind: Or,
+        value: None,
+    },
+    Token {
+        kind: Pass,
+        value: None,
+    },
+    Token {
+        kind: Raise,
+        value: None,
+    },
+    Token {
+        kind: Return,
+        value: None,
+    },
+    Token {
+        kind: Try,
+        value: None,
+    },
+    Token {
+        kind: While,
+        value: None,
+    },
+    Token {
+        kind: With,
+        value: None,
+    },
+    Token {
+        kind: Yield,
+        value: None,
+    },
+]
