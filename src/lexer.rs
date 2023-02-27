@@ -57,7 +57,11 @@ pub enum Kind {
     // Literals
     StringLiteral, // "string"
     Integer,       // 123
-    Float,         // 123.456
+    Binary,        // 0b1010
+    Octal,         // 0o123
+    Hexadecimal,   // 0x123
+    PointFloat,    // 123.456
+    ExponentFloat, // 123.456e-10
     Imaginary,     // 123j
 
     // Operators
@@ -130,7 +134,7 @@ pub enum Kind {
 #[derive(Debug, PartialEq, Clone)]
 pub enum TokenValue {
     None,
-    Integer(i64),
+    Number(String), // TODO: String because we don't need the value yet
     String(String),
 }
 
@@ -158,7 +162,9 @@ impl Lexer {
 
             match c {
                 // Numbers
-                '0'..='9' => return Kind::Integer,
+                '0'..='9' => {
+                    return self.match_numeric_literal();
+                }
                 // Keywords
                 'a'..='z' | 'A'..='Z' | '_' => {
                     let mut ident = String::new();
@@ -362,9 +368,14 @@ impl Lexer {
         }
 
         let value = match kind {
-            Kind::Integer => {
-                let value = self.source[start..end].parse::<i64>().unwrap();
-                TokenValue::Integer(value)
+            Kind::Integer
+            | Kind::Hexadecimal
+            | Kind::Binary
+            | Kind::PointFloat
+            | Kind::Octal
+            | Kind::ExponentFloat => {
+                let value = self.source[start..end].to_string();
+                TokenValue::Number(value)
             }
             Kind::Identifier => {
                 let value = self.source[start..end].to_string();
@@ -440,6 +451,107 @@ impl Lexer {
             "yield" => Kind::Yield,
             _ => Kind::Identifier,
         }
+    }
+
+    fn match_numeric_literal(&mut self) -> Kind {
+        match self.peek() {
+            Some('b') | Some('B') => {
+                self.next();
+                while let Some(c) = self.peek() {
+                    match c {
+                        '0' | '1' => {
+                            self.next();
+                        }
+                        '_' => {
+                            self.next();
+                        }
+                        _ => panic!("Binary literals must be 0 or 1"),
+                    }
+                }
+                return Kind::Binary;
+            }
+            Some('o') | Some('O') => {
+                self.next();
+                while let Some(c) = self.peek() {
+                    match c {
+                        '0'..='7' => {
+                            self.next();
+                        }
+                        '_' => {
+                            self.next();
+                        }
+                        _ => panic!("Octal literals must be 0-7"),
+                    }
+                }
+                return Kind::Octal;
+            }
+            Some('x') | Some('X') => {
+                self.next();
+                while let Some(c) = self.peek() {
+                    match c {
+                        '0'..='9' | 'a'..='f' | 'A'..='F' => {
+                            self.next();
+                        }
+                        '_' => {
+                            self.next();
+                        }
+                        _ => panic!("Hexadecimal literals must be 0-9, a-f, A-F"),
+                    }
+                }
+                return Kind::Hexadecimal;
+            }
+            _ => {}
+        }
+
+        while let Some(c) = self.peek() {
+            match c {
+                '.' => {
+                    self.next();
+                    while let Some(c) = self.peek() {
+                        match c {
+                            '0'..='9' => {
+                                self.next();
+                            }
+                            '_' => {
+                                self.next();
+                            }
+                            _ => break,
+                        }
+                    }
+                    return Kind::PointFloat;
+                }
+                'e' | 'E' => {
+                    self.next();
+                    match self.peek() {
+                        Some('+') | Some('-') => {
+                            self.next();
+                        }
+                        _ => {}
+                    }
+                    while let Some(c) = self.peek() {
+                        match c {
+                            '0'..='9' => {
+                                self.next();
+                            }
+                            '_' => {
+                                self.next();
+                            }
+                            _ => break,
+                        }
+                    }
+                    return Kind::ExponentFloat;
+                }
+                '0'..='9' => {
+                    self.next();
+                }
+                '_' => {
+                    self.next();
+                }
+                _ => break,
+            }
+        }
+
+        Kind::Integer
     }
 }
 
@@ -546,6 +658,27 @@ mod tests {
         // Test identifiers
         snapshot_test_lexer(&["a", "a_a", "_a", "a_", "a_a_a", "a_a_", "ಠ_ಠ"]);
         // Invalid identifiers
-        snapshot_test_lexer(&["🦀"])
+        snapshot_test_lexer(&["🦀"]);
+
+        // Test numeric literals
+        // Binary
+        snapshot_test_lexer(&[
+            "0b0", "0b1", "0b10", "0b11", "0b100", "0b101", "0b110", "0b111",
+        ]);
+
+        // Octal
+        snapshot_test_lexer(&["0o0", "0o1", "0o2", "0o3", "0o4", "0o5", "0o6", "0o7"]);
+
+        // Hexadecimal
+        snapshot_test_lexer(&[
+            "0x0", "0x1", "0x2", "0x3", "0x4", "0x5", "0x6", "0x7", "0x8", "0x9", "0xa", "0xb",
+            "0xc", "0xd", "0xe", "0xf", "0xA", "0xB", "0xC", "0xD", "0xE", "0xF",
+        ]);
+        //
+        // Point float
+        snapshot_test_lexer(&["0.0 0.1 00.0 00.1"]);
+
+        // Exponent float
+        snapshot_test_lexer(&["0e0 0e-1 0e+2"])
     }
 }

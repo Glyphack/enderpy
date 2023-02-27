@@ -1,0 +1,30 @@
+---
+source: src/lexer.rs
+description: 0.0 0.1 00.0 00.1
+---
+[
+    Token {
+        kind: PointFloat,
+        value: Number(
+            "0.0",
+        ),
+    },
+    Token {
+        kind: PointFloat,
+        value: Number(
+            "0.1",
+        ),
+    },
+    Token {
+        kind: PointFloat,
+        value: Number(
+            "00.0",
+        ),
+    },
+    Token {
+        kind: PointFloat,
+        value: Number(
+            "00.1",
+        ),
+    },
+]

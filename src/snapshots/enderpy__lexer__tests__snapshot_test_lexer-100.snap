@@ -1,0 +1,12 @@
+---
+source: src/lexer.rs
+description: "0xa"
+---
+[
+    Token {
+        kind: Hexadecimal,
+        value: Number(
+            "0xa",
+        ),
+    },
+]
