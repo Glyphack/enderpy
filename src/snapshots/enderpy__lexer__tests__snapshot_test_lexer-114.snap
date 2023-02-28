@@ -1,0 +1,30 @@
+---
+source: src/lexer.rs
+description: 11 33 1j 1_000_000j
+---
+[
+    Token {
+        kind: Integer,
+        value: Number(
+            "11",
+        ),
+    },
+    Token {
+        kind: Integer,
+        value: Number(
+            "33",
+        ),
+    },
+    Token {
+        kind: ImaginaryInteger,
+        value: Number(
+            "1j",
+        ),
+    },
+    Token {
+        kind: ImaginaryInteger,
+        value: Number(
+            "1_000_000j",
+        ),
+    },
+]

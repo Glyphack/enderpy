@@ -1,6 +1,6 @@
 ---
 source: src/lexer.rs
-description: 0.0 0.1 00.0 00.1
+description: 0.0 0.1 00.0 00.1 0.1j 0.01J
 ---
 [
     Token {
@@ -25,6 +25,18 @@ description: 0.0 0.1 00.0 00.1
         kind: PointFloat,
         value: Number(
             "00.1",
+        ),
+    },
+    Token {
+        kind: PointFloat,
+        value: Number(
+            "0.1j",
+        ),
+    },
+    Token {
+        kind: PointFloat,
+        value: Number(
+            "0.01J",
         ),
     },
 ]

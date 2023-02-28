@@ -55,14 +55,16 @@ pub enum Kind {
     Yield,    // yield
 
     // Literals
-    StringLiteral, // "string"
-    Integer,       // 123
-    Binary,        // 0b1010
-    Octal,         // 0o123
-    Hexadecimal,   // 0x123
-    PointFloat,    // 123.456
-    ExponentFloat, // 123.456e-10
-    Imaginary,     // 123j
+    StringLiteral,          // "string"
+    Integer,                // 123
+    Binary,                 // 0b1010
+    Octal,                  // 0o123
+    Hexadecimal,            // 0x123
+    PointFloat,             // 123.456
+    ExponentFloat,          // 123.456e-10
+    ImaginaryInteger,       // 123j
+    ImaginaryPointFloat,    // 123.2j
+    ImaginaryExponentFloat, // 123.456e-10j
 
     // Operators
     Plus,       // +
@@ -373,7 +375,10 @@ impl Lexer {
             | Kind::Binary
             | Kind::PointFloat
             | Kind::Octal
-            | Kind::ExponentFloat => {
+            | Kind::ExponentFloat
+            | Kind::ImaginaryInteger
+            | Kind::ImaginaryExponentFloat
+            | Kind::ImaginaryPointFloat => {
                 let value = self.source[start..end].to_string();
                 TokenValue::Number(value)
             }
@@ -503,9 +508,11 @@ impl Lexer {
             _ => {}
         }
 
+        let mut is_imaginary = false;
         while let Some(c) = self.peek() {
             match c {
                 '.' => {
+                    let mut has_exponent = false;
                     self.next();
                     while let Some(c) = self.peek() {
                         match c {
@@ -515,8 +522,29 @@ impl Lexer {
                             '_' => {
                                 self.next();
                             }
+                            'e' | 'E' => {
+                                has_exponent = true;
+                                self.next();
+                                match self.peek() {
+                                    Some('+') | Some('-') => {
+                                        self.next();
+                                    }
+                                    _ => panic!("Exponent must be + or -"),
+                                }
+                            }
+                            'j' | 'J' => {
+                                is_imaginary = true;
+                                self.next();
+                                break;
+                            }
                             _ => break,
                         }
+                    }
+                    if has_exponent {
+                        if is_imaginary {
+                            return Kind::ImaginaryExponentFloat;
+                        }
+                        return Kind::ExponentFloat;
                     }
                     return Kind::PointFloat;
                 }
@@ -530,14 +558,19 @@ impl Lexer {
                     }
                     while let Some(c) = self.peek() {
                         match c {
-                            '0'..='9' => {
+                            '0'..='9' | '_' => {
                                 self.next();
                             }
-                            '_' => {
+                            'j' | 'J' => {
+                                is_imaginary = true;
                                 self.next();
+                                break;
                             }
                             _ => break,
                         }
+                    }
+                    if is_imaginary {
+                        return Kind::ImaginaryExponentFloat;
                     }
                     return Kind::ExponentFloat;
                 }
@@ -547,8 +580,17 @@ impl Lexer {
                 '_' => {
                     self.next();
                 }
+                'j' | 'J' => {
+                    is_imaginary = true;
+                    self.next();
+                    break;
+                }
                 _ => break,
             }
+        }
+
+        if is_imaginary {
+            return Kind::ImaginaryInteger;
         }
 
         Kind::Integer
@@ -676,9 +718,12 @@ mod tests {
         ]);
         //
         // Point float
-        snapshot_test_lexer(&["0.0 0.1 00.0 00.1"]);
+        snapshot_test_lexer(&["0.0 0.1 00.0 00.1 0.1j 0.01J"]);
 
         // Exponent float
-        snapshot_test_lexer(&["0e0 0e-1 0e+2"])
+        snapshot_test_lexer(&["0e0 0e-1 0e+2 0e+3j 0e+3J"]);
+
+        // Integer
+        snapshot_test_lexer(&["11 33 1j 1_000_000j"]);
     }
 }
