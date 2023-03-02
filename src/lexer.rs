@@ -838,7 +838,7 @@ mod tests {
             &["a", "a_a", "_a", "a_", "a_a_a", "a_a_", "ಠ_ಠ"],
         );
         // Invalid identifiers
-        snapshot_test_lexer("identifiers", &["🦀"]);
+        snapshot_test_lexer("invalid-identifiers", &["🦀"]);
 
         // Test numeric literals
         // Binary
