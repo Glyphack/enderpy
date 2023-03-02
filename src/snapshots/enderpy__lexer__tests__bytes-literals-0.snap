@@ -1,0 +1,12 @@
+---
+source: src/lexer.rs
+description: "b\"hello\""
+---
+[
+    Token {
+        kind: Bytes,
+        value: String(
+            "b\"hello\"",
+        ),
+    },
+]

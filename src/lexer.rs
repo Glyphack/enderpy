@@ -54,8 +54,21 @@ pub enum Kind {
     With,     // with
     Yield,    // yield
 
-    // Literals
-    StringLiteral,          // "string"
+    // String Literals
+    StringLiteral,
+    // f-string literal
+    FString, // f or F prefix
+    // byte string literal
+    Bytes, // b or B prefix
+    // raw string literal
+    RawString, // r or R prefix
+    // raw f-string literal,
+    RawFString, // rf or rF or Rf or RF or fr or fR or Fr or FR prefix
+    // raw byte string literal
+    RawBytes, // rb or rB or Rb or RB or br or bR or Br or BR prefix
+    // unicode string literal,
+    Unicode, // u or U prefix
+
     Integer,                // 123
     Binary,                 // 0b1010
     Octal,                  // 0o123
@@ -117,10 +130,8 @@ pub enum Kind {
     PowAssign,        // **=
 
     // Special
-    SingleQuote, // '
-    DoubleQuote, // "
-    Sharp,       // #
-    BackSlash,   // \
+    Sharp,     // #
+    BackSlash, // \
 
     // Unconditional error
     Dollar,       // $
@@ -168,9 +179,85 @@ impl Lexer {
                     return self.match_numeric_literal();
                 }
                 // Keywords
-                'a'..='z' | 'A'..='Z' | '_' => {
+                identifier_start @ 'a'..='z'
+                | identifier_start @ 'A'..='Z'
+                | identifier_start @ '_' => {
+                    // Check if is start of string
+                    match identifier_start {
+                        'r' | 'R' => match self.peek() {
+                            // check if is start of string
+                            Some('b') | Some('B') => match self.double_peek() {
+                                Some(str_starter @ '"') | Some(str_starter @ '\'') => {
+                                    self.next();
+                                    self.next();
+                                    self.consume_string_from_start_char(str_starter);
+                                    return Kind::RawBytes;
+                                }
+                                _ => {}
+                            },
+                            Some('f') | Some('F') => match self.double_peek() {
+                                Some(str_starter @ '"') | Some(str_starter @ '\'') => {
+                                    self.next();
+                                    self.next();
+                                    self.consume_string_from_start_char(str_starter);
+                                    return Kind::RawFString;
+                                }
+                                _ => {}
+                            },
+                            Some(str_starter @ '"') | Some(str_starter @ '\'') => {
+                                self.next();
+                                self.consume_string_from_start_char(str_starter);
+                                return Kind::RawString;
+                            }
+                            _ => {}
+                        },
+                        'b' | 'B' => match self.peek() {
+                            Some('r') | Some('R') => match self.double_peek() {
+                                Some(str_starter @ '"') | Some(str_starter @ '\'') => {
+                                    self.next();
+                                    self.next();
+                                    self.consume_string_from_start_char(str_starter);
+                                    return Kind::RawBytes;
+                                }
+                                _ => {}
+                            },
+                            Some(str_starter @ '"') | Some(str_starter @ '\'') => {
+                                self.next();
+                                self.consume_string_from_start_char(str_starter);
+                                return Kind::Bytes;
+                            }
+                            _ => {}
+                        },
+                        'f' | 'F' => match self.peek() {
+                            Some('r') | Some('R') => match self.double_peek() {
+                                Some(str_starter @ '"') | Some(str_starter @ '\'') => {
+                                    self.next();
+                                    self.next();
+                                    self.consume_string_from_start_char(str_starter);
+                                    return Kind::RawFString;
+                                }
+                                _ => {}
+                            },
+                            Some(str_starter @ '"') | Some(str_starter @ '\'') => {
+                                self.next();
+                                self.consume_string_from_start_char(str_starter);
+                                return Kind::FString;
+                            }
+                            _ => {}
+                        },
+                        'u' | 'U' => match self.peek() {
+                            Some(str_starter @ '"') | Some(str_starter @ '\'') => {
+                                self.next();
+                                self.consume_string_from_start_char(str_starter);
+                                return Kind::Unicode;
+                            }
+                            _ => {}
+                        },
+                        _ => {}
+                    };
+
                     let mut ident = String::new();
-                    ident.push(c);
+                    ident.push(identifier_start);
                     while let Some(c) = self.peek() {
                         match c {
                             'a'..='z' | 'A'..='Z' | '0'..='9' | '_' => {
@@ -190,6 +277,11 @@ impl Lexer {
                         }
                     }
                     return self.match_keyword(&ident);
+                }
+                // String Literals
+                str_starter @ '"' | str_starter @ '\'' => {
+                    self.consume_string_from_start_char(str_starter);
+                    return StringLiteral;
                 }
                 // Operators
                 '+' => match self.peek() {
@@ -312,8 +404,6 @@ impl Lexer {
                     }
                     _ => return Assign,
                 },
-                '\'' => return SingleQuote,
-                '"' => return DoubleQuote,
                 '#' => return Sharp,
                 '\\' => return BackSlash,
                 '$' => return Dollar,
@@ -386,10 +476,22 @@ impl Lexer {
                 let value = self.source[start..end].to_string();
                 TokenValue::String(value)
             }
+            Kind::StringLiteral
+            | Kind::FString
+            | Kind::RawBytes
+            | Kind::RawString
+            | Kind::RawFString
+            | Kind::Bytes
+            | Kind::Unicode => {
+                let value = self.source[start..end].to_string();
+                TokenValue::String(value)
+            }
             _ => TokenValue::None,
         };
         Token { kind, value }
     }
+
+    // TODO: Make sure we don't need to scape the source
 
     /// Get the length offset from the source text, in UTF-8 bytes
     fn offset(&self) -> usize {
@@ -455,6 +557,35 @@ impl Lexer {
             "with" => Kind::With,
             "yield" => Kind::Yield,
             _ => Kind::Identifier,
+        }
+    }
+
+    fn consume_string_from_start_char(&mut self, str_starter: char) {
+        // Check if string starts with triple quotes
+        if self.peek() == Some(str_starter) && self.double_peek() == Some(str_starter) {
+            self.next();
+            let mut last_read_char = self.next();
+            while let Some(c) = self.next() {
+                if c == str_starter
+                    && self.peek() == Some(str_starter)
+                    && self.double_peek() == Some(str_starter)
+                    && last_read_char != Some('\\')
+                {
+                    self.next();
+                    self.next();
+                    break;
+                }
+                last_read_char = Some(c);
+            }
+        } else {
+            let mut last_read_char = self.next();
+            while let Some(c) = self.next() {
+                if last_read_char != Some('\\') && self.peek() == Some(str_starter) {
+                    self.next();
+                    break;
+                }
+                last_read_char = Some(c);
+            }
         }
     }
 
@@ -603,9 +734,9 @@ mod tests {
     use super::Lexer;
     use insta::assert_debug_snapshot;
 
-    fn snapshot_test_lexer(inputs: &[&str]) {
-        for input in inputs.iter() {
-            let mut lexer = Lexer::new(input);
+    fn snapshot_test_lexer(snap_name: &str, inputs: &[&str]) {
+        for (i, test_input) in inputs.iter().enumerate() {
+            let mut lexer = Lexer::new(test_input);
             let mut tokens = vec![];
             loop {
                 let token = lexer.read_next_token();
@@ -614,116 +745,229 @@ mod tests {
                 }
                 tokens.push(token);
             }
+            let snap_file_name = format!("{}-{}", snap_name, i);
             insta::with_settings!({
-                description => input.to_string(), // the template source code
+                description => test_input.to_string(), // the template source code
                 omit_expression => true // do not include the default expression
             }, {
-                    assert_debug_snapshot!(tokens);
+                    assert_debug_snapshot!(snap_file_name, tokens);
             });
         }
     }
 
     #[test]
     fn test_lexer() {
-        snapshot_test_lexer(&[
-            "1+2",
-            "a+b",
-            "a + b",
-            "+=2",
-            "xX = 2",
-            "if else elif",
-            "()",
-            "[]",
-            "{}:",
-            ".",
-            ",",
-            ";",
-            "@",
-            "=",
-            "'",
-            "\\",
-            "\"",
-            "#",
-            "\\",
-            "$",
-            "?",
-            "`",
-            "->",
-            "+=",
-            "-=",
-            "*=",
-            "/=",
-            "%=",
-            "@=",
-            "&=",
-            "|=",
-            "^=",
-            "//=",
-            "<<=",
-            ">>=",
-            "**=",
-            "**",
-            "//",
-            "<<",
-            ">>",
-            "+",
-            "-",
-            "*",
-            "**",
-            "/",
-            "//",
-            "%",
-            "@",
-            "<<",
-            ">>",
-            "&",
-            "|",
-            "^",
-            "~",
-            ":=",
-            "<",
-            ">",
-            "<=",
-            ">=",
-            "==",
-            "!=",
-        ]);
+        snapshot_test_lexer(
+            "test-lexer",
+            &[
+                "1+2",
+                "a+b",
+                "a + b",
+                "+=2",
+                "xX = 2",
+                "if else elif",
+                "()",
+                "[]",
+                "{}:",
+                ".",
+                ",",
+                ";",
+                "@",
+                "=",
+                "\\",
+                "#",
+                "$",
+                "?",
+                "`",
+                "->",
+                "+=",
+                "-=",
+                "*=",
+                "/=",
+                "%=",
+                "@=",
+                "&=",
+                "|=",
+                "^=",
+                "//=",
+                "<<=",
+                ">>=",
+                "**=",
+                "**",
+                "//",
+                "<<",
+                ">>",
+                "+",
+                "-",
+                "*",
+                "**",
+                "/",
+                "//",
+                "%",
+                "@",
+                "<<",
+                ">>",
+                "&",
+                "|",
+                "^",
+                "~",
+                ":=",
+                "<",
+                ">",
+                "<=",
+                ">=",
+                "==",
+                "!=",
+            ],
+        );
 
         // keywords
-        snapshot_test_lexer(&[
-            "False None True and as assert async await",
-            "break class continue def del elif else except",
-            "finally for from global if import in is lambda",
-            "nonlocal not or pass raise return try while with yield",
-        ]);
+        snapshot_test_lexer(
+            "keywords",
+            &[
+                "False None True and as assert async await",
+                "break class continue def del elif else except",
+                "finally for from global if import in is lambda",
+                "nonlocal not or pass raise return try while with yield",
+            ],
+        );
 
         // Test identifiers
-        snapshot_test_lexer(&["a", "a_a", "_a", "a_", "a_a_a", "a_a_", "ಠ_ಠ"]);
+        snapshot_test_lexer(
+            "identifiers",
+            &["a", "a_a", "_a", "a_", "a_a_a", "a_a_", "ಠ_ಠ"],
+        );
         // Invalid identifiers
-        snapshot_test_lexer(&["🦀"]);
+        snapshot_test_lexer("identifiers", &["🦀"]);
 
         // Test numeric literals
         // Binary
-        snapshot_test_lexer(&[
-            "0b0", "0b1", "0b10", "0b11", "0b100", "0b101", "0b110", "0b111",
-        ]);
+        snapshot_test_lexer(
+            "numeric-binary",
+            &[
+                "0b0", "0b1", "0b10", "0b11", "0b100", "0b101", "0b110", "0b111",
+            ],
+        );
 
         // Octal
-        snapshot_test_lexer(&["0o0", "0o1", "0o2", "0o3", "0o4", "0o5", "0o6", "0o7"]);
+        snapshot_test_lexer(
+            "numeric-octal",
+            &["0o0", "0o1", "0o2", "0o3", "0o4", "0o5", "0o6", "0o7"],
+        );
 
         // Hexadecimal
-        snapshot_test_lexer(&[
-            "0x0", "0x1", "0x2", "0x3", "0x4", "0x5", "0x6", "0x7", "0x8", "0x9", "0xa", "0xb",
-            "0xc", "0xd", "0xe", "0xf", "0xA", "0xB", "0xC", "0xD", "0xE", "0xF",
-        ]);
+        snapshot_test_lexer(
+            "numeric-hexadecimal",
+            &[
+                "0x0", "0x1", "0x2", "0x3", "0x4", "0x5", "0x6", "0x7", "0x8", "0x9", "0xa", "0xb",
+                "0xc", "0xd", "0xe", "0xf", "0xA", "0xB", "0xC", "0xD", "0xE", "0xF",
+            ],
+        );
         //
         // Point float
-        snapshot_test_lexer(&["0.0 0.1 00.0 00.1 0.1j 0.01J"]);
+        snapshot_test_lexer("numeric-floating-point", &["0.0 0.1 00.0 00.1 0.1j 0.01J"]);
 
         // Exponent float
-        snapshot_test_lexer(&["0e0 0e-1 0e+2 0e+3j 0e+3J"]);
+        snapshot_test_lexer("numeric-floating-exponent", &["0e0 0e-1 0e+2 0e+3j 0e+3J"]);
 
         // Integer
-        snapshot_test_lexer(&["11 33 1j 1_000_000j"]);
+        snapshot_test_lexer("numeric-integer", &["11 33 1j 1_000_000j"]);
+
+        // Strings
+        snapshot_test_lexer(
+            "string-literals",
+            &[
+                "\"hello\"",
+                "\"world\"",
+                "\"\"",
+                "a = \"hello\"",
+                "\'hello\'",
+                "\"\"\"hello\"\"\"",
+                "\'\'\'hello\'\'\'",
+            ],
+        );
+        // F-strings
+        snapshot_test_lexer(
+            "f-string-literals",
+            &[
+                "f\"hello\"",
+                "f\"world\"",
+                "f\"\"",
+                "a = f\"hello\"",
+                "f\'hello_{var}\'",
+                "f\"\"\"hello\"\"\"",
+                "f\'\'\'hello\'\'\'",
+            ],
+        );
+
+        // Bytes
+        snapshot_test_lexer(
+            "bytes-literals",
+            &[
+                "b\"hello\"",
+                "b\"world\"",
+                "b\"\"",
+                "a = b\"hello\"",
+                "b\'hello\'",
+                "b\"\"\"hello\"\"\"",
+                "b\'\'\'hello\'\'\'",
+            ],
+        );
+
+        // Raw strings
+        snapshot_test_lexer(
+            "raw-string-literals",
+            &[
+                "r\"hello\"",
+                "r\"world\"",
+                "r\"\"",
+                "a = r\"hello\"",
+                "r\'hello\'",
+                "r\"\"\"hello\"\"\"",
+                "r\'\'\'hello\'\'\'",
+            ],
+        );
+
+        // Raw F-strings
+        snapshot_test_lexer(
+            "raw-f-string-literals",
+            &[
+                "rf\"hello\"",
+                "rf\"world\"",
+                "rf\"\"",
+                "a = rf\"hello\"",
+                "rf\'hello_{var}\'",
+                "rf\"\"\"hello\"\"\"",
+                "rf\'\'\'hello\'\'\'",
+            ],
+        );
+
+        // Raw bytes
+        snapshot_test_lexer(
+            "raw-bytes-literals",
+            &[
+                "rb\"hello\"",
+                "rb\"world\"",
+                "rb\"\"",
+                "a = rb\"hello\"",
+                "rb\'hello\'",
+                "rb\"\"\"hello\"\"\"",
+                "rb\'\'\'hello\'\'\'",
+            ],
+        );
+
+        // Unicode strings
+        snapshot_test_lexer(
+            "unicode-string-literals",
+            &[
+                "u\"hello\"",
+                "u\"world\"",
+                "u\"\"",
+                "a = u\"hello\"",
+                "u\'hello\'",
+                "u\"\"\"hello\"\"\"",
+                "u\'\'\'hello\'\'\'",
+            ],
+        );
     }
 }

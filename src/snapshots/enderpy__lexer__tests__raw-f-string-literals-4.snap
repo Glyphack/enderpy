@@ -1,0 +1,12 @@
+---
+source: src/lexer.rs
+description: "rf'hello_{var}'"
+---
+[
+    Token {
+        kind: RawFString,
+        value: String(
+            "rf'hello_{var}'",
+        ),
+    },
+]

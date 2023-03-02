@@ -1,0 +1,12 @@
+---
+source: src/lexer.rs
+description: "u\"\""
+---
+[
+    Token {
+        kind: Unicode,
+        value: String(
+            "u\"\"",
+        ),
+    },
+]

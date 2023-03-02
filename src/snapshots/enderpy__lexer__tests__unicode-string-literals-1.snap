@@ -1,0 +1,12 @@
+---
+source: src/lexer.rs
+description: "u\"world\""
+---
+[
+    Token {
+        kind: Unicode,
+        value: String(
+            "u\"world\"",
+        ),
+    },
+]

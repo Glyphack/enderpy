@@ -1,0 +1,12 @@
+---
+source: src/lexer.rs
+description: "f\"\"\"hello\"\"\""
+---
+[
+    Token {
+        kind: FString,
+        value: String(
+            "f\"\"\"hello\"\"\"",
+        ),
+    },
+]

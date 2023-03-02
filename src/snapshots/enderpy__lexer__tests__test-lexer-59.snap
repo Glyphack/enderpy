@@ -1,10 +1,10 @@
 ---
 source: src/lexer.rs
-description: "'"
+description: "=="
 ---
 [
     Token {
-        kind: SingleQuote,
+        kind: Eq,
         value: None,
     },
 ]

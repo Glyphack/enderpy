@@ -1,0 +1,12 @@
+---
+source: src/lexer.rs
+description: "f\"world\""
+---
+[
+    Token {
+        kind: FString,
+        value: String(
+            "f\"world\"",
+        ),
+    },
+]

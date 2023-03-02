@@ -1,0 +1,12 @@
+---
+source: src/lexer.rs
+description: "r\"\""
+---
+[
+    Token {
+        kind: RawString,
+        value: String(
+            "r\"\"",
+        ),
+    },
+]

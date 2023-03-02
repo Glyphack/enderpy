@@ -1,12 +1,12 @@
 ---
 source: src/lexer.rs
-description: a
+description: "u'hello'"
 ---
 [
     Token {
-        kind: Identifier,
+        kind: Unicode,
         value: String(
-            "a",
+            "u'hello'",
         ),
     },
 ]
