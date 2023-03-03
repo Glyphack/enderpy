@@ -1,0 +1,32 @@
+---
+source: src/lexer.rs
+description: "if True:\n            pass"
+---
+[
+    Token {
+        kind: If,
+        value: None,
+    },
+    Token {
+        kind: True,
+        value: None,
+    },
+    Token {
+        kind: Colon,
+        value: None,
+    },
+    Token {
+        kind: NewLine,
+        value: None,
+    },
+    Token {
+        kind: Indent,
+        value: Indent(
+            1,
+        ),
+    },
+    Token {
+        kind: Pass,
+        value: None,
+    },
+]
