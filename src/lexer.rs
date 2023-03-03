@@ -562,30 +562,37 @@ impl Lexer {
 
     fn consume_string_from_start_char(&mut self, str_starter: char) {
         // Check if string starts with triple quotes
+        let mut string_terminated = false;
+        let mut last_read_char = str_starter;
         if self.peek() == Some(str_starter) && self.double_peek() == Some(str_starter) {
             self.next();
-            let mut last_read_char = self.next();
             while let Some(c) = self.next() {
                 if c == str_starter
                     && self.peek() == Some(str_starter)
                     && self.double_peek() == Some(str_starter)
-                    && last_read_char != Some('\\')
+                    && last_read_char != '\\'
                 {
+                    string_terminated = true;
                     self.next();
                     self.next();
                     break;
                 }
-                last_read_char = Some(c);
+                last_read_char = c;
             }
         } else {
-            let mut last_read_char = self.next();
             while let Some(c) = self.next() {
-                if last_read_char != Some('\\') && self.peek() == Some(str_starter) {
+                println!("c: {}", c);
+                if c == str_starter && last_read_char != '\\' {
+                    string_terminated = true;
                     self.next();
                     break;
                 }
-                last_read_char = Some(c);
+                last_read_char = c;
             }
+        }
+
+        if !string_terminated {
+            panic!("String not terminated");
         }
     }
 
@@ -881,11 +888,12 @@ mod tests {
                 "\"world\"",
                 "\"\"",
                 "a = \"hello\"",
-                "\'hello\'",
+                "'hello'",
                 "\"\"\"hello\"\"\"",
-                "\'\'\'hello\'\'\'",
+                "'''hello'''",
             ],
         );
+
         // F-strings
         snapshot_test_lexer(
             "f-string-literals",
@@ -894,9 +902,9 @@ mod tests {
                 "f\"world\"",
                 "f\"\"",
                 "a = f\"hello\"",
-                "f\'hello_{var}\'",
+                "f'hello_{var}'",
                 "f\"\"\"hello\"\"\"",
-                "f\'\'\'hello\'\'\'",
+                "f'''hello'''",
             ],
         );
 
@@ -908,9 +916,9 @@ mod tests {
                 "b\"world\"",
                 "b\"\"",
                 "a = b\"hello\"",
-                "b\'hello\'",
+                "b'hello'",
                 "b\"\"\"hello\"\"\"",
-                "b\'\'\'hello\'\'\'",
+                "b'''hello'''",
             ],
         );
 
@@ -922,9 +930,9 @@ mod tests {
                 "r\"world\"",
                 "r\"\"",
                 "a = r\"hello\"",
-                "r\'hello\'",
+                "r'hello'",
                 "r\"\"\"hello\"\"\"",
-                "r\'\'\'hello\'\'\'",
+                "r'''hello'''",
             ],
         );
 
@@ -936,9 +944,9 @@ mod tests {
                 "rf\"world\"",
                 "rf\"\"",
                 "a = rf\"hello\"",
-                "rf\'hello_{var}\'",
+                "rf'hello_{var}'",
                 "rf\"\"\"hello\"\"\"",
-                "rf\'\'\'hello\'\'\'",
+                "rf'''hello'''",
             ],
         );
 
@@ -950,9 +958,9 @@ mod tests {
                 "rb\"world\"",
                 "rb\"\"",
                 "a = rb\"hello\"",
-                "rb\'hello\'",
+                "rb'hello'",
                 "rb\"\"\"hello\"\"\"",
-                "rb\'\'\'hello\'\'\'",
+                "rb'''hello'''",
             ],
         );
 
@@ -964,10 +972,44 @@ mod tests {
                 "u\"world\"",
                 "u\"\"",
                 "a = u\"hello\"",
-                "u\'hello\'",
+                "u'hello'",
                 "u\"\"\"hello\"\"\"",
-                "u\'\'\'hello\'\'\'",
+                "u'''hello'''",
             ],
         );
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_unterminated_string_double_quotes() {
+        let mut lexer = Lexer::new("\"hello");
+        let tok = lexer.read_next_token();
+
+        println!("{:?}", tok);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_unterminated_string_single_quotes() {
+        let mut lexer = Lexer::new("'hello");
+        let tok = lexer.read_next_token();
+
+        println!("{:?}", tok);
+    }
+    #[test]
+    #[should_panic]
+    fn test_unterminated_string_triple_single_quotes() {
+        let mut lexer = Lexer::new("'''hello''");
+        let tok = lexer.read_next_token();
+
+        println!("{:?}", tok);
+    }
+    #[test]
+    #[should_panic]
+    fn test_unterminated_string_triple_single_quotes_2() {
+        let mut lexer = Lexer::new("'''hello'");
+        let tok = lexer.read_next_token();
+
+        println!("{:?}", tok);
     }
 }
