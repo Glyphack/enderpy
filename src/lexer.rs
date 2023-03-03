@@ -1117,6 +1117,11 @@ def",
        pass
     pass",
         );
-        lexer.read_next_token();
+        loop {
+            let token = lexer.read_next_token();
+            if token.kind == Kind::Eof {
+                break;
+            }
+        }
     }
 }
