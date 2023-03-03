@@ -1,0 +1,12 @@
+---
+source: src/lexer.rs
+description: "\"\""
+---
+[
+    Token {
+        kind: StringLiteral,
+        value: String(
+            "\"\"",
+        ),
+    },
+]

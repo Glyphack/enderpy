@@ -1,0 +1,22 @@
+---
+source: src/lexer.rs
+description: "a = rb\"hello\""
+---
+[
+    Token {
+        kind: Identifier,
+        value: String(
+            "a",
+        ),
+    },
+    Token {
+        kind: Assign,
+        value: None,
+    },
+    Token {
+        kind: RawBytes,
+        value: String(
+            "rb\"hello\"",
+        ),
+    },
+]

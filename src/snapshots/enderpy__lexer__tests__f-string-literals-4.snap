@@ -1,0 +1,12 @@
+---
+source: src/lexer.rs
+description: "f'hello_{var}'"
+---
+[
+    Token {
+        kind: FString,
+        value: String(
+            "f'hello_{var}'",
+        ),
+    },
+]
