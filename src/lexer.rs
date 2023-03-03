@@ -326,12 +326,9 @@ impl Lexer {
                 },
                 '/' => match self.peek() {
                     Some('/') => {
-                        match self.double_peek() {
-                            Some('=') => {
-                                self.double_next();
-                                return IntDivAssign;
-                            }
-                            _ => {}
+                        if let Some('=') = self.double_peek() {
+                            self.double_next();
+                            return IntDivAssign;
                         }
                         self.next();
                         return IntDiv;
@@ -385,13 +382,12 @@ impl Lexer {
                     }
                     _ => return Colon,
                 },
-                '!' => match self.peek() {
-                    Some('=') => {
+                '!' => {
+                    if let Some('=') = self.peek() {
                         self.next();
                         return NotEq;
                     }
-                    _ => {}
-                },
+                }
                 // Delimiters
                 '(' => return LeftParen,
                 ')' => return RightParen,
@@ -467,12 +463,9 @@ impl Lexer {
     pub fn read_next_token(&mut self) -> Token {
         // Check if we are at the start of a line
         if self.is_at_line_start() {
-            match self.handle_indentation() {
-                Some(token) => {
-                    self.start_of_line = false;
-                    return token;
-                }
-                None => {}
+            if let Some(token) = self.handle_indentation() {
+                self.start_of_line = false;
+                return token;
             }
         }
 
@@ -523,7 +516,7 @@ impl Lexer {
     }
 
     fn is_at_line_start(&self) -> bool {
-        return self.start_of_line;
+        self.start_of_line
     }
 
     // TODO: Make sure we don't need to scape the source
@@ -787,35 +780,37 @@ impl Lexer {
             }
         }
         if let Some(top) = self.indent_stack.last() {
-            if spaces_count > *top {
-                self.indent_stack.push(spaces_count);
-                let kind = Kind::Indent;
-                let value = TokenValue::Indent(1);
-                return Some(Token { kind, value });
-            } else if spaces_count < *top {
-                let mut de_indents = 0;
-                while let Some(top) = self.indent_stack.last() {
-                    match top.cmp(&spaces_count) {
-                        Ordering::Greater => {
-                            self.indent_stack.pop();
-                            de_indents += 1;
-                        }
-                        Ordering::Equal => {
-                            break;
-                        }
-                        Ordering::Less => {
-                            panic!("Invalid indentation");
+            match spaces_count.cmp(top) {
+                Ordering::Less => {
+                    let mut de_indents = 0;
+                    while let Some(top) = self.indent_stack.last() {
+                        match top.cmp(&spaces_count) {
+                            Ordering::Greater => {
+                                self.indent_stack.pop();
+                                de_indents += 1;
+                            }
+                            Ordering::Equal => {
+                                break;
+                            }
+                            Ordering::Less => {
+                                panic!("Invalid indentation");
+                            }
                         }
                     }
+                    let kind = Kind::Dedent;
+                    let value = TokenValue::Indent(de_indents);
+                    Some(Token { kind, value })
                 }
-                let kind = Kind::Dedent;
-                let value = TokenValue::Indent(de_indents);
-                return Some(Token { kind, value });
-            } else {
-                return None;
+                Ordering::Equal => None,
+                Ordering::Greater => {
+                    self.indent_stack.push(spaces_count);
+                    let kind = Kind::Indent;
+                    let value = TokenValue::Indent(1);
+                    Some(Token { kind, value })
+                }
             }
         } else {
-            return None;
+            None
         }
     }
 }
