@@ -1056,6 +1056,11 @@ mod tests {
                 "u'''hello'''",
             ],
         );
+
+        snapshot_test_lexer(
+            "import",
+            &["import a", "import a.b", "import a.b.c", "import a from b"],
+        );
     }
 
     #[test]

@@ -1,0 +1,26 @@
+---
+source: src/lexer.rs
+description: import a from b
+---
+[
+    Token {
+        kind: Import,
+        value: None,
+    },
+    Token {
+        kind: Identifier,
+        value: String(
+            "a",
+        ),
+    },
+    Token {
+        kind: From,
+        value: None,
+    },
+    Token {
+        kind: Identifier,
+        value: String(
+            "b",
+        ),
+    },
+]
