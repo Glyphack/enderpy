@@ -565,6 +565,9 @@ impl Lexer {
                         }
                         return Kind::ExponentFloat;
                     }
+                    if is_imaginary {
+                        return Kind::ImaginaryPointFloat;
+                    }
                     return Kind::PointFloat;
                 }
                 'e' | 'E' => {

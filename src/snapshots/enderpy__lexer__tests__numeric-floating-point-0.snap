@@ -36,7 +36,7 @@ description: 0.0 0.1 00.0 00.1 0.1j 0.01J
         end: 17,
     },
     Token {
-        kind: PointFloat,
+        kind: ImaginaryPointFloat,
         value: Number(
             "0.1j",
         ),
@@ -44,7 +44,7 @@ description: 0.0 0.1 00.0 00.1 0.1j 0.01J
         end: 22,
     },
     Token {
-        kind: PointFloat,
+        kind: ImaginaryPointFloat,
         value: Number(
             "0.01J",
         ),
