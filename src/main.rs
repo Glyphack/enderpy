@@ -1,7 +1,9 @@
-use lexer::{Kind, Lexer};
+use lexer::Lexer;
+use token::Kind;
 use tracing::info;
 
 mod lexer;
+mod token;
 
 fn main() {
     tracing_subscriber::fmt::init();
