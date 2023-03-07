@@ -1,4 +1,5 @@
-use crate::lexer::{Kind, Lexer, Token, TokenValue};
+use crate::lexer::Lexer;
+use crate::token::{Kind, Token, TokenValue};
 
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 // #[serde(tag = "type")]
