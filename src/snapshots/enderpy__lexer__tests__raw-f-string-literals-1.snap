@@ -5,8 +5,10 @@ description: "rf\"world\""
 [
     Token {
         kind: RawFString,
-        value: String(
+        value: Str(
             "rf\"world\"",
         ),
+        start: 0,
+        end: 9,
     },
 ]

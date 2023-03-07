@@ -8,5 +8,7 @@ description: 0b10
         value: Number(
             "0b10",
         ),
+        start: 0,
+        end: 4,
     },
 ]

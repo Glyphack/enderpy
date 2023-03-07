@@ -5,8 +5,10 @@ description: "r\"\""
 [
     Token {
         kind: RawString,
-        value: String(
+        value: Str(
             "r\"\"",
         ),
+        start: 0,
+        end: 3,
     },
 ]

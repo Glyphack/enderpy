@@ -8,35 +8,47 @@ description: 0.0 0.1 00.0 00.1 0.1j 0.01J
         value: Number(
             "0.0",
         ),
+        start: 0,
+        end: 3,
     },
     Token {
         kind: PointFloat,
         value: Number(
             "0.1",
         ),
+        start: 4,
+        end: 7,
     },
     Token {
         kind: PointFloat,
         value: Number(
             "00.0",
         ),
+        start: 8,
+        end: 12,
     },
     Token {
         kind: PointFloat,
         value: Number(
             "00.1",
         ),
+        start: 13,
+        end: 17,
     },
     Token {
         kind: PointFloat,
         value: Number(
             "0.1j",
         ),
+        start: 18,
+        end: 22,
     },
     Token {
         kind: PointFloat,
         value: Number(
             "0.01J",
         ),
+        start: 23,
+        end: 28,
     },
 ]

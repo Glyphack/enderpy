@@ -5,8 +5,10 @@ description: "f\"\""
 [
     Token {
         kind: FString,
-        value: String(
+        value: Str(
             "f\"\"",
         ),
+        start: 0,
+        end: 3,
     },
 ]

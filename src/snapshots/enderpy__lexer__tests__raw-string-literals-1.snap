@@ -5,8 +5,10 @@ description: "r\"world\""
 [
     Token {
         kind: RawString,
-        value: String(
+        value: Str(
             "r\"world\"",
         ),
+        start: 0,
+        end: 8,
     },
 ]

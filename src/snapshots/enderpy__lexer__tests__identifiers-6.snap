@@ -5,8 +5,10 @@ description: ಠ_ಠ
 [
     Token {
         kind: Identifier,
-        value: String(
+        value: Str(
             "ಠ_ಠ",
         ),
+        start: 0,
+        end: 7,
     },
 ]
