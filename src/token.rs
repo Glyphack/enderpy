@@ -7,8 +7,6 @@ pub struct Token {
     pub end: usize,
 }
 
-// TODO: remove this after implementing all the tokens
-#[allow(dead_code)]
 // https://docs.python.org/3/reference/lexical_analysis.html
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub enum Kind {
