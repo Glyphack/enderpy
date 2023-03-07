@@ -140,7 +140,6 @@ pub enum Kind {
     BackTick,     // `
 
     // Others
-    Comment,
     WhiteSpace,
     Eof,
 }
