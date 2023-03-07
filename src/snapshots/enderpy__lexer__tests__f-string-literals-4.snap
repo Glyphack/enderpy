@@ -5,8 +5,10 @@ description: "f'hello_{var}'"
 [
     Token {
         kind: FString,
-        value: String(
+        value: Str(
             "f'hello_{var}'",
         ),
+        start: 0,
+        end: 14,
     },
 ]

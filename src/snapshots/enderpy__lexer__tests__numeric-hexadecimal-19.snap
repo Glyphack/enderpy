@@ -8,5 +8,7 @@ description: "0xD"
         value: Number(
             "0xD",
         ),
+        start: 0,
+        end: 3,
     },
 ]

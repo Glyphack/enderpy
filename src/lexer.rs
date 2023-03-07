@@ -1,13 +1,16 @@
 #[derive(Debug, Clone)]
 pub struct Token {
     pub kind: Kind,
+    // Value might be deleted in the future
     pub value: TokenValue,
+    pub start: usize,
+    pub end: usize,
 }
 
 // TODO: remove this after implementing all the tokens
 #[allow(dead_code)]
 // https://docs.python.org/3/reference/lexical_analysis.html
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub enum Kind {
     // Line structure
     NewLine, // \n
@@ -148,10 +151,11 @@ pub enum Kind {
 pub enum TokenValue {
     None,
     Number(String), // TODO: String because we don't need the value yet
-    String(String),
+    Str(String),
     Indent(usize),
 }
 
+#[derive(Debug)]
 pub struct Lexer {
     source: String,
     remaining: String,
@@ -492,7 +496,7 @@ impl Lexer {
             }
             Kind::Identifier => {
                 let value = self.source[start..end].to_string();
-                TokenValue::String(value)
+                TokenValue::Str(value)
             }
             Kind::StringLiteral
             | Kind::FString
@@ -502,7 +506,7 @@ impl Lexer {
             | Kind::Bytes
             | Kind::Unicode => {
                 let value = self.source[start..end].to_string();
-                TokenValue::String(value)
+                TokenValue::Str(value)
             }
             _ => TokenValue::None,
         };
@@ -512,7 +516,12 @@ impl Lexer {
         } else {
             self.start_of_line = false;
         }
-        Token { kind, value }
+        Token {
+            kind,
+            value,
+            start,
+            end,
+        }
     }
 
     fn is_at_line_start(&self) -> bool {
@@ -763,6 +772,7 @@ impl Lexer {
 
     fn handle_indentation(&mut self) -> Option<Token> {
         use std::cmp::Ordering;
+        let start = self.offset();
         let mut spaces_count = 0;
         while let Some(c) = self.peek() {
             match c {
@@ -799,14 +809,26 @@ impl Lexer {
                     }
                     let kind = Kind::Dedent;
                     let value = TokenValue::Indent(de_indents);
-                    Some(Token { kind, value })
+                    let end = self.offset();
+                    Some(Token {
+                        kind,
+                        value,
+                        start,
+                        end,
+                    })
                 }
                 Ordering::Equal => None,
                 Ordering::Greater => {
                     self.indent_stack.push(spaces_count);
                     let kind = Kind::Indent;
                     let value = TokenValue::Indent(1);
-                    Some(Token { kind, value })
+                    let end = self.offset();
+                    Some(Token {
+                        kind,
+                        value,
+                        start,
+                        end,
+                    })
                 }
             }
         } else {

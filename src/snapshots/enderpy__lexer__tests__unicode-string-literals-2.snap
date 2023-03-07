@@ -5,8 +5,10 @@ description: "u\"\""
 [
     Token {
         kind: Unicode,
-        value: String(
+        value: Str(
             "u\"\"",
         ),
+        start: 0,
+        end: 3,
     },
 ]

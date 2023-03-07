@@ -5,8 +5,10 @@ description: "f\"world\""
 [
     Token {
         kind: FString,
-        value: String(
+        value: Str(
             "f\"world\"",
         ),
+        start: 0,
+        end: 8,
     },
 ]

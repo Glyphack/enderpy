@@ -6,11 +6,15 @@ description: import a
     Token {
         kind: Import,
         value: None,
+        start: 0,
+        end: 6,
     },
     Token {
         kind: Identifier,
-        value: String(
+        value: Str(
             "a",
         ),
+        start: 7,
+        end: 8,
     },
 ]

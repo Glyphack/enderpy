@@ -8,5 +8,7 @@ description: 0b0
         value: Number(
             "0b0",
         ),
+        start: 0,
+        end: 3,
     },
 ]

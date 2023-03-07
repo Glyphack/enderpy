@@ -5,8 +5,10 @@ description: a
 [
     Token {
         kind: Identifier,
-        value: String(
+        value: Str(
             "a",
         ),
+        start: 0,
+        end: 1,
     },
 ]

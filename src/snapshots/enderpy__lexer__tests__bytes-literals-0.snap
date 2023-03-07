@@ -5,8 +5,10 @@ description: "b\"hello\""
 [
     Token {
         kind: Bytes,
-        value: String(
+        value: Str(
             "b\"hello\"",
         ),
+        start: 0,
+        end: 8,
     },
 ]

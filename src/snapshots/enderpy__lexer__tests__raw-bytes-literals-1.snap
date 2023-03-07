@@ -5,8 +5,10 @@ description: "rb\"world\""
 [
     Token {
         kind: RawBytes,
-        value: String(
+        value: Str(
             "rb\"world\"",
         ),
+        start: 0,
+        end: 9,
     },
 ]
