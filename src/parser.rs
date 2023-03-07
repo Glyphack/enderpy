@@ -17,7 +17,7 @@ impl Node {
 }
 
 #[derive(Debug)]
-pub struct Program {
+pub struct Module {
     pub node: Node,
     pub body: Vec<Statement>,
 }
@@ -30,14 +30,8 @@ pub enum Statement {
 #[derive(Debug)]
 pub struct Assign {
     pub node: Node,
-    pub targets: Vec<Name>,
+    pub targets: Vec<BindingIdentifier>,
     pub value: Expression,
-}
-
-#[derive(Debug)]
-pub struct Name {
-    pub node: Node,
-    pub id: BindingIdentifier,
 }
 
 #[derive(Debug)]
@@ -48,20 +42,13 @@ pub struct BindingIdentifier {
 
 #[derive(Debug)]
 pub enum Expression {
-    BooleanOperation(Box<BooleanOperation>),
+    Constant(Box<Constant>),
 }
 
 #[derive(Debug)]
-pub struct BooleanOperation {
+pub struct Constant {
     pub node: Node,
-    pub op: BooleanOperator,
-    pub values: Vec<Expression>,
-}
-
-#[derive(Debug)]
-pub enum BooleanOperator {
-    And,
-    Or,
+    pub value: String,
 }
 
 #[derive(Debug)]
@@ -86,10 +73,10 @@ impl Parser {
         }
     }
 
-    fn parse(&mut self) -> Program {
+    fn parse(&mut self) -> Module {
         let stmt = self.parse_assign_statement();
         let body = vec![stmt];
-        return Program {
+        return Module {
             node: Node::new(0, self.source.len()),
             body,
         };
@@ -144,9 +131,9 @@ impl Parser {
         self.cur_token = token;
     }
 
+    // TODO: This is a dummy function to parse an assignment statement
     fn parse_assign_statement(&mut self) -> Statement {
         let start = self.start_node();
-        self.bump(Kind::Identifier);
         let targets = self.parse_binding_identifier_list();
         self.bump(Kind::Assign);
         let value = self.parse_expression();
@@ -158,27 +145,19 @@ impl Parser {
         })
     }
 
-    fn parse_binding_identifier_list(&mut self) -> Vec<Name> {
+    fn parse_binding_identifier_list(&mut self) -> Vec<BindingIdentifier> {
         let mut list = vec![];
         loop {
             let start = self.start_node();
+            let val = self.cur_token().value.clone();
             self.bump(Kind::Identifier);
-            let end = self.finish_node(start);
-
-            match self.cur_token().value {
-                TokenValue::Str(ref s) => {
-                    list.push(Name {
-                        node: end,
-                        id: BindingIdentifier {
-                            node: end,
-                            name: s.clone(),
-                        },
-                    });
-                }
-                _ => {
-                    panic!("Unexpected token value: {:?}", self.cur_token().value)
-                }
-            }
+            list.push(BindingIdentifier {
+                node: self.finish_node(start),
+                name: match val {
+                    TokenValue::Str(val) => val,
+                    _ => "".to_string(),
+                },
+            });
 
             if self.eat(Kind::Comma) {
                 continue;
@@ -188,57 +167,18 @@ impl Parser {
         list
     }
 
+    // TODO: This is a dummy function to parse an expression
     fn parse_expression(&mut self) -> Expression {
         let start = self.start_node();
-        let op = self.parse_boolean_operator();
-        let values = self.parse_boolean_values();
-        let end = self.finish_node(start);
-        Expression::BooleanOperation(Box::new(BooleanOperation {
-            node: end,
-            op,
-            values,
+        let val = self.cur_token().value.clone();
+        self.bump(Kind::Integer);
+        Expression::Constant(Box::new(Constant {
+            node: self.finish_node(start),
+            value: match val {
+                TokenValue::Number(val) => val.to_string(),
+                _ => "".to_string(),
+            },
         }))
-    }
-
-    fn parse_boolean_operator(&mut self) -> BooleanOperator {
-        if self.eat(Kind::And) {
-            BooleanOperator::And
-        } else if self.eat(Kind::Or) {
-            BooleanOperator::Or
-        } else {
-            panic!("Unexpected token: {:?}", self.cur_token())
-        }
-    }
-
-    fn parse_boolean_values(&mut self) -> Vec<Expression> {
-        let mut values = vec![];
-        loop {
-            let value = self.parse_boolean_value();
-            values.push(value);
-            if self.eat(Kind::Comma) {
-                continue;
-            }
-            break;
-        }
-        values
-    }
-
-    fn parse_boolean_value(&mut self) -> Expression {
-        if self.eat(Kind::True) {
-            Expression::BooleanOperation(Box::new(BooleanOperation {
-                node: Node::new(0, 0),
-                op: BooleanOperator::And,
-                values: vec![],
-            }))
-        } else if self.eat(Kind::False) {
-            Expression::BooleanOperation(Box::new(BooleanOperation {
-                node: Node::new(0, 0),
-                op: BooleanOperator::Or,
-                values: vec![],
-            }))
-        } else {
-            panic!("Unexpected token: {:?}", self.cur_token())
-        }
     }
 }
 
@@ -249,9 +189,15 @@ mod tests {
 
     #[test]
     fn test_parse() {
-        let source = "a = true".to_string();
+        let source = "a = 1".to_string();
         let mut parser = Parser::new(source);
         let program = parser.parse();
-        assert_debug_snapshot!(program);
+
+        insta::with_settings!({
+                description => "a = 1", // the template source code
+                omit_expression => true // do not include the default expression
+            }, {
+                assert_debug_snapshot!(program);
+        });
     }
 }
