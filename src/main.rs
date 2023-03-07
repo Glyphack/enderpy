@@ -3,6 +3,7 @@ use token::Kind;
 use tracing::info;
 
 mod lexer;
+mod parser;
 mod token;
 
 fn main() {
