@@ -2,8 +2,12 @@ use crate::token::{Kind, Token, TokenValue};
 
 #[derive(Debug)]
 pub struct Lexer {
+    /// Source code
     source: String,
-    remaining: String,
+    /// The start position of the current token
+    start: usize,
+    /// The current position in the source code
+    current: usize,
     start_of_line: bool,
     indent_stack: Vec<usize>,
 }
@@ -12,7 +16,8 @@ impl Lexer {
     pub fn new(source: &str) -> Self {
         Self {
             source: source.to_string(),
-            remaining: source.to_string(),
+            start: 0,
+            current: 0,
             start_of_line: true,
             indent_stack: vec![0],
         }
@@ -310,6 +315,8 @@ impl Lexer {
     }
 
     pub fn read_next_token(&mut self) -> Token {
+        self.start = self.current;
+        let start = self.start;
         // Check if we are at the start of a line
         if self.is_at_line_start() {
             if let Some(token) = self.handle_indentation() {
@@ -318,9 +325,7 @@ impl Lexer {
             }
         }
 
-        let start = self.offset();
         let kind = self.read_next_kind();
-        let end = self.offset();
 
         if kind == Kind::WhiteSpace {
             return self.read_next_token();
@@ -336,11 +341,11 @@ impl Lexer {
             | Kind::ImaginaryInteger
             | Kind::ImaginaryExponentFloat
             | Kind::ImaginaryPointFloat => {
-                let value = self.source[start..end].to_string();
+                let value = self.extract();
                 TokenValue::Number(value)
             }
             Kind::Identifier => {
-                let value = self.source[start..end].to_string();
+                let value = self.extract();
                 TokenValue::Str(value)
             }
             Kind::StringLiteral
@@ -350,7 +355,7 @@ impl Lexer {
             | Kind::RawFString
             | Kind::Bytes
             | Kind::Unicode => {
-                let value = self.source[start..end].to_string();
+                let value = self.extract();
                 TokenValue::Str(value)
             }
             _ => TokenValue::None,
@@ -365,8 +370,12 @@ impl Lexer {
             kind,
             value,
             start,
-            end,
+            end: self.current,
         }
+    }
+
+    fn extract(&mut self) -> String {
+        self.source[self.start..self.current].to_string()
     }
 
     fn is_at_line_start(&self) -> bool {
@@ -375,15 +384,10 @@ impl Lexer {
 
     // TODO: Make sure we don't need to scape the source
 
-    /// Get the length offset from the source text, in UTF-8 bytes
-    fn offset(&self) -> usize {
-        self.source.len() - self.remaining.chars().as_str().len()
-    }
-
     fn next(&mut self) -> Option<char> {
-        let c = self.remaining.chars().next();
+        let c = self.peek();
         if let Some(c) = c {
-            self.remaining = self.remaining[c.len_utf8()..].to_string();
+            self.current += c.len_utf8();
         }
         c
     }
@@ -394,11 +398,11 @@ impl Lexer {
     }
 
     fn peek(&self) -> Option<char> {
-        self.remaining.chars().next()
+        self.source[self.current..].chars().next()
     }
 
     fn double_peek(&self) -> Option<char> {
-        self.remaining.chars().nth(1)
+        self.source[self.current..].chars().nth(1)
     }
 
     fn match_keyword(&self, ident: &str) -> Kind {
@@ -620,7 +624,7 @@ impl Lexer {
 
     fn handle_indentation(&mut self) -> Option<Token> {
         use std::cmp::Ordering;
-        let start = self.offset();
+        let start = self.start;
         let mut spaces_count = 0;
         while let Some(c) = self.peek() {
             match c {
@@ -657,7 +661,7 @@ impl Lexer {
                     }
                     let kind = Kind::Dedent;
                     let value = TokenValue::Indent(de_indents);
-                    let end = self.offset();
+                    let end = self.current;
                     Some(Token {
                         kind,
                         value,
@@ -670,7 +674,7 @@ impl Lexer {
                     self.indent_stack.push(spaces_count);
                     let kind = Kind::Indent;
                     let value = TokenValue::Indent(1);
-                    let end = self.offset();
+                    let end = self.current;
                     Some(Token {
                         kind,
                         value,
