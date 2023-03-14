@@ -2,10 +2,8 @@ use crate::token::{Kind, Token, TokenValue};
 
 #[derive(Debug)]
 pub struct Lexer {
-    /// Source code
+    /// The source code
     source: String,
-    /// The start position of the current token
-    start: usize,
     /// The current position in the source code
     current: usize,
     start_of_line: bool,
@@ -16,20 +14,49 @@ impl Lexer {
     pub fn new(source: &str) -> Self {
         Self {
             source: source.to_string(),
-            start: 0,
             current: 0,
             start_of_line: true,
-            indent_stack: vec![0],
+            indent_stack: Vec::new(),
         }
     }
 
-    fn read_next_kind(&mut self) -> Kind {
+    pub fn next_token(&mut self) -> Token {
+        let start = self.current;
+        let kind = self.next_kind();
+        if kind == Kind::WhiteSpace {
+            return self.next_token();
+        }
+
+        let value = self.read_value(self.extract());
+        let end = self.current;
+        return Token {
+            kind,
+            value,
+            start,
+            end,
+        };
+
+        Token {
+            kind,
+            value,
+            start,
+            end: self.current,
+        }
+    }
+
+    fn next_kind(&mut self) -> Kind {
         use unicode_id_start::{is_id_continue, is_id_start};
         use Kind::*;
+
+        self.start_of_line = false;
 
         while let Some(c) = self.next() {
             if c.is_whitespace() && c != '\n' && c != '\r' {
                 return Kind::WhiteSpace;
+            }
+
+            if self.is_at_line_start() {
+                self.handle_indentation().map(|kind| return kind);
             }
 
             match c {
@@ -299,12 +326,10 @@ impl Lexer {
                     _ => return Greater,
                 },
                 '\n' | '\r' => {
+                    self.start_of_line = true;
                     return NewLine;
                 }
                 ' ' | '\t' => {
-                    // indentation case is handled above before the match
-                    // because there might be no whitespace after newline and
-                    // still a Dedent token is needed
                     return WhiteSpace;
                 }
                 _ => {}
@@ -314,68 +339,8 @@ impl Lexer {
         Kind::Eof
     }
 
-    pub fn read_next_token(&mut self) -> Token {
-        self.start = self.current;
-        let start = self.start;
-        // Check if we are at the start of a line
-        if self.is_at_line_start() {
-            if let Some(token) = self.handle_indentation() {
-                self.start_of_line = false;
-                return token;
-            }
-        }
-
-        let kind = self.read_next_kind();
-
-        if kind == Kind::WhiteSpace {
-            return self.read_next_token();
-        }
-
-        let value = match kind {
-            Kind::Integer
-            | Kind::Hexadecimal
-            | Kind::Binary
-            | Kind::PointFloat
-            | Kind::Octal
-            | Kind::ExponentFloat
-            | Kind::ImaginaryInteger
-            | Kind::ImaginaryExponentFloat
-            | Kind::ImaginaryPointFloat => {
-                let value = self.extract();
-                TokenValue::Number(value)
-            }
-            Kind::Identifier => {
-                let value = self.extract();
-                TokenValue::Str(value)
-            }
-            Kind::StringLiteral
-            | Kind::FString
-            | Kind::RawBytes
-            | Kind::RawString
-            | Kind::RawFString
-            | Kind::Bytes
-            | Kind::Unicode => {
-                let value = self.extract();
-                TokenValue::Str(value)
-            }
-            _ => TokenValue::None,
-        };
-
-        if kind == Kind::NewLine {
-            self.start_of_line = true;
-        } else {
-            self.start_of_line = false;
-        }
-        Token {
-            kind,
-            value,
-            start,
-            end: self.current,
-        }
-    }
-
-    fn extract(&mut self) -> String {
-        self.source[self.start..self.current].to_string()
+    fn extract(&mut self, start: usize) -> String {
+        self.source[start..self.current].to_string()
     }
 
     fn is_at_line_start(&self) -> bool {
@@ -622,9 +587,8 @@ impl Lexer {
         Kind::Integer
     }
 
-    fn handle_indentation(&mut self) -> Option<Token> {
+    fn handle_indentation(&mut self) -> Option<Kind> {
         use std::cmp::Ordering;
-        let start = self.start;
         let mut spaces_count = 0;
         while let Some(c) = self.peek() {
             match c {
@@ -644,47 +608,41 @@ impl Lexer {
         if let Some(top) = self.indent_stack.last() {
             match spaces_count.cmp(top) {
                 Ordering::Less => {
-                    let mut de_indents = 0;
-                    while let Some(top) = self.indent_stack.last() {
-                        match top.cmp(&spaces_count) {
-                            Ordering::Greater => {
-                                self.indent_stack.pop();
-                                de_indents += 1;
-                            }
-                            Ordering::Equal => {
-                                break;
-                            }
-                            Ordering::Less => {
-                                panic!("Invalid indentation");
-                            }
-                        }
-                    }
                     let kind = Kind::Dedent;
-                    let value = TokenValue::Indent(de_indents);
-                    let end = self.current;
-                    Some(Token {
-                        kind,
-                        value,
-                        start,
-                        end,
-                    })
+                    return Some(kind);
                 }
                 Ordering::Equal => None,
                 Ordering::Greater => {
                     self.indent_stack.push(spaces_count);
                     let kind = Kind::Indent;
-                    let value = TokenValue::Indent(1);
-                    let end = self.current;
-                    Some(Token {
-                        kind,
-                        value,
-                        start,
-                        end,
-                    })
+                    return Some(kind);
                 }
             }
         } else {
             None
+        }
+    }
+
+    fn read_value(&self, kind: Kind, kind_value: String) -> TokenValue {
+        match kind {
+            Kind::Integer
+            | Kind::Hexadecimal
+            | Kind::Binary
+            | Kind::PointFloat
+            | Kind::Octal
+            | Kind::ExponentFloat
+            | Kind::ImaginaryInteger
+            | Kind::ImaginaryExponentFloat
+            | Kind::ImaginaryPointFloat => TokenValue::Number(kind_value),
+            Kind::Identifier => TokenValue::Str(kind_value),
+            Kind::StringLiteral
+            | Kind::FString
+            | Kind::RawBytes
+            | Kind::RawString
+            | Kind::RawFString
+            | Kind::Bytes
+            | Kind::Unicode => TokenValue::Str(kind_value),
+            _ => TokenValue::None,
         }
     }
 }
@@ -700,7 +658,7 @@ mod tests {
             let mut lexer = Lexer::new(test_input);
             let mut tokens = vec![];
             loop {
-                let token = lexer.read_next_token();
+                let token = lexer.next_token();
                 if token.kind == Kind::Eof {
                     break;
                 }
@@ -961,26 +919,26 @@ def",
     #[should_panic]
     fn test_unterminated_string_double_quotes() {
         let mut lexer = Lexer::new("\"hello");
-        lexer.read_next_token();
+        lexer.next_token();
     }
 
     #[test]
     #[should_panic]
     fn test_unterminated_string_single_quotes() {
         let mut lexer = Lexer::new("'hello");
-        lexer.read_next_token();
+        lexer.next_token();
     }
     #[test]
     #[should_panic]
     fn test_unterminated_string_triple_single_quotes() {
         let mut lexer = Lexer::new("'''hello''");
-        lexer.read_next_token();
+        lexer.next_token();
     }
     #[test]
     #[should_panic]
     fn test_unterminated_string_triple_single_quotes_2() {
         let mut lexer = Lexer::new("'''hello'");
-        lexer.read_next_token();
+        lexer.next_token();
     }
 
     #[test]
@@ -992,7 +950,7 @@ def",
     pass",
         );
         loop {
-            let token = lexer.read_next_token();
+            let token = lexer.next_token();
             if token.kind == Kind::Eof {
                 break;
             }
