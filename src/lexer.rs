@@ -1,4 +1,5 @@
 use crate::token::{Kind, Token, TokenValue};
+use unicode_id_start::{is_id_continue, is_id_start};
 
 #[derive(Debug)]
 pub struct Lexer {
@@ -6,10 +7,11 @@ pub struct Lexer {
     source: String,
     /// The current position in the source code
     current: usize,
+    /// Keeps track of whether the lexer is at the start of a line
     start_of_line: bool,
-    // keeps track of the indentation level
-    // the first element is always 0
-    // because the first line is always at indentation level 0
+    /// keeps track of the indentation level
+    /// the first element is always 0
+    /// because the first line is always at indentation level 0
     indent_stack: Vec<usize>,
 }
 
@@ -26,11 +28,12 @@ impl Lexer {
     pub fn next_token(&mut self) -> Token {
         let start = self.current;
         let kind = self.next_kind();
+        // Ignore whitespace
         if kind == Kind::WhiteSpace {
             return self.next_token();
         }
-        let raw_value = self.extract(start);
-        let value = self.read_value(kind, raw_value);
+        let raw_value = self.extract_raw_token_value(start);
+        let value = self.parse_token_value(kind, raw_value);
         let end = self.current;
         Token {
             kind,
@@ -41,131 +44,27 @@ impl Lexer {
     }
 
     fn next_kind(&mut self) -> Kind {
-        use unicode_id_start::{is_id_continue, is_id_start};
-        use Kind::*;
-
-        if self.is_at_line_start() {
-            if let Some(indent_kind) = self.handle_indentation() {
-                self.start_of_line = false;
+        if self.start_of_line {
+            if let Some(indent_kind) = self.match_indentation() {
+                self.start_of_line = false; // WHY!?
                 return indent_kind;
             }
         }
 
         while let Some(c) = self.next() {
-            if c.is_whitespace() && c != '\n' && c != '\r' {
-                return Kind::WhiteSpace;
-            }
-            self.start_of_line = false;
+            self.start_of_line = false; // WHY AGAIN?!
 
             match c {
                 // Numbers
-                '0'..='9' => {
-                    return self.match_numeric_literal();
-                }
-                // Keywords
-                identifier_start @ 'a'..='z'
-                | identifier_start @ 'A'..='Z'
-                | identifier_start @ '_' => {
-                    // Check if is start of string
-                    match identifier_start {
-                        'r' | 'R' => match self.peek() {
-                            // check if is start of string
-                            Some('b') | Some('B') => match self.double_peek() {
-                                Some(str_starter @ '"') | Some(str_starter @ '\'') => {
-                                    self.next();
-                                    self.next();
-                                    self.consume_string_from_start_char(str_starter);
-                                    return Kind::RawBytes;
-                                }
-                                _ => {}
-                            },
-                            Some('f') | Some('F') => match self.double_peek() {
-                                Some(str_starter @ '"') | Some(str_starter @ '\'') => {
-                                    self.next();
-                                    self.next();
-                                    self.consume_string_from_start_char(str_starter);
-                                    return Kind::RawFString;
-                                }
-                                _ => {}
-                            },
-                            Some(str_starter @ '"') | Some(str_starter @ '\'') => {
-                                self.next();
-                                self.consume_string_from_start_char(str_starter);
-                                return Kind::RawString;
-                            }
-                            _ => {}
-                        },
-                        'b' | 'B' => match self.peek() {
-                            Some('r') | Some('R') => match self.double_peek() {
-                                Some(str_starter @ '"') | Some(str_starter @ '\'') => {
-                                    self.next();
-                                    self.next();
-                                    self.consume_string_from_start_char(str_starter);
-                                    return Kind::RawBytes;
-                                }
-                                _ => {}
-                            },
-                            Some(str_starter @ '"') | Some(str_starter @ '\'') => {
-                                self.next();
-                                self.consume_string_from_start_char(str_starter);
-                                return Kind::Bytes;
-                            }
-                            _ => {}
-                        },
-                        'f' | 'F' => match self.peek() {
-                            Some('r') | Some('R') => match self.double_peek() {
-                                Some(str_starter @ '"') | Some(str_starter @ '\'') => {
-                                    self.next();
-                                    self.next();
-                                    self.consume_string_from_start_char(str_starter);
-                                    return Kind::RawFString;
-                                }
-                                _ => {}
-                            },
-                            Some(str_starter @ '"') | Some(str_starter @ '\'') => {
-                                self.next();
-                                self.consume_string_from_start_char(str_starter);
-                                return Kind::FString;
-                            }
-                            _ => {}
-                        },
-                        'u' | 'U' => match self.peek() {
-                            Some(str_starter @ '"') | Some(str_starter @ '\'') => {
-                                self.next();
-                                self.consume_string_from_start_char(str_starter);
-                                return Kind::Unicode;
-                            }
-                            _ => {}
-                        },
-                        _ => {}
-                    };
-
-                    let mut ident = String::new();
-                    ident.push(identifier_start);
-                    while let Some(c) = self.peek() {
-                        match c {
-                            'a'..='z' | 'A'..='Z' | '0'..='9' | '_' => {
-                                ident.push(c);
-                                self.next();
-                            }
-                            _ => {
-                                // Some unicode characters are valid in identifiers
-                                // https://boshen.github.io/javascript-parser-in-rust/docs/lexer/#identifiers-and-unicode
-                                if is_id_start(c) & is_id_continue(c) {
-                                    ident.push(c);
-                                    self.next();
-                                } else {
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                    return self.match_keyword(&ident);
+                '0'..='9' => return self.match_numeric_literal(),
+                // Identifiers & Keywords
+                id_start @ 'a'..='z' | id_start @ 'A'..='Z' | id_start @ '_' => {
+                    return self.match_id_keyword(id_start);
                 }
                 // String Literals
-                str_starter @ '"' | str_starter @ '\'' => {
-                    self.consume_string_from_start_char(str_starter);
-                    return StringLiteral;
+                str_start @ '"' | str_start @ '\'' => {
+                    self.skip_to_string_end(str_start);
+                    return Kind::StringLiteral;
                 }
                 // Operators
                 '+' => match self.peek() {
@@ -178,158 +77,156 @@ impl Lexer {
                 '-' => match self.peek() {
                     Some('>') => {
                         self.next();
-                        return Arrow;
+                        return Kind::Arrow;
                     }
                     Some('=') => {
                         self.next();
-                        return SubAssign;
+                        return Kind::SubAssign;
                     }
-                    _ => return Minus,
+                    _ => return Kind::Minus,
                 },
                 '*' => match self.peek() {
                     Some('=') => {
                         self.next();
-                        return MulAssign;
+                        return Kind::MulAssign;
                     }
                     Some('*') => match self.double_peek() {
                         Some('=') => {
                             self.double_next();
-                            return PowAssign;
+                            return Kind::PowAssign;
                         }
                         _ => {
                             self.next();
-                            return Pow;
+                            return Kind::Pow;
                         }
                     },
-                    _ => return Mul,
+                    _ => return Kind::Mul,
                 },
                 '/' => match self.peek() {
                     Some('/') => {
                         if let Some('=') = self.double_peek() {
                             self.double_next();
-                            return IntDivAssign;
+                            return Kind::IntDivAssign;
                         }
                         self.next();
-                        return IntDiv;
+                        return Kind::IntDiv;
                     }
                     Some('=') => {
                         self.next();
-                        return DivAssign;
+                        return Kind::DivAssign;
                     }
-                    _ => return Div,
+                    _ => return Kind::Div,
                 },
                 '%' => match self.peek() {
                     Some('=') => {
                         self.next();
-                        return ModAssign;
+                        return Kind::ModAssign;
                     }
-                    _ => return Mod,
+                    _ => return Kind::Mod,
                 },
                 '@' => match self.peek() {
                     Some('=') => {
                         self.next();
-                        return MatrixMulAssign;
+                        return Kind::MatrixMulAssign;
                     }
-                    _ => return MatrixMul,
+                    _ => return Kind::MatrixMul,
                 },
                 '&' => match self.peek() {
                     Some('=') => {
                         self.next();
-                        return BitAndAssign;
+                        return Kind::BitAndAssign;
                     }
-                    _ => return BitAnd,
+                    _ => return Kind::BitAnd,
                 },
                 '|' => match self.peek() {
                     Some('=') => {
                         self.next();
-                        return BitOrAssign;
+                        return Kind::BitOrAssign;
                     }
-                    _ => return BitOr,
+                    _ => return Kind::BitOr,
                 },
                 '^' => match self.peek() {
                     Some('=') => {
                         self.next();
-                        return BitXorAssign;
+                        return Kind::BitXorAssign;
                     }
-                    _ => return BitXor,
+                    _ => return Kind::BitXor,
                 },
-                '~' => return BitNot,
+                '~' => return Kind::BitNot,
                 ':' => match self.peek() {
                     Some('=') => {
                         self.next();
-                        return Walrus;
+                        return Kind::Walrus;
                     }
-                    _ => return Colon,
+                    _ => return Kind::Colon,
                 },
                 '!' => {
                     if let Some('=') = self.peek() {
                         self.next();
-                        return NotEq;
+                        return Kind::NotEq;
                     }
                 }
                 // Delimiters
-                '(' => return LeftParen,
-                ')' => return RightParen,
-                '[' => return LeftBrace,
-                ']' => return RightBrace,
-                '{' => return LeftBracket,
-                '}' => return RightBracket,
-                ',' => return Comma,
-                '.' => return Dot,
-                ';' => return SemiColon,
+                '(' => return Kind::LeftParen,
+                ')' => return Kind::RightParen,
+                '[' => return Kind::LeftBrace,
+                ']' => return Kind::RightBrace,
+                '{' => return Kind::LeftBracket,
+                '}' => return Kind::RightBracket,
+                ',' => return Kind::Comma,
+                '.' => return Kind::Dot,
+                ';' => return Kind::SemiColon,
                 '=' => match self.peek() {
                     Some('=') => {
                         self.next();
-                        return Eq;
+                        return Kind::Eq;
                     }
-                    _ => return Assign,
+                    _ => return Kind::Assign,
                 },
-                '#' => return Sharp,
-                '\\' => return BackSlash,
-                '$' => return Dollar,
-                '?' => return QuestionMark,
-                '`' => return BackTick,
+                '#' => return Kind::Sharp,
+                '\\' => return Kind::BackSlash,
+                '$' => return Kind::Dollar,
+                '?' => return Kind::QuestionMark,
+                '`' => return Kind::BackTick,
                 '<' => match self.peek() {
                     Some('<') => match self.double_peek() {
                         Some('=') => {
                             self.double_next();
-                            return ShiftLeftAssign;
+                            return Kind::ShiftLeftAssign;
                         }
                         _ => {
                             self.next();
-                            return LeftShift;
+                            return Kind::LeftShift;
                         }
                     },
                     Some('=') => {
                         self.next();
-                        return LessEq;
+                        return Kind::LessEq;
                     }
-                    _ => return Less,
+                    _ => return Kind::Less,
                 },
                 '>' => match self.peek() {
                     Some('>') => match self.double_peek() {
                         Some('=') => {
                             self.double_next();
-                            return ShiftRightAssign;
+                            return Kind::ShiftRightAssign;
                         }
                         _ => {
                             self.next();
-                            return RightShift;
+                            return Kind::RightShift;
                         }
                     },
                     Some('=') => {
                         self.next();
-                        return GreaterEq;
+                        return Kind::GreaterEq;
                     }
-                    _ => return Greater,
+                    _ => return Kind::Greater,
                 },
                 '\n' | '\r' => {
                     self.start_of_line = true;
-                    return NewLine;
+                    return Kind::NewLine;
                 }
-                ' ' | '\t' => {
-                    return WhiteSpace;
-                }
+                c if match_whitespace(c) => return Kind::WhiteSpace,
                 _ => {}
             }
         }
@@ -337,12 +234,104 @@ impl Lexer {
         Kind::Eof
     }
 
-    fn extract(&mut self, start: usize) -> String {
-        self.source[start..self.current].to_string()
+    fn match_id_keyword(&mut self, id_start: char) -> Kind {
+        match id_start {
+            'r' | 'R' => match self.peek() {
+                // check if is start of string
+                Some('b') | Some('B') => match self.double_peek() {
+                    Some(str_starter @ '"') | Some(str_starter @ '\'') => {
+                        self.next();
+                        self.next();
+                        self.skip_to_string_end(str_starter);
+                        return Kind::RawBytes;
+                    }
+                    _ => {}
+                },
+                Some('f') | Some('F') => match self.double_peek() {
+                    Some(str_starter @ '"') | Some(str_starter @ '\'') => {
+                        self.next();
+                        self.next();
+                        self.skip_to_string_end(str_starter);
+                        return Kind::RawFString;
+                    }
+                    _ => {}
+                },
+                Some(str_starter @ '"') | Some(str_starter @ '\'') => {
+                    self.next();
+                    self.skip_to_string_end(str_starter);
+                    return Kind::RawString;
+                }
+                _ => {}
+            },
+            'b' | 'B' => match self.peek() {
+                Some('r') | Some('R') => match self.double_peek() {
+                    Some(str_starter @ '"') | Some(str_starter @ '\'') => {
+                        self.next();
+                        self.next();
+                        self.skip_to_string_end(str_starter);
+                        return Kind::RawBytes;
+                    }
+                    _ => {}
+                },
+                Some(str_starter @ '"') | Some(str_starter @ '\'') => {
+                    self.next();
+                    self.skip_to_string_end(str_starter);
+                    return Kind::Bytes;
+                }
+                _ => {}
+            },
+            'f' | 'F' => match self.peek() {
+                Some('r') | Some('R') => match self.double_peek() {
+                    Some(str_starter @ '"') | Some(str_starter @ '\'') => {
+                        self.next();
+                        self.next();
+                        self.skip_to_string_end(str_starter);
+                        return Kind::RawFString;
+                    }
+                    _ => {}
+                },
+                Some(str_starter @ '"') | Some(str_starter @ '\'') => {
+                    self.next();
+                    self.skip_to_string_end(str_starter);
+                    return Kind::FString;
+                }
+                _ => {}
+            },
+            'u' | 'U' => match self.peek() {
+                Some(str_starter @ '"') | Some(str_starter @ '\'') => {
+                    self.next();
+                    self.skip_to_string_end(str_starter);
+                    return Kind::Unicode;
+                }
+                _ => {}
+            },
+            _ => {}
+        };
+        let mut ident = String::new();
+        ident.push(id_start);
+        while let Some(c) = self.peek() {
+            match c {
+                'a'..='z' | 'A'..='Z' | '0'..='9' | '_' => {
+                    ident.push(c);
+                    self.next();
+                }
+                _ => {
+                    // Some unicode characters are valid in identifiers
+                    // https://boshen.github.io/javascript-parser-in-rust/docs/lexer/#identifiers-and-unicode
+                    if is_id_start(c) & is_id_continue(c) {
+                        ident.push(c);
+                        self.next();
+                    } else {
+                        break;
+                    }
+                }
+            }
+        }
+        self.match_keyword(&ident)
     }
 
-    fn is_at_line_start(&self) -> bool {
-        self.start_of_line
+    fn extract_raw_token_value(&mut self, start: usize) -> String {
+        self.source[start..self.current].to_string()
     }
 
     // TODO: Make sure we don't need to scape the source
@@ -409,16 +398,16 @@ impl Lexer {
         }
     }
 
-    fn consume_string_from_start_char(&mut self, str_starter: char) {
+    fn skip_to_string_end(&mut self, str_start: char) {
         // Check if string starts with triple quotes
         let mut string_terminated = false;
-        let mut last_read_char = str_starter;
-        if self.peek() == Some(str_starter) && self.double_peek() == Some(str_starter) {
+        let mut last_read_char = str_start;
+        if self.peek() == Some(str_start) && self.double_peek() == Some(str_start) {
             self.next();
             while let Some(c) = self.next() {
-                if c == str_starter
-                    && self.peek() == Some(str_starter)
-                    && self.double_peek() == Some(str_starter)
+                if c == str_start
+                    && self.peek() == Some(str_start)
+                    && self.double_peek() == Some(str_start)
                     && last_read_char != '\\'
                 {
                     string_terminated = true;
@@ -430,7 +419,7 @@ impl Lexer {
             }
         } else {
             while let Some(c) = self.next() {
-                if c == str_starter && last_read_char != '\\' {
+                if c == str_start && last_read_char != '\\' {
                     string_terminated = true;
                     self.next();
                     break;
@@ -585,7 +574,7 @@ impl Lexer {
         Kind::Integer
     }
 
-    fn handle_indentation(&mut self) -> Option<Kind> {
+    fn match_indentation(&mut self) -> Option<Kind> {
         use std::cmp::Ordering;
         let mut spaces_count = 0;
         while let Some(c) = self.peek() {
@@ -622,7 +611,7 @@ impl Lexer {
         }
     }
 
-    fn read_value(&mut self, kind: Kind, kind_value: String) -> TokenValue {
+    fn parse_token_value(&mut self, kind: Kind, kind_value: String) -> TokenValue {
         use std::cmp::Ordering;
         match kind {
             Kind::Integer
@@ -679,6 +668,10 @@ impl Lexer {
             _ => TokenValue::None,
         }
     }
+}
+
+fn match_whitespace(c: char) -> bool {
+    c.is_whitespace() && c != '\n' && c != '\r'
 }
 
 #[cfg(test)]
