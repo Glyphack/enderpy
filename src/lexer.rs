@@ -7,6 +7,9 @@ pub struct Lexer {
     /// The current position in the source code
     current: usize,
     start_of_line: bool,
+    // keeps track of the indentation level
+    // the first element is always 0
+    // because the first line is always at indentation level 0
     indent_stack: Vec<usize>,
 }
 
@@ -16,7 +19,7 @@ impl Lexer {
             source: source.to_string(),
             current: 0,
             start_of_line: true,
-            indent_stack: Vec::new(),
+            indent_stack: vec![0],
         }
     }
 
@@ -26,8 +29,8 @@ impl Lexer {
         if kind == Kind::WhiteSpace {
             return self.next_token();
         }
-
-        let value = self.read_value(self.extract());
+        let kind_value = self.extract(start);
+        let value = self.read_value(kind, kind_value);
         let end = self.current;
         return Token {
             kind,
@@ -35,29 +38,24 @@ impl Lexer {
             start,
             end,
         };
-
-        Token {
-            kind,
-            value,
-            start,
-            end: self.current,
-        }
     }
 
     fn next_kind(&mut self) -> Kind {
         use unicode_id_start::{is_id_continue, is_id_start};
         use Kind::*;
 
-        self.start_of_line = false;
+        if self.is_at_line_start() {
+            if let Some(indent_kind) = self.handle_indentation() {
+                self.start_of_line = false;
+                return indent_kind;
+            }
+        }
 
         while let Some(c) = self.next() {
             if c.is_whitespace() && c != '\n' && c != '\r' {
                 return Kind::WhiteSpace;
             }
-
-            if self.is_at_line_start() {
-                self.handle_indentation().map(|kind| return kind);
-            }
+            self.start_of_line = false;
 
             match c {
                 // Numbers
@@ -606,6 +604,7 @@ impl Lexer {
             }
         }
         if let Some(top) = self.indent_stack.last() {
+            print!("{} {}", spaces_count, top);
             match spaces_count.cmp(top) {
                 Ordering::Less => {
                     let kind = Kind::Dedent;
@@ -623,7 +622,8 @@ impl Lexer {
         }
     }
 
-    fn read_value(&self, kind: Kind, kind_value: String) -> TokenValue {
+    fn read_value(&mut self, kind: Kind, kind_value: String) -> TokenValue {
+        use std::cmp::Ordering;
         match kind {
             Kind::Integer
             | Kind::Hexadecimal
@@ -642,6 +642,40 @@ impl Lexer {
             | Kind::RawFString
             | Kind::Bytes
             | Kind::Unicode => TokenValue::Str(kind_value),
+            Kind::Dedent => {
+                let mut spaces_count = 0;
+                for c in kind_value.chars() {
+                    match c {
+                        '\t' => {
+                            spaces_count += 4;
+                        }
+                        ' ' => {
+                            spaces_count += 1;
+                        }
+                        _ => {
+                            break;
+                        }
+                    }
+                }
+                let mut de_indents = 0;
+                print!("dedent: {:?} {:?}", spaces_count, self.indent_stack);
+                while let Some(top) = self.indent_stack.last() {
+                    match top.cmp(&spaces_count) {
+                        Ordering::Greater => {
+                            self.indent_stack.pop();
+                            de_indents += 1;
+                        }
+                        Ordering::Equal => {
+                            break;
+                        }
+                        Ordering::Less => {
+                            panic!("Invalid indentation");
+                        }
+                    }
+                }
+                TokenValue::Indent(de_indents)
+            }
+            Kind::Indent => TokenValue::Indent(1),
             _ => TokenValue::None,
         }
     }
@@ -946,7 +980,7 @@ def",
     fn test_unexpected_indentation() {
         let mut lexer = Lexer::new(
             "if True:
-       pass
+        pass
     pass",
         );
         loop {
