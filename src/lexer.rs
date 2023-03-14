@@ -29,15 +29,15 @@ impl Lexer {
         if kind == Kind::WhiteSpace {
             return self.next_token();
         }
-        let kind_value = self.extract(start);
-        let value = self.read_value(kind, kind_value);
+        let raw_value = self.extract(start);
+        let value = self.read_value(kind, raw_value);
         let end = self.current;
-        return Token {
+        Token {
             kind,
             value,
             start,
             end,
-        };
+        }
     }
 
     fn next_kind(&mut self) -> Kind {
@@ -608,13 +608,13 @@ impl Lexer {
             match spaces_count.cmp(top) {
                 Ordering::Less => {
                     let kind = Kind::Dedent;
-                    return Some(kind);
+                    Some(kind)
                 }
                 Ordering::Equal => None,
                 Ordering::Greater => {
                     self.indent_stack.push(spaces_count);
                     let kind = Kind::Indent;
-                    return Some(kind);
+                    Some(kind)
                 }
             }
         } else {
