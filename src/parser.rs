@@ -17,6 +17,8 @@ impl Node {
     }
 }
 
+// The following structs are used to represent the AST
+// https://docs.python.org/3/library/ast.html#abstract-grammar
 #[derive(Debug)]
 pub struct Module {
     pub node: Node,
