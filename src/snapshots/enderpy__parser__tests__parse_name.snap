@@ -19,7 +19,7 @@ Module {
                         Name {
                             node: Node {
                                 start: 0,
-                                end: 0,
+                                end: 1,
                             },
                             id: "a",
                         },
@@ -29,7 +29,7 @@ Module {
                     Constant {
                         node: Node {
                             start: 4,
-                            end: 3,
+                            end: 5,
                         },
                         value: "1",
                     },

@@ -173,24 +173,25 @@ impl Parser {
 
     fn parse_expression(&mut self) -> Expression {
         let start = self.start_node();
-        let expr = match self.cur_kind() {
+        let consumed_token = self.cur_token().clone();
+        self.bump_any();
+        let expr = match consumed_token.kind {
             Kind::Identifier => Expression::Name(Box::new(Name {
                 node: self.finish_node(start),
-                id: match self.cur_token().value.clone() {
+                id: match consumed_token.value.clone() {
                     TokenValue::Str(val) => val,
                     _ => panic!("Identifier not a string but {:?}", self.cur_token()),
                 },
             })),
             Kind::Integer => Expression::Constant(Box::new(Constant {
                 node: self.finish_node(start),
-                value: match self.cur_token().value.clone() {
+                value: match consumed_token.value.clone() {
                     TokenValue::Number(val) => val,
                     _ => panic!("Integer not a number but {:?}", self.cur_token()),
                 },
             })),
             _ => panic!("Not implemented"),
         };
-        self.bump_any();
         expr
     }
 }
