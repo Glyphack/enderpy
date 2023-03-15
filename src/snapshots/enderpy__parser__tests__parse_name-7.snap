@@ -1,18 +1,18 @@
 ---
 source: src/parser.rs
-description: a = 1
+description: "a = rb'1'"
 ---
 Module {
     node: Node {
         start: 0,
-        end: 5,
+        end: 9,
     },
     body: [
         AssignStatement(
             Assign {
                 node: Node {
                     start: 0,
-                    end: 5,
+                    end: 9,
                 },
                 targets: [
                     Name(
@@ -29,10 +29,12 @@ Module {
                     Constant {
                         node: Node {
                             start: 4,
-                            end: 5,
+                            end: 9,
                         },
-                        value: Int(
-                            "1",
+                        value: Bytes(
+                            [
+                                49,
+                            ],
                         ),
                     },
                 ),
