@@ -1,10 +1,17 @@
 use crate::token::{Kind, Token, TokenValue};
+use unicode_id_start::{is_id_continue, is_id_start};
 
 #[derive(Debug)]
 pub struct Lexer {
+    /// The source code
     source: String,
-    remaining: String,
+    /// The current position in the source code
+    current: usize,
+    /// Keeps track of whether the lexer is at the start of a line
     start_of_line: bool,
+    /// keeps track of the indentation level
+    /// the first element is always 0
+    /// because the first line is always at indentation level 0
     indent_stack: Vec<usize>,
 }
 
@@ -12,130 +19,52 @@ impl Lexer {
     pub fn new(source: &str) -> Self {
         Self {
             source: source.to_string(),
-            remaining: source.to_string(),
+            current: 0,
             start_of_line: true,
             indent_stack: vec![0],
         }
     }
 
-    fn read_next_kind(&mut self) -> Kind {
-        use unicode_id_start::{is_id_continue, is_id_start};
-        use Kind::*;
+    pub fn next_token(&mut self) -> Token {
+        let start = self.current;
+        let kind = self.next_kind();
+        // Ignore whitespace
+        if kind == Kind::WhiteSpace {
+            return self.next_token();
+        }
+        let raw_value = self.extract_raw_token_value(start);
+        let value = self.parse_token_value(kind, raw_value);
+        let end = self.current;
+        Token {
+            kind,
+            value,
+            start,
+            end,
+        }
+    }
+
+    fn next_kind(&mut self) -> Kind {
+        if self.start_of_line {
+            if let Some(indent_kind) = self.match_indentation() {
+                self.start_of_line = false; // WHY!?
+                return indent_kind;
+            }
+        }
 
         while let Some(c) = self.next() {
-            if c.is_whitespace() && c != '\n' && c != '\r' {
-                return Kind::WhiteSpace;
-            }
+            self.start_of_line = false; // WHY AGAIN?!
 
             match c {
                 // Numbers
-                '0'..='9' => {
-                    return self.match_numeric_literal();
-                }
-                // Keywords
-                identifier_start @ 'a'..='z'
-                | identifier_start @ 'A'..='Z'
-                | identifier_start @ '_' => {
-                    // Check if is start of string
-                    match identifier_start {
-                        'r' | 'R' => match self.peek() {
-                            // check if is start of string
-                            Some('b') | Some('B') => match self.double_peek() {
-                                Some(str_starter @ '"') | Some(str_starter @ '\'') => {
-                                    self.next();
-                                    self.next();
-                                    self.consume_string_from_start_char(str_starter);
-                                    return Kind::RawBytes;
-                                }
-                                _ => {}
-                            },
-                            Some('f') | Some('F') => match self.double_peek() {
-                                Some(str_starter @ '"') | Some(str_starter @ '\'') => {
-                                    self.next();
-                                    self.next();
-                                    self.consume_string_from_start_char(str_starter);
-                                    return Kind::RawFString;
-                                }
-                                _ => {}
-                            },
-                            Some(str_starter @ '"') | Some(str_starter @ '\'') => {
-                                self.next();
-                                self.consume_string_from_start_char(str_starter);
-                                return Kind::RawString;
-                            }
-                            _ => {}
-                        },
-                        'b' | 'B' => match self.peek() {
-                            Some('r') | Some('R') => match self.double_peek() {
-                                Some(str_starter @ '"') | Some(str_starter @ '\'') => {
-                                    self.next();
-                                    self.next();
-                                    self.consume_string_from_start_char(str_starter);
-                                    return Kind::RawBytes;
-                                }
-                                _ => {}
-                            },
-                            Some(str_starter @ '"') | Some(str_starter @ '\'') => {
-                                self.next();
-                                self.consume_string_from_start_char(str_starter);
-                                return Kind::Bytes;
-                            }
-                            _ => {}
-                        },
-                        'f' | 'F' => match self.peek() {
-                            Some('r') | Some('R') => match self.double_peek() {
-                                Some(str_starter @ '"') | Some(str_starter @ '\'') => {
-                                    self.next();
-                                    self.next();
-                                    self.consume_string_from_start_char(str_starter);
-                                    return Kind::RawFString;
-                                }
-                                _ => {}
-                            },
-                            Some(str_starter @ '"') | Some(str_starter @ '\'') => {
-                                self.next();
-                                self.consume_string_from_start_char(str_starter);
-                                return Kind::FString;
-                            }
-                            _ => {}
-                        },
-                        'u' | 'U' => match self.peek() {
-                            Some(str_starter @ '"') | Some(str_starter @ '\'') => {
-                                self.next();
-                                self.consume_string_from_start_char(str_starter);
-                                return Kind::Unicode;
-                            }
-                            _ => {}
-                        },
-                        _ => {}
-                    };
-
-                    let mut ident = String::new();
-                    ident.push(identifier_start);
-                    while let Some(c) = self.peek() {
-                        match c {
-                            'a'..='z' | 'A'..='Z' | '0'..='9' | '_' => {
-                                ident.push(c);
-                                self.next();
-                            }
-                            _ => {
-                                // Some unicode characters are valid in identifiers
-                                // https://boshen.github.io/javascript-parser-in-rust/docs/lexer/#identifiers-and-unicode
-                                if is_id_start(c) & is_id_continue(c) {
-                                    ident.push(c);
-                                    self.next();
-                                } else {
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                    return self.match_keyword(&ident);
+                '0'..='9' => return self.match_numeric_literal(),
+                // Identifiers & Keywords
+                id_start @ 'a'..='z' | id_start @ 'A'..='Z' | id_start @ '_' => {
+                    return self.match_id_keyword(id_start);
                 }
                 // String Literals
-                str_starter @ '"' | str_starter @ '\'' => {
-                    self.consume_string_from_start_char(str_starter);
-                    return StringLiteral;
+                str_start @ '"' | str_start @ '\'' => {
+                    self.skip_to_str_end(str_start);
+                    return Kind::StringLiteral;
                 }
                 // Operators
                 '+' => match self.peek() {
@@ -148,160 +77,156 @@ impl Lexer {
                 '-' => match self.peek() {
                     Some('>') => {
                         self.next();
-                        return Arrow;
+                        return Kind::Arrow;
                     }
                     Some('=') => {
                         self.next();
-                        return SubAssign;
+                        return Kind::SubAssign;
                     }
-                    _ => return Minus,
+                    _ => return Kind::Minus,
                 },
                 '*' => match self.peek() {
                     Some('=') => {
                         self.next();
-                        return MulAssign;
+                        return Kind::MulAssign;
                     }
                     Some('*') => match self.double_peek() {
                         Some('=') => {
                             self.double_next();
-                            return PowAssign;
+                            return Kind::PowAssign;
                         }
                         _ => {
                             self.next();
-                            return Pow;
+                            return Kind::Pow;
                         }
                     },
-                    _ => return Mul,
+                    _ => return Kind::Mul,
                 },
                 '/' => match self.peek() {
                     Some('/') => {
                         if let Some('=') = self.double_peek() {
                             self.double_next();
-                            return IntDivAssign;
+                            return Kind::IntDivAssign;
                         }
                         self.next();
-                        return IntDiv;
+                        return Kind::IntDiv;
                     }
                     Some('=') => {
                         self.next();
-                        return DivAssign;
+                        return Kind::DivAssign;
                     }
-                    _ => return Div,
+                    _ => return Kind::Div,
                 },
                 '%' => match self.peek() {
                     Some('=') => {
                         self.next();
-                        return ModAssign;
+                        return Kind::ModAssign;
                     }
-                    _ => return Mod,
+                    _ => return Kind::Mod,
                 },
                 '@' => match self.peek() {
                     Some('=') => {
                         self.next();
-                        return MatrixMulAssign;
+                        return Kind::MatrixMulAssign;
                     }
-                    _ => return MatrixMul,
+                    _ => return Kind::MatrixMul,
                 },
                 '&' => match self.peek() {
                     Some('=') => {
                         self.next();
-                        return BitAndAssign;
+                        return Kind::BitAndAssign;
                     }
-                    _ => return BitAnd,
+                    _ => return Kind::BitAnd,
                 },
                 '|' => match self.peek() {
                     Some('=') => {
                         self.next();
-                        return BitOrAssign;
+                        return Kind::BitOrAssign;
                     }
-                    _ => return BitOr,
+                    _ => return Kind::BitOr,
                 },
                 '^' => match self.peek() {
                     Some('=') => {
                         self.next();
-                        return BitXorAssign;
+                        return Kind::BitXorAssign;
                     }
-                    _ => return BitXor,
+                    _ => return Kind::BitXor,
                 },
-                '~' => return BitNot,
+                '~' => return Kind::BitNot,
                 ':' => match self.peek() {
                     Some('=') => {
                         self.next();
-                        return Walrus;
+                        return Kind::Walrus;
                     }
-                    _ => return Colon,
+                    _ => return Kind::Colon,
                 },
                 '!' => {
                     if let Some('=') = self.peek() {
                         self.next();
-                        return NotEq;
+                        return Kind::NotEq;
                     }
                 }
                 // Delimiters
-                '(' => return LeftParen,
-                ')' => return RightParen,
-                '[' => return LeftBrace,
-                ']' => return RightBrace,
-                '{' => return LeftBracket,
-                '}' => return RightBracket,
-                ',' => return Comma,
-                '.' => return Dot,
-                ';' => return SemiColon,
+                '(' => return Kind::LeftParen,
+                ')' => return Kind::RightParen,
+                '[' => return Kind::LeftBrace,
+                ']' => return Kind::RightBrace,
+                '{' => return Kind::LeftBracket,
+                '}' => return Kind::RightBracket,
+                ',' => return Kind::Comma,
+                '.' => return Kind::Dot,
+                ';' => return Kind::SemiColon,
                 '=' => match self.peek() {
                     Some('=') => {
                         self.next();
-                        return Eq;
+                        return Kind::Eq;
                     }
-                    _ => return Assign,
+                    _ => return Kind::Assign,
                 },
-                '#' => return Sharp,
-                '\\' => return BackSlash,
-                '$' => return Dollar,
-                '?' => return QuestionMark,
-                '`' => return BackTick,
+                '#' => return Kind::Sharp,
+                '\\' => return Kind::BackSlash,
+                '$' => return Kind::Dollar,
+                '?' => return Kind::QuestionMark,
+                '`' => return Kind::BackTick,
                 '<' => match self.peek() {
                     Some('<') => match self.double_peek() {
                         Some('=') => {
                             self.double_next();
-                            return ShiftLeftAssign;
+                            return Kind::ShiftLeftAssign;
                         }
                         _ => {
                             self.next();
-                            return LeftShift;
+                            return Kind::LeftShift;
                         }
                     },
                     Some('=') => {
                         self.next();
-                        return LessEq;
+                        return Kind::LessEq;
                     }
-                    _ => return Less,
+                    _ => return Kind::Less,
                 },
                 '>' => match self.peek() {
                     Some('>') => match self.double_peek() {
                         Some('=') => {
                             self.double_next();
-                            return ShiftRightAssign;
+                            return Kind::ShiftRightAssign;
                         }
                         _ => {
                             self.next();
-                            return RightShift;
+                            return Kind::RightShift;
                         }
                     },
                     Some('=') => {
                         self.next();
-                        return GreaterEq;
+                        return Kind::GreaterEq;
                     }
-                    _ => return Greater,
+                    _ => return Kind::Greater,
                 },
                 '\n' | '\r' => {
-                    return NewLine;
+                    self.start_of_line = true;
+                    return Kind::NewLine;
                 }
-                ' ' | '\t' => {
-                    // indentation case is handled above before the match
-                    // because there might be no whitespace after newline and
-                    // still a Dedent token is needed
-                    return WhiteSpace;
-                }
+                c if match_whitespace(c) => return Kind::WhiteSpace,
                 _ => {}
             }
         }
@@ -309,81 +234,118 @@ impl Lexer {
         Kind::Eof
     }
 
-    pub fn read_next_token(&mut self) -> Token {
-        // Check if we are at the start of a line
-        if self.is_at_line_start() {
-            if let Some(token) = self.handle_indentation() {
-                self.start_of_line = false;
-                return token;
+    fn match_id_keyword(&mut self, id_start: char) -> Kind {
+        if let Some(str_kind) = self.match_str(id_start) {
+            return str_kind;
+        }
+        let id = self.extract_id(id_start);
+        self.match_keyword(&id)
+    }
+
+    fn extract_id(&mut self, id_start: char) -> String {
+        let mut id = String::new();
+        id.push(id_start);
+        while let Some(c) = self.peek() {
+            match c {
+                'a'..='z' | 'A'..='Z' | '0'..='9' | '_' => {
+                    id.push(c);
+                    self.next();
+                }
+                _ => {
+                    // Some unicode characters are valid in identifiers
+                    // https://boshen.github.io/javascript-parser-in-rust/docs/lexer/#identifiers-and-unicode
+                    if is_id_start(c) & is_id_continue(c) {
+                        id.push(c);
+                        self.next();
+                    } else {
+                        break;
+                    }
+                }
             }
         }
+        id
+    }
 
-        let start = self.offset();
-        let kind = self.read_next_kind();
-        let end = self.offset();
-
-        if kind == Kind::WhiteSpace {
-            return self.read_next_token();
-        }
-
-        let value = match kind {
-            Kind::Integer
-            | Kind::Hexadecimal
-            | Kind::Binary
-            | Kind::PointFloat
-            | Kind::Octal
-            | Kind::ExponentFloat
-            | Kind::ImaginaryInteger
-            | Kind::ImaginaryExponentFloat
-            | Kind::ImaginaryPointFloat => {
-                let value = self.source[start..end].to_string();
-                TokenValue::Number(value)
-            }
-            Kind::Identifier => {
-                let value = self.source[start..end].to_string();
-                TokenValue::Str(value)
-            }
-            Kind::StringLiteral
-            | Kind::FString
-            | Kind::RawBytes
-            | Kind::RawString
-            | Kind::RawFString
-            | Kind::Bytes
-            | Kind::Unicode => {
-                let value = self.source[start..end].to_string();
-                TokenValue::Str(value)
-            }
-            _ => TokenValue::None,
+    fn match_str(&mut self, id_start: char) -> Option<Kind> {
+        match id_start {
+            'r' | 'R' => match self.peek() {
+                // check if is start of string
+                Some('b') | Some('B') => match self.double_peek() {
+                    Some(str_start @ '"') | Some(str_start @ '\'') => {
+                        self.double_next();
+                        self.skip_to_str_end(str_start);
+                        return Some(Kind::RawBytes);
+                    }
+                    _ => {}
+                },
+                Some('f') | Some('F') => match self.double_peek() {
+                    Some(str_start @ '"') | Some(str_start @ '\'') => {
+                        self.double_next();
+                        self.skip_to_str_end(str_start);
+                        return Some(Kind::RawFString);
+                    }
+                    _ => {}
+                },
+                Some(str_start @ '"') | Some(str_start @ '\'') => {
+                    self.next();
+                    self.skip_to_str_end(str_start);
+                    return Some(Kind::RawString);
+                }
+                _ => {}
+            },
+            'b' | 'B' => match self.peek() {
+                Some('r') | Some('R') => match self.double_peek() {
+                    Some(str_start @ '"') | Some(str_start @ '\'') => {
+                        self.double_next();
+                        self.skip_to_str_end(str_start);
+                        return Some(Kind::RawBytes);
+                    }
+                    _ => {}
+                },
+                Some(str_start @ '"') | Some(str_start @ '\'') => {
+                    self.next();
+                    self.skip_to_str_end(str_start);
+                    return Some(Kind::Bytes);
+                }
+                _ => {}
+            },
+            'f' | 'F' => match self.peek() {
+                Some('r') | Some('R') => match self.double_peek() {
+                    Some(str_start @ '"') | Some(str_start @ '\'') => {
+                        self.double_next();
+                        self.skip_to_str_end(str_start);
+                        return Some(Kind::RawFString);
+                    }
+                    _ => {}
+                },
+                Some(str_start @ '"') | Some(str_start @ '\'') => {
+                    self.next();
+                    self.skip_to_str_end(str_start);
+                    return Some(Kind::FString);
+                }
+                _ => {}
+            },
+            'u' | 'U' => match self.peek() {
+                Some(str_start @ '"') | Some(str_start @ '\'') => {
+                    self.next();
+                    self.skip_to_str_end(str_start);
+                    return Some(Kind::Unicode);
+                }
+                _ => {}
+            },
+            _ => {}
         };
-
-        if kind == Kind::NewLine {
-            self.start_of_line = true;
-        } else {
-            self.start_of_line = false;
-        }
-        Token {
-            kind,
-            value,
-            start,
-            end,
-        }
+        None
     }
 
-    fn is_at_line_start(&self) -> bool {
-        self.start_of_line
-    }
-
-    // TODO: Make sure we don't need to scape the source
-
-    /// Get the length offset from the source text, in UTF-8 bytes
-    fn offset(&self) -> usize {
-        self.source.len() - self.remaining.chars().as_str().len()
+    fn extract_raw_token_value(&mut self, start: usize) -> String {
+        self.source[start..self.current].to_string()
     }
 
     fn next(&mut self) -> Option<char> {
-        let c = self.remaining.chars().next();
+        let c = self.peek();
         if let Some(c) = c {
-            self.remaining = self.remaining[c.len_utf8()..].to_string();
+            self.current += c.len_utf8();
         }
         c
     }
@@ -394,11 +356,11 @@ impl Lexer {
     }
 
     fn peek(&self) -> Option<char> {
-        self.remaining.chars().next()
+        self.source[self.current..].chars().next()
     }
 
     fn double_peek(&self) -> Option<char> {
-        self.remaining.chars().nth(1)
+        self.source[self.current..].chars().nth(1)
     }
 
     fn match_keyword(&self, ident: &str) -> Kind {
@@ -442,28 +404,27 @@ impl Lexer {
         }
     }
 
-    fn consume_string_from_start_char(&mut self, str_starter: char) {
+    fn skip_to_str_end(&mut self, str_start: char) {
         // Check if string starts with triple quotes
         let mut string_terminated = false;
-        let mut last_read_char = str_starter;
-        if self.peek() == Some(str_starter) && self.double_peek() == Some(str_starter) {
+        let mut last_read_char = str_start;
+        if self.peek() == Some(str_start) && self.double_peek() == Some(str_start) {
             self.next();
             while let Some(c) = self.next() {
-                if c == str_starter
-                    && self.peek() == Some(str_starter)
-                    && self.double_peek() == Some(str_starter)
+                if c == str_start
+                    && self.peek() == Some(str_start)
+                    && self.double_peek() == Some(str_start)
                     && last_read_char != '\\'
                 {
                     string_terminated = true;
-                    self.next();
-                    self.next();
+                    self.double_next();
                     break;
                 }
                 last_read_char = c;
             }
         } else {
             while let Some(c) = self.next() {
-                if c == str_starter && last_read_char != '\\' {
+                if c == str_start && last_read_char != '\\' {
                     string_terminated = true;
                     self.next();
                     break;
@@ -618,9 +579,8 @@ impl Lexer {
         Kind::Integer
     }
 
-    fn handle_indentation(&mut self) -> Option<Token> {
+    fn match_indentation(&mut self) -> Option<Kind> {
         use std::cmp::Ordering;
-        let start = self.offset();
         let mut spaces_count = 0;
         while let Some(c) = self.peek() {
             match c {
@@ -639,50 +599,74 @@ impl Lexer {
         }
         if let Some(top) = self.indent_stack.last() {
             match spaces_count.cmp(top) {
-                Ordering::Less => {
-                    let mut de_indents = 0;
-                    while let Some(top) = self.indent_stack.last() {
-                        match top.cmp(&spaces_count) {
-                            Ordering::Greater => {
-                                self.indent_stack.pop();
-                                de_indents += 1;
-                            }
-                            Ordering::Equal => {
-                                break;
-                            }
-                            Ordering::Less => {
-                                panic!("Invalid indentation");
-                            }
-                        }
-                    }
-                    let kind = Kind::Dedent;
-                    let value = TokenValue::Indent(de_indents);
-                    let end = self.offset();
-                    Some(Token {
-                        kind,
-                        value,
-                        start,
-                        end,
-                    })
-                }
+                Ordering::Less => Some(Kind::Dedent),
                 Ordering::Equal => None,
                 Ordering::Greater => {
                     self.indent_stack.push(spaces_count);
-                    let kind = Kind::Indent;
-                    let value = TokenValue::Indent(1);
-                    let end = self.offset();
-                    Some(Token {
-                        kind,
-                        value,
-                        start,
-                        end,
-                    })
+                    Some(Kind::Indent)
                 }
             }
         } else {
             None
         }
     }
+
+    fn parse_token_value(&mut self, kind: Kind, kind_value: String) -> TokenValue {
+        use std::cmp::Ordering;
+        match kind {
+            Kind::Integer
+            | Kind::Hexadecimal
+            | Kind::Binary
+            | Kind::PointFloat
+            | Kind::Octal
+            | Kind::ExponentFloat
+            | Kind::ImaginaryInteger
+            | Kind::ImaginaryExponentFloat
+            | Kind::ImaginaryPointFloat => TokenValue::Number(kind_value),
+            Kind::Identifier => TokenValue::Str(kind_value),
+            Kind::StringLiteral
+            | Kind::FString
+            | Kind::RawBytes
+            | Kind::RawString
+            | Kind::RawFString
+            | Kind::Bytes
+            | Kind::Unicode => TokenValue::Str(kind_value),
+            Kind::Dedent => {
+                let mut spaces_count = 0;
+                for c in kind_value.chars() {
+                    match c {
+                        '\t' => {
+                            spaces_count += 4;
+                        }
+                        ' ' => {
+                            spaces_count += 1;
+                        }
+                        _ => {
+                            break;
+                        }
+                    }
+                }
+                let mut de_indents = 0;
+                while let Some(top) = self.indent_stack.last() {
+                    match top.cmp(&spaces_count) {
+                        Ordering::Greater => {
+                            self.indent_stack.pop();
+                            de_indents += 1;
+                        }
+                        Ordering::Equal => break,
+                        Ordering::Less => panic!("Invalid indentation"),
+                    }
+                }
+                TokenValue::Indent(de_indents)
+            }
+            Kind::Indent => TokenValue::Indent(1),
+            _ => TokenValue::None,
+        }
+    }
+}
+
+fn match_whitespace(c: char) -> bool {
+    c.is_whitespace() && c != '\n' && c != '\r'
 }
 
 #[cfg(test)]
@@ -696,7 +680,7 @@ mod tests {
             let mut lexer = Lexer::new(test_input);
             let mut tokens = vec![];
             loop {
-                let token = lexer.read_next_token();
+                let token = lexer.next_token();
                 if token.kind == Kind::Eof {
                     break;
                 }
@@ -957,26 +941,26 @@ def",
     #[should_panic]
     fn test_unterminated_string_double_quotes() {
         let mut lexer = Lexer::new("\"hello");
-        lexer.read_next_token();
+        lexer.next_token();
     }
 
     #[test]
     #[should_panic]
     fn test_unterminated_string_single_quotes() {
         let mut lexer = Lexer::new("'hello");
-        lexer.read_next_token();
+        lexer.next_token();
     }
     #[test]
     #[should_panic]
     fn test_unterminated_string_triple_single_quotes() {
         let mut lexer = Lexer::new("'''hello''");
-        lexer.read_next_token();
+        lexer.next_token();
     }
     #[test]
     #[should_panic]
     fn test_unterminated_string_triple_single_quotes_2() {
         let mut lexer = Lexer::new("'''hello'");
-        lexer.read_next_token();
+        lexer.next_token();
     }
 
     #[test]
@@ -984,11 +968,11 @@ def",
     fn test_unexpected_indentation() {
         let mut lexer = Lexer::new(
             "if True:
-       pass
+        pass
     pass",
         );
         loop {
-            let token = lexer.read_next_token();
+            let token = lexer.next_token();
             if token.kind == Kind::Eof {
                 break;
             }

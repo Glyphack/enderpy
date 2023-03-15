@@ -63,7 +63,7 @@ pub struct Parser {
 impl Parser {
     pub fn new(source: String) -> Self {
         let mut lexer = Lexer::new(&source);
-        let cur_token = lexer.read_next_token();
+        let cur_token = lexer.next_token();
         let prev_token_end = 0;
 
         Self {
@@ -127,7 +127,7 @@ impl Parser {
 
     /// Move to the next token
     fn advance(&mut self) {
-        let token = self.lexer.read_next_token();
+        let token = self.lexer.next_token();
         self.prev_token_end = self.cur_token.end;
         self.cur_token = token;
     }
