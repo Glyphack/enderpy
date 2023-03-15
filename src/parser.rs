@@ -28,30 +28,47 @@ pub struct Module {
 #[derive(Debug)]
 pub enum Statement {
     AssignStatement(Assign),
+    ExpressionStatement(Expression),
 }
 
 #[derive(Debug)]
 pub struct Assign {
     pub node: Node,
-    pub targets: Vec<BindingIdentifier>,
+    pub targets: Vec<Expression>,
     pub value: Expression,
-}
-
-#[derive(Debug)]
-pub struct BindingIdentifier {
-    pub node: Node,
-    pub name: String,
 }
 
 #[derive(Debug)]
 pub enum Expression {
     Constant(Box<Constant>),
+    List(Box<List>),
+    Tuple(Box<Tuple>),
+    Name(Box<Name>),
+}
+
+// https://docs.python.org/3/reference/expressions.html#atom-identifiers
+#[derive(Debug)]
+pub struct Name {
+    pub node: Node,
+    pub id: String,
 }
 
 #[derive(Debug)]
 pub struct Constant {
     pub node: Node,
     pub value: String,
+}
+
+#[derive(Debug)]
+pub struct List {
+    pub node: Node,
+    pub elements: Vec<Expression>,
+}
+
+#[derive(Debug)]
+pub struct Tuple {
+    pub node: Node,
+    pub elements: Vec<Expression>,
 }
 
 #[derive(Debug)]
@@ -77,12 +94,17 @@ impl Parser {
     }
 
     fn parse(&mut self) -> Module {
-        let stmt = self.parse_assign_statement();
-        let body = vec![stmt];
-        return Module {
-            node: Node::new(0, self.source.len()),
+        let node = self.start_node();
+        let mut body = vec![];
+        while self.cur_kind() != Kind::Eof {
+            let stmt = self.parse_statement();
+            body.push(stmt);
+        }
+
+        Module {
+            node: self.finish_node(node),
             body,
-        };
+        }
     }
 
     fn start_node(&self) -> Node {
@@ -134,54 +156,42 @@ impl Parser {
         self.cur_token = token;
     }
 
-    // TODO: This is a dummy function to parse an assignment statement
-    fn parse_assign_statement(&mut self) -> Statement {
+    fn parse_statement(&mut self) -> Statement {
         let start = self.start_node();
-        let targets = self.parse_binding_identifier_list();
-        self.bump(Kind::Assign);
-        let value = self.parse_expression();
-        let end = self.finish_node(start);
-        Statement::AssignStatement(Assign {
-            node: end,
-            targets,
-            value,
-        })
-    }
-
-    fn parse_binding_identifier_list(&mut self) -> Vec<BindingIdentifier> {
-        let mut list = vec![];
-        loop {
-            let start = self.start_node();
-            let val = self.cur_token().value.clone();
-            self.bump(Kind::Identifier);
-            list.push(BindingIdentifier {
+        let left = self.parse_expression();
+        if self.eat(Kind::Assign) {
+            let right = self.parse_expression();
+            return Statement::AssignStatement(Assign {
                 node: self.finish_node(start),
-                name: match val {
-                    TokenValue::Str(val) => val,
-                    _ => "".to_string(),
-                },
+                targets: vec![left],
+                value: right,
             });
-
-            if self.eat(Kind::Comma) {
-                continue;
-            }
-            break;
+        } else {
+            panic!("Not implemented {:?}", self.cur_token);
         }
-        list
     }
 
-    // TODO: This is a dummy function to parse an expression
     fn parse_expression(&mut self) -> Expression {
         let start = self.start_node();
-        let val = self.cur_token().value.clone();
-        self.bump(Kind::Integer);
-        Expression::Constant(Box::new(Constant {
-            node: self.finish_node(start),
-            value: match val {
-                TokenValue::Number(val) => val.to_string(),
-                _ => "".to_string(),
-            },
-        }))
+        let expr = match self.cur_kind() {
+            Kind::Identifier => Expression::Name(Box::new(Name {
+                node: self.finish_node(start),
+                id: match self.cur_token().value.clone() {
+                    TokenValue::Str(val) => val,
+                    _ => panic!("Identifier not a string but {:?}", self.cur_token()),
+                },
+            })),
+            Kind::Integer => Expression::Constant(Box::new(Constant {
+                node: self.finish_node(start),
+                value: match self.cur_token().value.clone() {
+                    TokenValue::Number(val) => val,
+                    _ => panic!("Integer not a number but {:?}", self.cur_token()),
+                },
+            })),
+            _ => panic!("Not implemented"),
+        };
+        self.bump_any();
+        expr
     }
 }
 
@@ -191,7 +201,7 @@ mod tests {
     use insta::assert_debug_snapshot;
 
     #[test]
-    fn test_parse() {
+    fn test_parse_name() {
         let source = "a = 1".to_string();
         let mut parser = Parser::new(source);
         let program = parser.parse();
