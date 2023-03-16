@@ -1,18 +1,18 @@
 ---
 source: src/parser.rs
-description: a = 1
+description: a = True
 ---
 Module {
     node: Node {
         start: 0,
-        end: 5,
+        end: 8,
     },
     body: [
         AssignStatement(
             Assign {
                 node: Node {
                     start: 0,
-                    end: 5,
+                    end: 8,
                 },
                 targets: [
                     Name(
@@ -29,10 +29,10 @@ Module {
                     Constant {
                         node: Node {
                             start: 4,
-                            end: 5,
+                            end: 8,
                         },
-                        value: Int(
-                            "1",
+                        value: Bool(
+                            true,
                         ),
                     },
                 ),

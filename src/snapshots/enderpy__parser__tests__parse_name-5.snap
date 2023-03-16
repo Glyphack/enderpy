@@ -1,18 +1,18 @@
 ---
 source: src/parser.rs
-description: a = 1
+description: a = 1j
 ---
 Module {
     node: Node {
         start: 0,
-        end: 5,
+        end: 6,
     },
     body: [
         AssignStatement(
             Assign {
                 node: Node {
                     start: 0,
-                    end: 5,
+                    end: 6,
                 },
                 targets: [
                     Name(
@@ -29,11 +29,12 @@ Module {
                     Constant {
                         node: Node {
                             start: 4,
-                            end: 5,
+                            end: 6,
                         },
-                        value: Int(
-                            "1",
-                        ),
+                        value: Complex {
+                            real: "0",
+                            imaginary: "1j",
+                        },
                     },
                 ),
             },
