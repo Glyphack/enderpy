@@ -1,0 +1,13 @@
+---
+source: src/lexer/lexer.rs
+---
+[
+    Token {
+        kind: Octal,
+        value: Number(
+            "0o5",
+        ),
+        start: 0,
+        end: 3,
+    },
+]

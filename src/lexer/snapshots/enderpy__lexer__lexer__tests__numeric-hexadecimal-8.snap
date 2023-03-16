@@ -1,0 +1,14 @@
+---
+source: src/lexer/lexer.rs
+description: "0x8"
+---
+[
+    Token {
+        kind: Hexadecimal,
+        value: Number(
+            "0x8",
+        ),
+        start: 0,
+        end: 3,
+    },
+]

@@ -1,0 +1,12 @@
+---
+source: src/lexer/lexer.rs
+description: "@"
+---
+[
+    Token {
+        kind: MatrixMul,
+        value: None,
+        start: 0,
+        end: 1,
+    },
+]

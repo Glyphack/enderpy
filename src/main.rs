@@ -1,8 +1,8 @@
-use parser::Parser;
-
 mod lexer;
 mod parser;
 mod token;
+
+use parser::parser::Parser;
 
 fn main() {
     tracing_subscriber::fmt::init();

@@ -1,0 +1,14 @@
+---
+source: src/lexer/lexer.rs
+description: 0b111
+---
+[
+    Token {
+        kind: Binary,
+        value: Number(
+            "0b111",
+        ),
+        start: 0,
+        end: 5,
+    },
+]

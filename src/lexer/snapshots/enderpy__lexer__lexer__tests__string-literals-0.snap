@@ -1,0 +1,14 @@
+---
+source: src/lexer/lexer.rs
+description: "\"hello\""
+---
+[
+    Token {
+        kind: StringLiteral,
+        value: Str(
+            "\"hello\"",
+        ),
+        start: 0,
+        end: 7,
+    },
+]

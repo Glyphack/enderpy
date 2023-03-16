@@ -1,0 +1,12 @@
+---
+source: src/lexer/lexer.rs
+description: "<<="
+---
+[
+    Token {
+        kind: ShiftLeftAssign,
+        value: None,
+        start: 0,
+        end: 3,
+    },
+]

@@ -1,0 +1,14 @@
+---
+source: src/lexer/lexer.rs
+description: "rb\"\"\"hello\"\"\""
+---
+[
+    Token {
+        kind: RawBytes,
+        value: Str(
+            "rb\"\"\"hello\"\"\"",
+        ),
+        start: 0,
+        end: 13,
+    },
+]
