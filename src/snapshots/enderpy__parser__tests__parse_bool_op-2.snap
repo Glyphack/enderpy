@@ -1,0 +1,43 @@
+---
+source: src/parser.rs
+description: a and b
+---
+Module {
+    node: Node {
+        start: 0,
+        end: 7,
+    },
+    body: [
+        ExpressionStatement(
+            BoolOp(
+                BoolOperation {
+                    node: Node {
+                        start: 7,
+                        end: 7,
+                    },
+                    op: And,
+                    values: [
+                        Name(
+                            Name {
+                                node: Node {
+                                    start: 0,
+                                    end: 1,
+                                },
+                                id: "a",
+                            },
+                        ),
+                        Name(
+                            Name {
+                                node: Node {
+                                    start: 6,
+                                    end: 7,
+                                },
+                                id: "b",
+                            },
+                        ),
+                    ],
+                },
+            ),
+        ),
+    ],
+}

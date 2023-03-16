@@ -1,6 +1,7 @@
 use parser::Parser;
 
 mod lexer;
+mod operator;
 mod parser;
 mod token;
 

@@ -1,5 +1,7 @@
 use crate::lexer::Lexer;
+use crate::operator::{is_bool_op, map_binary_operator};
 use crate::token::{Kind, Token, TokenValue};
+use serde::Serialize;
 
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)] // #[serde(tag = "type")]
 pub struct Node {
@@ -43,6 +45,7 @@ pub enum Expression {
     List(Box<List>),
     Tuple(Box<Tuple>),
     Name(Box<Name>),
+    BoolOp(Box<BoolOperation>),
 }
 
 // https://docs.python.org/3/reference/expressions.html#atom-identifiers
@@ -81,6 +84,20 @@ pub struct List {
 pub struct Tuple {
     pub node: Node,
     pub elements: Vec<Expression>,
+}
+
+// https://docs.python.org/3/library/ast.html#ast.BoolOp
+#[derive(Debug)]
+pub struct BoolOperation {
+    pub node: Node,
+    pub op: BooleanOperator,
+    pub values: Vec<Expression>,
+}
+
+#[derive(Debug)]
+pub enum BooleanOperator {
+    And,
+    Or,
 }
 
 #[derive(Debug)]
@@ -135,6 +152,10 @@ impl Parser {
         self.cur_token.kind
     }
 
+    fn peek_kind(&mut self) -> Kind {
+        self.lexer.peek_token().kind
+    }
+
     /// Checks if the current index has token `Kind`
     fn at(&self, kind: Kind) -> bool {
         self.cur_kind() == kind
@@ -186,9 +207,8 @@ impl Parser {
                 targets: vec![lhs],
                 value: rhs,
             });
-        } else {
-            panic!("Not implemented {:?}", self.cur_token);
         }
+        return Statement::ExpressionStatement(lhs);
     }
 
     fn parse_expression(&mut self) -> Expression {
@@ -287,6 +307,22 @@ impl Parser {
             },
             _ => panic!("Not implemented {:?}", self.cur_token()),
         };
+
+        let peeked = self.cur_kind();
+        if is_bool_op(&peeked) {
+            let op = map_binary_operator(&peeked);
+            self.bump_any();
+            let rhs = self.parse_expression();
+            // TODO: Check if rhs is BoolOp then we need to flatten it
+            // e.g. a or b or c can be BoolOp(or, [a, b, c])
+            let node = self.start_node();
+            expr = Expression::BoolOp(Box::new(BoolOperation {
+                node: self.finish_node(node),
+                op,
+                values: vec![expr, rhs],
+            }));
+        }
+
         while self.eat(Kind::Comma) {
             let next_elm = self.parse_expression();
             let node = self.start_node();
@@ -342,6 +378,20 @@ mod tests {
             "a = \"\"\"a\"\"\"",
             "a = 'a'",
         ] {
+            let mut parser = Parser::new(test_case.to_string());
+            let program = parser.parse();
+
+            insta::with_settings!({
+                    description => test_case.to_string(), // the template source code
+                    omit_expression => true // do not include the default expression
+                }, {
+                    assert_debug_snapshot!(program);
+            });
+        }
+    }
+    #[test]
+    fn test_parse_bool_op() {
+        for test_case in &["a or b", "a and b", "a or b or c", "a and b or c"] {
             let mut parser = Parser::new(test_case.to_string());
             let program = parser.parse();
 

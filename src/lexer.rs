@@ -43,6 +43,13 @@ impl Lexer {
         }
     }
 
+    pub fn peek_token(&mut self) -> Token {
+        let current = self.current;
+        let token = self.next_token();
+        self.current = current;
+        token
+    }
+
     fn next_kind(&mut self) -> Kind {
         if self.start_of_line {
             if let Some(indent_kind) = self.match_indentation() {
