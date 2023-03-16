@@ -1,0 +1,12 @@
+---
+source: src/lexer/lexer.rs
+description: "<="
+---
+[
+    Token {
+        kind: LessEq,
+        value: None,
+        start: 0,
+        end: 2,
+    },
+]

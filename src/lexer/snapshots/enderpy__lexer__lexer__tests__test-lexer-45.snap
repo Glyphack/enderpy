@@ -1,0 +1,12 @@
+---
+source: src/lexer/lexer.rs
+description: "<<"
+---
+[
+    Token {
+        kind: LeftShift,
+        value: None,
+        start: 0,
+        end: 2,
+    },
+]

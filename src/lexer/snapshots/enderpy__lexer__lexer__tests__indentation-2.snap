@@ -1,0 +1,96 @@
+---
+source: src/lexer/lexer.rs
+description: "if True:\n    if True:\n        pass\ndef"
+---
+[
+    Token {
+        kind: If,
+        value: None,
+        start: 0,
+        end: 2,
+    },
+    Token {
+        kind: True,
+        value: None,
+        start: 3,
+        end: 7,
+    },
+    Token {
+        kind: Colon,
+        value: None,
+        start: 7,
+        end: 8,
+    },
+    Token {
+        kind: NewLine,
+        value: None,
+        start: 8,
+        end: 9,
+    },
+    Token {
+        kind: Indent,
+        value: Indent(
+            1,
+        ),
+        start: 9,
+        end: 13,
+    },
+    Token {
+        kind: If,
+        value: None,
+        start: 13,
+        end: 15,
+    },
+    Token {
+        kind: True,
+        value: None,
+        start: 16,
+        end: 20,
+    },
+    Token {
+        kind: Colon,
+        value: None,
+        start: 20,
+        end: 21,
+    },
+    Token {
+        kind: NewLine,
+        value: None,
+        start: 21,
+        end: 22,
+    },
+    Token {
+        kind: Indent,
+        value: Indent(
+            1,
+        ),
+        start: 22,
+        end: 30,
+    },
+    Token {
+        kind: Pass,
+        value: None,
+        start: 30,
+        end: 34,
+    },
+    Token {
+        kind: NewLine,
+        value: None,
+        start: 34,
+        end: 35,
+    },
+    Token {
+        kind: Dedent,
+        value: Indent(
+            2,
+        ),
+        start: 35,
+        end: 35,
+    },
+    Token {
+        kind: Def,
+        value: None,
+        start: 35,
+        end: 38,
+    },
+]
