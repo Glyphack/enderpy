@@ -41,6 +41,7 @@ pub enum Expression {
     Tuple(Box<Tuple>),
     Name(Box<Name>),
     BoolOp(Box<BoolOperation>),
+    UnaryOp(Box<UnaryOperation>),
 }
 
 // https://docs.python.org/3/reference/expressions.html#atom-identifiers
@@ -93,4 +94,20 @@ pub struct BoolOperation {
 pub enum BooleanOperator {
     And,
     Or,
+}
+
+// https://docs.python.org/3/library/ast.html#ast.UnaryOp
+#[derive(Debug)]
+pub struct UnaryOperation {
+    pub node: Node,
+    pub op: UnaryOperator,
+    pub operand: Box<Expression>,
+}
+
+#[derive(Debug)]
+pub enum UnaryOperator {
+    Not,
+    Invert,
+    UAdd,
+    USub,
 }

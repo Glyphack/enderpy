@@ -1,7 +1,9 @@
 use crate::lexer::lexer::Lexer;
 use crate::parser::ast::*;
-use crate::parser::operator::{is_bool_op, map_binary_operator};
+use crate::parser::operator::{is_bool_op, is_unary_op, map_binary_operator};
 use crate::token::{Kind, Token, TokenValue};
+
+use super::operator::map_unary_operator;
 
 #[derive(Debug)]
 pub struct Parser {
@@ -55,6 +57,10 @@ impl Parser {
         self.cur_token.kind
     }
 
+    fn peek_token(&mut self) -> Token {
+        self.lexer.peek_token()
+    }
+
     fn peek_kind(&mut self) -> Kind {
         self.lexer.peek_token().kind
     }
@@ -95,7 +101,7 @@ impl Parser {
     fn parse_statement(&mut self) -> Statement {
         match self.cur_kind() {
             Kind::Identifier => self.parse_identifier_statement(),
-            _ => panic!("Not implemented {:?}", self.cur_token),
+            _ => Statement::ExpressionStatement(self.parse_expression()),
         }
     }
 
@@ -116,49 +122,75 @@ impl Parser {
 
     fn parse_expression(&mut self) -> Expression {
         let start = self.start_node();
-        let consumed_token = self.cur_token().clone();
-        self.bump_any();
-        let mut expr = match consumed_token.kind {
-            Kind::Identifier => Expression::Name(Box::new(Name {
+
+        let peeked_token = self.cur_token().clone();
+
+        let unary_expr = if is_unary_op(&peeked_token.kind) {
+            println!("Unary {:?}", peeked_token);
+            let op = map_unary_operator(&peeked_token.kind);
+            self.bump_any();
+            let operand = self.parse_expression();
+            let node = self.start_node();
+            Some(Expression::UnaryOp(Box::new(UnaryOperation {
+                node: self.finish_node(node),
+                op,
+                operand: Box::new(operand),
+            })))
+        } else {
+            None
+        };
+
+        // TODO fix
+        if unary_expr.is_none() {
+            self.bump_any();
+        }
+
+        println!("Now {:?}", peeked_token);
+        // refactor to if let and smaller function
+        let atom = match peeked_token.kind {
+            Kind::Identifier => Some(Expression::Name(Box::new(Name {
                 node: self.finish_node(start),
-                id: match consumed_token.value.clone() {
+                id: match peeked_token.value.clone() {
                     TokenValue::Str(val) => val,
                     _ => panic!("Identifier must be string {:?}", self.cur_token()),
                 },
-            })),
-            Kind::Integer => match consumed_token.value.clone() {
-                TokenValue::Number(val) => Expression::Constant(Box::new(Constant {
+            }))),
+            Kind::Integer => match peeked_token.value.clone() {
+                TokenValue::Number(val) => Some(Expression::Constant(Box::new(Constant {
                     node: self.finish_node(start),
                     value: ConstantValue::Int(val),
-                })),
-                _ => panic!("Integer number value must be a number {:?}", consumed_token),
+                }))),
+                _ => panic!(
+                    "Integer number value must be a number {:?}",
+                    self.cur_token()
+                ),
             },
-            Kind::None => Expression::Constant(Box::new(Constant {
+            Kind::None => Some(Expression::Constant(Box::new(Constant {
                 node: self.finish_node(start),
                 value: ConstantValue::None,
-            })),
-            Kind::True => Expression::Constant(Box::new(Constant {
+            }))),
+            Kind::True => Some(Expression::Constant(Box::new(Constant {
                 node: self.finish_node(start),
                 value: ConstantValue::Bool(true),
-            })),
-            Kind::False => Expression::Constant(Box::new(Constant {
+            }))),
+            Kind::False => Some(Expression::Constant(Box::new(Constant {
                 node: self.finish_node(start),
                 value: ConstantValue::Bool(false),
-            })),
-            Kind::ImaginaryInteger => match consumed_token.value.clone() {
-                TokenValue::Number(val) => Expression::Constant(Box::new(Constant {
+            }))),
+            Kind::ImaginaryInteger => match peeked_token.value.clone() {
+                TokenValue::Number(val) => Some(Expression::Constant(Box::new(Constant {
                     node: self.finish_node(start),
                     value: ConstantValue::Complex {
                         real: "0".to_string(),
                         imaginary: val,
                     },
-                })),
+                }))),
                 _ => panic!(
                     "Imaginary integer number value must be a number {:?}",
-                    consumed_token
+                    peeked_token
                 ),
             },
-            Kind::Bytes => match consumed_token.value.clone() {
+            Kind::Bytes => match peeked_token.value.clone() {
                 TokenValue::Str(val) => {
                     let bytes_val = self
                         .extract_string_inside(
@@ -167,53 +199,61 @@ impl Parser {
                                 .to_string(),
                         )
                         .into_bytes();
-                    Expression::Constant(Box::new(Constant {
+                    Some(Expression::Constant(Box::new(Constant {
                         node: self.finish_node(start),
                         value: ConstantValue::Bytes(bytes_val),
-                    }))
+                    })))
                 }
                 _ => panic!("Bytes value must be a bytes {:?}", self.cur_token()),
             },
-            Kind::StringLiteral => match consumed_token.value.clone() {
+            Kind::StringLiteral => match peeked_token.value.clone() {
                 TokenValue::Str(val) => {
                     let string_val = self.extract_string_inside(val);
-                    Expression::Constant(Box::new(Constant {
+                    Some(Expression::Constant(Box::new(Constant {
                         node: self.finish_node(start),
                         value: ConstantValue::Str(string_val),
-                    }))
+                    })))
                 }
                 _ => panic!("String value must be a string {:?}", self.cur_token()),
             },
-            Kind::RawString => match consumed_token.value.clone() {
+            Kind::RawString => match peeked_token.value.clone() {
                 TokenValue::Str(val) => {
                     let string_val =
                         self.extract_string_inside(val.chars().skip(1).collect::<String>());
-                    Expression::Constant(Box::new(Constant {
+                    Some(Expression::Constant(Box::new(Constant {
                         node: self.finish_node(start),
                         value: ConstantValue::Str(string_val),
-                    }))
+                    })))
                 }
-                _ => panic!("String value must be a string {:?}", self.cur_token()),
+                _ => panic!("String value must be a string {:?}", peeked_token),
             },
-            Kind::RawBytes => match consumed_token.value.clone() {
+            Kind::RawBytes => match peeked_token.value.clone() {
                 TokenValue::Str(val) => {
                     // rb or br appear in the beginning of raw bytes
                     let bytes_val = self
                         .extract_string_inside(val.chars().skip(2).collect::<String>())
                         .into_bytes();
-                    Expression::Constant(Box::new(Constant {
+                    Some(Expression::Constant(Box::new(Constant {
                         node: self.finish_node(start),
                         value: ConstantValue::Bytes(bytes_val),
-                    }))
+                    })))
                 }
                 _ => panic!("Bytes value must be a bytes {:?}", self.cur_token()),
             },
-            _ => panic!("Not implemented {:?}", self.cur_token()),
+            _ => None,
         };
 
-        let peeked = self.cur_kind();
-        if is_bool_op(&peeked) {
-            let op = map_binary_operator(&peeked);
+        let mut expr = if let Some(atom) = atom {
+            atom
+        } else if let Some(unary_expr) = unary_expr {
+            unary_expr
+        } else {
+            panic!("Expected expression {:?}", peeked_token)
+        };
+
+        let current_kind = self.cur_kind();
+        if is_bool_op(&current_kind) {
+            let op = map_binary_operator(&current_kind);
             self.bump_any();
             let rhs = self.parse_expression();
             // TODO: Check if rhs is BoolOp then we need to flatten it
@@ -223,7 +263,7 @@ impl Parser {
                 node: self.finish_node(node),
                 op,
                 values: vec![expr, rhs],
-            }));
+            }))
         }
 
         while self.eat(Kind::Comma) {
@@ -295,6 +335,21 @@ mod tests {
     #[test]
     fn test_parse_bool_op() {
         for test_case in &["a or b", "a and b", "a or b or c", "a and b or c"] {
+            let mut parser = Parser::new(test_case.to_string());
+            let program = parser.parse();
+
+            insta::with_settings!({
+                    description => test_case.to_string(), // the template source code
+                    omit_expression => true // do not include the default expression
+                }, {
+                    assert_debug_snapshot!(program);
+            });
+        }
+    }
+
+    #[test]
+    fn test_parse_unary_op() {
+        for test_case in &["not a", "+ a", "~ a", "-a"] {
             let mut parser = Parser::new(test_case.to_string());
             let program = parser.parse();
 
