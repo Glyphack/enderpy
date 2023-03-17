@@ -1,4 +1,4 @@
-use crate::parser::parser::BooleanOperator;
+use crate::parser::ast::BooleanOperator;
 use crate::token::Kind;
 
 pub fn is_bool_op(kind: &Kind) -> bool {
