@@ -1,3 +1,5 @@
+use miette::{SourceOffset, SourceSpan};
+
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)] // #[serde(tag = "type")]
 pub struct Node {
     /// Start offset in source
@@ -10,6 +12,19 @@ pub struct Node {
 impl Node {
     pub fn new(start: usize, end: usize) -> Self {
         Self { start, end }
+    }
+
+    pub fn len(&self) -> usize {
+        self.end - self.start
+    }
+}
+
+impl From<Node> for SourceSpan {
+    fn from(val: Node) -> Self {
+        Self::new(
+            SourceOffset::from(val.start as usize),
+            SourceOffset::from(val.len() as usize),
+        )
     }
 }
 
