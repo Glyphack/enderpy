@@ -141,7 +141,13 @@ impl Parser {
         };
 
         let atom = if is_atom(&self.cur_kind()) {
-            let expr = Some(self.parse_atom_expression());
+            let start = self.start_node();
+            // value must be cloned to be assigned to the node
+            let token_value = self.cur_token().value.clone();
+            // bump needs to happen before creating the atom node
+            // otherwise the end would be the same as the start
+            self.bump_any();
+            let expr = Some(self.map_to_atom(start, &self.cur_kind(), token_value));
             expr
         } else {
             None
@@ -182,18 +188,15 @@ impl Parser {
         expr
     }
 
-    fn parse_atom_expression(&mut self) -> Expression {
-        let start = self.start_node();
-        let prev_token = self.cur_token().clone();
-        self.bump_any();
-        let atom = match prev_token.kind {
+    fn map_to_atom(&self, start: Node, kind: &Kind, value: TokenValue) -> Expression {
+        let atom = match kind {
             Kind::Identifier => Expression::Name(Box::new(Name {
                 node: self.finish_node(start),
-                id: self.unwrap_token_value_str(&prev_token.value),
+                id: self.unwrap_token_value_str(&value),
             })),
             Kind::Integer => Expression::Constant(Box::new(Constant {
                 node: self.finish_node(start),
-                value: ConstantValue::Int(self.unwrap_token_value_number(&prev_token.value)),
+                value: ConstantValue::Int(self.unwrap_token_value_number(&value)),
             })),
             Kind::None => Expression::Constant(Box::new(Constant {
                 node: self.finish_node(start),
@@ -211,12 +214,12 @@ impl Parser {
                 node: self.finish_node(start),
                 value: ConstantValue::Complex {
                     real: "0".to_string(),
-                    imaginary: self.unwrap_token_value_number(&prev_token.value),
+                    imaginary: self.unwrap_token_value_number(&value),
                 },
             })),
             Kind::Bytes => {
                 let bytes_val = extract_string_inside(
-                    self.unwrap_token_value_str(&prev_token.value)
+                    self.unwrap_token_value_str(&value)
                         .strip_prefix("b")
                         .expect("bytes literal must start with b")
                         .to_string(),
@@ -228,8 +231,7 @@ impl Parser {
                 }))
             }
             Kind::StringLiteral => {
-                let string_val =
-                    extract_string_inside(self.unwrap_token_value_str(&prev_token.value));
+                let string_val = extract_string_inside(self.unwrap_token_value_str(&value));
                 Expression::Constant(Box::new(Constant {
                     node: self.finish_node(start),
                     value: ConstantValue::Str(string_val),
@@ -237,7 +239,7 @@ impl Parser {
             }
             Kind::RawString => {
                 let string_val = extract_string_inside(
-                    self.unwrap_token_value_str(&prev_token.value)
+                    self.unwrap_token_value_str(&value)
                         .chars()
                         .skip(1)
                         .collect::<String>(),
@@ -250,7 +252,7 @@ impl Parser {
             Kind::RawBytes => {
                 // rb or br appear in the beginning of raw bytes
                 let bytes_val = extract_string_inside(
-                    self.unwrap_token_value_str(&prev_token.value)
+                    self.unwrap_token_value_str(&value)
                         .chars()
                         .skip(2)
                         .collect::<String>(),
