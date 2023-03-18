@@ -1,0 +1,32 @@
+---
+source: src/parser/parser.rs
+description: + a
+---
+Module {
+    node: Node {
+        start: 0,
+        end: 3,
+    },
+    body: [
+        ExpressionStatement(
+            UnaryOp(
+                UnaryOperation {
+                    node: Node {
+                        start: 3,
+                        end: 3,
+                    },
+                    op: UAdd,
+                    operand: Name(
+                        Name {
+                            node: Node {
+                                start: 2,
+                                end: 3,
+                            },
+                            id: "a",
+                        },
+                    ),
+                },
+            ),
+        ),
+    ],
+}
