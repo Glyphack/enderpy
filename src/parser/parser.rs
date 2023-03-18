@@ -5,7 +5,9 @@ use crate::parser::ast::*;
 use crate::parser::operator::{is_bool_op, is_unary_op, map_binary_operator};
 use crate::parser::string::extract_string_inside;
 use crate::token::{Kind, Token, TokenValue};
+use miette::Result;
 
+use super::diagnostics;
 use super::expression::is_atom;
 use super::operator::map_unary_operator;
 
@@ -36,7 +38,12 @@ impl Parser {
         let mut body = vec![];
         while self.cur_kind() != Kind::Eof {
             let stmt = self.parse_statement();
-            body.push(stmt);
+            if stmt.is_ok() {
+                body.push(stmt.unwrap());
+            } else {
+                // TODO: place to report errors to the user
+                self.bump_any();
+            }
         }
 
         Module {
@@ -102,35 +109,54 @@ impl Parser {
         self.cur_token = token;
     }
 
-    fn parse_statement(&mut self) -> Statement {
-        match self.cur_kind() {
-            Kind::Identifier => self.parse_identifier_statement(),
-            _ => Statement::ExpressionStatement(self.parse_expression()),
+    /// Expect a `Kind` or return error
+    pub fn expect(&mut self, kind: Kind) -> Result<()> {
+        if !self.at(kind) {
+            let range = self.start_node();
+            return Err(
+                diagnostics::ExpectToken(kind.to_str(), self.cur_kind().to_str(), range).into(),
+            );
         }
+        self.advance();
+        Ok(())
+    }
+
+    fn parse_statement(&mut self) -> Result<Statement> {
+        let stmt = match self.cur_kind() {
+            Kind::Identifier => self.parse_identifier_statement(),
+            _ => Ok(Statement::ExpressionStatement(self.parse_expression())),
+        };
+        self.expect(Kind::NewLine)?;
+
+        stmt
     }
 
     // Parses an statement which starts with an identifier
-    fn parse_identifier_statement(&mut self) -> Statement {
+    fn parse_identifier_statement(&mut self) -> Result<Statement> {
         let start = self.start_node();
-        let lhs = self.parse_expression();
+        let lhs = self.parse_expression().unwrap();
         if self.eat(Kind::Assign) {
-            let rhs = self.parse_expression();
-            return Statement::AssignStatement(Assign {
+            let rhs = self
+                .parse_expression()
+                .expect("Expected expression on the right hand side");
+            return Ok(Statement::AssignStatement(Assign {
                 node: self.finish_node(start),
                 targets: vec![lhs],
                 value: rhs,
-            });
+            }));
         }
-        return Statement::ExpressionStatement(lhs);
+        return Ok(Statement::ExpressionStatement(lhs));
     }
 
     // https://docs.python.org/3/library/ast.html#expressions
-    fn parse_expression(&mut self) -> Expression {
+    fn parse_expression(&mut self) -> Result<Expression> {
         let unary_expr = if is_unary_op(&self.cur_kind()) {
             let unary_node = self.start_node();
             let op = map_unary_operator(&self.cur_kind());
             self.bump_any();
-            let operand = self.parse_expression();
+            let operand = self
+                .parse_expression()
+                .expect("Expected one of +, -, ~, not as unary operator");
             Some(Expression::UnaryOp(Box::new(UnaryOperation {
                 node: self.finish_node(unary_node),
                 op,
@@ -159,14 +185,19 @@ impl Parser {
         } else if let Some(unary_expr) = unary_expr {
             unary_expr
         } else {
-            panic!("Expected expression {:?}", self.cur_token)
+            return Err(
+                diagnostics::UnexpectedToken(self.cur_kind().to_str(), self.start_node()).into(),
+            );
         };
 
         let current_kind = self.cur_kind();
         if is_bool_op(&current_kind) {
             let op = map_binary_operator(&current_kind);
             self.bump_any();
-            let rhs = self.parse_expression();
+            let rhs = self
+                .parse_expression()
+                .expect("Expected expression after binary operator");
+
             // TODO: Check if rhs is BoolOp then we need to flatten it
             // e.g. a or b or c can be BoolOp(or, [a, b, c])
             let node = self.start_node();
@@ -178,25 +209,36 @@ impl Parser {
         }
 
         while self.eat(Kind::Comma) {
-            let next_elm = self.parse_expression();
             let node = self.start_node();
-            expr = Expression::Tuple(Box::new(Tuple {
-                node: self.finish_node(node),
-                elements: vec![expr, next_elm],
-            }));
+            let next_elm = self.parse_expression();
+            match next_elm {
+                Ok(next_elm) => {
+                    self.bump_any();
+                    expr = Expression::Tuple(Box::new(Tuple {
+                        node: self.finish_node(node),
+                        elements: vec![expr, next_elm],
+                    }));
+                }
+                Err(e) => {
+                    expr = Expression::Tuple(Box::new(Tuple {
+                        node: self.finish_node(node),
+                        elements: vec![expr],
+                    }))
+                }
+            }
         }
-        expr
+        Ok(expr)
     }
 
     fn map_to_atom(&self, start: Node, kind: &Kind, value: TokenValue) -> Expression {
         let atom = match kind {
             Kind::Identifier => Expression::Name(Box::new(Name {
                 node: self.finish_node(start),
-                id: self.unwrap_token_value_str(&value),
+                id: value.to_string(),
             })),
             Kind::Integer => Expression::Constant(Box::new(Constant {
                 node: self.finish_node(start),
-                value: ConstantValue::Int(self.unwrap_token_value_number(&value)),
+                value: ConstantValue::Int(value.to_string()),
             })),
             Kind::None => Expression::Constant(Box::new(Constant {
                 node: self.finish_node(start),
@@ -214,12 +256,13 @@ impl Parser {
                 node: self.finish_node(start),
                 value: ConstantValue::Complex {
                     real: "0".to_string(),
-                    imaginary: self.unwrap_token_value_number(&value),
+                    imaginary: value.to_string(),
                 },
             })),
             Kind::Bytes => {
                 let bytes_val = extract_string_inside(
-                    self.unwrap_token_value_str(&value)
+                    value
+                        .to_string()
                         .strip_prefix("b")
                         .expect("bytes literal must start with b")
                         .to_string(),
@@ -231,19 +274,15 @@ impl Parser {
                 }))
             }
             Kind::StringLiteral => {
-                let string_val = extract_string_inside(self.unwrap_token_value_str(&value));
+                let string_val = extract_string_inside(value.to_string());
                 Expression::Constant(Box::new(Constant {
                     node: self.finish_node(start),
                     value: ConstantValue::Str(string_val),
                 }))
             }
             Kind::RawString => {
-                let string_val = extract_string_inside(
-                    self.unwrap_token_value_str(&value)
-                        .chars()
-                        .skip(1)
-                        .collect::<String>(),
-                );
+                let string_val =
+                    extract_string_inside(value.to_string().chars().skip(1).collect::<String>());
                 Expression::Constant(Box::new(Constant {
                     node: self.finish_node(start),
                     value: ConstantValue::Str(string_val),
@@ -251,13 +290,9 @@ impl Parser {
             }
             Kind::RawBytes => {
                 // rb or br appear in the beginning of raw bytes
-                let bytes_val = extract_string_inside(
-                    self.unwrap_token_value_str(&value)
-                        .chars()
-                        .skip(2)
-                        .collect::<String>(),
-                )
-                .into_bytes();
+                let bytes_val =
+                    extract_string_inside(value.to_string().chars().skip(2).collect::<String>())
+                        .into_bytes();
                 Expression::Constant(Box::new(Constant {
                     node: self.finish_node(start),
                     value: ConstantValue::Bytes(bytes_val),
@@ -266,20 +301,6 @@ impl Parser {
             _ => panic!("Expected atom expression"),
         };
         atom
-    }
-
-    pub fn unwrap_token_value_str(&self, value: &TokenValue) -> String {
-        match value {
-            TokenValue::Str(ref val) => val.to_string(),
-            _ => panic!("Expected value of token {:?} to be a string", value),
-        }
-    }
-
-    fn unwrap_token_value_number(&self, value: &TokenValue) -> String {
-        match value {
-            TokenValue::Number(ref val) => val.to_string(),
-            _ => panic!("Expected value of token {:?} to be a number", value),
-        }
     }
 }
 
