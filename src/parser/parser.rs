@@ -137,9 +137,7 @@ impl Parser {
         let start = self.start_node();
         let lhs = self.parse_expression().unwrap();
         if self.eat(Kind::Assign) {
-            let rhs = self
-                .parse_expression()
-                .expect("Expected expression on the right hand side");
+            let rhs = self.parse_expression()?;
             return Ok(Statement::AssignStatement(Assign {
                 node: self.finish_node(start),
                 targets: vec![lhs],
@@ -155,9 +153,7 @@ impl Parser {
             let unary_node = self.start_node();
             let op = map_unary_operator(&self.cur_kind());
             self.bump_any();
-            let operand = self
-                .parse_expression()
-                .expect("Expected one of +, -, ~, not as unary operator");
+            let operand = self.parse_expression()?;
             Some(Expression::UnaryOp(Box::new(UnaryOperation {
                 node: self.finish_node(unary_node),
                 op,
@@ -196,10 +192,7 @@ impl Parser {
         if is_bool_op(&current_kind) {
             let op = map_binary_operator(&current_kind);
             self.bump_any();
-            let rhs = self
-                .parse_expression()
-                .expect("Expected expression after binary operator");
-
+            let rhs = self.parse_expression()?;
             // TODO: Check if rhs is BoolOp then we need to flatten it
             // e.g. a or b or c can be BoolOp(or, [a, b, c])
             let node = self.start_node();
@@ -221,7 +214,7 @@ impl Parser {
                         elements: vec![expr, next_elm],
                     }));
                 }
-                Err(e) => {
+                Err(_) => {
                     expr = Expression::Tuple(Box::new(Tuple {
                         node: self.finish_node(node),
                         elements: vec![expr],
