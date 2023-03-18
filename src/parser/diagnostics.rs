@@ -20,6 +20,6 @@ pub struct UnexpectedToken(
 );
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("Expect token")]
+#[error("Unknown statement")]
 #[diagnostic()]
 pub struct UnknownStatement(pub &'static str, #[label("Unknown statement {0}")] pub Node);

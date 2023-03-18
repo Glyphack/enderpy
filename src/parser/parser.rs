@@ -41,7 +41,7 @@ impl Parser {
             if stmt.is_ok() {
                 body.push(stmt.unwrap());
             } else {
-                // TODO: place to report errors to the user
+                println!("Error: {:?}", stmt.err());
                 self.bump_any();
             }
         }
@@ -124,9 +124,10 @@ impl Parser {
     fn parse_statement(&mut self) -> Result<Statement> {
         let stmt = match self.cur_kind() {
             Kind::Identifier => self.parse_identifier_statement(),
-            _ => Ok(Statement::ExpressionStatement(self.parse_expression())),
+            _ => Ok(Statement::ExpressionStatement(
+                self.parse_expression().unwrap(),
+            )),
         };
-        self.expect(Kind::NewLine)?;
 
         stmt
     }
@@ -170,10 +171,11 @@ impl Parser {
             let start = self.start_node();
             // value must be cloned to be assigned to the node
             let token_value = self.cur_token().value.clone();
+            let token_kind = self.cur_kind();
             // bump needs to happen before creating the atom node
             // otherwise the end would be the same as the start
             self.bump_any();
-            let expr = Some(self.map_to_atom(start, &self.cur_kind(), token_value));
+            let expr = Some(self.map_to_atom(start, &token_kind, token_value));
             expr
         } else {
             None

@@ -149,6 +149,12 @@ impl Kind {
     #[must_use]
     pub fn to_str(self) -> &'static str {
         match self {
+            Kind::Hexadecimal => "Hexadecimal",
+            Kind::PointFloat => "PointFloat",
+            Kind::ExponentFloat => "ExponentFloat",
+            Kind::ImaginaryInteger => "ImaginaryInteger",
+            Kind::ImaginaryPointFloat => "ImaginaryPointFloat",
+            Kind::ImaginaryExponentFloat => "ImaginaryExponentFloat",
             Kind::Arrow => "->",
             Kind::AddAssign => "+=",
             Kind::SubAssign => "-=",
@@ -202,8 +208,7 @@ impl Kind {
             Kind::BitNot => "~",
             Kind::Less => "<",
             Kind::Greater => ">",
-            Kind::NewLine => "
-────────────────────────────────────────────────────────────────────────
+            Kind::NewLine => "\n",
             Kind::SemiColon => ";",
             Kind::Assign => "=",
             Kind::Plus => "+",
@@ -264,8 +269,7 @@ impl Kind {
             Kind::RawString => "RawString",
             Kind::RawFString => "RawFString",
             Kind::RawBytes => "RawBytes",
-            Kind::Unicode => "Unicode
-────────────────────────────────────────────────────────────────────────
+            Kind::Unicode => "Unicode",
             Kind::SemiColon => ";",
             Kind::Assign => "=",
             Kind::Plus => "+",
@@ -327,7 +331,6 @@ impl Kind {
             Kind::RawBytes => "RawBytes",
             Kind::Unicode => "Unicode",
             Kind::Integer => "Integer",
-────────────────────────────────────────────────────────────────────────
             Kind::SemiColon => ";",
             Kind::Assign => "=",
             Kind::Plus => "+",
@@ -381,17 +384,14 @@ impl Kind {
             Kind::False => "False",
             Kind::None => "None",
             Kind::True => "True",
-            Kind::Str(_)
-            | Kind::FString
+            Kind::FString
             | Kind::Bytes
             | Kind::RawString
             | Kind::RawFString
             | Kind::RawBytes
             | Kind::Unicode => "StringLiteral",
-            Kind::Number(_) => "Number",
             Kind::Identifier => "Identifier",
-            Kind::NewLine => "NewLine
-────────────────────────────────────────────────────────────────────────
+            Kind::NewLine => "NewLine",
             Kind::SemiColon => ";",
             Kind::Assign => "=",
             Kind::Plus => "+",
@@ -513,8 +513,7 @@ impl Kind {
             Kind::StringLiteral => "StringLiteral",
             Kind::FString => "FString",
             Kind::Bytes => "Bytes",
-            Kind::RawString => "RawString
-────────────────────────────────────────────────────────────────────────
+            Kind::RawString => "RawString",
             Kind::SemiColon => ";",
             Kind::Assign => "=",
             Kind::Plus => "+",
