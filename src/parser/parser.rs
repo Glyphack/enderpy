@@ -1,8 +1,12 @@
+use std::panic;
+
 use crate::lexer::lexer::Lexer;
 use crate::parser::ast::*;
 use crate::parser::operator::{is_bool_op, is_unary_op, map_binary_operator};
+use crate::parser::string::extract_string_inside;
 use crate::token::{Kind, Token, TokenValue};
 
+use super::expression::is_atom;
 use super::operator::map_unary_operator;
 
 #[derive(Debug)]
@@ -120,19 +124,15 @@ impl Parser {
         return Statement::ExpressionStatement(lhs);
     }
 
+    // https://docs.python.org/3/library/ast.html#expressions
     fn parse_expression(&mut self) -> Expression {
-        let start = self.start_node();
-
-        let peeked_token = self.cur_token().clone();
-
-        let unary_expr = if is_unary_op(&peeked_token.kind) {
-            println!("Unary {:?}", peeked_token);
-            let op = map_unary_operator(&peeked_token.kind);
+        let unary_expr = if is_unary_op(&self.cur_kind()) {
+            let unary_node = self.start_node();
+            let op = map_unary_operator(&self.cur_kind());
             self.bump_any();
             let operand = self.parse_expression();
-            let node = self.start_node();
             Some(Expression::UnaryOp(Box::new(UnaryOperation {
-                node: self.finish_node(node),
+                node: self.finish_node(unary_node),
                 op,
                 operand: Box::new(operand),
             })))
@@ -140,115 +140,26 @@ impl Parser {
             None
         };
 
-        // TODO fix
-        if unary_expr.is_none() {
+        let atom = if is_atom(&self.cur_kind()) {
+            let start = self.start_node();
+            // value must be cloned to be assigned to the node
+            let token_value = self.cur_token().value.clone();
+            // bump needs to happen before creating the atom node
+            // otherwise the end would be the same as the start
             self.bump_any();
-        }
-
-        println!("Now {:?}", peeked_token);
-        // refactor to if let and smaller function
-        let atom = match peeked_token.kind {
-            Kind::Identifier => Some(Expression::Name(Box::new(Name {
-                node: self.finish_node(start),
-                id: match peeked_token.value.clone() {
-                    TokenValue::Str(val) => val,
-                    _ => panic!("Identifier must be string {:?}", self.cur_token()),
-                },
-            }))),
-            Kind::Integer => match peeked_token.value.clone() {
-                TokenValue::Number(val) => Some(Expression::Constant(Box::new(Constant {
-                    node: self.finish_node(start),
-                    value: ConstantValue::Int(val),
-                }))),
-                _ => panic!(
-                    "Integer number value must be a number {:?}",
-                    self.cur_token()
-                ),
-            },
-            Kind::None => Some(Expression::Constant(Box::new(Constant {
-                node: self.finish_node(start),
-                value: ConstantValue::None,
-            }))),
-            Kind::True => Some(Expression::Constant(Box::new(Constant {
-                node: self.finish_node(start),
-                value: ConstantValue::Bool(true),
-            }))),
-            Kind::False => Some(Expression::Constant(Box::new(Constant {
-                node: self.finish_node(start),
-                value: ConstantValue::Bool(false),
-            }))),
-            Kind::ImaginaryInteger => match peeked_token.value.clone() {
-                TokenValue::Number(val) => Some(Expression::Constant(Box::new(Constant {
-                    node: self.finish_node(start),
-                    value: ConstantValue::Complex {
-                        real: "0".to_string(),
-                        imaginary: val,
-                    },
-                }))),
-                _ => panic!(
-                    "Imaginary integer number value must be a number {:?}",
-                    peeked_token
-                ),
-            },
-            Kind::Bytes => match peeked_token.value.clone() {
-                TokenValue::Str(val) => {
-                    let bytes_val = self
-                        .extract_string_inside(
-                            val.strip_prefix("b")
-                                .expect("bytes literal must start with b")
-                                .to_string(),
-                        )
-                        .into_bytes();
-                    Some(Expression::Constant(Box::new(Constant {
-                        node: self.finish_node(start),
-                        value: ConstantValue::Bytes(bytes_val),
-                    })))
-                }
-                _ => panic!("Bytes value must be a bytes {:?}", self.cur_token()),
-            },
-            Kind::StringLiteral => match peeked_token.value.clone() {
-                TokenValue::Str(val) => {
-                    let string_val = self.extract_string_inside(val);
-                    Some(Expression::Constant(Box::new(Constant {
-                        node: self.finish_node(start),
-                        value: ConstantValue::Str(string_val),
-                    })))
-                }
-                _ => panic!("String value must be a string {:?}", self.cur_token()),
-            },
-            Kind::RawString => match peeked_token.value.clone() {
-                TokenValue::Str(val) => {
-                    let string_val =
-                        self.extract_string_inside(val.chars().skip(1).collect::<String>());
-                    Some(Expression::Constant(Box::new(Constant {
-                        node: self.finish_node(start),
-                        value: ConstantValue::Str(string_val),
-                    })))
-                }
-                _ => panic!("String value must be a string {:?}", peeked_token),
-            },
-            Kind::RawBytes => match peeked_token.value.clone() {
-                TokenValue::Str(val) => {
-                    // rb or br appear in the beginning of raw bytes
-                    let bytes_val = self
-                        .extract_string_inside(val.chars().skip(2).collect::<String>())
-                        .into_bytes();
-                    Some(Expression::Constant(Box::new(Constant {
-                        node: self.finish_node(start),
-                        value: ConstantValue::Bytes(bytes_val),
-                    })))
-                }
-                _ => panic!("Bytes value must be a bytes {:?}", self.cur_token()),
-            },
-            _ => None,
+            let expr = Some(self.map_to_atom(start, &self.cur_kind(), token_value));
+            expr
+        } else {
+            None
         };
 
+        // refactor to if let and smaller function
         let mut expr = if let Some(atom) = atom {
             atom
         } else if let Some(unary_expr) = unary_expr {
             unary_expr
         } else {
-            panic!("Expected expression {:?}", peeked_token)
+            panic!("Expected expression {:?}", self.cur_token)
         };
 
         let current_kind = self.cur_kind();
@@ -277,25 +188,97 @@ impl Parser {
         expr
     }
 
-    fn extract_string_inside(&self, val: String) -> String {
-        if let Some(val) = val.strip_prefix("\"\"\"") {
-            val.strip_suffix("\"\"\"")
-                .expect("String must be enclosed with \"\"\"")
-                .to_string()
-        } else if let Some(val) = val.strip_prefix("\"") {
-            val.strip_suffix("\"")
-                .expect("String must be enclosed with \"")
-                .to_string()
-        } else if let Some(val) = val.strip_prefix("'''") {
-            val.strip_suffix("'''")
-                .expect("String must be enclosed with '''")
-                .to_string()
-        } else if let Some(val) = val.strip_prefix("'") {
-            val.strip_suffix("'")
-                .expect("String must be enclosed with '")
-                .to_string()
-        } else {
-            panic!("String must be enclosed in \"\"\", \"', ''' or '");
+    fn map_to_atom(&self, start: Node, kind: &Kind, value: TokenValue) -> Expression {
+        let atom = match kind {
+            Kind::Identifier => Expression::Name(Box::new(Name {
+                node: self.finish_node(start),
+                id: self.unwrap_token_value_str(&value),
+            })),
+            Kind::Integer => Expression::Constant(Box::new(Constant {
+                node: self.finish_node(start),
+                value: ConstantValue::Int(self.unwrap_token_value_number(&value)),
+            })),
+            Kind::None => Expression::Constant(Box::new(Constant {
+                node: self.finish_node(start),
+                value: ConstantValue::None,
+            })),
+            Kind::True => Expression::Constant(Box::new(Constant {
+                node: self.finish_node(start),
+                value: ConstantValue::Bool(true),
+            })),
+            Kind::False => Expression::Constant(Box::new(Constant {
+                node: self.finish_node(start),
+                value: ConstantValue::Bool(false),
+            })),
+            Kind::ImaginaryInteger => Expression::Constant(Box::new(Constant {
+                node: self.finish_node(start),
+                value: ConstantValue::Complex {
+                    real: "0".to_string(),
+                    imaginary: self.unwrap_token_value_number(&value),
+                },
+            })),
+            Kind::Bytes => {
+                let bytes_val = extract_string_inside(
+                    self.unwrap_token_value_str(&value)
+                        .strip_prefix("b")
+                        .expect("bytes literal must start with b")
+                        .to_string(),
+                )
+                .into_bytes();
+                Expression::Constant(Box::new(Constant {
+                    node: self.finish_node(start),
+                    value: ConstantValue::Bytes(bytes_val),
+                }))
+            }
+            Kind::StringLiteral => {
+                let string_val = extract_string_inside(self.unwrap_token_value_str(&value));
+                Expression::Constant(Box::new(Constant {
+                    node: self.finish_node(start),
+                    value: ConstantValue::Str(string_val),
+                }))
+            }
+            Kind::RawString => {
+                let string_val = extract_string_inside(
+                    self.unwrap_token_value_str(&value)
+                        .chars()
+                        .skip(1)
+                        .collect::<String>(),
+                );
+                Expression::Constant(Box::new(Constant {
+                    node: self.finish_node(start),
+                    value: ConstantValue::Str(string_val),
+                }))
+            }
+            Kind::RawBytes => {
+                // rb or br appear in the beginning of raw bytes
+                let bytes_val = extract_string_inside(
+                    self.unwrap_token_value_str(&value)
+                        .chars()
+                        .skip(2)
+                        .collect::<String>(),
+                )
+                .into_bytes();
+                Expression::Constant(Box::new(Constant {
+                    node: self.finish_node(start),
+                    value: ConstantValue::Bytes(bytes_val),
+                }))
+            }
+            _ => panic!("Expected atom expression"),
+        };
+        atom
+    }
+
+    pub fn unwrap_token_value_str(&self, value: &TokenValue) -> String {
+        match value {
+            TokenValue::Str(ref val) => val.to_string(),
+            _ => panic!("Expected value of token {:?} to be a string", value),
+        }
+    }
+
+    fn unwrap_token_value_number(&self, value: &TokenValue) -> String {
+        match value {
+            TokenValue::Number(ref val) => val.to_string(),
+            _ => panic!("Expected value of token {:?} to be a number", value),
         }
     }
 }
