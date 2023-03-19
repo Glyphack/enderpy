@@ -12,7 +12,7 @@ Module {
             BoolOp(
                 BoolOperation {
                     node: Node {
-                        start: 12,
+                        start: 0,
                         end: 12,
                     },
                     op: And,
@@ -29,7 +29,7 @@ Module {
                         BoolOp(
                             BoolOperation {
                                 node: Node {
-                                    start: 12,
+                                    start: 6,
                                     end: 12,
                                 },
                                 op: Or,
