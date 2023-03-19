@@ -57,6 +57,7 @@ pub enum Expression {
     Name(Box<Name>),
     BoolOp(Box<BoolOperation>),
     UnaryOp(Box<UnaryOperation>),
+    BinOp(Box<BinOp>),
 }
 
 // https://docs.python.org/3/reference/expressions.html#atom-identifiers
@@ -125,4 +126,30 @@ pub enum UnaryOperator {
     Invert,
     UAdd,
     USub,
+}
+
+// https://docs.python.org/3/library/ast.html#ast.BinOp
+#[derive(Debug)]
+pub struct BinOp {
+    pub node: Node,
+    pub op: BinaryOperator,
+    pub left: Box<Expression>,
+    pub right: Box<Expression>,
+}
+
+#[derive(Debug)]
+pub enum BinaryOperator {
+    Add,
+    Sub,
+    Mult,
+    MatMult,
+    Div,
+    Mod,
+    Pow,
+    LShift,
+    RShift,
+    BitOr,
+    BitXor,
+    BitAnd,
+    FloorDiv,
 }

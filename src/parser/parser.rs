@@ -2,14 +2,14 @@ use std::panic;
 
 use crate::lexer::lexer::Lexer;
 use crate::parser::ast::*;
-use crate::parser::operator::{is_bool_op, is_unary_op, map_binary_operator};
+use crate::parser::operator::{is_bool_op, is_unary_op, map_boolean_operator};
 use crate::parser::string::extract_string_inside;
 use crate::token::{Kind, Token, TokenValue};
 use miette::Result;
 
 use super::diagnostics;
 use super::expression::is_atom;
-use super::operator::map_unary_operator;
+use super::operator::{is_bin_op, map_binary_operator, map_unary_operator};
 
 #[derive(Debug)]
 pub struct Parser {
@@ -149,6 +149,7 @@ impl Parser {
 
     // https://docs.python.org/3/library/ast.html#expressions
     fn parse_expression(&mut self) -> Result<Expression> {
+        let node = self.start_node();
         let unary_expr = if is_unary_op(&self.cur_kind()) {
             let unary_node = self.start_node();
             let op = map_unary_operator(&self.cur_kind());
@@ -164,14 +165,13 @@ impl Parser {
         };
 
         let atom = if is_atom(&self.cur_kind()) {
-            let start = self.start_node();
             // value must be cloned to be assigned to the node
             let token_value = self.cur_token().value.clone();
             let token_kind = self.cur_kind();
             // bump needs to happen before creating the atom node
             // otherwise the end would be the same as the start
             self.bump_any();
-            let expr = Some(self.map_to_atom(start, &token_kind, token_value));
+            let expr = Some(self.map_to_atom(node, &token_kind, token_value));
             expr
         } else {
             None
@@ -190,16 +190,27 @@ impl Parser {
 
         let current_kind = self.cur_kind();
         if is_bool_op(&current_kind) {
-            let op = map_binary_operator(&current_kind);
+            let op = map_boolean_operator(&current_kind);
             self.bump_any();
             let rhs = self.parse_expression()?;
             // TODO: Check if rhs is BoolOp then we need to flatten it
             // e.g. a or b or c can be BoolOp(or, [a, b, c])
-            let node = self.start_node();
             expr = Expression::BoolOp(Box::new(BoolOperation {
                 node: self.finish_node(node),
                 op,
                 values: vec![expr, rhs],
+            }))
+        }
+
+        if is_bin_op(&current_kind) {
+            let op = map_binary_operator(&current_kind);
+            self.bump_any();
+            let rhs = self.parse_expression()?;
+            expr = Expression::BinOp(Box::new(BinOp {
+                node: self.finish_node(node),
+                op,
+                left: Box::new(expr),
+                right: Box::new(rhs),
             }))
         }
 
@@ -349,6 +360,24 @@ mod tests {
     #[test]
     fn test_parse_unary_op() {
         for test_case in &["not a", "+ a", "~ a", "-a"] {
+            let mut parser = Parser::new(test_case.to_string());
+            let program = parser.parse();
+
+            insta::with_settings!({
+                    description => test_case.to_string(), // the template source code
+                    omit_expression => true // do not include the default expression
+                }, {
+                    assert_debug_snapshot!(program);
+            });
+        }
+    }
+
+    #[test]
+    fn test_binary_op() {
+        for test_case in &[
+            "a + b", "a - b", "a * b", "a / b", "a // b", "a % b", "a ** b", "a << b", "a >> b",
+            "a & b", "a ^ b", "a | b", "a @ b",
+        ] {
             let mut parser = Parser::new(test_case.to_string());
             let program = parser.parse();
 
