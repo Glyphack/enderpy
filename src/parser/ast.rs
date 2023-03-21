@@ -58,6 +58,7 @@ pub enum Expression {
     BoolOp(Box<BoolOperation>),
     UnaryOp(Box<UnaryOperation>),
     BinOp(Box<BinOp>),
+    NamedExpr(Box<NamedExpression>),
 }
 
 // https://docs.python.org/3/reference/expressions.html#atom-identifiers
@@ -152,4 +153,12 @@ pub enum BinaryOperator {
     BitXor,
     BitAnd,
     FloorDiv,
+}
+
+// https://docs.python.org/3/library/ast.html#ast.NamedExpr
+#[derive(Debug)]
+pub struct NamedExpression {
+    pub node: Node,
+    pub target: Box<Expression>,
+    pub value: Box<Expression>,
 }

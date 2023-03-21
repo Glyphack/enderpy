@@ -23,3 +23,8 @@ pub struct UnexpectedToken(
 #[error("Unknown statement")]
 #[diagnostic()]
 pub struct UnknownStatement(pub &'static str, #[label("Unknown statement {0}")] pub Node);
+
+#[derive(Debug, Error, Diagnostic)]
+#[error("invalid syntax")]
+#[diagnostic()]
+pub struct InvalidSyntax(pub &'static str, #[label("invalid syntax {0}")] pub Node);
