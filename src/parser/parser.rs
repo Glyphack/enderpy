@@ -124,6 +124,7 @@ impl Parser {
     fn parse_statement(&mut self) -> Result<Statement> {
         let stmt = match self.cur_kind() {
             Kind::Identifier => self.parse_identifier_statement(),
+            Kind::LeftParen => self.parse_paren_statement(),
             _ => Ok(Statement::ExpressionStatement(
                 self.parse_expression().unwrap(),
             )),
@@ -147,6 +148,20 @@ impl Parser {
         return Ok(Statement::ExpressionStatement(lhs));
     }
 
+    // Parses an statement which starts with a left parenthesis
+    fn parse_paren_statement(&mut self) -> Result<Statement> {
+        let start = self.start_node();
+        self.bump(Kind::LeftParen);
+        let expr = self.parse_expression()?;
+        match expr {
+            Expression::NamedExpr(_) => {
+                self.bump(Kind::RightParen);
+                Ok(Statement::ExpressionStatement(expr))
+            }
+            _ => Err(diagnostics::InvalidSyntax("", start).into()),
+        }
+    }
+
     // https://docs.python.org/3/library/ast.html#expressions
     fn parse_expression(&mut self) -> Result<Expression> {
         let node = self.start_node();
@@ -163,6 +178,23 @@ impl Parser {
         } else {
             None
         };
+
+        if self.at(Kind::Identifier) && self.peek_kind() == Kind::Walrus {
+            let mut identifier_node = self.start_node();
+            let identifier = self.cur_token().value.to_string();
+            self.bump(Kind::Identifier);
+            identifier_node = self.finish_node(identifier_node);
+            self.bump(Kind::Walrus);
+            let value = self.parse_expression()?;
+            return Ok(Expression::NamedExpr(Box::new(NamedExpression {
+                node: self.finish_node(node),
+                target: Box::new(Expression::Name(Box::new(Name {
+                    node: identifier_node,
+                    id: identifier,
+                }))),
+                value: Box::new(value),
+            })));
+        }
 
         let atom = if is_atom(&self.cur_kind()) {
             // value must be cloned to be assigned to the node
@@ -378,6 +410,21 @@ mod tests {
             "a + b", "a - b", "a * b", "a / b", "a // b", "a % b", "a ** b", "a << b", "a >> b",
             "a & b", "a ^ b", "a | b", "a @ b",
         ] {
+            let mut parser = Parser::new(test_case.to_string());
+            let program = parser.parse();
+
+            insta::with_settings!({
+                    description => test_case.to_string(), // the template source code
+                    omit_expression => true // do not include the default expression
+                }, {
+                    assert_debug_snapshot!(program);
+            });
+        }
+    }
+
+    #[test]
+    fn test_named_expression() {
+        for test_case in &["(a := b)"] {
             let mut parser = Parser::new(test_case.to_string());
             let program = parser.parse();
 
