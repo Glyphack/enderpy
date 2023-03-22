@@ -38,6 +38,7 @@ pub fn is_bin_op(kind: &Kind) -> bool {
         Kind::Plus
         | Kind::Minus
         | Kind::Mul
+        | Kind::MatrixMul
         | Kind::MulAssign
         | Kind::Div
         | Kind::Mod
@@ -57,7 +58,7 @@ pub fn map_binary_operator(kind: &Kind) -> BinaryOperator {
         Kind::Plus => BinaryOperator::Add,
         Kind::Minus => BinaryOperator::Sub,
         Kind::Mul => BinaryOperator::Mult,
-        Kind::MulAssign => BinaryOperator::MatMult,
+        Kind::MatrixMul => BinaryOperator::MatMult,
         Kind::Div => BinaryOperator::Div,
         Kind::Mod => BinaryOperator::Mod,
         Kind::Pow => BinaryOperator::Pow,
