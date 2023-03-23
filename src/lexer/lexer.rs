@@ -1,5 +1,8 @@
 use crate::token::{Kind, Token, TokenValue};
+use miette::Result;
 use unicode_id_start::{is_id_continue, is_id_start};
+
+use super::diagnostics::SyntaxError;
 
 #[derive(Debug)]
 pub struct Lexer {
@@ -25,9 +28,9 @@ impl Lexer {
         }
     }
 
-    pub fn next_token(&mut self) -> Token {
+    pub fn next_token(&mut self) -> Result<Token> {
         let start = self.current;
-        let kind = self.next_kind();
+        let kind = self.next_kind()?;
         // Ignore whitespace
         if kind == Kind::WhiteSpace {
             return self.next_token();
@@ -35,26 +38,26 @@ impl Lexer {
         let raw_value = self.extract_raw_token_value(start);
         let value = self.parse_token_value(kind, raw_value);
         let end = self.current;
-        Token {
+        Ok(Token {
             kind,
             value,
             start,
             end,
-        }
+        })
     }
 
-    pub fn peek_token(&mut self) -> Token {
+    pub fn peek_token(&mut self) -> Result<Token> {
         let current = self.current;
         let token = self.next_token();
         self.current = current;
         token
     }
 
-    fn next_kind(&mut self) -> Kind {
+    fn next_kind(&mut self) -> Result<Kind> {
         if self.start_of_line {
             if let Some(indent_kind) = self.match_indentation() {
                 self.start_of_line = false; // WHY!?
-                return indent_kind;
+                return Ok(indent_kind);
             }
         }
 
@@ -63,190 +66,190 @@ impl Lexer {
 
             match c {
                 // Numbers
-                '0'..='9' => return self.match_numeric_literal(),
+                '0'..='9' => return Ok(self.match_numeric_literal()),
                 // Identifiers & Keywords
                 id_start @ 'a'..='z' | id_start @ 'A'..='Z' | id_start @ '_' => {
                     return self.match_id_keyword(id_start);
                 }
                 // String Literals
                 str_start @ '"' | str_start @ '\'' => {
-                    self.skip_to_str_end(str_start);
-                    return Kind::StringLiteral;
+                    self.skip_to_str_end(str_start)?;
+                    return Ok(Kind::StringLiteral);
                 }
                 // Operators
                 '+' => match self.peek() {
                     Some('=') => {
                         self.next();
-                        return Kind::AddAssign;
+                        return Ok(Kind::AddAssign);
                     }
-                    _ => return Kind::Plus,
+                    _ => return Ok(Kind::Plus),
                 },
                 '-' => match self.peek() {
                     Some('>') => {
                         self.next();
-                        return Kind::Arrow;
+                        return Ok(Kind::Arrow);
                     }
                     Some('=') => {
                         self.next();
-                        return Kind::SubAssign;
+                        return Ok(Kind::SubAssign);
                     }
-                    _ => return Kind::Minus,
+                    _ => return Ok(Kind::Minus),
                 },
                 '*' => match self.peek() {
                     Some('=') => {
                         self.next();
-                        return Kind::MulAssign;
+                        return Ok(Kind::MulAssign);
                     }
                     Some('*') => match self.double_peek() {
                         Some('=') => {
                             self.double_next();
-                            return Kind::PowAssign;
+                            return Ok(Kind::PowAssign);
                         }
                         _ => {
                             self.next();
-                            return Kind::Pow;
+                            return Ok(Kind::Pow);
                         }
                     },
-                    _ => return Kind::Mul,
+                    _ => return Ok(Kind::Mul),
                 },
                 '/' => match self.peek() {
                     Some('/') => {
                         if let Some('=') = self.double_peek() {
                             self.double_next();
-                            return Kind::IntDivAssign;
+                            return Ok(Kind::IntDivAssign);
                         }
                         self.next();
-                        return Kind::IntDiv;
+                        return Ok(Kind::IntDiv);
                     }
                     Some('=') => {
                         self.next();
-                        return Kind::DivAssign;
+                        return Ok(Kind::DivAssign);
                     }
-                    _ => return Kind::Div,
+                    _ => return Ok(Kind::Div),
                 },
                 '%' => match self.peek() {
                     Some('=') => {
                         self.next();
-                        return Kind::ModAssign;
+                        return Ok(Kind::ModAssign);
                     }
-                    _ => return Kind::Mod,
+                    _ => return Ok(Kind::Mod),
                 },
                 '@' => match self.peek() {
                     Some('=') => {
                         self.next();
-                        return Kind::MatrixMulAssign;
+                        return Ok(Kind::MatrixMulAssign);
                     }
-                    _ => return Kind::MatrixMul,
+                    _ => return Ok(Kind::MatrixMul),
                 },
                 '&' => match self.peek() {
                     Some('=') => {
                         self.next();
-                        return Kind::BitAndAssign;
+                        return Ok(Kind::BitAndAssign);
                     }
-                    _ => return Kind::BitAnd,
+                    _ => return Ok(Kind::BitAnd),
                 },
                 '|' => match self.peek() {
                     Some('=') => {
                         self.next();
-                        return Kind::BitOrAssign;
+                        return Ok(Kind::BitOrAssign);
                     }
-                    _ => return Kind::BitOr,
+                    _ => return Ok(Kind::BitOr),
                 },
                 '^' => match self.peek() {
                     Some('=') => {
                         self.next();
-                        return Kind::BitXorAssign;
+                        return Ok(Kind::BitXorAssign);
                     }
-                    _ => return Kind::BitXor,
+                    _ => return Ok(Kind::BitXor),
                 },
-                '~' => return Kind::BitNot,
+                '~' => return Ok(Kind::BitNot),
                 ':' => match self.peek() {
                     Some('=') => {
                         self.next();
-                        return Kind::Walrus;
+                        return Ok(Kind::Walrus);
                     }
-                    _ => return Kind::Colon,
+                    _ => return Ok(Kind::Colon),
                 },
                 '!' => {
                     if let Some('=') = self.peek() {
                         self.next();
-                        return Kind::NotEq;
+                        return Ok(Kind::NotEq);
                     }
                 }
                 // Delimiters
-                '(' => return Kind::LeftParen,
-                ')' => return Kind::RightParen,
-                '[' => return Kind::LeftBrace,
-                ']' => return Kind::RightBrace,
-                '{' => return Kind::LeftBracket,
-                '}' => return Kind::RightBracket,
-                ',' => return Kind::Comma,
-                '.' => return Kind::Dot,
-                ';' => return Kind::SemiColon,
+                '(' => return Ok(Kind::LeftParen),
+                ')' => return Ok(Kind::RightParen),
+                '[' => return Ok(Kind::LeftBrace),
+                ']' => return Ok(Kind::RightBrace),
+                '{' => return Ok(Kind::LeftBracket),
+                '}' => return Ok(Kind::RightBracket),
+                ',' => return Ok(Kind::Comma),
+                '.' => return Ok(Kind::Dot),
+                ';' => return Ok(Kind::SemiColon),
                 '=' => match self.peek() {
                     Some('=') => {
                         self.next();
-                        return Kind::Eq;
+                        return Ok(Kind::Eq);
                     }
-                    _ => return Kind::Assign,
+                    _ => return Ok(Kind::Assign),
                 },
-                '#' => return Kind::Sharp,
-                '\\' => return Kind::BackSlash,
-                '$' => return Kind::Dollar,
-                '?' => return Kind::QuestionMark,
-                '`' => return Kind::BackTick,
+                '#' => return Ok(Kind::Sharp),
+                '\\' => return Ok(Kind::BackSlash),
+                '$' => return Ok(Kind::Dollar),
+                '?' => return Ok(Kind::QuestionMark),
+                '`' => return Ok(Kind::BackTick),
                 '<' => match self.peek() {
                     Some('<') => match self.double_peek() {
                         Some('=') => {
                             self.double_next();
-                            return Kind::ShiftLeftAssign;
+                            return Ok(Kind::ShiftLeftAssign);
                         }
                         _ => {
                             self.next();
-                            return Kind::LeftShift;
+                            return Ok(Kind::LeftShift);
                         }
                     },
                     Some('=') => {
                         self.next();
-                        return Kind::LessEq;
+                        return Ok(Kind::LessEq);
                     }
-                    _ => return Kind::Less,
+                    _ => return Ok(Kind::Less),
                 },
                 '>' => match self.peek() {
                     Some('>') => match self.double_peek() {
                         Some('=') => {
                             self.double_next();
-                            return Kind::ShiftRightAssign;
+                            return Ok(Kind::ShiftRightAssign);
                         }
                         _ => {
                             self.next();
-                            return Kind::RightShift;
+                            return Ok(Kind::RightShift);
                         }
                     },
                     Some('=') => {
                         self.next();
-                        return Kind::GreaterEq;
+                        return Ok(Kind::GreaterEq);
                     }
-                    _ => return Kind::Greater,
+                    _ => return Ok(Kind::Greater),
                 },
                 '\n' | '\r' => {
                     self.start_of_line = true;
-                    return Kind::NewLine;
+                    return Ok(Kind::NewLine);
                 }
-                c if match_whitespace(c) => return Kind::WhiteSpace,
+                c if match_whitespace(c) => return Ok(Kind::WhiteSpace),
                 _ => {}
             }
         }
 
-        Kind::Eof
+        Ok(Kind::Eof)
     }
 
-    fn match_id_keyword(&mut self, id_start: char) -> Kind {
-        if let Some(str_kind) = self.match_str(id_start) {
-            return str_kind;
+    fn match_id_keyword(&mut self, id_start: char) -> Result<Kind> {
+        if let Some(str_kind) = self.match_str(id_start)? {
+            return Ok(str_kind);
         }
         let id = self.extract_id(id_start);
-        self.match_keyword(&id)
+        Ok(self.match_keyword(&id))
     }
 
     fn extract_id(&mut self, id_start: char) -> String {
@@ -273,30 +276,30 @@ impl Lexer {
         id
     }
 
-    fn match_str(&mut self, id_start: char) -> Option<Kind> {
+    fn match_str(&mut self, id_start: char) -> Result<Option<Kind>> {
         match id_start {
             'r' | 'R' => match self.peek() {
                 // check if is start of string
                 Some('b') | Some('B') => match self.double_peek() {
                     Some(str_start @ '"') | Some(str_start @ '\'') => {
                         self.double_next();
-                        self.skip_to_str_end(str_start);
-                        return Some(Kind::RawBytes);
+                        self.skip_to_str_end(str_start)?;
+                        return Ok(Some(Kind::RawBytes));
                     }
                     _ => {}
                 },
                 Some('f') | Some('F') => match self.double_peek() {
                     Some(str_start @ '"') | Some(str_start @ '\'') => {
                         self.double_next();
-                        self.skip_to_str_end(str_start);
-                        return Some(Kind::RawFString);
+                        self.skip_to_str_end(str_start)?;
+                        return Ok(Some(Kind::RawFString));
                     }
                     _ => {}
                 },
                 Some(str_start @ '"') | Some(str_start @ '\'') => {
                     self.next();
-                    self.skip_to_str_end(str_start);
-                    return Some(Kind::RawString);
+                    self.skip_to_str_end(str_start)?;
+                    return Ok(Some(Kind::RawString));
                 }
                 _ => {}
             },
@@ -304,15 +307,15 @@ impl Lexer {
                 Some('r') | Some('R') => match self.double_peek() {
                     Some(str_start @ '"') | Some(str_start @ '\'') => {
                         self.double_next();
-                        self.skip_to_str_end(str_start);
-                        return Some(Kind::RawBytes);
+                        self.skip_to_str_end(str_start)?;
+                        return Ok(Some(Kind::RawBytes));
                     }
                     _ => {}
                 },
                 Some(str_start @ '"') | Some(str_start @ '\'') => {
                     self.next();
-                    self.skip_to_str_end(str_start);
-                    return Some(Kind::Bytes);
+                    self.skip_to_str_end(str_start)?;
+                    return Ok(Some(Kind::Bytes));
                 }
                 _ => {}
             },
@@ -320,29 +323,29 @@ impl Lexer {
                 Some('r') | Some('R') => match self.double_peek() {
                     Some(str_start @ '"') | Some(str_start @ '\'') => {
                         self.double_next();
-                        self.skip_to_str_end(str_start);
-                        return Some(Kind::RawFString);
+                        self.skip_to_str_end(str_start)?;
+                        return Ok(Some(Kind::RawFString));
                     }
                     _ => {}
                 },
                 Some(str_start @ '"') | Some(str_start @ '\'') => {
                     self.next();
-                    self.skip_to_str_end(str_start);
-                    return Some(Kind::FString);
+                    self.skip_to_str_end(str_start)?;
+                    return Ok(Some(Kind::FString));
                 }
                 _ => {}
             },
             'u' | 'U' => match self.peek() {
                 Some(str_start @ '"') | Some(str_start @ '\'') => {
                     self.next();
-                    self.skip_to_str_end(str_start);
-                    return Some(Kind::Unicode);
+                    self.skip_to_str_end(str_start)?;
+                    return Ok(Some(Kind::Unicode));
                 }
                 _ => {}
             },
             _ => {}
         };
-        None
+        Ok(None)
     }
 
     fn extract_raw_token_value(&mut self, start: usize) -> String {
@@ -411,7 +414,7 @@ impl Lexer {
         }
     }
 
-    fn skip_to_str_end(&mut self, str_start: char) {
+    fn skip_to_str_end(&mut self, str_start: char) -> Result<()> {
         // Check if string starts with triple quotes
         let mut string_terminated = false;
         let mut last_read_char = str_start;
@@ -441,7 +444,9 @@ impl Lexer {
         }
 
         if !string_terminated {
-            panic!("String not terminated");
+            Err(SyntaxError("String not terminated").into())
+        } else {
+            Ok(())
         }
     }
 
@@ -681,13 +686,14 @@ mod tests {
     use super::Kind;
     use super::Lexer;
     use insta::assert_debug_snapshot;
+    use miette::Result;
 
-    fn snapshot_test_lexer(snap_name: &str, inputs: &[&str]) {
+    fn snapshot_test_lexer(snap_name: &str, inputs: &[&str]) -> Result<()> {
         for (i, test_input) in inputs.iter().enumerate() {
             let mut lexer = Lexer::new(test_input);
             let mut tokens = vec![];
             loop {
-                let token = lexer.next_token();
+                let token = lexer.next_token()?;
                 if token.kind == Kind::Eof {
                     break;
                 }
@@ -701,6 +707,7 @@ mod tests {
                     assert_debug_snapshot!(snap_file_name, tokens);
             });
         }
+        Ok(())
     }
 
     #[test]
@@ -767,7 +774,8 @@ mod tests {
                 "==",
                 "!=",
             ],
-        );
+        )
+        .unwrap();
 
         // keywords
         snapshot_test_lexer(
@@ -778,15 +786,17 @@ mod tests {
                 "finally for from global if import in is lambda",
                 "nonlocal not or pass raise return try while with yield",
             ],
-        );
+        )
+        .unwrap();
 
         // Test identifiers
         snapshot_test_lexer(
             "identifiers",
             &["a", "a_a", "_a", "a_", "a_a_a", "a_a_", "ಠ_ಠ"],
-        );
+        )
+        .unwrap();
         // Invalid identifiers
-        snapshot_test_lexer("invalid-identifiers", &["🦀"]);
+        snapshot_test_lexer("invalid-identifiers", &["🦀"]).unwrap();
 
         // Test numeric literals
         // Binary
@@ -795,13 +805,15 @@ mod tests {
             &[
                 "0b0", "0b1", "0b10", "0b11", "0b100", "0b101", "0b110", "0b111",
             ],
-        );
+        )
+        .unwrap();
 
         // Octal
         snapshot_test_lexer(
             "numeric-octal",
             &["0o0", "0o1", "0o2", "0o3", "0o4", "0o5", "0o6", "0o7"],
-        );
+        )
+        .unwrap();
 
         // Hexadecimal
         snapshot_test_lexer(
@@ -810,16 +822,17 @@ mod tests {
                 "0x0", "0x1", "0x2", "0x3", "0x4", "0x5", "0x6", "0x7", "0x8", "0x9", "0xa", "0xb",
                 "0xc", "0xd", "0xe", "0xf", "0xA", "0xB", "0xC", "0xD", "0xE", "0xF",
             ],
-        );
+        )
+        .unwrap();
         //
         // Point float
-        snapshot_test_lexer("numeric-floating-point", &["0.0 0.1 00.0 00.1 0.1j 0.01J"]);
+        snapshot_test_lexer("numeric-floating-point", &["0.0 0.1 00.0 00.1 0.1j 0.01J"]).unwrap();
 
         // Exponent float
-        snapshot_test_lexer("numeric-floating-exponent", &["0e0 0e-1 0e+2 0e+3j 0e+3J"]);
+        snapshot_test_lexer("numeric-floating-exponent", &["0e0 0e-1 0e+2 0e+3j 0e+3J"]).unwrap();
 
         // Integer
-        snapshot_test_lexer("numeric-integer", &["11 33 1j 1_000_000j"]);
+        snapshot_test_lexer("numeric-integer", &["11 33 1j 1_000_000j"]).unwrap();
 
         // Strings
         snapshot_test_lexer(
@@ -833,7 +846,8 @@ mod tests {
                 "\"\"\"hello\"\"\"",
                 "'''hello'''",
             ],
-        );
+        )
+        .unwrap();
         // F-strings
         snapshot_test_lexer(
             "f-string-literals",
@@ -846,7 +860,8 @@ mod tests {
                 "f\"\"\"hello\"\"\"",
                 "f'''hello'''",
             ],
-        );
+        )
+        .unwrap();
 
         // Bytes
         snapshot_test_lexer(
@@ -860,7 +875,8 @@ mod tests {
                 "b\"\"\"hello\"\"\"",
                 "b'''hello'''",
             ],
-        );
+        )
+        .unwrap();
 
         // Raw strings
         snapshot_test_lexer(
@@ -874,7 +890,8 @@ mod tests {
                 "r\"\"\"hello\"\"\"",
                 "r'''hello'''",
             ],
-        );
+        )
+        .unwrap();
 
         // Raw F-strings
         snapshot_test_lexer(
@@ -888,7 +905,8 @@ mod tests {
                 "rf\"\"\"hello\"\"\"",
                 "rf'''hello'''",
             ],
-        );
+        )
+        .unwrap();
 
         // Raw bytes
         snapshot_test_lexer(
@@ -902,7 +920,8 @@ mod tests {
                 "rb\"\"\"hello\"\"\"",
                 "rb'''hello'''",
             ],
-        );
+        )
+        .unwrap();
 
         // Unicode strings
         snapshot_test_lexer(
@@ -916,12 +935,14 @@ mod tests {
                 "u\"\"\"hello\"\"\"",
                 "u'''hello'''",
             ],
-        );
+        )
+        .unwrap();
 
         snapshot_test_lexer(
             "import",
             &["import a", "import a.b", "import a.b.c", "import a from b"],
-        );
+        )
+        .unwrap();
     }
 
     #[test]
@@ -941,33 +962,34 @@ else:
         pass
 def",
             ],
-        );
+        )
+        .unwrap();
     }
 
     #[test]
     #[should_panic]
     fn test_unterminated_string_double_quotes() {
         let mut lexer = Lexer::new("\"hello");
-        lexer.next_token();
+        lexer.next_token().unwrap();
     }
 
     #[test]
     #[should_panic]
     fn test_unterminated_string_single_quotes() {
         let mut lexer = Lexer::new("'hello");
-        lexer.next_token();
+        lexer.next_token().unwrap();
     }
     #[test]
     #[should_panic]
     fn test_unterminated_string_triple_single_quotes() {
         let mut lexer = Lexer::new("'''hello''");
-        lexer.next_token();
+        lexer.next_token().unwrap();
     }
     #[test]
     #[should_panic]
     fn test_unterminated_string_triple_single_quotes_2() {
         let mut lexer = Lexer::new("'''hello'");
-        lexer.next_token();
+        lexer.next_token().unwrap();
     }
 
     #[test]
@@ -979,7 +1001,7 @@ def",
     pass",
         );
         loop {
-            let token = lexer.next_token();
+            let token = lexer.next_token().unwrap();
             if token.kind == Kind::Eof {
                 break;
             }
