@@ -22,7 +22,7 @@ pub struct Parser {
 impl Parser {
     pub fn new(source: String) -> Self {
         let mut lexer = Lexer::new(&source);
-        let cur_token = lexer.next_token();
+        let cur_token = lexer.next_token().unwrap();
         let prev_token_end = 0;
 
         Self {
@@ -68,12 +68,13 @@ impl Parser {
         self.cur_token.kind
     }
 
-    fn peek_token(&mut self) -> Token {
+    fn peek_token(&mut self) -> Result<Token> {
         self.lexer.peek_token()
     }
 
-    fn peek_kind(&mut self) -> Kind {
-        self.lexer.peek_token().kind
+    fn peek_kind(&mut self) -> Result<Kind> {
+        let token = self.lexer.peek_token()?;
+        Ok(token.kind)
     }
 
     /// Checks if the current index has token `Kind`
@@ -105,8 +106,16 @@ impl Parser {
     /// Move to the next token
     fn advance(&mut self) {
         let token = self.lexer.next_token();
-        self.prev_token_end = self.cur_token.end;
-        self.cur_token = token;
+        match token {
+            Err(err) => {
+                println!("Error: {:?}", err);
+                self.bump_any();
+            }
+            Ok(token) => {
+                self.prev_token_end = self.cur_token.end;
+                self.cur_token = token;
+            }
+        }
     }
 
     /// Expect a `Kind` or return error
@@ -179,7 +188,7 @@ impl Parser {
             None
         };
 
-        if self.at(Kind::Identifier) && self.peek_kind() == Kind::Walrus {
+        if self.at(Kind::Identifier) && matches!(self.peek_kind(), Ok(Kind::Walrus)) {
             let mut identifier_node = self.start_node();
             let identifier = self.cur_token().value.to_string();
             self.bump(Kind::Identifier);
