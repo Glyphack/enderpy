@@ -55,6 +55,7 @@ pub enum Expression {
     List(Box<List>),
     Tuple(Box<Tuple>),
     Dict(Box<Dict>),
+    Set(Box<Set>),
     Name(Box<Name>),
     BoolOp(Box<BoolOperation>),
     UnaryOp(Box<UnaryOperation>),
@@ -105,6 +106,12 @@ pub struct Dict {
     pub node: Node,
     pub keys: Vec<Expression>,
     pub values: Vec<Expression>,
+}
+
+#[derive(Debug)]
+pub struct Set {
+    pub node: Node,
+    pub elements: Vec<Expression>,
 }
 
 // https://docs.python.org/3/library/ast.html#ast.BoolOp

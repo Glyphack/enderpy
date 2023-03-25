@@ -160,7 +160,7 @@ impl Parser {
             return self.parse_list();
         }
         if self.at(Kind::LeftBracket) {
-            return self.parse_dict();
+            return self.parse_dict_or_set();
         }
         if self.at(Kind::LeftParen) {
             return self.parse_tuple_or_named_expr();
@@ -327,7 +327,7 @@ impl Parser {
 
     fn parse_list(&mut self) -> Result<Expression> {
         let node = self.start_node();
-        self.bump_any();
+        self.bump(Kind::LeftBrace);
         let mut elements = vec![];
         while !self.eat(Kind::RightBrace) {
             let expr = self.parse_expression()?;
@@ -342,7 +342,7 @@ impl Parser {
 
     fn parse_tuple_or_named_expr(&mut self) -> Result<Expression> {
         let node = self.start_node();
-        self.bump_any();
+        self.bump(Kind::LeftParen);
         let mut elements = vec![];
         while !self.eat(Kind::RightParen) {
             let expr = self.parse_expression()?;
@@ -367,9 +367,37 @@ impl Parser {
         })))
     }
 
-    fn parse_dict(&mut self) -> Result<Expression> {
+    fn parse_dict_or_set(&mut self) -> Result<Expression> {
         let node = self.start_node();
-        self.bump_any();
+        self.bump(Kind::LeftBracket);
+        if matches!(self.peek_kind(), Ok(Kind::Comma)) {
+            self.parse_set(node)
+        } else {
+            self.parse_dict(node)
+        }
+    }
+
+    fn parse_set(&mut self, node: Node) -> Result<Expression> {
+        let mut elements = vec![];
+        while !self.eat(Kind::RightBracket) {
+            let expr = self.parse_expression()?;
+            elements.push(expr);
+            if !self.eat(Kind::Comma) && !self.at(Kind::RightBracket) {
+                return Err(diagnostics::ExpectToken(
+                    Kind::Comma.to_str(),
+                    self.cur_kind().to_str(),
+                    self.finish_node(node),
+                )
+                .into());
+            }
+        }
+        Ok(Expression::Set(Box::new(Set {
+            node: self.finish_node(node),
+            elements,
+        })))
+    }
+
+    fn parse_dict(&mut self, node: Node) -> Result<Expression> {
         let mut keys = vec![];
         let mut values = vec![];
         while !self.eat(Kind::RightBracket) {
@@ -523,6 +551,21 @@ mod tests {
     #[test]
     fn test_dict() {
         for test_case in &["{a: b, c: d}"] {
+            let mut parser = Parser::new(test_case.to_string());
+            let program = parser.parse();
+
+            insta::with_settings!({
+                    description => test_case.to_string(), // the template source code
+                    omit_expression => true // do not include the default expression
+                }, {
+                    assert_debug_snapshot!(program);
+            });
+        }
+    }
+
+    #[test]
+    fn parse_set() {
+        for test_case in &["{a, b, c}"] {
             let mut parser = Parser::new(test_case.to_string());
             let program = parser.parse();
 
