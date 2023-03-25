@@ -121,7 +121,7 @@ impl Parser {
     /// Expect a `Kind` or return error
     pub fn expect(&mut self, kind: Kind) -> Result<()> {
         if !self.at(kind) {
-            let range = self.start_node();
+            let range = self.finish_node(self.start_node());
             return Err(
                 diagnostics::ExpectToken(kind.to_str(), self.cur_kind().to_str(), range).into(),
             );
@@ -133,10 +133,7 @@ impl Parser {
     fn parse_statement(&mut self) -> Result<Statement> {
         let stmt = match self.cur_kind() {
             Kind::Identifier => self.parse_identifier_statement(),
-            Kind::LeftParen => self.parse_paren_statement(),
-            _ => Ok(Statement::ExpressionStatement(
-                self.parse_expression().unwrap(),
-            )),
+            _ => Ok(Statement::ExpressionStatement(self.parse_expression()?)),
         };
 
         stmt
@@ -145,7 +142,7 @@ impl Parser {
     // Parses an statement which starts with an identifier
     fn parse_identifier_statement(&mut self) -> Result<Statement> {
         let start = self.start_node();
-        let lhs = self.parse_expression().unwrap();
+        let lhs = self.parse_expression()?;
         if self.eat(Kind::Assign) {
             let rhs = self.parse_expression()?;
             return Ok(Statement::AssignStatement(Assign {
@@ -157,22 +154,17 @@ impl Parser {
         return Ok(Statement::ExpressionStatement(lhs));
     }
 
-    // Parses an statement which starts with a left parenthesis
-    fn parse_paren_statement(&mut self) -> Result<Statement> {
-        let start = self.start_node();
-        self.bump(Kind::LeftParen);
-        let expr = self.parse_expression()?;
-        match expr {
-            Expression::NamedExpr(_) => {
-                self.bump(Kind::RightParen);
-                Ok(Statement::ExpressionStatement(expr))
-            }
-            _ => Err(diagnostics::InvalidSyntax("", start).into()),
-        }
-    }
-
     // https://docs.python.org/3/library/ast.html#expressions
     fn parse_expression(&mut self) -> Result<Expression> {
+        if self.at(Kind::LeftBrace) {
+            return self.parse_list();
+        }
+        if self.at(Kind::LeftBracket) {
+            return self.parse_dict_or_set();
+        }
+        if self.at(Kind::LeftParen) {
+            return self.parse_tuple_or_named_expr();
+        }
         let node = self.start_node();
         let unary_expr = if is_unary_op(&self.cur_kind()) {
             let unary_node = self.start_node();
@@ -224,9 +216,11 @@ impl Parser {
         } else if let Some(unary_expr) = unary_expr {
             unary_expr
         } else {
-            return Err(
-                diagnostics::UnexpectedToken(self.cur_kind().to_str(), self.start_node()).into(),
-            );
+            return Err(diagnostics::UnexpectedToken(
+                self.cur_kind().to_str(),
+                self.finish_node(self.start_node()),
+            )
+            .into());
         };
 
         let current_kind = self.cur_kind();
@@ -255,25 +249,6 @@ impl Parser {
             }))
         }
 
-        while self.eat(Kind::Comma) {
-            let node = self.start_node();
-            let next_elm = self.parse_expression();
-            match next_elm {
-                Ok(next_elm) => {
-                    self.bump_any();
-                    expr = Expression::Tuple(Box::new(Tuple {
-                        node: self.finish_node(node),
-                        elements: vec![expr, next_elm],
-                    }));
-                }
-                Err(_) => {
-                    expr = Expression::Tuple(Box::new(Tuple {
-                        node: self.finish_node(node),
-                        elements: vec![expr],
-                    }))
-                }
-            }
-        }
         Ok(expr)
     }
 
@@ -348,6 +323,103 @@ impl Parser {
             _ => panic!("Expected atom expression"),
         };
         atom
+    }
+
+    fn parse_list(&mut self) -> Result<Expression> {
+        let node = self.start_node();
+        self.bump(Kind::LeftBrace);
+        let mut elements = vec![];
+        while !self.eat(Kind::RightBrace) {
+            let expr = self.parse_expression()?;
+            elements.push(expr);
+            self.eat(Kind::Comma);
+        }
+        Ok(Expression::List(Box::new(List {
+            node: self.finish_node(node),
+            elements,
+        })))
+    }
+
+    fn parse_tuple_or_named_expr(&mut self) -> Result<Expression> {
+        let node = self.start_node();
+        self.bump(Kind::LeftParen);
+        let mut elements = vec![];
+        while !self.eat(Kind::RightParen) {
+            let expr = self.parse_expression()?;
+            if let Expression::NamedExpr(_) = expr {
+                self.bump(Kind::RightParen);
+                return Ok(expr);
+            }
+
+            elements.push(expr);
+            if !self.eat(Kind::Comma) && !self.at(Kind::RightParen) {
+                return Err(diagnostics::ExpectToken(
+                    Kind::Comma.to_str(),
+                    self.cur_kind().to_str(),
+                    self.finish_node(node),
+                )
+                .into());
+            }
+        }
+        Ok(Expression::Tuple(Box::new(Tuple {
+            node: self.finish_node(node),
+            elements,
+        })))
+    }
+
+    fn parse_dict_or_set(&mut self) -> Result<Expression> {
+        let node = self.start_node();
+        self.bump(Kind::LeftBracket);
+        if matches!(self.peek_kind(), Ok(Kind::Comma)) {
+            self.parse_set(node)
+        } else {
+            self.parse_dict(node)
+        }
+    }
+
+    fn parse_set(&mut self, node: Node) -> Result<Expression> {
+        let mut elements = vec![];
+        while !self.eat(Kind::RightBracket) {
+            let expr = self.parse_expression()?;
+            elements.push(expr);
+            if !self.eat(Kind::Comma) && !self.at(Kind::RightBracket) {
+                return Err(diagnostics::ExpectToken(
+                    Kind::Comma.to_str(),
+                    self.cur_kind().to_str(),
+                    self.finish_node(node),
+                )
+                .into());
+            }
+        }
+        Ok(Expression::Set(Box::new(Set {
+            node: self.finish_node(node),
+            elements,
+        })))
+    }
+
+    fn parse_dict(&mut self, node: Node) -> Result<Expression> {
+        let mut keys = vec![];
+        let mut values = vec![];
+        while !self.eat(Kind::RightBracket) {
+            let key = self.parse_expression()?;
+            self.expect(Kind::Colon)?;
+            let value = self.parse_expression()?;
+            keys.push(key);
+            values.push(value);
+            if !self.eat(Kind::Comma) && !self.at(Kind::RightBracket) {
+                return Err(diagnostics::ExpectToken(
+                    Kind::Comma.to_str(),
+                    self.cur_kind().to_str(),
+                    node,
+                )
+                .into());
+            }
+        }
+        Ok(Expression::Dict(Box::new(Dict {
+            node: self.finish_node(node),
+            keys,
+            values,
+        })))
     }
 }
 
@@ -434,6 +506,66 @@ mod tests {
     #[test]
     fn test_named_expression() {
         for test_case in &["(a := b)"] {
+            let mut parser = Parser::new(test_case.to_string());
+            let program = parser.parse();
+
+            insta::with_settings!({
+                    description => test_case.to_string(), // the template source code
+                    omit_expression => true // do not include the default expression
+                }, {
+                    assert_debug_snapshot!(program);
+            });
+        }
+    }
+
+    #[test]
+    fn test_list() {
+        for test_case in &["[a, b, c]"] {
+            let mut parser = Parser::new(test_case.to_string());
+            let program = parser.parse();
+
+            insta::with_settings!({
+                    description => test_case.to_string(), // the template source code
+                    omit_expression => true // do not include the default expression
+                }, {
+                    assert_debug_snapshot!(program);
+            });
+        }
+    }
+
+    #[test]
+    fn test_tuple() {
+        for test_case in &["(a, b, c)"] {
+            let mut parser = Parser::new(test_case.to_string());
+            let program = parser.parse();
+
+            insta::with_settings!({
+                    description => test_case.to_string(), // the template source code
+                    omit_expression => true // do not include the default expression
+                }, {
+                    assert_debug_snapshot!(program);
+            });
+        }
+    }
+
+    #[test]
+    fn test_dict() {
+        for test_case in &["{a: b, c: d}"] {
+            let mut parser = Parser::new(test_case.to_string());
+            let program = parser.parse();
+
+            insta::with_settings!({
+                    description => test_case.to_string(), // the template source code
+                    omit_expression => true // do not include the default expression
+                }, {
+                    assert_debug_snapshot!(program);
+            });
+        }
+    }
+
+    #[test]
+    fn parse_set() {
+        for test_case in &["{a, b, c}"] {
             let mut parser = Parser::new(test_case.to_string());
             let program = parser.parse();
 
