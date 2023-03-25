@@ -1,3 +1,4 @@
+use crate::parser::ast::Expression;
 use crate::token::Kind;
 
 pub fn is_atom(kind: &Kind) -> bool {
@@ -21,6 +22,28 @@ pub fn is_atom(kind: &Kind) -> bool {
         | Kind::ImaginaryPointFloat
         | Kind::ImaginaryExponentFloat
         | Kind::None => true,
+        _ => false,
+    }
+}
+
+// https://docs.python.org/3/reference/expressions.html#primaries
+pub fn is_primary(expr: &Expression) -> bool {
+    match expr {
+        Expression::Name(_)
+        | Expression::Constant(_)
+        | Expression::List(_)
+        | Expression::Tuple(_)
+        | Expression::Dict(_)
+        | Expression::Set(_)
+        | Expression::Yield(_)
+        | Expression::Generator(_)
+        | Expression::ListComp(_)
+        | Expression::SetComp(_)
+        | Expression::DictComp(_)
+        | Expression::Attribute(_)
+        | Expression::Subscript(_)
+        | Expression::Slice(_)
+        | Expression::Call(_) => true,
         _ => false,
     }
 }
