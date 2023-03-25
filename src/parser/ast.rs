@@ -63,6 +63,7 @@ pub enum Expression {
     NamedExpr(Box<NamedExpression>),
     Yield(Box<Yield>),
     YieldFrom(Box<YieldFrom>),
+    Starred(Box<Starred>),
 }
 
 // https://docs.python.org/3/reference/expressions.html#atom-identifiers
@@ -192,4 +193,11 @@ pub struct Yield {
 pub struct YieldFrom {
     pub node: Node,
     pub value: Box<Expression>,
+}
+
+// https://docs.python.org/3/library/ast.html#ast.Starred
+#[derive(Debug)]
+pub struct Starred {
+    pub node: Node,
+    pub value: Expression,
 }
