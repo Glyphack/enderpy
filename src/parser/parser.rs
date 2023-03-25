@@ -166,6 +166,28 @@ impl Parser {
             return self.parse_tuple_or_named_expr();
         }
         let node = self.start_node();
+
+        if self.at(Kind::Yield) {
+            let yield_node = self.start_node();
+            self.bump(Kind::Yield);
+            if self.at(Kind::From) {
+                self.bump(Kind::From);
+                let value = self.parse_expression()?;
+                return Ok(Expression::YieldFrom(Box::new(YieldFrom {
+                    node: self.finish_node(yield_node),
+                    value: Box::new(value),
+                })));
+            }
+            let value = match self.parse_expression() {
+                Ok(expr) => Some(Box::new(expr)),
+                _ => None,
+            };
+            return Ok(Expression::Yield(Box::new(Yield {
+                node: self.finish_node(yield_node),
+                value,
+            })));
+        }
+
         let unary_expr = if is_unary_op(&self.cur_kind()) {
             let unary_node = self.start_node();
             let op = map_unary_operator(&self.cur_kind());
@@ -562,10 +584,24 @@ mod tests {
             });
         }
     }
-
     #[test]
     fn parse_set() {
         for test_case in &["{a, b, c}"] {
+            let mut parser = Parser::new(test_case.to_string());
+            let program = parser.parse();
+
+            insta::with_settings!({
+                    description => test_case.to_string(), // the template source code
+                    omit_expression => true // do not include the default expression
+                }, {
+                    assert_debug_snapshot!(program);
+            });
+        }
+    }
+
+    #[test]
+    fn test_yield_expression() {
+        for test_case in &["yield", "yield a", "yield from a"] {
             let mut parser = Parser::new(test_case.to_string());
             let program = parser.parse();
 

@@ -61,6 +61,8 @@ pub enum Expression {
     UnaryOp(Box<UnaryOperation>),
     BinOp(Box<BinOp>),
     NamedExpr(Box<NamedExpression>),
+    Yield(Box<Yield>),
+    YieldFrom(Box<YieldFrom>),
 }
 
 // https://docs.python.org/3/reference/expressions.html#atom-identifiers
@@ -175,5 +177,19 @@ pub enum BinaryOperator {
 pub struct NamedExpression {
     pub node: Node,
     pub target: Box<Expression>,
+    pub value: Box<Expression>,
+}
+
+// https://docs.python.org/3/library/ast.html#ast.Yield
+#[derive(Debug)]
+pub struct Yield {
+    pub node: Node,
+    pub value: Option<Box<Expression>>,
+}
+
+// https://docs.python.org/3/library/ast.html#ast.YieldFrom
+#[derive(Debug)]
+pub struct YieldFrom {
+    pub node: Node,
     pub value: Box<Expression>,
 }
