@@ -64,6 +64,15 @@ pub enum Expression {
     Yield(Box<Yield>),
     YieldFrom(Box<YieldFrom>),
     Starred(Box<Starred>),
+    Generator(Box<Generator>),
+    ListComp(Box<ListComp>),
+    SetComp(Box<SetComp>),
+    DictComp(Box<DictComp>),
+    Attribute(Box<Attribute>),
+    Subscript(Box<Subscript>),
+    Slice(Box<Slice>),
+    Call(Box<Call>),
+    Await(Box<Await>),
 }
 
 // https://docs.python.org/3/reference/expressions.html#atom-identifiers
@@ -200,4 +209,100 @@ pub struct YieldFrom {
 pub struct Starred {
     pub node: Node,
     pub value: Expression,
+}
+
+#[derive(Debug)]
+pub struct Generator {
+    pub node: Node,
+    pub element: Box<Expression>,
+}
+
+#[derive(Debug)]
+pub struct ListComp {
+    pub node: Node,
+    pub element: Box<Expression>,
+    pub generators: Vec<Comprehension>,
+}
+
+#[derive(Debug)]
+pub struct SetComp {
+    pub node: Node,
+    pub element: Box<Expression>,
+    pub generators: Vec<Comprehension>,
+}
+
+#[derive(Debug)]
+pub struct DictComp {
+    pub node: Node,
+    pub key: Box<Expression>,
+    pub value: Box<Expression>,
+    pub generators: Vec<Comprehension>,
+}
+
+#[derive(Debug)]
+pub struct Comprehension {
+    pub node: Node,
+    pub target: Box<Expression>,
+    pub iter: Box<Expression>,
+    pub ifs: Vec<Expression>,
+}
+
+// https://docs.python.org/3/library/ast.html#ast.Attribute
+#[derive(Debug)]
+pub struct Attribute {
+    pub node: Node,
+    pub value: Box<Expression>,
+    pub attr: String,
+}
+
+// https://docs.python.org/3/library/ast.html#ast.Subscript
+#[derive(Debug)]
+pub struct Subscript {
+    pub node: Node,
+    pub value: Box<Expression>,
+    pub slice: Box<SubscriptSlice>,
+}
+
+#[derive(Debug)]
+pub enum SubscriptSlice {
+    Index(Box<Expression>),
+    Slice(Box<Slice>),
+    ExtSlice(Box<ExtSlice>),
+}
+
+#[derive(Debug)]
+pub struct Slice {
+    pub node: Node,
+    pub lower: Option<Box<Expression>>,
+    pub upper: Option<Box<Expression>>,
+    pub step: Option<Box<Expression>>,
+}
+
+#[derive(Debug)]
+pub struct ExtSlice {
+    pub node: Node,
+    pub dims: Vec<Expression>,
+}
+
+// https://docs.python.org/3/library/ast.html#ast.Call
+#[derive(Debug)]
+pub struct Call {
+    pub node: Node,
+    pub func: Box<Expression>,
+    pub args: Vec<Expression>,
+    pub keywords: Vec<Keyword>,
+}
+
+#[derive(Debug)]
+pub struct Keyword {
+    pub node: Node,
+    pub arg: String,
+    pub value: Box<Expression>,
+}
+
+// https://docs.python.org/3/library/ast.html#ast.Await
+#[derive(Debug)]
+pub struct Await {
+    pub node: Node,
+    pub value: Box<Expression>,
 }
