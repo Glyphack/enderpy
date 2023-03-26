@@ -8,7 +8,7 @@ use crate::token::{Kind, Token, TokenValue};
 use miette::Result;
 
 use super::diagnostics;
-use super::expression::{is_atom, is_primary};
+use super::expression::{is_atom, is_iterable, is_primary};
 use super::operator::{is_bin_op, map_binary_operator, map_unary_operator};
 
 #[derive(Debug)]
@@ -17,6 +17,12 @@ pub struct Parser {
     lexer: Lexer,
     cur_token: Token,
     prev_token_end: usize,
+    // This var keeps track of how many levels deep we are in a list, tuple or set
+    // expression. This is used to determine if we should parse comma separated
+    // expressions as tuple or not.
+    // This is incremented when we see an opening bracket and decremented when we
+    // see a closing bracket.
+    nested_expression_list: usize,
 }
 
 impl Parser {
@@ -30,6 +36,7 @@ impl Parser {
             lexer,
             cur_token,
             prev_token_end,
+            nested_expression_list: 0,
         }
     }
 
@@ -157,13 +164,25 @@ impl Parser {
     // https://docs.python.org/3/library/ast.html#expressions
     fn parse_expression(&mut self) -> Result<Expression> {
         if self.at(Kind::LeftBrace) {
-            return self.parse_list();
+            self.nested_expression_list += 1;
+            let list_expr = self.parse_list();
+            self.nested_expression_list -= 1;
+            return list_expr;
         }
         if self.at(Kind::LeftBracket) {
-            return self.parse_dict_or_set();
+            self.nested_expression_list += 1;
+            let dict_or_set_expr = self.parse_dict_or_set();
+            self.nested_expression_list -= 1;
+            return dict_or_set_expr;
         }
         if self.at(Kind::LeftParen) {
-            return self.parse_tuple_or_named_expr();
+            self.nested_expression_list += 1;
+            let tuple_or_named_expr = self.parse_tuple_or_named_expr();
+            self.nested_expression_list -= 1;
+            return tuple_or_named_expr;
+        }
+        if self.at(Kind::Mul) {
+            return self.parse_starred();
         }
         if self.at(Kind::Await) {
             return self.parse_await();
@@ -271,6 +290,21 @@ impl Parser {
                 op,
                 left: Box::new(expr),
                 right: Box::new(rhs),
+            }))
+        }
+
+        if self.at(Kind::Comma) && self.nested_expression_list == 0 {
+            self.nested_expression_list += 1;
+            let mut elements = vec![expr];
+            while self.eat(Kind::Comma) && !self.at(Kind::NewLine) {
+                // not all expressions are allowed in a tuple
+                // TODO: check if the expression is allowed
+                elements.push(self.parse_expression()?);
+            }
+            self.nested_expression_list -= 1;
+            expr = Expression::Tuple(Box::new(Tuple {
+                node: self.finish_node(node),
+                elements,
             }))
         }
 
@@ -444,6 +478,21 @@ impl Parser {
             node: self.finish_node(node),
             keys,
             values,
+        })))
+    }
+
+    fn parse_starred(&mut self) -> Result<Expression> {
+        let mut node = self.start_node();
+        self.bump(Kind::Mul);
+        let starred_value_kind = self.cur_kind().clone();
+        let expr = self.parse_expression()?;
+        node = self.finish_node(node);
+        if !is_iterable(&expr) {
+            return Err(diagnostics::UnexpectedToken(starred_value_kind.to_str(), node).into());
+        }
+        Ok(Expression::Starred(Box::new(Starred {
+            node: self.finish_node(node),
+            value: expr,
         })))
     }
 
@@ -640,6 +689,21 @@ mod tests {
     }
 
     #[test]
+    fn test_starred() {
+        for test_case in &["*a"] {
+        let mut parser = Parser::new(test_case.to_string());
+            let program = parser.parse();
+
+            insta::with_settings!({
+                    description => test_case.to_string(), // the template source code
+                    omit_expression => true // do not include the default expression
+                }, {
+                    assert_debug_snapshot!(program);
+            });
+        }
+    }
+
+    #[test]
     fn test_await_expression() {
         for test_case in &["await a"] {
             let mut parser = Parser::new(test_case.to_string());
@@ -647,6 +711,21 @@ mod tests {
 
             insta::with_settings!({
                     description => test_case.to_string(), // the template source code
+                    omit_expression => true // do not include the default expression
+                }, {
+                    assert_debug_snapshot!(program);
+            });
+        }
+    }
+
+    #[test]
+    fn test_expressions_list() {
+        for test_test in &["a, b, c"] {
+            let mut parser = Parser::new(test_test.to_string());
+            let program = parser.parse();
+
+            insta::with_settings!({
+                    description => test_test.to_string(), // the template source code
                     omit_expression => true // do not include the default expression
                 }, {
                     assert_debug_snapshot!(program);
