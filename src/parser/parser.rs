@@ -8,7 +8,7 @@ use crate::token::{Kind, Token, TokenValue};
 use miette::Result;
 
 use super::diagnostics;
-use super::expression::is_atom;
+use super::expression::{is_atom, is_primary};
 use super::operator::{is_bin_op, map_binary_operator, map_unary_operator};
 
 #[derive(Debug)]
@@ -164,6 +164,9 @@ impl Parser {
         }
         if self.at(Kind::LeftParen) {
             return self.parse_tuple_or_named_expr();
+        }
+        if self.at(Kind::Await) {
+            return self.parse_await();
         }
         let node = self.start_node();
 
@@ -443,6 +446,28 @@ impl Parser {
             values,
         })))
     }
+
+    fn parse_await(&mut self) -> Result<Expression> {
+        let node = self.start_node();
+        self.bump(Kind::Await);
+        // we clone the token here to inform user in case
+        // the expression is not a primary expression
+        // it's more clear to say which token is unexpected
+        // instead of saying some expression is unexpected
+        let await_value_token = self.cur_token().clone();
+        let await_value = self.parse_expression()?;
+        if !is_primary(&await_value) {
+            return Err(diagnostics::UnexpectedToken(
+                await_value_token.kind.to_str(),
+                self.finish_node(node),
+            )
+            .into());
+        }
+        Ok(Expression::Await(Box::new(Await {
+            node: self.finish_node(node),
+            value: Box::new(await_value),
+        })))
+    }
 }
 
 #[cfg(test)]
@@ -602,6 +627,21 @@ mod tests {
     #[test]
     fn test_yield_expression() {
         for test_case in &["yield", "yield a", "yield from a"] {
+            let mut parser = Parser::new(test_case.to_string());
+            let program = parser.parse();
+
+            insta::with_settings!({
+                    description => test_case.to_string(), // the template source code
+                    omit_expression => true // do not include the default expression
+                }, {
+                    assert_debug_snapshot!(program);
+            });
+        }
+    }
+
+    #[test]
+    fn test_await_expression() {
+        for test_case in &["await a"] {
             let mut parser = Parser::new(test_case.to_string());
             let program = parser.parse();
 
