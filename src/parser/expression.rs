@@ -1,8 +1,6 @@
 use crate::parser::ast::Expression;
 use crate::token::Kind;
 
-use super::ast::Expression;
-
 pub fn is_atom(kind: &Kind) -> bool {
     match kind {
         Kind::Identifier
@@ -35,7 +33,7 @@ pub fn is_iterable(expr: &Expression) -> bool {
         | Expression::Set { .. }
         | Expression::Name { .. } => true,
         _ => false,
-      }
+    }
 }
 
 // https://docs.python.org/3/reference/expressions.html#primaries

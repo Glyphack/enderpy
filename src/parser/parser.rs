@@ -23,6 +23,10 @@ pub struct Parser {
     // This is incremented when we see an opening bracket and decremented when we
     // see a closing bracket.
     nested_expression_list: usize,
+    // Keeps track of if we are inside an subscript expression
+    // This is incremented when we see an opening bracket and decremented when we
+    // see a closing bracket.
+    nested_subscript: usize,
 }
 
 impl Parser {
@@ -37,6 +41,7 @@ impl Parser {
             cur_token,
             prev_token_end,
             nested_expression_list: 0,
+            nested_subscript: 0,
         }
     }
 
@@ -293,6 +298,16 @@ impl Parser {
             }))
         }
 
+        // if self.nested_subscript > 0 && self.at(Kind::Colon) {
+        //     self.bump(Kind::Colon);
+        //     let slice_value = self.parse_subscript_value()?;
+        //     expr = Expression::Subscript(Box::new(Subscript {
+        //         node: self.finish_node(node),
+        //         value: Box::new(expr),
+        //         slice: slice_value,
+        //     }))
+        // }
+
         if self.at(Kind::Comma) && self.nested_expression_list == 0 {
             self.nested_expression_list += 1;
             let mut elements = vec![expr];
@@ -305,6 +320,18 @@ impl Parser {
             expr = Expression::Tuple(Box::new(Tuple {
                 node: self.finish_node(node),
                 elements,
+            }))
+        }
+
+        if is_primary(&expr) && self.at(Kind::LeftBrace) {
+            self.bump(Kind::LeftBrace);
+            self.nested_subscript += 1;
+            let slice_value = self.parse_subscript_value()?;
+            self.nested_subscript -= 1;
+            expr = Expression::Subscript(Box::new(Subscript {
+                node: self.finish_node(node),
+                value: Box::new(expr),
+                slice: Box::new(slice_value),
             }))
         }
 
@@ -517,6 +544,31 @@ impl Parser {
             value: Box::new(await_value),
         })))
     }
+
+    fn parse_subscript_value(&mut self) -> Result<Expression> {
+        let expr = self.parse_expression()?;
+        if self.at(Kind::Colon) {
+            let lower = Some(Box::new(expr));
+            let mut upper = None;
+            let mut step = None;
+
+            if self.eat(Kind::Colon) && !self.at(Kind::RightBracket) {
+                upper = Some(Box::new(self.parse_expression()?));
+                if self.eat(Kind::Colon) && !self.at(Kind::RightBracket) {
+                    step = Some(Box::new(self.parse_expression()?));
+                }
+            }
+
+            return Ok(Expression::Slice(Box::new(Slice {
+                node: Node::default(),
+                lower,
+                upper,
+                step,
+            })));
+        } else {
+            return Ok(expr);
+        }
+    }
 }
 
 #[cfg(test)]
@@ -691,7 +743,7 @@ mod tests {
     #[test]
     fn test_starred() {
         for test_case in &["*a"] {
-        let mut parser = Parser::new(test_case.to_string());
+            let mut parser = Parser::new(test_case.to_string());
             let program = parser.parse();
 
             insta::with_settings!({
@@ -726,6 +778,21 @@ mod tests {
 
             insta::with_settings!({
                     description => test_test.to_string(), // the template source code
+                    omit_expression => true // do not include the default expression
+                }, {
+                    assert_debug_snapshot!(program);
+            });
+        }
+    }
+
+    #[test]
+    fn test_parse_subscript() {
+        for test_case in &["a[b]", "a[b:c]", "a[b:c:d]", "a[b, c, d]"] {
+            let mut parser = Parser::new(test_case.to_string());
+            let program = parser.parse();
+
+            insta::with_settings!({
+                    description => test_case.to_string(), // the template source code
                     omit_expression => true // do not include the default expression
                 }, {
                     assert_debug_snapshot!(program);
