@@ -73,6 +73,7 @@ pub enum Expression {
     Slice(Box<Slice>),
     Call(Box<Call>),
     Await(Box<Await>),
+    Compare(Box<Compare>),
 }
 
 // https://docs.python.org/3/reference/expressions.html#atom-identifiers
@@ -294,4 +295,27 @@ pub struct Keyword {
 pub struct Await {
     pub node: Node,
     pub value: Box<Expression>,
+}
+
+// https://docs.python.org/3/library/ast.html#ast.Compare
+#[derive(Debug)]
+pub struct Compare {
+    pub node: Node,
+    pub left: Box<Expression>,
+    pub ops: Vec<ComparisonOperator>,
+    pub comparators: Vec<Expression>,
+}
+
+#[derive(Debug)]
+pub enum ComparisonOperator {
+    Eq,
+    NotEq,
+    Lt,
+    LtE,
+    Gt,
+    GtE,
+    Is,
+    IsNot,
+    In,
+    NotIn,
 }

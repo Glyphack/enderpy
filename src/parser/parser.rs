@@ -2,14 +2,15 @@ use std::panic;
 
 use crate::lexer::lexer::Lexer;
 use crate::parser::ast::*;
-use crate::parser::operator::{is_bool_op, is_unary_op, map_boolean_operator};
 use crate::parser::string::extract_string_inside;
 use crate::token::{Kind, Token, TokenValue};
 use miette::Result;
 
 use super::diagnostics;
 use super::expression::{is_atom, is_iterable, is_primary};
-use super::operator::{is_bin_op, map_binary_operator, map_unary_operator};
+use super::operator::{
+    is_bin_arithmetic_op, is_comparison_operator, is_unary_op, map_unary_operator,
+};
 
 #[derive(Debug)]
 pub struct Parser {
@@ -168,247 +169,72 @@ impl Parser {
 
     // https://docs.python.org/3/library/ast.html#expressions
     fn parse_expression(&mut self) -> Result<Expression> {
-        if self.at(Kind::LeftBrace) {
-            self.nested_expression_list += 1;
-            let list_expr = self.parse_list();
-            self.nested_expression_list -= 1;
-            return list_expr;
-        }
-        if self.at(Kind::LeftBracket) {
-            self.nested_expression_list += 1;
-            let dict_or_set_expr = self.parse_dict_or_set();
-            self.nested_expression_list -= 1;
-            return dict_or_set_expr;
-        }
-        if self.at(Kind::LeftParen) {
-            self.nested_expression_list += 1;
-            let tuple_or_named_expr = self.parse_tuple_or_named_expr();
-            self.nested_expression_list -= 1;
-            return tuple_or_named_expr;
-        }
-        if self.at(Kind::Mul) {
-            return self.parse_starred();
-        }
-        if self.at(Kind::Await) {
-            return self.parse_await();
-        }
-        let node = self.start_node();
-
-        if self.at(Kind::Yield) {
-            let yield_node = self.start_node();
-            self.bump(Kind::Yield);
-            if self.at(Kind::From) {
-                self.bump(Kind::From);
-                let value = self.parse_expression()?;
-                return Ok(Expression::YieldFrom(Box::new(YieldFrom {
-                    node: self.finish_node(yield_node),
-                    value: Box::new(value),
-                })));
-            }
-            let value = match self.parse_expression() {
-                Ok(expr) => Some(Box::new(expr)),
-                _ => None,
-            };
-            return Ok(Expression::Yield(Box::new(Yield {
-                node: self.finish_node(yield_node),
-                value,
-            })));
-        }
-
-        let unary_expr = if is_unary_op(&self.cur_kind()) {
-            let unary_node = self.start_node();
-            let op = map_unary_operator(&self.cur_kind());
-            self.bump_any();
-            let operand = self.parse_expression()?;
-            Some(Expression::UnaryOp(Box::new(UnaryOperation {
-                node: self.finish_node(unary_node),
-                op,
-                operand: Box::new(operand),
-            })))
-        } else {
-            None
-        };
-
         if self.at(Kind::Identifier) && matches!(self.peek_kind(), Ok(Kind::Walrus)) {
-            let mut identifier_node = self.start_node();
-            let identifier = self.cur_token().value.to_string();
-            self.bump(Kind::Identifier);
-            identifier_node = self.finish_node(identifier_node);
-            self.bump(Kind::Walrus);
-            let value = self.parse_expression()?;
-            return Ok(Expression::NamedExpr(Box::new(NamedExpression {
-                node: self.finish_node(node),
-                target: Box::new(Expression::Name(Box::new(Name {
-                    node: identifier_node,
-                    id: identifier,
-                }))),
-                value: Box::new(value),
-            })));
+            return self.parse_assignment_expression();
         }
+        println!("cur: {:?}", self.cur_token);
+        println!("peek: {:?}", self.peek_token());
 
-        let atom = if is_atom(&self.cur_kind()) {
-            // value must be cloned to be assigned to the node
-            let token_value = self.cur_token().value.clone();
-            let token_kind = self.cur_kind();
-            // bump needs to happen before creating the atom node
-            // otherwise the end would be the same as the start
-            self.bump_any();
-            let expr = Some(self.map_to_atom(node, &token_kind, token_value));
-            expr
-        } else {
-            None
-        };
-
-        // refactor to if let and smaller function
-        let mut expr = if let Some(atom) = atom {
-            atom
-        } else if let Some(unary_expr) = unary_expr {
-            unary_expr
-        } else {
-            return Err(diagnostics::UnexpectedToken(
-                self.cur_kind().to_str(),
-                self.finish_node(self.start_node()),
-            )
-            .into());
-        };
-
-        let current_kind = self.cur_kind();
-        if is_bool_op(&current_kind) {
-            let op = map_boolean_operator(&current_kind);
-            self.bump_any();
-            let rhs = self.parse_expression()?;
-            // TODO: Check if rhs is BoolOp then we need to flatten it
-            // e.g. a or b or c can be BoolOp(or, [a, b, c])
-            expr = Expression::BoolOp(Box::new(BoolOperation {
-                node: self.finish_node(node),
-                op,
-                values: vec![expr, rhs],
-            }))
-        }
-
-        if is_bin_op(&current_kind) {
-            let op = map_binary_operator(&current_kind);
-            self.bump_any();
-            let rhs = self.parse_expression()?;
-            expr = Expression::BinOp(Box::new(BinOp {
-                node: self.finish_node(node),
-                op,
-                left: Box::new(expr),
-                right: Box::new(rhs),
-            }))
-        }
-
-        // if self.nested_subscript > 0 && self.at(Kind::Colon) {
-        //     self.bump(Kind::Colon);
-        //     let slice_value = self.parse_subscript_value()?;
-        //     expr = Expression::Subscript(Box::new(Subscript {
+        // if self.at(Kind::Comma) && self.nested_expression_list == 0 {
+        //     self.nested_expression_list += 1;
+        //     let mut elements = vec![expr];
+        //     while self.eat(Kind::Comma) && !self.at(Kind::NewLine) {
+        //         // not all expressions are allowed in a tuple
+        //         // TODO: check if the expression is allowed
+        //         elements.push(self.parse_expression()?);
+        //     }
+        //     self.nested_expression_list -= 1;
+        //     expr = Expression::Tuple(Box::new(Tuple {
         //         node: self.finish_node(node),
-        //         value: Box::new(expr),
-        //         slice: slice_value,
+        //         elements,
         //     }))
         // }
 
-        if self.at(Kind::Comma) && self.nested_expression_list == 0 {
-            self.nested_expression_list += 1;
-            let mut elements = vec![expr];
-            while self.eat(Kind::Comma) && !self.at(Kind::NewLine) {
-                // not all expressions are allowed in a tuple
-                // TODO: check if the expression is allowed
-                elements.push(self.parse_expression()?);
-            }
-            self.nested_expression_list -= 1;
-            expr = Expression::Tuple(Box::new(Tuple {
-                node: self.finish_node(node),
-                elements,
-            }))
-        }
+        // if is_primary(&expr) && self.at(Kind::LeftBrace) {
+        //     self.bump(Kind::LeftBrace);
+        //     self.nested_subscript += 1;
+        //     let slice_value = self.parse_subscript_value()?;
+        //     self.nested_subscript -= 1;
+        //     expr = Expression::Subscript(Box::new(Subscript {
+        //         node: self.finish_node(node),
+        //         value: Box::new(expr),
+        //         slice: Box::new(slice_value),
+        //     }))
+        // }
 
-        if is_primary(&expr) && self.at(Kind::LeftBrace) {
-            self.bump(Kind::LeftBrace);
-            self.nested_subscript += 1;
-            let slice_value = self.parse_subscript_value()?;
-            self.nested_subscript -= 1;
-            expr = Expression::Subscript(Box::new(Subscript {
-                node: self.finish_node(node),
-                value: Box::new(expr),
-                slice: Box::new(slice_value),
-            }))
-        }
-
-        Ok(expr)
+        unimplemented!()
     }
 
-    fn map_to_atom(&self, start: Node, kind: &Kind, value: TokenValue) -> Expression {
-        let atom = match kind {
-            Kind::Identifier => Expression::Name(Box::new(Name {
-                node: self.finish_node(start),
-                id: value.to_string(),
-            })),
-            Kind::Integer => Expression::Constant(Box::new(Constant {
-                node: self.finish_node(start),
-                value: ConstantValue::Int(value.to_string()),
-            })),
-            Kind::None => Expression::Constant(Box::new(Constant {
-                node: self.finish_node(start),
-                value: ConstantValue::None,
-            })),
-            Kind::True => Expression::Constant(Box::new(Constant {
-                node: self.finish_node(start),
-                value: ConstantValue::Bool(true),
-            })),
-            Kind::False => Expression::Constant(Box::new(Constant {
-                node: self.finish_node(start),
-                value: ConstantValue::Bool(false),
-            })),
-            Kind::ImaginaryInteger => Expression::Constant(Box::new(Constant {
-                node: self.finish_node(start),
-                value: ConstantValue::Complex {
-                    real: "0".to_string(),
-                    imaginary: value.to_string(),
-                },
-            })),
-            Kind::Bytes => {
-                let bytes_val = extract_string_inside(
-                    value
-                        .to_string()
-                        .strip_prefix("b")
-                        .expect("bytes literal must start with b")
-                        .to_string(),
-                )
-                .into_bytes();
-                Expression::Constant(Box::new(Constant {
-                    node: self.finish_node(start),
-                    value: ConstantValue::Bytes(bytes_val),
-                }))
-            }
-            Kind::StringLiteral => {
-                let string_val = extract_string_inside(value.to_string());
-                Expression::Constant(Box::new(Constant {
-                    node: self.finish_node(start),
-                    value: ConstantValue::Str(string_val),
-                }))
-            }
-            Kind::RawString => {
-                let string_val =
-                    extract_string_inside(value.to_string().chars().skip(1).collect::<String>());
-                Expression::Constant(Box::new(Constant {
-                    node: self.finish_node(start),
-                    value: ConstantValue::Str(string_val),
-                }))
-            }
-            Kind::RawBytes => {
-                // rb or br appear in the beginning of raw bytes
-                let bytes_val =
-                    extract_string_inside(value.to_string().chars().skip(2).collect::<String>())
-                        .into_bytes();
-                Expression::Constant(Box::new(Constant {
-                    node: self.finish_node(start),
-                    value: ConstantValue::Bytes(bytes_val),
-                }))
-            }
-            _ => panic!("Expected atom expression"),
-        };
-        atom
+    fn parse_conditional_expression(&mut self) -> Result<Expression> {
+        let or_test = self.parse_or_test();
+        if self.eat(Kind::If) {
+            let test = self.parse_or_test()?;
+            self.eat(Kind::Else);
+            let or_test = self.parse_conditional_expression()?;
+            // TODO: return conditional expression
+            unimplemented!()
+        }
+
+        or_test
+    }
+
+    fn parse_assignment_expression(&mut self) -> Result<Expression> {
+        let node = self.start_node();
+        let identifier = self.cur_token().value.to_string();
+        let mut identifier_node = self.start_node();
+        self.expect(Kind::Identifier)?;
+        identifier_node = self.finish_node(identifier_node);
+        self.expect(Kind::Walrus)?;
+        self.bump(Kind::Walrus);
+        let value = self.parse_expression_2()?;
+        return Ok(Expression::NamedExpr(Box::new(NamedExpression {
+            node: self.finish_node(node),
+            target: Box::new(Expression::Name(Box::new(Name {
+                node: identifier_node,
+                id: identifier,
+            }))),
+            value: Box::new(value),
+        })));
     }
 
     fn parse_list(&mut self) -> Result<Expression> {
@@ -569,6 +395,395 @@ impl Parser {
             return Ok(expr);
         }
     }
+
+    fn parse_expression_2(&mut self) -> Result<Expression> {
+        if self.eat(Kind::Lambda) {
+            // TODO: parse lambda
+            unimplemented!()
+        }
+        self.parse_conditional_expression()
+    }
+
+    // Boolean operations
+    // https://docs.python.org/3/reference/expressions.html#boolean-operations
+    fn parse_or_test(&mut self) -> Result<Expression> {
+        let node = self.start_node();
+        let lhs = self.parse_and_test()?;
+        if self.at(Kind::Or) {
+            self.bump(Kind::Or);
+            let rhs = self.parse_or_test()?;
+            return Ok(Expression::BoolOp(Box::new(BoolOperation {
+                node: self.finish_node(node),
+                op: BooleanOperator::Or,
+                values: vec![lhs, rhs],
+            })));
+        }
+        Ok(lhs)
+    }
+
+    fn parse_and_test(&mut self) -> Result<Expression> {
+        let lhs = self.parse_not_test()?;
+        if self.at(Kind::And) {
+            let node = self.start_node();
+            self.bump(Kind::And);
+            let rhs = self.parse_not_test()?;
+            return Ok(Expression::BoolOp(Box::new(BoolOperation {
+                node: self.finish_node(node),
+                op: BooleanOperator::And,
+                values: vec![lhs, rhs],
+            })));
+        }
+        Ok(lhs)
+    }
+
+    fn parse_not_test(&mut self) -> Result<Expression> {
+        if self.at(Kind::Not) {
+            //TODO: implement
+            let operand = self.parse_not_test()?;
+            return Ok(Expression::UnaryOp(Box::new(UnaryOperation {
+                node: Node::default(),
+                op: UnaryOperator::Not,
+                operand: Box::new(operand),
+            })));
+        }
+        self.parse_comparison()
+    }
+
+    fn parse_comparison(&mut self) -> Result<Expression> {
+        let or_expr = self.parse_or_expr();
+        if is_comparison_operator(&self.cur_kind()) {
+            let mut comp_operator = self.parse_comp_operator()?;
+            let rhs = self.parse_or_expr()?;
+            unimplemented!()
+        }
+        or_expr
+    }
+
+    // Binary bitwise operations
+    // https://docs.python.org/3/reference/expressions.html#grammar-token-python-grammar-or_expr
+    fn parse_or_expr(&mut self) -> Result<Expression> {
+        let node = self.start_node();
+        let xor_expr = self.parse_xor_expr()?;
+        if self.eat(Kind::BitOr) {
+            let lhs = self.parse_xor_expr()?;
+            return Ok(Expression::BinOp(Box::new(BinOp {
+                node: self.finish_node(node),
+                op: BinaryOperator::BitOr,
+                left: Box::new(xor_expr),
+                right: Box::new(lhs),
+            })));
+        }
+        return Ok(xor_expr);
+    }
+
+    fn parse_xor_expr(&mut self) -> Result<Expression> {
+        let and_expr = self.parse_and_expr()?;
+        if self.eat(Kind::BitXor) {
+            let lhs = self.parse_and_expr()?;
+            return Ok(Expression::BinOp(Box::new(BinOp {
+                node: Node::default(),
+                op: BinaryOperator::BitXor,
+                left: Box::new(and_expr),
+                right: Box::new(lhs),
+            })));
+        }
+        return Ok(and_expr);
+    }
+
+    fn parse_and_expr(&mut self) -> Result<Expression> {
+        let shift_expr = self.parse_shift_expr()?;
+
+        if self.eat(Kind::BitAnd) {
+            let lhs = self.parse_shift_expr()?;
+            return Ok(Expression::BinOp(Box::new(BinOp {
+                node: Node::default(),
+                op: BinaryOperator::BitAnd,
+                left: Box::new(shift_expr),
+                right: Box::new(lhs),
+            })));
+        }
+        return Ok(shift_expr);
+    }
+
+    fn parse_shift_expr(&mut self) -> Result<Expression> {
+        let arith_expr = self.parse_binary_arithmetic_operation()?;
+        if self.eat(Kind::LeftShift) || self.eat(Kind::RightShift) {
+            let op = if self.cur_kind() == Kind::LeftShift {
+                BinaryOperator::LShift
+            } else {
+                BinaryOperator::RShift
+            };
+            let lhs = self.parse_binary_arithmetic_operation()?;
+            return Ok(Expression::BinOp(Box::new(BinOp {
+                node: Node::default(),
+                op,
+                left: Box::new(arith_expr),
+                right: Box::new(lhs),
+            })));
+        }
+        return Ok(arith_expr);
+    }
+
+    // https://docs.python.org/3/reference/expressions.html#binary-arithmetic-operations
+    fn parse_binary_arithmetic_operation(&mut self) -> Result<Expression> {
+        let lhs = self.parse_unary_arithmetric_operation()?;
+        if is_bin_arithmetic_op(&self.cur_kind()) {
+            let op = self.parse_bin_arithmetic_op()?;
+            let rhs = self.parse_unary_arithmetric_operation()?;
+            return Ok(Expression::BinOp(Box::new(BinOp {
+                node: Node::default(),
+                op,
+                left: Box::new(lhs),
+                right: Box::new(rhs),
+            })));
+        }
+        return Ok(lhs);
+    }
+
+    fn parse_unary_arithmetric_operation(&mut self) -> Result<Expression> {
+        if is_unary_op(&self.cur_kind()) {
+            let op = map_unary_operator(&self.cur_kind());
+            self.bump_any();
+            let operand = self.parse_unary_arithmetric_operation()?;
+            return Ok(Expression::UnaryOp(Box::new(UnaryOperation {
+                node: Node::default(),
+                op,
+                operand: Box::new(operand),
+            })));
+        }
+        self.parse_power_expression()
+    }
+
+    fn parse_power_expression(&mut self) -> Result<Expression> {
+        let base = if self.at(Kind::Await) {
+            unimplemented!()
+        } else {
+            self.parse_primary()
+        };
+        if self.eat(Kind::Pow) {
+            let exponent = self.parse_unary_arithmetric_operation()?;
+            unimplemented!()
+        }
+
+        return base;
+    }
+
+    fn parse_primary(&mut self) -> Result<Expression> {
+        let node = self.start_node();
+        if is_atom(&self.cur_kind()) {
+            return self.parse_atom();
+        }
+        if self.eat(Kind::Dot) {
+            unimplemented!()
+        }
+        if self.eat(Kind::LeftBrace) {
+            unimplemented!()
+        }
+        if self.eat(Kind::LeftParen) {
+            unimplemented!()
+        }
+
+        Err(diagnostics::UnexpectedToken(self.cur_kind().to_str(), self.finish_node(node)).into())
+    }
+
+    fn parse_atom(&mut self) -> Result<Expression> {
+        let node = self.start_node();
+        if self.at(Kind::Yield) {
+            return self.parse_yield_expression();
+        } else if self.at(Kind::LeftBrace) {
+            self.nested_expression_list += 1;
+            let list_expr = self.parse_list();
+            self.nested_expression_list -= 1;
+            return list_expr;
+        } else if self.at(Kind::LeftBracket) {
+            self.nested_expression_list += 1;
+            let dict_or_set_expr = self.parse_dict_or_set();
+            self.nested_expression_list -= 1;
+            return dict_or_set_expr;
+        } else if self.at(Kind::LeftParen) {
+            self.nested_expression_list += 1;
+            let tuple_or_named_expr = self.parse_tuple_or_named_expr();
+            self.nested_expression_list -= 1;
+            return tuple_or_named_expr;
+        } else if self.at(Kind::Identifier) {
+            let value = self.cur_token().value.to_string();
+            self.bump(Kind::Identifier);
+            return Ok(Expression::Name(Box::new(Name {
+                node: self.finish_node(node),
+                id: value,
+            })));
+        } else if is_atom(&self.cur_kind()) {
+            let node = self.start_node();
+            // value must be cloned to be assigned to the node
+            let token_value = self.cur_token().value.clone();
+            let token_kind = self.cur_kind();
+            // bump needs to happen before creating the atom node
+            // otherwise the end would be the same as the start
+            self.bump_any();
+            let expr = self.map_to_atom(node, &token_kind, token_value);
+            return Ok(expr);
+        } else {
+            return Err(diagnostics::UnexpectedToken(
+                self.cur_kind().to_str(),
+                self.finish_node(node),
+            )
+            .into());
+        }
+    }
+
+    fn parse_yield_expression(&mut self) -> Result<Expression> {
+        let yield_node = self.start_node();
+        self.bump(Kind::Yield);
+        if self.at(Kind::From) {
+            self.bump(Kind::From);
+            let value = self.parse_expression()?;
+            return Ok(Expression::YieldFrom(Box::new(YieldFrom {
+                node: self.finish_node(yield_node),
+                value: Box::new(value),
+            })));
+        }
+        let value = match self.parse_expression() {
+            Ok(expr) => Some(Box::new(expr)),
+            _ => None,
+        };
+        return Ok(Expression::Yield(Box::new(Yield {
+            node: self.finish_node(yield_node),
+            value,
+        })));
+    }
+
+    fn map_to_atom(&self, start: Node, kind: &Kind, value: TokenValue) -> Expression {
+        let atom = match kind {
+            Kind::Identifier => Expression::Name(Box::new(Name {
+                node: self.finish_node(start),
+                id: value.to_string(),
+            })),
+            Kind::Integer => Expression::Constant(Box::new(Constant {
+                node: self.finish_node(start),
+                value: ConstantValue::Int(value.to_string()),
+            })),
+            Kind::None => Expression::Constant(Box::new(Constant {
+                node: self.finish_node(start),
+                value: ConstantValue::None,
+            })),
+            Kind::True => Expression::Constant(Box::new(Constant {
+                node: self.finish_node(start),
+                value: ConstantValue::Bool(true),
+            })),
+            Kind::False => Expression::Constant(Box::new(Constant {
+                node: self.finish_node(start),
+                value: ConstantValue::Bool(false),
+            })),
+            Kind::ImaginaryInteger => Expression::Constant(Box::new(Constant {
+                node: self.finish_node(start),
+                value: ConstantValue::Complex {
+                    real: "0".to_string(),
+                    imaginary: value.to_string(),
+                },
+            })),
+            Kind::Bytes => {
+                let bytes_val = extract_string_inside(
+                    value
+                        .to_string()
+                        .strip_prefix("b")
+                        .expect("bytes literal must start with b")
+                        .to_string(),
+                )
+                .into_bytes();
+                Expression::Constant(Box::new(Constant {
+                    node: self.finish_node(start),
+                    value: ConstantValue::Bytes(bytes_val),
+                }))
+            }
+            Kind::StringLiteral => {
+                let string_val = extract_string_inside(value.to_string());
+                Expression::Constant(Box::new(Constant {
+                    node: self.finish_node(start),
+                    value: ConstantValue::Str(string_val),
+                }))
+            }
+            Kind::RawString => {
+                let string_val =
+                    extract_string_inside(value.to_string().chars().skip(1).collect::<String>());
+                Expression::Constant(Box::new(Constant {
+                    node: self.finish_node(start),
+                    value: ConstantValue::Str(string_val),
+                }))
+            }
+            Kind::RawBytes => {
+                // rb or br appear in the beginning of raw bytes
+                let bytes_val =
+                    extract_string_inside(value.to_string().chars().skip(2).collect::<String>())
+                        .into_bytes();
+                Expression::Constant(Box::new(Constant {
+                    node: self.finish_node(start),
+                    value: ConstantValue::Bytes(bytes_val),
+                }))
+            }
+            _ => panic!("Expected atom expression"),
+        };
+        atom
+    }
+
+    fn parse_comp_operator(&mut self) -> Result<ComparisonOperator> {
+        let node = self.start_node();
+        let op = match self.cur_kind() {
+            Kind::Less => ComparisonOperator::Lt,
+            Kind::Greater => ComparisonOperator::Gt,
+            Kind::LessEq => ComparisonOperator::LtE,
+            Kind::GreaterEq => ComparisonOperator::GtE,
+            Kind::Eq => ComparisonOperator::Eq,
+            Kind::NotEq => ComparisonOperator::NotEq,
+            Kind::In => ComparisonOperator::In,
+            Kind::Is => match self.peek_kind() {
+                Ok(Kind::Not) => {
+                    self.bump_any();
+                    ComparisonOperator::IsNot
+                }
+                _ => ComparisonOperator::Is,
+            },
+            Kind::Not => match self.peek_kind() {
+                Ok(Kind::In) => {
+                    self.bump_any();
+                    ComparisonOperator::NotIn
+                }
+                _ => {
+                    return Err(diagnostics::UnexpectedToken(
+                        self.cur_kind().to_str(),
+                        self.finish_node(node),
+                    )
+                    .into())
+                }
+            },
+            _ => {
+                return Err(diagnostics::UnexpectedToken(
+                    self.cur_kind().to_str(),
+                    self.finish_node(node),
+                )
+                .into())
+            }
+        };
+        self.bump_any();
+        Ok(op)
+    }
+
+    fn parse_bin_arithmetic_op(&mut self) -> Result<BinaryOperator> {
+        let op = match self.cur_kind() {
+            Kind::Plus => Ok(BinaryOperator::Add),
+            Kind::Minus => Ok(BinaryOperator::Sub),
+            Kind::Mul => Ok(BinaryOperator::Mult),
+            Kind::Div => Ok(BinaryOperator::Div),
+            Kind::IntDiv => Ok(BinaryOperator::FloorDiv),
+            Kind::Mod => Ok(BinaryOperator::Mod),
+            Kind::Pow => Ok(BinaryOperator::Pow),
+            Kind::MatrixMul => Ok(BinaryOperator::MatMult),
+            _ => Err(
+                diagnostics::UnexpectedToken(self.cur_kind().to_str(), self.start_node()).into(),
+            ),
+        };
+        self.bump_any();
+        op
+    }
 }
 
 #[cfg(test)]
@@ -653,7 +868,7 @@ mod tests {
 
     #[test]
     fn test_named_expression() {
-        for test_case in &["(a := b)"] {
+        for test_case in &["a := b"] {
             let mut parser = Parser::new(test_case.to_string());
             let program = parser.parse();
 
