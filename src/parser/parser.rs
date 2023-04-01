@@ -577,7 +577,21 @@ impl Parser {
             unimplemented!("parse_primary: {:?}", self.cur_kind())
         };
         if self.eat(Kind::Dot) {
-            unimplemented!()
+            let mut expr = Ok(Expression::Attribute(Box::new(Attribute {
+                node: self.finish_node(node),
+                value: Box::new(atom_or_primary),
+                attr: self.cur_token().value.to_string(),
+            })));
+            self.bump_any();
+            while self.eat(Kind::Dot) {
+                expr = Ok(Expression::Attribute(Box::new(Attribute {
+                    node: self.finish_node(node),
+                    value: Box::new(expr?),
+                    attr: self.cur_token().value.to_string(),
+                })));
+                self.bump_any();
+            }
+            return expr;
         }
         // https://docs.python.org/3/reference/expressions.html#slicings
         if self.eat(Kind::LeftBrace) {
@@ -1116,6 +1130,21 @@ mod tests {
             "a[::]",
             "a[b, c:d:e, f]",
         ] {
+            let mut parser = Parser::new(test_case.to_string());
+            let program = parser.parse();
+
+            insta::with_settings!({
+                    description => test_case.to_string(), // the template source code
+                    omit_expression => true // do not include the default expression
+                }, {
+                    assert_debug_snapshot!(program);
+            });
+        }
+    }
+
+    #[test]
+    fn test_attribute_ref() {
+        for test_case in &["a.b", "a.b.c", "a.b_c"] {
             let mut parser = Parser::new(test_case.to_string());
             let program = parser.parse();
 
