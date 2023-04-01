@@ -174,33 +174,6 @@ impl Parser {
         }
         let expr = self.parse_expression_2()?;
 
-        // if self.at(Kind::Comma) && self.nested_expression_list == 0 {
-        //     self.nested_expression_list += 1;
-        //     let mut elements = vec![expr];
-        //     while self.eat(Kind::Comma) && !self.at(Kind::NewLine) {
-        //         // not all expressions are allowed in a tuple
-        //         // TODO: check if the expression is allowed
-        //         elements.push(self.parse_expression()?);
-        //     }
-        //     self.nested_expression_list -= 1;
-        //     expr = Expression::Tuple(Box::new(Tuple {
-        //         node: self.finish_node(node),
-        //         elements,
-        //     }))
-        // }
-
-        // if is_primary(&expr) && self.at(Kind::LeftBrace) {
-        //     self.bump(Kind::LeftBrace);
-        //     self.nested_subscript += 1;
-        //     let slice_value = self.parse_subscript_value()?;
-        //     self.nested_subscript -= 1;
-        //     expr = Expression::Subscript(Box::new(Subscript {
-        //         node: self.finish_node(node),
-        //         value: Box::new(expr),
-        //         slice: Box::new(slice_value),
-        //     }))
-        // }
-
         Ok(expr)
     }
 
@@ -219,42 +192,49 @@ impl Parser {
 
     fn parse_assignment_expression(&mut self) -> Result<Expression> {
         let node = self.start_node();
-        let identifier = self.cur_token().value.to_string();
-        let mut identifier_node = self.start_node();
-        self.expect(Kind::Identifier)?;
-        identifier_node = self.finish_node(identifier_node);
-        self.expect(Kind::Walrus)?;
-        self.bump(Kind::Walrus);
-        let value = self.parse_expression_2()?;
-        return Ok(Expression::NamedExpr(Box::new(NamedExpression {
-            node: self.finish_node(node),
-            target: Box::new(Expression::Name(Box::new(Name {
+        if self.at(Kind::Identifier) {
+            let identifier = self.cur_token().value.to_string();
+            let mut identifier_node = self.start_node();
+            identifier_node = self.finish_node(identifier_node);
+            self.expect(Kind::Identifier)?;
+            identifier_node = self.finish_node(identifier_node);
+            if self.eat(Kind::Walrus) {
+                let value = self.parse_expression_2()?;
+                return Ok(Expression::NamedExpr(Box::new(NamedExpression {
+                    node: self.finish_node(node),
+                    target: Box::new(Expression::Name(Box::new(Name {
+                        node: identifier_node,
+                        id: identifier,
+                    }))),
+                    value: Box::new(value),
+                })));
+            }
+            return Ok(Expression::Name(Box::new(Name {
                 node: identifier_node,
                 id: identifier,
-            }))),
-            value: Box::new(value),
-        })));
+            })));
+        }
+
+        self.parse_expression_2()
     }
 
+    // https://docs.python.org/3/reference/expressions.html#list-displays
     fn parse_list(&mut self) -> Result<Expression> {
         let node = self.start_node();
         self.bump(Kind::LeftBrace);
-        let mut elements = vec![];
-        while !self.eat(Kind::RightBrace) {
-            let expr = self.parse_starred_list()?;
-            elements.push(expr);
-            self.eat(Kind::Comma);
-        }
+        let elements = self.parse_starred_list()?;
+        self.expect(Kind::RightBrace)?;
         Ok(Expression::List(Box::new(List {
             node: self.finish_node(node),
             elements,
         })))
     }
 
+    // https://docs.python.org/3/reference/expressions.html#parenthesized-forms
     fn parse_paren_form(&mut self) -> Result<Expression> {
         let node = self.start_node();
         self.expect(Kind::LeftParen)?;
-        if self.eat(Kind::RightParen) {
+        if self.at(Kind::RightParen) {
             return Ok(Expression::Tuple(Box::new(Tuple {
                 node: self.finish_node(node),
                 elements: vec![],
@@ -276,26 +256,17 @@ impl Parser {
         }
     }
 
+    // https://docs.python.org/3/reference/expressions.html#set-displays
     fn parse_set(&mut self, node: Node) -> Result<Expression> {
-        let mut elements = vec![];
-        while !self.eat(Kind::RightBracket) {
-            let expr = self.parse_starred_list()?;
-            elements.push(expr);
-            if !self.eat(Kind::Comma) && !self.at(Kind::RightBracket) {
-                return Err(diagnostics::ExpectToken(
-                    Kind::Comma.to_str(),
-                    self.cur_kind().to_str(),
-                    self.finish_node(node),
-                )
-                .into());
-            }
-        }
+        let elements = self.parse_starred_list()?;
+        self.expect(Kind::RightBracket)?;
         Ok(Expression::Set(Box::new(Set {
             node: self.finish_node(node),
             elements,
         })))
     }
 
+    // https://docs.python.org/3/reference/expressions.html#dictionary-displays
     fn parse_dict(&mut self, node: Node) -> Result<Expression> {
         let mut keys = vec![];
         let mut values = vec![];
@@ -321,7 +292,7 @@ impl Parser {
         })))
     }
 
-    fn parse_starred_list(&mut self) -> Result<Expression> {
+    fn parse_starred_list(&mut self) -> Result<Vec<Expression>> {
         let node = self.start_node();
         let mut expressions = vec![];
         expressions.push(self.parse_starred_item()?);
@@ -329,13 +300,7 @@ impl Parser {
             let expr = self.parse_starred_item()?;
             expressions.push(expr);
         }
-        if expressions.len() == 1 {
-            return Ok(expressions.pop().unwrap());
-        }
-        Ok(Expression::Tuple(Box::new(Tuple {
-            node: self.finish_node(node),
-            elements: expressions,
-        })))
+        Ok(expressions)
     }
 
     fn parse_starred_item(&mut self) -> Result<Expression> {
@@ -592,9 +557,9 @@ impl Parser {
         return base;
     }
 
+    // https://docs.python.org/3/reference/expressions.html#primaries
     fn parse_primary(&mut self) -> Result<Expression> {
         let node = self.start_node();
-        println!("parse_primary: {:?}", self.cur_kind());
         let atom_or_primary = if is_atom(&self.cur_kind()) {
             self.parse_atom()?
         } else {
@@ -618,6 +583,7 @@ impl Parser {
         return Ok(atom_or_primary);
     }
 
+    // https://docs.python.org/3/reference/expressions.html#atoms
     fn parse_atom(&mut self) -> Result<Expression> {
         let node = self.start_node();
         if self.at(Kind::Yield) {
@@ -662,16 +628,22 @@ impl Parser {
         }
     }
 
+    // https://docs.python.org/3/reference/expressions.html#yield-expressions
     fn parse_yield_expression(&mut self) -> Result<Expression> {
         let yield_node = self.start_node();
-        // self.bump(Kind::Yield);
-        self.bump_any();
+        self.bump(Kind::Yield);
 
         if self.eat(Kind::From) {
             let value = self.parse_expression_2()?;
             return Ok(Expression::YieldFrom(Box::new(YieldFrom {
                 node: self.finish_node(yield_node),
                 value: Box::new(value),
+            })));
+        }
+        if self.eat(Kind::NewLine) || self.at(Kind::Eof) {
+            return Ok(Expression::Yield(Box::new(Yield {
+                node: self.finish_node(yield_node),
+                value: None,
             })));
         }
         let value = match self.parse_expression_list() {
@@ -836,13 +808,9 @@ impl Parser {
 
     // https://docs.python.org/3/reference/expressions.html#expression-lists
     fn parse_starred_expression(&mut self) -> Result<Expression> {
-        if !self.at(Kind::Mul)
-            && !(self.at(Kind::Identifier) && matches!(self.peek_kind(), Ok(Kind::Mul)))
-        {
-            return self.parse_expression_2();
-        }
         let node = self.start_node();
-        let mut elements = vec![self.parse_starred_item()?];
+        let mut elements = vec![];
+        elements.push(self.parse_starred_item()?);
         while self.eat(Kind::Comma) && !self.at(Kind::Eof) && !self.at(Kind::RightParen) {
             let expr = self.parse_starred_item()?;
             elements.push(expr);
