@@ -576,20 +576,16 @@ impl Parser {
         } else {
             unimplemented!("parse_primary: {:?}", self.cur_kind())
         };
-        if self.eat(Kind::Dot) {
-            let mut expr = Ok(Expression::Attribute(Box::new(Attribute {
-                node: self.finish_node(node),
-                value: Box::new(atom_or_primary),
-                attr: self.cur_token().value.to_string(),
-            })));
-            self.bump_any();
+        if self.at(Kind::Dot) {
+            let mut expr = Ok(atom_or_primary);
             while self.eat(Kind::Dot) {
+                let attr_val = self.cur_token().value.to_string();
+                self.expect(Kind::Identifier)?;
                 expr = Ok(Expression::Attribute(Box::new(Attribute {
                     node: self.finish_node(node),
                     value: Box::new(expr?),
-                    attr: self.cur_token().value.to_string(),
+                    attr: attr_val,
                 })));
-                self.bump_any();
             }
             return expr;
         }
