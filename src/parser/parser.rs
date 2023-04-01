@@ -169,9 +169,6 @@ impl Parser {
 
     // https://docs.python.org/3/library/ast.html#expressions
     fn parse_expression(&mut self) -> Result<Expression> {
-        if self.at(Kind::Identifier) && matches!(self.peek_kind(), Ok(Kind::Walrus)) {
-            return self.parse_assignment_expression();
-        }
         let expr = self.parse_expression_2()?;
 
         Ok(expr)
@@ -974,7 +971,7 @@ mod tests {
 
     #[test]
     fn test_named_expression() {
-        for test_case in &["a := b"] {
+        for test_case in &["(a := b)"] {
             let mut parser = Parser::new(test_case.to_string());
             let program = parser.parse();
 
