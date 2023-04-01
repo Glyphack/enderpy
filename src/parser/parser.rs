@@ -174,6 +174,7 @@ impl Parser {
         Ok(expr)
     }
 
+    // https://docs.python.org/3/reference/expressions.html#conditional-expressions
     fn parse_conditional_expression(&mut self) -> Result<Expression> {
         let or_test = self.parse_or_test();
         if self.eat(Kind::If) {
@@ -187,6 +188,7 @@ impl Parser {
         or_test
     }
 
+    // https://docs.python.org/3/reference/expressions.html#assignment-expressions
     fn parse_assignment_expression(&mut self) -> Result<Expression> {
         let node = self.start_node();
         if self.at(Kind::Identifier) {
@@ -289,6 +291,7 @@ impl Parser {
         })))
     }
 
+    // https://docs.python.org/3/reference/expressions.html#expression-lists
     fn parse_starred_list(&mut self) -> Result<Vec<Expression>> {
         let node = self.start_node();
         let mut expressions = vec![];
@@ -300,6 +303,7 @@ impl Parser {
         Ok(expressions)
     }
 
+    // https://docs.python.org/3/reference/expressions.html#expression-lists
     fn parse_starred_item(&mut self) -> Result<Expression> {
         let mut node = self.start_node();
         if self.eat(Kind::Mul) {
@@ -317,6 +321,7 @@ impl Parser {
         self.parse_assignment_expression()
     }
 
+    // https://docs.python.org/3/reference/expressions.html#await-expression
     fn parse_await(&mut self) -> Result<Expression> {
         let node = self.start_node();
         self.bump(Kind::Await);
@@ -339,6 +344,7 @@ impl Parser {
         })))
     }
 
+    // https://docs.python.org/3/reference/expressions.html#slicings
     fn parse_subscript_value(&mut self) -> Result<Expression> {
         let node = self.start_node();
         let expr = self.parse_expression()?;
@@ -365,6 +371,7 @@ impl Parser {
         }
     }
 
+    // https://docs.python.org/3/reference/expressions.html#conditional-expressions
     fn parse_expression_2(&mut self) -> Result<Expression> {
         if self.eat(Kind::Lambda) {
             // TODO: parse lambda
@@ -373,7 +380,6 @@ impl Parser {
         self.parse_conditional_expression()
     }
 
-    // Boolean operations
     // https://docs.python.org/3/reference/expressions.html#boolean-operations
     fn parse_or_test(&mut self) -> Result<Expression> {
         let node = self.start_node();
@@ -389,6 +395,7 @@ impl Parser {
         Ok(lhs)
     }
 
+    // https://docs.python.org/3/reference/expressions.html#boolean-operations
     fn parse_and_test(&mut self) -> Result<Expression> {
         let node = self.start_node();
         let lhs = self.parse_not_test()?;
@@ -404,6 +411,7 @@ impl Parser {
         Ok(lhs)
     }
 
+    // https://docs.python.org/3/reference/expressions.html#boolean-operations
     fn parse_not_test(&mut self) -> Result<Expression> {
         let node = self.start_node();
         if self.at(Kind::Not) {
@@ -418,6 +426,7 @@ impl Parser {
         self.parse_comparison()
     }
 
+    // https://docs.python.org/3/reference/expressions.html#comparisons
     fn parse_comparison(&mut self) -> Result<Expression> {
         let or_expr = self.parse_or_expr();
         if is_comparison_operator(&self.cur_kind()) {
@@ -429,7 +438,7 @@ impl Parser {
     }
 
     // Binary bitwise operations
-    // https://docs.python.org/3/reference/expressions.html#grammar-token-python-grammar-or_expr
+    // https://docs.python.org/3/reference/expressions.html#binary-bitwise-operations
     fn parse_or_expr(&mut self) -> Result<Expression> {
         let node = self.start_node();
         let xor_expr = self.parse_xor_expr()?;
@@ -445,6 +454,7 @@ impl Parser {
         return Ok(xor_expr);
     }
 
+    // https://docs.python.org/3/reference/expressions.html#binary-bitwise-operations
     fn parse_xor_expr(&mut self) -> Result<Expression> {
         let node = self.start_node();
         let and_expr = self.parse_and_expr()?;
@@ -460,6 +470,7 @@ impl Parser {
         return Ok(and_expr);
     }
 
+    // https://docs.python.org/3/reference/expressions.html#binary-bitwise-operations
     fn parse_and_expr(&mut self) -> Result<Expression> {
         let node = self.start_node();
         let shift_expr = self.parse_shift_expr()?;
@@ -476,6 +487,7 @@ impl Parser {
         return Ok(shift_expr);
     }
 
+    // https://docs.python.org/3/reference/expressions.html#shifting-operations
     fn parse_shift_expr(&mut self) -> Result<Expression> {
         let node = self.start_node();
         let arith_expr = self.parse_binary_arithmetic_operation()?;
@@ -514,6 +526,7 @@ impl Parser {
         return Ok(lhs);
     }
 
+    // https://docs.python.org/3/reference/expressions.html#unary-arithmetic-and-bitwise-operations
     fn parse_unary_arithmetric_operation(&mut self) -> Result<Expression> {
         let node = self.start_node();
         if is_unary_op(&self.cur_kind()) {
@@ -529,6 +542,7 @@ impl Parser {
         self.parse_power_expression()
     }
 
+    // https://docs.python.org/3/reference/expressions.html#the-power-operator
     fn parse_power_expression(&mut self) -> Result<Expression> {
         let node = self.start_node();
         let base = if self.at(Kind::Await) {
@@ -651,6 +665,111 @@ impl Parser {
             node: self.finish_node(yield_node),
             value,
         })));
+    }
+
+    // https://docs.python.org/3/reference/expressions.html#expression-lists
+    fn parse_expression_list(&mut self) -> Result<Expression> {
+        let node = self.start_node();
+        let mut expressions = vec![];
+        expressions.push(self.parse_expression_2()?);
+        while self.eat(Kind::Comma) && !self.at(Kind::Eof) {
+            let expr = self.parse_expression_2()?;
+            expressions.push(expr);
+        }
+        if expressions.len() == 1 {
+            return Ok(expressions.pop().unwrap());
+        }
+        Ok(Expression::Tuple(Box::new(Tuple {
+            node: self.finish_node(node),
+            elements: expressions,
+        })))
+    }
+
+    // https://docs.python.org/3/reference/expressions.html#expression-lists
+    fn parse_starred_expression(&mut self) -> Result<Expression> {
+        let node = self.start_node();
+        let mut elements = vec![];
+        elements.push(self.parse_starred_item()?);
+        while self.eat(Kind::Comma) && !self.at(Kind::Eof) && !self.at(Kind::RightParen) {
+            let expr = self.parse_starred_item()?;
+            elements.push(expr);
+        }
+        if elements.len() == 1 {
+            return Ok(elements.pop().unwrap());
+        }
+        Ok(Expression::Tuple(Box::new(Tuple {
+            node: self.finish_node(node),
+            elements,
+        })))
+    }
+
+    // https://docs.python.org/3/reference/expressions.html#slicings
+    // Clsoing will be consumed by this function
+    fn parse_slice_list(&mut self) -> Result<Expression> {
+        let node = self.start_node();
+        let mut elements = vec![];
+        while !self.at(Kind::Eof) && !self.at(Kind::RightBrace) {
+            if self.at(Kind::Colon) {
+                elements.push(self.parse_proper_slice(None)?);
+            } else {
+                let expr = self.parse_expression_2()?;
+                if self.at(Kind::Colon) {
+                    elements.push(self.parse_proper_slice(Some(expr))?);
+                } else {
+                    elements.push(expr);
+                }
+            }
+            if !self.eat(Kind::Comma) {
+                break;
+            }
+        }
+        self.expect(Kind::RightBrace)?;
+        if elements.len() == 1 {
+            return Ok(elements.pop().unwrap());
+        }
+        Ok(Expression::Tuple(Box::new(Tuple {
+            node: self.finish_node(node),
+            elements,
+        })))
+    }
+
+    // https://docs.python.org/3/reference/expressions.html#slicings
+    fn parse_proper_slice(&mut self, lower: Option<Expression>) -> Result<Expression> {
+        let node = self.start_node();
+
+        let slice_lower = if lower.is_some() {
+            Some(Box::new(lower.unwrap()))
+        } else {
+            if self.eat(Kind::Colon) {
+                None
+            } else {
+                Some(Box::new(self.parse_expression_2()?))
+            }
+        };
+        let upper = if self.eat(Kind::Colon) {
+            if self.at(Kind::RightBrace) {
+                None
+            } else {
+                Some(Box::new(self.parse_expression_2()?))
+            }
+        } else {
+            None
+        };
+        let step = if self.eat(Kind::Colon) {
+            if self.at(Kind::RightBrace) {
+                None
+            } else {
+                Some(Box::new(self.parse_expression_2()?))
+            }
+        } else {
+            None
+        };
+        Ok(Expression::Slice(Box::new(Slice {
+            node: self.finish_node(node),
+            lower: slice_lower,
+            upper,
+            step,
+        })))
     }
 
     fn map_to_atom(&self, start: Node, kind: &Kind, value: TokenValue) -> Expression {
@@ -784,108 +903,6 @@ impl Parser {
         };
         self.bump_any();
         op
-    }
-
-    fn parse_expression_list(&mut self) -> Result<Expression> {
-        let node = self.start_node();
-        let mut expressions = vec![];
-        expressions.push(self.parse_expression_2()?);
-        while self.eat(Kind::Comma) && !self.at(Kind::Eof) {
-            let expr = self.parse_expression_2()?;
-            expressions.push(expr);
-        }
-        if expressions.len() == 1 {
-            return Ok(expressions.pop().unwrap());
-        }
-        Ok(Expression::Tuple(Box::new(Tuple {
-            node: self.finish_node(node),
-            elements: expressions,
-        })))
-    }
-
-    // https://docs.python.org/3/reference/expressions.html#expression-lists
-    fn parse_starred_expression(&mut self) -> Result<Expression> {
-        let node = self.start_node();
-        let mut elements = vec![];
-        elements.push(self.parse_starred_item()?);
-        while self.eat(Kind::Comma) && !self.at(Kind::Eof) && !self.at(Kind::RightParen) {
-            let expr = self.parse_starred_item()?;
-            elements.push(expr);
-        }
-        if elements.len() == 1 {
-            return Ok(elements.pop().unwrap());
-        }
-        Ok(Expression::Tuple(Box::new(Tuple {
-            node: self.finish_node(node),
-            elements,
-        })))
-    }
-
-    // Clsoing will be consumed by this function
-    fn parse_slice_list(&mut self) -> Result<Expression> {
-        let node = self.start_node();
-        let mut elements = vec![];
-        while !self.at(Kind::Eof) && !self.at(Kind::RightBrace) {
-            if self.at(Kind::Colon) {
-                elements.push(self.parse_proper_slice(None)?);
-            } else {
-                let expr = self.parse_expression_2()?;
-                if self.at(Kind::Colon) {
-                    elements.push(self.parse_proper_slice(Some(expr))?);
-                } else {
-                    elements.push(expr);
-                }
-            }
-            if !self.eat(Kind::Comma) {
-                break;
-            }
-        }
-        self.expect(Kind::RightBrace)?;
-        if elements.len() == 1 {
-            return Ok(elements.pop().unwrap());
-        }
-        Ok(Expression::Tuple(Box::new(Tuple {
-            node: self.finish_node(node),
-            elements,
-        })))
-    }
-
-    fn parse_proper_slice(&mut self, lower: Option<Expression>) -> Result<Expression> {
-        let node = self.start_node();
-
-        let slice_lower = if lower.is_some() {
-            Some(Box::new(lower.unwrap()))
-        } else {
-            if self.eat(Kind::Colon) {
-                None
-            } else {
-                Some(Box::new(self.parse_expression_2()?))
-            }
-        };
-        let upper = if self.eat(Kind::Colon) {
-            if self.at(Kind::RightBrace) {
-                None
-            } else {
-                Some(Box::new(self.parse_expression_2()?))
-            }
-        } else {
-            None
-        };
-        let step = if self.eat(Kind::Colon) {
-            if self.at(Kind::RightBrace) {
-                None
-            } else {
-                Some(Box::new(self.parse_expression_2()?))
-            }
-        } else {
-            None
-        };
-        Ok(Expression::Slice(Box::new(Slice {
-            node: self.finish_node(node),
-            lower: slice_lower,
-            upper,
-            step,
-        })))
     }
 }
 
