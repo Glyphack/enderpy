@@ -1144,7 +1144,7 @@ mod tests {
 
     #[test]
     fn test_attribute_ref() {
-        for test_case in &["a.b", "a.b.c", "a.b_c"] {
+        for test_case in &["a.b", "a.b.c", "a.b_c", "a.b.c.d"] {
             let mut parser = Parser::new(test_case.to_string());
             let program = parser.parse();
 
