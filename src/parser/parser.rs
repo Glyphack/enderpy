@@ -2,14 +2,15 @@ use std::panic;
 
 use crate::lexer::lexer::Lexer;
 use crate::parser::ast::*;
-use crate::parser::operator::{is_bool_op, is_unary_op, map_boolean_operator};
 use crate::parser::string::extract_string_inside;
 use crate::token::{Kind, Token, TokenValue};
 use miette::Result;
 
 use super::diagnostics;
 use super::expression::{is_atom, is_iterable, is_primary};
-use super::operator::{is_bin_op, map_binary_operator, map_unary_operator};
+use super::operator::{
+    is_bin_arithmetic_op, is_comparison_operator, is_unary_op, map_unary_operator,
+};
 
 #[derive(Debug)]
 pub struct Parser {
@@ -23,6 +24,10 @@ pub struct Parser {
     // This is incremented when we see an opening bracket and decremented when we
     // see a closing bracket.
     nested_expression_list: usize,
+    // Keeps track of if we are inside an subscript expression
+    // This is incremented when we see an opening bracket and decremented when we
+    // see a closing bracket.
+    nested_subscript: usize,
 }
 
 impl Parser {
@@ -37,6 +42,7 @@ impl Parser {
             cur_token,
             prev_token_end,
             nested_expression_list: 0,
+            nested_subscript: 0,
         }
     }
 
@@ -163,152 +169,607 @@ impl Parser {
 
     // https://docs.python.org/3/library/ast.html#expressions
     fn parse_expression(&mut self) -> Result<Expression> {
-        if self.at(Kind::LeftBrace) {
+        let expr = self.parse_expression_2()?;
+
+        Ok(expr)
+    }
+
+    // https://docs.python.org/3/reference/expressions.html#conditional-expressions
+    fn parse_conditional_expression(&mut self) -> Result<Expression> {
+        let or_test = self.parse_or_test();
+        if self.eat(Kind::If) {
+            let test = self.parse_or_test()?;
+            self.eat(Kind::Else);
+            let or_test = self.parse_conditional_expression()?;
+            // TODO: return conditional expression
+            unimplemented!()
+        }
+
+        or_test
+    }
+
+    // https://docs.python.org/3/reference/expressions.html#assignment-expressions
+    fn parse_assignment_expression(&mut self) -> Result<Expression> {
+        let node = self.start_node();
+        if self.at(Kind::Identifier) {
+            let identifier = self.cur_token().value.to_string();
+            let mut identifier_node = self.start_node();
+            identifier_node = self.finish_node(identifier_node);
+            self.expect(Kind::Identifier)?;
+            identifier_node = self.finish_node(identifier_node);
+            if self.eat(Kind::Walrus) {
+                let value = self.parse_expression_2()?;
+                return Ok(Expression::NamedExpr(Box::new(NamedExpression {
+                    node: self.finish_node(node),
+                    target: Box::new(Expression::Name(Box::new(Name {
+                        node: identifier_node,
+                        id: identifier,
+                    }))),
+                    value: Box::new(value),
+                })));
+            }
+            return Ok(Expression::Name(Box::new(Name {
+                node: identifier_node,
+                id: identifier,
+            })));
+        }
+
+        self.parse_expression_2()
+    }
+
+    // https://docs.python.org/3/reference/expressions.html#list-displays
+    fn parse_list(&mut self) -> Result<Expression> {
+        let node = self.start_node();
+        self.bump(Kind::LeftBrace);
+        let elements = self.parse_starred_list()?;
+        self.expect(Kind::RightBrace)?;
+        Ok(Expression::List(Box::new(List {
+            node: self.finish_node(node),
+            elements,
+        })))
+    }
+
+    // https://docs.python.org/3/reference/expressions.html#parenthesized-forms
+    fn parse_paren_form(&mut self) -> Result<Expression> {
+        let node = self.start_node();
+        self.expect(Kind::LeftParen)?;
+        if self.at(Kind::RightParen) {
+            return Ok(Expression::Tuple(Box::new(Tuple {
+                node: self.finish_node(node),
+                elements: vec![],
+            })));
+        }
+
+        let expr = self.parse_starred_expression()?;
+        self.expect(Kind::RightParen)?;
+        Ok(expr)
+    }
+
+    fn parse_dict_or_set(&mut self) -> Result<Expression> {
+        let node = self.start_node();
+        self.bump(Kind::LeftBracket);
+        if matches!(self.peek_kind(), Ok(Kind::Comma)) {
+            self.parse_set(node)
+        } else {
+            self.parse_dict(node)
+        }
+    }
+
+    // https://docs.python.org/3/reference/expressions.html#set-displays
+    fn parse_set(&mut self, node: Node) -> Result<Expression> {
+        let elements = self.parse_starred_list()?;
+        self.expect(Kind::RightBracket)?;
+        Ok(Expression::Set(Box::new(Set {
+            node: self.finish_node(node),
+            elements,
+        })))
+    }
+
+    // https://docs.python.org/3/reference/expressions.html#dictionary-displays
+    fn parse_dict(&mut self, node: Node) -> Result<Expression> {
+        let mut keys = vec![];
+        let mut values = vec![];
+        while !self.eat(Kind::RightBracket) {
+            let key = self.parse_expression()?;
+            self.expect(Kind::Colon)?;
+            let value = self.parse_expression()?;
+            keys.push(key);
+            values.push(value);
+            if !self.eat(Kind::Comma) && !self.at(Kind::RightBracket) {
+                return Err(diagnostics::ExpectToken(
+                    Kind::Comma.to_str(),
+                    self.cur_kind().to_str(),
+                    node,
+                )
+                .into());
+            }
+        }
+        Ok(Expression::Dict(Box::new(Dict {
+            node: self.finish_node(node),
+            keys,
+            values,
+        })))
+    }
+
+    // https://docs.python.org/3/reference/expressions.html#expression-lists
+    fn parse_starred_list(&mut self) -> Result<Vec<Expression>> {
+        let node = self.start_node();
+        let mut expressions = vec![];
+        expressions.push(self.parse_starred_item()?);
+        while self.eat(Kind::Comma) && !self.at(Kind::Eof) {
+            let expr = self.parse_starred_item()?;
+            expressions.push(expr);
+        }
+        Ok(expressions)
+    }
+
+    // https://docs.python.org/3/reference/expressions.html#expression-lists
+    fn parse_starred_item(&mut self) -> Result<Expression> {
+        let mut node = self.start_node();
+        if self.eat(Kind::Mul) {
+            let starred_value_kind = self.cur_kind().clone();
+            let expr = self.parse_or_expr()?;
+            node = self.finish_node(node);
+            if !is_iterable(&expr) {
+                return Err(diagnostics::UnexpectedToken(starred_value_kind.to_str(), node).into());
+            }
+            return Ok(Expression::Starred(Box::new(Starred {
+                node: self.finish_node(node),
+                value: expr,
+            })));
+        }
+        self.parse_assignment_expression()
+    }
+
+    // https://docs.python.org/3/reference/expressions.html#await-expression
+    fn parse_await(&mut self) -> Result<Expression> {
+        let node = self.start_node();
+        self.bump(Kind::Await);
+        // we clone the token here to inform user in case
+        // the expression is not a primary expression
+        // it's more clear to say which token is unexpected
+        // instead of saying some expression is unexpected
+        let await_value_token = self.cur_token().clone();
+        let await_value = self.parse_expression()?;
+        if !is_primary(&await_value) {
+            return Err(diagnostics::UnexpectedToken(
+                await_value_token.kind.to_str(),
+                self.finish_node(node),
+            )
+            .into());
+        }
+        Ok(Expression::Await(Box::new(Await {
+            node: self.finish_node(node),
+            value: Box::new(await_value),
+        })))
+    }
+
+    // https://docs.python.org/3/reference/expressions.html#slicings
+    fn parse_subscript_value(&mut self) -> Result<Expression> {
+        let node = self.start_node();
+        let expr = self.parse_expression()?;
+        if self.at(Kind::Colon) {
+            let lower = Some(Box::new(expr));
+            let mut upper = None;
+            let mut step = None;
+
+            if self.eat(Kind::Colon) && !self.at(Kind::RightBracket) {
+                upper = Some(Box::new(self.parse_expression()?));
+                if self.eat(Kind::Colon) && !self.at(Kind::RightBracket) {
+                    step = Some(Box::new(self.parse_expression()?));
+                }
+            }
+
+            return Ok(Expression::Slice(Box::new(Slice {
+                node: self.finish_node(node),
+                lower,
+                upper,
+                step,
+            })));
+        } else {
+            return Ok(expr);
+        }
+    }
+
+    // https://docs.python.org/3/reference/expressions.html#conditional-expressions
+    fn parse_expression_2(&mut self) -> Result<Expression> {
+        if self.eat(Kind::Lambda) {
+            // TODO: parse lambda
+            unimplemented!()
+        }
+        self.parse_conditional_expression()
+    }
+
+    // https://docs.python.org/3/reference/expressions.html#boolean-operations
+    fn parse_or_test(&mut self) -> Result<Expression> {
+        let node = self.start_node();
+        let lhs = self.parse_and_test()?;
+        if self.eat(Kind::Or) {
+            let rhs = self.parse_or_test()?;
+            return Ok(Expression::BoolOp(Box::new(BoolOperation {
+                node: self.finish_node(node),
+                op: BooleanOperator::Or,
+                values: vec![lhs, rhs],
+            })));
+        }
+        Ok(lhs)
+    }
+
+    // https://docs.python.org/3/reference/expressions.html#boolean-operations
+    fn parse_and_test(&mut self) -> Result<Expression> {
+        let node = self.start_node();
+        let lhs = self.parse_not_test()?;
+        if self.at(Kind::And) {
+            self.bump(Kind::And);
+            let rhs = self.parse_not_test()?;
+            return Ok(Expression::BoolOp(Box::new(BoolOperation {
+                node: self.finish_node(node),
+                op: BooleanOperator::And,
+                values: vec![lhs, rhs],
+            })));
+        }
+        Ok(lhs)
+    }
+
+    // https://docs.python.org/3/reference/expressions.html#boolean-operations
+    fn parse_not_test(&mut self) -> Result<Expression> {
+        let node = self.start_node();
+        if self.at(Kind::Not) {
+            self.bump(Kind::Not);
+            let operand = self.parse_not_test()?;
+            return Ok(Expression::UnaryOp(Box::new(UnaryOperation {
+                node: self.finish_node(node),
+                op: UnaryOperator::Not,
+                operand: Box::new(operand),
+            })));
+        }
+        self.parse_comparison()
+    }
+
+    // https://docs.python.org/3/reference/expressions.html#comparisons
+    fn parse_comparison(&mut self) -> Result<Expression> {
+        let or_expr = self.parse_or_expr();
+        if is_comparison_operator(&self.cur_kind()) {
+            let mut comp_operator = self.parse_comp_operator()?;
+            let rhs = self.parse_or_expr()?;
+            unimplemented!()
+        }
+        or_expr
+    }
+
+    // Binary bitwise operations
+    // https://docs.python.org/3/reference/expressions.html#binary-bitwise-operations
+    fn parse_or_expr(&mut self) -> Result<Expression> {
+        let node = self.start_node();
+        let xor_expr = self.parse_xor_expr()?;
+        if self.eat(Kind::BitOr) {
+            let lhs = self.parse_xor_expr()?;
+            return Ok(Expression::BinOp(Box::new(BinOp {
+                node: self.finish_node(node),
+                op: BinaryOperator::BitOr,
+                left: Box::new(xor_expr),
+                right: Box::new(lhs),
+            })));
+        }
+        return Ok(xor_expr);
+    }
+
+    // https://docs.python.org/3/reference/expressions.html#binary-bitwise-operations
+    fn parse_xor_expr(&mut self) -> Result<Expression> {
+        let node = self.start_node();
+        let and_expr = self.parse_and_expr()?;
+        if self.eat(Kind::BitXor) {
+            let lhs = self.parse_and_expr()?;
+            return Ok(Expression::BinOp(Box::new(BinOp {
+                node: self.finish_node(node),
+                op: BinaryOperator::BitXor,
+                left: Box::new(and_expr),
+                right: Box::new(lhs),
+            })));
+        }
+        return Ok(and_expr);
+    }
+
+    // https://docs.python.org/3/reference/expressions.html#binary-bitwise-operations
+    fn parse_and_expr(&mut self) -> Result<Expression> {
+        let node = self.start_node();
+        let shift_expr = self.parse_shift_expr()?;
+
+        if self.eat(Kind::BitAnd) {
+            let lhs = self.parse_shift_expr()?;
+            return Ok(Expression::BinOp(Box::new(BinOp {
+                node: self.finish_node(node),
+                op: BinaryOperator::BitAnd,
+                left: Box::new(shift_expr),
+                right: Box::new(lhs),
+            })));
+        }
+        return Ok(shift_expr);
+    }
+
+    // https://docs.python.org/3/reference/expressions.html#shifting-operations
+    fn parse_shift_expr(&mut self) -> Result<Expression> {
+        let node = self.start_node();
+        let arith_expr = self.parse_binary_arithmetic_operation()?;
+        if self.at(Kind::LeftShift) || self.at(Kind::RightShift) {
+            let op = if self.eat(Kind::LeftShift) {
+                BinaryOperator::LShift
+            } else {
+                self.bump(Kind::RightShift);
+                BinaryOperator::RShift
+            };
+            let lhs = self.parse_binary_arithmetic_operation()?;
+            return Ok(Expression::BinOp(Box::new(BinOp {
+                node: self.finish_node(node),
+                op,
+                left: Box::new(arith_expr),
+                right: Box::new(lhs),
+            })));
+        }
+        return Ok(arith_expr);
+    }
+
+    // https://docs.python.org/3/reference/expressions.html#binary-arithmetic-operations
+    fn parse_binary_arithmetic_operation(&mut self) -> Result<Expression> {
+        let node = self.start_node();
+        let lhs = self.parse_unary_arithmetric_operation()?;
+        if is_bin_arithmetic_op(&self.cur_kind()) {
+            let op = self.parse_bin_arithmetic_op()?;
+            let rhs = self.parse_unary_arithmetric_operation()?;
+            return Ok(Expression::BinOp(Box::new(BinOp {
+                node: self.finish_node(node),
+                op,
+                left: Box::new(lhs),
+                right: Box::new(rhs),
+            })));
+        }
+        return Ok(lhs);
+    }
+
+    // https://docs.python.org/3/reference/expressions.html#unary-arithmetic-and-bitwise-operations
+    fn parse_unary_arithmetric_operation(&mut self) -> Result<Expression> {
+        let node = self.start_node();
+        if is_unary_op(&self.cur_kind()) {
+            let op = map_unary_operator(&self.cur_kind());
+            self.bump_any();
+            let operand = self.parse_unary_arithmetric_operation()?;
+            return Ok(Expression::UnaryOp(Box::new(UnaryOperation {
+                node: self.finish_node(node),
+                op,
+                operand: Box::new(operand),
+            })));
+        }
+        self.parse_power_expression()
+    }
+
+    // https://docs.python.org/3/reference/expressions.html#the-power-operator
+    fn parse_power_expression(&mut self) -> Result<Expression> {
+        let node = self.start_node();
+        let base = if self.at(Kind::Await) {
+            self.bump(Kind::Await);
+            let value = self.parse_primary()?;
+            Ok(Expression::Await(Box::new(Await {
+                node: self.finish_node(node),
+                value: Box::new(value),
+            })))
+        } else {
+            self.parse_primary()
+        };
+        if self.eat(Kind::Pow) {
+            let exponent = self.parse_unary_arithmetric_operation()?;
+            return Ok(Expression::BinOp(Box::new(BinOp {
+                node: self.finish_node(node),
+                op: BinaryOperator::Pow,
+                left: Box::new(base?),
+                right: Box::new(exponent),
+            })));
+        }
+
+        return base;
+    }
+
+    // https://docs.python.org/3/reference/expressions.html#primaries
+    fn parse_primary(&mut self) -> Result<Expression> {
+        let node = self.start_node();
+        let atom_or_primary = if is_atom(&self.cur_kind()) {
+            self.parse_atom()?
+        } else {
+            unimplemented!("parse_primary: {:?}", self.cur_kind())
+        };
+        if self.eat(Kind::Dot) {
+            unimplemented!()
+        }
+        // https://docs.python.org/3/reference/expressions.html#slicings
+        if self.eat(Kind::LeftBrace) {
+            return Ok(Expression::Subscript(Box::new(Subscript {
+                node: self.finish_node(node),
+                value: Box::new(atom_or_primary),
+                slice: Box::new(self.parse_slice_list()?),
+            })));
+        }
+        if self.eat(Kind::LeftParen) {
+            unimplemented!()
+        }
+
+        return Ok(atom_or_primary);
+    }
+
+    // https://docs.python.org/3/reference/expressions.html#atoms
+    fn parse_atom(&mut self) -> Result<Expression> {
+        let node = self.start_node();
+        if self.at(Kind::Yield) {
+            return self.parse_yield_expression();
+        } else if self.at(Kind::LeftBrace) {
             self.nested_expression_list += 1;
             let list_expr = self.parse_list();
             self.nested_expression_list -= 1;
             return list_expr;
-        }
-        if self.at(Kind::LeftBracket) {
+        } else if self.at(Kind::LeftBracket) {
             self.nested_expression_list += 1;
             let dict_or_set_expr = self.parse_dict_or_set();
             self.nested_expression_list -= 1;
             return dict_or_set_expr;
-        }
-        if self.at(Kind::LeftParen) {
+        } else if self.at(Kind::LeftParen) {
             self.nested_expression_list += 1;
-            let tuple_or_named_expr = self.parse_tuple_or_named_expr();
+            let tuple_or_named_expr = self.parse_paren_form();
             self.nested_expression_list -= 1;
             return tuple_or_named_expr;
-        }
-        if self.at(Kind::Mul) {
-            return self.parse_starred();
-        }
-        if self.at(Kind::Await) {
-            return self.parse_await();
-        }
-        let node = self.start_node();
-
-        if self.at(Kind::Yield) {
-            let yield_node = self.start_node();
-            self.bump(Kind::Yield);
-            if self.at(Kind::From) {
-                self.bump(Kind::From);
-                let value = self.parse_expression()?;
-                return Ok(Expression::YieldFrom(Box::new(YieldFrom {
-                    node: self.finish_node(yield_node),
-                    value: Box::new(value),
-                })));
-            }
-            let value = match self.parse_expression() {
-                Ok(expr) => Some(Box::new(expr)),
-                _ => None,
-            };
-            return Ok(Expression::Yield(Box::new(Yield {
-                node: self.finish_node(yield_node),
-                value,
-            })));
-        }
-
-        let unary_expr = if is_unary_op(&self.cur_kind()) {
-            let unary_node = self.start_node();
-            let op = map_unary_operator(&self.cur_kind());
-            self.bump_any();
-            let operand = self.parse_expression()?;
-            Some(Expression::UnaryOp(Box::new(UnaryOperation {
-                node: self.finish_node(unary_node),
-                op,
-                operand: Box::new(operand),
-            })))
-        } else {
-            None
-        };
-
-        if self.at(Kind::Identifier) && matches!(self.peek_kind(), Ok(Kind::Walrus)) {
-            let mut identifier_node = self.start_node();
-            let identifier = self.cur_token().value.to_string();
+        } else if self.at(Kind::Identifier) {
+            let value = self.cur_token().value.to_string();
             self.bump(Kind::Identifier);
-            identifier_node = self.finish_node(identifier_node);
-            self.bump(Kind::Walrus);
-            let value = self.parse_expression()?;
-            return Ok(Expression::NamedExpr(Box::new(NamedExpression {
+            return Ok(Expression::Name(Box::new(Name {
                 node: self.finish_node(node),
-                target: Box::new(Expression::Name(Box::new(Name {
-                    node: identifier_node,
-                    id: identifier,
-                }))),
-                value: Box::new(value),
+                id: value,
             })));
-        }
-
-        let atom = if is_atom(&self.cur_kind()) {
+        } else if is_atom(&self.cur_kind()) {
             // value must be cloned to be assigned to the node
             let token_value = self.cur_token().value.clone();
             let token_kind = self.cur_kind();
             // bump needs to happen before creating the atom node
             // otherwise the end would be the same as the start
             self.bump_any();
-            let expr = Some(self.map_to_atom(node, &token_kind, token_value));
-            expr
-        } else {
-            None
-        };
-
-        // refactor to if let and smaller function
-        let mut expr = if let Some(atom) = atom {
-            atom
-        } else if let Some(unary_expr) = unary_expr {
-            unary_expr
+            let expr = self.map_to_atom(node, &token_kind, token_value);
+            return Ok(expr);
         } else {
             return Err(diagnostics::UnexpectedToken(
                 self.cur_kind().to_str(),
-                self.finish_node(self.start_node()),
+                self.finish_node(node),
             )
             .into());
+        }
+    }
+
+    // https://docs.python.org/3/reference/expressions.html#yield-expressions
+    fn parse_yield_expression(&mut self) -> Result<Expression> {
+        let yield_node = self.start_node();
+        self.bump(Kind::Yield);
+
+        if self.eat(Kind::From) {
+            let value = self.parse_expression_2()?;
+            return Ok(Expression::YieldFrom(Box::new(YieldFrom {
+                node: self.finish_node(yield_node),
+                value: Box::new(value),
+            })));
+        }
+        if self.eat(Kind::NewLine) || self.at(Kind::Eof) {
+            return Ok(Expression::Yield(Box::new(Yield {
+                node: self.finish_node(yield_node),
+                value: None,
+            })));
+        }
+        let value = match self.parse_expression_list() {
+            Ok(expr) => Some(Box::new(expr)),
+            _ => None,
         };
+        return Ok(Expression::Yield(Box::new(Yield {
+            node: self.finish_node(yield_node),
+            value,
+        })));
+    }
 
-        let current_kind = self.cur_kind();
-        if is_bool_op(&current_kind) {
-            let op = map_boolean_operator(&current_kind);
-            self.bump_any();
-            let rhs = self.parse_expression()?;
-            // TODO: Check if rhs is BoolOp then we need to flatten it
-            // e.g. a or b or c can be BoolOp(or, [a, b, c])
-            expr = Expression::BoolOp(Box::new(BoolOperation {
-                node: self.finish_node(node),
-                op,
-                values: vec![expr, rhs],
-            }))
+    // https://docs.python.org/3/reference/expressions.html#expression-lists
+    fn parse_expression_list(&mut self) -> Result<Expression> {
+        let node = self.start_node();
+        let mut expressions = vec![];
+        expressions.push(self.parse_expression_2()?);
+        while self.eat(Kind::Comma) && !self.at(Kind::Eof) {
+            let expr = self.parse_expression_2()?;
+            expressions.push(expr);
         }
-
-        if is_bin_op(&current_kind) {
-            let op = map_binary_operator(&current_kind);
-            self.bump_any();
-            let rhs = self.parse_expression()?;
-            expr = Expression::BinOp(Box::new(BinOp {
-                node: self.finish_node(node),
-                op,
-                left: Box::new(expr),
-                right: Box::new(rhs),
-            }))
+        if expressions.len() == 1 {
+            return Ok(expressions.pop().unwrap());
         }
+        Ok(Expression::Tuple(Box::new(Tuple {
+            node: self.finish_node(node),
+            elements: expressions,
+        })))
+    }
 
-        if self.at(Kind::Comma) && self.nested_expression_list == 0 {
-            self.nested_expression_list += 1;
-            let mut elements = vec![expr];
-            while self.eat(Kind::Comma) && !self.at(Kind::NewLine) {
-                // not all expressions are allowed in a tuple
-                // TODO: check if the expression is allowed
-                elements.push(self.parse_expression()?);
+    // https://docs.python.org/3/reference/expressions.html#expression-lists
+    fn parse_starred_expression(&mut self) -> Result<Expression> {
+        let node = self.start_node();
+        let mut elements = vec![];
+        elements.push(self.parse_starred_item()?);
+        while self.eat(Kind::Comma) && !self.at(Kind::Eof) && !self.at(Kind::RightParen) {
+            let expr = self.parse_starred_item()?;
+            elements.push(expr);
+        }
+        if elements.len() == 1 {
+            return Ok(elements.pop().unwrap());
+        }
+        Ok(Expression::Tuple(Box::new(Tuple {
+            node: self.finish_node(node),
+            elements,
+        })))
+    }
+
+    // https://docs.python.org/3/reference/expressions.html#slicings
+    // Clsoing will be consumed by this function
+    fn parse_slice_list(&mut self) -> Result<Expression> {
+        let node = self.start_node();
+        let mut elements = vec![];
+        while !self.at(Kind::Eof) && !self.at(Kind::RightBrace) {
+            if self.at(Kind::Colon) {
+                elements.push(self.parse_proper_slice(None)?);
+            } else {
+                let expr = self.parse_expression_2()?;
+                if self.at(Kind::Colon) {
+                    elements.push(self.parse_proper_slice(Some(expr))?);
+                } else {
+                    elements.push(expr);
+                }
             }
-            self.nested_expression_list -= 1;
-            expr = Expression::Tuple(Box::new(Tuple {
-                node: self.finish_node(node),
-                elements,
-            }))
+            if !self.eat(Kind::Comma) {
+                break;
+            }
         }
+        self.expect(Kind::RightBrace)?;
+        if elements.len() == 1 {
+            return Ok(elements.pop().unwrap());
+        }
+        Ok(Expression::Tuple(Box::new(Tuple {
+            node: self.finish_node(node),
+            elements,
+        })))
+    }
 
-        Ok(expr)
+    // https://docs.python.org/3/reference/expressions.html#slicings
+    fn parse_proper_slice(&mut self, lower: Option<Expression>) -> Result<Expression> {
+        let node = self.start_node();
+
+        let slice_lower = if lower.is_some() {
+            Some(Box::new(lower.unwrap()))
+        } else {
+            if self.eat(Kind::Colon) {
+                None
+            } else {
+                Some(Box::new(self.parse_expression_2()?))
+            }
+        };
+        let upper = if self.eat(Kind::Colon) {
+            if self.at(Kind::RightBrace) {
+                None
+            } else {
+                Some(Box::new(self.parse_expression_2()?))
+            }
+        } else {
+            None
+        };
+        let step = if self.eat(Kind::Colon) {
+            if self.at(Kind::RightBrace) {
+                None
+            } else {
+                Some(Box::new(self.parse_expression_2()?))
+            }
+        } else {
+            None
+        };
+        Ok(Expression::Slice(Box::new(Slice {
+            node: self.finish_node(node),
+            lower: slice_lower,
+            upper,
+            step,
+        })))
     }
 
     fn map_to_atom(&self, start: Node, kind: &Kind, value: TokenValue) -> Expression {
@@ -384,138 +845,64 @@ impl Parser {
         atom
     }
 
-    fn parse_list(&mut self) -> Result<Expression> {
+    fn parse_comp_operator(&mut self) -> Result<ComparisonOperator> {
         let node = self.start_node();
-        self.bump(Kind::LeftBrace);
-        let mut elements = vec![];
-        while !self.eat(Kind::RightBrace) {
-            let expr = self.parse_expression()?;
-            elements.push(expr);
-            self.eat(Kind::Comma);
-        }
-        Ok(Expression::List(Box::new(List {
-            node: self.finish_node(node),
-            elements,
-        })))
-    }
-
-    fn parse_tuple_or_named_expr(&mut self) -> Result<Expression> {
-        let node = self.start_node();
-        self.bump(Kind::LeftParen);
-        let mut elements = vec![];
-        while !self.eat(Kind::RightParen) {
-            let expr = self.parse_expression()?;
-            if let Expression::NamedExpr(_) = expr {
-                self.bump(Kind::RightParen);
-                return Ok(expr);
-            }
-
-            elements.push(expr);
-            if !self.eat(Kind::Comma) && !self.at(Kind::RightParen) {
-                return Err(diagnostics::ExpectToken(
-                    Kind::Comma.to_str(),
+        let op = match self.cur_kind() {
+            Kind::Less => ComparisonOperator::Lt,
+            Kind::Greater => ComparisonOperator::Gt,
+            Kind::LessEq => ComparisonOperator::LtE,
+            Kind::GreaterEq => ComparisonOperator::GtE,
+            Kind::Eq => ComparisonOperator::Eq,
+            Kind::NotEq => ComparisonOperator::NotEq,
+            Kind::In => ComparisonOperator::In,
+            Kind::Is => match self.peek_kind() {
+                Ok(Kind::Not) => {
+                    self.bump_any();
+                    ComparisonOperator::IsNot
+                }
+                _ => ComparisonOperator::Is,
+            },
+            Kind::Not => match self.peek_kind() {
+                Ok(Kind::In) => {
+                    self.bump_any();
+                    ComparisonOperator::NotIn
+                }
+                _ => {
+                    return Err(diagnostics::UnexpectedToken(
+                        self.cur_kind().to_str(),
+                        self.finish_node(node),
+                    )
+                    .into())
+                }
+            },
+            _ => {
+                return Err(diagnostics::UnexpectedToken(
                     self.cur_kind().to_str(),
                     self.finish_node(node),
                 )
-                .into());
+                .into())
             }
-        }
-        Ok(Expression::Tuple(Box::new(Tuple {
-            node: self.finish_node(node),
-            elements,
-        })))
+        };
+        self.bump_any();
+        Ok(op)
     }
 
-    fn parse_dict_or_set(&mut self) -> Result<Expression> {
-        let node = self.start_node();
-        self.bump(Kind::LeftBracket);
-        if matches!(self.peek_kind(), Ok(Kind::Comma)) {
-            self.parse_set(node)
-        } else {
-            self.parse_dict(node)
-        }
-    }
-
-    fn parse_set(&mut self, node: Node) -> Result<Expression> {
-        let mut elements = vec![];
-        while !self.eat(Kind::RightBracket) {
-            let expr = self.parse_expression()?;
-            elements.push(expr);
-            if !self.eat(Kind::Comma) && !self.at(Kind::RightBracket) {
-                return Err(diagnostics::ExpectToken(
-                    Kind::Comma.to_str(),
-                    self.cur_kind().to_str(),
-                    self.finish_node(node),
-                )
-                .into());
-            }
-        }
-        Ok(Expression::Set(Box::new(Set {
-            node: self.finish_node(node),
-            elements,
-        })))
-    }
-
-    fn parse_dict(&mut self, node: Node) -> Result<Expression> {
-        let mut keys = vec![];
-        let mut values = vec![];
-        while !self.eat(Kind::RightBracket) {
-            let key = self.parse_expression()?;
-            self.expect(Kind::Colon)?;
-            let value = self.parse_expression()?;
-            keys.push(key);
-            values.push(value);
-            if !self.eat(Kind::Comma) && !self.at(Kind::RightBracket) {
-                return Err(diagnostics::ExpectToken(
-                    Kind::Comma.to_str(),
-                    self.cur_kind().to_str(),
-                    node,
-                )
-                .into());
-            }
-        }
-        Ok(Expression::Dict(Box::new(Dict {
-            node: self.finish_node(node),
-            keys,
-            values,
-        })))
-    }
-
-    fn parse_starred(&mut self) -> Result<Expression> {
-        let mut node = self.start_node();
-        self.bump(Kind::Mul);
-        let starred_value_kind = self.cur_kind().clone();
-        let expr = self.parse_expression()?;
-        node = self.finish_node(node);
-        if !is_iterable(&expr) {
-            return Err(diagnostics::UnexpectedToken(starred_value_kind.to_str(), node).into());
-        }
-        Ok(Expression::Starred(Box::new(Starred {
-            node: self.finish_node(node),
-            value: expr,
-        })))
-    }
-
-    fn parse_await(&mut self) -> Result<Expression> {
-        let node = self.start_node();
-        self.bump(Kind::Await);
-        // we clone the token here to inform user in case
-        // the expression is not a primary expression
-        // it's more clear to say which token is unexpected
-        // instead of saying some expression is unexpected
-        let await_value_token = self.cur_token().clone();
-        let await_value = self.parse_expression()?;
-        if !is_primary(&await_value) {
-            return Err(diagnostics::UnexpectedToken(
-                await_value_token.kind.to_str(),
-                self.finish_node(node),
-            )
-            .into());
-        }
-        Ok(Expression::Await(Box::new(Await {
-            node: self.finish_node(node),
-            value: Box::new(await_value),
-        })))
+    fn parse_bin_arithmetic_op(&mut self) -> Result<BinaryOperator> {
+        let op = match self.cur_kind() {
+            Kind::Plus => Ok(BinaryOperator::Add),
+            Kind::Minus => Ok(BinaryOperator::Sub),
+            Kind::Mul => Ok(BinaryOperator::Mult),
+            Kind::Div => Ok(BinaryOperator::Div),
+            Kind::IntDiv => Ok(BinaryOperator::FloorDiv),
+            Kind::Mod => Ok(BinaryOperator::Mod),
+            Kind::Pow => Ok(BinaryOperator::Pow),
+            Kind::MatrixMul => Ok(BinaryOperator::MatMult),
+            _ => Err(
+                diagnostics::UnexpectedToken(self.cur_kind().to_str(), self.start_node()).into(),
+            ),
+        };
+        self.bump_any();
+        op
     }
 }
 
@@ -659,7 +1046,7 @@ mod tests {
         }
     }
     #[test]
-    fn parse_set() {
+    fn test_set() {
         for test_case in &["{a, b, c}"] {
             let mut parser = Parser::new(test_case.to_string());
             let program = parser.parse();
@@ -690,8 +1077,8 @@ mod tests {
 
     #[test]
     fn test_starred() {
-        for test_case in &["*a"] {
-        let mut parser = Parser::new(test_case.to_string());
+        for test_case in &["(*a)"] {
+            let mut parser = Parser::new(test_case.to_string());
             let program = parser.parse();
 
             insta::with_settings!({
@@ -719,13 +1106,21 @@ mod tests {
     }
 
     #[test]
-    fn test_expressions_list() {
-        for test_test in &["a, b, c"] {
-            let mut parser = Parser::new(test_test.to_string());
+    fn test_subscript() {
+        for test_case in &[
+            "a[b]",
+            "a[b:c]",
+            "a[b:c:d]",
+            "a[b, c, d]",
+            "a[b, c: d, e]",
+            "a[::]",
+            "a[b, c:d:e, f]",
+        ] {
+            let mut parser = Parser::new(test_case.to_string());
             let program = parser.parse();
 
             insta::with_settings!({
-                    description => test_test.to_string(), // the template source code
+                    description => test_case.to_string(), // the template source code
                     omit_expression => true // do not include the default expression
                 }, {
                     assert_debug_snapshot!(program);

@@ -73,6 +73,7 @@ pub enum Expression {
     Slice(Box<Slice>),
     Call(Box<Call>),
     Await(Box<Await>),
+    Compare(Box<Compare>),
 }
 
 // https://docs.python.org/3/reference/expressions.html#atom-identifiers
@@ -260,28 +261,17 @@ pub struct Attribute {
 pub struct Subscript {
     pub node: Node,
     pub value: Box<Expression>,
-    pub slice: Box<SubscriptSlice>,
+    pub slice: Box<Expression>,
 }
 
-#[derive(Debug)]
-pub enum SubscriptSlice {
-    Index(Box<Expression>),
-    Slice(Box<Slice>),
-    ExtSlice(Box<ExtSlice>),
-}
-
+// https://docs.python.org/3/library/ast.html#ast.Slice
+// can be used for Subscript
 #[derive(Debug)]
 pub struct Slice {
     pub node: Node,
     pub lower: Option<Box<Expression>>,
     pub upper: Option<Box<Expression>>,
     pub step: Option<Box<Expression>>,
-}
-
-#[derive(Debug)]
-pub struct ExtSlice {
-    pub node: Node,
-    pub dims: Vec<Expression>,
 }
 
 // https://docs.python.org/3/library/ast.html#ast.Call
@@ -305,4 +295,27 @@ pub struct Keyword {
 pub struct Await {
     pub node: Node,
     pub value: Box<Expression>,
+}
+
+// https://docs.python.org/3/library/ast.html#ast.Compare
+#[derive(Debug)]
+pub struct Compare {
+    pub node: Node,
+    pub left: Box<Expression>,
+    pub ops: Vec<ComparisonOperator>,
+    pub comparators: Vec<Expression>,
+}
+
+#[derive(Debug)]
+pub enum ComparisonOperator {
+    Eq,
+    NotEq,
+    Lt,
+    LtE,
+    Gt,
+    GtE,
+    Is,
+    IsNot,
+    In,
+    NotIn,
 }

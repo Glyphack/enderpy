@@ -1,6 +1,6 @@
 ---
 source: src/parser/parser.rs
-description: (*a)
+description: "a[b]"
 ---
 Module {
     node: Node {
@@ -9,19 +9,28 @@ Module {
     },
     body: [
         ExpressionStatement(
-            Starred(
-                Starred {
+            Subscript(
+                Subscript {
                     node: Node {
-                        start: 1,
+                        start: 0,
                         end: 3,
                     },
                     value: Name(
                         Name {
                             node: Node {
+                                start: 0,
+                                end: 1,
+                            },
+                            id: "a",
+                        },
+                    ),
+                    slice: Name(
+                        Name {
+                            node: Node {
                                 start: 2,
                                 end: 3,
                             },
-                            id: "a",
+                            id: "b",
                         },
                     ),
                 },

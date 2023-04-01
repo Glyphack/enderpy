@@ -1,6 +1,6 @@
 ---
 source: src/parser/parser.rs
-description: "(a, b, c)"
+description: "{a, b, c}"
 ---
 Module {
     node: Node {
@@ -9,11 +9,11 @@ Module {
     },
     body: [
         ExpressionStatement(
-            Tuple(
-                Tuple {
+            Set(
+                Set {
                     node: Node {
-                        start: 1,
-                        end: 8,
+                        start: 0,
+                        end: 9,
                     },
                     elements: [
                         Name(

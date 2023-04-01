@@ -53,6 +53,21 @@ pub fn is_bin_op(kind: &Kind) -> bool {
     }
 }
 
+pub fn is_bin_arithmetic_op(kind: &Kind) -> bool {
+    match kind {
+        Kind::Plus
+        | Kind::Minus
+        | Kind::Mul
+        | Kind::MatrixMul
+        | Kind::MulAssign
+        | Kind::Div
+        | Kind::Mod
+        | Kind::Pow
+        | Kind::IntDiv => true,
+        _ => false,
+    }
+}
+
 pub fn map_binary_operator(kind: &Kind) -> BinaryOperator {
     match kind {
         Kind::Plus => BinaryOperator::Add,
@@ -69,5 +84,22 @@ pub fn map_binary_operator(kind: &Kind) -> BinaryOperator {
         Kind::LeftShift => BinaryOperator::LShift,
         Kind::RightShift => BinaryOperator::RShift,
         _ => panic!("Not a binary operator"),
+    }
+}
+
+pub fn is_comparison_operator(kind: &Kind) -> bool {
+    match kind {
+        Kind::Eq
+        | Kind::NotEq
+        | Kind::Less
+        | Kind::LessEq
+        | Kind::Greater
+        | Kind::GreaterEq
+        | Kind::Is
+        | Kind::In
+        // Not is not a comparison operator, but it is used in the
+        // "not in" operator
+        | Kind::Not => true,
+        _ => false,
     }
 }
