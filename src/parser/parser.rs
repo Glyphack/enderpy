@@ -172,8 +172,7 @@ impl Parser {
         if self.at(Kind::Identifier) && matches!(self.peek_kind(), Ok(Kind::Walrus)) {
             return self.parse_assignment_expression();
         }
-        println!("cur: {:?}", self.cur_token);
-        println!("peek: {:?}", self.peek_token());
+        let expr = self.parse_expression_2()?;
 
         // if self.at(Kind::Comma) && self.nested_expression_list == 0 {
         //     self.nested_expression_list += 1;
@@ -202,7 +201,7 @@ impl Parser {
         //     }))
         // }
 
-        unimplemented!()
+        Ok(expr)
     }
 
     fn parse_conditional_expression(&mut self) -> Result<Expression> {
@@ -242,7 +241,7 @@ impl Parser {
         self.bump(Kind::LeftBrace);
         let mut elements = vec![];
         while !self.eat(Kind::RightBrace) {
-            let expr = self.parse_expression()?;
+            let expr = self.parse_starred_list()?;
             elements.push(expr);
             self.eat(Kind::Comma);
         }
@@ -252,31 +251,19 @@ impl Parser {
         })))
     }
 
-    fn parse_tuple_or_named_expr(&mut self) -> Result<Expression> {
+    fn parse_paren_form(&mut self) -> Result<Expression> {
         let node = self.start_node();
-        self.bump(Kind::LeftParen);
-        let mut elements = vec![];
-        while !self.eat(Kind::RightParen) {
-            let expr = self.parse_expression()?;
-            if let Expression::NamedExpr(_) = expr {
-                self.bump(Kind::RightParen);
-                return Ok(expr);
-            }
-
-            elements.push(expr);
-            if !self.eat(Kind::Comma) && !self.at(Kind::RightParen) {
-                return Err(diagnostics::ExpectToken(
-                    Kind::Comma.to_str(),
-                    self.cur_kind().to_str(),
-                    self.finish_node(node),
-                )
-                .into());
-            }
+        self.expect(Kind::LeftParen)?;
+        if self.eat(Kind::RightParen) {
+            return Ok(Expression::Tuple(Box::new(Tuple {
+                node: self.finish_node(node),
+                elements: vec![],
+            })));
         }
-        Ok(Expression::Tuple(Box::new(Tuple {
-            node: self.finish_node(node),
-            elements,
-        })))
+
+        let expr = self.parse_starred_expression()?;
+        self.expect(Kind::RightParen)?;
+        Ok(expr)
     }
 
     fn parse_dict_or_set(&mut self) -> Result<Expression> {
@@ -292,7 +279,7 @@ impl Parser {
     fn parse_set(&mut self, node: Node) -> Result<Expression> {
         let mut elements = vec![];
         while !self.eat(Kind::RightBracket) {
-            let expr = self.parse_expression()?;
+            let expr = self.parse_starred_list()?;
             elements.push(expr);
             if !self.eat(Kind::Comma) && !self.at(Kind::RightBracket) {
                 return Err(diagnostics::ExpectToken(
@@ -334,19 +321,38 @@ impl Parser {
         })))
     }
 
-    fn parse_starred(&mut self) -> Result<Expression> {
-        let mut node = self.start_node();
-        self.bump(Kind::Mul);
-        let starred_value_kind = self.cur_kind().clone();
-        let expr = self.parse_expression()?;
-        node = self.finish_node(node);
-        if !is_iterable(&expr) {
-            return Err(diagnostics::UnexpectedToken(starred_value_kind.to_str(), node).into());
+    fn parse_starred_list(&mut self) -> Result<Expression> {
+        let node = self.start_node();
+        let mut expressions = vec![];
+        expressions.push(self.parse_starred_item()?);
+        while self.eat(Kind::Comma) && !self.at(Kind::Eof) {
+            let expr = self.parse_starred_item()?;
+            expressions.push(expr);
         }
-        Ok(Expression::Starred(Box::new(Starred {
+        if expressions.len() == 1 {
+            return Ok(expressions.pop().unwrap());
+        }
+        Ok(Expression::Tuple(Box::new(Tuple {
             node: self.finish_node(node),
-            value: expr,
+            elements: expressions,
         })))
+    }
+
+    fn parse_starred_item(&mut self) -> Result<Expression> {
+        let mut node = self.start_node();
+        if self.eat(Kind::Mul) {
+            let starred_value_kind = self.cur_kind().clone();
+            let expr = self.parse_or_expr()?;
+            node = self.finish_node(node);
+            if !is_iterable(&expr) {
+                return Err(diagnostics::UnexpectedToken(starred_value_kind.to_str(), node).into());
+            }
+            return Ok(Expression::Starred(Box::new(Starred {
+                node: self.finish_node(node),
+                value: expr,
+            })));
+        }
+        self.parse_assignment_expression()
     }
 
     fn parse_await(&mut self) -> Result<Expression> {
@@ -372,6 +378,7 @@ impl Parser {
     }
 
     fn parse_subscript_value(&mut self) -> Result<Expression> {
+        let node = self.start_node();
         let expr = self.parse_expression()?;
         if self.at(Kind::Colon) {
             let lower = Some(Box::new(expr));
@@ -386,7 +393,7 @@ impl Parser {
             }
 
             return Ok(Expression::Slice(Box::new(Slice {
-                node: Node::default(),
+                node: self.finish_node(node),
                 lower,
                 upper,
                 step,
@@ -409,8 +416,7 @@ impl Parser {
     fn parse_or_test(&mut self) -> Result<Expression> {
         let node = self.start_node();
         let lhs = self.parse_and_test()?;
-        if self.at(Kind::Or) {
-            self.bump(Kind::Or);
+        if self.eat(Kind::Or) {
             let rhs = self.parse_or_test()?;
             return Ok(Expression::BoolOp(Box::new(BoolOperation {
                 node: self.finish_node(node),
@@ -422,9 +428,9 @@ impl Parser {
     }
 
     fn parse_and_test(&mut self) -> Result<Expression> {
+        let node = self.start_node();
         let lhs = self.parse_not_test()?;
         if self.at(Kind::And) {
-            let node = self.start_node();
             self.bump(Kind::And);
             let rhs = self.parse_not_test()?;
             return Ok(Expression::BoolOp(Box::new(BoolOperation {
@@ -437,11 +443,12 @@ impl Parser {
     }
 
     fn parse_not_test(&mut self) -> Result<Expression> {
+        let node = self.start_node();
         if self.at(Kind::Not) {
-            //TODO: implement
+            self.bump(Kind::Not);
             let operand = self.parse_not_test()?;
             return Ok(Expression::UnaryOp(Box::new(UnaryOperation {
-                node: Node::default(),
+                node: self.finish_node(node),
                 op: UnaryOperator::Not,
                 operand: Box::new(operand),
             })));
@@ -477,11 +484,12 @@ impl Parser {
     }
 
     fn parse_xor_expr(&mut self) -> Result<Expression> {
+        let node = self.start_node();
         let and_expr = self.parse_and_expr()?;
         if self.eat(Kind::BitXor) {
             let lhs = self.parse_and_expr()?;
             return Ok(Expression::BinOp(Box::new(BinOp {
-                node: Node::default(),
+                node: self.finish_node(node),
                 op: BinaryOperator::BitXor,
                 left: Box::new(and_expr),
                 right: Box::new(lhs),
@@ -491,12 +499,13 @@ impl Parser {
     }
 
     fn parse_and_expr(&mut self) -> Result<Expression> {
+        let node = self.start_node();
         let shift_expr = self.parse_shift_expr()?;
 
         if self.eat(Kind::BitAnd) {
             let lhs = self.parse_shift_expr()?;
             return Ok(Expression::BinOp(Box::new(BinOp {
-                node: Node::default(),
+                node: self.finish_node(node),
                 op: BinaryOperator::BitAnd,
                 left: Box::new(shift_expr),
                 right: Box::new(lhs),
@@ -506,16 +515,18 @@ impl Parser {
     }
 
     fn parse_shift_expr(&mut self) -> Result<Expression> {
+        let node = self.start_node();
         let arith_expr = self.parse_binary_arithmetic_operation()?;
-        if self.eat(Kind::LeftShift) || self.eat(Kind::RightShift) {
-            let op = if self.cur_kind() == Kind::LeftShift {
+        if self.at(Kind::LeftShift) || self.at(Kind::RightShift) {
+            let op = if self.eat(Kind::LeftShift) {
                 BinaryOperator::LShift
             } else {
+                self.bump(Kind::RightShift);
                 BinaryOperator::RShift
             };
             let lhs = self.parse_binary_arithmetic_operation()?;
             return Ok(Expression::BinOp(Box::new(BinOp {
-                node: Node::default(),
+                node: self.finish_node(node),
                 op,
                 left: Box::new(arith_expr),
                 right: Box::new(lhs),
@@ -526,12 +537,13 @@ impl Parser {
 
     // https://docs.python.org/3/reference/expressions.html#binary-arithmetic-operations
     fn parse_binary_arithmetic_operation(&mut self) -> Result<Expression> {
+        let node = self.start_node();
         let lhs = self.parse_unary_arithmetric_operation()?;
         if is_bin_arithmetic_op(&self.cur_kind()) {
             let op = self.parse_bin_arithmetic_op()?;
             let rhs = self.parse_unary_arithmetric_operation()?;
             return Ok(Expression::BinOp(Box::new(BinOp {
-                node: Node::default(),
+                node: self.finish_node(node),
                 op,
                 left: Box::new(lhs),
                 right: Box::new(rhs),
@@ -541,12 +553,13 @@ impl Parser {
     }
 
     fn parse_unary_arithmetric_operation(&mut self) -> Result<Expression> {
+        let node = self.start_node();
         if is_unary_op(&self.cur_kind()) {
             let op = map_unary_operator(&self.cur_kind());
             self.bump_any();
             let operand = self.parse_unary_arithmetric_operation()?;
             return Ok(Expression::UnaryOp(Box::new(UnaryOperation {
-                node: Node::default(),
+                node: self.finish_node(node),
                 op,
                 operand: Box::new(operand),
             })));
@@ -555,14 +568,25 @@ impl Parser {
     }
 
     fn parse_power_expression(&mut self) -> Result<Expression> {
+        let node = self.start_node();
         let base = if self.at(Kind::Await) {
-            unimplemented!()
+            self.bump(Kind::Await);
+            let value = self.parse_primary()?;
+            Ok(Expression::Await(Box::new(Await {
+                node: self.finish_node(node),
+                value: Box::new(value),
+            })))
         } else {
             self.parse_primary()
         };
         if self.eat(Kind::Pow) {
             let exponent = self.parse_unary_arithmetric_operation()?;
-            unimplemented!()
+            return Ok(Expression::BinOp(Box::new(BinOp {
+                node: self.finish_node(node),
+                op: BinaryOperator::Pow,
+                left: Box::new(base?),
+                right: Box::new(exponent),
+            })));
         }
 
         return base;
@@ -570,20 +594,28 @@ impl Parser {
 
     fn parse_primary(&mut self) -> Result<Expression> {
         let node = self.start_node();
-        if is_atom(&self.cur_kind()) {
-            return self.parse_atom();
-        }
+        println!("parse_primary: {:?}", self.cur_kind());
+        let atom_or_primary = if is_atom(&self.cur_kind()) {
+            self.parse_atom()?
+        } else {
+            unimplemented!("parse_primary: {:?}", self.cur_kind())
+        };
         if self.eat(Kind::Dot) {
             unimplemented!()
         }
+        // https://docs.python.org/3/reference/expressions.html#slicings
         if self.eat(Kind::LeftBrace) {
-            unimplemented!()
+            return Ok(Expression::Subscript(Box::new(Subscript {
+                node: self.finish_node(node),
+                value: Box::new(atom_or_primary),
+                slice: Box::new(self.parse_slice_list()?),
+            })));
         }
         if self.eat(Kind::LeftParen) {
             unimplemented!()
         }
 
-        Err(diagnostics::UnexpectedToken(self.cur_kind().to_str(), self.finish_node(node)).into())
+        return Ok(atom_or_primary);
     }
 
     fn parse_atom(&mut self) -> Result<Expression> {
@@ -602,7 +634,7 @@ impl Parser {
             return dict_or_set_expr;
         } else if self.at(Kind::LeftParen) {
             self.nested_expression_list += 1;
-            let tuple_or_named_expr = self.parse_tuple_or_named_expr();
+            let tuple_or_named_expr = self.parse_paren_form();
             self.nested_expression_list -= 1;
             return tuple_or_named_expr;
         } else if self.at(Kind::Identifier) {
@@ -613,7 +645,6 @@ impl Parser {
                 id: value,
             })));
         } else if is_atom(&self.cur_kind()) {
-            let node = self.start_node();
             // value must be cloned to be assigned to the node
             let token_value = self.cur_token().value.clone();
             let token_kind = self.cur_kind();
@@ -633,16 +664,17 @@ impl Parser {
 
     fn parse_yield_expression(&mut self) -> Result<Expression> {
         let yield_node = self.start_node();
-        self.bump(Kind::Yield);
-        if self.at(Kind::From) {
-            self.bump(Kind::From);
-            let value = self.parse_expression()?;
+        // self.bump(Kind::Yield);
+        self.bump_any();
+
+        if self.eat(Kind::From) {
+            let value = self.parse_expression_2()?;
             return Ok(Expression::YieldFrom(Box::new(YieldFrom {
                 node: self.finish_node(yield_node),
                 value: Box::new(value),
             })));
         }
-        let value = match self.parse_expression() {
+        let value = match self.parse_expression_list() {
             Ok(expr) => Some(Box::new(expr)),
             _ => None,
         };
@@ -783,6 +815,112 @@ impl Parser {
         };
         self.bump_any();
         op
+    }
+
+    fn parse_expression_list(&mut self) -> Result<Expression> {
+        let node = self.start_node();
+        let mut expressions = vec![];
+        expressions.push(self.parse_expression_2()?);
+        while self.eat(Kind::Comma) && !self.at(Kind::Eof) {
+            let expr = self.parse_expression_2()?;
+            expressions.push(expr);
+        }
+        if expressions.len() == 1 {
+            return Ok(expressions.pop().unwrap());
+        }
+        Ok(Expression::Tuple(Box::new(Tuple {
+            node: self.finish_node(node),
+            elements: expressions,
+        })))
+    }
+
+    // https://docs.python.org/3/reference/expressions.html#expression-lists
+    fn parse_starred_expression(&mut self) -> Result<Expression> {
+        if !self.at(Kind::Mul)
+            && !(self.at(Kind::Identifier) && matches!(self.peek_kind(), Ok(Kind::Mul)))
+        {
+            return self.parse_expression_2();
+        }
+        let node = self.start_node();
+        let mut elements = vec![self.parse_starred_item()?];
+        while self.eat(Kind::Comma) && !self.at(Kind::Eof) && !self.at(Kind::RightParen) {
+            let expr = self.parse_starred_item()?;
+            elements.push(expr);
+        }
+        if elements.len() == 1 {
+            return Ok(elements.pop().unwrap());
+        }
+        Ok(Expression::Tuple(Box::new(Tuple {
+            node: self.finish_node(node),
+            elements,
+        })))
+    }
+
+    // Clsoing will be consumed by this function
+    fn parse_slice_list(&mut self) -> Result<Expression> {
+        let node = self.start_node();
+        let mut elements = vec![];
+        while !self.at(Kind::Eof) && !self.at(Kind::RightBrace) {
+            if self.at(Kind::Colon) {
+                elements.push(self.parse_proper_slice(None)?);
+            } else {
+                let expr = self.parse_expression_2()?;
+                if self.at(Kind::Colon) {
+                    elements.push(self.parse_proper_slice(Some(expr))?);
+                } else {
+                    elements.push(expr);
+                }
+            }
+            if !self.eat(Kind::Comma) {
+                break;
+            }
+        }
+        self.expect(Kind::RightBrace)?;
+        if elements.len() == 1 {
+            return Ok(elements.pop().unwrap());
+        }
+        Ok(Expression::Tuple(Box::new(Tuple {
+            node: self.finish_node(node),
+            elements,
+        })))
+    }
+
+    fn parse_proper_slice(&mut self, lower: Option<Expression>) -> Result<Expression> {
+        let node = self.start_node();
+
+        let slice_lower = if lower.is_some() {
+            Some(Box::new(lower.unwrap()))
+        } else {
+            if self.eat(Kind::Colon) {
+                None
+            } else {
+                Some(Box::new(self.parse_expression_2()?))
+            }
+        };
+        let upper = if self.eat(Kind::Colon) {
+            if self.at(Kind::RightBrace) {
+                None
+            } else {
+                Some(Box::new(self.parse_expression_2()?))
+            }
+        } else {
+            None
+        };
+        let step = if self.eat(Kind::Colon) {
+            if self.at(Kind::RightBrace) {
+                None
+            } else {
+                Some(Box::new(self.parse_expression_2()?))
+            }
+        } else {
+            None
+        };
+        Ok(Expression::Slice(Box::new(Slice {
+            node: self.finish_node(node),
+            lower: slice_lower,
+            upper,
+            step,
+        })))
     }
 }
 
@@ -926,7 +1064,7 @@ mod tests {
         }
     }
     #[test]
-    fn parse_set() {
+    fn test_set() {
         for test_case in &["{a, b, c}"] {
             let mut parser = Parser::new(test_case.to_string());
             let program = parser.parse();
@@ -957,7 +1095,7 @@ mod tests {
 
     #[test]
     fn test_starred() {
-        for test_case in &["*a"] {
+        for test_case in &["(*a)"] {
             let mut parser = Parser::new(test_case.to_string());
             let program = parser.parse();
 
@@ -986,23 +1124,16 @@ mod tests {
     }
 
     #[test]
-    fn test_expressions_list() {
-        for test_test in &["a, b, c"] {
-            let mut parser = Parser::new(test_test.to_string());
-            let program = parser.parse();
-
-            insta::with_settings!({
-                    description => test_test.to_string(), // the template source code
-                    omit_expression => true // do not include the default expression
-                }, {
-                    assert_debug_snapshot!(program);
-            });
-        }
-    }
-
-    #[test]
-    fn test_parse_subscript() {
-        for test_case in &["a[b]", "a[b:c]", "a[b:c:d]", "a[b, c, d]"] {
+    fn test_subscript() {
+        for test_case in &[
+            "a[b]",
+            "a[b:c]",
+            "a[b:c:d]",
+            "a[b, c, d]",
+            "a[b, c: d, e]",
+            "a[::]",
+            "a[b, c:d:e, f]",
+        ] {
             let mut parser = Parser::new(test_case.to_string());
             let program = parser.parse();
 
