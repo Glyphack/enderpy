@@ -281,12 +281,14 @@ pub struct Call {
     pub func: Box<Expression>,
     pub args: Vec<Expression>,
     pub keywords: Vec<Keyword>,
+    pub starargs: Option<Box<Expression>>,
+    pub kwargs: Option<Box<Expression>>,
 }
 
 #[derive(Debug)]
 pub struct Keyword {
     pub node: Node,
-    pub arg: String,
+    pub arg: Option<String>,
     pub value: Box<Expression>,
 }
 
@@ -319,4 +321,3 @@ pub enum ComparisonOperator {
     In,
     NotIn,
 }
-

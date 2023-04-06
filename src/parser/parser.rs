@@ -597,8 +597,77 @@ impl Parser {
                 slice: Box::new(self.parse_slice_list()?),
             })));
         }
+        // https://docs.python.org/3/reference/expressions.html#calls
         if self.eat(Kind::LeftParen) {
-            unimplemented!()
+            let mut positional_args = vec![];
+            let mut keyword_args = vec![];
+            let mut seen_keyword = false;
+
+            loop {
+                if self.at(Kind::RightParen) {
+                    break;
+                }
+                if self.at(Kind::Identifier) && matches!(self.peek_kind(), Ok(Kind::Assign)) {
+                    seen_keyword = true;
+                    let keyword_arg = match self.parse_keyword_item() {
+                        Ok(keyword_arg) => keyword_arg,
+                        Err(_) => {
+                            return Err(diagnostics::ExpectToken(
+                                "Keyword argument",
+                                self.cur_kind().to_str(),
+                                self.finish_node(self.start_node()),
+                            )
+                            .into());
+                        }
+                    };
+                    keyword_args.push(keyword_arg);
+                } else if self.at(Kind::Mul) {
+                    let star_arg_node = self.start_node();
+                    self.bump(Kind::Mul);
+                    let star_arg = Expression::Starred(Box::new(Starred {
+                        node: self.finish_node(star_arg_node),
+                        value: self.parse_expression_2()?,
+                    }));
+                    positional_args.push(star_arg);
+                } else if self.at(Kind::Pow) {
+                    let kwarg_node = self.start_node();
+                    self.bump(Kind::Pow);
+                    seen_keyword = true;
+                    let kwarg = Keyword {
+                        node: self.finish_node(kwarg_node),
+                        arg: None,
+                        value: Box::new(self.parse_expression_2()?),
+                    };
+                    keyword_args.push(kwarg);
+                } else {
+                    if seen_keyword {
+                        // TODO change to synatx error
+                        return Err(diagnostics::ExpectToken(
+                            "Positional argument after keyword argument",
+                            self.cur_kind().to_str(),
+                            self.finish_node(self.start_node()),
+                        )
+                        .into());
+                    }
+                    let arg = self.parse_assignment_expression()?;
+                    positional_args.push(arg);
+                }
+                if !self.eat(Kind::Comma) {
+                    break;
+                }
+            }
+
+            self.bump(Kind::Comma);
+            self.expect(Kind::RightParen)?;
+
+            return Ok(Expression::Call(Box::new(Call {
+                node: self.finish_node(node),
+                func: Box::new(atom_or_primary),
+                args: positional_args,
+                keywords: keyword_args,
+                starargs: None,
+                kwargs: None,
+            })));
         }
 
         return Ok(atom_or_primary);
@@ -914,6 +983,19 @@ impl Parser {
         self.bump_any();
         op
     }
+
+    fn parse_keyword_item(&mut self) -> Result<Keyword> {
+        let node = self.start_node();
+        let arg = self.cur_token().value.to_string();
+        self.bump(Kind::Identifier);
+        self.bump(Kind::Assign);
+        let value = Box::new(self.parse_expression_2()?);
+        Ok(Keyword {
+            node: self.finish_node(node),
+            arg: Some(arg),
+            value,
+        })
+    }
 }
 
 #[cfg(test)]
@@ -1141,6 +1223,29 @@ mod tests {
     #[test]
     fn test_attribute_ref() {
         for test_case in &["a.b", "a.b.c", "a.b_c", "a.b.c.d"] {
+            let mut parser = Parser::new(test_case.to_string());
+            let program = parser.parse();
+
+            insta::with_settings!({
+                    description => test_case.to_string(), // the template source code
+                    omit_expression => true // do not include the default expression
+                }, {
+                    assert_debug_snapshot!(program);
+            });
+        }
+    }
+
+    #[test]
+    fn parse_call() {
+        for test_case in &[
+            "a()",
+            "a(b)",
+            "a(b, c)",
+            "func(b=c)",
+            "func(a, b=c, d=e)",
+            "func(a, b=c, d=e, *f)",
+            "func(a, b=c, d=e, *f, **g)",
+        ] {
             let mut parser = Parser::new(test_case.to_string());
             let program = parser.parse();
 
