@@ -1,0 +1,54 @@
+---
+source: src/parser/parser.rs
+description: func(b=c)
+---
+Module {
+    node: Node {
+        start: 0,
+        end: 9,
+    },
+    body: [
+        ExpressionStatement(
+            Call(
+                Call {
+                    node: Node {
+                        start: 0,
+                        end: 9,
+                    },
+                    func: Name(
+                        Name {
+                            node: Node {
+                                start: 0,
+                                end: 4,
+                            },
+                            id: "func",
+                        },
+                    ),
+                    args: [],
+                    keywords: [
+                        Keyword {
+                            node: Node {
+                                start: 5,
+                                end: 8,
+                            },
+                            arg: Some(
+                                "b",
+                            ),
+                            value: Name(
+                                Name {
+                                    node: Node {
+                                        start: 7,
+                                        end: 8,
+                                    },
+                                    id: "c",
+                                },
+                            ),
+                        },
+                    ],
+                    starargs: None,
+                    kwargs: None,
+                },
+            ),
+        ),
+    ],
+}
