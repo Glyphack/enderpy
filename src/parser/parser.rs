@@ -5,7 +5,6 @@ use crate::parser::ast::*;
 use crate::parser::string::extract_string_inside;
 use crate::token::{Kind, Token, TokenValue};
 use miette::Result;
-use tracing_subscriber::filter::targets;
 
 use super::diagnostics;
 use super::expression::{is_atom, is_iterable, is_primary};
@@ -240,10 +239,31 @@ impl Parser {
                 elements: vec![],
             })));
         }
-        let first_expr = self.parse_starred_item()?;
+        // paren form starts with either an expression or a star expression
+        // Generator starts with an expression
+        // we need to first check if we have a generator or a paren form
+        // we do this by checking if the next expression is assignment expression
+        // if not we consume the expression and check if the next token is a for
+        // if not we have a paren form
+        // The first expression we consume have three cases
+        // Either an starred item https://docs.python.org/3/reference/expressions.html#grammar-token-python-grammar-starred_expression
+        // or an assignment expression
+        let first_expr =
+            if self.at(Kind::Identifier) && matches!(self.peek_kind(), Ok(Kind::Walrus)) {
+                self.parse_assignment_expression()?
+            } else if self.eat(Kind::Mul) {
+                let expr = self.parse_or_expr()?;
+                Expression::Starred(Box::new(Starred {
+                    node: self.finish_node(node),
+                    value: Box::new(expr),
+                }))
+            } else {
+                self.parse_expression_2()?
+            };
 
         if matches!(self.cur_kind(), Kind::For) || matches!(self.peek_kind(), Ok(Kind::For)) {
             let generators = self.parse_comp_for()?;
+            self.expect(Kind::RightParen)?;
             return Ok(Expression::Generator(Box::new(Generator {
                 node: self.finish_node(node),
                 element: Box::new(first_expr),
@@ -1578,6 +1598,27 @@ mod tests {
             "lambda a, *b, c: a",
             "lambda a, *b, c, **d: a",
             "lambda a=1 : a",
+        ] {
+            let mut parser = Parser::new(test_case.to_string());
+            let program = parser.parse();
+
+            insta::with_settings!({
+                    description => test_case.to_string(), // the template source code
+                    omit_expression => true // do not include the default expression
+                }, {
+                    assert_debug_snapshot!(program);
+            });
+        }
+    }
+
+    #[test]
+    fn test_generator_expression() {
+        for test_case in &[
+            "(a for a in b)",
+            "(a for a in b if c)",
+            "(a for a in b if c if d)",
+            "(a for a in b for c in d)",
+            "(ord(c) for line in file for c in line)",
         ] {
             let mut parser = Parser::new(test_case.to_string());
             let program = parser.parse();
