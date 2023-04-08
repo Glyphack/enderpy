@@ -373,9 +373,18 @@ impl Parser {
 
     // https://docs.python.org/3/reference/expressions.html#conditional-expressions
     fn parse_expression_2(&mut self) -> Result<Expression> {
+        let node = self.start_node();
         if self.eat(Kind::Lambda) {
-            // TODO: parse lambda
-            unimplemented!()
+            let params_list = self.parse_parameters(true).expect("lambda params");
+            println!("params_list: {:?}", params_list);
+            self.expect(Kind::Colon)?;
+            let expr = self.parse_expression_2()?;
+
+            return Ok(Expression::Lambda(Box::new(Lambda {
+                node: self.finish_node(node),
+                args: params_list,
+                body: Box::new(expr),
+            })));
         }
         self.parse_conditional_expression()
     }
@@ -996,6 +1005,130 @@ impl Parser {
             value,
         })
     }
+
+    fn parse_parameters(&mut self, is_lambda: bool) -> Result<Arguments> {
+        let node = self.start_node();
+        let mut seen_vararg = false;
+        let mut seen_kwarg = false;
+        let mut must_have_default = false;
+
+        let mut posonlyargs = vec![];
+        let mut args = vec![];
+        let mut vararg = None;
+        let mut kwarg = None;
+        let mut kwonlyargs = vec![];
+        let mut kw_defaults = vec![];
+        let mut defaults = vec![];
+
+        loop {
+            if self.is_def_parameter() {
+                let (param, default) = self.parse_parameter(is_lambda)?;
+                if seen_vararg {
+                    kwonlyargs.push(param);
+                } else if seen_kwarg {
+                    return Err(diagnostics::InvalidSyntax(
+                        "parameter after kwarg",
+                        self.finish_node(node),
+                    )
+                    .into());
+                } else {
+                    args.push(param);
+                }
+                if let Some(default_value) = default {
+                    if seen_vararg {
+                        kw_defaults.push(default_value);
+                    } else {
+                        must_have_default = true;
+                        defaults.push(default_value);
+                    }
+                } else if must_have_default {
+                    return Err(diagnostics::InvalidSyntax(
+                        "non-default argument follows default argument",
+                        self.finish_node(node),
+                    )
+                    .into());
+                }
+            // If a parameter has a default value, all following parameters up until the “*”
+            // must also have a default value — this is a syntactic restriction that is not expressed by the grammar.
+            } else if self.eat(Kind::Mul) {
+                seen_vararg = true;
+                let (param, default) = self.parse_parameter(is_lambda)?;
+                // default is not allowed for vararg
+                if default.is_some() {
+                    return Err(diagnostics::InvalidSyntax(
+                        "var-positional argument cannot have default value",
+                        self.finish_node(node),
+                    )
+                    .into());
+                }
+                vararg = Some(param);
+            } else if self.eat(Kind::Pow) {
+                seen_kwarg = true;
+                let (param, default) = self.parse_parameter(is_lambda)?;
+                // default is not allowed for kwarg
+                if default.is_some() {
+                    return Err(diagnostics::InvalidSyntax(
+                        "var-keyword argument cannot have default value",
+                        self.finish_node(node),
+                    )
+                    .into());
+                }
+                kwarg = Some(param);
+            } else if self.eat(Kind::Comma) {
+                continue;
+            } else if self.eat(Kind::Div) {
+                // copy the current args to posonlyargs
+                posonlyargs = args;
+                args = vec![];
+            } else {
+                break;
+            }
+        }
+        // return Parameter
+
+        Ok(Arguments {
+            node: self.finish_node(node),
+            posonlyargs,
+            args,
+            vararg,
+            kwonlyargs,
+            kw_defaults,
+            kwarg,
+            defaults,
+        })
+    }
+
+    fn is_def_parameter(&mut self) -> bool {
+        return self.cur_kind() == Kind::Identifier;
+        // && matches!(self.peek_kind(), Ok(Kind::Assign))
+        // || matches!(self.peek_kind(), Ok(Kind::Colon))
+    }
+
+    fn parse_parameter(&mut self, is_lambda: bool) -> Result<(Arg, Option<Expression>)> {
+        let node = self.start_node();
+        let arg = self.cur_token().value.to_string();
+        self.bump(Kind::Identifier);
+        // Lambda parameters cannot have annotations
+        let annotation = if self.at(Kind::Colon) && !is_lambda {
+            self.bump(Kind::Colon);
+            Some(self.parse_expression_2()?)
+        } else {
+            None
+        };
+        let default = if self.eat(Kind::Assign) {
+            Some(self.parse_expression_2()?)
+        } else {
+            None
+        };
+        Ok((
+            Arg {
+                node: self.finish_node(node),
+                arg,
+                annotation,
+            },
+            default,
+        ))
+    }
 }
 
 #[cfg(test)]
@@ -1245,6 +1378,30 @@ mod tests {
             "func(a, b=c, d=e)",
             "func(a, b=c, d=e, *f)",
             "func(a, b=c, d=e, *f, **g)",
+        ] {
+            let mut parser = Parser::new(test_case.to_string());
+            let program = parser.parse();
+
+            insta::with_settings!({
+                    description => test_case.to_string(), // the template source code
+                    omit_expression => true // do not include the default expression
+                }, {
+                    assert_debug_snapshot!(program);
+            });
+        }
+    }
+
+    #[test]
+    fn test_lambda() {
+        for test_case in &[
+            "lambda: a",
+            "lambda a: a",
+            "lambda a, b: a",
+            "lambda a, b, c: a",
+            "lambda a, *b: a",
+            "lambda a, *b, c: a",
+            "lambda a, *b, c, **d: a",
+            "lambda a=1 : a",
         ] {
             let mut parser = Parser::new(test_case.to_string());
             let program = parser.parse();
