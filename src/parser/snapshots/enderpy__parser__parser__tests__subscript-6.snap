@@ -13,7 +13,7 @@ Module {
                 Subscript {
                     node: Node {
                         start: 0,
-                        end: 2,
+                        end: 5,
                     },
                     value: Name(
                         Name {
