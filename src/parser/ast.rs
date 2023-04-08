@@ -74,6 +74,7 @@ pub enum Expression {
     Call(Box<Call>),
     Await(Box<Await>),
     Compare(Box<Compare>),
+    Lambda(Box<Lambda>),
 }
 
 // https://docs.python.org/3/reference/expressions.html#atom-identifiers
@@ -320,4 +321,33 @@ pub enum ComparisonOperator {
     IsNot,
     In,
     NotIn,
+}
+
+// https://docs.python.org/3/library/ast.html#ast.Lambda
+#[derive(Debug)]
+pub struct Lambda {
+    pub node: Node,
+    pub args: Arguments,
+    pub body: Box<Expression>,
+}
+
+// https://docs.python.org/3/library/ast.html#ast.arguments
+#[derive(Debug)]
+pub struct Arguments {
+    pub node: Node,
+    pub posonlyargs: Vec<Arg>,
+    pub args: Vec<Arg>,
+    pub vararg: Option<Arg>,
+    pub kwonlyargs: Vec<Arg>,
+    pub kw_defaults: Vec<Expression>,
+    pub kwarg: Option<Arg>,
+    pub defaults: Vec<Expression>,
+}
+
+// https://docs.python.org/3/library/ast.html#ast.arg
+#[derive(Debug)]
+pub struct Arg {
+    pub node: Node,
+    pub arg: String,
+    pub annotation: Option<Expression>,
 }
