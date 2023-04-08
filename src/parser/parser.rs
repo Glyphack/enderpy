@@ -179,10 +179,14 @@ impl Parser {
         let or_test = self.parse_or_test();
         if self.eat(Kind::If) {
             let test = self.parse_or_test()?;
-            self.eat(Kind::Else);
-            let or_test = self.parse_conditional_expression()?;
-            // TODO: return conditional expression
-            unimplemented!()
+            self.expect(Kind::Else)?;
+            let or_else = self.parse_expression_2()?;
+            return Ok(Expression::IfExp(Box::new(IfExp {
+                node: self.start_node(),
+                test: Box::new(test),
+                body: Box::new(or_test?),
+                orelse: Box::new(or_else),
+            })));
         }
 
         or_test
@@ -1619,6 +1623,24 @@ mod tests {
             "(a for a in b if c if d)",
             "(a for a in b for c in d)",
             "(ord(c) for line in file for c in line)",
+        ] {
+            let mut parser = Parser::new(test_case.to_string());
+            let program = parser.parse();
+
+            insta::with_settings!({
+                    description => test_case.to_string(), // the template source code
+                    omit_expression => true // do not include the default expression
+                }, {
+                    assert_debug_snapshot!(program);
+            });
+        }
+    }
+
+    #[test]
+    fn test_conditional_expression() {
+        for test_case in &[
+            // "a if b else c",
+            "a if b else c if d else e",
         ] {
             let mut parser = Parser::new(test_case.to_string());
             let program = parser.parse();

@@ -75,6 +75,7 @@ pub enum Expression {
     Await(Box<Await>),
     Compare(Box<Compare>),
     Lambda(Box<Lambda>),
+    IfExp(Box<IfExp>),
 }
 
 // https://docs.python.org/3/reference/expressions.html#atom-identifiers
@@ -354,4 +355,13 @@ pub struct Arg {
     pub node: Node,
     pub arg: String,
     pub annotation: Option<Expression>,
+}
+
+// https://docs.python.org/3/library/ast.html#ast.IfExp
+#[derive(Debug)]
+pub struct IfExp {
+    pub node: Node,
+    pub test: Box<Expression>,
+    pub body: Box<Expression>,
+    pub orelse: Box<Expression>,
 }
