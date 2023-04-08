@@ -210,13 +210,15 @@ pub struct YieldFrom {
 #[derive(Debug)]
 pub struct Starred {
     pub node: Node,
-    pub value: Expression,
+    pub value: Box<Expression>,
 }
 
+// https://docs.python.org/3/library/ast.html#ast.GeneratorExp
 #[derive(Debug)]
 pub struct Generator {
     pub node: Node,
     pub element: Box<Expression>,
+    pub generators: Vec<Comprehension>,
 }
 
 #[derive(Debug)]
@@ -241,12 +243,14 @@ pub struct DictComp {
     pub generators: Vec<Comprehension>,
 }
 
+// https://docs.python.org/3/library/ast.html#ast.comprehension
 #[derive(Debug)]
 pub struct Comprehension {
     pub node: Node,
     pub target: Box<Expression>,
     pub iter: Box<Expression>,
     pub ifs: Vec<Expression>,
+    pub is_async: bool,
 }
 
 // https://docs.python.org/3/library/ast.html#ast.Attribute

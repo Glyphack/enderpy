@@ -5,6 +5,7 @@ use crate::parser::ast::*;
 use crate::parser::string::extract_string_inside;
 use crate::token::{Kind, Token, TokenValue};
 use miette::Result;
+use tracing_subscriber::filter::targets;
 
 use super::diagnostics;
 use super::expression::{is_atom, is_iterable, is_primary};
@@ -230,7 +231,7 @@ impl Parser {
     }
 
     // https://docs.python.org/3/reference/expressions.html#parenthesized-forms
-    fn parse_paren_form(&mut self) -> Result<Expression> {
+    fn parse_paren_form_or_generator(&mut self) -> Result<Expression> {
         let node = self.start_node();
         self.expect(Kind::LeftParen)?;
         if self.at(Kind::RightParen) {
@@ -239,10 +240,167 @@ impl Parser {
                 elements: vec![],
             })));
         }
+        let first_expr = self.parse_starred_item()?;
 
-        let expr = self.parse_starred_expression()?;
+        if matches!(self.cur_kind(), Kind::For) || matches!(self.peek_kind(), Ok(Kind::For)) {
+            let generators = self.parse_comp_for()?;
+            return Ok(Expression::Generator(Box::new(Generator {
+                node: self.finish_node(node),
+                element: Box::new(first_expr),
+                generators,
+            })));
+        }
+
+        let expr = self.parse_starred_expression(node, first_expr)?;
         self.expect(Kind::RightParen)?;
         Ok(expr)
+    }
+
+    // https://docs.python.org/3/reference/expressions.html#displays-for-lists-sets-and-dictionaries
+    fn parse_comp_for(&mut self) -> Result<Vec<Comprehension>> {
+        // if current token is async
+        let is_async = if self.eat(Kind::Async) { true } else { false };
+
+        let mut generators = vec![];
+        loop {
+            let node = self.start_node();
+            self.expect(Kind::For)?;
+            let target = self.parse_target_list()?;
+            self.expect(Kind::In)?;
+            let iter = self.parse_or_test()?;
+            let ifs = if self.eat(Kind::If) {
+                let mut ifs = vec![];
+                loop {
+                    ifs.push(self.parse_or_test()?);
+                    if !self.eat(Kind::If) {
+                        break;
+                    }
+                }
+                ifs
+            } else {
+                vec![]
+            };
+            generators.push(Comprehension {
+                node: self.finish_node(node),
+                target: Box::new(target),
+                iter: Box::new(iter),
+                ifs,
+                is_async,
+            });
+            if !matches!(self.cur_kind(), Kind::For) {
+                break;
+            }
+        }
+        Ok(generators)
+    }
+
+    // https://docs.python.org/3/reference/simple_stmts.html#grammar-token-python-grammar-target_list
+    fn parse_target_list(&mut self) -> Result<Expression> {
+        let node = self.start_node();
+        let mut targets = vec![];
+        loop {
+            targets.push(self.parse_target()?);
+            if !self.eat(Kind::Comma) {
+                break;
+            }
+        }
+        if targets.len() == 1 {
+            Ok(targets.remove(0))
+        } else {
+            Ok(Expression::Tuple(Box::new(Tuple {
+                node: self.finish_node(node),
+                elements: targets,
+            })))
+        }
+    }
+
+    // https://docs.python.org/3/reference/simple_stmts.html#grammar-token-python-grammar-target
+    fn parse_target(&mut self) -> Result<Expression> {
+        let node = self.start_node();
+        let mut targets = vec![];
+        let target = match self.cur_kind() {
+            Kind::Identifier => match self.peek_kind() {
+                Ok(Kind::LeftBrace) => {
+                    let atom = self.parse_atom()?;
+                    self.parse_subscript(node, atom)?
+                }
+                Ok(Kind::Dot) => {
+                    let atom = self.parse_atom()?;
+                    self.parse_atribute_ref(node, atom)?
+                }
+                _ => {
+                    let identifier = self.cur_token().value.to_string();
+                    let mut identifier_node = self.start_node();
+                    identifier_node = self.finish_node(identifier_node);
+                    self.expect(Kind::Identifier)?;
+                    identifier_node = self.finish_node(identifier_node);
+                    return Ok(Expression::Name(Box::new(Name {
+                        node: identifier_node,
+                        id: identifier,
+                    })));
+                }
+            },
+            Kind::LeftBrace => {
+                let mut elements = vec![];
+                self.bump(Kind::LeftBrace);
+                loop {
+                    elements.push(self.parse_target()?);
+                    if !self.eat(Kind::Comma) {
+                        break;
+                    }
+                }
+                self.expect(Kind::RightBrace)?;
+                Expression::List(Box::new(List {
+                    node: self.finish_node(node),
+                    elements,
+                }))
+            }
+            Kind::LeftParen => {
+                let mut targets = vec![];
+                self.bump(Kind::LeftParen);
+                loop {
+                    targets.push(self.parse_target()?);
+                    if !self.eat(Kind::Comma) {
+                        break;
+                    }
+                }
+                self.expect(Kind::RightParen)?;
+                if targets.len() == 1 {
+                    targets.pop().unwrap()
+                } else {
+                    Expression::Tuple(Box::new(Tuple {
+                        node: self.finish_node(node),
+                        elements: targets,
+                    }))
+                }
+            }
+            Kind::Mul => Expression::Starred(Box::new(Starred {
+                node: self.finish_node(node),
+                value: Box::new(self.parse_target()?),
+            })),
+            _ => panic!("invalid target"),
+        };
+        targets.push(target);
+        while self.eat(Kind::Comma) {
+            // check if current kind can be start of a target
+            if !matches!(
+                self.cur_kind(),
+                Kind::Identifier | Kind::LeftBrace | Kind::LeftParen | Kind::Mul
+            ) {
+                break;
+            }
+            let next_target = self.parse_target()?;
+            targets.push(next_target);
+        }
+
+        if targets.len() == 1 {
+            Ok(targets.remove(0))
+        } else {
+            Ok(Expression::Tuple(Box::new(Tuple {
+                node: self.finish_node(node),
+                elements: targets,
+            })))
+        }
     }
 
     fn parse_dict_or_set(&mut self) -> Result<Expression> {
@@ -315,7 +473,7 @@ impl Parser {
             }
             return Ok(Expression::Starred(Box::new(Starred {
                 node: self.finish_node(node),
-                value: expr,
+                value: Box::new(expr),
             })));
         }
         self.parse_assignment_expression()
@@ -586,25 +744,11 @@ impl Parser {
             unimplemented!("parse_primary: {:?}", self.cur_kind())
         };
         if self.at(Kind::Dot) {
-            let mut expr = Ok(atom_or_primary);
-            while self.eat(Kind::Dot) {
-                let attr_val = self.cur_token().value.to_string();
-                self.expect(Kind::Identifier)?;
-                expr = Ok(Expression::Attribute(Box::new(Attribute {
-                    node: self.finish_node(node),
-                    value: Box::new(expr?),
-                    attr: attr_val,
-                })));
-            }
-            return expr;
+            return self.parse_atribute_ref(node, atom_or_primary);
         }
         // https://docs.python.org/3/reference/expressions.html#slicings
-        if self.eat(Kind::LeftBrace) {
-            return Ok(Expression::Subscript(Box::new(Subscript {
-                node: self.finish_node(node),
-                value: Box::new(atom_or_primary),
-                slice: Box::new(self.parse_slice_list()?),
-            })));
+        if self.at(Kind::LeftBrace) {
+            return self.parse_subscript(node, atom_or_primary);
         }
         // https://docs.python.org/3/reference/expressions.html#calls
         if self.eat(Kind::LeftParen) {
@@ -635,7 +779,7 @@ impl Parser {
                     self.bump(Kind::Mul);
                     let star_arg = Expression::Starred(Box::new(Starred {
                         node: self.finish_node(star_arg_node),
-                        value: self.parse_expression_2()?,
+                        value: Box::new(self.parse_expression_2()?),
                     }));
                     positional_args.push(star_arg);
                 } else if self.at(Kind::Pow) {
@@ -682,6 +826,33 @@ impl Parser {
         return Ok(atom_or_primary);
     }
 
+    fn parse_atribute_ref(&mut self, node: Node, value: Expression) -> Result<Expression> {
+        let mut expr = Ok(value);
+        while self.eat(Kind::Dot) {
+            let attr_val = self.cur_token().value.to_string();
+            self.expect(Kind::Identifier)?;
+            expr = Ok(Expression::Attribute(Box::new(Attribute {
+                node: self.finish_node(node),
+                value: Box::new(expr?),
+                attr: attr_val,
+            })));
+        }
+        return expr;
+    }
+
+    fn parse_subscript(&mut self, node: Node, value: Expression) -> Result<Expression> {
+        let mut expr = Ok(value);
+        while self.eat(Kind::LeftBrace) {
+            let slice = self.parse_slice_list()?;
+            expr = Ok(Expression::Subscript(Box::new(Subscript {
+                node: self.finish_node(node),
+                value: Box::new(expr?),
+                slice: Box::new(slice),
+            })));
+        }
+        return expr;
+    }
+
     // https://docs.python.org/3/reference/expressions.html#atoms
     fn parse_atom(&mut self) -> Result<Expression> {
         let node = self.start_node();
@@ -699,7 +870,7 @@ impl Parser {
             return dict_or_set_expr;
         } else if self.at(Kind::LeftParen) {
             self.nested_expression_list += 1;
-            let tuple_or_named_expr = self.parse_paren_form();
+            let tuple_or_named_expr = self.parse_paren_form_or_generator();
             self.nested_expression_list -= 1;
             return tuple_or_named_expr;
         } else if self.at(Kind::Identifier) {
@@ -774,15 +945,20 @@ impl Parser {
     }
 
     // https://docs.python.org/3/reference/expressions.html#expression-lists
-    fn parse_starred_expression(&mut self) -> Result<Expression> {
-        let node = self.start_node();
+    fn parse_starred_expression(
+        &mut self,
+        node: Node,
+        first_elm: Expression,
+    ) -> Result<Expression> {
         let mut elements = vec![];
-        elements.push(self.parse_starred_item()?);
+        let mut seen_comma = false;
+        elements.push(first_elm);
         while self.eat(Kind::Comma) && !self.at(Kind::Eof) && !self.at(Kind::RightParen) {
+            seen_comma = true;
             let expr = self.parse_starred_item()?;
             elements.push(expr);
         }
-        if elements.len() == 1 {
+        if elements.len() == 1 && !seen_comma {
             return Ok(elements.pop().unwrap());
         }
         Ok(Expression::Tuple(Box::new(Tuple {
