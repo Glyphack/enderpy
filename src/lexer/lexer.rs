@@ -436,7 +436,6 @@ impl Lexer {
             while let Some(c) = self.next() {
                 if c == str_start && last_read_char != '\\' {
                     string_terminated = true;
-                    self.next();
                     break;
                 }
                 last_read_char = c;
@@ -838,7 +837,7 @@ mod tests {
         snapshot_test_lexer(
             "string-literals",
             &[
-                "\"hello\"",
+                "\"hello\"  ",
                 "\"world\"",
                 "\"\"",
                 "a = \"hello\"",

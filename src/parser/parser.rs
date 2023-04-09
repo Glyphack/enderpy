@@ -2,7 +2,7 @@ use std::panic;
 
 use crate::lexer::lexer::Lexer;
 use crate::parser::ast::*;
-use crate::parser::string::extract_string_inside;
+use crate::parser::string::{extract_string_inside, is_string};
 use crate::token::{Kind, Token, TokenValue};
 use miette::Result;
 
@@ -11,6 +11,7 @@ use super::expression::{is_atom, is_iterable, is_primary};
 use super::operator::{
     is_bin_arithmetic_op, is_comparison_operator, is_unary_op, map_unary_operator,
 };
+use super::string::concat_string_exprs;
 
 #[derive(Debug)]
 pub struct Parser {
@@ -344,6 +345,7 @@ impl Parser {
         let mut targets = vec![];
         let target = match self.cur_kind() {
             Kind::Identifier => match self.peek_kind() {
+                // TODO: atom cannot be all the atoms like string, number
                 Ok(Kind::LeftBrace) => {
                     let atom = self.parse_atom()?;
                     self.parse_subscript(node, atom)?
@@ -911,7 +913,37 @@ impl Parser {
             // bump needs to happen before creating the atom node
             // otherwise the end would be the same as the start
             self.bump_any();
-            let expr = self.map_to_atom(node, &token_kind, token_value);
+            let mut expr = self.map_to_atom(node, &token_kind, token_value);
+
+            // If the current token is a string, we need to check if there are more strings
+            // and concat them
+            // https://docs.python.org/3/reference/lexical_analysis.html#string-literal-concatenation
+            if is_string(&token_kind) {
+                loop {
+                    if is_string(&self.cur_kind()) {
+                        let token_value = self.cur_token().value.clone();
+                        let token_kind = self.cur_kind();
+                        self.bump_any();
+                        let next_str = self.map_to_atom(node, &token_kind, token_value);
+                        expr = concat_string_exprs(expr, next_str)?;
+                    } else if self.eat(Kind::WhiteSpace) {
+                        continue;
+                    } else if self.at(Kind::Indent)
+                        || self.at(Kind::NewLine)
+                        || self.at(Kind::Dedent)
+                    {
+                        // Normally the strings in two lines are not concatenated
+                        // but if they are inside a [], {}, (), they are
+                        // here we consume all the indent and newline in this case
+                        if self.nested_expression_list > 0 {
+                            self.bump_any();
+                        }
+                    } else {
+                        break;
+                    }
+                }
+            }
+
             return Ok(expr);
         } else {
             return Err(diagnostics::UnexpectedToken(
@@ -1641,6 +1673,34 @@ mod tests {
         for test_case in &[
             // "a if b else c",
             "a if b else c if d else e",
+        ] {
+            let mut parser = Parser::new(test_case.to_string());
+            let program = parser.parse();
+
+            insta::with_settings!({
+                    description => test_case.to_string(), // the template source code
+                    omit_expression => true // do not include the default expression
+                }, {
+                    assert_debug_snapshot!(program);
+            });
+        }
+    }
+
+    #[test]
+    fn test_string_literal_concatnation() {
+        for test_case in &[
+            "'a' 'b'",
+            "b'a' b'b'",
+            "'a'   'b'",
+            "r'a' 'b'",
+            "b'a' 'b'",
+            "('a'
+            'b')",
+            "('a'
+            'b', 'c')",
+            "('a'
+                'b'
+'c')",
         ] {
             let mut parser = Parser::new(test_case.to_string());
             let program = parser.parse();
