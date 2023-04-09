@@ -925,14 +925,18 @@ impl Parser {
                         let token_kind = self.cur_kind();
                         self.bump_any();
                         let next_str = self.map_to_atom(node, &token_kind, token_value);
-                        // concat
                         expr = concat_string_exprs(expr, next_str)?;
-                    } else if self.at(Kind::WhiteSpace) {
-                    } else if self.at(Kind::NewLine) && self.nested_expression_list > 0 {
+                    } else if self.eat(Kind::WhiteSpace) {
+                        continue;
+                    } else if self.at(Kind::Indent)
+                        || self.at(Kind::NewLine)
+                        || self.at(Kind::Dedent)
+                    {
                         // Normally the strings in two lines are not concatenated
                         // but if they are inside a [], {}, (), they are
-                        while self.eat(Kind::NewLine) {
-                            while self.eat(Kind::Indent) {}
+                        // here we consume all the indent and newline in this case
+                        if self.nested_expression_list > 0 {
+                            self.bump_any();
                         }
                     } else {
                         break;
@@ -1691,9 +1695,12 @@ mod tests {
             "r'a' 'b'",
             "b'a' 'b'",
             "('a'
-        'b')",
+            'b')",
             "('a'
-        'b', 'c')",
+            'b', 'c')",
+            "('a'
+                'b'
+'c')",
         ] {
             let mut parser = Parser::new(test_case.to_string());
             let program = parser.parse();

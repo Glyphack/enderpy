@@ -1,11 +1,11 @@
 ---
 source: src/parser/parser.rs
-description: "('a'\n            'b')"
+description: "('a'\n                'b'\n'c')"
 ---
 Module {
     node: Node {
         start: 0,
-        end: 21,
+        end: 29,
     },
     body: [
         ExpressionStatement(
@@ -13,10 +13,10 @@ Module {
                 Constant {
                     node: Node {
                         start: 1,
-                        end: 20,
+                        end: 28,
                     },
                     value: Str(
-                        "ab",
+                        "abc",
                     ),
                 },
             ),
