@@ -1,0 +1,46 @@
+---
+source: src/parser/parser.rs
+description: "('a'\n        'b', 'c')"
+---
+Module {
+    node: Node {
+        start: 0,
+        end: 22,
+    },
+    body: [
+        ExpressionStatement(
+            Tuple(
+                Tuple {
+                    node: Node {
+                        start: 0,
+                        end: 21,
+                    },
+                    elements: [
+                        Constant(
+                            Constant {
+                                node: Node {
+                                    start: 1,
+                                    end: 16,
+                                },
+                                value: Str(
+                                    "ab",
+                                ),
+                            },
+                        ),
+                        Constant(
+                            Constant {
+                                node: Node {
+                                    start: 18,
+                                    end: 21,
+                                },
+                                value: Str(
+                                    "c",
+                                ),
+                            },
+                        ),
+                    ],
+                },
+            ),
+        ),
+    ],
+}

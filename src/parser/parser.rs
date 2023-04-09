@@ -915,6 +915,9 @@ impl Parser {
             self.bump_any();
             let mut expr = self.map_to_atom(node, &token_kind, token_value);
 
+            // If the current token is a string, we need to check if there are more strings
+            // and concat them
+            // https://docs.python.org/3/reference/lexical_analysis.html#string-literal-concatenation
             if is_string(&token_kind) {
                 loop {
                     if is_string(&self.cur_kind()) {
@@ -923,9 +926,11 @@ impl Parser {
                         self.bump_any();
                         let next_str = self.map_to_atom(node, &token_kind, token_value);
                         // concat
-                        expr = concat_string_exprs(expr, next_str);
+                        expr = concat_string_exprs(expr, next_str)?;
+                    } else if self.at(Kind::WhiteSpace) {
                     } else if self.at(Kind::NewLine) && self.nested_expression_list > 0 {
-                        unimplemented!();
+                        // Normally the strings in two lines are not concatenated
+                        // but if they are inside a [], {}, (), they are
                         while self.eat(Kind::NewLine) {
                             while self.eat(Kind::Indent) {}
                         }
@@ -1127,7 +1132,6 @@ impl Parser {
                 }))
             }
             Kind::StringLiteral => {
-                println!("{:?}", value);
                 let string_val = extract_string_inside(value.to_string());
                 Expression::Constant(Box::new(Constant {
                     node: self.finish_node(start),
@@ -1680,7 +1684,17 @@ mod tests {
 
     #[test]
     fn test_string_literal_concatnation() {
-        for test_case in &["'a' 'b'"] {
+        for test_case in &[
+            "'a' 'b'",
+            "b'a' b'b'",
+            "'a'   'b'",
+            "r'a' 'b'",
+            "b'a' 'b'",
+            "('a'
+        'b')",
+            "('a'
+        'b', 'c')",
+        ] {
             let mut parser = Parser::new(test_case.to_string());
             let program = parser.parse();
 
