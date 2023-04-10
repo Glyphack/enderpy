@@ -1,11 +1,11 @@
 ---
 source: src/parser/parser.rs
-description: "(a,\n            )"
+description: "(a,\n)"
 ---
 Module {
     node: Node {
         start: 0,
-        end: 17,
+        end: 5,
     },
     body: [
         ExpressionStatement(

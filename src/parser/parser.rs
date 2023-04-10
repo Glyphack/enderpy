@@ -168,11 +168,28 @@ impl Parser {
         return Ok(Statement::ExpressionStatement(lhs));
     }
 
-    // https://docs.python.org/3/library/ast.html#expressions
+    // https://docs.python.org/3/library/ast.html#ast.Expr
     fn parse_expression(&mut self) -> Result<Expression> {
+        let node = self.start_node();
         let expr = self.parse_expression_2()?;
 
-        Ok(expr)
+        let mut exprs = vec![];
+        if self.at(Kind::Comma) {
+            exprs.push(expr);
+            while self.eat(Kind::Comma) {
+                if self.at(Kind::Eof) {
+                    break;
+                }
+                exprs.push(self.parse_expression_2()?);
+            }
+        } else {
+            return Ok(expr);
+        }
+
+        return Ok(Expression::Tuple(Box::new(Tuple {
+            node: self.finish_node(node),
+            elements: exprs,
+        })));
     }
 
     // https://docs.python.org/3/reference/expressions.html#conditional-expressions
@@ -454,9 +471,9 @@ impl Parser {
         let mut keys = vec![];
         let mut values = vec![];
         while !self.eat(Kind::RightBracket) {
-            let key = self.parse_expression()?;
+            let key = self.parse_expression_2()?;
             self.expect(Kind::Colon)?;
-            let value = self.parse_expression()?;
+            let value = self.parse_expression_2()?;
             keys.push(key);
             values.push(value);
             if !self.at(Kind::RightBracket) {
@@ -522,7 +539,7 @@ impl Parser {
         // it's more clear to say which token is unexpected
         // instead of saying some expression is unexpected
         let await_value_token = self.cur_token().clone();
-        let await_value = self.parse_expression()?;
+        let await_value = self.parse_expression_2()?;
         if !is_primary(&await_value) {
             return Err(diagnostics::UnexpectedToken(
                 await_value_token.kind.to_str(),
@@ -541,7 +558,6 @@ impl Parser {
         let node = self.start_node();
         if self.eat(Kind::Lambda) {
             let params_list = self.parse_parameters(true).expect("lambda params");
-            println!("params_list: {:?}", params_list);
             self.expect(Kind::Colon)?;
             let expr = self.parse_expression_2()?;
 
@@ -999,7 +1015,6 @@ impl Parser {
             if self.at(Kind::RightParen) {
                 break;
             }
-            println!("here {:?} ", self.cur_kind());
             let expr = self.parse_starred_item()?;
             elements.push(expr);
             seen_comma = true;
@@ -1373,6 +1388,8 @@ mod tests {
             "a = '''a'''",
             "a = \"\"\"a\"\"\"",
             "a = 'a'",
+            "a = 1, 2",
+            "a = 1, 2, ",
         ] {
             let mut parser = Parser::new(test_case.to_string());
             let program = parser.parse();
@@ -1461,6 +1478,7 @@ mod tests {
                 c]",
             "[a,
             ]",
+            "[a, b, c,]",
         ] {
             let mut parser = Parser::new(test_case.to_string());
             let program = parser.parse();
@@ -1477,31 +1495,18 @@ mod tests {
     #[test]
     fn test_tuple() {
         for test_case in &[
-            // "(a, b, c)",
-            // "(a,
-            // b, c)",
-            // "(a
-            // , b, c)",
-            // "(a,
-            // b,
-            //     c)",
+            "(a, b, c)",
+            "(a,
+            b, c)",
+            "(a
+            , b, c)",
+            "(a,
+            b,
+                c)",
             "(a,
 )",
+            "(a, b, c,)",
         ] {
-            // let mut lexer = Lexer::new(test_case);
-            // loop {
-            //     let token = lexer.next_token().expect("");
-            //     println!("{:?}", token);
-            //     if token.kind == Kind::Eof {
-            //         break;
-            //     }
-            // }
-            println!("tokens");
-
-            println!("source: {}", test_case);
-            test_case.chars().for_each(|c| {
-                println!("{:?}", c);
-            });
             let mut parser = Parser::new(test_case.to_string());
             let program = parser.parse();
 
@@ -1528,6 +1533,7 @@ mod tests {
                 e: f}",
             "{a: b,
             }",
+            "{a: b, c: d,}",
         ] {
             let mut parser = Parser::new(test_case.to_string());
             let program = parser.parse();
@@ -1553,6 +1559,7 @@ mod tests {
                 c}",
             "{a,
             }",
+            "{a, b, c,}",
         ] {
             let mut parser = Parser::new(test_case.to_string());
             let program = parser.parse();
@@ -1621,6 +1628,7 @@ mod tests {
             "a[b, c: d, e]",
             "a[::]",
             "a[b, c:d:e, f]",
+            "a[::d,]",
         ] {
             let mut parser = Parser::new(test_case.to_string());
             let program = parser.parse();
@@ -1659,6 +1667,7 @@ mod tests {
             "func(a, b=c, d=e)",
             "func(a, b=c, d=e, *f)",
             "func(a, b=c, d=e, *f, **g)",
+            "func(a,)",
         ] {
             let mut parser = Parser::new(test_case.to_string());
             let program = parser.parse();
@@ -1683,6 +1692,7 @@ mod tests {
             "lambda a, *b, c: a",
             "lambda a, *b, c, **d: a",
             "lambda a=1 : a",
+            "lambda a=1 : a,",
         ] {
             let mut parser = Parser::new(test_case.to_string());
             let program = parser.parse();

@@ -1,21 +1,21 @@
 ---
 source: src/parser/parser.rs
-description: "(a, b, c)"
+description: "{a: b, c: d,}"
 ---
 Module {
     node: Node {
         start: 0,
-        end: 9,
+        end: 13,
     },
     body: [
         ExpressionStatement(
-            Tuple(
-                Tuple {
+            Dict(
+                Dict {
                     node: Node {
                         start: 0,
-                        end: 8,
+                        end: 13,
                     },
-                    elements: [
+                    keys: [
                         Name(
                             Name {
                                 node: Node {
@@ -28,6 +28,17 @@ Module {
                         Name(
                             Name {
                                 node: Node {
+                                    start: 7,
+                                    end: 8,
+                                },
+                                id: "c",
+                            },
+                        ),
+                    ],
+                    values: [
+                        Name(
+                            Name {
+                                node: Node {
                                     start: 4,
                                     end: 5,
                                 },
@@ -37,10 +48,10 @@ Module {
                         Name(
                             Name {
                                 node: Node {
-                                    start: 7,
-                                    end: 8,
+                                    start: 10,
+                                    end: 11,
                                 },
-                                id: "c",
+                                id: "d",
                             },
                         ),
                     ],
