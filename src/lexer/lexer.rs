@@ -33,17 +33,11 @@ impl Lexer {
     pub fn next_token(&mut self) -> Result<Token> {
         let start = self.current;
         let kind = self.next_kind()?;
-        println!(
-            "char  : '{}' nested: {}",
-            self.peek().unwrap_or('D'),
-            self.nesting
-        );
 
         // Ignore whitespace
         if kind == Kind::WhiteSpace {
             return self.next_token();
         }
-        println!("got kind: {:?}", kind);
         let raw_value = self.extract_raw_token_value(start);
         let value = self.parse_token_value(kind, raw_value);
         let end = self.current;
@@ -267,7 +261,6 @@ impl Lexer {
                     // The indentation of the continuation lines is not important. Blank continuation lines are allowed.
                     // There is no NEWLINE token between implicit continuation lines.
                     if self.nesting == 0 {
-                        println!(" NEWLINE");
                         self.start_of_line = true;
                         return Ok(Kind::NewLine);
                     } else {
