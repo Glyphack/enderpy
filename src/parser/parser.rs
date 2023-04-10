@@ -489,7 +489,6 @@ impl Parser {
             let expr = self.parse_starred_item()?;
             if !self.at(Kind::Eof) && !self.at(termination_kind) {
                 self.expect(Kind::Comma)?;
-                self.consume_whitespace_and_newline();
             }
             expressions.push(expr);
         }
@@ -745,11 +744,6 @@ impl Parser {
 
     // https://docs.python.org/3/reference/expressions.html#primaries
     fn parse_primary(&mut self) -> Result<Expression> {
-        if self.nested_expression_list > 0 {
-            self.consume_whitespace_and_newline();
-        } else {
-            while self.eat(Kind::WhiteSpace) {}
-        }
         let node = self.start_node();
         let atom_or_primary = if is_atom(&self.cur_kind()) {
             self.parse_atom()?
@@ -836,11 +830,6 @@ impl Parser {
             Ok(atom_or_primary)
         };
 
-        if self.nested_expression_list > 0 {
-            self.consume_whitespace_and_newline();
-        } else {
-            while self.eat(Kind::WhiteSpace) {}
-        }
         return primary;
     }
 
@@ -873,11 +862,6 @@ impl Parser {
 
     // https://docs.python.org/3/reference/expressions.html#atoms
     fn parse_atom(&mut self) -> Result<Expression> {
-        if self.nested_expression_list > 0 {
-            self.consume_whitespace_and_newline();
-        } else {
-            while self.eat(Kind::WhiteSpace) {}
-        }
         let node = self.start_node();
         if self.at(Kind::Yield) {
             return self.parse_yield_expression();
@@ -919,7 +903,6 @@ impl Parser {
                 loop {
                     if is_string(&self.cur_kind()) {
                         let token_value = self.cur_token().value.clone();
-                        print!("{:?} ", token_value);
                         let token_kind = self.cur_kind();
                         self.bump_any();
                         let next_str = self.map_to_atom(node, &token_kind, token_value);
@@ -1011,13 +994,12 @@ impl Parser {
         // it, it's a tuple
         let mut seen_comma = false;
         elements.push(first_elm);
-        self.consume_whitespace_and_newline();
         while !self.at(Kind::Eof) && !self.at(Kind::RightParen) {
             self.expect(Kind::Comma)?;
-            self.consume_whitespace_and_newline();
             if self.at(Kind::RightParen) {
                 break;
             }
+            println!("here {:?} ", self.cur_kind());
             let expr = self.parse_starred_item()?;
             elements.push(expr);
             seen_comma = true;
@@ -1495,17 +1477,31 @@ mod tests {
     #[test]
     fn test_tuple() {
         for test_case in &[
-            "(a, b, c)",
+            // "(a, b, c)",
+            // "(a,
+            // b, c)",
+            // "(a
+            // , b, c)",
+            // "(a,
+            // b,
+            //     c)",
             "(a,
-            b, c)",
-            "(a
-            , b, c)",
-            "(a,
-            b,
-                c)",
-            "(a,
-            )",
+)",
         ] {
+            // let mut lexer = Lexer::new(test_case);
+            // loop {
+            //     let token = lexer.next_token().expect("");
+            //     println!("{:?}", token);
+            //     if token.kind == Kind::Eof {
+            //         break;
+            //     }
+            // }
+            println!("tokens");
+
+            println!("source: {}", test_case);
+            test_case.chars().for_each(|c| {
+                println!("{:?}", c);
+            });
             let mut parser = Parser::new(test_case.to_string());
             let program = parser.parse();
 
