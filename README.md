@@ -40,8 +40,10 @@ us and ask for help when you need more information on something.
 
 These learning resources are valuable to get started with the project:
 
+For working on parser and lexer:
+
 - [Writing JavaScript parser in Rust](https://boshen.github.io/javascript-parser-in-rust/)
-- First chapter of [https://craftinginterpreters.com/](https://craftinginterpreters.com/)
+- Second chapter of [https://craftinginterpreters.com/](https://craftinginterpreters.com/)
 
 ## Inspired By
 
