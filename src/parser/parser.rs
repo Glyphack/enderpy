@@ -1546,7 +1546,18 @@ mod tests {
     }
     #[test]
     fn test_set() {
-        for test_case in &["{a, b, c}"] {
+        for test_case in &[
+            "{a, b, c}",
+            "{a,
+            b, c}",
+            "{a
+            , b, c}",
+            "{a,
+            b,
+                c}",
+            "{a,
+            }",
+        ] {
             let mut parser = Parser::new(test_case.to_string());
             let program = parser.parse();
 
