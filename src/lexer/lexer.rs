@@ -16,6 +16,7 @@ pub struct Lexer {
     /// the first element is always 0
     /// because the first line is always at indentation level 0
     indent_stack: Vec<usize>,
+    nesting: i8,
 }
 
 impl Lexer {
@@ -25,6 +26,7 @@ impl Lexer {
             current: 0,
             start_of_line: true,
             indent_stack: vec![0],
+            nesting: 0,
         }
     }
 
@@ -177,12 +179,30 @@ impl Lexer {
                     }
                 }
                 // Delimiters
-                '(' => return Ok(Kind::LeftParen),
-                ')' => return Ok(Kind::RightParen),
-                '[' => return Ok(Kind::LeftBrace),
-                ']' => return Ok(Kind::RightBrace),
-                '{' => return Ok(Kind::LeftBracket),
-                '}' => return Ok(Kind::RightBracket),
+                '(' => {
+                    self.nesting += 1;
+                    return Ok(Kind::LeftParen);
+                }
+                ')' => {
+                    self.nesting -= 1;
+                    return Ok(Kind::RightParen);
+                }
+                '[' => {
+                    self.nesting += 1;
+                    return Ok(Kind::LeftBrace);
+                }
+                ']' => {
+                    self.nesting -= 1;
+                    return Ok(Kind::RightBrace);
+                }
+                '{' => {
+                    self.nesting += 1;
+                    return Ok(Kind::LeftBracket);
+                }
+                '}' => {
+                    self.nesting -= 1;
+                    return Ok(Kind::RightBracket);
+                }
                 ',' => return Ok(Kind::Comma),
                 '.' => return Ok(Kind::Dot),
                 ';' => return Ok(Kind::SemiColon),
@@ -233,8 +253,15 @@ impl Lexer {
                     _ => return Ok(Kind::Greater),
                 },
                 '\n' | '\r' => {
-                    self.start_of_line = true;
-                    return Ok(Kind::NewLine);
+                    // Expressions in parentheses, square brackets or curly braces can be split over more than one physical line without using backslashes.
+                    // The indentation of the continuation lines is not important. Blank continuation lines are allowed.
+                    // There is no NEWLINE token between implicit continuation lines.
+                    if self.nesting == 0 {
+                        self.start_of_line = true;
+                        return Ok(Kind::NewLine);
+                    } else {
+                        return Ok(Kind::WhiteSpace);
+                    }
                 }
                 c if match_whitespace(c) => return Ok(Kind::WhiteSpace),
                 _ => {}

@@ -919,6 +919,7 @@ impl Parser {
                 loop {
                     if is_string(&self.cur_kind()) {
                         let token_value = self.cur_token().value.clone();
+                        print!("{:?} ", token_value);
                         let token_kind = self.cur_kind();
                         self.bump_any();
                         let next_str = self.map_to_atom(node, &token_kind, token_value);
@@ -934,6 +935,8 @@ impl Parser {
                         // here we consume all the indent and newline in this case
                         if self.nested_expression_list > 0 {
                             self.bump_any();
+                        } else {
+                            break;
                         }
                     } else {
                         break;
