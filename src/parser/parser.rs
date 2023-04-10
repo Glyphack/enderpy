@@ -196,7 +196,7 @@ impl Parser {
     // https://docs.python.org/3/reference/expressions.html#assignment-expressions
     fn parse_assignment_expression(&mut self) -> Result<Expression> {
         let node = self.start_node();
-        if self.at(Kind::Identifier) {
+        if self.at(Kind::Identifier) && matches!(self.peek_kind()?, Kind::Walrus) {
             let identifier = self.cur_token().value.to_string();
             let mut identifier_node = self.start_node();
             identifier_node = self.finish_node(identifier_node);
@@ -226,7 +226,7 @@ impl Parser {
     fn parse_list(&mut self) -> Result<Expression> {
         let node = self.start_node();
         self.bump(Kind::LeftBrace);
-        let elements = self.parse_starred_list()?;
+        let elements = self.parse_starred_list(Kind::RightBrace)?;
         self.expect(Kind::RightBrace)?;
         Ok(Expression::List(Box::new(List {
             node: self.finish_node(node),
@@ -441,7 +441,7 @@ impl Parser {
 
     // https://docs.python.org/3/reference/expressions.html#set-displays
     fn parse_set(&mut self, node: Node) -> Result<Expression> {
-        let elements = self.parse_starred_list()?;
+        let elements = self.parse_starred_list(Kind::RightBracket)?;
         self.expect(Kind::RightBracket)?;
         Ok(Expression::Set(Box::new(Set {
             node: self.finish_node(node),
@@ -459,13 +459,9 @@ impl Parser {
             let value = self.parse_expression()?;
             keys.push(key);
             values.push(value);
-            if !self.eat(Kind::Comma) && !self.at(Kind::RightBracket) {
-                return Err(diagnostics::ExpectToken(
-                    Kind::Comma.to_str(),
-                    self.cur_kind().to_str(),
-                    node,
-                )
-                .into());
+            if !self.at(Kind::RightBracket) {
+                self.expect(Kind::Comma)?;
+                self.consume_whitespace_and_newline();
             }
         }
         Ok(Expression::Dict(Box::new(Dict {
@@ -475,13 +471,25 @@ impl Parser {
         })))
     }
 
+    fn consume_whitespace_and_newline(&mut self) {
+        while matches!(
+            self.cur_kind(),
+            Kind::WhiteSpace | Kind::NewLine | Kind::Indent | Kind::Dedent
+        ) {
+            self.bump(self.cur_kind());
+        }
+    }
+
     // https://docs.python.org/3/reference/expressions.html#expression-lists
-    fn parse_starred_list(&mut self) -> Result<Vec<Expression>> {
-        let node = self.start_node();
+    // termination_kind is used to know when to stop parsing the list
+    // this kind is not consumed
+    fn parse_starred_list(&mut self, termination_kind: Kind) -> Result<Vec<Expression>> {
         let mut expressions = vec![];
-        expressions.push(self.parse_starred_item()?);
-        while self.eat(Kind::Comma) && !self.at(Kind::Eof) {
+        while !self.at(Kind::Eof) && !self.at(termination_kind) {
             let expr = self.parse_starred_item()?;
+            if !self.at(Kind::Eof) && !self.at(termination_kind) {
+                self.expect(Kind::Comma)?;
+            }
             expressions.push(expr);
         }
         Ok(expressions)
@@ -526,33 +534,6 @@ impl Parser {
             node: self.finish_node(node),
             value: Box::new(await_value),
         })))
-    }
-
-    // https://docs.python.org/3/reference/expressions.html#slicings
-    fn parse_subscript_value(&mut self) -> Result<Expression> {
-        let node = self.start_node();
-        let expr = self.parse_expression()?;
-        if self.at(Kind::Colon) {
-            let lower = Some(Box::new(expr));
-            let mut upper = None;
-            let mut step = None;
-
-            if self.eat(Kind::Colon) && !self.at(Kind::RightBracket) {
-                upper = Some(Box::new(self.parse_expression()?));
-                if self.eat(Kind::Colon) && !self.at(Kind::RightBracket) {
-                    step = Some(Box::new(self.parse_expression()?));
-                }
-            }
-
-            return Ok(Expression::Slice(Box::new(Slice {
-                node: self.finish_node(node),
-                lower,
-                upper,
-                step,
-            })));
-        } else {
-            return Ok(expr);
-        }
     }
 
     // https://docs.python.org/3/reference/expressions.html#conditional-expressions
@@ -769,15 +750,13 @@ impl Parser {
         } else {
             unimplemented!("parse_primary: {:?}", self.cur_kind())
         };
-        if self.at(Kind::Dot) {
-            return self.parse_atribute_ref(node, atom_or_primary);
-        }
-        // https://docs.python.org/3/reference/expressions.html#slicings
-        if self.at(Kind::LeftBrace) {
-            return self.parse_subscript(node, atom_or_primary);
-        }
-        // https://docs.python.org/3/reference/expressions.html#calls
-        if self.eat(Kind::LeftParen) {
+        let primary = if self.at(Kind::Dot) {
+            self.parse_atribute_ref(node, atom_or_primary)
+        } else if self.at(Kind::LeftBrace) {
+            // https://docs.python.org/3/reference/expressions.html#slicings
+            self.parse_subscript(node, atom_or_primary)
+        } else if self.eat(Kind::LeftParen) {
+            // https://docs.python.org/3/reference/expressions.html#calls
             let mut positional_args = vec![];
             let mut keyword_args = vec![];
             let mut seen_keyword = false;
@@ -839,17 +818,19 @@ impl Parser {
             self.bump(Kind::Comma);
             self.expect(Kind::RightParen)?;
 
-            return Ok(Expression::Call(Box::new(Call {
+            Ok(Expression::Call(Box::new(Call {
                 node: self.finish_node(node),
                 func: Box::new(atom_or_primary),
                 args: positional_args,
                 keywords: keyword_args,
                 starargs: None,
                 kwargs: None,
-            })));
-        }
+            })))
+        } else {
+            Ok(atom_or_primary)
+        };
 
-        return Ok(atom_or_primary);
+        return primary;
     }
 
     fn parse_atribute_ref(&mut self, node: Node, value: Expression) -> Result<Expression> {
@@ -937,6 +918,8 @@ impl Parser {
                         // here we consume all the indent and newline in this case
                         if self.nested_expression_list > 0 {
                             self.bump_any();
+                        } else {
+                            break;
                         }
                     } else {
                         break;
@@ -1007,12 +990,19 @@ impl Parser {
         first_elm: Expression,
     ) -> Result<Expression> {
         let mut elements = vec![];
+        // if tuple has one element but there's a comma after
+        // it, it's a tuple
         let mut seen_comma = false;
         elements.push(first_elm);
-        while self.eat(Kind::Comma) && !self.at(Kind::Eof) && !self.at(Kind::RightParen) {
-            seen_comma = true;
+        while !self.at(Kind::Eof) && !self.at(Kind::RightParen) {
+            self.expect(Kind::Comma)?;
+            if self.at(Kind::RightParen) {
+                break;
+            }
+            println!("here {:?} ", self.cur_kind());
             let expr = self.parse_starred_item()?;
             elements.push(expr);
+            seen_comma = true;
         }
         if elements.len() == 1 && !seen_comma {
             return Ok(elements.pop().unwrap());
@@ -1460,7 +1450,18 @@ mod tests {
 
     #[test]
     fn test_list() {
-        for test_case in &["[a, b, c]"] {
+        for test_case in &[
+            "[a, b, c]",
+            "[a,
+            b, c]",
+            "[a
+            , b, c]",
+            "[a,
+            b,
+                c]",
+            "[a,
+            ]",
+        ] {
             let mut parser = Parser::new(test_case.to_string());
             let program = parser.parse();
 
@@ -1475,7 +1476,32 @@ mod tests {
 
     #[test]
     fn test_tuple() {
-        for test_case in &["(a, b, c)"] {
+        for test_case in &[
+            // "(a, b, c)",
+            // "(a,
+            // b, c)",
+            // "(a
+            // , b, c)",
+            // "(a,
+            // b,
+            //     c)",
+            "(a,
+)",
+        ] {
+            // let mut lexer = Lexer::new(test_case);
+            // loop {
+            //     let token = lexer.next_token().expect("");
+            //     println!("{:?}", token);
+            //     if token.kind == Kind::Eof {
+            //         break;
+            //     }
+            // }
+            println!("tokens");
+
+            println!("source: {}", test_case);
+            test_case.chars().for_each(|c| {
+                println!("{:?}", c);
+            });
             let mut parser = Parser::new(test_case.to_string());
             let program = parser.parse();
 
@@ -1490,7 +1516,19 @@ mod tests {
 
     #[test]
     fn test_dict() {
-        for test_case in &["{a: b, c: d}"] {
+        // do the same here
+        for test_case in &[
+            "{a: b, c: d}",
+            "{a: b,
+            c: d}",
+            "{a: b
+            , c: d}",
+            "{a: b,
+            c: d,
+                e: f}",
+            "{a: b,
+            }",
+        ] {
             let mut parser = Parser::new(test_case.to_string());
             let program = parser.parse();
 
@@ -1504,7 +1542,18 @@ mod tests {
     }
     #[test]
     fn test_set() {
-        for test_case in &["{a, b, c}"] {
+        for test_case in &[
+            "{a, b, c}",
+            "{a,
+            b, c}",
+            "{a
+            , b, c}",
+            "{a,
+            b,
+                c}",
+            "{a,
+            }",
+        ] {
             let mut parser = Parser::new(test_case.to_string());
             let program = parser.parse();
 

@@ -1,6 +1,6 @@
 ---
 source: src/lexer/lexer.rs
-description: "\"hello\""
+description: "\"hello\"  "
 ---
 [
     Token {
