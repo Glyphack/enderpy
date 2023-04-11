@@ -31,12 +31,7 @@ pub fn extract_string_inside(val: String) -> String {
 
 pub fn is_string(kind: &Kind) -> bool {
     match kind {
-        Kind::StringLiteral
-        | Kind::RawString
-        | Kind::RawBytes
-        | Kind::Bytes
-        | Kind::FString
-        | Kind::RawFString => true,
+        Kind::StringLiteral | Kind::RawString | Kind::RawBytes | Kind::Bytes => true,
         _ => false,
     }
 }

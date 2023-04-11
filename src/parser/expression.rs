@@ -8,8 +8,8 @@ pub fn is_atom(kind: &Kind) -> bool {
         | Kind::RawString
         | Kind::RawBytes
         | Kind::Bytes
-        | Kind::FString
-        | Kind::RawFString
+        | Kind::FStringStart
+        | Kind::RawFStringStart
         | Kind::Integer
         | Kind::True
         | Kind::False
