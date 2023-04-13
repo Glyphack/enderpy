@@ -4,11 +4,19 @@ description: "rf\"\""
 ---
 [
     Token {
-        kind: RawFString,
+        kind: RawFStringStart,
         value: Str(
-            "rf\"\"",
+            "rf\"",
         ),
         start: 0,
+        end: 3,
+    },
+    Token {
+        kind: FStringEnd,
+        value: Str(
+            "\"",
+        ),
+        start: 3,
         end: 4,
     },
 ]

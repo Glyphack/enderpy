@@ -4,11 +4,47 @@ description: "rf'hello_{var}'"
 ---
 [
     Token {
-        kind: RawFString,
+        kind: RawFStringStart,
         value: Str(
-            "rf'hello_{var}'",
+            "rf'",
         ),
         start: 0,
+        end: 3,
+    },
+    Token {
+        kind: FStringMiddle,
+        value: Str(
+            "hello_",
+        ),
+        start: 3,
+        end: 9,
+    },
+    Token {
+        kind: LeftBracket,
+        value: None,
+        start: 9,
+        end: 10,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "var",
+        ),
+        start: 10,
+        end: 13,
+    },
+    Token {
+        kind: RightBracket,
+        value: None,
+        start: 13,
+        end: 14,
+    },
+    Token {
+        kind: FStringEnd,
+        value: Str(
+            "'",
+        ),
+        start: 14,
         end: 15,
     },
 ]
