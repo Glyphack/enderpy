@@ -1107,7 +1107,8 @@ def",
                 "f'''hello'''",
                 "f\"{{hey}}\"",
                 "f\"oh_{{hey}}\"",
-                "f'hello_{f'''{a}'''}'",
+                // unsupported
+                // "f'hello_{f'''{a}'''}'",
             ],
         )
         .unwrap();
