@@ -4,11 +4,27 @@ description: "rf'''hello'''"
 ---
 [
     Token {
-        kind: RawFString,
+        kind: RawFStringStart,
         value: Str(
-            "rf'''hello'''",
+            "rf'''",
         ),
         start: 0,
+        end: 5,
+    },
+    Token {
+        kind: FStringMiddle,
+        value: Str(
+            "hello",
+        ),
+        start: 5,
+        end: 10,
+    },
+    Token {
+        kind: FStringEnd,
+        value: Str(
+            "'''",
+        ),
+        start: 10,
         end: 13,
     },
 ]

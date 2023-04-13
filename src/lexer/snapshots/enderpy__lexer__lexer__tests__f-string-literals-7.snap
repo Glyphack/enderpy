@@ -1,30 +1,30 @@
 ---
 source: src/lexer/lexer.rs
-description: "rf\"hello\""
+description: "f\"{{hey}}\""
 ---
 [
     Token {
-        kind: RawFStringStart,
+        kind: FStringStart,
         value: Str(
-            "rf\"",
+            "f\"",
         ),
         start: 0,
-        end: 3,
+        end: 2,
     },
     Token {
         kind: FStringMiddle,
         value: Str(
-            "hello",
+            "{{hey}}",
         ),
-        start: 3,
-        end: 8,
+        start: 2,
+        end: 9,
     },
     Token {
         kind: FStringEnd,
         value: Str(
             "\"",
         ),
-        start: 8,
-        end: 9,
+        start: 9,
+        end: 10,
     },
 ]

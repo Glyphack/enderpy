@@ -18,11 +18,27 @@ description: "a = rf\"hello\""
         end: 3,
     },
     Token {
-        kind: RawFString,
+        kind: RawFStringStart,
         value: Str(
-            "rf\"hello\"",
+            "rf\"",
         ),
         start: 4,
+        end: 7,
+    },
+    Token {
+        kind: FStringMiddle,
+        value: Str(
+            "hello",
+        ),
+        start: 7,
+        end: 12,
+    },
+    Token {
+        kind: FStringEnd,
+        value: Str(
+            "\"",
+        ),
+        start: 12,
         end: 13,
     },
 ]

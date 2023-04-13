@@ -20,6 +20,11 @@ pub struct Lexer {
     // This stack means we are in a fstring that started with
     // character at the top of the stack
     fstring_stack: Vec<String>,
+    // This is a counter used to keep track of how many
+    // brackets we are inside
+    // Each time we see a left bracket we increment this
+    // Each time we see a right bracket we decrement this
+    // This is used to match brackets in fstrings
     inside_fstring_bracket: i8,
 }
 
@@ -74,7 +79,7 @@ impl Lexer {
 
     pub fn next_fstring_token(&mut self) -> Option<Kind> {
         if self.inside_fstring_bracket > 0 {
-            if self.peek() == Some('}') {
+            if self.peek() == Some('}') && self.double_peek() != Some('}') {
                 self.next();
                 self.inside_fstring_bracket -= 1;
                 return Some(Kind::RightBracket);
@@ -83,12 +88,17 @@ impl Lexer {
             // and let the other tokens be matched
             return None;
         }
-        println!("not inside the bracket");
         let mut consumed_str_in_fstring = String::new();
         while let Some(curr) = self.next() {
             let str_finisher = self.fstring_stack.last().unwrap();
             match curr {
                 '{' => {
+                    if self.peek() == Some('{') {
+                        consumed_str_in_fstring.push(curr);
+                        consumed_str_in_fstring.push(self.peek().unwrap());
+                        self.double_next();
+                        continue;
+                    }
                     self.inside_fstring_bracket += 1;
                     return Some(Kind::LeftBracket);
                 }
@@ -113,7 +123,7 @@ impl Lexer {
             }
 
             let peeked_char = self.peek()?;
-            if peeked_char == '{' {
+            if peeked_char == '{' && self.double_peek() != Some('{') {
                 return Some(Kind::FStringMiddle);
             }
             // if last consumed_str_in_fstring is a backslash
@@ -149,7 +159,6 @@ impl Lexer {
             }
         }
         if self.fstring_stack.len() > 0 {
-            println!("going to match fstring token");
             if let Some(kind) = self.next_fstring_token() {
                 return Ok(kind);
             }
@@ -835,7 +844,6 @@ mod tests {
                 if token.kind == Kind::Eof {
                     break;
                 }
-                println!("{:?}", token);
                 tokens.push(token);
             }
             let snap_file_name = format!("{}-{}", snap_name, i);
@@ -1018,21 +1026,6 @@ mod tests {
         )
         .unwrap();
 
-        // // Raw F-strings
-        // snapshot_test_lexer(
-        //     "raw-f-string-literals",
-        //     &[
-        //         "rf\"hello\"",
-        //         "rf\"world\"",
-        //         "rf\"\"",
-        //         "a = rf\"hello\"",
-        //         "rf'hello_{var}'",
-        //         "rf\"\"\"hello\"\"\"",
-        //         "rf'''hello'''",
-        //     ],
-        // )
-        // .unwrap();
-
         // Raw bytes
         snapshot_test_lexer(
             "raw-bytes-literals",
@@ -1112,6 +1105,23 @@ def",
                 "a = f\"hello\"",
                 "f\"\"\"hello\"\"\"",
                 "f'''hello'''",
+                "f\"{{hey}}\"",
+                "f\"oh_{{hey}}\"",
+            ],
+        )
+        .unwrap();
+
+        // Raw F-strings
+        snapshot_test_lexer(
+            "raw-f-string-literals",
+            &[
+                "rf\"hello\"",
+                "rf\"world\"",
+                "rf\"\"",
+                "a = rf\"hello\"",
+                "rf'hello_{var}'",
+                "rf\"\"\"hello\"\"\"",
+                "rf'''hello'''",
             ],
         )
         .unwrap();
