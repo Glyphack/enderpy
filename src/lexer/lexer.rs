@@ -17,6 +17,8 @@ pub struct Lexer {
     /// because the first line is always at indentation level 0
     indent_stack: Vec<usize>,
     nesting: i8,
+    // This stack means we are in a fstring that started with
+    // character at the top of the stack
     fstring_stack: Vec<String>,
     inside_fstring_bracket: i8,
 }
@@ -70,6 +72,75 @@ impl Lexer {
         token
     }
 
+    pub fn next_fstring_token(&mut self) -> Option<Kind> {
+        if self.inside_fstring_bracket > 0 {
+            if self.peek() == Some('}') {
+                self.next();
+                self.inside_fstring_bracket -= 1;
+                return Some(Kind::RightBracket);
+            }
+            // if we are inside a bracket return none
+            // and let the other tokens be matched
+            return None;
+        }
+        println!("not inside the bracket");
+        let mut consumed_str_in_fstring = String::new();
+        while let Some(curr) = self.next() {
+            let str_finisher = self.fstring_stack.last().unwrap();
+            match curr {
+                '{' => {
+                    self.inside_fstring_bracket += 1;
+                    return Some(Kind::LeftBracket);
+                }
+                _ => {}
+            }
+            match str_finisher.len() {
+                1 => {
+                    if curr == str_finisher.chars().next().unwrap() {
+                        return Some(Kind::FStringEnd);
+                    }
+                }
+                3 => {
+                    if curr == str_finisher.chars().nth(0).unwrap()
+                        && self.peek() == Some(str_finisher.chars().nth(1).unwrap())
+                        && self.double_peek() == Some(str_finisher.chars().nth(2).unwrap())
+                    {
+                        self.double_next();
+                        return Some(Kind::FStringEnd);
+                    }
+                }
+                _ => {}
+            }
+
+            let peeked_char = self.peek()?;
+            if peeked_char == '{' {
+                return Some(Kind::FStringMiddle);
+            }
+            // if last consumed_str_in_fstring is a backslash
+            if consumed_str_in_fstring.ends_with('\\') {
+                consumed_str_in_fstring.push(curr);
+                continue;
+            }
+            match str_finisher.len() {
+                1 => {
+                    if peeked_char == str_finisher.chars().next().unwrap() {
+                        return Some(Kind::FStringMiddle);
+                    }
+                }
+                3 => {
+                    if peeked_char == str_finisher.chars().nth(0).unwrap()
+                        && self.double_peek() == Some(str_finisher.chars().nth(1).unwrap())
+                        && self.triple_peek() == Some(str_finisher.chars().nth(2).unwrap())
+                    {
+                        return Some(Kind::FStringMiddle);
+                    }
+                }
+                _ => {}
+            }
+        }
+        None
+    }
+
     fn next_kind(&mut self) -> Result<Kind> {
         if self.start_of_line {
             if let Some(indent_kind) = self.match_indentation() {
@@ -77,44 +148,15 @@ impl Lexer {
                 return Ok(indent_kind);
             }
         }
+        if self.fstring_stack.len() > 0 {
+            println!("going to match fstring token");
+            if let Some(kind) = self.next_fstring_token() {
+                return Ok(kind);
+            }
+        }
 
         while let Some(c) = self.next() {
             self.start_of_line = false; // WHY AGAIN?!
-
-            if self.fstring_stack.len() > 0 {
-                match c {
-                    '{' => {
-                        self.inside_fstring_bracket += 1;
-                        return Ok(Kind::LeftBracket);
-                    }
-                    '}' => {
-                        self.inside_fstring_bracket -= 1;
-                        return Ok(Kind::RightBracket);
-                    }
-                    _ => {
-                        if self.inside_fstring_bracket == 0 {
-                            println!("c = {}, fstring_stack = {:?}", c, self.fstring_stack);
-                            let fstring_starter = self.fstring_stack.last().unwrap();
-                            if c == '{' {
-                                return Ok(Kind::FStringMiddle);
-                            } else if fstring_starter.eq(&c.to_string()) {
-                                return Ok(Kind::FStringEnd);
-                            }
-                            while let Some(c) = self.peek() {
-                                let fstring_starter = self.fstring_stack.last().unwrap();
-                                println!("c = {}, fstring_starter = {}", c, fstring_starter);
-                                if c == '{' {
-                                    return Ok(Kind::FStringMiddle);
-                                } else if fstring_starter.eq(&c.to_string()) {
-                                    return Ok(Kind::FStringMiddle);
-                                } else {
-                                    self.next();
-                                }
-                            }
-                        }
-                    }
-                }
-            }
 
             match c {
                 // Numbers
@@ -368,7 +410,8 @@ impl Lexer {
                 Some('f') | Some('F') => match self.double_peek() {
                     Some(str_start @ '"') | Some(str_start @ '\'') => {
                         self.double_next();
-                        self.skip_to_str_end(str_start)?;
+                        let fstring_start = self.create_f_string_start(str_start);
+                        self.fstring_stack.push(fstring_start);
                         return Ok(Some(Kind::RawFStringStart));
                     }
                     _ => {}
@@ -400,14 +443,16 @@ impl Lexer {
                 Some('r') | Some('R') => match self.double_peek() {
                     Some(str_start @ '"') | Some(str_start @ '\'') => {
                         self.double_next();
-                        self.fstring_stack.push(str_start.to_string());
+                        let fstring_start = self.create_f_string_start(str_start);
+                        self.fstring_stack.push(fstring_start);
                         return Ok(Some(Kind::RawFStringStart));
                     }
                     _ => {}
                 },
                 Some(str_start @ '"') | Some(str_start @ '\'') => {
                     self.next();
-                    self.fstring_stack.push(str_start.to_string());
+                    let fstring_start = self.create_f_string_start(str_start);
+                    self.fstring_stack.push(fstring_start);
                     return Ok(Some(Kind::FStringStart));
                 }
                 _ => {}
@@ -448,6 +493,10 @@ impl Lexer {
 
     fn double_peek(&self) -> Option<char> {
         self.source[self.current..].chars().nth(1)
+    }
+
+    fn triple_peek(&self) -> Option<char> {
+        self.source[self.current..].chars().nth(2)
     }
 
     fn match_keyword(&self, ident: &str) -> Kind {
@@ -754,6 +803,16 @@ impl Lexer {
             _ => TokenValue::None,
         }
     }
+
+    fn create_f_string_start(&mut self, str_start: char) -> String {
+        let mut start_of_fstring = String::from(str_start);
+        if self.peek() == Some(str_start) && self.double_peek() == Some(str_start) {
+            start_of_fstring.push(str_start);
+            start_of_fstring.push(str_start);
+            self.double_next();
+        }
+        start_of_fstring
+    }
 }
 
 fn match_whitespace(c: char) -> bool {
@@ -1046,13 +1105,13 @@ def",
         snapshot_test_lexer(
             "f-string-literals",
             &[
-                // "f\"hello\"",
-                // "f\"world\"",
-                // "f\"\"",
-                // "a = f\"hello\"",
+                "f\"hello\"",
                 "f'hello_{var}'",
-                // "f\"\"\"hello\"\"\"",
-                // "f'''hello'''",
+                "f\"world\"",
+                "f\"\"",
+                "a = f\"hello\"",
+                "f\"\"\"hello\"\"\"",
+                "f'''hello'''",
             ],
         )
         .unwrap();
