@@ -4,7 +4,7 @@ description: "rf\"hello\""
 ---
 [
     Token {
-        kind: RawFString,
+        kind: RawFStringStart,
         value: Str(
             "rf\"hello\"",
         ),

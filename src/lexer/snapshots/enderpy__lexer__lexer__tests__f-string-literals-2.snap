@@ -1,14 +1,30 @@
 ---
 source: src/lexer/lexer.rs
-description: "f\"\""
+description: "f\"world\""
 ---
 [
     Token {
-        kind: FString,
+        kind: FStringStart,
         value: Str(
-            "f\"\"",
+            "f\"",
         ),
         start: 0,
-        end: 3,
+        end: 2,
+    },
+    Token {
+        kind: FStringMiddle,
+        value: Str(
+            "world",
+        ),
+        start: 2,
+        end: 7,
+    },
+    Token {
+        kind: FStringEnd,
+        value: Str(
+            "\"",
+        ),
+        start: 7,
+        end: 8,
     },
 ]

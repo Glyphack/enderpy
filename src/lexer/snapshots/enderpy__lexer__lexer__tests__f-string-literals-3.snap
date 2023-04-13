@@ -1,28 +1,22 @@
 ---
 source: src/lexer/lexer.rs
-description: "a = f\"hello\""
+description: "f\"\""
 ---
 [
     Token {
-        kind: Identifier,
+        kind: FStringStart,
         value: Str(
-            "a",
+            "f\"",
         ),
         start: 0,
-        end: 1,
+        end: 2,
     },
     Token {
-        kind: Assign,
-        value: None,
+        kind: FStringEnd,
+        value: Str(
+            "\"",
+        ),
         start: 2,
         end: 3,
-    },
-    Token {
-        kind: FString,
-        value: Str(
-            "f\"hello\"",
-        ),
-        start: 4,
-        end: 12,
     },
 ]

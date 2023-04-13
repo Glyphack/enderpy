@@ -4,11 +4,27 @@ description: "f\"\"\"hello\"\"\""
 ---
 [
     Token {
-        kind: FString,
+        kind: FStringStart,
         value: Str(
-            "f\"\"\"hello\"\"\"",
+            "f\"\"\"",
         ),
         start: 0,
+        end: 4,
+    },
+    Token {
+        kind: FStringMiddle,
+        value: Str(
+            "hello",
+        ),
+        start: 4,
+        end: 9,
+    },
+    Token {
+        kind: FStringEnd,
+        value: Str(
+            "\"\"\"",
+        ),
+        start: 9,
         end: 12,
     },
 ]

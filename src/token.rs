@@ -58,13 +58,17 @@ pub enum Kind {
     // String Literals
     StringLiteral,
     // f-string literal
-    FString, // f or F prefix
+    // To understand why using the following token, see:
+    // https://peps.python.org/pep-0701/#handling-of-f-string-debug-expressions
+    FStringStart,  // f or F prefix and the opening quote
+    FStringMiddle, // portion of the test which is not in the {} pair
+    FStringEnd,    // the closing quote
     // byte string literal
     Bytes, // b or B prefix
     // raw string literal
     RawString, // r or R prefix
     // raw f-string literal,
-    RawFString, // rf or rF or Rf or RF or fr or fR or Fr or FR prefix
+    RawFStringStart, // rf or rF or Rf or RF or fr or fR or Fr or FR prefix
     // raw byte string literal
     RawBytes, // rb or rB or Rb or RB or br or bR or Br or BR prefix
     // unicode string literal,
@@ -247,10 +251,12 @@ impl Kind {
             Kind::With => "With",
             Kind::Yield => "Yield",
             Kind::StringLiteral => "StringLiteral",
-            Kind::FString => "FString",
+            Kind::FStringStart => "FStringStart",
+            Kind::FStringMiddle => "FstringMiddle",
+            Kind::FStringEnd => "FStringEnd",
             Kind::Bytes => "Bytes",
             Kind::RawString => "RawString",
-            Kind::RawFString => "RawFString",
+            Kind::RawFStringStart => "RawFString",
             Kind::RawBytes => "RawBytes",
             Kind::Unicode => "Unicode",
             Kind::Binary => "Binary",
