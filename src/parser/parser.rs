@@ -911,8 +911,6 @@ impl Parser {
             // otherwise the end would be the same as the start
             self.bump_any();
             let mut expr = self.map_to_atom(node, &token_kind, token_value)?;
-            println!("expr: {:?}", expr);
-            println!("cur_kind: {:?}", self.cur_kind());
 
             // If the current token is a string, we need to check if there are more strings
             // and concat them
@@ -1395,7 +1393,7 @@ impl Parser {
                 }
                 Kind::LeftBracket => {
                     self.bump(Kind::LeftBracket);
-                    expressions.push(self.parse_expression_2()?);
+                    expressions.push(self.parse_expression()?);
                     self.expect(Kind::RightBracket)?;
                 }
                 _ => {
