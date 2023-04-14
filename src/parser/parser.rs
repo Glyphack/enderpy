@@ -911,6 +911,8 @@ impl Parser {
             // otherwise the end would be the same as the start
             self.bump_any();
             let mut expr = self.map_to_atom(node, &token_kind, token_value)?;
+            println!("expr: {:?}", expr);
+            println!("cur_kind: {:?}", self.cur_kind());
 
             // If the current token is a string, we need to check if there are more strings
             // and concat them
@@ -1380,7 +1382,6 @@ impl Parser {
 
     // the FStringStart token is consumed by the caller
     fn parse_fstring(&mut self) -> Result<Vec<Expression>> {
-        println!("parse_fstring");
         let mut expressions = vec![];
         while self.cur_kind() != Kind::FStringEnd {
             match self.cur_kind() {
@@ -1803,6 +1804,10 @@ mod tests {
             "('a'
                 'b'
 'c')",
+            "f'a' 'c'",
+            "f'a' 'b' 'c'",
+            "'d' f'a' 'b'",
+            "f'a_{1}' 'b' ",
         ] {
             let mut parser = Parser::new(test_case.to_string());
             let program = parser.parse();

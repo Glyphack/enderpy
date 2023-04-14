@@ -107,6 +107,7 @@ impl Lexer {
             match str_finisher.len() {
                 1 => {
                     if curr == str_finisher.chars().next().unwrap() {
+                        self.fstring_stack.pop();
                         return Some(Kind::FStringEnd);
                     }
                 }
@@ -115,6 +116,7 @@ impl Lexer {
                         && self.peek() == Some(str_finisher.chars().nth(1).unwrap())
                         && self.double_peek() == Some(str_finisher.chars().nth(2).unwrap())
                     {
+                        self.fstring_stack.pop();
                         self.double_next();
                         return Some(Kind::FStringEnd);
                     }
@@ -1107,6 +1109,7 @@ def",
                 "f'''hello'''",
                 "f\"{{hey}}\"",
                 "f\"oh_{{hey}}\"",
+                "f'a' 'c'",
                 // unsupported
                 // "f'hello_{f'''{a}'''}'",
             ],
