@@ -1,0 +1,44 @@
+---
+source: src/parser/parser.rs
+description: "assert True, 'fancy message'"
+---
+Module {
+    node: Node {
+        start: 0,
+        end: 28,
+    },
+    body: [
+        Assert(
+            Assert {
+                node: Node {
+                    start: 0,
+                    end: 28,
+                },
+                test: Constant(
+                    Constant {
+                        node: Node {
+                            start: 7,
+                            end: 11,
+                        },
+                        value: Bool(
+                            true,
+                        ),
+                    },
+                ),
+                msg: Some(
+                    Constant(
+                        Constant {
+                            node: Node {
+                                start: 13,
+                                end: 28,
+                            },
+                            value: Str(
+                                "fancy message",
+                            ),
+                        },
+                    ),
+                ),
+            },
+        ),
+    ],
+}

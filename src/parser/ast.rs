@@ -40,6 +40,7 @@ pub struct Module {
 pub enum Statement {
     AssignStatement(Assign),
     ExpressionStatement(Expression),
+    Assert(Assert),
 }
 
 #[derive(Debug)]
@@ -47,6 +48,13 @@ pub struct Assign {
     pub node: Node,
     pub targets: Vec<Expression>,
     pub value: Expression,
+}
+
+#[derive(Debug)]
+pub struct Assert {
+    pub node: Node,
+    pub test: Expression,
+    pub msg: Option<Expression>,
 }
 
 #[derive(Debug)]

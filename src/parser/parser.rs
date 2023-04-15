@@ -25,10 +25,6 @@ pub struct Parser {
     // This is incremented when we see an opening bracket and decremented when we
     // see a closing bracket.
     nested_expression_list: usize,
-    // Keeps track of if we are inside an subscript expression
-    // This is incremented when we see an opening bracket and decremented when we
-    // see a closing bracket.
-    nested_subscript: usize,
 }
 
 impl Parser {
@@ -43,7 +39,6 @@ impl Parser {
             cur_token,
             prev_token_end,
             nested_expression_list: 0,
-            nested_subscript: 0,
         }
     }
 
@@ -147,6 +142,7 @@ impl Parser {
     fn parse_statement(&mut self) -> Result<Statement> {
         let stmt = match self.cur_kind() {
             Kind::Identifier => self.parse_identifier_statement(),
+            Kind::Assert => self.parse_assert_statement(),
             _ => Ok(Statement::ExpressionStatement(self.parse_expression()?)),
         };
 
@@ -157,15 +153,49 @@ impl Parser {
     fn parse_identifier_statement(&mut self) -> Result<Statement> {
         let start = self.start_node();
         let lhs = self.parse_expression()?;
-        if self.eat(Kind::Assign) {
-            let rhs = self.parse_expression()?;
-            return Ok(Statement::AssignStatement(Assign {
-                node: self.finish_node(start),
-                targets: vec![lhs],
-                value: rhs,
-            }));
+        match self.cur_kind() {
+            Kind::Assign => self.parse_assignment_statement(start, lhs),
+            _ => Ok(Statement::ExpressionStatement(lhs)),
         }
-        return Ok(Statement::ExpressionStatement(lhs));
+    }
+
+    fn parse_assignment_statement(&mut self, start: Node, lhs: Expression) -> Result<Statement> {
+        let mut targets = vec![lhs];
+        self.bump(Kind::Assign);
+        let value = loop {
+            let rhs = self.parse_expression()?;
+            // if there's an assign after the expression we have multiple targets
+            // like a = b = 1
+            // so we add the rhs to the targets and continue parsing
+            // otherwise we break and return the rhs as the value
+            if self.eat(Kind::Assign) {
+                targets.push(rhs);
+            } else {
+                break rhs;
+            }
+        };
+        return Ok(Statement::AssignStatement(Assign {
+            node: self.finish_node(start),
+            targets,
+            value,
+        }));
+    }
+
+    fn parse_assert_statement(&mut self) -> Result<Statement> {
+        let node = self.start_node();
+        self.bump(Kind::Assert);
+        let test = self.parse_expression_2()?;
+        let msg = if self.eat(Kind::Comma) {
+            Some(self.parse_expression_2()?)
+        } else {
+            None
+        };
+
+        return Ok(Statement::Assert(Assert {
+            node: self.finish_node(node),
+            test,
+            msg,
+        }));
     }
 
     // https://docs.python.org/3/library/ast.html#ast.Expr
@@ -1416,7 +1446,7 @@ mod tests {
     use insta::assert_debug_snapshot;
 
     #[test]
-    fn test_parse_name() {
+    fn test_parse_assignment() {
         for test_case in &[
             "a = 1",
             "a = None",
@@ -1432,6 +1462,8 @@ mod tests {
             "a = 'a'",
             "a = 1, 2",
             "a = 1, 2, ",
+            "a = b = 1",
+            "a,b = c,d = 1,2",
         ] {
             let mut parser = Parser::new(test_case.to_string());
             let program = parser.parse();
@@ -1444,6 +1476,22 @@ mod tests {
             });
         }
     }
+
+    #[test]
+    fn test_parse_assert_stmt() {
+        for test_case in &["assert a", "assert a, b", "assert True, 'fancy message'"] {
+            let mut parser = Parser::new(test_case.to_string());
+            let program = parser.parse();
+
+            insta::with_settings!({
+                    description => test_case.to_string(), // the template source code
+                    omit_expression => true // do not include the default expression
+                }, {
+                    assert_debug_snapshot!(program);
+            });
+        }
+    }
+
     #[test]
     fn test_parse_bool_op() {
         for test_case in &["a or b", "a and b", "a or b or c", "a and b or c"] {
