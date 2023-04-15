@@ -76,6 +76,8 @@ pub enum Expression {
     Compare(Box<Compare>),
     Lambda(Box<Lambda>),
     IfExp(Box<IfExp>),
+    JoinedStr(Box<JoinedStr>),
+    FormattedValue(Box<FormattedValue>),
 }
 
 // https://docs.python.org/3/reference/expressions.html#atom-identifiers
@@ -364,4 +366,20 @@ pub struct IfExp {
     pub test: Box<Expression>,
     pub body: Box<Expression>,
     pub orelse: Box<Expression>,
+}
+
+// https://docs.python.org/3/library/ast.html#ast.FormattedValue
+#[derive(Debug)]
+pub struct FormattedValue {
+    pub node: Node,
+    pub value: Box<Expression>,
+    pub conversion: Option<i32>,
+    pub format_spec: Option<Box<Expression>>,
+}
+
+// https://docs.python.org/3/library/ast.html#ast.JoinedStr
+#[derive(Debug)]
+pub struct JoinedStr {
+    pub node: Node,
+    pub values: Vec<Expression>,
 }

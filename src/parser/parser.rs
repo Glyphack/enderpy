@@ -910,7 +910,7 @@ impl Parser {
             // bump needs to happen before creating the atom node
             // otherwise the end would be the same as the start
             self.bump_any();
-            let mut expr = self.map_to_atom(node, &token_kind, token_value);
+            let mut expr = self.map_to_atom(node, &token_kind, token_value)?;
 
             // If the current token is a string, we need to check if there are more strings
             // and concat them
@@ -921,7 +921,7 @@ impl Parser {
                         let token_value = self.cur_token().value.clone();
                         let token_kind = self.cur_kind();
                         self.bump_any();
-                        let next_str = self.map_to_atom(node, &token_kind, token_value);
+                        let next_str = self.map_to_atom(node, &token_kind, token_value)?;
                         expr = concat_string_exprs(expr, next_str)?;
                     } else if self.eat(Kind::WhiteSpace) {
                         continue;
@@ -1097,7 +1097,7 @@ impl Parser {
         })))
     }
 
-    fn map_to_atom(&self, start: Node, kind: &Kind, value: TokenValue) -> Expression {
+    fn map_to_atom(&mut self, start: Node, kind: &Kind, value: TokenValue) -> Result<Expression> {
         let atom = match kind {
             Kind::Identifier => Expression::Name(Box::new(Name {
                 node: self.finish_node(start),
@@ -1165,9 +1165,20 @@ impl Parser {
                     value: ConstantValue::Bytes(bytes_val),
                 }))
             }
-            _ => panic!("Expected atom expression"),
+            Kind::FStringStart => {
+                let fstring = self.parse_fstring()?;
+                Expression::JoinedStr(Box::new(JoinedStr {
+                    node: self.finish_node(start),
+                    values: fstring,
+                }))
+            }
+            _ => {
+                return Err(
+                    diagnostics::InvalidSyntax("Unexpected token", self.finish_node(start)).into(),
+                )
+            }
         };
-        atom
+        Ok(atom)
     }
 
     fn parse_comp_operator(&mut self) -> Result<ComparisonOperator> {
@@ -1365,6 +1376,37 @@ impl Parser {
             },
             default,
         ))
+    }
+
+    // the FStringStart token is consumed by the caller
+    fn parse_fstring(&mut self) -> Result<Vec<Expression>> {
+        let mut expressions = vec![];
+        while self.cur_kind() != Kind::FStringEnd {
+            match self.cur_kind() {
+                Kind::FStringMiddle => {
+                    let str_val = self.cur_token().value.to_string().clone();
+                    self.bump(Kind::FStringMiddle);
+                    expressions.push(Expression::Constant(Box::new(Constant {
+                        node: self.start_node(),
+                        value: ConstantValue::Str(str_val),
+                    })));
+                }
+                Kind::LeftBracket => {
+                    self.bump(Kind::LeftBracket);
+                    expressions.push(self.parse_expression()?);
+                    self.expect(Kind::RightBracket)?;
+                }
+                _ => {
+                    return Err(diagnostics::UnexpectedToken(
+                        "unknown token in fstring",
+                        self.finish_node(self.start_node()),
+                    )
+                    .into());
+                }
+            }
+        }
+        self.bump(Kind::FStringEnd);
+        Ok(expressions)
     }
 }
 
@@ -1760,6 +1802,32 @@ mod tests {
             "('a'
                 'b'
 'c')",
+            "f'a' 'c'",
+            "f'a' 'b' 'c'",
+            "'d' f'a' 'b'",
+            "f'a_{1}' 'b' ",
+        ] {
+            let mut parser = Parser::new(test_case.to_string());
+            let program = parser.parse();
+
+            insta::with_settings!({
+                    description => test_case.to_string(), // the template source code
+                    omit_expression => true // do not include the default expression
+                }, {
+                    assert_debug_snapshot!(program);
+            });
+        }
+    }
+
+    #[test]
+    fn test_fstring() {
+        for test_case in &[
+            "f'a'",
+            "f'hello_{a}'",
+            "f'hello_{a} {b}'",
+            "f'hello_{a} {b} {c}'",
+            // unsupported
+            // "f'hello_{f'''{a}'''}'",
         ] {
             let mut parser = Parser::new(test_case.to_string());
             let program = parser.parse();
