@@ -157,15 +157,32 @@ impl Parser {
     fn parse_identifier_statement(&mut self) -> Result<Statement> {
         let start = self.start_node();
         let lhs = self.parse_expression()?;
-        if self.eat(Kind::Assign) {
-            let rhs = self.parse_expression()?;
-            return Ok(Statement::AssignStatement(Assign {
-                node: self.finish_node(start),
-                targets: vec![lhs],
-                value: rhs,
-            }));
+        match self.cur_kind() {
+            Kind::Assign => self.parse_assignment_statement(start, lhs),
+            _ => Ok(Statement::ExpressionStatement(lhs)),
         }
-        return Ok(Statement::ExpressionStatement(lhs));
+    }
+
+    fn parse_assignment_statement(&mut self, start: Node, lhs: Expression) -> Result<Statement> {
+        let mut targets = vec![lhs];
+        self.bump(Kind::Assign);
+        let value = loop {
+            let rhs = self.parse_expression()?;
+            // if there's an assign after the expression we have multiple targets
+            // like a = b = 1
+            // so we add the rhs to the targets and continue parsing
+            // otherwise we break and return the rhs as the value
+            if self.eat(Kind::Assign) {
+                targets.push(rhs);
+            } else {
+                break rhs;
+            }
+        };
+        return Ok(Statement::AssignStatement(Assign {
+            node: self.finish_node(start),
+            targets,
+            value,
+        }));
     }
 
     // https://docs.python.org/3/library/ast.html#ast.Expr
@@ -1390,6 +1407,8 @@ mod tests {
             "a = 'a'",
             "a = 1, 2",
             "a = 1, 2, ",
+            "a = b = 1",
+            "a,b = c,d = 1,2",
         ] {
             let mut parser = Parser::new(test_case.to_string());
             let program = parser.parse();
