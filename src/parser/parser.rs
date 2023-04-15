@@ -25,10 +25,6 @@ pub struct Parser {
     // This is incremented when we see an opening bracket and decremented when we
     // see a closing bracket.
     nested_expression_list: usize,
-    // Keeps track of if we are inside an subscript expression
-    // This is incremented when we see an opening bracket and decremented when we
-    // see a closing bracket.
-    nested_subscript: usize,
 }
 
 impl Parser {
