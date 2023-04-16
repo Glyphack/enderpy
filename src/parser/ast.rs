@@ -41,6 +41,9 @@ pub enum Statement {
     AssignStatement(Assign),
     ExpressionStatement(Expression),
     Assert(Assert),
+    Pass(Pass),
+    Delete(Delete),
+    Return(Return),
 }
 
 #[derive(Debug)]
@@ -55,6 +58,23 @@ pub struct Assert {
     pub node: Node,
     pub test: Expression,
     pub msg: Option<Expression>,
+}
+
+#[derive(Debug)]
+pub struct Pass {
+    pub node: Node,
+}
+
+#[derive(Debug)]
+pub struct Delete {
+    pub node: Node,
+    pub targets: Vec<Expression>,
+}
+
+#[derive(Debug)]
+pub struct Return {
+    pub node: Node,
+    pub value: Option<Expression>,
 }
 
 #[derive(Debug)]

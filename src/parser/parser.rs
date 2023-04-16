@@ -143,10 +143,33 @@ impl Parser {
         let stmt = match self.cur_kind() {
             Kind::Identifier => self.parse_identifier_statement(),
             Kind::Assert => self.parse_assert_statement(),
+            Kind::Pass => self.parse_pass_statement(),
+            Kind::Del => self.parse_del_statement(),
+            Kind::Return => self.parse_return_statement(),
             _ => Ok(Statement::ExpressionStatement(self.parse_expression()?)),
         };
 
+        self.bump(Kind::NewLine);
+
         stmt
+    }
+
+    fn parse_del_statement(&mut self) -> Result<Statement> {
+        let node = self.start_node();
+        self.bump(Kind::Del);
+        let expr = self.parse_target_list()?;
+        // target list can return a tuple for a,b
+        // but in delete a,b the a,b part is not a tuple
+        // It's a list of targets
+        // so we need to unwrap the tuple if it's a tuple
+        let expr = match expr {
+            Expression::Tuple(tuple) => tuple.elements,
+            _ => vec![expr],
+        };
+        Ok(Statement::Delete(Delete {
+            node: self.finish_node(node),
+            targets: expr,
+        }))
     }
 
     // Parses an statement which starts with an identifier
@@ -195,6 +218,28 @@ impl Parser {
             node: self.finish_node(node),
             test,
             msg,
+        }));
+    }
+
+    fn parse_pass_statement(&mut self) -> Result<Statement> {
+        let node = self.start_node();
+        self.bump(Kind::Pass);
+        return Ok(Statement::Pass(Pass {
+            node: self.finish_node(node),
+        }));
+    }
+
+    fn parse_return_statement(&mut self) -> Result<Statement> {
+        let node = self.start_node();
+        self.bump(Kind::Return);
+        let value = if self.at(Kind::NewLine) {
+            None
+        } else {
+            Some(self.parse_expression_list()?)
+        };
+        return Ok(Statement::Return(Return {
+            node: self.finish_node(node),
+            value,
         }));
     }
 
@@ -372,7 +417,7 @@ impl Parser {
         let mut targets = vec![];
         loop {
             targets.push(self.parse_target()?);
-            if !self.eat(Kind::Comma) {
+            if !self.eat(Kind::Comma) || matches!(self.cur_kind(), Kind::NewLine | Kind::Eof) {
                 break;
             }
         }
@@ -1480,6 +1525,36 @@ mod tests {
     #[test]
     fn test_parse_assert_stmt() {
         for test_case in &["assert a", "assert a, b", "assert True, 'fancy message'"] {
+            let mut parser = Parser::new(test_case.to_string());
+            let program = parser.parse();
+
+            insta::with_settings!({
+                    description => test_case.to_string(), // the template source code
+                    omit_expression => true // do not include the default expression
+                }, {
+                    assert_debug_snapshot!(program);
+            });
+        }
+    }
+
+    #[test]
+    fn test_pass_stmt() {
+        for test_case in &["pass", "pass ", "pass\n"] {
+            let mut parser = Parser::new(test_case.to_string());
+            let program = parser.parse();
+
+            insta::with_settings!({
+                    description => test_case.to_string(), // the template source code
+                    omit_expression => true // do not include the default expression
+                }, {
+                    assert_debug_snapshot!(program);
+            });
+        }
+    }
+
+    #[test]
+    fn test_parse_del_stmt() {
+        for test_case in &["del a", "del a, b", "del a, b, "] {
             let mut parser = Parser::new(test_case.to_string());
             let program = parser.parse();
 
