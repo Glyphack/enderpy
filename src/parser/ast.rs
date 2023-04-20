@@ -44,6 +44,13 @@ pub enum Statement {
     Pass(Pass),
     Delete(Delete),
     Return(Return),
+    Raise(Raise),
+    Break(Break),
+    Continue(Continue),
+    Import(Import),
+    ImportFrom(ImportFrom),
+    Global(Global),
+    Nonlocal(Nonlocal),
 }
 
 #[derive(Debug)]
@@ -75,6 +82,64 @@ pub struct Delete {
 pub struct Return {
     pub node: Node,
     pub value: Option<Expression>,
+}
+
+// https://docs.python.org/3/library/ast.html#ast.Raise
+#[derive(Debug)]
+pub struct Raise {
+    pub node: Node,
+    pub exc: Option<Expression>,
+    pub cause: Option<Expression>,
+}
+
+// https://docs.python.org/3/library/ast.html#ast.Break
+#[derive(Debug)]
+pub struct Break {
+    pub node: Node,
+}
+
+// https://docs.python.org/3/library/ast.html#ast.Continue
+#[derive(Debug)]
+pub struct Continue {
+    pub node: Node,
+}
+
+// https://docs.python.org/3/library/ast.html#ast.Import
+#[derive(Debug)]
+pub struct Import {
+    pub node: Node,
+    pub names: Vec<Alias>,
+}
+
+// https://docs.python.org/3/library/ast.html#ast.alias
+#[derive(Debug)]
+pub struct Alias {
+    pub node: Node,
+    pub name: String,
+    pub asname: Option<String>,
+}
+
+// https://docs.python.org/3/library/ast.html#ast.ImportFrom
+#[derive(Debug)]
+pub struct ImportFrom {
+    pub node: Node,
+    pub module: String,
+    pub names: Vec<Alias>,
+    pub level: usize,
+}
+
+// https://docs.python.org/3/library/ast.html#ast.Global
+#[derive(Debug)]
+pub struct Global {
+    pub node: Node,
+    pub names: Vec<String>,
+}
+
+// https://docs.python.org/3/library/ast.html#ast.Nonlocal
+#[derive(Debug)]
+pub struct Nonlocal {
+    pub node: Node,
+    pub names: Vec<String>,
 }
 
 #[derive(Debug)]
