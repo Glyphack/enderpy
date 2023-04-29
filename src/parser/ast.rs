@@ -39,6 +39,8 @@ pub struct Module {
 #[derive(Debug)]
 pub enum Statement {
     AssignStatement(Assign),
+    AnnAssignStatement(AnnAssign),
+    AugAssignStatement(AugAssign),
     ExpressionStatement(Expression),
     Assert(Assert),
     Pass(Pass),
@@ -58,6 +60,40 @@ pub struct Assign {
     pub node: Node,
     pub targets: Vec<Expression>,
     pub value: Expression,
+}
+
+#[derive(Debug)]
+pub struct AnnAssign {
+    pub node: Node,
+    pub target: Expression,
+    pub annotation: Expression,
+    pub value: Option<Expression>,
+    pub simple: bool,
+}
+
+#[derive(Debug)]
+pub struct AugAssign {
+    pub node: Node,
+    pub target: Expression,
+    pub op: AugAssignOp,
+    pub value: Expression,
+}
+
+#[derive(Debug)]
+pub enum AugAssignOp {
+    Add,
+    Sub,
+    Mult,
+    MatMult,
+    Div,
+    Mod,
+    Pow,
+    LShift,
+    RShift,
+    BitOr,
+    BitXor,
+    BitAnd,
+    FloorDiv,
 }
 
 #[derive(Debug)]

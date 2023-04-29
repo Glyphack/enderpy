@@ -141,7 +141,6 @@ impl Parser {
 
     fn parse_statement(&mut self) -> Result<Statement> {
         let stmt = match self.cur_kind() {
-            Kind::Identifier => self.parse_identifier_statement(),
             Kind::Assert => self.parse_assert_statement(),
             Kind::Pass => self.parse_pass_statement(),
             Kind::Del => self.parse_del_statement(),
@@ -157,11 +156,40 @@ impl Parser {
             Kind::From => self.parse_from_import_statement(),
             Kind::Global => self.parse_global_statement(),
             Kind::Nonlocal => self.parse_nonlocal_statement(),
-            _ => Ok(Statement::ExpressionStatement(self.parse_expression()?)),
+            _ => self.parse_assignment_or_expression_statement(),
         };
 
         self.bump(Kind::NewLine);
 
+        stmt
+    }
+
+    fn parse_assignment_or_expression_statement(&mut self) -> Result<Statement> {
+        let node = self.start_node();
+        let lhs = self.parse_expression()?;
+        let stmt = if self.cur_kind() == Kind::Assign {
+            self.parse_assignment_statement(node, lhs)
+        } else if matches!(
+            self.cur_kind(),
+            Kind::AddAssign
+                | Kind::SubAssign
+                | Kind::MulAssign
+                | Kind::DivAssign
+                | Kind::IntDivAssign
+                | Kind::ModAssign
+                | Kind::PowAssign
+                | Kind::BitAndAssign
+                | Kind::BitOrAssign
+                | Kind::BitXorAssign
+                | Kind::ShiftLeftAssign
+                | Kind::ShiftRightAssign
+        ) {
+            self.parse_aug_assignment_statement(node, lhs)
+        } else if self.at(Kind::Colon) {
+            self.parse_ann_assign_statement(node, lhs)
+        } else {
+            Ok(Statement::ExpressionStatement(lhs))
+        };
         stmt
     }
 
@@ -181,16 +209,6 @@ impl Parser {
             node: self.finish_node(node),
             targets: expr,
         }))
-    }
-
-    // Parses an statement which starts with an identifier
-    fn parse_identifier_statement(&mut self) -> Result<Statement> {
-        let start = self.start_node();
-        let lhs = self.parse_expression()?;
-        match self.cur_kind() {
-            Kind::Assign => self.parse_assignment_statement(start, lhs),
-            _ => Ok(Statement::ExpressionStatement(lhs)),
-        }
     }
 
     fn parse_assignment_statement(&mut self, start: Node, lhs: Expression) -> Result<Statement> {
@@ -213,6 +231,76 @@ impl Parser {
             targets,
             value,
         }));
+    }
+
+    fn parse_aug_assignment_statement(
+        &mut self,
+        start: Node,
+        lhs: Expression,
+    ) -> Result<Statement> {
+        let op = self.parse_aug_assign_op()?;
+        let value = self.parse_assignment_value()?;
+
+        return Ok(Statement::AugAssignStatement(AugAssign {
+            node: self.finish_node(start),
+            target: lhs,
+            op,
+            value,
+        }));
+    }
+
+    fn parse_ann_assign_statement(&mut self, start: Node, lhs: Expression) -> Result<Statement> {
+        self.bump(Kind::Colon);
+        let annotation = self.parse_expression_2()?;
+        let value = if self.eat(Kind::Assign) {
+            Some(self.parse_assignment_value()?)
+        } else {
+            None
+        };
+        return Ok(Statement::AnnAssignStatement(AnnAssign {
+            node: self.finish_node(start),
+            target: lhs,
+            annotation,
+            value,
+            // TODO: implement simple
+            simple: true,
+        }));
+    }
+
+    // The value is either expression list or yield expression
+    // https://docs.python.org/3/reference/simple_stmts.html#assignment-statements
+    fn parse_assignment_value(&mut self) -> Result<Expression> {
+        if self.cur_kind() == Kind::Yield {
+            return Ok(self.parse_yield_expression()?);
+        }
+        self.parse_expression_list()
+    }
+
+    fn parse_aug_assign_op(&mut self) -> Result<AugAssignOp> {
+        let op = match self.cur_kind() {
+            Kind::AddAssign => AugAssignOp::Add,
+            Kind::SubAssign => AugAssignOp::Sub,
+            Kind::MulAssign => AugAssignOp::Mult,
+            Kind::DivAssign => AugAssignOp::Div,
+            Kind::IntDivAssign => AugAssignOp::FloorDiv,
+            Kind::ModAssign => AugAssignOp::Mod,
+            Kind::PowAssign => AugAssignOp::Pow,
+            Kind::BitAndAssign => AugAssignOp::BitAnd,
+            Kind::BitOrAssign => AugAssignOp::BitOr,
+            Kind::BitXorAssign => AugAssignOp::BitXor,
+            Kind::ShiftLeftAssign => AugAssignOp::LShift,
+            Kind::ShiftRightAssign => AugAssignOp::RShift,
+            _ => {
+                return Err(diagnostics::ExpectToken(
+                    "augmented assignment",
+                    self.cur_kind().to_str(),
+                    self.finish_node(self.start_node()),
+                )
+                .into());
+            }
+        };
+        self.bump_any();
+        Ok(op)
     }
 
     fn parse_assert_statement(&mut self) -> Result<Statement> {
@@ -1191,7 +1279,7 @@ impl Parser {
     // https://docs.python.org/3/reference/expressions.html#yield-expressions
     fn parse_yield_expression(&mut self) -> Result<Expression> {
         let yield_node = self.start_node();
-        self.bump(Kind::Yield);
+        self.expect(Kind::Yield)?;
 
         if self.eat(Kind::From) {
             let value = self.parse_expression_2()?;
@@ -1468,9 +1556,11 @@ impl Parser {
             Kind::Mod => Ok(BinaryOperator::Mod),
             Kind::Pow => Ok(BinaryOperator::Pow),
             Kind::MatrixMul => Ok(BinaryOperator::MatMult),
-            _ => Err(
-                diagnostics::UnexpectedToken(self.cur_kind().to_str(), self.start_node()).into(),
-            ),
+            _ => Err(diagnostics::UnexpectedToken(
+                self.cur_kind().to_str(),
+                self.finish_node(self.start_node()),
+            )
+            .into()),
         };
         self.bump_any();
         op
@@ -1669,6 +1759,24 @@ mod tests {
             "a = 1, 2, ",
             "a = b = 1",
             "a,b = c,d = 1,2",
+            // augmented assignment
+            "a += 1",
+            "a -= 1",
+            "a *= 1",
+            "a /= 1",
+            "a //= 1",
+            "a %= 1",
+            "a **= 1",
+            "a <<= 1",
+            "a >>= 1",
+            "a &= 1",
+            "a ^= 1",
+            "a |= 1",
+            // annotated assignment
+            "a: int = 1",
+            "a: int = 1, 2",
+            "a: int = 1, 2, ",
+            "a: int = b",
         ] {
             let mut parser = Parser::new(test_case.to_string());
             let program = parser.parse();

@@ -1,0 +1,50 @@
+---
+source: src/parser/parser.rs
+description: "a: int = b"
+---
+Module {
+    node: Node {
+        start: 0,
+        end: 10,
+    },
+    body: [
+        AnnAssignStatement(
+            AnnAssign {
+                node: Node {
+                    start: 0,
+                    end: 10,
+                },
+                target: Name(
+                    Name {
+                        node: Node {
+                            start: 0,
+                            end: 1,
+                        },
+                        id: "a",
+                    },
+                ),
+                annotation: Name(
+                    Name {
+                        node: Node {
+                            start: 3,
+                            end: 6,
+                        },
+                        id: "int",
+                    },
+                ),
+                value: Some(
+                    Name(
+                        Name {
+                            node: Node {
+                                start: 9,
+                                end: 10,
+                            },
+                            id: "b",
+                        },
+                    ),
+                ),
+                simple: true,
+            },
+        ),
+    ],
+}
