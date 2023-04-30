@@ -1,0 +1,52 @@
+---
+source: src/parser/parser.rs
+description: "yield a, b"
+---
+Module {
+    node: Node {
+        start: 0,
+        end: 10,
+    },
+    body: [
+        ExpressionStatement(
+            Yield(
+                Yield {
+                    node: Node {
+                        start: 0,
+                        end: 10,
+                    },
+                    value: Some(
+                        Tuple(
+                            Tuple {
+                                node: Node {
+                                    start: 6,
+                                    end: 10,
+                                },
+                                elements: [
+                                    Name(
+                                        Name {
+                                            node: Node {
+                                                start: 6,
+                                                end: 7,
+                                            },
+                                            id: "a",
+                                        },
+                                    ),
+                                    Name(
+                                        Name {
+                                            node: Node {
+                                                start: 9,
+                                                end: 10,
+                                            },
+                                            id: "b",
+                                        },
+                                    ),
+                                ],
+                            },
+                        ),
+                    ),
+                },
+            ),
+        ),
+    ],
+}

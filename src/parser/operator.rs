@@ -59,31 +59,11 @@ pub fn is_bin_arithmetic_op(kind: &Kind) -> bool {
         | Kind::Minus
         | Kind::Mul
         | Kind::MatrixMul
-        | Kind::MulAssign
         | Kind::Div
         | Kind::Mod
         | Kind::Pow
         | Kind::IntDiv => true,
         _ => false,
-    }
-}
-
-pub fn map_binary_operator(kind: &Kind) -> BinaryOperator {
-    match kind {
-        Kind::Plus => BinaryOperator::Add,
-        Kind::Minus => BinaryOperator::Sub,
-        Kind::Mul => BinaryOperator::Mult,
-        Kind::MatrixMul => BinaryOperator::MatMult,
-        Kind::Div => BinaryOperator::Div,
-        Kind::Mod => BinaryOperator::Mod,
-        Kind::Pow => BinaryOperator::Pow,
-        Kind::IntDiv => BinaryOperator::FloorDiv,
-        Kind::BitAnd => BinaryOperator::BitAnd,
-        Kind::BitOr => BinaryOperator::BitOr,
-        Kind::BitXor => BinaryOperator::BitXor,
-        Kind::LeftShift => BinaryOperator::LShift,
-        Kind::RightShift => BinaryOperator::RShift,
-        _ => panic!("Not a binary operator"),
     }
 }
 

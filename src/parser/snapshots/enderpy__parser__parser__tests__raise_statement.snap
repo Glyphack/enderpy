@@ -1,0 +1,22 @@
+---
+source: src/parser/parser.rs
+description: raise
+---
+Module {
+    node: Node {
+        start: 0,
+        end: 5,
+    },
+    body: [
+        Raise(
+            Raise {
+                node: Node {
+                    start: 0,
+                    end: 5,
+                },
+                exc: None,
+                cause: None,
+            },
+        ),
+    ],
+}

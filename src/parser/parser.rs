@@ -141,16 +141,55 @@ impl Parser {
 
     fn parse_statement(&mut self) -> Result<Statement> {
         let stmt = match self.cur_kind() {
-            Kind::Identifier => self.parse_identifier_statement(),
             Kind::Assert => self.parse_assert_statement(),
             Kind::Pass => self.parse_pass_statement(),
             Kind::Del => self.parse_del_statement(),
             Kind::Return => self.parse_return_statement(),
-            _ => Ok(Statement::ExpressionStatement(self.parse_expression()?)),
+            // https://docs.python.org/3/reference/simple_stmts.html#the-yield-statement
+            Kind::Yield => Ok(Statement::ExpressionStatement(
+                self.parse_yield_expression()?,
+            )),
+            Kind::Raise => self.parse_raise_statement(),
+            Kind::Break => self.parse_break_statement(),
+            Kind::Continue => self.parse_continue_statement(),
+            Kind::Import => self.parse_import_statement(),
+            Kind::From => self.parse_from_import_statement(),
+            Kind::Global => self.parse_global_statement(),
+            Kind::Nonlocal => self.parse_nonlocal_statement(),
+            _ => self.parse_assignment_or_expression_statement(),
         };
 
         self.bump(Kind::NewLine);
 
+        stmt
+    }
+
+    fn parse_assignment_or_expression_statement(&mut self) -> Result<Statement> {
+        let node = self.start_node();
+        let lhs = self.parse_expression()?;
+        let stmt = if self.cur_kind() == Kind::Assign {
+            self.parse_assignment_statement(node, lhs)
+        } else if matches!(
+            self.cur_kind(),
+            Kind::AddAssign
+                | Kind::SubAssign
+                | Kind::MulAssign
+                | Kind::DivAssign
+                | Kind::IntDivAssign
+                | Kind::ModAssign
+                | Kind::PowAssign
+                | Kind::BitAndAssign
+                | Kind::BitOrAssign
+                | Kind::BitXorAssign
+                | Kind::ShiftLeftAssign
+                | Kind::ShiftRightAssign
+        ) {
+            self.parse_aug_assignment_statement(node, lhs)
+        } else if self.at(Kind::Colon) {
+            self.parse_ann_assign_statement(node, lhs)
+        } else {
+            Ok(Statement::ExpressionStatement(lhs))
+        };
         stmt
     }
 
@@ -170,16 +209,6 @@ impl Parser {
             node: self.finish_node(node),
             targets: expr,
         }))
-    }
-
-    // Parses an statement which starts with an identifier
-    fn parse_identifier_statement(&mut self) -> Result<Statement> {
-        let start = self.start_node();
-        let lhs = self.parse_expression()?;
-        match self.cur_kind() {
-            Kind::Assign => self.parse_assignment_statement(start, lhs),
-            _ => Ok(Statement::ExpressionStatement(lhs)),
-        }
     }
 
     fn parse_assignment_statement(&mut self, start: Node, lhs: Expression) -> Result<Statement> {
@@ -202,6 +231,76 @@ impl Parser {
             targets,
             value,
         }));
+    }
+
+    fn parse_aug_assignment_statement(
+        &mut self,
+        start: Node,
+        lhs: Expression,
+    ) -> Result<Statement> {
+        let op = self.parse_aug_assign_op()?;
+        let value = self.parse_assignment_value()?;
+
+        return Ok(Statement::AugAssignStatement(AugAssign {
+            node: self.finish_node(start),
+            target: lhs,
+            op,
+            value,
+        }));
+    }
+
+    fn parse_ann_assign_statement(&mut self, start: Node, lhs: Expression) -> Result<Statement> {
+        self.bump(Kind::Colon);
+        let annotation = self.parse_expression_2()?;
+        let value = if self.eat(Kind::Assign) {
+            Some(self.parse_assignment_value()?)
+        } else {
+            None
+        };
+        return Ok(Statement::AnnAssignStatement(AnnAssign {
+            node: self.finish_node(start),
+            target: lhs,
+            annotation,
+            value,
+            // TODO: implement simple
+            simple: true,
+        }));
+    }
+
+    // The value is either expression list or yield expression
+    // https://docs.python.org/3/reference/simple_stmts.html#assignment-statements
+    fn parse_assignment_value(&mut self) -> Result<Expression> {
+        if self.cur_kind() == Kind::Yield {
+            return Ok(self.parse_yield_expression()?);
+        }
+        self.parse_expression_list()
+    }
+
+    fn parse_aug_assign_op(&mut self) -> Result<AugAssignOp> {
+        let op = match self.cur_kind() {
+            Kind::AddAssign => AugAssignOp::Add,
+            Kind::SubAssign => AugAssignOp::Sub,
+            Kind::MulAssign => AugAssignOp::Mult,
+            Kind::DivAssign => AugAssignOp::Div,
+            Kind::IntDivAssign => AugAssignOp::FloorDiv,
+            Kind::ModAssign => AugAssignOp::Mod,
+            Kind::PowAssign => AugAssignOp::Pow,
+            Kind::BitAndAssign => AugAssignOp::BitAnd,
+            Kind::BitOrAssign => AugAssignOp::BitOr,
+            Kind::BitXorAssign => AugAssignOp::BitXor,
+            Kind::ShiftLeftAssign => AugAssignOp::LShift,
+            Kind::ShiftRightAssign => AugAssignOp::RShift,
+            _ => {
+                return Err(diagnostics::ExpectToken(
+                    "augmented assignment",
+                    self.cur_kind().to_str(),
+                    self.finish_node(self.start_node()),
+                )
+                .into());
+            }
+        };
+        self.bump_any();
+        Ok(op)
     }
 
     fn parse_assert_statement(&mut self) -> Result<Statement> {
@@ -241,6 +340,155 @@ impl Parser {
             node: self.finish_node(node),
             value,
         }));
+    }
+
+    // https://docs.python.org/3/reference/simple_stmts.html#the-raise-statement
+    fn parse_raise_statement(&mut self) -> Result<Statement> {
+        let node = self.start_node();
+        self.bump(Kind::Raise);
+        let exc = if matches!(self.cur_kind(), Kind::NewLine | Kind::Eof) {
+            None
+        } else {
+            Some(self.parse_expression_2()?)
+        };
+        let cause = if self.eat(Kind::From) {
+            Some(self.parse_expression_2()?)
+        } else {
+            None
+        };
+        return Ok(Statement::Raise(Raise {
+            node: self.finish_node(node),
+            exc,
+            cause,
+        }));
+    }
+
+    // https://docs.python.org/3/reference/simple_stmts.html#the-break-statement
+    fn parse_break_statement(&mut self) -> Result<Statement> {
+        let node = self.start_node();
+        self.bump(Kind::Break);
+        return Ok(Statement::Break(Break {
+            node: self.finish_node(node),
+        }));
+    }
+
+    // https://docs.python.org/3/reference/simple_stmts.html#the-continue-statement
+    fn parse_continue_statement(&mut self) -> Result<Statement> {
+        let node = self.start_node();
+        self.bump(Kind::Continue);
+        return Ok(Statement::Continue(Continue {
+            node: self.finish_node(node),
+        }));
+    }
+
+    // https://docs.python.org/3/reference/simple_stmts.html#the-global-statement
+    fn parse_global_statement(&mut self) -> Result<Statement> {
+        let node = self.start_node();
+        self.bump(Kind::Global);
+        let mut names = vec![];
+        while self.at(Kind::Identifier) {
+            let name = self.cur_token().value.to_string();
+            names.push(name);
+            self.bump(Kind::Identifier);
+            if !self.eat(Kind::Comma) {
+                break;
+            }
+        }
+        return Ok(Statement::Global(Global {
+            node: self.finish_node(node),
+            names,
+        }));
+    }
+
+    // https://docs.python.org/3/reference/simple_stmts.html#the-nonlocal-statement
+    fn parse_nonlocal_statement(&mut self) -> Result<Statement> {
+        let node = self.start_node();
+        self.bump(Kind::Nonlocal);
+        let mut names = vec![];
+        while self.at(Kind::Identifier) {
+            let name = self.cur_token().value.to_string();
+            names.push(name);
+            self.bump(Kind::Identifier);
+            if !self.eat(Kind::Comma) {
+                break;
+            }
+        }
+        return Ok(Statement::Nonlocal(Nonlocal {
+            node: self.finish_node(node),
+            names,
+        }));
+    }
+
+    // https://docs.python.org/3/reference/simple_stmts.html#the-import-statement
+    fn parse_import_statement(&mut self) -> Result<Statement> {
+        let node = self.start_node();
+        self.bump(Kind::Import);
+        let mut aliases = vec![];
+        while self.at(Kind::Identifier) {
+            let node = self.start_node();
+            let module = self.parse_module_name();
+            let alias = self.parse_alias(module, node);
+            aliases.push(alias);
+
+            if !self.eat(Kind::Comma) {
+                break;
+            }
+        }
+        return Ok(Statement::Import(Import {
+            node: self.finish_node(node),
+            names: aliases,
+        }));
+    }
+
+    // https://docs.python.org/3/reference/simple_stmts.html#the-from-import-statement
+    fn parse_from_import_statement(&mut self) -> Result<Statement> {
+        let import_node = self.start_node();
+        self.bump(Kind::From);
+        let module = self.parse_module_name();
+        self.bump(Kind::Import);
+        let mut aliases = vec![];
+        while self.at(Kind::Identifier) {
+            let alias_name = self.start_node();
+            let name = self.cur_token().value.to_string();
+            self.bump(Kind::Identifier);
+            let asname = self.parse_alias(name, alias_name);
+            aliases.push(asname);
+            if !self.eat(Kind::Comma) {
+                break;
+            }
+        }
+        return Ok(Statement::ImportFrom(ImportFrom {
+            node: self.finish_node(import_node),
+            module,
+            names: aliases,
+            level: 0,
+        }));
+    }
+
+    fn parse_alias(&mut self, name: String, node: Node) -> Alias {
+        let asname = if self.eat(Kind::As) {
+            let alias_name = self.cur_token().value.to_string();
+            self.bump(Kind::Identifier);
+            Some(alias_name)
+        } else {
+            None
+        };
+        return Alias {
+            node: self.finish_node(node),
+            name,
+            asname,
+        };
+    }
+
+    fn parse_module_name(&mut self) -> String {
+        let mut module = String::from(self.cur_token().value.to_string());
+        self.bump(Kind::Identifier);
+        while self.eat(Kind::Dot) {
+            module.push('.');
+            module.push_str(self.cur_token().value.to_string().as_str());
+            self.bump(Kind::Identifier);
+        }
+        return module;
     }
 
     // https://docs.python.org/3/library/ast.html#ast.Expr
@@ -1031,7 +1279,7 @@ impl Parser {
     // https://docs.python.org/3/reference/expressions.html#yield-expressions
     fn parse_yield_expression(&mut self) -> Result<Expression> {
         let yield_node = self.start_node();
-        self.bump(Kind::Yield);
+        self.expect(Kind::Yield)?;
 
         if self.eat(Kind::From) {
             let value = self.parse_expression_2()?;
@@ -1308,9 +1556,11 @@ impl Parser {
             Kind::Mod => Ok(BinaryOperator::Mod),
             Kind::Pow => Ok(BinaryOperator::Pow),
             Kind::MatrixMul => Ok(BinaryOperator::MatMult),
-            _ => Err(
-                diagnostics::UnexpectedToken(self.cur_kind().to_str(), self.start_node()).into(),
-            ),
+            _ => Err(diagnostics::UnexpectedToken(
+                self.cur_kind().to_str(),
+                self.finish_node(self.start_node()),
+            )
+            .into()),
         };
         self.bump_any();
         op
@@ -1509,6 +1759,24 @@ mod tests {
             "a = 1, 2, ",
             "a = b = 1",
             "a,b = c,d = 1,2",
+            // augmented assignment
+            "a += 1",
+            "a -= 1",
+            "a *= 1",
+            "a /= 1",
+            "a //= 1",
+            "a %= 1",
+            "a **= 1",
+            "a <<= 1",
+            "a >>= 1",
+            "a &= 1",
+            "a ^= 1",
+            "a |= 1",
+            // annotated assignment
+            "a: int = 1",
+            "a: int = 1, 2",
+            "a: int = 1, 2, ",
+            "a: int = b",
         ] {
             let mut parser = Parser::new(test_case.to_string());
             let program = parser.parse();
@@ -1555,6 +1823,76 @@ mod tests {
     #[test]
     fn test_parse_del_stmt() {
         for test_case in &["del a", "del a, b", "del a, b, "] {
+            let mut parser = Parser::new(test_case.to_string());
+            let program = parser.parse();
+
+            insta::with_settings!({
+                    description => test_case.to_string(), // the template source code
+                    omit_expression => true // do not include the default expression
+                }, {
+                    assert_debug_snapshot!(program);
+            });
+        }
+    }
+
+    #[test]
+    fn parse_yield_statement() {
+        for test_case in &["yield", "yield a", "yield a, b", "yield a, b, "] {
+            let mut parser = Parser::new(test_case.to_string());
+            let program = parser.parse();
+
+            insta::with_settings!({
+                    description => test_case.to_string(), // the template source code
+                    omit_expression => true // do not include the default expression
+                }, {
+                    assert_debug_snapshot!(program);
+            });
+        }
+    }
+
+    #[test]
+    fn test_raise_statement() {
+        for test_case in &["raise", "raise a", "raise a from c"] {
+            let mut parser = Parser::new(test_case.to_string());
+            let program = parser.parse();
+
+            insta::with_settings!({
+                    description => test_case.to_string(), // the template source code
+                    omit_expression => true // do not include the default expression
+                }, {
+                    assert_debug_snapshot!(program);
+            });
+        }
+    }
+
+    #[test]
+    fn test_parse_break_continue() {
+        for test_case in &["break", "continue"] {
+            let mut parser = Parser::new(test_case.to_string());
+            let program = parser.parse();
+
+            insta::with_settings!({
+                    description => test_case.to_string(), // the template source code
+                    omit_expression => true // do not include the default expression
+                }, {
+                    assert_debug_snapshot!(program);
+            });
+        }
+    }
+
+    #[test]
+    fn test_parse_import_statement() {
+        for test_case in &[
+            "import a",
+            "import a as b",
+            "import a.b",
+            "import a.b as c",
+            "import a.b.c",
+            "from a import b",
+            "from a import b as c",
+            "from a.b import c",
+            "from a.b import c as d",
+        ] {
             let mut parser = Parser::new(test_case.to_string());
             let program = parser.parse();
 
