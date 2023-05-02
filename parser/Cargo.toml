@@ -1,5 +1,5 @@
 [package]
-name = "enderpy"
+name = "parser"
 version = "0.1.0"
 edition = "2021"
 
@@ -13,10 +13,3 @@ thiserror = "1.0.40"
 
 [dev-dependencies]
 insta = { version = "1.28.0", features = ["yaml"] }
-
-
-[profile.dev.package.insta]
-opt-level = 3
-
-[profile.dev.package.similar]
-opt-level = 3
