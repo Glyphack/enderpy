@@ -1,0 +1,30 @@
+---
+source: parser/src/parser/parser.rs
+description: import a.b
+---
+Module {
+    node: Node {
+        start: 0,
+        end: 10,
+    },
+    body: [
+        Import(
+            Import {
+                node: Node {
+                    start: 0,
+                    end: 10,
+                },
+                names: [
+                    Alias {
+                        node: Node {
+                            start: 7,
+                            end: 10,
+                        },
+                        name: "a.b",
+                        asname: None,
+                    },
+                ],
+            },
+        ),
+    ],
+}

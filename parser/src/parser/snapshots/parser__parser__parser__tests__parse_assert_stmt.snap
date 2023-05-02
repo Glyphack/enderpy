@@ -1,0 +1,30 @@
+---
+source: parser/src/parser/parser.rs
+description: assert a
+---
+Module {
+    node: Node {
+        start: 0,
+        end: 8,
+    },
+    body: [
+        Assert(
+            Assert {
+                node: Node {
+                    start: 0,
+                    end: 8,
+                },
+                test: Name(
+                    Name {
+                        node: Node {
+                            start: 7,
+                            end: 8,
+                        },
+                        id: "a",
+                    },
+                ),
+                msg: None,
+            },
+        ),
+    ],
+}

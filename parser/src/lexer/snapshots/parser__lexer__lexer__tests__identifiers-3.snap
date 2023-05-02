@@ -1,0 +1,14 @@
+---
+source: parser/src/lexer/lexer.rs
+description: a_
+---
+[
+    Token {
+        kind: Identifier,
+        value: Str(
+            "a_",
+        ),
+        start: 0,
+        end: 2,
+    },
+]

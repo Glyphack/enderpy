@@ -1,0 +1,20 @@
+---
+source: parser/src/parser/parser.rs
+description: "pass "
+---
+Module {
+    node: Node {
+        start: 0,
+        end: 4,
+    },
+    body: [
+        Pass(
+            Pass {
+                node: Node {
+                    start: 0,
+                    end: 4,
+                },
+            },
+        ),
+    ],
+}

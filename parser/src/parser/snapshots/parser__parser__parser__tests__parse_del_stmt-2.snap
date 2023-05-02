@@ -1,0 +1,40 @@
+---
+source: parser/src/parser/parser.rs
+description: "del a, b"
+---
+Module {
+    node: Node {
+        start: 0,
+        end: 8,
+    },
+    body: [
+        Delete(
+            Delete {
+                node: Node {
+                    start: 0,
+                    end: 8,
+                },
+                targets: [
+                    Name(
+                        Name {
+                            node: Node {
+                                start: 4,
+                                end: 5,
+                            },
+                            id: "a",
+                        },
+                    ),
+                    Name(
+                        Name {
+                            node: Node {
+                                start: 7,
+                                end: 8,
+                            },
+                            id: "b",
+                        },
+                    ),
+                ],
+            },
+        ),
+    ],
+}

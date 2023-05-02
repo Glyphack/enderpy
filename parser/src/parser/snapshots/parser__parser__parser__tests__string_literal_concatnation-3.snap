@@ -1,0 +1,25 @@
+---
+source: parser/src/parser/parser.rs
+description: "'a'   'b'"
+---
+Module {
+    node: Node {
+        start: 0,
+        end: 9,
+    },
+    body: [
+        ExpressionStatement(
+            Constant(
+                Constant {
+                    node: Node {
+                        start: 0,
+                        end: 9,
+                    },
+                    value: Str(
+                        "ab",
+                    ),
+                },
+            ),
+        ),
+    ],
+}
