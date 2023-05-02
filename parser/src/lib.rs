@@ -2,4 +2,4 @@ mod lexer;
 mod parser;
 mod token;
 
-pub use parser::parser::Parser;
+pub use crate::parser::parser::Parser;
