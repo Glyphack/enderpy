@@ -53,6 +53,7 @@ pub enum Statement {
     ImportFrom(ImportFrom),
     Global(Global),
     Nonlocal(Nonlocal),
+    IfStatement(If),
 }
 
 #[derive(Debug)]
@@ -511,4 +512,13 @@ pub struct FormattedValue {
 pub struct JoinedStr {
     pub node: Node,
     pub values: Vec<Expression>,
+}
+
+// https://docs.python.org/3/library/ast.html#ast.If
+#[derive(Debug)]
+pub struct If {
+    pub node: Node,
+    pub test: Box<Expression>,
+    pub body: Vec<Statement>,
+    pub orelse: Vec<Statement>,
 }

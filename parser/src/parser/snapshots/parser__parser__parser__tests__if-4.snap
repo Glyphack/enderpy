@@ -1,0 +1,48 @@
+---
+source: parser/src/parser/parser.rs
+description: "if a:\n    pass;pass"
+---
+Module {
+    node: Node {
+        start: 0,
+        end: 19,
+    },
+    body: [
+        IfStatement(
+            If {
+                node: Node {
+                    start: 3,
+                    end: 19,
+                },
+                test: Name(
+                    Name {
+                        node: Node {
+                            start: 3,
+                            end: 4,
+                        },
+                        id: "a",
+                    },
+                ),
+                body: [
+                    Pass(
+                        Pass {
+                            node: Node {
+                                start: 10,
+                                end: 14,
+                            },
+                        },
+                    ),
+                    Pass(
+                        Pass {
+                            node: Node {
+                                start: 15,
+                                end: 19,
+                            },
+                        },
+                    ),
+                ],
+                orelse: [],
+            },
+        ),
+    ],
+}
