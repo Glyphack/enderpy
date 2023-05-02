@@ -11,6 +11,7 @@ use super::expression::{is_atom, is_iterable, is_primary};
 use super::operator::{
     is_bin_arithmetic_op, is_comparison_operator, is_unary_op, map_unary_operator,
 };
+use super::statement::is_at_compound_statement;
 use super::string::concat_string_exprs;
 
 #[derive(Debug)]
@@ -46,7 +47,11 @@ impl Parser {
         let node = self.start_node();
         let mut body = vec![];
         while self.cur_kind() != Kind::Eof {
-            let stmt = self.parse_statement();
+            let stmt = if is_at_compound_statement(&self.cur_kind()) {
+                self.parse_compount_statement()
+            } else {
+                self.parse_simple_statement()
+            };
             if stmt.is_ok() {
                 body.push(stmt.unwrap());
             } else {
@@ -139,7 +144,7 @@ impl Parser {
         Ok(())
     }
 
-    fn parse_statement(&mut self) -> Result<Statement> {
+    fn parse_simple_statement(&mut self) -> Result<Statement> {
         let stmt = match self.cur_kind() {
             Kind::Assert => self.parse_assert_statement(),
             Kind::Pass => self.parse_pass_statement(),
@@ -162,6 +167,45 @@ impl Parser {
         self.bump(Kind::NewLine);
 
         stmt
+    }
+
+    fn parse_compount_statement(&mut self) -> Result<Statement> {
+        let stmt = match self.cur_kind() {
+            Kind::If => self.parse_if_statement(),
+            // Kind::While => self.parse_while_statement(),
+            // Kind::For => self.parse_for_statement(),
+            // Kind::Try => self.parse_try_statement(),
+            // Kind::With => self.parse_with_statement(),
+            // Kind::Def => self.parse_function_definition(),
+            // Kind::Class => self.parse_class_definition(),
+            _ => {
+                let range = self.finish_node(self.start_node());
+                Err(
+                    diagnostics::ExpectToken("compound statement", self.cur_kind().to_str(), range)
+                        .into(),
+                )
+            }
+        };
+
+        self.bump(Kind::NewLine);
+
+        stmt
+    }
+
+    fn parse_if_statement(&mut self) -> Result<Statement> {
+        self.bump(Kind::If);
+        let node = self.start_node();
+        let test = Box::new(self.parse_assignment_expression()?);
+        self.expect(Kind::Colon)?;
+        let body = self.parse_suite()?;
+        let orelse = vec![];
+
+        Ok(Statement::IfStatement(If {
+            node: self.finish_node(node),
+            test,
+            body,
+            orelse,
+        }))
     }
 
     fn parse_assignment_or_expression_statement(&mut self) -> Result<Statement> {
@@ -191,6 +235,48 @@ impl Parser {
             Ok(Statement::ExpressionStatement(lhs))
         };
         stmt
+    }
+
+    // https://docs.python.org/3/reference/compound_stmts.html#grammar-token-python-grammar-suite
+    fn parse_suite(&mut self) -> Result<Vec<Statement>> {
+        if self.eat(Kind::NewLine) {
+            self.expect(Kind::Indent)?;
+            let mut stmts = vec![];
+            while !self.eat(Kind::Dedent) && !self.at(Kind::Eof) {
+                let stmt = self.parse_statement()?;
+                stmts.extend(stmt);
+            }
+            Ok(stmts)
+        } else {
+            let stmt = self.parse_statement_list()?;
+            self.bump(Kind::NewLine);
+            Ok(stmt)
+        }
+    }
+
+    // https://docs.python.org/3/reference/compound_stmts.html#grammar-token-python-grammar-statement
+    fn parse_statement(&mut self) -> Result<Vec<Statement>> {
+        let stmt = if is_at_compound_statement(&self.cur_kind()) {
+            let comp_stmt = self.parse_compount_statement()?;
+            Ok(vec![comp_stmt])
+        } else {
+            let stmt_list = self.parse_statement_list();
+            self.bump(Kind::NewLine);
+            stmt_list
+        };
+        stmt
+    }
+
+    // https://docs.python.org/3/reference/simple_stmts.html#grammar-token-python-grammar-stmt-list
+    fn parse_statement_list(&mut self) -> Result<Vec<Statement>> {
+        let mut stmts = vec![];
+        let stmt = self.parse_simple_statement()?;
+        stmts.push(stmt);
+        while self.eat(Kind::SemiColon) {
+            let stmt = self.parse_simple_statement()?;
+            stmts.push(stmt);
+        }
+        Ok(stmts)
     }
 
     fn parse_del_statement(&mut self) -> Result<Statement> {
@@ -2289,6 +2375,33 @@ mod tests {
             "f'hello_{a} {b} {c}'",
             // unsupported
             // "f'hello_{f'''{a}'''}'",
+        ] {
+            let mut parser = Parser::new(test_case.to_string());
+            let program = parser.parse();
+
+            insta::with_settings!({
+                    description => test_case.to_string(), // the template source code
+                    omit_expression => true // do not include the default expression
+                }, {
+                    assert_debug_snapshot!(program);
+            });
+        }
+    }
+
+    #[test]
+    fn test_if() {
+        for test_case in &[
+            "if a: pass",
+            "if a:
+    pass",
+            "if a:
+        a = 1
+if a:
+        b = 1
+
+",
+            "if a:
+    pass;pass",
         ] {
             let mut parser = Parser::new(test_case.to_string());
             let program = parser.parse();
