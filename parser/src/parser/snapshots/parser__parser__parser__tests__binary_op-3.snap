@@ -1,0 +1,41 @@
+---
+source: parser/src/parser/parser.rs
+description: a * b
+---
+Module {
+    node: Node {
+        start: 0,
+        end: 5,
+    },
+    body: [
+        ExpressionStatement(
+            BinOp(
+                BinOp {
+                    node: Node {
+                        start: 0,
+                        end: 5,
+                    },
+                    op: Mult,
+                    left: Name(
+                        Name {
+                            node: Node {
+                                start: 0,
+                                end: 1,
+                            },
+                            id: "a",
+                        },
+                    ),
+                    right: Name(
+                        Name {
+                            node: Node {
+                                start: 4,
+                                end: 5,
+                            },
+                            id: "b",
+                        },
+                    ),
+                },
+            ),
+        ),
+    ],
+}

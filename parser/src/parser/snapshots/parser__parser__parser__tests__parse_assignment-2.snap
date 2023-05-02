@@ -1,0 +1,40 @@
+---
+source: parser/src/parser/parser.rs
+description: a = None
+---
+Module {
+    node: Node {
+        start: 0,
+        end: 8,
+    },
+    body: [
+        AssignStatement(
+            Assign {
+                node: Node {
+                    start: 0,
+                    end: 8,
+                },
+                targets: [
+                    Name(
+                        Name {
+                            node: Node {
+                                start: 0,
+                                end: 1,
+                            },
+                            id: "a",
+                        },
+                    ),
+                ],
+                value: Constant(
+                    Constant {
+                        node: Node {
+                            start: 4,
+                            end: 8,
+                        },
+                        value: None,
+                    },
+                ),
+            },
+        ),
+    ],
+}

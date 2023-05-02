@@ -1,0 +1,40 @@
+---
+source: parser/src/parser/parser.rs
+description: "(a := b)"
+---
+Module {
+    node: Node {
+        start: 0,
+        end: 8,
+    },
+    body: [
+        ExpressionStatement(
+            NamedExpr(
+                NamedExpression {
+                    node: Node {
+                        start: 1,
+                        end: 7,
+                    },
+                    target: Name(
+                        Name {
+                            node: Node {
+                                start: 1,
+                                end: 2,
+                            },
+                            id: "a",
+                        },
+                    ),
+                    value: Name(
+                        Name {
+                            node: Node {
+                                start: 6,
+                                end: 7,
+                            },
+                            id: "b",
+                        },
+                    ),
+                },
+            ),
+        ),
+    ],
+}

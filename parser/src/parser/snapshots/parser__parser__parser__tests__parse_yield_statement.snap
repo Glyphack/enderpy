@@ -1,0 +1,23 @@
+---
+source: parser/src/parser/parser.rs
+description: yield
+---
+Module {
+    node: Node {
+        start: 0,
+        end: 5,
+    },
+    body: [
+        ExpressionStatement(
+            Yield(
+                Yield {
+                    node: Node {
+                        start: 0,
+                        end: 5,
+                    },
+                    value: None,
+                },
+            ),
+        ),
+    ],
+}

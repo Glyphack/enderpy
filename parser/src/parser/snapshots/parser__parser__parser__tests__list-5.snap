@@ -1,0 +1,33 @@
+---
+source: parser/src/parser/parser.rs
+description: "[a,\n            ]"
+---
+Module {
+    node: Node {
+        start: 0,
+        end: 17,
+    },
+    body: [
+        ExpressionStatement(
+            List(
+                List {
+                    node: Node {
+                        start: 0,
+                        end: 17,
+                    },
+                    elements: [
+                        Name(
+                            Name {
+                                node: Node {
+                                    start: 1,
+                                    end: 2,
+                                },
+                                id: "a",
+                            },
+                        ),
+                    ],
+                },
+            ),
+        ),
+    ],
+}

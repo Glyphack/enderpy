@@ -1,0 +1,28 @@
+---
+source: parser/src/lexer/lexer.rs
+description: a + b
+---
+[
+    Token {
+        kind: Identifier,
+        value: Str(
+            "a",
+        ),
+        start: 0,
+        end: 1,
+    },
+    Token {
+        kind: Plus,
+        value: None,
+        start: 2,
+        end: 3,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "b",
+        ),
+        start: 4,
+        end: 5,
+    },
+]
