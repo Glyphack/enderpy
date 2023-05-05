@@ -198,13 +198,52 @@ impl Parser {
         let test = Box::new(self.parse_assignment_expression()?);
         self.expect(Kind::Colon)?;
         let body = self.parse_suite()?;
-        let orelse = vec![];
+        let mut orelse: Option<If> = None;
+        while self.at(Kind::Elif) {
+            let elif_node = self.start_node();
+            self.bump(Kind::Elif);
+            let elif_test = Box::new(self.parse_assignment_expression()?);
+            self.expect(Kind::Colon)?;
+            let body = self.parse_suite()?;
+            let if_value = If {
+                node: self.finish_node(elif_node),
+                test: elif_test,
+                body,
+                orelse: vec![],
+            };
+            if let Some(val) = &mut orelse {
+                val.update_orelse(vec![Statement::IfStatement(if_value)]);
+            } else {
+                orelse = Some(if_value);
+            }
+        }
+
+        if self.at(Kind::Else) {
+            self.bump(Kind::Else);
+            self.expect(Kind::Colon)?;
+            let else_body = self.parse_suite()?;
+            if let Some(val) = &mut orelse {
+                val.update_orelse(else_body);
+            }
+        }
+
+        // if we had any else or elif statements, we need to wrap them in a vec
+        // otherwise we just return an empty vec as the else block of the if statement
+        let or_else_vec = if let Some(val) = orelse {
+            vec![Statement::IfStatement(val)]
+        } else {
+            vec![]
+        };
+
+        // There can be a dedent after the if block
+        // The only other token here can be a eof
+        self.bump(Kind::Dedent);
 
         Ok(Statement::IfStatement(If {
             node: self.finish_node(node),
             test,
             body,
-            orelse,
+            orelse: or_else_vec,
         }))
     }
 
@@ -1027,13 +1066,25 @@ impl Parser {
 
     // https://docs.python.org/3/reference/expressions.html#comparisons
     fn parse_comparison(&mut self) -> Result<Expression> {
-        let or_expr = self.parse_or_expr();
-        if is_comparison_operator(&self.cur_kind()) {
-            let mut comp_operator = self.parse_comp_operator()?;
-            let rhs = self.parse_or_expr()?;
-            unimplemented!()
+        let node = self.start_node();
+        let or_expr = self.parse_or_expr()?;
+        let mut ops = vec![];
+        let mut comparators = vec![];
+        while is_comparison_operator(&self.cur_kind()) {
+            ops.push(self.parse_comp_operator()?);
+            comparators.push(self.parse_or_expr()?);
         }
-        or_expr
+
+        if !ops.is_empty() {
+            return Ok(Expression::Compare(Box::new(Compare {
+                node: self.finish_node(node),
+                left: Box::new(or_expr),
+                ops,
+                comparators,
+            })));
+        }
+
+        Ok(or_expr)
     }
 
     // Binary bitwise operations
@@ -2389,6 +2440,33 @@ mod tests {
     }
 
     #[test]
+    fn test_comparison() {
+        for test_case in &[
+            "a == b",
+            "a != b",
+            "a > b",
+            "a < b",
+            "a >= b",
+            "a <= b",
+            "a is b",
+            "a is not b",
+            "a in b",
+            "a not in b",
+            "a < b < c",
+        ] {
+            let mut parser = Parser::new(test_case.to_string());
+            let program = parser.parse();
+
+            insta::with_settings!({
+                description => test_case.to_string(), // the template source code
+                omit_expression => true // do not include the default expression
+            }, {
+                assert_debug_snapshot!(program);
+            });
+        }
+    }
+
+    #[test]
     fn test_if() {
         for test_case in &[
             "if a: pass",
@@ -2402,6 +2480,19 @@ if a:
 ",
             "if a:
     pass;pass",
+            "if a is b:
+            pass",
+            "if a is b:
+                pass
+elif a is c:
+                pass",
+            "if a is b:
+                pass
+elif a is c:
+                pass
+else:
+                pass
+",
         ] {
             let mut parser = Parser::new(test_case.to_string());
             let program = parser.parse();

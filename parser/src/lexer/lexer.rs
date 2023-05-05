@@ -805,7 +805,7 @@ impl Lexer {
                             de_indents += 1;
                         }
                         Ordering::Equal => break,
-                        Ordering::Less => panic!("Invalid indentation"),
+                        Ordering::Less => panic!("Invalid indentation, current indentation is {} which is less than previous {}", spaces_count, top),
                     }
                 }
                 TokenValue::Indent(de_indents)

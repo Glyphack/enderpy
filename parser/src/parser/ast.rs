@@ -522,3 +522,9 @@ pub struct If {
     pub body: Vec<Statement>,
     pub orelse: Vec<Statement>,
 }
+
+impl If {
+    pub fn update_orelse(&mut self, other_or_else: Vec<Statement>) {
+        self.orelse = other_or_else;
+    }
+}
