@@ -1,0 +1,40 @@
+---
+source: parser/src/parser/parser.rs
+description: "while a:\n    pass"
+---
+Module {
+    node: Node {
+        start: 0,
+        end: 17,
+    },
+    body: [
+        WhileStatement(
+            While {
+                node: Node {
+                    start: 0,
+                    end: 17,
+                },
+                test: Name(
+                    Name {
+                        node: Node {
+                            start: 6,
+                            end: 7,
+                        },
+                        id: "a",
+                    },
+                ),
+                body: [
+                    Pass(
+                        Pass {
+                            node: Node {
+                                start: 13,
+                                end: 17,
+                            },
+                        },
+                    ),
+                ],
+                orelse: [],
+            },
+        ),
+    ],
+}

@@ -172,10 +172,10 @@ impl Parser {
     fn parse_compount_statement(&mut self) -> Result<Statement> {
         let stmt = match self.cur_kind() {
             Kind::If => self.parse_if_statement(),
-            // Kind::While => self.parse_while_statement(),
-            // Kind::For => self.parse_for_statement(),
-            // Kind::Try => self.parse_try_statement(),
-            // Kind::With => self.parse_with_statement(),
+            Kind::While => self.parse_while_statement(),
+            Kind::For => self.parse_for_statement(),
+            Kind::Try => self.parse_try_statement(),
+            Kind::With => self.parse_with_statement(),
             // Kind::Def => self.parse_function_definition(),
             // Kind::Class => self.parse_class_definition(),
             _ => {
@@ -245,6 +245,202 @@ impl Parser {
             body,
             orelse: or_else_vec,
         }))
+    }
+
+    fn parse_while_statement(&mut self) -> Result<Statement> {
+        let node = self.start_node();
+        self.bump(Kind::While);
+        let test = Box::new(self.parse_assignment_expression()?);
+        self.expect(Kind::Colon)?;
+        let body = self.parse_suite()?;
+        let orelse = if self.at(Kind::Else) {
+            self.bump(Kind::Else);
+            self.expect(Kind::Colon)?;
+            self.parse_suite()?
+        } else {
+            vec![]
+        };
+
+        self.bump(Kind::Dedent);
+
+        Ok(Statement::WhileStatement(While {
+            node: self.finish_node(node),
+            test,
+            body,
+            orelse,
+        }))
+    }
+
+    fn parse_for_statement(&mut self) -> Result<Statement> {
+        let node = self.start_node();
+        self.bump(Kind::For);
+        let target = Box::new(self.parse_target_list()?);
+        self.expect(Kind::In)?;
+        let iter_list = self.parse_starred_list(Kind::Colon)?;
+        let iter = if iter_list.len() > 1 {
+            Box::new(Expression::Tuple(Box::new(Tuple {
+                node: self.finish_node(node),
+                elements: iter_list,
+            })))
+        } else if iter_list.len() == 1 {
+            Box::new(iter_list.into_iter().next().unwrap())
+        } else {
+            return Err(diagnostics::ExpectToken(
+                "exptected iterator in for loop",
+                self.cur_kind().to_str(),
+                self.finish_node(node),
+            )
+            .into());
+        };
+        self.expect(Kind::Colon)?;
+        let body = self.parse_suite()?;
+        let orelse = if self.eat(Kind::Else) {
+            self.expect(Kind::Colon)?;
+            self.parse_suite()?
+        } else {
+            vec![]
+        };
+
+        self.bump(Kind::Dedent);
+
+        Ok(Statement::ForStatement(For {
+            node: self.finish_node(node),
+            target,
+            iter,
+            body,
+            orelse,
+        }))
+    }
+
+    fn parse_with_statement(&mut self) -> Result<Statement> {
+        let node = self.start_node();
+        self.bump(Kind::With);
+        let items = self.parse_with_items()?;
+        self.expect(Kind::Colon)?;
+        let body = self.parse_suite()?;
+
+        self.bump(Kind::Dedent);
+
+        Ok(Statement::WithStatement(With {
+            node: self.finish_node(node),
+            items,
+            body,
+        }))
+    }
+
+    fn parse_with_items(&mut self) -> Result<Vec<WithItem>> {
+        let mut items = vec![];
+
+        if self.eat(Kind::LeftParen) {
+            items.push(self.parse_with_item()?);
+            while self.eat(Kind::Comma) & !self.at(Kind::RightParen) {
+                items.push(self.parse_with_item()?);
+            }
+            self.expect(Kind::RightParen)?;
+            return Ok(items);
+        }
+        items.push(self.parse_with_item()?);
+        while self.eat(Kind::Comma) & !self.at(Kind::Colon) {
+            items.push(self.parse_with_item()?);
+        }
+
+        Ok(items)
+    }
+
+    fn parse_with_item(&mut self) -> Result<WithItem> {
+        let node = self.start_node();
+        let context_expr = Box::new(self.parse_expression_2()?);
+        let optional_vars = if self.eat(Kind::As) {
+            Some(Box::new(self.parse_target()?))
+        } else {
+            None
+        };
+
+        Ok(WithItem {
+            node: self.finish_node(node),
+            context_expr,
+            optional_vars,
+        })
+    }
+
+    fn parse_try_statement(&mut self) -> Result<Statement> {
+        let node = self.start_node();
+        let mut is_try_star = false;
+        self.bump(Kind::Try);
+        self.expect(Kind::Colon)?;
+        let body = self.parse_suite()?;
+        let handlers = if self.at(Kind::Except) {
+            if matches!(self.peek_kind(), Ok(Kind::Mul)) {
+                is_try_star = true;
+            }
+            self.parse_except_clauses()?
+        } else {
+            vec![]
+        };
+        let orelse = if self.eat(Kind::Else) {
+            self.expect(Kind::Colon)?;
+            self.parse_suite()?
+        } else {
+            vec![]
+        };
+
+        let finalbody = if self.eat(Kind::Finally) {
+            self.expect(Kind::Colon)?;
+            self.parse_suite()?
+        } else {
+            vec![]
+        };
+
+        if is_try_star {
+            Ok(Statement::TryStarStatement(TryStar {
+                node: self.finish_node(node),
+                body,
+                handlers,
+                orelse,
+                finalbody,
+            }))
+        } else {
+            Ok(Statement::TryStatement(Try {
+                node: self.finish_node(node),
+                body,
+                handlers,
+                orelse,
+                finalbody,
+            }))
+        }
+    }
+
+    fn parse_except_clauses(&mut self) -> Result<Vec<ExceptHandler>> {
+        let mut handlers = vec![];
+        while self.at(Kind::Except) {
+            let node = self.start_node();
+            self.bump(Kind::Except);
+            self.bump(Kind::Mul);
+            let typ = if !self.at(Kind::Colon) {
+                Some(Box::new(self.parse_expression_2()?))
+            } else {
+                None
+            };
+            let name = if self.eat(Kind::As) {
+                let val = Some(self.cur_token().value.to_string());
+                self.bump(Kind::Identifier);
+                val
+            } else {
+                None
+            };
+
+            self.expect(Kind::Colon)?;
+            let body = self.parse_suite()?;
+
+            handlers.push(ExceptHandler {
+                node: self.finish_node(node),
+                typ,
+                name,
+                body,
+            });
+        }
+
+        Ok(handlers)
     }
 
     fn parse_assignment_or_expression_statement(&mut self) -> Result<Statement> {
@@ -947,7 +1143,8 @@ impl Parser {
 
     // https://docs.python.org/3/reference/expressions.html#expression-lists
     // termination_kind is used to know when to stop parsing the list
-    // this kind is not consumed
+    // for example to parse a tuple the termination_kind is Kind::RightParen
+    // caller is responsible to consume the first & last occurrence of the termination_kind
     fn parse_starred_list(&mut self, termination_kind: Kind) -> Result<Vec<Expression>> {
         let mut expressions = vec![];
         while !self.at(Kind::Eof) && !self.at(termination_kind) {
@@ -2492,6 +2689,123 @@ elif a is c:
                 pass
 else:
                 pass
+",
+        ] {
+            let mut parser = Parser::new(test_case.to_string());
+            let program = parser.parse();
+
+            insta::with_settings!({
+                    description => test_case.to_string(), // the template source code
+                    omit_expression => true // do not include the default expression
+                }, {
+                    assert_debug_snapshot!(program);
+            });
+        }
+    }
+
+    #[test]
+    fn test_while_statement() {
+        for test_case in &[
+            "while a: pass",
+            "while a:
+    pass",
+            "while a:
+        a = 1
+else:
+        b = 1
+",
+        ] {
+            let mut parser = Parser::new(test_case.to_string());
+            let program = parser.parse();
+
+            insta::with_settings!({
+                    description => test_case.to_string(), // the template source code
+                    omit_expression => true // do not include the default expression
+                }, {
+                    assert_debug_snapshot!(program);
+            });
+        }
+    }
+
+    #[test]
+    fn test_for_statement() {
+        for test_case in &[
+            "for a in b: pass",
+            "for a in b:
+    pass",
+            "for a in range(10):
+    a = 1
+else:
+    b = 1",
+            "for a in range(10), range(10):
+    a = 1
+",
+        ] {
+            let mut parser = Parser::new(test_case.to_string());
+            let program = parser.parse();
+
+            insta::with_settings!({
+                    description => test_case.to_string(), // the template source code
+                    omit_expression => true // do not include the default expression
+                }, {
+                    assert_debug_snapshot!(program);
+            });
+        }
+    }
+
+    #[test]
+    fn test_with_statement() {
+        for test_case in &[
+            "with a: pass",
+            "with a as b: pass",
+            "with a as b, c as d: pass",
+            "with (a as b, c as d): pass",
+        ] {
+            let mut parser = Parser::new(test_case.to_string());
+            let program = parser.parse();
+
+            insta::with_settings!({
+                    description => test_case.to_string(), // the template source code
+                    omit_expression => true // do not include the default expression
+                }, {
+                    assert_debug_snapshot!(program);
+            });
+        }
+    }
+
+    #[test]
+    fn test_try_statement() {
+        for test_case in &[
+            "try:
+    pass
+except:
+    pass",
+            "try:
+                pass
+except Exception:
+                pass",
+            "try:
+                pass
+except Exception as e:
+                pass",
+            "try:
+                pass
+except Exception as e:
+                pass
+else:
+                pass",
+            "try:
+                pass
+except Exception as e:
+                pass
+else:
+                pass
+finally:
+                pass",
+            "try:
+    pass
+except *Exception as e:
+    pass
 ",
         ] {
             let mut parser = Parser::new(test_case.to_string());

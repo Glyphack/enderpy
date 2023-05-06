@@ -54,6 +54,11 @@ pub enum Statement {
     Global(Global),
     Nonlocal(Nonlocal),
     IfStatement(If),
+    WhileStatement(While),
+    ForStatement(For),
+    WithStatement(With),
+    TryStatement(Try),
+    TryStarStatement(TryStar),
 }
 
 #[derive(Debug)]
@@ -527,4 +532,69 @@ impl If {
     pub fn update_orelse(&mut self, other_or_else: Vec<Statement>) {
         self.orelse = other_or_else;
     }
+}
+
+// https://docs.python.org/3/library/ast.html#ast.While
+#[derive(Debug)]
+pub struct While {
+    pub node: Node,
+    pub test: Box<Expression>,
+    pub body: Vec<Statement>,
+    pub orelse: Vec<Statement>,
+}
+
+// https://docs.python.org/3/library/ast.html#ast.For
+#[derive(Debug)]
+pub struct For {
+    pub node: Node,
+    pub target: Box<Expression>,
+    pub iter: Box<Expression>,
+    pub body: Vec<Statement>,
+    pub orelse: Vec<Statement>,
+}
+
+// https://docs.python.org/3/library/ast.html#ast.With
+#[derive(Debug)]
+pub struct With {
+    pub node: Node,
+    pub items: Vec<WithItem>,
+    pub body: Vec<Statement>,
+}
+
+// https://docs.python.org/3/library/ast.html#ast.withitem
+// can be used for With
+#[derive(Debug)]
+pub struct WithItem {
+    pub node: Node,
+    pub context_expr: Box<Expression>,
+    pub optional_vars: Option<Box<Expression>>,
+}
+
+// https://docs.python.org/3/library/ast.html#ast.Try
+#[derive(Debug)]
+pub struct Try {
+    pub node: Node,
+    pub body: Vec<Statement>,
+    pub handlers: Vec<ExceptHandler>,
+    pub orelse: Vec<Statement>,
+    pub finalbody: Vec<Statement>,
+}
+
+// https://docs.python.org/3/library/ast.html#ast.TryStar
+#[derive(Debug)]
+pub struct TryStar {
+    pub node: Node,
+    pub body: Vec<Statement>,
+    pub handlers: Vec<ExceptHandler>,
+    pub orelse: Vec<Statement>,
+    pub finalbody: Vec<Statement>,
+}
+
+// https://docs.python.org/3/library/ast.html#ast.ExceptHandler
+#[derive(Debug)]
+pub struct ExceptHandler {
+    pub node: Node,
+    pub typ: Option<Box<Expression>>,
+    pub name: Option<String>,
+    pub body: Vec<Statement>,
 }
