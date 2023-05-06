@@ -174,7 +174,7 @@ impl Parser {
             Kind::If => self.parse_if_statement(),
             Kind::While => self.parse_while_statement(),
             Kind::For => self.parse_for_statement(),
-            // Kind::Try => self.parse_try_statement(),
+            Kind::Try => self.parse_try_statement(),
             Kind::With => self.parse_with_statement(),
             // Kind::Def => self.parse_function_definition(),
             // Kind::Class => self.parse_class_definition(),
@@ -361,6 +361,86 @@ impl Parser {
             context_expr,
             optional_vars,
         })
+    }
+
+    fn parse_try_statement(&mut self) -> Result<Statement> {
+        let node = self.start_node();
+        let mut is_try_star = false;
+        self.bump(Kind::Try);
+        self.expect(Kind::Colon)?;
+        let body = self.parse_suite()?;
+        let handlers = if self.at(Kind::Except) {
+            if matches!(self.peek_kind(), Ok(Kind::Mul)) {
+                is_try_star = true;
+            }
+            self.parse_except_clauses()?
+        } else {
+            vec![]
+        };
+        let orelse = if self.eat(Kind::Else) {
+            self.expect(Kind::Colon)?;
+            self.parse_suite()?
+        } else {
+            vec![]
+        };
+
+        let finalbody = if self.eat(Kind::Finally) {
+            self.expect(Kind::Colon)?;
+            self.parse_suite()?
+        } else {
+            vec![]
+        };
+
+        if is_try_star {
+            Ok(Statement::TryStarStatement(TryStar {
+                node: self.finish_node(node),
+                body,
+                handlers,
+                orelse,
+                finalbody,
+            }))
+        } else {
+            Ok(Statement::TryStatement(Try {
+                node: self.finish_node(node),
+                body,
+                handlers,
+                orelse,
+                finalbody,
+            }))
+        }
+    }
+
+    fn parse_except_clauses(&mut self) -> Result<Vec<ExceptHandler>> {
+        let mut handlers = vec![];
+        while self.at(Kind::Except) {
+            let node = self.start_node();
+            self.bump(Kind::Except);
+            self.bump(Kind::Mul);
+            let typ = if !self.at(Kind::Colon) {
+                Some(Box::new(self.parse_expression_2()?))
+            } else {
+                None
+            };
+            let name = if self.eat(Kind::As) {
+                let val = Some(self.cur_token().value.to_string());
+                self.bump(Kind::Identifier);
+                val
+            } else {
+                None
+            };
+
+            self.expect(Kind::Colon)?;
+            let body = self.parse_suite()?;
+
+            handlers.push(ExceptHandler {
+                node: self.finish_node(node),
+                typ,
+                name,
+                body,
+            });
+        }
+
+        Ok(handlers)
     }
 
     fn parse_assignment_or_expression_statement(&mut self) -> Result<Statement> {
@@ -2680,6 +2760,53 @@ else:
             "with a as b: pass",
             "with a as b, c as d: pass",
             "with (a as b, c as d): pass",
+        ] {
+            let mut parser = Parser::new(test_case.to_string());
+            let program = parser.parse();
+
+            insta::with_settings!({
+                    description => test_case.to_string(), // the template source code
+                    omit_expression => true // do not include the default expression
+                }, {
+                    assert_debug_snapshot!(program);
+            });
+        }
+    }
+
+    #[test]
+    fn test_try_statement() {
+        for test_case in &[
+            "try:
+    pass
+except:
+    pass",
+            "try:
+                pass
+except Exception:
+                pass",
+            "try:
+                pass
+except Exception as e:
+                pass",
+            "try:
+                pass
+except Exception as e:
+                pass
+else:
+                pass",
+            "try:
+                pass
+except Exception as e:
+                pass
+else:
+                pass
+finally:
+                pass",
+            "try:
+    pass
+except *Exception as e:
+    pass
+",
         ] {
             let mut parser = Parser::new(test_case.to_string());
             let program = parser.parse();

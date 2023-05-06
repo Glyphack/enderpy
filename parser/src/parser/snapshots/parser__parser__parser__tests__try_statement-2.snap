@@ -1,0 +1,62 @@
+---
+source: parser/src/parser/parser.rs
+description: "try:\n                pass\nexcept Exception:\n                pass"
+---
+Module {
+    node: Node {
+        start: 0,
+        end: 64,
+    },
+    body: [
+        TryStatement(
+            Try {
+                node: Node {
+                    start: 0,
+                    end: 64,
+                },
+                body: [
+                    Pass(
+                        Pass {
+                            node: Node {
+                                start: 21,
+                                end: 25,
+                            },
+                        },
+                    ),
+                ],
+                handlers: [
+                    ExceptHandler {
+                        node: Node {
+                            start: 26,
+                            end: 64,
+                        },
+                        typ: Some(
+                            Name(
+                                Name {
+                                    node: Node {
+                                        start: 33,
+                                        end: 42,
+                                    },
+                                    id: "Exception",
+                                },
+                            ),
+                        ),
+                        name: None,
+                        body: [
+                            Pass(
+                                Pass {
+                                    node: Node {
+                                        start: 60,
+                                        end: 64,
+                                    },
+                                },
+                            ),
+                        ],
+                    },
+                ],
+                orelse: [],
+                finalbody: [],
+            },
+        ),
+    ],
+}
