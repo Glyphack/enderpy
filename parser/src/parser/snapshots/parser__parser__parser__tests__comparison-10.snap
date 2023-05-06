@@ -1,0 +1,45 @@
+---
+source: parser/src/parser/parser.rs
+description: a not in b
+---
+Module {
+    node: Node {
+        start: 0,
+        end: 10,
+    },
+    body: [
+        ExpressionStatement(
+            Compare(
+                Compare {
+                    node: Node {
+                        start: 0,
+                        end: 10,
+                    },
+                    left: Name(
+                        Name {
+                            node: Node {
+                                start: 0,
+                                end: 1,
+                            },
+                            id: "a",
+                        },
+                    ),
+                    ops: [
+                        NotIn,
+                    ],
+                    comparators: [
+                        Name(
+                            Name {
+                                node: Node {
+                                    start: 9,
+                                    end: 10,
+                                },
+                                id: "b",
+                            },
+                        ),
+                    ],
+                },
+            ),
+        ),
+    ],
+}
