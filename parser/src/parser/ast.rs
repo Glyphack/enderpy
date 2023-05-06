@@ -56,6 +56,7 @@ pub enum Statement {
     IfStatement(If),
     WhileStatement(While),
     ForStatement(For),
+    WithStatement(With),
 }
 
 #[derive(Debug)]
@@ -548,4 +549,21 @@ pub struct For {
     pub iter: Box<Expression>,
     pub body: Vec<Statement>,
     pub orelse: Vec<Statement>,
+}
+
+// https://docs.python.org/3/library/ast.html#ast.With
+#[derive(Debug)]
+pub struct With {
+    pub node: Node,
+    pub items: Vec<WithItem>,
+    pub body: Vec<Statement>,
+}
+
+// https://docs.python.org/3/library/ast.html#ast.withitem
+// can be used for With
+#[derive(Debug)]
+pub struct WithItem {
+    pub node: Node,
+    pub context_expr: Box<Expression>,
+    pub optional_vars: Option<Box<Expression>>,
 }

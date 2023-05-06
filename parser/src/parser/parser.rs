@@ -312,7 +312,56 @@ impl Parser {
         }))
     }
 
-    fn parse_with_statement(&mut self) -> Result<WithItem>
+    fn parse_with_statement(&mut self) -> Result<Statement> {
+        let node = self.start_node();
+        self.bump(Kind::With);
+        let items = self.parse_with_items()?;
+        self.expect(Kind::Colon)?;
+        let body = self.parse_suite()?;
+
+        self.bump(Kind::Dedent);
+
+        Ok(Statement::WithStatement(With {
+            node: self.finish_node(node),
+            items,
+            body,
+        }))
+    }
+
+    fn parse_with_items(&mut self) -> Result<Vec<WithItem>> {
+        let mut items = vec![];
+
+        if self.eat(Kind::LeftParen) {
+            items.push(self.parse_with_item()?);
+            while self.eat(Kind::Comma) & !self.at(Kind::RightParen) {
+                items.push(self.parse_with_item()?);
+            }
+            self.expect(Kind::RightParen)?;
+            return Ok(items);
+        }
+        items.push(self.parse_with_item()?);
+        while self.eat(Kind::Comma) & !self.at(Kind::Colon) {
+            items.push(self.parse_with_item()?);
+        }
+
+        Ok(items)
+    }
+
+    fn parse_with_item(&mut self) -> Result<WithItem> {
+        let node = self.start_node();
+        let context_expr = Box::new(self.parse_expression_2()?);
+        let optional_vars = if self.eat(Kind::As) {
+            Some(Box::new(self.parse_target()?))
+        } else {
+            None
+        };
+
+        Ok(WithItem {
+            node: self.finish_node(node),
+            context_expr,
+            optional_vars,
+        })
+    }
 
     fn parse_assignment_or_expression_statement(&mut self) -> Result<Statement> {
         let node = self.start_node();
@@ -2611,6 +2660,26 @@ else:
             "for a in range(10), range(10):
     a = 1
 ",
+        ] {
+            let mut parser = Parser::new(test_case.to_string());
+            let program = parser.parse();
+
+            insta::with_settings!({
+                    description => test_case.to_string(), // the template source code
+                    omit_expression => true // do not include the default expression
+                }, {
+                    assert_debug_snapshot!(program);
+            });
+        }
+    }
+
+    #[test]
+    fn test_with_statement() {
+        for test_case in &[
+            "with a: pass",
+            "with a as b: pass",
+            "with a as b, c as d: pass",
+            "with (a as b, c as d): pass",
         ] {
             let mut parser = Parser::new(test_case.to_string());
             let program = parser.parse();
