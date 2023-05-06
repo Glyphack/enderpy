@@ -54,6 +54,8 @@ pub enum Statement {
     Global(Global),
     Nonlocal(Nonlocal),
     IfStatement(If),
+    WhileStatement(While),
+    ForStatement(For),
 }
 
 #[derive(Debug)]
@@ -527,4 +529,23 @@ impl If {
     pub fn update_orelse(&mut self, other_or_else: Vec<Statement>) {
         self.orelse = other_or_else;
     }
+}
+
+// https://docs.python.org/3/library/ast.html#ast.While
+#[derive(Debug)]
+pub struct While {
+    pub node: Node,
+    pub test: Box<Expression>,
+    pub body: Vec<Statement>,
+    pub orelse: Vec<Statement>,
+}
+
+// https://docs.python.org/3/library/ast.html#ast.For
+#[derive(Debug)]
+pub struct For {
+    pub node: Node,
+    pub target: Box<Expression>,
+    pub iter: Box<Expression>,
+    pub body: Vec<Statement>,
+    pub orelse: Vec<Statement>,
 }

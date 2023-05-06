@@ -1,0 +1,49 @@
+---
+source: parser/src/parser/parser.rs
+description: "for a in b: pass"
+---
+Module {
+    node: Node {
+        start: 0,
+        end: 16,
+    },
+    body: [
+        ForStatement(
+            For {
+                node: Node {
+                    start: 0,
+                    end: 16,
+                },
+                target: Name(
+                    Name {
+                        node: Node {
+                            start: 4,
+                            end: 5,
+                        },
+                        id: "a",
+                    },
+                ),
+                iter: Name(
+                    Name {
+                        node: Node {
+                            start: 9,
+                            end: 10,
+                        },
+                        id: "b",
+                    },
+                ),
+                body: [
+                    Pass(
+                        Pass {
+                            node: Node {
+                                start: 12,
+                                end: 16,
+                            },
+                        },
+                    ),
+                ],
+                orelse: [],
+            },
+        ),
+    ],
+}
