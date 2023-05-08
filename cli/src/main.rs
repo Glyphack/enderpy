@@ -1,6 +1,15 @@
-use parser::Parser;
+use clap::Parser;
+use cli::{Cli, Commands};
+
+mod cli;
 
 fn main() {
-    let result = Parser::new("1 + 2".to_string()).parse();
-    println!("{:?}", result);
+    let cli = Cli::parse();
+
+    match &cli.command {
+        Commands::Tokenize => todo!(),
+        Commands::Parse => todo!(),
+        Commands::Check => todo!(),
+        Commands::Watch => todo!(),
+    }
 }
