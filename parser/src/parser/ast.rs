@@ -59,6 +59,8 @@ pub enum Statement {
     WithStatement(With),
     TryStatement(Try),
     TryStarStatement(TryStar),
+    FunctionDef(FunctionDef),
+    ClassDef(ClassDef),
 }
 
 #[derive(Debug)]
@@ -481,7 +483,7 @@ pub struct Arguments {
     pub args: Vec<Arg>,
     pub vararg: Option<Arg>,
     pub kwonlyargs: Vec<Arg>,
-    pub kw_defaults: Vec<Expression>,
+    pub kw_defaults: Vec<Option<Expression>>,
     pub kwarg: Option<Arg>,
     pub defaults: Vec<Expression>,
 }
@@ -597,4 +599,28 @@ pub struct ExceptHandler {
     pub typ: Option<Box<Expression>>,
     pub name: Option<String>,
     pub body: Vec<Statement>,
+}
+
+// https://docs.python.org/3/library/ast.html#functiondef
+#[derive(Debug)]
+pub struct FunctionDef {
+    pub node: Node,
+    pub name: String,
+    pub args: Arguments,
+    pub body: Vec<Statement>,
+    pub decorator_list: Vec<Expression>,
+    pub returns: Option<Box<Expression>>,
+    pub type_comment: Option<String>,
+}
+
+// https://docs.python.org/3/library/ast.html#ast.ClassDef
+#[derive(Debug)]
+pub struct ClassDef {
+    pub node: Node,
+    pub name: String,
+    pub bases: Vec<Expression>,
+    pub starargs: Option<Box<Expression>>,
+    pub keywords: Vec<Keyword>,
+    pub body: Vec<Statement>,
+    pub decorator_list: Vec<Expression>,
 }

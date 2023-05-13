@@ -1,0 +1,57 @@
+---
+source: parser/src/parser/parser.rs
+description: "@decor\ndef a(): pass"
+---
+Module {
+    node: Node {
+        start: 0,
+        end: 20,
+    },
+    body: [
+        FunctionDef(
+            FunctionDef {
+                node: Node {
+                    start: 7,
+                    end: 20,
+                },
+                name: "a",
+                args: Arguments {
+                    node: Node {
+                        start: 13,
+                        end: 13,
+                    },
+                    posonlyargs: [],
+                    args: [],
+                    vararg: None,
+                    kwonlyargs: [],
+                    kw_defaults: [],
+                    kwarg: None,
+                    defaults: [],
+                },
+                body: [
+                    Pass(
+                        Pass {
+                            node: Node {
+                                start: 16,
+                                end: 20,
+                            },
+                        },
+                    ),
+                ],
+                decorator_list: [
+                    Name(
+                        Name {
+                            node: Node {
+                                start: 1,
+                                end: 6,
+                            },
+                            id: "decor",
+                        },
+                    ),
+                ],
+                returns: None,
+                type_comment: None,
+            },
+        ),
+    ],
+}
