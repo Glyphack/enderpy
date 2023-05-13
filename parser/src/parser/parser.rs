@@ -177,8 +177,8 @@ impl Parser {
             Kind::Try => self.parse_try_statement(),
             Kind::With => self.parse_with_statement(),
             Kind::Def => self.parse_function_definition(vec![]),
-            Kind::MatrixMul => self.parse_decorated_function_definition(),
-            // Kind::Class => self.parse_class_definition(),
+            Kind::MatrixMul => self.parse_decorated_function_def_or_class_def(),
+            Kind::Class => self.parse_class_definition(vec![]),
             _ => {
                 let range = self.finish_node(self.start_node());
                 Err(
@@ -445,11 +445,11 @@ impl Parser {
     }
 
     fn parse_function_definition(&mut self, decorators: Vec<Expression>) -> Result<Statement> {
-        // node excludes decorators
+        // TODO: node excludes decorators
         // later we can extract the node for first decorator
         // and start the node from there
         let node = self.start_node();
-        self.bump(Kind::Def);
+        self.expect(Kind::Def)?;
         let name = self.cur_token().value.to_string();
         self.expect(Kind::Identifier)?;
         self.expect(Kind::LeftParen)?;
@@ -471,7 +471,7 @@ impl Parser {
         }))
     }
 
-    fn parse_decorated_function_definition(&mut self) -> Result<Statement> {
+    fn parse_decorated_function_def_or_class_def(&mut self) -> Result<Statement> {
         let mut decorators = vec![];
         while self.eat(Kind::MatrixMul) {
             let name = self.parse_identifier()?;
@@ -479,7 +479,40 @@ impl Parser {
             self.bump(Kind::NewLine);
         }
 
-        self.parse_function_definition(decorators)
+        if self.at(Kind::Def) {
+            self.parse_function_definition(decorators)
+        } else {
+            self.parse_class_definition(decorators)
+        }
+    }
+
+    fn parse_class_definition(&mut self, decorators: Vec<Expression>) -> Result<Statement> {
+        // TODO: node excludes decorators
+        // later we can extract the node for first decorator
+        // and start the node from there
+        let node = self.start_node();
+        self.expect(Kind::Class)?;
+        let name = self.cur_token().value.to_string();
+        self.expect(Kind::Identifier)?;
+        let (bases, keywords) = if self.eat(Kind::LeftParen) {
+            let (bases, keywords) = self.parse_argument_list()?;
+            self.expect(Kind::RightParen)?;
+            (bases, keywords)
+        } else {
+            (vec![], vec![])
+        };
+        self.expect(Kind::Colon)?;
+        let body = self.parse_suite()?;
+
+        Ok(Statement::ClassDef(ClassDef {
+            node: self.finish_node(node),
+            name,
+            bases,
+            keywords,
+            body,
+            starargs: None,
+            decorator_list: decorators,
+        }))
     }
 
     fn parse_assignment_or_expression_statement(&mut self) -> Result<Statement> {
@@ -1545,6 +1578,68 @@ impl Parser {
         return primary;
     }
 
+    // https://docs.python.org/3/reference/expressions.html#grammar-token-python-grammar-argument_list
+    // returns args, keywords
+    fn parse_argument_list(&mut self) -> Result<(Vec<Expression>, Vec<Keyword>)> {
+        let mut seen_keyword = false;
+        let mut positional_args = vec![];
+        let mut keyword_args = vec![];
+        loop {
+            if self.at(Kind::RightParen) {
+                break;
+            }
+            if self.at(Kind::Identifier) && matches!(self.peek_kind(), Ok(Kind::Assign)) {
+                seen_keyword = true;
+                let keyword_arg = match self.parse_keyword_item() {
+                    Ok(keyword_arg) => keyword_arg,
+                    Err(_) => {
+                        return Err(diagnostics::ExpectToken(
+                            "Keyword argument",
+                            self.cur_kind().to_str(),
+                            self.finish_node(self.start_node()),
+                        )
+                        .into());
+                    }
+                };
+                keyword_args.push(keyword_arg);
+            } else if self.at(Kind::Mul) {
+                let star_arg_node = self.start_node();
+                self.bump(Kind::Mul);
+                let star_arg = Expression::Starred(Box::new(Starred {
+                    node: self.finish_node(star_arg_node),
+                    value: Box::new(self.parse_expression_2()?),
+                }));
+                positional_args.push(star_arg);
+            } else if self.at(Kind::Pow) {
+                let kwarg_node = self.start_node();
+                self.bump(Kind::Pow);
+                seen_keyword = true;
+                let kwarg = Keyword {
+                    node: self.finish_node(kwarg_node),
+                    arg: None,
+                    value: Box::new(self.parse_expression_2()?),
+                };
+                keyword_args.push(kwarg);
+            } else {
+                if seen_keyword {
+                    // TODO change to synatx error
+                    return Err(diagnostics::ExpectToken(
+                        "Positional argument after keyword argument",
+                        self.cur_kind().to_str(),
+                        self.finish_node(self.start_node()),
+                    )
+                    .into());
+                }
+                let arg = self.parse_assignment_expression()?;
+                positional_args.push(arg);
+            }
+            if !self.eat(Kind::Comma) {
+                break;
+            }
+        }
+        return Ok((positional_args, keyword_args));
+    }
+
     fn parse_atribute_ref(&mut self, node: Node, value: Expression) -> Result<Expression> {
         let mut expr = Ok(value);
         while self.eat(Kind::Dot) {
@@ -1985,13 +2080,13 @@ impl Parser {
                 } else {
                     args.push(param);
                 }
-                if let Some(default_value) = default {
-                    if seen_vararg {
-                        kw_defaults.push(default_value);
-                    } else {
-                        must_have_default = true;
-                        defaults.push(default_value);
-                    }
+
+                // TODO: refactor this
+                if seen_vararg {
+                    kw_defaults.push(default);
+                } else if let Some(default_value) = default {
+                    must_have_default = true;
+                    defaults.push(default_value);
                 } else if must_have_default {
                     return Err(diagnostics::InvalidSyntax(
                         "non-default argument follows default argument",
@@ -2003,6 +2098,9 @@ impl Parser {
             // must also have a default value — this is a syntactic restriction that is not expressed by the grammar.
             } else if self.eat(Kind::Mul) {
                 seen_vararg = true;
+                // after seeing vararg the must_have_default is reset
+                // until we see a default value again
+                must_have_default = false;
                 let (param, default) = self.parse_parameter(is_lambda)?;
                 // default is not allowed for vararg
                 if default.is_some() {
@@ -2879,6 +2977,32 @@ except *Exception as e:
 def a(): pass",
             "@decor
 def f(a: 'annotation', b=1, c=2, *d, e, f=3, **g): pass",
+        ] {
+            let mut parser = Parser::new(test_case.to_string());
+            let program = parser.parse();
+
+            insta::with_settings!({
+                    description => test_case.to_string(), // the template source code
+                    omit_expression => true // do not include the default expression
+                }, {
+                    assert_debug_snapshot!(program);
+            });
+        }
+    }
+
+    #[test]
+    fn test_class_def_statement() {
+        for test_case in &[
+            "class a: pass",
+            "class a():
+    pass",
+            "class a(b, c): pass",
+            "class a(b, *c, **d): pass",
+            "class a(b,
+                c,
+                d): pass",
+            "@decor
+class a: pass",
         ] {
             let mut parser = Parser::new(test_case.to_string());
             let program = parser.parse();
