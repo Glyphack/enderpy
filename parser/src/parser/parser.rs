@@ -176,7 +176,8 @@ impl Parser {
             Kind::For => self.parse_for_statement(),
             Kind::Try => self.parse_try_statement(),
             Kind::With => self.parse_with_statement(),
-            // Kind::Def => self.parse_function_definition(),
+            Kind::Def => self.parse_function_definition(vec![]),
+            Kind::MatrixMul => self.parse_decorated_function_definition(),
             // Kind::Class => self.parse_class_definition(),
             _ => {
                 let range = self.finish_node(self.start_node());
@@ -441,6 +442,44 @@ impl Parser {
         }
 
         Ok(handlers)
+    }
+
+    fn parse_function_definition(&mut self, decorators: Vec<Expression>) -> Result<Statement> {
+        // node excludes decorators
+        // later we can extract the node for first decorator
+        // and start the node from there
+        let node = self.start_node();
+        self.bump(Kind::Def);
+        let name = self.cur_token().value.to_string();
+        self.expect(Kind::Identifier)?;
+        self.expect(Kind::LeftParen)?;
+        let args = self.parse_parameters(false)?;
+        self.expect(Kind::RightParen)?;
+        self.expect(Kind::Colon)?;
+        let body = self.parse_suite()?;
+
+        Ok(Statement::FunctionDef(FunctionDef {
+            node: self.finish_node(node),
+            name,
+            args,
+            body,
+            decorator_list: decorators,
+            // TODO: return type
+            returns: None,
+            // TODO: type comment
+            type_comment: None,
+        }))
+    }
+
+    fn parse_decorated_function_definition(&mut self) -> Result<Statement> {
+        let mut decorators = vec![];
+        while self.eat(Kind::MatrixMul) {
+            let name = self.parse_identifier()?;
+            decorators.push(name);
+            self.bump(Kind::NewLine);
+        }
+
+        self.parse_function_definition(decorators)
     }
 
     fn parse_assignment_or_expression_statement(&mut self) -> Result<Statement> {
@@ -1554,12 +1593,7 @@ impl Parser {
             self.nested_expression_list -= 1;
             return tuple_or_named_expr;
         } else if self.at(Kind::Identifier) {
-            let value = self.cur_token().value.to_string();
-            self.bump(Kind::Identifier);
-            return Ok(Expression::Name(Box::new(Name {
-                node: self.finish_node(node),
-                id: value,
-            })));
+            return self.parse_identifier();
         } else if is_atom(&self.cur_kind()) {
             // value must be cloned to be assigned to the node
             let token_value = self.cur_token().value.clone();
@@ -1608,6 +1642,16 @@ impl Parser {
             )
             .into());
         }
+    }
+
+    fn parse_identifier(&mut self) -> Result<Expression> {
+        let node = self.start_node();
+        let value = self.cur_token().value.to_string();
+        self.expect(Kind::Identifier)?;
+        return Ok(Expression::Name(Box::new(Name {
+            node: self.finish_node(node),
+            id: value,
+        })));
     }
 
     // https://docs.python.org/3/reference/expressions.html#yield-expressions
@@ -2807,6 +2851,34 @@ finally:
 except *Exception as e:
     pass
 ",
+        ] {
+            let mut parser = Parser::new(test_case.to_string());
+            let program = parser.parse();
+
+            insta::with_settings!({
+                    description => test_case.to_string(), // the template source code
+                    omit_expression => true // do not include the default expression
+                }, {
+                    assert_debug_snapshot!(program);
+            });
+        }
+    }
+
+    #[test]
+    fn test_func_def_statement() {
+        for test_case in &[
+            "def a(): pass",
+            "def a():
+    pass",
+            "def a(a, b, c): pass",
+            "def a(a, *b, **c): pass",
+            "def a(a,
+                b,
+                c): pass",
+            "@decor
+def a(): pass",
+            "@decor
+def f(a: 'annotation', b=1, c=2, *d, e, f=3, **g): pass",
         ] {
             let mut parser = Parser::new(test_case.to_string());
             let program = parser.parse();
