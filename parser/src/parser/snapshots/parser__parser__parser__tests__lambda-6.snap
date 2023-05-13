@@ -51,7 +51,9 @@ Module {
                                 annotation: None,
                             },
                         ],
-                        kw_defaults: [],
+                        kw_defaults: [
+                            None,
+                        ],
                         kwarg: None,
                         defaults: [],
                     },
