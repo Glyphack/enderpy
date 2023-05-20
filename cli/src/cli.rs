@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use clap::{Parser, Subcommand};
 
 /// Enderpy CLI
@@ -11,9 +13,15 @@ pub struct Cli {
 #[derive(Subcommand)]
 pub enum Commands {
     /// Print lexer tokens
-    Tokenize,
+    Tokenize {
+        /// Path to source file
+        file: PathBuf,
+    },
     /// Print abstract syntax tree
-    Parse,
+    Parse {
+        /// Path to source file
+        file: PathBuf,
+    },
     /// Type check
     Check,
     /// Watch changes to type check
