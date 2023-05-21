@@ -1,4 +1,4 @@
-use std::panic;
+use std::{panic, vec};
 
 use crate::lexer::lexer::Lexer;
 use crate::parser::ast::*;
@@ -7,7 +7,7 @@ use crate::token::{Kind, Token, TokenValue};
 use miette::Result;
 
 use super::diagnostics;
-use super::expression::{is_atom, is_iterable, is_primary};
+use super::expression::{is_atom, is_iterable};
 use super::operator::{
     is_bin_arithmetic_op, is_comparison_operator, is_unary_op, map_unary_operator,
 };
@@ -179,6 +179,11 @@ impl Parser {
             Kind::Def => self.parse_function_definition(vec![]),
             Kind::MatrixMul => self.parse_decorated_function_def_or_class_def(),
             Kind::Class => self.parse_class_definition(vec![]),
+            // match is a soft keyword
+            // https://docs.python.org/3/reference/lexical_analysis.html#soft-keywords
+            Kind::Identifier if self.cur_token().value.to_string() == "match" => {
+                self.parse_match_statement()
+            }
             _ => {
                 let range = self.finish_node(self.start_node());
                 Err(
@@ -513,6 +518,387 @@ impl Parser {
             starargs: None,
             decorator_list: decorators,
         }))
+    }
+
+    // https://peps.python.org/pep-0622/#appendix-a-full-grammar
+    fn parse_match_statement(&mut self) -> Result<Statement> {
+        let node = self.start_node();
+        // This identifier is match word
+        self.bump(Kind::Identifier);
+        let subject = Box::new(self.parse_subject()?);
+        self.expect(Kind::Colon)?;
+        self.expect(Kind::NewLine)?;
+        self.expect(Kind::Indent)?;
+        let cases = self.parse_cases()?;
+
+        Ok(Statement::Match(Match {
+            node: self.finish_node(node),
+            subject,
+            cases,
+        }))
+    }
+
+    // This is inaccuracy, but I don't know how
+    // the grammar should be
+    fn parse_subject(&mut self) -> Result<Expression> {
+        self.parse_star_named_expressions()
+    }
+
+    // star named expresison is similar to starred expression
+    // but it does not accept expression as a value
+    // https://docs.python.org/3/reference/grammar.html
+    fn parse_star_named_expression(&mut self) -> Result<Expression> {
+        if self.at(Kind::Mul) {
+            self.parse_or_expr()
+        } else {
+            self.parse_assignment_expression()
+        }
+    }
+
+    fn parse_star_named_expressions(&mut self) -> Result<Expression> {
+        let node = self.start_node();
+        let mut exprs = vec![];
+        loop {
+            if !self.eat(Kind::Comma) {
+                break;
+            }
+            exprs.push(self.parse_star_named_expression()?);
+        }
+
+        if exprs.len() == 1 {
+            Ok(exprs.remove(0))
+        } else {
+            Ok(Expression::Tuple(Box::new(Tuple {
+                node: self.finish_node(node),
+                elements: exprs,
+            })))
+        }
+    }
+
+    fn parse_cases(&mut self) -> Result<Vec<MatchCase>> {
+        let mut cases = vec![];
+        loop {
+            if !self.at(Kind::Dedent) {
+                break;
+            }
+            let node = self.start_node();
+
+            // This identifier is case word
+            self.expect(Kind::Identifier)?;
+            let pattern = Box::new(self.parse_patterns()?);
+            let guard = if self.at(Kind::If) {
+                Some(Box::new(self.parse_guard()?))
+            } else {
+                None
+            };
+            self.expect(Kind::Colon)?;
+            let body = self.parse_suite()?;
+            cases.push(MatchCase {
+                node: self.finish_node(node),
+                pattern,
+                guard,
+                body,
+            });
+        }
+
+        Ok(cases)
+    }
+
+    fn parse_guard(&mut self) -> Result<Expression> {
+        self.expect(Kind::If)?;
+        self.parse_assignment_expression()
+    }
+
+    // https://docs.python.org/3/reference/compound_stmts.html#grammar-token-python-grammar-patterns
+    // The open sequence pattern is either a pattern or maybe star pattern
+    // Here we expect at least one ( pattern or maybe star pattern )
+    fn parse_patterns(&mut self) -> Result<MatchPattern> {
+        let mut patterns = self.parse_open_sequence_pattern()?;
+
+        if patterns.len() == 1 {
+            Ok(patterns.remove(0))
+        } else {
+            Ok(MatchPattern::MatchSequence(patterns))
+        }
+    }
+
+    fn parse_pattern(&mut self) -> Result<MatchPattern> {
+        let or_pattern = self.parse_or_pattern()?;
+
+        if self.at(Kind::As) {
+            let node = self.start_node();
+            let name = Some(self.cur_token().value.to_string());
+            self.bump(Kind::As);
+            Ok(MatchPattern::MatchAs(MatchAs {
+                node: self.finish_node(node),
+                pattern: Some(Box::new(or_pattern)),
+                name,
+            }))
+        } else {
+            Ok(or_pattern)
+        }
+    }
+
+    fn parse_or_pattern(&mut self) -> Result<MatchPattern> {
+        let mut patterns = vec![];
+        patterns.push(self.parse_closed_pattern()?);
+        loop {
+            if !self.eat(Kind::Or) {
+                break;
+            }
+            patterns.push(self.parse_closed_pattern()?);
+        }
+
+        Ok(MatchPattern::MatchOr(patterns))
+    }
+
+    fn parse_closed_pattern(&mut self) -> Result<MatchPattern> {
+        let matching_pattern = match self.cur_kind() {
+            Kind::LeftParen => self.parse_sequence_pattern(),
+            Kind::LeftBrace => self.parse_sequence_pattern(),
+            Kind::LeftBracket => self.parse_mapping_pattern(),
+            Kind::Identifier => {
+                if !matches!(self.peek_kind(), Ok(Kind::Dot)) {
+                    // TODO: use a way to reuse node from value expression
+                    let node = self.start_node();
+                    let value = self.parse_attr()?;
+                    if self.at(Kind::LeftParen) {
+                        self.parse_class_pattern(value)
+                    } else {
+                        self.parse_value_pattern(value, node)
+                    }
+                } else {
+                    self.parse_capture_or_wildcard_pattern()
+                }
+        },
+            Kind::Integer
+            | Kind::Binary
+            | Kind::Octal
+            | Kind::Hexadecimal
+            | Kind::PointFloat
+            | Kind::ExponentFloat
+            | Kind::ImaginaryInteger
+            | Kind::ImaginaryPointFloat
+            | Kind::ImaginaryExponentFloat
+            | Kind::StringLiteral | Kind::RawBytes | Kind::Bytes | Kind::RawString
+            // The signed numbers are also allowed
+            | Kind::Minus | Kind::Plus => {
+                self.parse_literal_pattern()
+
+                },
+            _ => return Err(diagnostics::InvalidSyntax(
+                            "Unexpected token",
+                            self.finish_node(self.start_node()),
+                        ).into()),
+        };
+        matching_pattern
+    }
+
+    // https://docs.python.org/3/reference/compound_stmts.html#literal-patterns
+    fn parse_literal_pattern(&mut self) -> Result<MatchPattern> {
+        let node = self.start_node();
+        let value = Box::new(self.parse_binary_arithmetic_operation()?);
+        self.expect(Kind::Colon)?;
+        Ok(MatchPattern::MatchValue(MatchValue {
+            node: self.finish_node(node),
+            value,
+        }))
+    }
+
+    fn parse_capture_or_wildcard_pattern(&mut self) -> Result<MatchPattern> {
+        let capture_value = self.cur_token().value.to_string().clone();
+        let node = self.start_node();
+        self.expect(Kind::Identifier)?;
+        // TODO: should also accpet as?
+        self.expect(Kind::Colon)?;
+
+        if capture_value == "_" {
+            Ok(MatchPattern::MatchAs(MatchAs {
+                node: self.finish_node(node),
+                name: None,
+                pattern: None,
+            }))
+        } else {
+            Ok(MatchPattern::MatchAs(MatchAs {
+                node: self.finish_node(node),
+                name: Some(capture_value),
+                pattern: None,
+            }))
+        }
+    }
+
+    // https://docs.python.org/3/reference/compound_stmts.html#value-patterns
+    // This pattern shares the value logic with class pattern
+    // so we pass that part to this method
+    fn parse_value_pattern(&mut self, value: Expression, node: Node) -> Result<MatchPattern> {
+        Ok(MatchPattern::MatchValue(MatchValue {
+            node: self.finish_node(node),
+            value: Box::new(value),
+        }))
+    }
+
+    // This parse attr does not allow anything other than names
+    // in contrast to attribute parsing in primary expression
+    fn parse_attr(&mut self) -> Result<Expression> {
+        let node = self.start_node();
+        let value = self.cur_token().value.to_string().clone();
+        let mut expr = Ok(Expression::Name(Box::new(Name {
+            node: self.finish_node(node),
+            id: value,
+        })));
+        while self.eat(Kind::Dot) {
+            let attr_val = self.cur_token().value.to_string();
+            self.expect(Kind::Identifier)?;
+            expr = Ok(Expression::Attribute(Box::new(Attribute {
+                node: self.finish_node(node),
+                value: Box::new(expr?),
+                attr: attr_val,
+            })));
+        }
+        return expr;
+    }
+
+    // TODO: This has precedence over sequence pattern but I'm not sure
+    // what is the right way to use it.
+    fn parse_group_pattern(&mut self) -> Result<MatchPattern> {
+        self.expect(Kind::LeftParen)?;
+        let pattern = self.parse_pattern()?;
+        self.expect(Kind::RightParen)?;
+        Ok(pattern)
+    }
+
+    fn parse_mapping_pattern(&mut self) -> Result<MatchPattern> {
+        let node = self.start_node();
+        self.expect(Kind::LeftBrace)?;
+        let mut keys = vec![];
+        let mut patterns = vec![];
+        let mut rest = None;
+        loop {
+            if !self.eat(Kind::Comma) {
+                break;
+            }
+            if self.eat(Kind::Pow) {
+                rest = Some(self.cur_token().value.to_string().clone());
+                // consume the trailing comma
+                self.bump(Kind::Comma);
+                // rest is the last element
+                break;
+            } else {
+                // TODO: here we cannot accept all primary expressions
+                // but python docs do not have the full list of what is allowed
+                // so we just do this for now
+                keys.push(self.parse_primary()?);
+                self.expect(Kind::Colon)?;
+                patterns.push(self.parse_pattern()?);
+            }
+        }
+
+        self.expect(Kind::RightBrace)?;
+
+        Ok(MatchPattern::MatchMapping(MatchMapping {
+            node: self.finish_node(node),
+            keys,
+            patterns,
+            rest,
+        }))
+    }
+
+    fn parse_literal_or_value_pattern(&mut self) -> Result<MatchPattern> {
+        if self.cur_kind() == Kind::Identifier && !matches!(self.peek_kind(), Ok(Kind::Colon)) {
+            let node = self.start_node();
+            let value = self.parse_attr()?;
+            self.parse_value_pattern(value, node)
+        } else {
+            self.parse_literal_pattern()
+        }
+    }
+
+    fn parse_class_pattern(&mut self, class_name: Expression) -> Result<MatchPattern> {
+        let node = self.start_node();
+        let class = Box::new(class_name);
+        self.expect(Kind::LeftParen)?;
+        let mut patterns = vec![];
+        let mut kwd_attrs = vec![];
+        let mut kwd_patterns = vec![];
+        let mut seen_keyword_pattern = false;
+        loop {
+            if !self.eat(Kind::Comma) {
+                break;
+            }
+
+            if self.at(Kind::Identifier) && !matches!(self.peek_kind(), Ok(Kind::Eq)) {
+                seen_keyword_pattern = true;
+                kwd_attrs.push(self.cur_token().value.to_string().clone());
+                self.expect(Kind::Colon)?;
+                kwd_patterns.push(self.parse_pattern()?);
+            } else {
+                if seen_keyword_pattern {
+                    return Err(diagnostics::InvalidSyntax(
+                        "Unexpected token",
+                        self.finish_node(node),
+                    )
+                    .into());
+                }
+                patterns.push(self.parse_pattern()?);
+            }
+        }
+        self.expect(Kind::RightParen)?;
+        Ok(MatchPattern::MatchClass(MatchClass {
+            node: self.finish_node(node),
+            cls: class,
+            patterns,
+            kwd_attrs,
+            kwd_patterns,
+        }))
+    }
+
+    fn parse_sequence_pattern(&mut self) -> Result<MatchPattern> {
+        let node = self.start_node();
+        if self.eat(Kind::LeftBrace) {
+            let pattern = self.parse_maybe_sequence_pattern()?;
+            self.expect(Kind::RightBrace)?;
+            Ok(MatchPattern::MatchSequence(pattern))
+        } else if self.eat(Kind::LeftParen) {
+            let pattern = self.parse_open_sequence_pattern()?;
+            self.expect(Kind::RightParen)?;
+            Ok(MatchPattern::MatchSequence(pattern))
+        } else {
+            return Err(diagnostics::InvalidSyntax(
+                "Expected a sequence pattern",
+                self.finish_node(node),
+            )
+            .into());
+        }
+    }
+
+    fn parse_open_sequence_pattern(&mut self) -> Result<Vec<MatchPattern>> {
+        let mut patterns = vec![];
+        patterns.push(self.parse_maybe_star_patern()?);
+        loop {
+            if !self.eat(Kind::Comma) {
+                break;
+            }
+            patterns.push(self.parse_maybe_star_patern()?);
+        }
+        Ok(patterns)
+    }
+
+    fn parse_maybe_sequence_pattern(&mut self) -> Result<Vec<MatchPattern>> {
+        let mut patterns = vec![];
+        loop {
+            if !self.eat(Kind::Comma) {
+                break;
+            }
+            patterns.push(self.parse_maybe_star_patern()?);
+        }
+        Ok(patterns)
+    }
+    fn parse_maybe_star_patern(&mut self) -> Result<MatchPattern> {
+        if self.eat(Kind::Mul) {
+            self.parse_capture_or_wildcard_pattern()
+        } else {
+            self.parse_pattern()
+        }
     }
 
     fn parse_assignment_or_expression_statement(&mut self) -> Result<Statement> {
@@ -1247,29 +1633,6 @@ impl Parser {
         self.parse_assignment_expression()
     }
 
-    // https://docs.python.org/3/reference/expressions.html#await-expression
-    fn parse_await(&mut self) -> Result<Expression> {
-        let node = self.start_node();
-        self.bump(Kind::Await);
-        // we clone the token here to inform user in case
-        // the expression is not a primary expression
-        // it's more clear to say which token is unexpected
-        // instead of saying some expression is unexpected
-        let await_value_token = self.cur_token().clone();
-        let await_value = self.parse_expression_2()?;
-        if !is_primary(&await_value) {
-            return Err(diagnostics::UnexpectedToken(
-                await_value_token.kind.to_str(),
-                self.finish_node(node),
-            )
-            .into());
-        }
-        Ok(Expression::Await(Box::new(Await {
-            node: self.finish_node(node),
-            value: Box::new(await_value),
-        })))
-    }
-
     // https://docs.python.org/3/reference/expressions.html#conditional-expressions
     fn parse_expression_2(&mut self) -> Result<Expression> {
         let node = self.start_node();
@@ -1496,6 +1859,7 @@ impl Parser {
             unimplemented!("parse_primary: {:?}", self.cur_kind())
         };
         let primary = if self.at(Kind::Dot) {
+            // TODO: does not handle cases like a.b[0].c
             self.parse_atribute_ref(node, atom_or_primary)
         } else if self.at(Kind::LeftBrace) {
             // https://docs.python.org/3/reference/expressions.html#slicings
