@@ -1,3 +1,4 @@
+use std::ops::Index;
 use std::{panic, vec};
 
 use crate::lexer::lexer::Lexer;
@@ -47,7 +48,7 @@ impl Parser {
         let node = self.start_node();
         let mut body = vec![];
         while self.cur_kind() != Kind::Eof {
-            let stmt = if is_at_compound_statement(&self.cur_kind()) {
+            let stmt = if is_at_compound_statement(&self.cur_token()) {
                 self.parse_compount_statement()
             } else {
                 self.parse_simple_statement()
@@ -56,6 +57,10 @@ impl Parser {
                 body.push(stmt.unwrap());
             } else {
                 println!("Error: {:?}", stmt.err());
+                self.bump_any();
+            }
+
+            while self.at(Kind::NewLine) {
                 self.bump_any();
             }
         }
@@ -135,10 +140,11 @@ impl Parser {
     /// Expect a `Kind` or return error
     pub fn expect(&mut self, kind: Kind) -> Result<()> {
         if !self.at(kind) {
-            let range = self.finish_node(self.start_node());
-            return Err(
-                diagnostics::ExpectToken(kind.to_str(), self.cur_kind().to_str(), range).into(),
-            );
+            let node = self.start_node();
+            let found = self.cur_token.kind;
+            self.bump_any();
+            let range = self.finish_node(node);
+            return Err(diagnostics::ExpectToken(kind.to_str(), found.to_str(), range).into());
         }
         self.advance();
         Ok(())
@@ -161,7 +167,20 @@ impl Parser {
             Kind::From => self.parse_from_import_statement(),
             Kind::Global => self.parse_global_statement(),
             Kind::Nonlocal => self.parse_nonlocal_statement(),
-            _ => self.parse_assignment_or_expression_statement(),
+            _ => {
+                if self.cur_kind() == Kind::Indent {
+                    let node = self.start_node();
+                    let kind = self.cur_kind();
+                    self.bump_any();
+                    return Err(diagnostics::UnexpectedToken(
+                        kind.to_str(),
+                        self.finish_node(node),
+                    )
+                    .into());
+                } else {
+                    self.parse_assignment_or_expression_statement()
+                }
+            }
         };
 
         self.bump(Kind::NewLine);
@@ -192,8 +211,6 @@ impl Parser {
                 )
             }
         };
-
-        self.bump(Kind::NewLine);
 
         stmt
     }
@@ -524,6 +541,7 @@ impl Parser {
     fn parse_match_statement(&mut self) -> Result<Statement> {
         let node = self.start_node();
         // This identifier is match word
+        // match is a soft keyword
         self.bump(Kind::Identifier);
         let subject = Box::new(self.parse_subject()?);
         self.expect(Kind::Colon)?;
@@ -557,7 +575,7 @@ impl Parser {
 
     fn parse_star_named_expressions(&mut self) -> Result<Expression> {
         let node = self.start_node();
-        let mut exprs = vec![];
+        let mut exprs = vec![self.parse_star_named_expression()?];
         loop {
             if !self.eat(Kind::Comma) {
                 break;
@@ -578,7 +596,7 @@ impl Parser {
     fn parse_cases(&mut self) -> Result<Vec<MatchCase>> {
         let mut cases = vec![];
         loop {
-            if !self.at(Kind::Dedent) {
+            if self.at(Kind::Dedent) || self.at(Kind::Eof) {
                 break;
             }
             let node = self.start_node();
@@ -591,6 +609,8 @@ impl Parser {
             } else {
                 None
             };
+            println!("{:?}", pattern);
+            println!("{:?}", self.cur_token());
             self.expect(Kind::Colon)?;
             let body = self.parse_suite()?;
             cases.push(MatchCase {
@@ -643,13 +663,16 @@ impl Parser {
         let mut patterns = vec![];
         patterns.push(self.parse_closed_pattern()?);
         loop {
-            if !self.eat(Kind::Or) {
+            if !self.eat(Kind::BitOr) {
                 break;
             }
             patterns.push(self.parse_closed_pattern()?);
         }
-
-        Ok(MatchPattern::MatchOr(patterns))
+        if patterns.len() == 1 {
+            Ok(patterns.remove(0))
+        } else {
+            Ok(MatchPattern::MatchOr(patterns))
+        }
     }
 
     fn parse_closed_pattern(&mut self) -> Result<MatchPattern> {
@@ -658,7 +681,7 @@ impl Parser {
             Kind::LeftBrace => self.parse_sequence_pattern(),
             Kind::LeftBracket => self.parse_mapping_pattern(),
             Kind::Identifier => {
-                if !matches!(self.peek_kind(), Ok(Kind::Dot)) {
+                if matches!(self.peek_kind(), Ok(Kind::Dot)) {
                     // TODO: use a way to reuse node from value expression
                     let node = self.start_node();
                     let value = self.parse_attr()?;
@@ -668,7 +691,12 @@ impl Parser {
                         self.parse_value_pattern(value, node)
                     }
                 } else {
-                    self.parse_capture_or_wildcard_pattern()
+                    if matches!(self.peek_kind(), Ok(Kind::LeftParen)) {
+                        let value = self.parse_attr()?;
+                        self.parse_class_pattern(value)
+                    } else {
+                        self.parse_capture_or_wildcard_pattern()
+                    }
                 }
         },
             Kind::Integer
@@ -680,16 +708,24 @@ impl Parser {
             | Kind::ImaginaryInteger
             | Kind::ImaginaryPointFloat
             | Kind::ImaginaryExponentFloat
+            | Kind::None
+            | Kind::True
+            | Kind::False
             | Kind::StringLiteral | Kind::RawBytes | Kind::Bytes | Kind::RawString
             // The signed numbers are also allowed
             | Kind::Minus | Kind::Plus => {
                 self.parse_literal_pattern()
 
                 },
-            _ => return Err(diagnostics::InvalidSyntax(
-                            "Unexpected token",
-                            self.finish_node(self.start_node()),
-                        ).into()),
+            _ => {
+                let node = self.start_node();
+                let msg = format!("unexpected token {:?}", self.cur_token().value);
+                self.bump_any();
+                return Err(diagnostics::InvalidSyntax(
+                                        msg,
+                                        self.finish_node(node),
+                                    ).into())
+            },
         };
         matching_pattern
     }
@@ -698,7 +734,6 @@ impl Parser {
     fn parse_literal_pattern(&mut self) -> Result<MatchPattern> {
         let node = self.start_node();
         let value = Box::new(self.parse_binary_arithmetic_operation()?);
-        self.expect(Kind::Colon)?;
         Ok(MatchPattern::MatchValue(MatchValue {
             node: self.finish_node(node),
             value,
@@ -710,7 +745,6 @@ impl Parser {
         let node = self.start_node();
         self.expect(Kind::Identifier)?;
         // TODO: should also accpet as?
-        self.expect(Kind::Colon)?;
 
         if capture_value == "_" {
             Ok(MatchPattern::MatchAs(MatchAs {
@@ -746,6 +780,7 @@ impl Parser {
             node: self.finish_node(node),
             id: value,
         })));
+        self.expect(Kind::Identifier);
         while self.eat(Kind::Dot) {
             let attr_val = self.cur_token().value.to_string();
             self.expect(Kind::Identifier)?;
@@ -769,19 +804,21 @@ impl Parser {
 
     fn parse_mapping_pattern(&mut self) -> Result<MatchPattern> {
         let node = self.start_node();
-        self.expect(Kind::LeftBrace)?;
+        self.expect(Kind::LeftBracket)?;
         let mut keys = vec![];
         let mut patterns = vec![];
         let mut rest = None;
         loop {
-            if !self.eat(Kind::Comma) {
+            if self.eat(Kind::RightBracket) {
                 break;
             }
             if self.eat(Kind::Pow) {
                 rest = Some(self.cur_token().value.to_string().clone());
+                self.bump(Kind::Identifier);
                 // consume the trailing comma
                 self.bump(Kind::Comma);
-                // rest is the last element
+                // rest is the last element so we expect the closing bracket
+                self.expect(Kind::RightBracket)?;
                 break;
             } else {
                 // TODO: here we cannot accept all primary expressions
@@ -791,9 +828,11 @@ impl Parser {
                 self.expect(Kind::Colon)?;
                 patterns.push(self.parse_pattern()?);
             }
-        }
 
-        self.expect(Kind::RightBrace)?;
+            if !self.at(Kind::RightBracket) {
+                self.expect(Kind::Comma)?;
+            }
+        }
 
         Ok(MatchPattern::MatchMapping(MatchMapping {
             node: self.finish_node(node),
@@ -822,27 +861,30 @@ impl Parser {
         let mut kwd_patterns = vec![];
         let mut seen_keyword_pattern = false;
         loop {
-            if !self.eat(Kind::Comma) {
+            if self.eat(Kind::RightParen) {
                 break;
             }
 
-            if self.at(Kind::Identifier) && !matches!(self.peek_kind(), Ok(Kind::Eq)) {
+            if self.at(Kind::Identifier) && matches!(self.peek_kind(), Ok(Kind::Assign)) {
                 seen_keyword_pattern = true;
                 kwd_attrs.push(self.cur_token().value.to_string().clone());
-                self.expect(Kind::Colon)?;
+                self.bump(Kind::Identifier);
+                self.bump(Kind::Assign);
                 kwd_patterns.push(self.parse_pattern()?);
             } else {
                 if seen_keyword_pattern {
                     return Err(diagnostics::InvalidSyntax(
-                        "Unexpected token",
+                        "positional pattern cannot follow keyword pattern".to_string(),
                         self.finish_node(node),
                     )
                     .into());
                 }
                 patterns.push(self.parse_pattern()?);
             }
+            if !self.at(Kind::RightParen) {
+                self.expect(Kind::Comma)?;
+            }
         }
-        self.expect(Kind::RightParen)?;
         Ok(MatchPattern::MatchClass(MatchClass {
             node: self.finish_node(node),
             cls: class,
@@ -864,7 +906,7 @@ impl Parser {
             Ok(MatchPattern::MatchSequence(pattern))
         } else {
             return Err(diagnostics::InvalidSyntax(
-                "Expected a sequence pattern",
+                "Expected a sequence pattern".to_string(),
                 self.finish_node(node),
             )
             .into());
@@ -886,10 +928,13 @@ impl Parser {
     fn parse_maybe_sequence_pattern(&mut self) -> Result<Vec<MatchPattern>> {
         let mut patterns = vec![];
         loop {
-            if !self.eat(Kind::Comma) {
+            if self.at(Kind::RightBrace) {
                 break;
             }
             patterns.push(self.parse_maybe_star_patern()?);
+            if !self.at(Kind::RightBrace) {
+                self.expect(Kind::Comma)?;
+            }
         }
         Ok(patterns)
     }
@@ -949,12 +994,11 @@ impl Parser {
 
     // https://docs.python.org/3/reference/compound_stmts.html#grammar-token-python-grammar-statement
     fn parse_statement(&mut self) -> Result<Vec<Statement>> {
-        let stmt = if is_at_compound_statement(&self.cur_kind()) {
+        let stmt = if is_at_compound_statement(&self.cur_token()) {
             let comp_stmt = self.parse_compount_statement()?;
             Ok(vec![comp_stmt])
         } else {
             let stmt_list = self.parse_statement_list();
-            self.bump(Kind::NewLine);
             stmt_list
         };
         stmt
@@ -2332,10 +2376,34 @@ impl Parser {
                     values: fstring,
                 }))
             }
+            Kind::PointFloat => Expression::Constant(Box::new(Constant {
+                node: self.finish_node(start),
+                value: ConstantValue::Float(value.to_string()),
+            })),
+            Kind::ExponentFloat => Expression::Constant(Box::new(Constant {
+                node: self.finish_node(start),
+                value: ConstantValue::Float(value.to_string()),
+            })),
+            Kind::ImaginaryPointFloat => Expression::Constant(Box::new(Constant {
+                node: self.finish_node(start),
+                value: ConstantValue::Complex {
+                    real: "0".to_string(),
+                    imaginary: value.to_string(),
+                },
+            })),
+            Kind::ImaginaryExponentFloat => Expression::Constant(Box::new(Constant {
+                node: self.finish_node(start),
+                value: ConstantValue::Complex {
+                    real: "0".to_string(),
+                    imaginary: value.to_string(),
+                },
+            })),
             _ => {
-                return Err(
-                    diagnostics::InvalidSyntax("Unexpected token", self.finish_node(start)).into(),
+                return Err(diagnostics::InvalidSyntax(
+                    format!("unexpected token {:?}", kind),
+                    self.finish_node(start),
                 )
+                .into())
             }
         };
         Ok(atom)
@@ -2437,7 +2505,7 @@ impl Parser {
                     kwonlyargs.push(param);
                 } else if seen_kwarg {
                     return Err(diagnostics::InvalidSyntax(
-                        "parameter after kwarg",
+                        "parameter after kwarg".to_string(),
                         self.finish_node(node),
                     )
                     .into());
@@ -2453,7 +2521,7 @@ impl Parser {
                     defaults.push(default_value);
                 } else if must_have_default {
                     return Err(diagnostics::InvalidSyntax(
-                        "non-default argument follows default argument",
+                        "non-default argument follows default argument".to_string(),
                         self.finish_node(node),
                     )
                     .into());
@@ -2469,7 +2537,7 @@ impl Parser {
                 // default is not allowed for vararg
                 if default.is_some() {
                     return Err(diagnostics::InvalidSyntax(
-                        "var-positional argument cannot have default value",
+                        "var-positional argument cannot have default value".to_string(),
                         self.finish_node(node),
                     )
                     .into());
@@ -2481,7 +2549,7 @@ impl Parser {
                 // default is not allowed for kwarg
                 if default.is_some() {
                     return Err(diagnostics::InvalidSyntax(
-                        "var-keyword argument cannot have default value",
+                        "var-keyword argument cannot have default value".to_string(),
                         self.finish_node(node),
                     )
                     .into());
@@ -3367,6 +3435,68 @@ def f(a: 'annotation', b=1, c=2, *d, e, f=3, **g): pass",
                 d): pass",
             "@decor
 class a: pass",
+        ] {
+            let mut parser = Parser::new(test_case.to_string());
+            let program = parser.parse();
+
+            insta::with_settings!({
+                    description => test_case.to_string(), // the template source code
+                    omit_expression => true // do not include the default expression
+                }, {
+                    assert_debug_snapshot!(program);
+            });
+        }
+    }
+
+    #[test]
+    fn test_match_statement() {
+        for test_case in &[
+            "match a:
+    case 1:
+        pass",
+            "match a:
+    case 1 | 2:
+        pass",
+            "match a.b:
+    case 1:
+        pass",
+            "match a:
+    case None:
+        pass
+    case True:
+        pass
+    case False:
+        pass
+    case -1:
+        pass
+    case 1.0:
+        pass
+    case _:
+        pass
+",
+            "match a:
+    case a.b:
+        pass
+    case a:
+        pass
+",
+            "match a:
+    case (a, b):
+        pass
+    case {1: _, 2: _}:
+        pass
+    case {**rest}:
+        pass
+",
+            "match x:
+    case Point2D(0, 0):
+        pass
+    case Point3D(x=0, y=0, z=0):
+        pass
+",
+            "match x:
+    case [a, b, c]:
+        pass",
         ] {
             let mut parser = Parser::new(test_case.to_string());
             let program = parser.parse();

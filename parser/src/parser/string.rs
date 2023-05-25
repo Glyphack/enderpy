@@ -64,14 +64,18 @@ pub fn concat_string_exprs(lhs: Expression, rhs: Expression) -> Result<Expressio
                     }))
                 }
                 (ConstantValue::Bytes(lhs), _) => {
-                    return Err(
-                        diagnostics::InvalidSyntax("Cannot concat bytes and string", node).into(),
+                    return Err(diagnostics::InvalidSyntax(
+                        "Cannot concat bytes and string".to_string(),
+                        node,
                     )
+                    .into())
                 }
                 (_, ConstantValue::Bytes(rhs)) => {
-                    return Err(
-                        diagnostics::InvalidSyntax("Cannot concat string and bytes", node).into(),
+                    return Err(diagnostics::InvalidSyntax(
+                        "Cannot concat string and bytes".to_string(),
+                        node,
                     )
+                    .into())
                 }
                 _ => panic!("Cannot concat string"),
             };
@@ -99,7 +103,7 @@ pub fn concat_string_exprs(lhs: Expression, rhs: Expression) -> Result<Expressio
                 }
                 ConstantValue::Bytes(_) => {
                     return Err(diagnostics::InvalidSyntax(
-                        "Cannot concat string and bytes",
+                        "Cannot concat string and bytes".to_string(),
                         const_rhs.node,
                     )
                     .into());
@@ -122,7 +126,7 @@ pub fn concat_string_exprs(lhs: Expression, rhs: Expression) -> Result<Expressio
                 })),
                 ConstantValue::Bytes(_) => {
                     return Err(diagnostics::InvalidSyntax(
-                        "Cannot concat string and bytes",
+                        "Cannot concat string and bytes".to_string(),
                         const_lhs.node,
                     )
                     .into());

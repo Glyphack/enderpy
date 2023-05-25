@@ -1,4 +1,4 @@
-use crate::parser::ast::Node;
+use crate::{parser::ast::Node, token::Kind};
 use miette::{self, Diagnostic};
 use thiserror::{self, Error};
 
@@ -27,4 +27,4 @@ pub struct UnknownStatement(pub &'static str, #[label("Unknown statement {0}")] 
 #[derive(Debug, Error, Diagnostic)]
 #[error("invalid syntax")]
 #[diagnostic()]
-pub struct InvalidSyntax(pub &'static str, #[label("invalid syntax {0}")] pub Node);
+pub struct InvalidSyntax(pub String, #[label("invalid syntax {0}")] pub Node);
