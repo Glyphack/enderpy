@@ -61,6 +61,7 @@ pub enum Statement {
     TryStarStatement(TryStar),
     FunctionDef(FunctionDef),
     ClassDef(ClassDef),
+    Match(Match),
 }
 
 #[derive(Debug)]
@@ -623,4 +624,63 @@ pub struct ClassDef {
     pub keywords: Vec<Keyword>,
     pub body: Vec<Statement>,
     pub decorator_list: Vec<Expression>,
+}
+
+// https://docs.python.org/3/library/ast.html#ast.Match
+#[derive(Debug)]
+pub struct Match {
+    pub node: Node,
+    pub subject: Box<Expression>,
+    pub cases: Vec<MatchCase>,
+}
+
+// https://docs.python.org/3/library/ast.html#ast.match_case
+#[derive(Debug)]
+pub struct MatchCase {
+    pub node: Node,
+    pub pattern: Box<MatchPattern>,
+    pub guard: Option<Box<Expression>>,
+    pub body: Vec<Statement>,
+}
+
+#[derive(Debug)]
+pub enum MatchPattern {
+    MatchValue(MatchValue),
+    MatchSingleton(Box<Expression>),
+    MatchSequence(Vec<MatchPattern>),
+    MatchStar(Box<Expression>),
+    MatchMapping(MatchMapping),
+    MatchAs(MatchAs),
+    MatchClass(MatchClass),
+    MatchOr(Vec<MatchPattern>),
+}
+
+#[derive(Debug)]
+pub struct MatchValue {
+    pub node: Node,
+    pub value: Box<Expression>,
+}
+
+#[derive(Debug)]
+pub struct MatchAs {
+    pub node: Node,
+    pub name: Option<String>,
+    pub pattern: Option<Box<MatchPattern>>,
+}
+
+#[derive(Debug)]
+pub struct MatchMapping {
+    pub node: Node,
+    pub keys: Vec<Expression>,
+    pub patterns: Vec<MatchPattern>,
+    pub rest: Option<String>,
+}
+
+#[derive(Debug)]
+pub struct MatchClass {
+    pub node: Node,
+    pub cls: Box<Expression>,
+    pub patterns: Vec<MatchPattern>,
+    pub kwd_attrs: Vec<String>,
+    pub kwd_patterns: Vec<MatchPattern>,
 }
