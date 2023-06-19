@@ -23,7 +23,7 @@ pub enum Commands {
         file: PathBuf,
     },
     /// Type check
-    Check,
+    Check { path: PathBuf },
     /// Watch changes to type check
     Watch,
 }

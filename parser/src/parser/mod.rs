@@ -1,4 +1,4 @@
-mod ast;
+pub mod ast;
 mod diagnostics;
 mod expression;
 mod operator;
