@@ -1,5 +1,5 @@
 [workspace]
-members = ["parser", "cli"]
+members = ["parser", "cli", "typechecker"]
 
 
 [profile.dev.package.insta]

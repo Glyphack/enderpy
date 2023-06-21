@@ -1,4 +1,4 @@
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use clap::Parser as ClapParser;
 use cli::{Cli, Commands};
 use parser::{token, Lexer, Parser};
@@ -12,7 +12,7 @@ fn main() -> Result<()> {
     match &cli.command {
         Commands::Tokenize { file } => tokenize(file),
         Commands::Parse { file } => parse(file),
-        Commands::Check => check(),
+        Commands::Check { path } => check(path),
         Commands::Watch => watch(),
     }
 }
@@ -39,8 +39,12 @@ fn parse(file: &PathBuf) -> Result<()> {
     Ok(())
 }
 
-fn check() -> Result<()> {
-    todo!()
+fn check(path: &PathBuf) -> Result<()> {
+    if path.is_dir() {
+        return Err(anyhow!("typechecking a path is not supported"));
+    }
+    let source = fs::read_to_string(path)?;
+    Ok(())
 }
 
 fn watch() -> Result<()> {
