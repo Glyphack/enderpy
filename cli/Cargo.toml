@@ -9,3 +9,4 @@ edition = "2021"
 anyhow = "1.0.71"
 clap = { version = "4.2.7", features = ["derive"] }
 parser = { path = "../parser" }
+typechecker = { path = "../typechecker" }

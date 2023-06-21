@@ -4,11 +4,12 @@ use std::collections::HashMap;
 pub struct SymbolTable<'a> {
     pub name: String,
     pub symbol_table_type: SymbolTableType,
-    pub symbols: HashMap<String, SymbolTableNode>,
+    symbols: HashMap<String, SymbolTableNode>,
     pub start_line_number: u8,
     // all sub tables have to be valid until the top level scope is valid
-    pub sub_tables: Vec<&'a SymbolTable<'a>>,
-    pub current_scope: u8,
+    sub_tables: Vec<&'a SymbolTable<'a>>,
+    // index of current scope in this table where we insert new symbols
+    current_scope: u8,
 }
 
 pub enum SymbolTableType {
@@ -39,6 +40,16 @@ pub enum SymbolScope {
 }
 
 impl<'a> SymbolTable<'a> {
+    pub fn new(name: String, symbol_table_type: SymbolTableType, start_line_number: u8) -> Self {
+        SymbolTable {
+            name,
+            symbol_table_type,
+            symbols: HashMap::new(),
+            start_line_number,
+            sub_tables: Vec::new(),
+            current_scope: 0,
+        }
+    }
     pub fn lookup_in_scope(&self, name: &str) -> Option<&SymbolTableNode> {
         return self.symbols.get(name);
     }

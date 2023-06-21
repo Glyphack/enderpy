@@ -4,15 +4,15 @@ use std::{env, path::PathBuf};
 
 #[derive(Debug, Deserialize)]
 #[allow(unused)]
-struct ImportDiscovery {
-    python_executable: PathBuf,
+pub struct ImportDiscovery {
+    pub python_executable: PathBuf,
 }
 
 #[derive(Debug, Deserialize)]
 #[allow(unused)]
 pub struct Settings {
-    debug: bool,
-    import_discoverty: ImportDiscovery,
+    pub debug: bool,
+    pub import_discoverty: ImportDiscovery,
 }
 
 impl Settings {

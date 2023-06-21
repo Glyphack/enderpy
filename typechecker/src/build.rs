@@ -2,32 +2,65 @@ use std::{collections::HashMap, path::PathBuf};
 
 use crate::semantic_analyzer::SemanticAnalyzer;
 use crate::settings::Settings;
-use crate::symbol_table::SymbolTable;
+use crate::state::State;
+use crate::symbol_table::{SymbolTable, SymbolTableType};
 
-struct BuildSource {
-    path: PathBuf,
-    module: String,
-    source: String,
+pub struct BuildSource {
+    pub path: PathBuf,
+    pub module: Option<String>,
+    pub source: String,
+    // If this source was found by following an import
+    pub followed: bool,
 }
 
-///
-struct BuildManager<'a> {
+pub struct BuildManager<'a> {
     errors: Vec<String>,
-    modules: HashMap<String, SymbolTable<'a>>,
+    sources: Vec<BuildSource>,
+    modules: HashMap<String, State<'a>>,
     missing_modules: Vec<String>,
     semantic_analyzer: SemanticAnalyzer,
     options: Settings,
 }
 
 impl<'a> BuildManager<'a> {
-    fn new(source: BuildSource, semantic_analyzer: SemanticAnalyzer, options: Settings) -> Self {
+    pub fn new(
+        sources: Vec<BuildSource>,
+        semantic_analyzer: SemanticAnalyzer,
+        options: Settings,
+    ) -> Self {
+        if sources.len() > 1 {
+            panic!("analyzing more than 1 given input is not supported");
+        }
+
         BuildManager {
             errors: vec![],
             modules: HashMap::new(),
+            sources,
             missing_modules: vec![],
             semantic_analyzer,
             options,
         }
+    }
+
+    // Entry point to analyze the program
+    pub fn build(self) {
+        let source = self.sources.last().unwrap();
+        let mut modules = HashMap::new();
+        modules.insert(
+            // TODO: better name
+            "mod_name",
+            State {
+                smybol_table: SymbolTable::new(
+                    source.path.to_str().unwrap().to_string(),
+                    SymbolTableType::Module,
+                    0,
+                ),
+                path: source.path.clone(),
+            },
+        );
+
+        // Get module dependencies and create dep graph
+        // Process the graph from leaves
     }
 
     // Adds a source file to the build manager
