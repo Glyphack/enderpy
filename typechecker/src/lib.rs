@@ -1,4 +1,6 @@
+mod ast_visitor;
 mod nodes;
+mod pre_analysis;
 mod state;
 mod symbol_table;
 

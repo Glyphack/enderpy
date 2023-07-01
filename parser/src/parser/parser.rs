@@ -532,7 +532,6 @@ impl Parser {
             bases,
             keywords,
             body,
-            starargs: None,
             decorator_list: decorators,
         }))
     }

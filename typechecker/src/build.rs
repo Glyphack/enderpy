@@ -1,5 +1,8 @@
 use std::{collections::HashMap, path::PathBuf};
 
+use parser::ast::Module;
+use parser::Parser;
+
 use crate::semantic_analyzer::SemanticAnalyzer;
 use crate::settings::Settings;
 use crate::state::State;
@@ -13,23 +16,23 @@ pub struct BuildSource {
     pub followed: bool,
 }
 
-pub struct BuildManager<'a> {
+pub struct BuildManager {
     errors: Vec<String>,
     sources: Vec<BuildSource>,
-    modules: HashMap<String, State<'a>>,
+    modules: HashMap<String, State>,
     missing_modules: Vec<String>,
     semantic_analyzer: SemanticAnalyzer,
     options: Settings,
 }
 
-impl<'a> BuildManager<'a> {
+impl BuildManager {
     pub fn new(
         sources: Vec<BuildSource>,
         semantic_analyzer: SemanticAnalyzer,
         options: Settings,
     ) -> Self {
         if sources.len() > 1 {
-            panic!("analyzing more than 1 given input is not supported");
+            panic!("analyzing more than 1 input is not supported");
         }
 
         BuildManager {
@@ -45,22 +48,46 @@ impl<'a> BuildManager<'a> {
     // Entry point to analyze the program
     pub fn build(self) {
         let source = self.sources.last().unwrap();
+
         let mut modules = HashMap::new();
         modules.insert(
             // TODO: better name
-            "mod_name",
+            self.get_mod_name(source),
             State {
+                manager: &self,
                 smybol_table: SymbolTable::new(
                     source.path.to_str().unwrap().to_string(),
                     SymbolTableType::Module,
                     0,
                 ),
-                path: source.path.clone(),
+                build_source: source,
             },
         );
 
         // Get module dependencies and create dep graph
         // Process the graph from leaves
+    }
+
+    pub fn get_mod_name(&self, source: &BuildSource) -> String {
+        if let Some(module) = &source.module {
+            module.clone()
+        } else {
+            // TODO: fix how module name is determined
+            source
+                .path
+                .file_stem()
+                .unwrap()
+                .to_str()
+                .unwrap()
+                .to_string()
+        }
+    }
+
+    pub fn parse_file(&self, source: &String) -> Module {
+        let mut parser = Parser::new(*source);
+        let tree = parser.parse();
+
+        tree
     }
 
     // Adds a source file to the build manager

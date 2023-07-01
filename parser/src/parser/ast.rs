@@ -620,7 +620,6 @@ pub struct ClassDef {
     pub node: Node,
     pub name: String,
     pub bases: Vec<Expression>,
-    pub starargs: Option<Box<Expression>>,
     pub keywords: Vec<Keyword>,
     pub body: Vec<Statement>,
     pub decorator_list: Vec<Expression>,
