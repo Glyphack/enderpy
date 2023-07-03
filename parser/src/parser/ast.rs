@@ -30,13 +30,13 @@ impl From<Node> for SourceSpan {
 
 // The following structs are used to represent the AST
 // https://docs.python.org/3/library/ast.html#abstract-grammar
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Module {
     pub node: Node,
     pub body: Vec<Statement>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Statement {
     AssignStatement(Assign),
     AnnAssignStatement(AnnAssign),
@@ -64,14 +64,14 @@ pub enum Statement {
     Match(Match),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Assign {
     pub node: Node,
     pub targets: Vec<Expression>,
     pub value: Expression,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct AnnAssign {
     pub node: Node,
     pub target: Expression,
@@ -80,7 +80,7 @@ pub struct AnnAssign {
     pub simple: bool,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct AugAssign {
     pub node: Node,
     pub target: Expression,
@@ -88,7 +88,7 @@ pub struct AugAssign {
     pub value: Expression,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum AugAssignOp {
     Add,
     Sub,
@@ -105,32 +105,32 @@ pub enum AugAssignOp {
     FloorDiv,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Assert {
     pub node: Node,
     pub test: Expression,
     pub msg: Option<Expression>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Pass {
     pub node: Node,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Delete {
     pub node: Node,
     pub targets: Vec<Expression>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Return {
     pub node: Node,
     pub value: Option<Expression>,
 }
 
 // https://docs.python.org/3/library/ast.html#ast.Raise
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Raise {
     pub node: Node,
     pub exc: Option<Expression>,
@@ -138,26 +138,26 @@ pub struct Raise {
 }
 
 // https://docs.python.org/3/library/ast.html#ast.Break
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Break {
     pub node: Node,
 }
 
 // https://docs.python.org/3/library/ast.html#ast.Continue
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Continue {
     pub node: Node,
 }
 
 // https://docs.python.org/3/library/ast.html#ast.Import
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Import {
     pub node: Node,
     pub names: Vec<Alias>,
 }
 
 // https://docs.python.org/3/library/ast.html#ast.alias
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Alias {
     pub node: Node,
     pub name: String,
@@ -165,7 +165,7 @@ pub struct Alias {
 }
 
 // https://docs.python.org/3/library/ast.html#ast.ImportFrom
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ImportFrom {
     pub node: Node,
     pub module: String,
@@ -174,20 +174,20 @@ pub struct ImportFrom {
 }
 
 // https://docs.python.org/3/library/ast.html#ast.Global
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Global {
     pub node: Node,
     pub names: Vec<String>,
 }
 
 // https://docs.python.org/3/library/ast.html#ast.Nonlocal
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Nonlocal {
     pub node: Node,
     pub names: Vec<String>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Expression {
     Constant(Box<Constant>),
     List(Box<List>),
@@ -219,7 +219,7 @@ pub enum Expression {
 }
 
 // https://docs.python.org/3/reference/expressions.html#atom-identifiers
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Name {
     pub node: Node,
     pub id: String,
@@ -244,54 +244,54 @@ pub enum ConstantValue {
     Complex { real: String, imaginary: String },
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct List {
     pub node: Node,
     pub elements: Vec<Expression>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Tuple {
     pub node: Node,
     pub elements: Vec<Expression>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Dict {
     pub node: Node,
     pub keys: Vec<Expression>,
     pub values: Vec<Expression>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Set {
     pub node: Node,
     pub elements: Vec<Expression>,
 }
 
 // https://docs.python.org/3/library/ast.html#ast.BoolOp
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct BoolOperation {
     pub node: Node,
     pub op: BooleanOperator,
     pub values: Vec<Expression>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum BooleanOperator {
     And,
     Or,
 }
 
 // https://docs.python.org/3/library/ast.html#ast.UnaryOp
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct UnaryOperation {
     pub node: Node,
     pub op: UnaryOperator,
     pub operand: Box<Expression>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum UnaryOperator {
     Not,
     Invert,
@@ -300,7 +300,7 @@ pub enum UnaryOperator {
 }
 
 // https://docs.python.org/3/library/ast.html#ast.BinOp
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct BinOp {
     pub node: Node,
     pub op: BinaryOperator,
@@ -308,7 +308,7 @@ pub struct BinOp {
     pub right: Box<Expression>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum BinaryOperator {
     Add,
     Sub,
@@ -326,7 +326,7 @@ pub enum BinaryOperator {
 }
 
 // https://docs.python.org/3/library/ast.html#ast.NamedExpr
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct NamedExpression {
     pub node: Node,
     pub target: Box<Expression>,
@@ -334,49 +334,49 @@ pub struct NamedExpression {
 }
 
 // https://docs.python.org/3/library/ast.html#ast.Yield
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Yield {
     pub node: Node,
     pub value: Option<Box<Expression>>,
 }
 
 // https://docs.python.org/3/library/ast.html#ast.YieldFrom
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct YieldFrom {
     pub node: Node,
     pub value: Box<Expression>,
 }
 
 // https://docs.python.org/3/library/ast.html#ast.Starred
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Starred {
     pub node: Node,
     pub value: Box<Expression>,
 }
 
 // https://docs.python.org/3/library/ast.html#ast.GeneratorExp
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Generator {
     pub node: Node,
     pub element: Box<Expression>,
     pub generators: Vec<Comprehension>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ListComp {
     pub node: Node,
     pub element: Box<Expression>,
     pub generators: Vec<Comprehension>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct SetComp {
     pub node: Node,
     pub element: Box<Expression>,
     pub generators: Vec<Comprehension>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct DictComp {
     pub node: Node,
     pub key: Box<Expression>,
@@ -385,7 +385,7 @@ pub struct DictComp {
 }
 
 // https://docs.python.org/3/library/ast.html#ast.comprehension
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Comprehension {
     pub node: Node,
     pub target: Box<Expression>,
@@ -395,7 +395,7 @@ pub struct Comprehension {
 }
 
 // https://docs.python.org/3/library/ast.html#ast.Attribute
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Attribute {
     pub node: Node,
     pub value: Box<Expression>,
@@ -403,7 +403,7 @@ pub struct Attribute {
 }
 
 // https://docs.python.org/3/library/ast.html#ast.Subscript
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Subscript {
     pub node: Node,
     pub value: Box<Expression>,
@@ -412,7 +412,7 @@ pub struct Subscript {
 
 // https://docs.python.org/3/library/ast.html#ast.Slice
 // can be used for Subscript
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Slice {
     pub node: Node,
     pub lower: Option<Box<Expression>>,
@@ -421,7 +421,7 @@ pub struct Slice {
 }
 
 // https://docs.python.org/3/library/ast.html#ast.Call
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Call {
     pub node: Node,
     pub func: Box<Expression>,
@@ -431,7 +431,7 @@ pub struct Call {
     pub kwargs: Option<Box<Expression>>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Keyword {
     pub node: Node,
     pub arg: Option<String>,
@@ -439,14 +439,14 @@ pub struct Keyword {
 }
 
 // https://docs.python.org/3/library/ast.html#ast.Await
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Await {
     pub node: Node,
     pub value: Box<Expression>,
 }
 
 // https://docs.python.org/3/library/ast.html#ast.Compare
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Compare {
     pub node: Node,
     pub left: Box<Expression>,
@@ -454,7 +454,7 @@ pub struct Compare {
     pub comparators: Vec<Expression>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum ComparisonOperator {
     Eq,
     NotEq,
@@ -469,7 +469,7 @@ pub enum ComparisonOperator {
 }
 
 // https://docs.python.org/3/library/ast.html#ast.Lambda
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Lambda {
     pub node: Node,
     pub args: Arguments,
@@ -477,7 +477,7 @@ pub struct Lambda {
 }
 
 // https://docs.python.org/3/library/ast.html#ast.arguments
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Arguments {
     pub node: Node,
     pub posonlyargs: Vec<Arg>,
@@ -490,7 +490,7 @@ pub struct Arguments {
 }
 
 // https://docs.python.org/3/library/ast.html#ast.arg
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Arg {
     pub node: Node,
     pub arg: String,
@@ -498,7 +498,7 @@ pub struct Arg {
 }
 
 // https://docs.python.org/3/library/ast.html#ast.IfExp
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct IfExp {
     pub node: Node,
     pub test: Box<Expression>,
@@ -507,7 +507,7 @@ pub struct IfExp {
 }
 
 // https://docs.python.org/3/library/ast.html#ast.FormattedValue
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct FormattedValue {
     pub node: Node,
     pub value: Box<Expression>,
@@ -516,14 +516,14 @@ pub struct FormattedValue {
 }
 
 // https://docs.python.org/3/library/ast.html#ast.JoinedStr
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct JoinedStr {
     pub node: Node,
     pub values: Vec<Expression>,
 }
 
 // https://docs.python.org/3/library/ast.html#ast.If
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct If {
     pub node: Node,
     pub test: Box<Expression>,
@@ -538,7 +538,7 @@ impl If {
 }
 
 // https://docs.python.org/3/library/ast.html#ast.While
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct While {
     pub node: Node,
     pub test: Box<Expression>,
@@ -547,7 +547,7 @@ pub struct While {
 }
 
 // https://docs.python.org/3/library/ast.html#ast.For
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct For {
     pub node: Node,
     pub target: Box<Expression>,
@@ -557,7 +557,7 @@ pub struct For {
 }
 
 // https://docs.python.org/3/library/ast.html#ast.With
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct With {
     pub node: Node,
     pub items: Vec<WithItem>,
@@ -566,7 +566,7 @@ pub struct With {
 
 // https://docs.python.org/3/library/ast.html#ast.withitem
 // can be used for With
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct WithItem {
     pub node: Node,
     pub context_expr: Box<Expression>,
@@ -574,7 +574,7 @@ pub struct WithItem {
 }
 
 // https://docs.python.org/3/library/ast.html#ast.Try
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Try {
     pub node: Node,
     pub body: Vec<Statement>,
@@ -584,7 +584,7 @@ pub struct Try {
 }
 
 // https://docs.python.org/3/library/ast.html#ast.TryStar
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct TryStar {
     pub node: Node,
     pub body: Vec<Statement>,
@@ -594,7 +594,7 @@ pub struct TryStar {
 }
 
 // https://docs.python.org/3/library/ast.html#ast.ExceptHandler
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ExceptHandler {
     pub node: Node,
     pub typ: Option<Box<Expression>>,
@@ -603,7 +603,7 @@ pub struct ExceptHandler {
 }
 
 // https://docs.python.org/3/library/ast.html#functiondef
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct FunctionDef {
     pub node: Node,
     pub name: String,
@@ -615,7 +615,7 @@ pub struct FunctionDef {
 }
 
 // https://docs.python.org/3/library/ast.html#ast.ClassDef
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ClassDef {
     pub node: Node,
     pub name: String,
@@ -626,7 +626,7 @@ pub struct ClassDef {
 }
 
 // https://docs.python.org/3/library/ast.html#ast.Match
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Match {
     pub node: Node,
     pub subject: Box<Expression>,
@@ -634,7 +634,7 @@ pub struct Match {
 }
 
 // https://docs.python.org/3/library/ast.html#ast.match_case
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct MatchCase {
     pub node: Node,
     pub pattern: Box<MatchPattern>,
@@ -642,7 +642,7 @@ pub struct MatchCase {
     pub body: Vec<Statement>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum MatchPattern {
     MatchValue(MatchValue),
     MatchSingleton(Box<Expression>),
@@ -654,20 +654,20 @@ pub enum MatchPattern {
     MatchOr(Vec<MatchPattern>),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct MatchValue {
     pub node: Node,
     pub value: Box<Expression>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct MatchAs {
     pub node: Node,
     pub name: Option<String>,
     pub pattern: Option<Box<MatchPattern>>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct MatchMapping {
     pub node: Node,
     pub keys: Vec<Expression>,
@@ -675,7 +675,7 @@ pub struct MatchMapping {
     pub rest: Option<String>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct MatchClass {
     pub node: Node,
     pub cls: Box<Expression>,

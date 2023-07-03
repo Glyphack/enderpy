@@ -2,12 +2,11 @@ use parser::ast;
 use std::collections::HashMap;
 
 pub struct SymbolTable {
-    pub name: String,
     pub symbol_table_type: SymbolTableType,
     symbols: HashMap<String, SymbolTableNode>,
     pub start_line_number: u8,
     // all sub tables have to be valid until the top level scope is valid
-    sub_tables: Vec<&SymbolTable>,
+    sub_tables: Vec<SymbolTable>,
     // index of current scope in this table where we insert new symbols
     current_scope: u8,
 }
@@ -40,9 +39,8 @@ pub enum SymbolScope {
 }
 
 impl SymbolTable {
-    pub fn new(name: String, symbol_table_type: SymbolTableType, start_line_number: u8) -> Self {
+    pub fn new(symbol_table_type: SymbolTableType, start_line_number: u8) -> Self {
         SymbolTable {
-            name,
             symbol_table_type,
             symbols: HashMap::new(),
             start_line_number,
@@ -54,7 +52,7 @@ impl SymbolTable {
         return self.symbols.get(name);
     }
 
-    pub fn enter_scope(&mut self, new_symbol_table: &SymbolTable) {
+    pub fn enter_scope(&mut self, new_symbol_table: SymbolTable) {
         self.sub_tables.push(new_symbol_table);
     }
     pub fn exit_scope(&self) {}

@@ -1,12 +1,11 @@
 use std::{collections::HashMap, path::PathBuf};
 
-use parser::ast::Module;
 use parser::Parser;
 
+use crate::nodes::EnderpyFile;
 use crate::semantic_analyzer::SemanticAnalyzer;
 use crate::settings::Settings;
 use crate::state::State;
-use crate::symbol_table::{SymbolTable, SymbolTableType};
 
 pub struct BuildSource {
     pub path: PathBuf,
@@ -47,25 +46,18 @@ impl BuildManager {
 
     // Entry point to analyze the program
     pub fn build(self) {
-        let source = self.sources.last().unwrap();
+        let build_source = self.sources.last().unwrap();
+        let tree = self.parse_file(&build_source.source, &build_source.path);
 
+        println!("{:?}", tree.imports);
         let mut modules = HashMap::new();
         modules.insert(
-            // TODO: better name
-            self.get_mod_name(source),
+            self.get_mod_name(build_source),
             State {
-                manager: &self,
-                smybol_table: SymbolTable::new(
-                    source.path.to_str().unwrap().to_string(),
-                    SymbolTableType::Module,
-                    0,
-                ),
-                build_source: source,
+                manager: self,
+                tree,
             },
         );
-
-        // Get module dependencies and create dep graph
-        // Process the graph from leaves
     }
 
     pub fn get_mod_name(&self, source: &BuildSource) -> String {
@@ -83,11 +75,10 @@ impl BuildManager {
         }
     }
 
-    pub fn parse_file(&self, source: &String) -> Module {
-        let mut parser = Parser::new(*source);
+    pub fn parse_file(&self, source: &String, path: &PathBuf) -> EnderpyFile {
+        let mut parser = Parser::new(source.clone());
         let tree = parser.parse();
-
-        tree
+        EnderpyFile::new(path.clone())
     }
 
     // Adds a source file to the build manager
@@ -95,7 +86,6 @@ impl BuildManager {
 
     // Finds imports in the source files and creates an import graph
     fn find_imports(&mut self) {
-        // Logic to parse source files and extract imports
         // Populates self.import_graph based on the imports found
     }
 

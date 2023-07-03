@@ -2,14 +2,12 @@ use parser::ast::Module;
 
 use crate::{
     build::{BuildManager, BuildSource},
-    symbol_table::SymbolTable,
+    nodes::EnderpyFile,
 };
 
 pub struct State {
     pub manager: BuildManager,
-    pub smybol_table: SymbolTable,
-    pub build_source: BuildSource,
-    // tree: Module,
+    pub tree: EnderpyFile,
 }
 
 impl State {

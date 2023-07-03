@@ -5,42 +5,37 @@
 // here, so this has the minimum amount of nodes needed to
 // get the type checker working. But can be expanded.
 
-use std::{convert, path::PathBuf};
+use std::path::PathBuf;
 
-use parser::ast::{Import, ImportFrom, Module, Statement};
+use parser::{
+    ast::{Import, ImportFrom, Module, Statement},
+    Parser,
+};
 
 use crate::{
     ast_visitor::TraversalVisitor,
     symbol_table::{SymbolTable, SymbolTableType},
 };
 
-enum ImportKinds {
+#[derive(Debug, Clone)]
+pub enum ImportKinds {
     Import(Import),
     ImportFrom(ImportFrom),
 }
 
 pub struct EnderpyFile {
-    path: PathBuf,
-    ast: Module,
-    names: SymbolTable,
+    pub ast: Module,
+    pub names: SymbolTable,
     // all the imports inside the file
-    imports: Vec<ImportKinds>,
+    pub imports: Vec<ImportKinds>,
     // highlevel definitions inside the file
-    defs: Vec<Statement>,
+    pub defs: Vec<Statement>,
 }
 
 impl EnderpyFile {
-    pub fn new(path: PathBuf, tree: Module) -> Self {
+    pub fn new(path: PathBuf) -> Self {
         let mut converter = ASTConverter::new();
-        let mut names = SymbolTable::new(path.to_str(), SymbolTableType::Module, 1);
-        converter.visit_module(&tree, &mut names);
-        EnderpyFile {
-            path,
-            ast: tree,
-            names,
-            defs: converter.defs,
-            imports: converter.imports,
-        }
+        converter.convert(&path)
     }
 }
 
@@ -62,117 +57,36 @@ impl ASTConverter {
 }
 
 impl ASTConverter {
-    fn convert(&self, tree: Module, path: PathBuf) -> EnderpyFile {
-        let mut imports: Vec<ImportKinds> = vec![];
-        let mut defs = vec![];
-        for stmt in tree.body {
-            self.visit_stmt(&stmt);
+    fn convert(&mut self, path: &PathBuf) -> EnderpyFile {
+        let source = std::fs::read_to_string(&path).unwrap();
+        let mut parser = Parser::new(source);
+        let tree = parser.parse();
+        for stmt in &tree.body {
+            self.visit_stmt(stmt);
         }
 
         EnderpyFile {
-            path,
             ast: tree,
-            names: SymbolTable::new(path.to_str(), SymbolTableType::Module, 1),
-            defs,
-            imports,
+            names: SymbolTable::new(SymbolTableType::Module, 1),
+            defs: self.defs.clone(),
+            imports: self.imports.clone(),
         }
     }
 }
 
-impl TraversalVisitor<ImportKinds> for ASTConverter {
-    fn visit_import(&mut self, i: &Import) -> ImportKinds {
-        todo!()
+impl TraversalVisitor for ASTConverter {
+    fn visit_import(&mut self, i: &Import) {
+        let import = i.clone();
+        self.imports.push(ImportKinds::Import(import));
     }
 
-    fn visit_import_from(&mut self, i: &ImportFrom) -> ImportKinds {
-        todo!()
+    fn visit_import_from(&mut self, i: &ImportFrom) {
+        let import = i.clone();
+        self.imports.push(ImportKinds::ImportFrom(import));
     }
 
-    fn visit_alias(&mut self, a: &parser::ast::Alias) -> ImportKinds {
-        todo!()
-    }
-
-    fn visit_assign(&mut self, a: &parser::ast::Assign) -> ImportKinds {
-        todo!()
-    }
-
-    fn visit_ann_assign(&mut self, a: &parser::ast::AnnAssign) -> ImportKinds {
-        todo!()
-    }
-
-    fn visit_aug_assign(&mut self, a: &parser::ast::AugAssign) -> ImportKinds {
-        todo!()
-    }
-
-    fn visit_assert(&mut self, a: &parser::ast::Assert) -> ImportKinds {
-        todo!()
-    }
-
-    fn visit_pass(&mut self, p: &parser::ast::Pass) -> ImportKinds {
-        todo!()
-    }
-
-    fn visit_delete(&mut self, d: &parser::ast::Delete) -> ImportKinds {
-        todo!()
-    }
-
-    fn visit_return(&mut self, r: &parser::ast::Return) -> ImportKinds {
-        todo!()
-    }
-
-    fn visit_raise(&mut self, r: &parser::ast::Raise) -> ImportKinds {
-        todo!()
-    }
-
-    fn visit_break(&mut self, b: &parser::ast::Break) -> ImportKinds {
-        todo!()
-    }
-
-    fn visit_continue(&mut self, c: &parser::ast::Continue) -> ImportKinds {
-        todo!()
-    }
-
-    fn visit_global(&mut self, g: &parser::ast::Global) -> ImportKinds {
-        todo!()
-    }
-
-    fn visit_nonlocal(&mut self, n: &parser::ast::Nonlocal) -> ImportKinds {
-        todo!()
-    }
-
-    fn visit_if(&mut self, i: &parser::ast::If) -> ImportKinds {
-        todo!()
-    }
-
-    fn visit_while(&mut self, w: &parser::ast::While) -> ImportKinds {
-        todo!()
-    }
-
-    fn visit_for(&mut self, f: &parser::ast::For) -> ImportKinds {
-        todo!()
-    }
-
-    fn visit_with(&mut self, w: &parser::ast::With) -> ImportKinds {
-        todo!()
-    }
-
-    fn visit_try(&mut self, t: &parser::ast::Try) -> ImportKinds {
-        todo!()
-    }
-
-    fn visit_try_star(&mut self, t: &parser::ast::TryStar) -> ImportKinds {
-        todo!()
-    }
-
-    fn visit_function_def(&mut self, f: &parser::ast::FunctionDef) -> ImportKinds {
-        todo!()
-    }
-
-    fn visit_class_def(&mut self, c: &parser::ast::ClassDef) -> ImportKinds {
-        todo!()
-    }
-
-    fn visit_match(&mut self, m: &parser::ast::Match) -> ImportKinds {
-        todo!()
+    fn visit_function_def(&mut self, f: &parser::ast::FunctionDef) {
+        let func = f.clone();
+        self.defs.push(Statement::FunctionDef(func));
     }
 }
