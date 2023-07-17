@@ -16,7 +16,6 @@ Module {
                 },
                 name: "a",
                 bases: [],
-                starargs: None,
                 keywords: [],
                 body: [
                     Pass(
