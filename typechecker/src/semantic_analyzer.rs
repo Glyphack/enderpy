@@ -1,56 +1,44 @@
-use parser::ast::{Expression, Statement};
+use parser::ast::Node;
 
 use crate::{
     ast_visitor::TraversalVisitor,
-    state::State,
-    symbol_table::{NodeType, SymbolTableNode, SymbolScope}, semanal_utils::{self, get_expr_type},
+    semanal_utils::{self, get_expr_type},
+    symbol_table::{NodeType, SymbolScope, SymbolTable, SymbolTableNode},
 };
 
 pub struct SemanticAnalyzer<'a> {
-    state: &'a State<'a>,
+    globals: &'a mut SymbolTable<'a>,
     // TODO: Replace errors with another type
     errors: Vec<String>,
     scope: SymbolScope,
 }
 
 impl<'a> SemanticAnalyzer<'a> {
-    pub fn new(state: &State) -> Self {
+    pub fn new(globals: &'a mut SymbolTable<'a>) -> Self {
         return SemanticAnalyzer {
-            state,
+            globals,
             errors: vec![],
-            scope: SymbolScope::Global
+            scope: SymbolScope::Global,
         };
     }
 
-    pub fn analyze(&self) {
-        for stmt in self.state.file.defs {
-            self.visit_stmt(&stmt)
-        }
-    }
-
-    fn add_expression_to_symbol_table(&self, name: String, node_type: NodeType, node: &Statement, public: bool) {
-        let symbol_node = SymbolTableNode{ name, node: *node, typ: node_type, module_public: public, module_hidden: false, implicit: false, scope: self.scope }
-        self.state.file.names.add_symbol(name, symbol_node)
-    }
-}
-
-// Get defined names in the statement. A single statement can define more than one symbol.
-// e.g. a, b = 1, 1
-fn get_names(statement: &Statement) -> Vec<String> {
-    match statement {
-        parser::ast::Statement::AssignStatement(a) => a
-            .targets
-            .into_iter()
-            .map(|f| get_expr_bind_name(&f))
-            .collect(),
-        _ => panic!("not implemented"),
-    }
-}
-
-fn get_expr_bind_name(expr: &Expression) -> String {
-    match expr {
-        parser::ast::Expression::Name(n) => n.id,
-        _ => panic!("not implemented"),
+    fn add_expression_to_symbol_table(
+        &mut self,
+        name: String,
+        node_type: NodeType,
+        node: Node,
+        public: bool,
+    ) {
+        let symbol_node = SymbolTableNode {
+            name,
+            node: node,
+            typ: node_type,
+            module_public: public,
+            module_hidden: false,
+            implicit: false,
+            scope: self.scope,
+        };
+        self.globals.add_symbol(symbol_node)
     }
 }
 
@@ -330,15 +318,13 @@ impl<'a> TraversalVisitor for SemanticAnalyzer<'a> {
     // TODO: Maybe we need to provide the full ast::Statement instead of the enum value?
     // Not sure but it makes it easier to store the node in Symbol Table
     // But puts more weight on the traverse code to decode the type
-    fn visit_assign(&mut self, a: &parser::ast::Assign) {
-        if a.targets.len() > 1 {
+    fn visit_assign(&mut self, assign: &parser::ast::Assign) {
+        if assign.targets.len() > 1 {
             panic!("assignment to multiple targets not implemented")
-            
         }
-        let name = semanal_utils::get_target_name(&a.targets.last().unwrap());
-        let nt = get_expr_type(&a.value);
-        self.add_expression_to_symbol_table(name, nt,&Statement::AssignStatement(*a), false);
-        
+        let name = semanal_utils::get_target_name(&assign.targets.last().unwrap());
+        let nt = get_expr_type(&assign.value);
+        self.add_expression_to_symbol_table(name, nt, assign.node, false);
     }
 
     fn visit_ann_assign(&mut self, a: &parser::ast::AnnAssign) {

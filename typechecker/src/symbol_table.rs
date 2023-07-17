@@ -1,12 +1,12 @@
-use parser::ast;
+use parser::ast::Node;
 use std::collections::HashMap;
 
-pub struct SymbolTable {
+pub struct SymbolTable<'a> {
     pub symbol_table_type: SymbolTableType,
     symbols: HashMap<String, SymbolTableNode>,
     pub start_line_number: u8,
     // all sub tables have to be valid until the top level scope is valid
-    sub_tables: Vec<SymbolTable>,
+    sub_tables: Vec<&'a SymbolTable<'a>>,
     // index of current scope in this table where we insert new symbols
     current_scope: u8,
 }
@@ -19,7 +19,7 @@ pub enum SymbolTableType {
 
 pub struct SymbolTableNode {
     pub name: String,
-    pub node: ast::Statement,
+    pub node: Node,
     pub typ: NodeType,
     pub module_public: bool,
     pub module_hidden: bool,
@@ -31,6 +31,7 @@ pub enum NodeType {
     String,
 }
 
+#[derive(Clone, Copy)]
 pub enum SymbolScope {
     Global,
     Nonlocal,
@@ -38,7 +39,7 @@ pub enum SymbolScope {
     Unknown,
 }
 
-impl SymbolTable {
+impl<'a> SymbolTable<'a> {
     pub fn new(symbol_table_type: SymbolTableType, start_line_number: u8) -> Self {
         SymbolTable {
             symbol_table_type,
@@ -52,12 +53,12 @@ impl SymbolTable {
         return self.symbols.get(name);
     }
 
-    pub fn enter_scope(&mut self, new_symbol_table: SymbolTable) {
+    pub fn enter_scope(&mut self, new_symbol_table: &'a SymbolTable<'a>) {
         self.sub_tables.push(new_symbol_table);
     }
     pub fn exit_scope(&self) {}
 
-    pub fn add_symbol(&self, name: String, symbol_node: SymbolTableNode) {
-        self.symbols.insert(name, symbol_node);
+    pub fn add_symbol(&mut self, symbol_node: SymbolTableNode) {
+        self.symbols.insert(symbol_node.name.clone(), symbol_node);
     }
 }

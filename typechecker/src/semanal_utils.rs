@@ -4,7 +4,7 @@ use crate::symbol_table::NodeType;
 
 pub fn get_target_name(assignment_target: &Expression) -> String {
     match assignment_target {
-        Expression::Name(n) => n.id,
+        Expression::Name(n) => n.id.clone(),
         _ => panic!("cannot defer name of the assignment target"),
     }
 }

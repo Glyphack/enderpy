@@ -17,55 +17,31 @@ pub enum ImportKinds {
     ImportFrom(ImportFrom),
 }
 
-pub struct EnderpyFile {
-    pub ast: Module,
-    pub names: SymbolTable,
+pub struct EnderpyFile<'a> {
+    pub names: SymbolTable<'a>,
     // all the imports inside the file
     pub imports: Vec<ImportKinds>,
     // high level definitions inside the file
     pub defs: Vec<Statement>,
 }
 
-impl EnderpyFile {
-    pub fn from(ast: &Module) -> Self {
-        let mut converter = ASTConverter::new();
-        converter.convert(ast)
-    }
-}
-
-/// Converts python AST to Enderpy file. This is a high level structure used by
-/// the rest of type checker components.
-/// This has many responsibilities and tightly coupled to EnderpyFile.
-struct ASTConverter {
-    imports: Vec<ImportKinds>,
-    defs: Vec<Statement>,
-}
-
-impl ASTConverter {
-    pub fn new() -> Self {
-        return ASTConverter {
-            imports: vec![],
-            defs: vec![],
-        };
-    }
-}
-
-impl ASTConverter {
-    fn convert(&mut self, tree: &Module) -> EnderpyFile {
-        for stmt in &tree.body {
-            self.visit_stmt(stmt);
-        }
-
-        EnderpyFile {
-            ast: *tree,
+impl<'a> EnderpyFile<'a> {
+    pub fn from(ast: Module) -> Self {
+        let mut file = Self {
             names: SymbolTable::new(SymbolTableType::Module, 1),
-            defs: self.defs,
-            imports: self.imports,
+            defs: vec![],
+            imports: vec![],
+        };
+
+        for stmt in &ast.body {
+            file.visit_stmt(stmt);
         }
+
+        file
     }
 }
 
-impl TraversalVisitor for ASTConverter {
+impl<'a> TraversalVisitor for EnderpyFile<'a> {
     fn visit_import(&mut self, i: &Import) {
         let import = i.clone();
         self.imports.push(ImportKinds::Import(import));

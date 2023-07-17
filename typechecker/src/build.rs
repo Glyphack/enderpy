@@ -3,7 +3,6 @@ use std::{collections::HashMap, path::PathBuf};
 use parser::Parser;
 
 use crate::nodes::EnderpyFile;
-use crate::semantic_analyzer::SemanticAnalyzer;
 use crate::settings::Settings;
 use crate::state::State;
 
@@ -41,7 +40,7 @@ impl<'a> BuildManager<'a> {
     fn prepare_modules(&self) {
         let mut modules = HashMap::new();
         for build_source in &self.sources {
-            let file = self.parse_file(&build_source.source, &build_source.path);
+            let file = self.parse_file(&build_source.source);
 
             modules.insert(
                 self.get_module_name(build_source),
@@ -54,7 +53,7 @@ impl<'a> BuildManager<'a> {
     }
 
     // Entry point to analyze the program
-    pub fn build(&self) {
+    pub fn build(&'a mut self) {
         self.prepare_modules();
         self.pre_analysis()
     }
@@ -74,10 +73,10 @@ impl<'a> BuildManager<'a> {
         }
     }
 
-    pub fn parse_file(&self, source: &String, path: &PathBuf) -> EnderpyFile {
+    pub fn parse_file(&self, source: &String) -> EnderpyFile {
         let mut parser = Parser::new(source.clone());
         let tree = parser.parse();
-        EnderpyFile::from(&tree)
+        EnderpyFile::from(tree)
     }
 
     // Adds a source file to the build manager
@@ -90,14 +89,9 @@ impl<'a> BuildManager<'a> {
 
     // Performs pre-analysis on the source files
     // Fills up the symbol table for each module
-    fn pre_analysis(&mut self) {
-        for state in self.modules.values().into_iter() {
-            let semanal = SemanticAnalyzer {
-                state: state,
-                errors: vec![],
-                scope: crate::symbol_table::SymbolScope::Global,
-            };
-            semanal.analyze()
+    fn pre_analysis(&'a mut self) {
+        for state in self.modules.iter_mut() {
+            state.1.process_top_levels();
         }
     }
 

@@ -65,8 +65,7 @@ fn check(path: &PathBuf) -> Result<()> {
             ),
         },
     };
-    let semantic_analyzer = SemanticAnalyzer {};
-    let build_manager = BuildManager::new(vec![initial_source], semantic_analyzer, options);
+    let mut build_manager = BuildManager::new(vec![initial_source], options);
     build_manager.build();
 
     // TODO: check the build_manager errors and show to user
