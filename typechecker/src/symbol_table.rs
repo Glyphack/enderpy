@@ -56,4 +56,8 @@ impl SymbolTable {
         self.sub_tables.push(new_symbol_table);
     }
     pub fn exit_scope(&self) {}
+
+    pub fn add_symbol(&self, name: String, symbol_node: SymbolTableNode) {
+        self.symbols.insert(name, symbol_node);
+    }
 }

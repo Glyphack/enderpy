@@ -57,7 +57,7 @@ fn check(path: &PathBuf) -> Result<()> {
     };
     let options = Settings {
         debug: true,
-        import_discoverty: ImportDiscovery {
+        import_discovery: ImportDiscovery {
             python_executable: PathBuf::from(
                 // TODO: discover executable
                 // Python has sys.executable to do this
