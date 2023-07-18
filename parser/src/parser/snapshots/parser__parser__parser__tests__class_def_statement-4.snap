@@ -43,7 +43,6 @@ Module {
                         },
                     ),
                 ],
-                starargs: None,
                 keywords: [
                     Keyword {
                         node: Node {

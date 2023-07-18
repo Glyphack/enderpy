@@ -44,7 +44,6 @@ Module {
                         },
                     ),
                 ],
-                starargs: None,
                 keywords: [],
                 body: [
                     Pass(
