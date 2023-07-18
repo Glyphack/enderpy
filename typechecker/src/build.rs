@@ -5,6 +5,7 @@ use parser::Parser;
 use crate::nodes::EnderpyFile;
 use crate::settings::Settings;
 use crate::state::State;
+use crate::symbol_table::SymbolTable;
 
 pub struct BuildSource {
     pub path: PathBuf,
@@ -14,15 +15,15 @@ pub struct BuildSource {
     pub followed: bool,
 }
 
-pub struct BuildManager<'a> {
+pub struct BuildManager {
     errors: Vec<String>,
     sources: Vec<BuildSource>,
-    modules: HashMap<String, State<'a>>,
+    pub modules: HashMap<String, State>,
     missing_modules: Vec<String>,
     options: Settings,
 }
 
-impl<'a> BuildManager<'a> {
+impl BuildManager {
     pub fn new(sources: Vec<BuildSource>, options: Settings) -> Self {
         if sources.len() > 1 {
             panic!("analyzing more than 1 input is not supported");
@@ -37,25 +38,22 @@ impl<'a> BuildManager<'a> {
         }
     }
 
-    fn prepare_modules(&self) {
-        let mut modules = HashMap::new();
+    fn prepare_modules(&mut self) {
         for build_source in &self.sources {
             let file = self.parse_file(&build_source.source);
+            let symbol_table = SymbolTable::new(crate::symbol_table::SymbolTableType::Module, 0);
 
-            modules.insert(
+            self.modules.insert(
                 self.get_module_name(build_source),
-                State {
-                    manager: self,
-                    file,
-                },
+                State { file, symbol_table },
             );
         }
     }
 
     // Entry point to analyze the program
-    pub fn build(&'a mut self) {
+    pub fn build(&mut self) {
         self.prepare_modules();
-        self.pre_analysis()
+        self.pre_analysis();
     }
 
     pub fn get_module_name(&self, source: &BuildSource) -> String {
@@ -89,7 +87,7 @@ impl<'a> BuildManager<'a> {
 
     // Performs pre-analysis on the source files
     // Fills up the symbol table for each module
-    fn pre_analysis(&'a mut self) {
+    fn pre_analysis(&mut self) {
         for state in self.modules.iter_mut() {
             state.1.process_top_levels();
         }
@@ -116,14 +114,24 @@ mod tests {
     // Write a temp file with source code and return the path for test. Cleanup after this goes out of scope
     fn write_temp_source(source: &str) -> PathBuf {
         let path = PathBuf::from("./tmp/test.py");
-        let mut file = std::fs::File::create(&path).unwrap();
-        file.write_all(source.as_bytes()).unwrap();
+        // let mut file = std::fs::File::create(&path).unwrap();
+        // file.write_all(source.as_bytes()).unwrap();
         path
     }
 
     #[test]
     fn test_build_manager() {
-        let mut manager = BuildManager::new(vec![], Settings::test_settings());
+        let source = "a = 'hello world'";
+        let path = write_temp_source(source);
+        let mut manager = BuildManager::new(
+            vec![BuildSource {
+                path,
+                module: Some(String::from("test")),
+                source: source.to_string(),
+                followed: false,
+            }],
+            Settings::test_settings(),
+        );
         manager.build();
     }
 }

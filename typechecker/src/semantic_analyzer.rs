@@ -6,15 +6,16 @@ use crate::{
     symbol_table::{NodeType, SymbolScope, SymbolTable, SymbolTableNode},
 };
 
-pub struct SemanticAnalyzer<'a> {
-    globals: &'a mut SymbolTable<'a>,
+pub struct SemanticAnalyzer {
+    pub globals: SymbolTable,
     // TODO: Replace errors with another type
     errors: Vec<String>,
     scope: SymbolScope,
 }
 
-impl<'a> SemanticAnalyzer<'a> {
-    pub fn new(globals: &'a mut SymbolTable<'a>) -> Self {
+impl SemanticAnalyzer {
+    pub fn new() -> Self {
+        let globals = SymbolTable::new(crate::symbol_table::SymbolTableType::Module, 0);
         return SemanticAnalyzer {
             globals,
             errors: vec![],
@@ -42,7 +43,7 @@ impl<'a> SemanticAnalyzer<'a> {
     }
 }
 
-impl<'a> TraversalVisitor for SemanticAnalyzer<'a> {
+impl TraversalVisitor for SemanticAnalyzer {
     fn visit_stmt(&mut self, s: &parser::ast::Statement) {
         // map all statements and call visit
         match s {

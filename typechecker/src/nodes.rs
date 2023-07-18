@@ -7,28 +7,23 @@
 
 use parser::ast::{Import, ImportFrom, Module, Statement};
 
-use crate::{
-    ast_visitor::TraversalVisitor,
-    symbol_table::{SymbolTable, SymbolTableType},
-};
+use crate::ast_visitor::TraversalVisitor;
 
 pub enum ImportKinds {
     Import(Import),
     ImportFrom(ImportFrom),
 }
 
-pub struct EnderpyFile<'a> {
-    pub names: SymbolTable<'a>,
+pub struct EnderpyFile {
     // all the imports inside the file
     pub imports: Vec<ImportKinds>,
     // high level definitions inside the file
     pub defs: Vec<Statement>,
 }
 
-impl<'a> EnderpyFile<'a> {
+impl<'a> EnderpyFile {
     pub fn from(ast: Module) -> Self {
         let mut file = Self {
-            names: SymbolTable::new(SymbolTableType::Module, 1),
             defs: vec![],
             imports: vec![],
         };
@@ -41,7 +36,12 @@ impl<'a> EnderpyFile<'a> {
     }
 }
 
-impl<'a> TraversalVisitor for EnderpyFile<'a> {
+impl<'a> TraversalVisitor for EnderpyFile {
+    fn visit_assign(&mut self, a: &parser::ast::Assign) {
+        let stmt = a.clone();
+        self.defs.push(Statement::AssignStatement(stmt));
+    }
+
     fn visit_import(&mut self, i: &Import) {
         let import = i.clone();
         self.imports.push(ImportKinds::Import(import));

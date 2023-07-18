@@ -1,18 +1,19 @@
 use crate::{
-    ast_visitor::TraversalVisitor, build::BuildManager, nodes::EnderpyFile,
-    semantic_analyzer::SemanticAnalyzer,
+    ast_visitor::TraversalVisitor, nodes::EnderpyFile, semantic_analyzer::SemanticAnalyzer,
+    symbol_table::SymbolTable,
 };
 
-pub struct State<'a> {
-    pub manager: &'a BuildManager<'a>,
-    pub file: EnderpyFile<'a>,
+pub struct State {
+    pub file: EnderpyFile,
+    pub symbol_table: SymbolTable,
 }
 
-impl<'a> State<'a> {
-    pub fn process_top_levels(&'a mut self) {
-        let mut sem_anal = SemanticAnalyzer::new(&mut self.file.names);
+impl State {
+    pub fn process_top_levels(&mut self) -> SymbolTable {
+        let mut sem_anal = SemanticAnalyzer::new();
         for stmt in &self.file.defs {
             sem_anal.visit_stmt(stmt)
         }
+        sem_anal.globals
     }
 }
