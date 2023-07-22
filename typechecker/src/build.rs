@@ -77,19 +77,11 @@ impl BuildManager {
         EnderpyFile::from(tree)
     }
 
-    // Adds a source file to the build manager
-    fn add_source_file(&mut self, file_path: String) {}
-
-    // Finds imports in the source files and creates an import graph
-    fn find_imports(&mut self) {
-        // Populates self.import_graph based on the imports found
-    }
-
     // Performs pre-analysis on the source files
     // Fills up the symbol table for each module
     fn pre_analysis(&mut self) {
         for state in self.modules.iter_mut() {
-            state.1.process_top_levels();
+            state.1.populate_symbol_table();
         }
     }
 
@@ -107,9 +99,8 @@ impl BuildManager {
 
 #[cfg(test)]
 mod tests {
-    use std::io::Write;
-
     use super::*;
+    use insta::assert_debug_snapshot;
 
     // Write a temp file with source code and return the path for test. Cleanup after this goes out of scope
     fn write_temp_source(source: &str) -> PathBuf {
@@ -120,8 +111,8 @@ mod tests {
     }
 
     #[test]
-    fn test_build_manager() {
-        let source = "a = 'hello world'";
+    fn create_symbol_table() {
+        let source = "a = 'hello world'\nb = a + 1";
         let path = write_temp_source(source);
         let mut manager = BuildManager::new(
             vec![BuildSource {
@@ -133,5 +124,12 @@ mod tests {
             Settings::test_settings(),
         );
         manager.build();
+        let module = manager.modules.values().last().unwrap();
+        insta::with_settings!({
+                description => "simple assignment", // the template source code
+                omit_expression => true // do not include the default expression
+            }, {
+                assert_debug_snapshot!(module.symbol_table);
+        });
     }
 }

@@ -1,0 +1,34 @@
+---
+source: typechecker/src/build.rs
+description: simple assignment
+---
+SymbolTable {
+    symbol_table_type: Module,
+    symbols: {
+        "b": SymbolTableNode {
+            name: "b",
+            node: Node {
+                start: 18,
+                end: 27,
+            },
+            typ: String,
+            module_public: false,
+            module_hidden: false,
+            implicit: false,
+            scope: Global,
+        },
+        "a": SymbolTableNode {
+            name: "a",
+            node: Node {
+                start: 0,
+                end: 17,
+            },
+            typ: String,
+            module_public: false,
+            module_hidden: false,
+            implicit: false,
+            scope: Global,
+        },
+    },
+    start_line_number: 0,
+}

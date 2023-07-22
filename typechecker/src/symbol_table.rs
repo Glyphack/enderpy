@@ -30,8 +30,9 @@ pub struct SymbolTableNode {
     pub scope: SymbolScope,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum NodeType {
+    Unknown,
     String,
 }
 
@@ -51,13 +52,14 @@ impl SymbolTable {
             start_line_number,
         }
     }
-    // pub fn lookup_in_scope(&self, name: &str) -> Option<&SymbolTableNode> {
-    //     return self.symbols.get(name);
-    // }
+    pub fn lookup_in_scope(&self, name: &str) -> Option<&SymbolTableNode> {
+        return self.symbols.get(name);
+    }
     //
     // pub fn enter_scope(&mut self, new_symbol_table: &'a SymbolTable<'a>) {
     //     self.sub_tables.push(new_symbol_table);
     // }
+
     pub fn exit_scope(&self) {}
 
     pub fn add_symbol(&mut self, symbol_node: SymbolTableNode) {

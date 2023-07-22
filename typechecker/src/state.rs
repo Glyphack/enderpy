@@ -9,11 +9,12 @@ pub struct State {
 }
 
 impl State {
-    pub fn process_top_levels(&mut self) -> SymbolTable {
+    /// entry point to fill up the symbol table from the global definitions
+    pub fn populate_symbol_table(&mut self) {
         let mut sem_anal = SemanticAnalyzer::new();
         for stmt in &self.file.defs {
             sem_anal.visit_stmt(stmt)
         }
-        sem_anal.globals
+        self.symbol_table = sem_anal.globals
     }
 }

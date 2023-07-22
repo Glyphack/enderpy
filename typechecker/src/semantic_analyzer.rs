@@ -1,8 +1,8 @@
-use parser::ast::Node;
+use parser::ast::{Expression, Node};
 
 use crate::{
     ast_visitor::TraversalVisitor,
-    semanal_utils::{self, get_expr_type},
+    semanal_utils::{get_constant_value_type, get_target_name},
     symbol_table::{NodeType, SymbolScope, SymbolTable, SymbolTableNode},
 };
 
@@ -32,7 +32,7 @@ impl SemanticAnalyzer {
     ) {
         let symbol_node = SymbolTableNode {
             name,
-            node: node,
+            node,
             typ: node_type,
             module_public: public,
             module_hidden: false,
@@ -40,6 +40,33 @@ impl SemanticAnalyzer {
             scope: self.scope,
         };
         self.globals.add_symbol(symbol_node)
+    }
+
+    // TODO: return unresolvable part
+    pub fn get_expr_type(&mut self, expr: &Expression) -> NodeType {
+        match expr {
+            Expression::Constant(c) => get_constant_value_type(&c.value),
+            Expression::Name(n) => *self.resolve_name(&n.id),
+            // TODO: of course wrong, but maybe
+            Expression::BinOp(b) => self.get_expr_type(&b.left),
+            _ => panic!("not implemented type"),
+        }
+    }
+
+    fn resolve_name(&self, name: &str) -> &NodeType {
+        let matched_scope = match self.globals.lookup_in_scope(name) {
+            Some(node) => return &node.typ,
+            None => (),
+        };
+
+        // TODO: maybe check python globals and libs?
+
+        &NodeType::Unknown
+    }
+
+    fn report_unresolved_reference(&mut self) {
+        self.errors
+            .push(String::from(format!("cannot resolve reference {}", "")))
     }
 }
 
@@ -323,8 +350,12 @@ impl TraversalVisitor for SemanticAnalyzer {
         if assign.targets.len() > 1 {
             panic!("assignment to multiple targets not implemented")
         }
-        let name = semanal_utils::get_target_name(&assign.targets.last().unwrap());
-        let nt = get_expr_type(&assign.value);
+        let name = get_target_name(&assign.targets.last().unwrap());
+        // handle when the value is not constant
+        let nt = self.get_expr_type(&assign.value);
+        if (matches!(nt, NodeType::Unknown)) {
+            self.report_unresolved_reference();
+        }
         self.add_expression_to_symbol_table(name, nt, assign.node, false);
     }
 

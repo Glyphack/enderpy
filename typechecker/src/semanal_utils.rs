@@ -9,12 +9,6 @@ pub fn get_target_name(assignment_target: &Expression) -> String {
     }
 }
 
-pub fn get_expr_type(expr: &Expression) -> NodeType {
-    match expr {
-        Expression::Constant(c) => get_constant_value_type(&c.value),
-        _ => panic!("not implemented type"),
-    }
-}
 
 pub fn get_constant_value_type(constant: &ConstantValue) -> NodeType {
     match constant {
