@@ -5,7 +5,6 @@ use parser::{token, Lexer, Parser};
 use std::{fs, path::PathBuf};
 use typechecker::{
     build::{BuildManager, BuildSource},
-    semantic_analyzer::SemanticAnalyzer,
     settings::{ImportDiscovery, Settings},
 };
 
@@ -51,7 +50,7 @@ fn check(path: &PathBuf) -> Result<()> {
     let source = fs::read_to_string(path)?;
     let initial_source = BuildSource {
         path: path.to_owned(),
-        module: None,
+        module: String::from("test"),
         source,
         followed: false,
     };

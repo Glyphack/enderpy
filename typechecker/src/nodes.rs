@@ -9,12 +9,15 @@ use parser::ast::{Import, ImportFrom, Module, Statement};
 
 use crate::ast_visitor::TraversalVisitor;
 
+#[derive(Clone)]
 pub enum ImportKinds {
     Import(Import),
     ImportFrom(ImportFrom),
 }
 
+#[derive(Clone)]
 pub struct EnderpyFile {
+    pub module_name: String,
     // all the imports inside the file
     pub imports: Vec<ImportKinds>,
     // high level definitions inside the file
@@ -22,8 +25,9 @@ pub struct EnderpyFile {
 }
 
 impl<'a> EnderpyFile {
-    pub fn from(ast: Module) -> Self {
+    pub fn from(ast: Module, module_name: String) -> Self {
         let mut file = Self {
+            module_name,
             defs: vec![],
             imports: vec![],
         };

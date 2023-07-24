@@ -1,40 +1,39 @@
-use parser::ast::{Expression, Node};
+use std::ops::Deref;
+
+use parser::ast::Expression;
 
 use crate::{
     ast_visitor::TraversalVisitor,
-    semanal_utils::{get_constant_value_type, get_target_name},
-    symbol_table::{NodeType, SymbolScope, SymbolTable, SymbolTableNode},
+    nodes::EnderpyFile,
+    symbol_table::{
+        Declaration, DeclarationPath, SymbolScope, SymbolTable, SymbolTableNode, Variable,
+    },
 };
 
 pub struct SemanticAnalyzer {
     pub globals: SymbolTable,
     // TODO: Replace errors with another type
+    file: Box<EnderpyFile>,
     errors: Vec<String>,
     scope: SymbolScope,
 }
 
 impl SemanticAnalyzer {
-    pub fn new() -> Self {
+    pub fn new(file: Box<EnderpyFile>) -> Self {
         let globals = SymbolTable::new(crate::symbol_table::SymbolTableType::Module, 0);
         return SemanticAnalyzer {
             globals,
+            file,
             errors: vec![],
             scope: SymbolScope::Global,
         };
     }
 
-    fn add_expression_to_symbol_table(
-        &mut self,
-        name: String,
-        node_type: NodeType,
-        node: Node,
-        public: bool,
-    ) {
+    fn add_declaration_to_symbol_table(&mut self, name: String, decl: Declaration) {
         let symbol_node = SymbolTableNode {
             name,
-            node,
-            typ: node_type,
-            module_public: public,
+            declarations: vec![decl],
+            module_public: false,
             module_hidden: false,
             implicit: false,
             scope: self.scope,
@@ -42,31 +41,13 @@ impl SemanticAnalyzer {
         self.globals.add_symbol(symbol_node)
     }
 
-    // TODO: return unresolvable part
-    pub fn get_expr_type(&mut self, expr: &Expression) -> NodeType {
-        match expr {
-            Expression::Constant(c) => get_constant_value_type(&c.value),
-            Expression::Name(n) => *self.resolve_name(&n.id),
-            // TODO: of course wrong, but maybe
-            Expression::BinOp(b) => self.get_expr_type(&b.left),
-            _ => panic!("not implemented type"),
-        }
-    }
-
-    fn resolve_name(&self, name: &str) -> &NodeType {
-        let matched_scope = match self.globals.lookup_in_scope(name) {
-            Some(node) => return &node.typ,
-            None => (),
-        };
-
-        // TODO: maybe check python globals and libs?
-
-        &NodeType::Unknown
-    }
-
     fn report_unresolved_reference(&mut self) {
         self.errors
             .push(String::from(format!("cannot resolve reference {}", "")))
+    }
+
+    fn current_scope(&self) -> SymbolScope {
+        SymbolScope::Global
     }
 }
 
@@ -231,9 +212,7 @@ impl TraversalVisitor for SemanticAnalyzer {
         }
     }
 
-    fn visit_constant(&mut self, c: &parser::ast::Constant) {
-        todo!()
-    }
+    fn visit_constant(&mut self, c: &parser::ast::Constant) {}
 
     fn visit_list(&mut self, l: &parser::ast::List) {
         todo!()
@@ -263,9 +242,7 @@ impl TraversalVisitor for SemanticAnalyzer {
         todo!()
     }
 
-    fn visit_bin_op(&mut self, b: &parser::ast::BinOp) {
-        todo!()
-    }
+    fn visit_bin_op(&mut self, b: &parser::ast::BinOp) {}
 
     fn visit_named_expr(&mut self, n: &parser::ast::NamedExpression) {
         todo!()
@@ -343,20 +320,29 @@ impl TraversalVisitor for SemanticAnalyzer {
         todo!()
     }
 
-    // TODO: Maybe we need to provide the full ast::Statement instead of the enum value?
-    // Not sure but it makes it easier to store the node in Symbol Table
-    // But puts more weight on the traverse code to decode the type
     fn visit_assign(&mut self, assign: &parser::ast::Assign) {
         if assign.targets.len() > 1 {
             panic!("assignment to multiple targets not implemented")
         }
-        let name = get_target_name(&assign.targets.last().unwrap());
-        // handle when the value is not constant
-        let nt = self.get_expr_type(&assign.value);
-        if (matches!(nt, NodeType::Unknown)) {
-            self.report_unresolved_reference();
-        }
-        self.add_expression_to_symbol_table(name, nt, assign.node, false);
+        let name_node = match assign.targets.last().unwrap() {
+            Expression::Name(n) => n,
+            _ => panic!("assignment to other than name node"),
+        };
+
+        let declared_name = name_node.id.clone();
+        let decl = Declaration::Variable(Box::new(Variable {
+            declaration_path: DeclarationPath {
+                module_name: self.file.module_name.clone(),
+                node: assign.node,
+            },
+            scope: self.current_scope(),
+            type_annotation: None,
+            inferred_type_source: Some(assign.value.clone()),
+            is_constant: false,
+        }));
+        self.add_declaration_to_symbol_table(declared_name, decl);
+
+        self.visit_expr(&assign.value);
     }
 
     fn visit_ann_assign(&mut self, a: &parser::ast::AnnAssign) {

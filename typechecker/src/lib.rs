@@ -1,6 +1,5 @@
 mod ast_visitor;
 mod nodes;
-mod pre_analysis;
 mod semanal_utils;
 mod state;
 mod symbol_table;

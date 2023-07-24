@@ -1,4 +1,4 @@
-use parser::ast::Node;
+use parser::ast::{self, Node};
 use std::collections::HashMap;
 
 #[derive(Debug)]
@@ -22,18 +22,31 @@ pub enum SymbolTableType {
 #[derive(Debug)]
 pub struct SymbolTableNode {
     pub name: String,
-    pub node: Node,
-    pub typ: NodeType,
+    pub declarations: Vec<Declaration>,
     pub module_public: bool,
     pub module_hidden: bool,
     pub implicit: bool,
     pub scope: SymbolScope,
 }
 
-#[derive(Debug, Clone, Copy)]
-pub enum NodeType {
-    Unknown,
-    String,
+#[derive(Debug)]
+pub struct DeclarationPath {
+    pub module_name: String,
+    pub node: Node,
+}
+
+#[derive(Debug)]
+pub enum Declaration {
+    Variable(Box<Variable>),
+}
+
+#[derive(Debug)]
+pub struct Variable {
+    pub declaration_path: DeclarationPath,
+    pub scope: SymbolScope,
+    pub type_annotation: Option<ast::Expression>,
+    pub inferred_type_source: Option<ast::Expression>,
+    pub is_constant: bool,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -64,5 +77,11 @@ impl SymbolTable {
 
     pub fn add_symbol(&mut self, symbol_node: SymbolTableNode) {
         self.symbols.insert(symbol_node.name.clone(), symbol_node);
+    }
+}
+
+impl SymbolTableNode {
+    pub fn add_declaration(&mut self, decl: Declaration) {
+        self.declarations.push(decl);
     }
 }

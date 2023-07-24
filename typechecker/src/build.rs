@@ -9,7 +9,7 @@ use crate::symbol_table::SymbolTable;
 
 pub struct BuildSource {
     pub path: PathBuf,
-    pub module: Option<String>,
+    pub module: String,
     pub source: String,
     // If this source was found by following an import
     pub followed: bool,
@@ -17,7 +17,6 @@ pub struct BuildSource {
 
 pub struct BuildManager {
     errors: Vec<String>,
-    sources: Vec<BuildSource>,
     pub modules: HashMap<String, State>,
     missing_modules: Vec<String>,
     options: Settings,
@@ -29,52 +28,46 @@ impl BuildManager {
             panic!("analyzing more than 1 input is not supported");
         }
 
+        let mut modules = HashMap::new();
+
+        for build_source in sources {
+            let mod_name = Self::get_module_name(&build_source);
+            let file = Box::new(Self::parse_file(&build_source.source, build_source.module));
+            let symbol_table = SymbolTable::new(crate::symbol_table::SymbolTableType::Module, 0);
+
+            modules.insert(mod_name, State { file, symbol_table });
+        }
+
         BuildManager {
             errors: vec![],
-            sources,
-            modules: HashMap::new(),
+            modules,
             missing_modules: vec![],
             options,
         }
     }
 
-    fn prepare_modules(&mut self) {
-        for build_source in &self.sources {
-            let file = self.parse_file(&build_source.source);
-            let symbol_table = SymbolTable::new(crate::symbol_table::SymbolTableType::Module, 0);
-
-            self.modules.insert(
-                self.get_module_name(build_source),
-                State { file, symbol_table },
-            );
-        }
+    pub fn parse_file(source: &String, module_name: String) -> EnderpyFile {
+        let mut parser = Parser::new(source.clone());
+        let tree = parser.parse();
+        EnderpyFile::from(tree, module_name)
     }
+
+    pub fn get_module_name(source: &BuildSource) -> String {
+        source
+            .path
+            .file_stem()
+            .unwrap()
+            .to_str()
+            .unwrap()
+            .to_string()
+    }
+
+    fn prepare_modules(&mut self) {}
 
     // Entry point to analyze the program
     pub fn build(&mut self) {
         self.prepare_modules();
         self.pre_analysis();
-    }
-
-    pub fn get_module_name(&self, source: &BuildSource) -> String {
-        if let Some(module) = &source.module {
-            module.clone()
-        } else {
-            // TODO: fix how module name is determined
-            source
-                .path
-                .file_stem()
-                .unwrap()
-                .to_str()
-                .unwrap()
-                .to_string()
-        }
-    }
-
-    pub fn parse_file(&self, source: &String) -> EnderpyFile {
-        let mut parser = Parser::new(source.clone());
-        let tree = parser.parse();
-        EnderpyFile::from(tree)
     }
 
     // Performs pre-analysis on the source files
@@ -117,7 +110,7 @@ mod tests {
         let mut manager = BuildManager::new(
             vec![BuildSource {
                 path,
-                module: Some(String::from("test")),
+                module: String::from("test"),
                 source: source.to_string(),
                 followed: false,
             }],
