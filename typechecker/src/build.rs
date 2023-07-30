@@ -104,25 +104,33 @@ mod tests {
     }
 
     #[test]
-    fn create_symbol_table() {
-        let source = "a = 'hello world'\nb = a + 1";
-        let path = write_temp_source(source);
-        let mut manager = BuildManager::new(
-            vec![BuildSource {
-                path,
-                module: String::from("test"),
-                source: source.to_string(),
-                followed: false,
-            }],
-            Settings::test_settings(),
-        );
-        manager.build();
-        let module = manager.modules.values().last().unwrap();
-        insta::with_settings!({
-                description => "simple assignment", // the template source code
-                omit_expression => true // do not include the default expression
-            }, {
-                assert_debug_snapshot!(module.symbol_table);
-        });
+    fn assign_stmt() {
+        let sources = vec![
+            "a = 'hello world'",
+            "b = a + 1",
+            "c,d = 1,2",
+            "a: int = 1",
+            "a += b",
+        ];
+        for source in sources {
+            let path = write_temp_source(source);
+            let mut manager = BuildManager::new(
+                vec![BuildSource {
+                    path,
+                    module: String::from("test"),
+                    source: source.to_string(),
+                    followed: false,
+                }],
+                Settings::test_settings(),
+            );
+            manager.build();
+            let module = manager.modules.values().last().unwrap();
+            insta::with_settings!({
+                    description => source, // the template source code
+                    omit_expression => true // do not include the default expression
+                }, {
+                    assert_debug_snapshot!(module.symbol_table);
+            });
+        }
     }
 }

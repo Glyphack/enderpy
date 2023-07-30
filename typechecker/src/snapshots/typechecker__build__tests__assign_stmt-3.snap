@@ -1,0 +1,124 @@
+---
+source: typechecker/src/build.rs
+description: "c,d = 1,2"
+---
+SymbolTable {
+    symbol_table_type: Module,
+    symbols: {
+        "c": SymbolTableNode {
+            name: "c",
+            declarations: [
+                Variable(
+                    Variable {
+                        declaration_path: DeclarationPath {
+                            module_name: "test",
+                            node: Node {
+                                start: 0,
+                                end: 9,
+                            },
+                        },
+                        scope: Global,
+                        type_annotation: None,
+                        inferred_type_source: Some(
+                            Tuple(
+                                Tuple {
+                                    node: Node {
+                                        start: 6,
+                                        end: 9,
+                                    },
+                                    elements: [
+                                        Constant(
+                                            Constant {
+                                                node: Node {
+                                                    start: 6,
+                                                    end: 7,
+                                                },
+                                                value: Int(
+                                                    "1",
+                                                ),
+                                            },
+                                        ),
+                                        Constant(
+                                            Constant {
+                                                node: Node {
+                                                    start: 8,
+                                                    end: 9,
+                                                },
+                                                value: Int(
+                                                    "2",
+                                                ),
+                                            },
+                                        ),
+                                    ],
+                                },
+                            ),
+                        ),
+                        is_constant: false,
+                    },
+                ),
+            ],
+            module_public: false,
+            module_hidden: false,
+            implicit: false,
+            scope: Global,
+        },
+        "d": SymbolTableNode {
+            name: "d",
+            declarations: [
+                Variable(
+                    Variable {
+                        declaration_path: DeclarationPath {
+                            module_name: "test",
+                            node: Node {
+                                start: 0,
+                                end: 9,
+                            },
+                        },
+                        scope: Global,
+                        type_annotation: None,
+                        inferred_type_source: Some(
+                            Tuple(
+                                Tuple {
+                                    node: Node {
+                                        start: 6,
+                                        end: 9,
+                                    },
+                                    elements: [
+                                        Constant(
+                                            Constant {
+                                                node: Node {
+                                                    start: 6,
+                                                    end: 7,
+                                                },
+                                                value: Int(
+                                                    "1",
+                                                ),
+                                            },
+                                        ),
+                                        Constant(
+                                            Constant {
+                                                node: Node {
+                                                    start: 8,
+                                                    end: 9,
+                                                },
+                                                value: Int(
+                                                    "2",
+                                                ),
+                                            },
+                                        ),
+                                    ],
+                                },
+                            ),
+                        ),
+                        is_constant: false,
+                    },
+                ),
+            ],
+            module_public: false,
+            module_hidden: false,
+            implicit: false,
+            scope: Global,
+        },
+    },
+    start_line_number: 0,
+}

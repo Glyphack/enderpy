@@ -29,7 +29,7 @@ impl SemanticAnalyzer {
         };
     }
 
-    fn add_declaration_to_symbol_table(&mut self, name: String, decl: Declaration) {
+    fn create_symbol(&mut self, name: String, decl: Declaration) {
         let symbol_node = SymbolTableNode {
             name,
             declarations: vec![decl],
@@ -49,11 +49,42 @@ impl SemanticAnalyzer {
     fn current_scope(&self) -> SymbolScope {
         SymbolScope::Global
     }
+
+    fn create_variable_declaration_symbol(
+        &mut self,
+        target: &Expression,
+        value: Option<Expression>,
+        declaration_path: DeclarationPath,
+        type_annotation: Option<Expression>,
+    ) {
+        match target {
+            Expression::Name(n) => {
+                let decl = Declaration::Variable(Box::new(Variable {
+                    declaration_path,
+                    scope: self.current_scope(),
+                    type_annotation,
+                    inferred_type_source: value,
+                    is_constant: false,
+                }));
+                self.create_symbol(n.id.clone(), decl)
+            }
+            Expression::Tuple(t) => {
+                for elm in t.elements.iter() {
+                    self.create_variable_declaration_symbol(
+                        elm,
+                        value.clone(),
+                        declaration_path.clone(),
+                        type_annotation.clone(),
+                    )
+                }
+            }
+            _ => panic!("cannot assign to {:?} is not supported", target),
+        }
+    }
 }
 
 impl TraversalVisitor for SemanticAnalyzer {
     fn visit_stmt(&mut self, s: &parser::ast::Statement) {
-        // map all statements and call visit
         match s {
             parser::ast::Statement::ExpressionStatement(e) => self.visit_expr(e),
             parser::ast::Statement::Import(i) => self.visit_import(i),
@@ -219,7 +250,7 @@ impl TraversalVisitor for SemanticAnalyzer {
     }
 
     fn visit_tuple(&mut self, t: &parser::ast::Tuple) {
-        todo!()
+        return;
     }
 
     fn visit_dict(&mut self, d: &parser::ast::Dict) {
@@ -321,36 +352,47 @@ impl TraversalVisitor for SemanticAnalyzer {
     }
 
     fn visit_assign(&mut self, assign: &parser::ast::Assign) {
+        let value = &assign.value;
         if assign.targets.len() > 1 {
-            panic!("assignment to multiple targets not implemented")
+            panic!("multiple assignment not suported");
         }
-        let name_node = match assign.targets.last().unwrap() {
-            Expression::Name(n) => n,
-            _ => panic!("assignment to other than name node"),
+        let target = assign.targets.last().unwrap();
+        let declaration_path = DeclarationPath {
+            module_name: self.file.module_name.clone(),
+            node: assign.node,
         };
-
-        let declared_name = name_node.id.clone();
-        let decl = Declaration::Variable(Box::new(Variable {
-            declaration_path: DeclarationPath {
-                module_name: self.file.module_name.clone(),
-                node: assign.node,
-            },
-            scope: self.current_scope(),
-            type_annotation: None,
-            inferred_type_source: Some(assign.value.clone()),
-            is_constant: false,
-        }));
-        self.add_declaration_to_symbol_table(declared_name, decl);
+        self.create_variable_declaration_symbol(
+            target,
+            Some(value.clone()),
+            declaration_path,
+            None,
+        );
 
         self.visit_expr(&assign.value);
     }
 
     fn visit_ann_assign(&mut self, a: &parser::ast::AnnAssign) {
-        todo!()
+        let value = &a.value;
+        let target = &a.target;
+        let declaration_path = DeclarationPath {
+            module_name: self.file.module_name.clone(),
+            node: a.node,
+        };
+        self.create_variable_declaration_symbol(
+            target,
+            value.clone(),
+            declaration_path,
+            Some(a.annotation.clone()),
+        );
+
+        if let Some(val) = &a.value {
+            self.visit_expr(&val);
+        }
     }
 
     fn visit_aug_assign(&mut self, a: &parser::ast::AugAssign) {
-        todo!()
+        self.visit_expr(&a.target);
+        self.visit_expr(&a.value);
     }
 
     fn visit_assert(&mut self, a: &parser::ast::Assert) {

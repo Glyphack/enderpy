@@ -46,6 +46,13 @@ impl<'a> TraversalVisitor for EnderpyFile {
         self.defs.push(Statement::AssignStatement(stmt));
     }
 
+    fn visit_ann_assign(&mut self, a: &parser::ast::AnnAssign) {
+        let stmt = a.clone();
+        self.defs.push(Statement::AnnAssignStatement(stmt));
+    }
+
+    fn visit_aug_assign(&mut self, a: &parser::ast::AugAssign) {}
+
     fn visit_import(&mut self, i: &Import) {
         let import = i.clone();
         self.imports.push(ImportKinds::Import(import));
