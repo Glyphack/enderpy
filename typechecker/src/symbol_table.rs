@@ -29,7 +29,7 @@ pub struct SymbolTableNode {
     pub scope: SymbolScope,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct DeclarationPath {
     pub module_name: String,
     pub node: Node,

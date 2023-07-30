@@ -19,6 +19,10 @@ impl Node {
     }
 }
 
+trait GetNode {
+    fn get_node(&self) -> Node;
+}
+
 impl From<Node> for SourceSpan {
     fn from(val: Node) -> Self {
         Self::new(
@@ -62,6 +66,37 @@ pub enum Statement {
     FunctionDef(FunctionDef),
     ClassDef(ClassDef),
     Match(Match),
+}
+
+impl GetNode for Statement {
+    fn get_node(&self) -> Node {
+        match self {
+            Statement::AssignStatement(s) => s.node,
+            Statement::AnnAssignStatement(s) => s.node,
+            Statement::AugAssignStatement(s) => s.node,
+            Statement::ExpressionStatement(s) => s.get_node(),
+            Statement::Assert(s) => s.node,
+            Statement::Pass(s) => s.node,
+            Statement::Delete(s) => s.node,
+            Statement::Return(s) => s.node,
+            Statement::Raise(s) => s.node,
+            Statement::Break(s) => s.node,
+            Statement::Continue(s) => s.node,
+            Statement::Import(s) => s.node,
+            Statement::ImportFrom(s) => s.node,
+            Statement::Global(s) => s.node,
+            Statement::Nonlocal(s) => s.node,
+            Statement::IfStatement(s) => s.node,
+            Statement::WhileStatement(s) => s.node,
+            Statement::ForStatement(s) => s.node,
+            Statement::WithStatement(s) => s.node,
+            Statement::TryStatement(s) => s.node,
+            Statement::TryStarStatement(s) => s.node,
+            Statement::FunctionDef(s) => s.node,
+            Statement::ClassDef(s) => s.node,
+            Statement::Match(s) => s.node,
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -216,6 +251,40 @@ pub enum Expression {
     IfExp(Box<IfExp>),
     JoinedStr(Box<JoinedStr>),
     FormattedValue(Box<FormattedValue>),
+}
+
+impl GetNode for Expression {
+    fn get_node(&self) -> Node {
+        match self {
+            Expression::Constant(c) => c.node,
+            Expression::List(l) => l.node,
+            Expression::Tuple(t) => t.node,
+            Expression::Dict(d) => d.node,
+            Expression::Set(s) => s.node,
+            Expression::Name(n) => n.node,
+            Expression::BoolOp(b) => b.node,
+            Expression::UnaryOp(u) => u.node,
+            Expression::BinOp(b) => b.node,
+            Expression::NamedExpr(n) => n.node,
+            Expression::Yield(y) => y.node,
+            Expression::YieldFrom(y) => y.node,
+            Expression::Starred(s) => s.node,
+            Expression::Generator(g) => g.node,
+            Expression::ListComp(l) => l.node,
+            Expression::SetComp(s) => s.node,
+            Expression::DictComp(d) => d.node,
+            Expression::Attribute(a) => a.node,
+            Expression::Subscript(s) => s.node,
+            Expression::Slice(s) => s.node,
+            Expression::Call(c) => c.node,
+            Expression::Await(a) => a.node,
+            Expression::Compare(c) => c.node,
+            Expression::Lambda(l) => l.node,
+            Expression::IfExp(i) => i.node,
+            Expression::JoinedStr(j) => j.node,
+            Expression::FormattedValue(f) => f.node,
+        }
+    }
 }
 
 // https://docs.python.org/3/reference/expressions.html#atom-identifiers

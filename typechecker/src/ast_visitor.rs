@@ -248,9 +248,7 @@ pub trait TraversalVisitor {
     fn visit_set(&mut self, s: &Set) {
         todo!()
     }
-    fn visit_name(&mut self, n: &Name) {
-        todo!()
-    }
+    fn visit_name(&mut self, n: &Name) {}
     fn visit_bool_op(&mut self, b: &BoolOperation) {
         todo!()
     }

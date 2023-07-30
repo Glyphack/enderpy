@@ -1,0 +1,9 @@
+---
+source: typechecker/src/build.rs
+description: a += b
+---
+SymbolTable {
+    symbol_table_type: Module,
+    symbols: {},
+    start_line_number: 0,
+}

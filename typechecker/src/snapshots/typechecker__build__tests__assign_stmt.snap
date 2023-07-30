@@ -1,0 +1,46 @@
+---
+source: typechecker/src/build.rs
+description: "a = 'hello world'"
+---
+SymbolTable {
+    symbol_table_type: Module,
+    symbols: {
+        "a": SymbolTableNode {
+            name: "a",
+            declarations: [
+                Variable(
+                    Variable {
+                        declaration_path: DeclarationPath {
+                            module_name: "test",
+                            node: Node {
+                                start: 0,
+                                end: 17,
+                            },
+                        },
+                        scope: Global,
+                        type_annotation: None,
+                        inferred_type_source: Some(
+                            Constant(
+                                Constant {
+                                    node: Node {
+                                        start: 4,
+                                        end: 17,
+                                    },
+                                    value: Str(
+                                        "hello world",
+                                    ),
+                                },
+                            ),
+                        ),
+                        is_constant: false,
+                    },
+                ),
+            ],
+            module_public: false,
+            module_hidden: false,
+            implicit: false,
+            scope: Global,
+        },
+    },
+    start_line_number: 0,
+}

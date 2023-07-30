@@ -1,0 +1,56 @@
+---
+source: typechecker/src/build.rs
+description: "a: int = 1"
+---
+SymbolTable {
+    symbol_table_type: Module,
+    symbols: {
+        "a": SymbolTableNode {
+            name: "a",
+            declarations: [
+                Variable(
+                    Variable {
+                        declaration_path: DeclarationPath {
+                            module_name: "test",
+                            node: Node {
+                                start: 0,
+                                end: 10,
+                            },
+                        },
+                        scope: Global,
+                        type_annotation: Some(
+                            Name(
+                                Name {
+                                    node: Node {
+                                        start: 3,
+                                        end: 6,
+                                    },
+                                    id: "int",
+                                },
+                            ),
+                        ),
+                        inferred_type_source: Some(
+                            Constant(
+                                Constant {
+                                    node: Node {
+                                        start: 9,
+                                        end: 10,
+                                    },
+                                    value: Int(
+                                        "1",
+                                    ),
+                                },
+                            ),
+                        ),
+                        is_constant: false,
+                    },
+                ),
+            ],
+            module_public: false,
+            module_hidden: false,
+            implicit: false,
+            scope: Global,
+        },
+    },
+    start_line_number: 0,
+}
