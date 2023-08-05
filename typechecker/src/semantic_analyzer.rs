@@ -1,12 +1,10 @@
-use std::ops::Deref;
-
 use parser::ast::Expression;
 
 use crate::{
     ast_visitor::TraversalVisitor,
     nodes::EnderpyFile,
     symbol_table::{
-        Declaration, DeclarationPath, SymbolScope, SymbolTable, SymbolTableNode, Variable,
+        Declaration, DeclarationPath, Function, SymbolScope, SymbolTable, SymbolTableNode, Variable,
     },
 };
 
@@ -224,6 +222,19 @@ impl TraversalVisitor for SemanticAnalyzer {
     }
 
     fn visit_function_def(&mut self, f: &parser::ast::FunctionDef) {
+        let declaration_path = DeclarationPath {
+            module_name: self.file.module_name.clone(),
+            node: f.node,
+        };
+        let functionDeclaration = Function {
+            declaration_path,
+            scope: self.current_scope(),
+            is_method: todo!(),
+            is_generator: todo!(),
+            return_statements: todo!(),
+            yeild_statements: todo!(),
+            raise_statements: todo!(),
+        };
         for stmt in &f.body {
             self.visit_stmt(&stmt);
         }
