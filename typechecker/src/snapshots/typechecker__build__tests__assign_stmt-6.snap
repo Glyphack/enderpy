@@ -1,11 +1,42 @@
 ---
 source: typechecker/src/build.rs
-description: "a = 'hello world'"
+description: "def f():\n   a = 1\n"
 ---
 SymbolTable {
     scopes: [
         SymbolTableScope {
             symbol_table_type: Module,
+            symbols: {
+                "f": SymbolTableNode {
+                    name: "f",
+                    declarations: [
+                        Function(
+                            Function {
+                                declaration_path: DeclarationPath {
+                                    module_name: "test",
+                                    node: Node {
+                                        start: 0,
+                                        end: 18,
+                                    },
+                                },
+                                is_method: false,
+                                is_generator: false,
+                                return_statements: [],
+                                yeild_statements: [],
+                                raise_statements: [],
+                            },
+                        ),
+                    ],
+                    module_public: false,
+                    module_hidden: false,
+                    implicit: false,
+                },
+            },
+        },
+    ],
+    all_scopes: [
+        SymbolTableScope {
+            symbol_table_type: Function,
             symbols: {
                 "a": SymbolTableNode {
                     name: "a",
@@ -15,7 +46,7 @@ SymbolTable {
                                 declaration_path: DeclarationPath {
                                     module_name: "test",
                                     node: Node {
-                                        start: 0,
+                                        start: 12,
                                         end: 17,
                                     },
                                 },
@@ -25,11 +56,11 @@ SymbolTable {
                                     Constant(
                                         Constant {
                                             node: Node {
-                                                start: 4,
+                                                start: 16,
                                                 end: 17,
                                             },
-                                            value: Str(
-                                                "hello world",
+                                            value: Int(
+                                                "1",
                                             ),
                                         },
                                     ),
@@ -45,5 +76,4 @@ SymbolTable {
             },
         },
     ],
-    all_scopes: [],
 }

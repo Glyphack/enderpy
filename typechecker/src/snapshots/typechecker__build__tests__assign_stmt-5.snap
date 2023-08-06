@@ -5,7 +5,6 @@ description: a += b
 SymbolTable {
     scopes: [
         SymbolTableScope {
-            start_line_number: 0,
             symbol_table_type: Module,
             symbols: {},
         },

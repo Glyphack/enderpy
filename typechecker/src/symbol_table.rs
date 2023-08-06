@@ -11,9 +11,17 @@ pub struct SymbolTable {
 
 #[derive(Debug)]
 pub struct SymbolTableScope {
-    pub start_line_number: u8,
     pub symbol_table_type: SymbolTableType,
     symbols: HashMap<String, SymbolTableNode>,
+}
+
+impl SymbolTableScope {
+    pub fn new(symbol_table_type: SymbolTableType) -> Self {
+        SymbolTableScope {
+            symbol_table_type,
+            symbols: HashMap::new(),
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -30,7 +38,6 @@ pub struct SymbolTableNode {
     pub module_public: bool,
     pub module_hidden: bool,
     pub implicit: bool,
-    pub scope: SymbolScope,
 }
 
 #[derive(Debug, Clone)]
@@ -57,7 +64,6 @@ pub struct Variable {
 #[derive(Debug)]
 pub struct Function {
     pub declaration_path: DeclarationPath,
-    pub scope: SymbolScope,
     pub is_method: bool,
     pub is_generator: bool,
     pub return_statements: Vec<ast::Return>,
@@ -77,7 +83,6 @@ pub enum SymbolScope {
 impl SymbolTable {
     pub fn new(symbol_table_type: SymbolTableType, start_line_number: u8) -> Self {
         let global_scope = SymbolTableScope {
-            start_line_number,
             symbol_table_type,
             symbols: HashMap::new(),
         };
@@ -94,6 +99,11 @@ impl SymbolTable {
             panic!("no scopes")
         }
     }
+
+    pub fn current_scope_type(&self) -> &SymbolTableType {
+        return &self.current_scope().symbol_table_type;
+    }
+
     pub fn lookup_in_scope(&self, name: &str) -> Option<&SymbolTableNode> {
         let cur_scope = self.current_scope();
         return cur_scope.symbols.get(name);

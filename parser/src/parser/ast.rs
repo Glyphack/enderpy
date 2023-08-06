@@ -40,6 +40,7 @@ pub struct Module {
     pub body: Vec<Statement>,
 }
 
+// Use box to reduce the enum size
 #[derive(Debug, Clone)]
 pub enum Statement {
     AssignStatement(Assign),
