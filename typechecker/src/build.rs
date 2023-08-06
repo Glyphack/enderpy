@@ -111,6 +111,10 @@ mod tests {
             "c,d = 1,2",
             "a: int = 1",
             "a += b",
+            "def f():
+   a = 1
+   return
+",
         ];
         for source in sources {
             let path = write_temp_source(source);

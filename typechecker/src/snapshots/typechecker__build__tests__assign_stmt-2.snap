@@ -3,62 +3,65 @@ source: typechecker/src/build.rs
 description: b = a + 1
 ---
 SymbolTable {
-    symbol_table_type: Module,
-    symbols: {
-        "b": SymbolTableNode {
-            name: "b",
-            declarations: [
-                Variable(
-                    Variable {
-                        declaration_path: DeclarationPath {
-                            module_name: "test",
-                            node: Node {
-                                start: 0,
-                                end: 9,
-                            },
-                        },
-                        scope: Global,
-                        type_annotation: None,
-                        inferred_type_source: Some(
-                            BinOp(
-                                BinOp {
+    scopes: [
+        SymbolTableScope {
+            symbol_table_type: Module,
+            symbols: {
+                "b": SymbolTableNode {
+                    name: "b",
+                    declarations: [
+                        Variable(
+                            Variable {
+                                declaration_path: DeclarationPath {
+                                    module_name: "test",
                                     node: Node {
-                                        start: 4,
+                                        start: 0,
                                         end: 9,
                                     },
-                                    op: Add,
-                                    left: Name(
-                                        Name {
+                                },
+                                scope: Global,
+                                type_annotation: None,
+                                inferred_type_source: Some(
+                                    BinOp(
+                                        BinOp {
                                             node: Node {
                                                 start: 4,
-                                                end: 5,
-                                            },
-                                            id: "a",
-                                        },
-                                    ),
-                                    right: Constant(
-                                        Constant {
-                                            node: Node {
-                                                start: 8,
                                                 end: 9,
                                             },
-                                            value: Int(
-                                                "1",
+                                            op: Add,
+                                            left: Name(
+                                                Name {
+                                                    node: Node {
+                                                        start: 4,
+                                                        end: 5,
+                                                    },
+                                                    id: "a",
+                                                },
+                                            ),
+                                            right: Constant(
+                                                Constant {
+                                                    node: Node {
+                                                        start: 8,
+                                                        end: 9,
+                                                    },
+                                                    value: Int(
+                                                        "1",
+                                                    ),
+                                                },
                                             ),
                                         },
                                     ),
-                                },
-                            ),
+                                ),
+                                is_constant: false,
+                            },
                         ),
-                        is_constant: false,
-                    },
-                ),
-            ],
-            module_public: false,
-            module_hidden: false,
-            implicit: false,
-            scope: Global,
+                    ],
+                    module_public: false,
+                    module_hidden: false,
+                    implicit: false,
+                },
+            },
         },
-    },
-    start_line_number: 0,
+    ],
+    all_scopes: [],
 }

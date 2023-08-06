@@ -1,4 +1,4 @@
-use std::ops::Deref;
+use std::collections::HashMap;
 
 use parser::ast::Expression;
 
@@ -6,7 +6,8 @@ use crate::{
     ast_visitor::TraversalVisitor,
     nodes::EnderpyFile,
     symbol_table::{
-        Declaration, DeclarationPath, SymbolScope, SymbolTable, SymbolTableNode, Variable,
+        Declaration, DeclarationPath, Function, SymbolScope, SymbolTable, SymbolTableNode,
+        SymbolTableScope, SymbolTableType, Variable,
     },
 };
 
@@ -15,6 +16,8 @@ pub struct SemanticAnalyzer {
     // TODO: Replace errors with another type
     file: Box<EnderpyFile>,
     errors: Vec<String>,
+
+    // TOD: Not needed?
     scope: SymbolScope,
 }
 
@@ -36,7 +39,6 @@ impl SemanticAnalyzer {
             module_public: false,
             module_hidden: false,
             implicit: false,
-            scope: self.scope,
         };
         self.globals.add_symbol(symbol_node)
     }
@@ -46,8 +48,12 @@ impl SemanticAnalyzer {
             .push(String::from(format!("cannot resolve reference {}", "")))
     }
 
-    fn current_scope(&self) -> SymbolScope {
-        SymbolScope::Global
+    fn current_scope(&self) -> &SymbolTableType {
+        return self.globals.current_scope_type();
+    }
+
+    fn is_inside_class(&self) -> bool {
+        return matches!(self.current_scope(), SymbolTableType::Class);
     }
 
     fn create_variable_declaration_symbol(
@@ -61,7 +67,8 @@ impl SemanticAnalyzer {
             Expression::Name(n) => {
                 let decl = Declaration::Variable(Box::new(Variable {
                     declaration_path,
-                    scope: self.current_scope(),
+                    // TODO: Hacky way
+                    scope: SymbolScope::Global,
                     type_annotation,
                     inferred_type_source: value,
                     is_constant: false,
@@ -224,9 +231,39 @@ impl TraversalVisitor for SemanticAnalyzer {
     }
 
     fn visit_function_def(&mut self, f: &parser::ast::FunctionDef) {
+        let declaration_path = DeclarationPath {
+            module_name: self.file.module_name.clone(),
+            node: f.node,
+        };
+        self.globals.enter_scope(SymbolTableScope::new(
+            crate::symbol_table::SymbolTableType::Function,
+        ));
+        let mut return_statements = vec![];
+        let mut yeild_statements = vec![];
+        let mut raise_statements = vec![];
         for stmt in &f.body {
             self.visit_stmt(&stmt);
+            match &stmt {
+                parser::ast::Statement::Raise(r) => raise_statements.push(r.clone()),
+                parser::ast::Statement::Return(r) => return_statements.push(r.clone()),
+                parser::ast::Statement::ExpressionStatement(e) => match e {
+                    parser::ast::Expression::Yield(y) => yeild_statements.push(*y.clone()),
+                    _ => (),
+                },
+                _ => (),
+            }
         }
+        self.globals.exit_scope();
+
+        let function_declaration = Declaration::Function(Box::new(Function {
+            declaration_path,
+            is_method: self.is_inside_class(),
+            is_generator: !yeild_statements.is_empty(),
+            return_statements,
+            yeild_statements,
+            raise_statements,
+        }));
+        self.create_symbol(f.name.clone(), function_declaration);
     }
 
     fn visit_class_def(&mut self, c: &parser::ast::ClassDef) {
@@ -407,9 +444,7 @@ impl TraversalVisitor for SemanticAnalyzer {
         todo!()
     }
 
-    fn visit_return(&mut self, r: &parser::ast::Return) {
-        todo!()
-    }
+    fn visit_return(&mut self, r: &parser::ast::Return) {}
 
     fn visit_raise(&mut self, r: &parser::ast::Raise) {
         todo!()

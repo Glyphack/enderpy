@@ -3,13 +3,25 @@ use std::collections::HashMap;
 
 #[derive(Debug)]
 pub struct SymbolTable {
+    // Sub tables are scopes inside the current scope
+    scopes: Vec<SymbolTableScope>,
+    // When a symbol goes out of scope we save it here to be able to look it up later
+    all_scopes: Vec<SymbolTableScope>,
+}
+
+#[derive(Debug)]
+pub struct SymbolTableScope {
     pub symbol_table_type: SymbolTableType,
     symbols: HashMap<String, SymbolTableNode>,
-    pub start_line_number: u8,
-    // all sub tables have to be valid until the top level scope is valid
-    // sub_tables: Vec<&'a SymbolTable<'a>>,
-    // index of current scope in this table where we insert new symbols
-    // current_scope: u8,
+}
+
+impl SymbolTableScope {
+    pub fn new(symbol_table_type: SymbolTableType) -> Self {
+        SymbolTableScope {
+            symbol_table_type,
+            symbols: HashMap::new(),
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -26,7 +38,6 @@ pub struct SymbolTableNode {
     pub module_public: bool,
     pub module_hidden: bool,
     pub implicit: bool,
-    pub scope: SymbolScope,
 }
 
 #[derive(Debug, Clone)]
@@ -38,6 +49,7 @@ pub struct DeclarationPath {
 #[derive(Debug)]
 pub enum Declaration {
     Variable(Box<Variable>),
+    Function(Box<Function>),
 }
 
 #[derive(Debug)]
@@ -47,6 +59,17 @@ pub struct Variable {
     pub type_annotation: Option<ast::Expression>,
     pub inferred_type_source: Option<ast::Expression>,
     pub is_constant: bool,
+}
+
+#[derive(Debug)]
+pub struct Function {
+    pub declaration_path: DeclarationPath,
+    pub is_method: bool,
+    pub is_generator: bool,
+    pub return_statements: Vec<ast::Return>,
+    pub yeild_statements: Vec<ast::Yield>,
+    // helpful to later type check exceptions
+    pub raise_statements: Vec<ast::Raise>,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -59,24 +82,52 @@ pub enum SymbolScope {
 
 impl SymbolTable {
     pub fn new(symbol_table_type: SymbolTableType, start_line_number: u8) -> Self {
-        SymbolTable {
+        let global_scope = SymbolTableScope {
             symbol_table_type,
             symbols: HashMap::new(),
-            start_line_number,
+        };
+        SymbolTable {
+            scopes: vec![global_scope],
+            all_scopes: vec![],
         }
     }
-    pub fn lookup_in_scope(&self, name: &str) -> Option<&SymbolTableNode> {
-        return self.symbols.get(name);
-    }
-    //
-    // pub fn enter_scope(&mut self, new_symbol_table: &'a SymbolTable<'a>) {
-    //     self.sub_tables.push(new_symbol_table);
-    // }
 
-    pub fn exit_scope(&self) {}
+    fn current_scope(&self) -> &SymbolTableScope {
+        if let Some(scope) = self.scopes.last() {
+            return &scope;
+        } else {
+            panic!("no scopes")
+        }
+    }
+
+    pub fn current_scope_type(&self) -> &SymbolTableType {
+        return &self.current_scope().symbol_table_type;
+    }
+
+    pub fn lookup_in_scope(&self, name: &str) -> Option<&SymbolTableNode> {
+        let cur_scope = self.current_scope();
+        return cur_scope.symbols.get(name);
+    }
+
+    pub fn enter_scope(&mut self, new_scope: SymbolTableScope) {
+        self.scopes.push(new_scope);
+    }
+
+    pub fn exit_scope(&mut self) {
+        let finished_scope = self.scopes.pop();
+        match finished_scope {
+            Some(scope) => self.all_scopes.push(scope),
+            None => panic!("tried to exit non-existent scope"),
+        }
+    }
 
     pub fn add_symbol(&mut self, symbol_node: SymbolTableNode) {
-        self.symbols.insert(symbol_node.name.clone(), symbol_node);
+        match self.scopes.last_mut() {
+            Some(scope) => {
+                scope.symbols.insert(symbol_node.name.clone(), symbol_node);
+            }
+            None => panic!("no current scope, there must be a global scope"),
+        };
     }
 }
 

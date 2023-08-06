@@ -3,7 +3,11 @@ source: typechecker/src/build.rs
 description: a += b
 ---
 SymbolTable {
-    symbol_table_type: Module,
-    symbols: {},
-    start_line_number: 0,
+    scopes: [
+        SymbolTableScope {
+            symbol_table_type: Module,
+            symbols: {},
+        },
+    ],
+    all_scopes: [],
 }
