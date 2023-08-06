@@ -113,6 +113,7 @@ mod tests {
             "a += b",
             "def f():
    a = 1
+   return
 ",
         ];
         for source in sources {

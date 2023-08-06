@@ -7,8 +7,8 @@ SymbolTable {
         SymbolTableScope {
             symbol_table_type: Module,
             symbols: {
-                "c": SymbolTableNode {
-                    name: "c",
+                "d": SymbolTableNode {
+                    name: "d",
                     declarations: [
                         Variable(
                             Variable {
@@ -63,8 +63,8 @@ SymbolTable {
                     module_hidden: false,
                     implicit: false,
                 },
-                "d": SymbolTableNode {
-                    name: "d",
+                "c": SymbolTableNode {
+                    name: "c",
                     declarations: [
                         Variable(
                             Variable {

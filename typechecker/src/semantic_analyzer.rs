@@ -444,9 +444,7 @@ impl TraversalVisitor for SemanticAnalyzer {
         todo!()
     }
 
-    fn visit_return(&mut self, r: &parser::ast::Return) {
-        todo!()
-    }
+    fn visit_return(&mut self, r: &parser::ast::Return) {}
 
     fn visit_raise(&mut self, r: &parser::ast::Raise) {
         todo!()

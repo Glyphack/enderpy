@@ -1,6 +1,6 @@
 ---
 source: typechecker/src/build.rs
-description: "def f():\n   a = 1\n"
+description: "def f():\n   a = 1\n   return\n"
 ---
 SymbolTable {
     scopes: [
@@ -16,12 +16,20 @@ SymbolTable {
                                     module_name: "test",
                                     node: Node {
                                         start: 0,
-                                        end: 18,
+                                        end: 28,
                                     },
                                 },
                                 is_method: false,
                                 is_generator: false,
-                                return_statements: [],
+                                return_statements: [
+                                    Return {
+                                        node: Node {
+                                            start: 18,
+                                            end: 27,
+                                        },
+                                        value: None,
+                                    },
+                                ],
                                 yeild_statements: [],
                                 raise_statements: [],
                             },
