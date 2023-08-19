@@ -137,4 +137,34 @@ mod tests {
             });
         }
     }
+
+    #[test]
+    fn test_class_def() {
+        let sources = vec![
+            "class c:
+   def __init__(self):
+        b = 1
+",
+        ];
+        for source in sources {
+            let path = write_temp_source(source);
+            let mut manager = BuildManager::new(
+                vec![BuildSource {
+                    path,
+                    module: String::from("test"),
+                    source: source.to_string(),
+                    followed: false,
+                }],
+                Settings::test_settings(),
+            );
+            manager.build();
+            let module = manager.modules.values().last().unwrap();
+            insta::with_settings!({
+                    description => source, // the template source code
+                    omit_expression => true // do not include the default expression
+                }, {
+                    assert_debug_snapshot!(module.symbol_table);
+            });
+        }
+    }
 }

@@ -6,7 +6,7 @@ use crate::{
     ast_visitor::TraversalVisitor,
     nodes::EnderpyFile,
     symbol_table::{
-        Declaration, DeclarationPath, Function, SymbolScope, SymbolTable, SymbolTableNode,
+        Class, Declaration, DeclarationPath, Function, SymbolScope, SymbolTable, SymbolTableNode,
         SymbolTableScope, SymbolTableType, Variable,
     },
 };
@@ -36,9 +36,6 @@ impl SemanticAnalyzer {
         let symbol_node = SymbolTableNode {
             name,
             declarations: vec![decl],
-            module_public: false,
-            module_hidden: false,
-            implicit: false,
         };
         self.globals.add_symbol(symbol_node)
     }
@@ -85,6 +82,9 @@ impl SemanticAnalyzer {
                     )
                 }
             }
+            Expression::Attribute(_) => print!(
+                "Ignoring attribute assingment. See https://github.com/Glyphack/enderpy/issues/157"
+            ),
             _ => panic!("cannot assign to {:?} is not supported", target),
         }
     }
@@ -237,6 +237,7 @@ impl TraversalVisitor for SemanticAnalyzer {
         };
         self.globals.enter_scope(SymbolTableScope::new(
             crate::symbol_table::SymbolTableType::Function,
+            f.name.clone(),
         ));
         let mut return_statements = vec![];
         let mut yeild_statements = vec![];
@@ -267,9 +268,31 @@ impl TraversalVisitor for SemanticAnalyzer {
     }
 
     fn visit_class_def(&mut self, c: &parser::ast::ClassDef) {
+        let declaration_path = DeclarationPath {
+            module_name: self.file.module_name.clone(),
+            node: c.node,
+        };
+        self.globals.enter_scope(SymbolTableScope::new(
+            SymbolTableType::Class,
+            c.name.clone(),
+        ));
+        let mut methods = vec![];
         for stmt in &c.body {
+            match stmt {
+                parser::ast::Statement::FunctionDef(f) => {
+                    methods.push(f.name.clone());
+                }
+                _ => (),
+            }
             self.visit_stmt(&stmt);
         }
+        self.globals.exit_scope();
+
+        let class_declaration = Declaration::Class(Box::new(Class {
+            declaration_path,
+            methods,
+        }));
+        self.create_symbol(c.name.clone(), class_declaration);
     }
 
     fn visit_match(&mut self, m: &parser::ast::Match) {
