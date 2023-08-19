@@ -119,7 +119,6 @@ impl SymbolTable {
     }
 
     pub fn enter_scope(&mut self, new_scope: SymbolTableScope) {
-        println!("entered scope: {:?}", self.scopes);
         self.scopes.push(new_scope);
     }
 
@@ -130,14 +129,12 @@ impl SymbolTable {
             None => panic!("tried to exit non-existent scope"),
         }
 
-        println!("exited scope: {:?}", self.scopes);
     }
 
     pub fn add_symbol(&mut self, symbol_node: SymbolTableNode) {
         match self.scopes.last_mut() {
             Some(scope) => {
                 scope.symbols.insert(symbol_node.name.clone(), symbol_node);
-                println!("added symbol: {:?}", self.scopes);
             }
             None => panic!("no current scope, there must be a global scope"),
         };

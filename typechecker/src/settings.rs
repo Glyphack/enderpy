@@ -23,9 +23,6 @@ impl Settings {
             .add_source(File::with_name("examples/hierarchical-env/config/default"))
             .build()?;
 
-        // Now that we're done, let's access our configuration
-        println!("debug: {:?}", s.get_bool("debug"));
-
         s.try_deserialize()
     }
 
