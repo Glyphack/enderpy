@@ -45,7 +45,7 @@ def print_symbol_table_info(symbol_table: symtable.SymbolTable, indent=0):
 
 # Example usage:
 code = """
-class A(B): pass
+a = 1
 """
 symbol_table = symtable.symtable(code, "example", "exec")
 print_symbol_table_info(symbol_table)

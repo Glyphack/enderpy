@@ -12,13 +12,15 @@ pub struct SymbolTable {
 #[derive(Debug)]
 pub struct SymbolTableScope {
     pub symbol_table_type: SymbolTableType,
+    pub name: String,
     symbols: HashMap<String, SymbolTableNode>,
 }
 
 impl SymbolTableScope {
-    pub fn new(symbol_table_type: SymbolTableType) -> Self {
+    pub fn new(symbol_table_type: SymbolTableType, name: String) -> Self {
         SymbolTableScope {
             symbol_table_type,
+            name,
             symbols: HashMap::new(),
         }
     }
@@ -35,9 +37,6 @@ pub enum SymbolTableType {
 pub struct SymbolTableNode {
     pub name: String,
     pub declarations: Vec<Declaration>,
-    pub module_public: bool,
-    pub module_hidden: bool,
-    pub implicit: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -108,6 +107,7 @@ impl SymbolTable {
         let global_scope = SymbolTableScope {
             symbol_table_type,
             symbols: HashMap::new(),
+            name: String::from("global"),
         };
         SymbolTable {
             scopes: vec![global_scope],
@@ -142,6 +142,7 @@ impl SymbolTable {
             Some(scope) => self.all_scopes.push(scope),
             None => panic!("tried to exit non-existent scope"),
         }
+
     }
 
     pub fn add_symbol(&mut self, symbol_node: SymbolTableNode) {

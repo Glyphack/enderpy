@@ -67,4 +67,9 @@ impl<'a> TraversalVisitor for EnderpyFile {
         let func = f.clone();
         self.defs.push(Statement::FunctionDef(func));
     }
+
+    fn visit_class_def(&mut self, c: &parser::ast::ClassDef) {
+        let class = c.clone();
+        self.defs.push(Statement::ClassDef(class));
+    }
 }
