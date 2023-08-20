@@ -6,6 +6,7 @@ SymbolTable {
     scopes: [
         SymbolTableScope {
             symbol_table_type: Module,
+            name: "global",
             symbols: {
                 "a": SymbolTableNode {
                     name: "a",
@@ -48,9 +49,6 @@ SymbolTable {
                             },
                         ),
                     ],
-                    module_public: false,
-                    module_hidden: false,
-                    implicit: false,
                 },
             },
         },

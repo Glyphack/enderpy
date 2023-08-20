@@ -7,7 +7,7 @@ use crate::{
     nodes::EnderpyFile,
     symbol_table::{
         Class, Class, Class, Declaration, Declaration, Declaration, DeclarationPath, Function,
-        Function, Paramter, Paramter, Paramter, SymbolScope, SymbolScope,
+        Function, Paramter, Paramter, Paramter, SymbolScope,
     },
 };
 
