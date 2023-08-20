@@ -50,6 +50,11 @@ pub enum Declaration {
     Variable(Box<Variable>),
     Function(Box<Function>),
     Class(Box<Class>),
+
+    Parameter(Box<Paramter>),
+
+    // TypeParameterDeclaration represents a type parameter in a generic class or function. It models type parameters declared on classes and functions like T in List[T].
+    TypeParameter,
 }
 
 #[derive(Debug)]
@@ -64,6 +69,7 @@ pub struct Variable {
 #[derive(Debug)]
 pub struct Function {
     pub declaration_path: DeclarationPath,
+    pub function_node: ast::FunctionDef,
     pub is_method: bool,
     pub is_generator: bool,
     pub return_statements: Vec<ast::Return>,
@@ -78,6 +84,14 @@ pub struct Class {
     // Method names, can be used to look up the function in the symbol table
     // of the class
     pub methods: Vec<String>,
+}
+
+#[derive(Debug)]
+pub struct Paramter {
+    pub declaration_path: DeclarationPath,
+    pub parameter_node: ast::Arg,
+    pub type_annotation: Option<ast::Expression>,
+    pub default_value: Option<ast::Expression>,
 }
 
 #[derive(Debug, Clone, Copy)]

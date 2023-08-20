@@ -137,6 +137,30 @@ mod tests {
             });
         }
     }
+    #[test]
+    fn test_function_def_symbols() {
+        let sources = vec!["def func(a ,b , /, c = 2, **e): pass"];
+        for source in sources {
+            let path = write_temp_source(source);
+            let mut manager = BuildManager::new(
+                vec![BuildSource {
+                    path,
+                    module: String::from("test"),
+                    source: source.to_string(),
+                    followed: false,
+                }],
+                Settings::test_settings(),
+            );
+            manager.build();
+            let module = manager.modules.values().last().unwrap();
+            insta::with_settings!({
+                    description => source, // the template source code
+                    omit_expression => true // do not include the default expression
+                }, {
+                    assert_debug_snapshot!(module.symbol_table);
+            });
+        }
+    }
 
     #[test]
     fn test_class_def() {
