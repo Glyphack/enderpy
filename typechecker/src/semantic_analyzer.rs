@@ -6,8 +6,8 @@ use crate::{
     ast_visitor::TraversalVisitor,
     nodes::EnderpyFile,
     symbol_table::{
-        Class, Class, Class, Declaration, Declaration, Declaration, DeclarationPath, Function,
-        Function, Paramter, Paramter, Paramter, SymbolScope, SymbolScope,
+        Class, Declaration, DeclarationPath, Function, Paramter, SymbolScope, SymbolTable,
+        SymbolTableNode, SymbolTableScope, SymbolTableType, Variable,
     },
 };
 
