@@ -45,19 +45,28 @@ pub struct DeclarationPath {
     pub node: Node,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Declaration {
     Variable(Box<Variable>),
     Function(Box<Function>),
     Class(Box<Class>),
 
     Parameter(Box<Paramter>),
-
     // TypeParameterDeclaration represents a type parameter in a generic class or function. It models type parameters declared on classes and functions like T in List[T].
-    TypeParameter,
 }
 
-#[derive(Debug)]
+impl Declaration {
+    pub fn declaration_path(&self) -> &DeclarationPath {
+        match self {
+            Declaration::Variable(v) => &v.declaration_path,
+            Declaration::Function(f) => &f.declaration_path,
+            Declaration::Class(c) => &c.declaration_path,
+            Declaration::Parameter(p) => &p.declaration_path,
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
 pub struct Variable {
     pub declaration_path: DeclarationPath,
     pub scope: SymbolScope,
@@ -66,7 +75,7 @@ pub struct Variable {
     pub is_constant: bool,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Function {
     pub declaration_path: DeclarationPath,
     pub function_node: ast::FunctionDef,
@@ -78,7 +87,7 @@ pub struct Function {
     pub raise_statements: Vec<ast::Raise>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Class {
     pub declaration_path: DeclarationPath,
     // Method names, can be used to look up the function in the symbol table
@@ -86,7 +95,7 @@ pub struct Class {
     pub methods: Vec<String>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Paramter {
     pub declaration_path: DeclarationPath,
     pub parameter_node: ast::Arg,
@@ -142,7 +151,6 @@ impl SymbolTable {
             Some(scope) => self.all_scopes.push(scope),
             None => panic!("tried to exit non-existent scope"),
         }
-
     }
 
     pub fn add_symbol(&mut self, symbol_node: SymbolTableNode) {
@@ -158,5 +166,70 @@ impl SymbolTable {
 impl SymbolTableNode {
     pub fn add_declaration(&mut self, decl: Declaration) {
         self.declarations.push(decl);
+    }
+}
+
+// implement display for symbol table and sort the symbols by key
+
+impl std::fmt::Display for SymbolTable {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        writeln!(f, "global scope:")?;
+        let mut sorted_scopes = self.scopes.iter().collect::<Vec<&SymbolTableScope>>();
+        sorted_scopes.sort_by(|a, b| a.name.cmp(&b.name));
+
+        for scope in sorted_scopes {
+            writeln!(f, "{}", scope)?;
+        }
+
+        writeln!(f, "-------------------")?;
+        writeln!(f, "all scopes:")?;
+
+        let mut sorted_all_scopes = self.all_scopes.iter().collect::<Vec<&SymbolTableScope>>();
+        sorted_all_scopes.sort_by(|a, b| a.name.cmp(&b.name));
+        for scope in sorted_all_scopes {
+            writeln!(f, "{}", scope)?;
+        }
+        Ok(())
+    }
+}
+
+impl std::fmt::Display for SymbolTableScope {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut sorted_symbols = self
+            .symbols
+            .iter()
+            .collect::<Vec<(&String, &SymbolTableNode)>>();
+        sorted_symbols.sort_by(|a, b| a.0.cmp(b.0));
+
+        writeln!(f, "Symbols:")?;
+        for (name, symbol) in sorted_symbols {
+            writeln!(f, "{}", name)?;
+            // sort the declarations by line number
+            let mut sorted_declarations = symbol.declarations.clone();
+            sorted_declarations.sort_by(|a, b| {
+                a.declaration_path()
+                    .node
+                    .start
+                    .cmp(&b.declaration_path().node.start)
+            });
+
+            writeln!(f, "- Declarations:")?;
+
+            for declaration in sorted_declarations {
+                writeln!(f, "--:   {}", declaration)?;
+            }
+        }
+        Ok(())
+    }
+}
+
+impl std::fmt::Display for Declaration {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Declaration::Variable(v) => write!(f, "{:?}", v),
+            Declaration::Function(fun) => write!(f, "{:?}", fun),
+            Declaration::Class(c) => write!(f, "{:?}", c),
+            Declaration::Parameter(p) => write!(f, "{:?}", p),
+        }
     }
 }

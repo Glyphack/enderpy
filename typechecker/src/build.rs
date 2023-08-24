@@ -62,11 +62,8 @@ impl BuildManager {
             .to_string()
     }
 
-    fn prepare_modules(&mut self) {}
-
     // Entry point to analyze the program
     pub fn build(&mut self) {
-        self.prepare_modules();
         self.pre_analysis();
     }
 
@@ -90,105 +87,52 @@ impl BuildManager {
     }
 }
 
+fn snapshot_symbol_table(source: &str) -> String {
+    let mut manager = BuildManager::new(
+        vec![BuildSource {
+            path: PathBuf::from("test.py"),
+            module: String::from("test"),
+            source: source.to_string(),
+            followed: false,
+        }],
+        Settings::test_settings(),
+    );
+    manager.build();
+
+    let module = manager.modules.values().last().unwrap();
+
+    format!("{}", module.symbol_table)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
-    use insta::assert_debug_snapshot;
 
-    // Write a temp file with source code and return the path for test. Cleanup after this goes out of scope
-    fn write_temp_source(source: &str) -> PathBuf {
-        let path = PathBuf::from("./tmp/test.py");
-        // let mut file = std::fs::File::create(&path).unwrap();
-        // file.write_all(source.as_bytes()).unwrap();
-        path
-    }
-
-    #[test]
-    fn assign_stmt() {
-        let sources = vec![
-            "a = 'hello world'",
-            "b = a + 1",
-            "c,d = 1,2",
-            "a: int = 1",
-            "a += b",
-            "def f():
-   a = 1
-   return
-",
-        ];
-        for source in sources {
-            let path = write_temp_source(source);
-            let mut manager = BuildManager::new(
-                vec![BuildSource {
-                    path,
-                    module: String::from("test"),
-                    source: source.to_string(),
-                    followed: false,
-                }],
-                Settings::test_settings(),
-            );
-            manager.build();
-            let module = manager.modules.values().last().unwrap();
-            insta::with_settings!({
-                    description => source, // the template source code
-                    omit_expression => true // do not include the default expression
-                }, {
-                    assert_debug_snapshot!(module.symbol_table);
-            });
-        }
-    }
-    #[test]
-    fn test_function_def_symbols() {
-        let sources = vec!["def func(a ,b , /, c = 2, **e): pass"];
-        for source in sources {
-            let path = write_temp_source(source);
-            let mut manager = BuildManager::new(
-                vec![BuildSource {
-                    path,
-                    module: String::from("test"),
-                    source: source.to_string(),
-                    followed: false,
-                }],
-                Settings::test_settings(),
-            );
-            manager.build();
-            let module = manager.modules.values().last().unwrap();
-            insta::with_settings!({
-                    description => source, // the template source code
-                    omit_expression => true // do not include the default expression
-                }, {
-                    assert_debug_snapshot!(module.symbol_table);
-            });
-        }
+    macro_rules! snap {
+        ($name:tt, $path:tt) => {
+            #[test]
+            fn $name() {
+                let contents = include_str!($path);
+                let result = snapshot_symbol_table(contents);
+                let mut settings = insta::Settings::clone_current();
+                settings.set_snapshot_path("../testdata/output/");
+                settings.set_description(contents);
+                settings.bind(|| {
+                    insta::assert_snapshot!(result);
+                });
+            }
+        };
     }
 
-    #[test]
-    fn test_class_def() {
-        let sources = vec![
-            "class c:
-   def __init__(self):
-        b = 1
-",
-        ];
-        for source in sources {
-            let path = write_temp_source(source);
-            let mut manager = BuildManager::new(
-                vec![BuildSource {
-                    path,
-                    module: String::from("test"),
-                    source: source.to_string(),
-                    followed: false,
-                }],
-                Settings::test_settings(),
-            );
-            manager.build();
-            let module = manager.modules.values().last().unwrap();
-            insta::with_settings!({
-                    description => source, // the template source code
-                    omit_expression => true // do not include the default expression
-                }, {
-                    assert_debug_snapshot!(module.symbol_table);
-            });
-        }
-    }
+    snap!(
+        test_simple_var_assignments,
+        "../testdata/inputs/simple_var_assignment.py"
+    );
+
+    snap!(
+        test_function_def,
+        "../testdata/inputs/function_definition.py"
+    );
+
+    snap!(test_class_def, "../testdata/inputs/class_definition.py");
 }
