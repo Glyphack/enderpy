@@ -167,6 +167,10 @@ impl SymbolTableNode {
     pub fn add_declaration(&mut self, decl: Declaration) {
         self.declarations.push(decl);
     }
+
+    pub fn last_declaration(&self) -> Option<&Declaration> {
+        self.declarations.last()
+    }
 }
 
 // implement display for symbol table and sort the symbols by key

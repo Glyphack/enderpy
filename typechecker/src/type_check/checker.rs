@@ -3,24 +3,46 @@ use parser::ast::{self, *};
 
 use crate::{
     ast_visitor::TraversalVisitor, ast_visitor_immut::TraversalVisitorImmut, settings::Settings,
-    state::State,
+    state::State, symbol_table::Declaration,
 };
 
-use super::types::Type;
+use super::{
+    type_inference::{self, type_equal},
+    types::Type,
+};
 
 pub struct TypeChecker<'a> {
     pub errors: Vec<String>,
     // TODO: currently only supporting a single file
     pub module: &'a State,
-    pub options: Settings,
+    pub options: &'a Settings,
 }
 
 impl<'a> TypeChecker<'a> {
-    fn new(module: &'a State, options: Settings) -> Self {
+    pub fn new(module: &'a State, options: &'a Settings) -> Self {
         TypeChecker {
             errors: vec![],
             module,
             options,
+        }
+    }
+
+    pub fn type_check(&mut self) {
+        for stmt in &self.module.file.body {
+            self.visit_stmt(&stmt);
+        }
+    }
+
+    fn infer_declaration_type(&mut self, declaration: &Declaration) -> Type {
+        match declaration {
+            Declaration::Variable(v) => {
+                if let Some(type_annotation) = &v.type_annotation {
+                    type_inference::get_type_from_annotation(type_annotation.clone())
+                } else {
+                    Type::Unknown
+                }
+            }
+            _ => Type::Unknown,
         }
     }
 
@@ -34,13 +56,20 @@ impl<'a> TypeChecker<'a> {
                 ast::ConstantValue::None => Type::None,
                 _ => Type::Unknown,
             },
+            ast::Expression::Name(n) => match self.module.symbol_table.lookup_in_scope(&n.id) {
+                Some(symbol) => match symbol.last_declaration() {
+                    Some(declaration) => self.infer_declaration_type(declaration),
+                    None => Type::Unknown,
+                },
+                None => Type::Unknown,
+            },
             _ => Type::Unknown,
         }
     }
 }
 
-impl<'a> TraversalVisitorImmut for TypeChecker<'a> {
-    fn visit_stmt(&self, s: &Statement) {
+impl<'a> TraversalVisitor for TypeChecker<'a> {
+    fn visit_stmt(&mut self, s: &Statement) {
         // map all statements and call visit
         match s {
             Statement::ExpressionStatement(e) => self.visit_expr(e),
@@ -70,7 +99,7 @@ impl<'a> TraversalVisitorImmut for TypeChecker<'a> {
         }
     }
 
-    fn visit_expr(&self, e: &Expression) {
+    fn visit_expr(&mut self, e: &Expression) {
         match e {
             Expression::Constant(c) => self.visit_constant(c),
             Expression::List(l) => self.visit_list(l),
@@ -102,15 +131,16 @@ impl<'a> TraversalVisitorImmut for TypeChecker<'a> {
         }
     }
 
-    fn visit_import(&self, i: &Import) {
+    fn visit_import(&mut self, i: &Import) {
         todo!();
     }
 
-    fn visit_import_from(&self, i: &ImportFrom) {
+    fn visit_import_from(&mut self, i: &ImportFrom) {
         todo!();
     }
 
-    fn visit_if(&self, i: &parser::ast::If) {
+    fn visit_if(&mut self, i: &parser::ast::If) {
+        // self.visit_stmt(i.test);
         for stmt in &i.body {
             self.visit_stmt(&stmt);
         }
@@ -119,19 +149,19 @@ impl<'a> TraversalVisitorImmut for TypeChecker<'a> {
         }
     }
 
-    fn visit_while(&self, w: &parser::ast::While) {
+    fn visit_while(&mut self, w: &parser::ast::While) {
         for stmt in &w.body {
             self.visit_stmt(&stmt)
         }
     }
 
-    fn visit_for(&self, f: &parser::ast::For) {
+    fn visit_for(&mut self, f: &parser::ast::For) {
         for stmt in &f.body {
             self.visit_stmt(&stmt);
         }
     }
 
-    fn visit_with(&self, w: &parser::ast::With) {
+    fn visit_with(&mut self, w: &parser::ast::With) {
         for stmt in &w.body {
             self.visit_stmt(&stmt);
         }
@@ -144,7 +174,7 @@ impl<'a> TraversalVisitorImmut for TypeChecker<'a> {
         }
     }
 
-    fn visit_try(&self, t: &parser::ast::Try) {
+    fn visit_try(&mut self, t: &parser::ast::Try) {
         for stmt in &t.body {
             self.visit_stmt(&stmt);
         }
@@ -162,7 +192,7 @@ impl<'a> TraversalVisitorImmut for TypeChecker<'a> {
         }
     }
 
-    fn visit_try_star(&self, t: &parser::ast::TryStar) {
+    fn visit_try_star(&mut self, t: &parser::ast::TryStar) {
         for stmt in &t.body {
             self.visit_stmt(&stmt);
         }
@@ -180,19 +210,19 @@ impl<'a> TraversalVisitorImmut for TypeChecker<'a> {
         }
     }
 
-    fn visit_function_def(&self, f: &parser::ast::FunctionDef) {
+    fn visit_function_def(&mut self, f: &parser::ast::FunctionDef) {
         for stmt in &f.body {
             self.visit_stmt(&stmt);
         }
     }
 
-    fn visit_class_def(&self, c: &parser::ast::ClassDef) {
+    fn visit_class_def(&mut self, c: &parser::ast::ClassDef) {
         for stmt in &c.body {
             self.visit_stmt(&stmt);
         }
     }
 
-    fn visit_match(&self, m: &parser::ast::Match) {
+    fn visit_match(&mut self, m: &parser::ast::Match) {
         for case in &m.cases {
             for stmt in &case.body {
                 self.visit_stmt(&stmt);
@@ -200,161 +230,167 @@ impl<'a> TraversalVisitorImmut for TypeChecker<'a> {
         }
     }
 
-    fn visit_constant(&self, c: &Constant) {
+    fn visit_constant(&mut self, c: &Constant) {
         todo!()
     }
 
-    fn visit_list(&self, l: &List) {
+    fn visit_list(&mut self, l: &List) {
         todo!()
     }
 
-    fn visit_tuple(&self, t: &Tuple) {
+    fn visit_tuple(&mut self, t: &Tuple) {
         todo!()
     }
 
-    fn visit_dict(&self, d: &Dict) {
+    fn visit_dict(&mut self, d: &Dict) {
         todo!()
     }
 
-    fn visit_set(&self, s: &Set) {
+    fn visit_set(&mut self, s: &Set) {
         todo!()
     }
 
-    fn visit_name(&self, n: &Name) {}
+    fn visit_name(&mut self, n: &Name) {}
 
-    fn visit_bool_op(&self, b: &BoolOperation) {
+    fn visit_bool_op(&mut self, b: &BoolOperation) {
         todo!()
     }
 
-    fn visit_unary_op(&self, u: &UnaryOperation) {
+    fn visit_unary_op(&mut self, u: &UnaryOperation) {
         todo!()
     }
 
-    fn visit_bin_op(&self, b: &BinOp) {
+    fn visit_bin_op(&mut self, b: &BinOp) {
+        let l_type = self.infer_expr_type(&b.left);
+        let r_type = self.infer_expr_type(&b.right);
+
+        println!("left: {}", l_type);
+        println!("right: {}", r_type);
+        if !type_equal(&l_type, &r_type) {
+            self.errors.push(format!(
+                "Cannot do {} between types {} and {}",
+                b.op, l_type, r_type
+            ));
+        }
+    }
+
+    fn visit_named_expr(&mut self, n: &NamedExpression) {
         todo!()
     }
 
-    fn visit_named_expr(&self, n: &NamedExpression) {
+    fn visit_yield(&mut self, y: &Yield) {
         todo!()
     }
 
-    fn visit_yield(&self, y: &Yield) {
+    fn visit_yield_from(&mut self, y: &YieldFrom) {
         todo!()
     }
 
-    fn visit_yield_from(&self, y: &YieldFrom) {
+    fn visit_starred(&mut self, s: &Starred) {
         todo!()
     }
 
-    fn visit_starred(&self, s: &Starred) {
+    fn visit_generator(&mut self, g: &Generator) {
         todo!()
     }
 
-    fn visit_generator(&self, g: &Generator) {
+    fn visit_list_comp(&mut self, l: &ListComp) {
         todo!()
     }
 
-    fn visit_list_comp(&self, l: &ListComp) {
+    fn visit_set_comp(&mut self, s: &SetComp) {
         todo!()
     }
 
-    fn visit_set_comp(&self, s: &SetComp) {
+    fn visit_dict_comp(&mut self, d: &DictComp) {
         todo!()
     }
 
-    fn visit_dict_comp(&self, d: &DictComp) {
+    fn visit_attribute(&mut self, a: &Attribute) {
         todo!()
     }
 
-    fn visit_attribute(&self, a: &Attribute) {
+    fn visit_subscript(&mut self, s: &Subscript) {
         todo!()
     }
 
-    fn visit_subscript(&self, s: &Subscript) {
+    fn visit_slice(&mut self, s: &Slice) {
         todo!()
     }
 
-    fn visit_slice(&self, s: &Slice) {
+    fn visit_call(&mut self, c: &Call) {
         todo!()
     }
 
-    fn visit_call(&self, c: &Call) {
+    fn visit_await(&mut self, a: &Await) {
         todo!()
     }
 
-    fn visit_await(&self, a: &Await) {
+    fn visit_compare(&mut self, c: &Compare) {
         todo!()
     }
 
-    fn visit_compare(&self, c: &Compare) {
+    fn visit_lambda(&mut self, l: &Lambda) {
         todo!()
     }
 
-    fn visit_lambda(&self, l: &Lambda) {
+    fn visit_if_exp(&mut self, i: &IfExp) {
         todo!()
     }
 
-    fn visit_if_exp(&self, i: &IfExp) {
+    fn visit_joined_str(&mut self, j: &JoinedStr) {
         todo!()
     }
 
-    fn visit_joined_str(&self, j: &JoinedStr) {
+    fn visit_formatted_value(&mut self, f: &FormattedValue) {
         todo!()
     }
 
-    fn visit_formatted_value(&self, f: &FormattedValue) {
+    fn visit_alias(&mut self, a: &Alias) {
         todo!()
     }
 
-    fn visit_alias(&self, a: &Alias) {
+    fn visit_assign(&mut self, a: &Assign) {}
+
+    fn visit_ann_assign(&mut self, a: &AnnAssign) {}
+
+    fn visit_aug_assign(&mut self, a: &AugAssign) {
         todo!()
     }
 
-    fn visit_assign(&self, a: &Assign) {
+    fn visit_assert(&mut self, a: &Assert) {
         todo!()
     }
 
-    fn visit_ann_assign(&self, a: &AnnAssign) {
+    fn visit_pass(&mut self, p: &Pass) {
         todo!()
     }
 
-    fn visit_aug_assign(&self, a: &AugAssign) {
+    fn visit_delete(&mut self, d: &Delete) {
         todo!()
     }
 
-    fn visit_assert(&self, a: &Assert) {
+    fn visit_return(&mut self, r: &Return) {
         todo!()
     }
 
-    fn visit_pass(&self, p: &Pass) {
+    fn visit_raise(&mut self, r: &Raise) {
         todo!()
     }
 
-    fn visit_delete(&self, d: &Delete) {
+    fn visit_break(&mut self, b: &Break) {
         todo!()
     }
 
-    fn visit_return(&self, r: &Return) {
+    fn visit_continue(&mut self, c: &Continue) {
         todo!()
     }
 
-    fn visit_raise(&self, r: &Raise) {
+    fn visit_global(&mut self, g: &Global) {
         todo!()
     }
 
-    fn visit_break(&self, b: &Break) {
-        todo!()
-    }
-
-    fn visit_continue(&self, c: &Continue) {
-        todo!()
-    }
-
-    fn visit_global(&self, g: &Global) {
-        todo!()
-    }
-
-    fn visit_nonlocal(&self, n: &Nonlocal) {
+    fn visit_nonlocal(&mut self, n: &Nonlocal) {
         todo!()
     }
 }

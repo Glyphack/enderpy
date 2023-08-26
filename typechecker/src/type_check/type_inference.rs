@@ -17,3 +17,14 @@ pub fn get_type_from_annotation(type_annotation: ast::Expression) -> Type {
 
     expr_type
 }
+
+pub fn type_equal(t1: &Type, t2: &Type) -> bool {
+    match (t1, t2) {
+        (Type::Int, Type::Int) => true,
+        (Type::Float, Type::Float) => true,
+        (Type::Str, Type::Str) => true,
+        (Type::Bool, Type::Bool) => true,
+        (Type::None, Type::None) => true,
+        _ => false,
+    }
+}

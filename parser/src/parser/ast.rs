@@ -395,6 +395,28 @@ pub enum BinaryOperator {
     FloorDiv,
 }
 
+impl std::fmt::Display for BinaryOperator {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        let op_str = match self {
+            BinaryOperator::Add => "+",
+            BinaryOperator::Sub => "-",
+            BinaryOperator::Mult => "*",
+            BinaryOperator::MatMult => "@",
+            BinaryOperator::Div => "/",
+            BinaryOperator::Mod => "%",
+            BinaryOperator::Pow => "**",
+            BinaryOperator::LShift => "<<",
+            BinaryOperator::RShift => ">>",
+            BinaryOperator::BitOr => "|",
+            BinaryOperator::BitXor => "^",
+            BinaryOperator::BitAnd => "&",
+            BinaryOperator::FloorDiv => "//",
+        };
+
+        write!(f, "{}", op_str)
+    }
+}
+
 // https://docs.python.org/3/library/ast.html#ast.NamedExpr
 #[derive(Debug, Clone)]
 pub struct NamedExpression {
