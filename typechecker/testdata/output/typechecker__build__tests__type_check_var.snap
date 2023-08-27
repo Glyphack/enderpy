@@ -1,7 +1,6 @@
 ---
 source: typechecker/src/build.rs
-assertion_line: 171
 description: "a: int = 1\n\na + \"str\"\n"
 expression: result
 ---
-Cannot do + between types Int and Str
+Operator '+' not supported for types 'Int' and 'Str'

@@ -7,7 +7,7 @@ use crate::{
 };
 
 use super::{
-    type_inference::{self, type_equal},
+    type_inference::{self, type_check_bin_op, type_equal},
     types::Type,
 };
 
@@ -230,9 +230,7 @@ impl<'a> TraversalVisitor for TypeChecker<'a> {
         }
     }
 
-    fn visit_constant(&mut self, c: &Constant) {
-        todo!()
-    }
+    fn visit_constant(&mut self, c: &Constant) {}
 
     fn visit_list(&mut self, l: &List) {
         todo!()
@@ -261,14 +259,14 @@ impl<'a> TraversalVisitor for TypeChecker<'a> {
     }
 
     fn visit_bin_op(&mut self, b: &BinOp) {
+        self.visit_expr(&b.left);
+        self.visit_expr(&b.right);
         let l_type = self.infer_expr_type(&b.left);
         let r_type = self.infer_expr_type(&b.right);
 
-        println!("left: {}", l_type);
-        println!("right: {}", r_type);
-        if !type_equal(&l_type, &r_type) {
+        if !type_check_bin_op(&l_type, &r_type, &b.op) {
             self.errors.push(format!(
-                "Cannot do {} between types {} and {}",
+                "Operator '{}' not supported for types '{}' and '{}'",
                 b.op, l_type, r_type
             ));
         }
