@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+
 
 use parser::ast::Expression;
 
@@ -24,12 +24,12 @@ pub struct SemanticAnalyzer {
 impl SemanticAnalyzer {
     pub fn new(file: Box<EnderpyFile>) -> Self {
         let globals = SymbolTable::new(crate::symbol_table::SymbolTableType::Module, 0);
-        return SemanticAnalyzer {
+        SemanticAnalyzer {
             globals,
             file,
             errors: vec![],
             scope: SymbolScope::Global,
-        };
+        }
     }
 
     fn create_symbol(&mut self, name: String, decl: Declaration) {
@@ -42,7 +42,7 @@ impl SemanticAnalyzer {
 
     fn report_unresolved_reference(&mut self) {
         self.errors
-            .push(String::from(format!("cannot resolve reference {}", "")))
+            .push(format!("cannot resolve reference {}", ""))
     }
 
     fn current_scope(&self) -> &SymbolTableType {
@@ -50,7 +50,7 @@ impl SemanticAnalyzer {
     }
 
     fn is_inside_class(&self) -> bool {
-        return matches!(self.current_scope(), SymbolTableType::Class);
+        matches!(self.current_scope(), SymbolTableType::Class)
     }
 
     fn create_variable_declaration_symbol(
@@ -255,43 +255,43 @@ impl TraversalVisitor for SemanticAnalyzer {
         }
     }
 
-    fn visit_import(&mut self, i: &parser::ast::Import) {
+    fn visit_import(&mut self, _i: &parser::ast::Import) {
         todo!();
     }
 
-    fn visit_import_from(&mut self, i: &parser::ast::ImportFrom) {
+    fn visit_import_from(&mut self, _i: &parser::ast::ImportFrom) {
         todo!();
     }
 
     fn visit_if(&mut self, i: &parser::ast::If) {
         for stmt in &i.body {
-            self.visit_stmt(&stmt);
+            self.visit_stmt(stmt);
         }
         for stmt in &i.orelse {
-            self.visit_stmt(&stmt);
+            self.visit_stmt(stmt);
         }
     }
 
     fn visit_while(&mut self, w: &parser::ast::While) {
         for stmt in &w.body {
-            self.visit_stmt(&stmt)
+            self.visit_stmt(stmt)
         }
     }
 
     fn visit_for(&mut self, f: &parser::ast::For) {
         for stmt in &f.body {
-            self.visit_stmt(&stmt);
+            self.visit_stmt(stmt);
         }
     }
 
     fn visit_with(&mut self, w: &parser::ast::With) {
         for stmt in &w.body {
-            self.visit_stmt(&stmt);
+            self.visit_stmt(stmt);
         }
         for with_items in &w.items {
-            self.visit_expr(&*&with_items.context_expr);
+            self.visit_expr(&with_items.context_expr);
             match &with_items.optional_vars {
-                Some(items) => self.visit_expr(&items),
+                Some(items) => self.visit_expr(items),
                 None => (),
             }
         }
@@ -299,36 +299,36 @@ impl TraversalVisitor for SemanticAnalyzer {
 
     fn visit_try(&mut self, t: &parser::ast::Try) {
         for stmt in &t.body {
-            self.visit_stmt(&stmt);
+            self.visit_stmt(stmt);
         }
         for stmt in &t.orelse {
-            self.visit_stmt(&stmt);
+            self.visit_stmt(stmt);
         }
         for stmt in &t.finalbody {
-            self.visit_stmt(&stmt);
+            self.visit_stmt(stmt);
         }
         // TODO: need to visit exception handler name and type but let's keep it simple for now
         for handler in &t.handlers {
             for stmt in &handler.body {
-                self.visit_stmt(&stmt);
+                self.visit_stmt(stmt);
             }
         }
     }
 
     fn visit_try_star(&mut self, t: &parser::ast::TryStar) {
         for stmt in &t.body {
-            self.visit_stmt(&stmt);
+            self.visit_stmt(stmt);
         }
         for stmt in &t.orelse {
-            self.visit_stmt(&stmt);
+            self.visit_stmt(stmt);
         }
         for stmt in &t.finalbody {
-            self.visit_stmt(&stmt);
+            self.visit_stmt(stmt);
         }
         // TODO: need to visit exception handler name and type but let's keep it simple for now
         for handler in &t.handlers {
             for stmt in &handler.body {
-                self.visit_stmt(&stmt);
+                self.visit_stmt(stmt);
             }
         }
     }
@@ -349,7 +349,7 @@ impl TraversalVisitor for SemanticAnalyzer {
         let mut yeild_statements = vec![];
         let mut raise_statements = vec![];
         for stmt in &f.body {
-            self.visit_stmt(&stmt);
+            self.visit_stmt(stmt);
             match &stmt {
                 parser::ast::Statement::Raise(r) => raise_statements.push(r.clone()),
                 parser::ast::Statement::Return(r) => return_statements.push(r.clone()),
@@ -391,7 +391,7 @@ impl TraversalVisitor for SemanticAnalyzer {
                 }
                 _ => (),
             }
-            self.visit_stmt(&stmt);
+            self.visit_stmt(stmt);
         }
         self.globals.exit_scope();
 
@@ -405,116 +405,115 @@ impl TraversalVisitor for SemanticAnalyzer {
     fn visit_match(&mut self, m: &parser::ast::Match) {
         for case in &m.cases {
             for stmt in &case.body {
-                self.visit_stmt(&stmt);
+                self.visit_stmt(stmt);
             }
         }
     }
 
-    fn visit_constant(&mut self, c: &parser::ast::Constant) {}
+    fn visit_constant(&mut self, _c: &parser::ast::Constant) {}
 
-    fn visit_list(&mut self, l: &parser::ast::List) {
+    fn visit_list(&mut self, _l: &parser::ast::List) {
         todo!()
     }
 
-    fn visit_tuple(&mut self, t: &parser::ast::Tuple) {
-        return;
+    fn visit_tuple(&mut self, _t: &parser::ast::Tuple) {
     }
 
-    fn visit_dict(&mut self, d: &parser::ast::Dict) {
+    fn visit_dict(&mut self, _d: &parser::ast::Dict) {
         todo!()
     }
 
-    fn visit_set(&mut self, s: &parser::ast::Set) {
+    fn visit_set(&mut self, _s: &parser::ast::Set) {
         todo!()
     }
 
-    fn visit_name(&mut self, n: &parser::ast::Name) {
+    fn visit_name(&mut self, _n: &parser::ast::Name) {
         todo!()
     }
 
-    fn visit_bool_op(&mut self, b: &parser::ast::BoolOperation) {
+    fn visit_bool_op(&mut self, _b: &parser::ast::BoolOperation) {
         todo!()
     }
 
-    fn visit_unary_op(&mut self, u: &parser::ast::UnaryOperation) {
+    fn visit_unary_op(&mut self, _u: &parser::ast::UnaryOperation) {
         todo!()
     }
 
-    fn visit_bin_op(&mut self, b: &parser::ast::BinOp) {}
+    fn visit_bin_op(&mut self, _b: &parser::ast::BinOp) {}
 
-    fn visit_named_expr(&mut self, n: &parser::ast::NamedExpression) {
+    fn visit_named_expr(&mut self, _n: &parser::ast::NamedExpression) {
         todo!()
     }
 
-    fn visit_yield(&mut self, y: &parser::ast::Yield) {
+    fn visit_yield(&mut self, _y: &parser::ast::Yield) {
         todo!()
     }
 
-    fn visit_yield_from(&mut self, y: &parser::ast::YieldFrom) {
+    fn visit_yield_from(&mut self, _y: &parser::ast::YieldFrom) {
         todo!()
     }
 
-    fn visit_starred(&mut self, s: &parser::ast::Starred) {
+    fn visit_starred(&mut self, _s: &parser::ast::Starred) {
         todo!()
     }
 
-    fn visit_generator(&mut self, g: &parser::ast::Generator) {
+    fn visit_generator(&mut self, _g: &parser::ast::Generator) {
         todo!()
     }
 
-    fn visit_list_comp(&mut self, l: &parser::ast::ListComp) {
+    fn visit_list_comp(&mut self, _l: &parser::ast::ListComp) {
         todo!()
     }
 
-    fn visit_set_comp(&mut self, s: &parser::ast::SetComp) {
+    fn visit_set_comp(&mut self, _s: &parser::ast::SetComp) {
         todo!()
     }
 
-    fn visit_dict_comp(&mut self, d: &parser::ast::DictComp) {
+    fn visit_dict_comp(&mut self, _d: &parser::ast::DictComp) {
         todo!()
     }
 
-    fn visit_attribute(&mut self, a: &parser::ast::Attribute) {
+    fn visit_attribute(&mut self, _a: &parser::ast::Attribute) {
         todo!()
     }
 
-    fn visit_subscript(&mut self, s: &parser::ast::Subscript) {
+    fn visit_subscript(&mut self, _s: &parser::ast::Subscript) {
         todo!()
     }
 
-    fn visit_slice(&mut self, s: &parser::ast::Slice) {
+    fn visit_slice(&mut self, _s: &parser::ast::Slice) {
         todo!()
     }
 
-    fn visit_call(&mut self, c: &parser::ast::Call) {
+    fn visit_call(&mut self, _c: &parser::ast::Call) {
         todo!()
     }
 
-    fn visit_await(&mut self, a: &parser::ast::Await) {
+    fn visit_await(&mut self, _a: &parser::ast::Await) {
         todo!()
     }
 
-    fn visit_compare(&mut self, c: &parser::ast::Compare) {
+    fn visit_compare(&mut self, _c: &parser::ast::Compare) {
         todo!()
     }
 
-    fn visit_lambda(&mut self, l: &parser::ast::Lambda) {
+    fn visit_lambda(&mut self, _l: &parser::ast::Lambda) {
         todo!()
     }
 
-    fn visit_if_exp(&mut self, i: &parser::ast::IfExp) {
+    fn visit_if_exp(&mut self, _i: &parser::ast::IfExp) {
         todo!()
     }
 
-    fn visit_joined_str(&mut self, j: &parser::ast::JoinedStr) {
+    fn visit_joined_str(&mut self, _j: &parser::ast::JoinedStr) {
         todo!()
     }
 
-    fn visit_formatted_value(&mut self, f: &parser::ast::FormattedValue) {
+    fn visit_formatted_value(&mut self, _f: &parser::ast::FormattedValue) {
         todo!()
     }
 
-    fn visit_alias(&mut self, a: &parser::ast::Alias) {
+    fn visit_alias(&mut self, _a: &parser::ast::Alias) {
         todo!()
     }
 
@@ -553,7 +552,7 @@ impl TraversalVisitor for SemanticAnalyzer {
         );
 
         if let Some(val) = &a.value {
-            self.visit_expr(&val);
+            self.visit_expr(val);
         }
     }
 
@@ -562,37 +561,36 @@ impl TraversalVisitor for SemanticAnalyzer {
         self.visit_expr(&a.value);
     }
 
-    fn visit_assert(&mut self, a: &parser::ast::Assert) {
+    fn visit_assert(&mut self, _a: &parser::ast::Assert) {
         todo!()
     }
 
-    fn visit_pass(&mut self, p: &parser::ast::Pass) {
-        return;
+    fn visit_pass(&mut self, _p: &parser::ast::Pass) {
     }
 
-    fn visit_delete(&mut self, d: &parser::ast::Delete) {
+    fn visit_delete(&mut self, _d: &parser::ast::Delete) {
         todo!()
     }
 
-    fn visit_return(&mut self, r: &parser::ast::Return) {}
+    fn visit_return(&mut self, _r: &parser::ast::Return) {}
 
-    fn visit_raise(&mut self, r: &parser::ast::Raise) {
+    fn visit_raise(&mut self, _r: &parser::ast::Raise) {
         todo!()
     }
 
-    fn visit_break(&mut self, b: &parser::ast::Break) {
+    fn visit_break(&mut self, _b: &parser::ast::Break) {
         todo!()
     }
 
-    fn visit_continue(&mut self, c: &parser::ast::Continue) {
+    fn visit_continue(&mut self, _c: &parser::ast::Continue) {
         todo!()
     }
 
-    fn visit_global(&mut self, g: &parser::ast::Global) {
+    fn visit_global(&mut self, _g: &parser::ast::Global) {
         todo!()
     }
 
-    fn visit_nonlocal(&mut self, n: &parser::ast::Nonlocal) {
+    fn visit_nonlocal(&mut self, _n: &parser::ast::Nonlocal) {
         todo!()
     }
 }

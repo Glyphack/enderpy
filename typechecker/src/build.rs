@@ -117,7 +117,7 @@ fn snapshot_type_check(source: &str) -> String {
     );
     manager.type_check();
 
-    format!("{}", manager.errors.join("\n"))
+    manager.errors.join("\n").to_string()
 }
 
 #[cfg(test)]

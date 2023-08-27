@@ -112,7 +112,7 @@ impl Lexer {
                     }
                 }
                 3 => {
-                    if curr == str_finisher.chars().nth(0).unwrap()
+                    if curr == str_finisher.chars().next().unwrap()
                         && self.peek() == Some(str_finisher.chars().nth(1).unwrap())
                         && self.double_peek() == Some(str_finisher.chars().nth(2).unwrap())
                     {
@@ -140,7 +140,7 @@ impl Lexer {
                     }
                 }
                 3 => {
-                    if peeked_char == str_finisher.chars().nth(0).unwrap()
+                    if peeked_char == str_finisher.chars().next().unwrap()
                         && self.double_peek() == Some(str_finisher.chars().nth(1).unwrap())
                         && self.triple_peek() == Some(str_finisher.chars().nth(2).unwrap())
                     {
@@ -160,7 +160,7 @@ impl Lexer {
                 return Ok(indent_kind);
             }
         }
-        if self.fstring_stack.len() > 0 {
+        if !self.fstring_stack.is_empty() {
             if let Some(kind) = self.next_fstring_token() {
                 return Ok(kind);
             }

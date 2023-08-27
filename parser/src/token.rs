@@ -281,7 +281,7 @@ impl TokenValue {
             TokenValue::None => "None".to_string(),
             TokenValue::Number(n) => n.to_string(),
             TokenValue::Str(s) => s.to_string(),
-            TokenValue::Indent(i) => panic!("not a string"),
+            TokenValue::Indent(_i) => panic!("not a string"),
         }
     }
 }

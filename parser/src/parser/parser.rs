@@ -1,4 +1,4 @@
-use std::ops::Index;
+
 use std::{panic, vec};
 
 use crate::lexer::lexer::Lexer;
@@ -48,7 +48,7 @@ impl Parser {
         let node = self.start_node();
         let mut body = vec![];
         while self.cur_kind() != Kind::Eof {
-            let stmt = if is_at_compound_statement(&self.cur_token()) {
+            let stmt = if is_at_compound_statement(self.cur_token()) {
                 self.parse_compount_statement()
             } else {
                 self.parse_simple_statement()
@@ -675,7 +675,8 @@ impl Parser {
     }
 
     fn parse_closed_pattern(&mut self) -> Result<MatchPattern> {
-        let matching_pattern = match self.cur_kind() {
+        
+        match self.cur_kind() {
             Kind::LeftParen => self.parse_sequence_pattern(),
             Kind::LeftBrace => self.parse_sequence_pattern(),
             Kind::LeftBracket => self.parse_mapping_pattern(),
@@ -689,13 +690,11 @@ impl Parser {
                     } else {
                         self.parse_value_pattern(value, node)
                     }
+                } else if matches!(self.peek_kind(), Ok(Kind::LeftParen)) {
+                    let value = self.parse_attr()?;
+                    self.parse_class_pattern(value)
                 } else {
-                    if matches!(self.peek_kind(), Ok(Kind::LeftParen)) {
-                        let value = self.parse_attr()?;
-                        self.parse_class_pattern(value)
-                    } else {
-                        self.parse_capture_or_wildcard_pattern()
-                    }
+                    self.parse_capture_or_wildcard_pattern()
                 }
         },
             Kind::Integer
@@ -720,13 +719,12 @@ impl Parser {
                 let node = self.start_node();
                 let msg = format!("unexpected token {:?}", self.cur_token().value);
                 self.bump_any();
-                return Err(diagnostics::InvalidSyntax(
+                Err(diagnostics::InvalidSyntax(
                                         msg,
                                         self.finish_node(node),
                                     ).into())
             },
-        };
-        matching_pattern
+        }
     }
 
     // https://docs.python.org/3/reference/compound_stmts.html#literal-patterns
@@ -789,7 +787,7 @@ impl Parser {
                 attr: attr_val,
             })));
         }
-        return expr;
+        expr
     }
 
     // TODO: This has precedence over sequence pattern but I'm not sure
@@ -948,7 +946,8 @@ impl Parser {
     fn parse_assignment_or_expression_statement(&mut self) -> Result<Statement> {
         let node = self.start_node();
         let lhs = self.parse_expression()?;
-        let stmt = if self.cur_kind() == Kind::Assign {
+        
+        if self.cur_kind() == Kind::Assign {
             self.parse_assignment_statement(node, lhs)
         } else if matches!(
             self.cur_kind(),
@@ -970,8 +969,7 @@ impl Parser {
             self.parse_ann_assign_statement(node, lhs)
         } else {
             Ok(Statement::ExpressionStatement(lhs))
-        };
-        stmt
+        }
     }
 
     // https://docs.python.org/3/reference/compound_stmts.html#grammar-token-python-grammar-suite
@@ -993,14 +991,14 @@ impl Parser {
 
     // https://docs.python.org/3/reference/compound_stmts.html#grammar-token-python-grammar-statement
     fn parse_statement(&mut self) -> Result<Vec<Statement>> {
-        let stmt = if is_at_compound_statement(&self.cur_token()) {
+        
+        if is_at_compound_statement(self.cur_token()) {
             let comp_stmt = self.parse_compount_statement()?;
             Ok(vec![comp_stmt])
         } else {
-            let stmt_list = self.parse_statement_list();
-            stmt_list
-        };
-        stmt
+            
+            self.parse_statement_list()
+        }
     }
 
     // https://docs.python.org/3/reference/simple_stmts.html#grammar-token-python-grammar-stmt-list
@@ -1048,11 +1046,11 @@ impl Parser {
                 break rhs;
             }
         };
-        return Ok(Statement::AssignStatement(Assign {
+        Ok(Statement::AssignStatement(Assign {
             node: self.finish_node(start),
             targets,
             value,
-        }));
+        }))
     }
 
     fn parse_aug_assignment_statement(
@@ -1063,12 +1061,12 @@ impl Parser {
         let op = self.parse_aug_assign_op()?;
         let value = self.parse_assignment_value()?;
 
-        return Ok(Statement::AugAssignStatement(AugAssign {
+        Ok(Statement::AugAssignStatement(AugAssign {
             node: self.finish_node(start),
             target: lhs,
             op,
             value,
-        }));
+        }))
     }
 
     fn parse_ann_assign_statement(&mut self, start: Node, lhs: Expression) -> Result<Statement> {
@@ -1079,21 +1077,21 @@ impl Parser {
         } else {
             None
         };
-        return Ok(Statement::AnnAssignStatement(AnnAssign {
+        Ok(Statement::AnnAssignStatement(AnnAssign {
             node: self.finish_node(start),
             target: lhs,
             annotation,
             value,
             // TODO: implement simple
             simple: true,
-        }));
+        }))
     }
 
     // The value is either expression list or yield expression
     // https://docs.python.org/3/reference/simple_stmts.html#assignment-statements
     fn parse_assignment_value(&mut self) -> Result<Expression> {
         if self.cur_kind() == Kind::Yield {
-            return Ok(self.parse_yield_expression()?);
+            return self.parse_yield_expression();
         }
         self.parse_expression_list()
     }
@@ -1135,19 +1133,19 @@ impl Parser {
             None
         };
 
-        return Ok(Statement::Assert(Assert {
+        Ok(Statement::Assert(Assert {
             node: self.finish_node(node),
             test,
             msg,
-        }));
+        }))
     }
 
     fn parse_pass_statement(&mut self) -> Result<Statement> {
         let node = self.start_node();
         self.bump(Kind::Pass);
-        return Ok(Statement::Pass(Pass {
+        Ok(Statement::Pass(Pass {
             node: self.finish_node(node),
-        }));
+        }))
     }
 
     fn parse_return_statement(&mut self) -> Result<Statement> {
@@ -1158,10 +1156,10 @@ impl Parser {
         } else {
             Some(self.parse_expression_list()?)
         };
-        return Ok(Statement::Return(Return {
+        Ok(Statement::Return(Return {
             node: self.finish_node(node),
             value,
-        }));
+        }))
     }
 
     // https://docs.python.org/3/reference/simple_stmts.html#the-raise-statement
@@ -1178,29 +1176,29 @@ impl Parser {
         } else {
             None
         };
-        return Ok(Statement::Raise(Raise {
+        Ok(Statement::Raise(Raise {
             node: self.finish_node(node),
             exc,
             cause,
-        }));
+        }))
     }
 
     // https://docs.python.org/3/reference/simple_stmts.html#the-break-statement
     fn parse_break_statement(&mut self) -> Result<Statement> {
         let node = self.start_node();
         self.bump(Kind::Break);
-        return Ok(Statement::Break(Break {
+        Ok(Statement::Break(Break {
             node: self.finish_node(node),
-        }));
+        }))
     }
 
     // https://docs.python.org/3/reference/simple_stmts.html#the-continue-statement
     fn parse_continue_statement(&mut self) -> Result<Statement> {
         let node = self.start_node();
         self.bump(Kind::Continue);
-        return Ok(Statement::Continue(Continue {
+        Ok(Statement::Continue(Continue {
             node: self.finish_node(node),
-        }));
+        }))
     }
 
     // https://docs.python.org/3/reference/simple_stmts.html#the-global-statement
@@ -1216,10 +1214,10 @@ impl Parser {
                 break;
             }
         }
-        return Ok(Statement::Global(Global {
+        Ok(Statement::Global(Global {
             node: self.finish_node(node),
             names,
-        }));
+        }))
     }
 
     // https://docs.python.org/3/reference/simple_stmts.html#the-nonlocal-statement
@@ -1235,10 +1233,10 @@ impl Parser {
                 break;
             }
         }
-        return Ok(Statement::Nonlocal(Nonlocal {
+        Ok(Statement::Nonlocal(Nonlocal {
             node: self.finish_node(node),
             names,
-        }));
+        }))
     }
 
     // https://docs.python.org/3/reference/simple_stmts.html#the-import-statement
@@ -1256,10 +1254,10 @@ impl Parser {
                 break;
             }
         }
-        return Ok(Statement::Import(Import {
+        Ok(Statement::Import(Import {
             node: self.finish_node(node),
             names: aliases,
-        }));
+        }))
     }
 
     // https://docs.python.org/3/reference/simple_stmts.html#the-from-import-statement
@@ -1279,12 +1277,12 @@ impl Parser {
                 break;
             }
         }
-        return Ok(Statement::ImportFrom(ImportFrom {
+        Ok(Statement::ImportFrom(ImportFrom {
             node: self.finish_node(import_node),
             module,
             names: aliases,
             level: 0,
-        }));
+        }))
     }
 
     fn parse_alias(&mut self, name: String, node: Node) -> Alias {
@@ -1295,22 +1293,22 @@ impl Parser {
         } else {
             None
         };
-        return Alias {
+        Alias {
             node: self.finish_node(node),
             name,
             asname,
-        };
+        }
     }
 
     fn parse_module_name(&mut self) -> String {
-        let mut module = String::from(self.cur_token().value.to_string());
+        let mut module = self.cur_token().value.to_string();
         self.bump(Kind::Identifier);
         while self.eat(Kind::Dot) {
             module.push('.');
             module.push_str(self.cur_token().value.to_string().as_str());
             self.bump(Kind::Identifier);
         }
-        return module;
+        module
     }
 
     // https://docs.python.org/3/library/ast.html#ast.Expr
@@ -1331,10 +1329,10 @@ impl Parser {
             return Ok(expr);
         }
 
-        return Ok(Expression::Tuple(Box::new(Tuple {
+        Ok(Expression::Tuple(Box::new(Tuple {
             node: self.finish_node(node),
             elements: exprs,
-        })));
+        })))
     }
 
     // https://docs.python.org/3/reference/expressions.html#conditional-expressions
@@ -1446,7 +1444,7 @@ impl Parser {
     // https://docs.python.org/3/reference/expressions.html#displays-for-lists-sets-and-dictionaries
     fn parse_comp_for(&mut self) -> Result<Vec<Comprehension>> {
         // if current token is async
-        let is_async = if self.eat(Kind::Async) { true } else { false };
+        let is_async = self.eat(Kind::Async);
 
         let mut generators = vec![];
         loop {
@@ -1662,7 +1660,7 @@ impl Parser {
     fn parse_starred_item(&mut self) -> Result<Expression> {
         let mut node = self.start_node();
         if self.eat(Kind::Mul) {
-            let starred_value_kind = self.cur_kind().clone();
+            let starred_value_kind = self.cur_kind();
             let expr = self.parse_or_expr()?;
             node = self.finish_node(node);
             if !is_iterable(&expr) {
@@ -1776,7 +1774,7 @@ impl Parser {
                 right: Box::new(lhs),
             })));
         }
-        return Ok(xor_expr);
+        Ok(xor_expr)
     }
 
     // https://docs.python.org/3/reference/expressions.html#binary-bitwise-operations
@@ -1792,7 +1790,7 @@ impl Parser {
                 right: Box::new(lhs),
             })));
         }
-        return Ok(and_expr);
+        Ok(and_expr)
     }
 
     // https://docs.python.org/3/reference/expressions.html#binary-bitwise-operations
@@ -1809,7 +1807,7 @@ impl Parser {
                 right: Box::new(lhs),
             })));
         }
-        return Ok(shift_expr);
+        Ok(shift_expr)
     }
 
     // https://docs.python.org/3/reference/expressions.html#shifting-operations
@@ -1831,7 +1829,7 @@ impl Parser {
                 right: Box::new(lhs),
             })));
         }
-        return Ok(arith_expr);
+        Ok(arith_expr)
     }
 
     // https://docs.python.org/3/reference/expressions.html#binary-arithmetic-operations
@@ -1848,7 +1846,7 @@ impl Parser {
                 right: Box::new(rhs),
             })));
         }
-        return Ok(lhs);
+        Ok(lhs)
     }
 
     // https://docs.python.org/3/reference/expressions.html#unary-arithmetic-and-bitwise-operations
@@ -1890,7 +1888,7 @@ impl Parser {
             })));
         }
 
-        return base;
+        base
     }
 
     // https://docs.python.org/3/reference/expressions.html#primaries
@@ -1982,7 +1980,7 @@ impl Parser {
             Ok(atom_or_primary)
         };
 
-        return primary;
+        primary
     }
 
     // https://docs.python.org/3/reference/expressions.html#grammar-token-python-grammar-argument_list
@@ -2044,7 +2042,7 @@ impl Parser {
                 break;
             }
         }
-        return Ok((positional_args, keyword_args));
+        Ok((positional_args, keyword_args))
     }
 
     fn parse_atribute_ref(&mut self, node: Node, value: Expression) -> Result<Expression> {
@@ -2058,7 +2056,7 @@ impl Parser {
                 attr: attr_val,
             })));
         }
-        return expr;
+        expr
     }
 
     fn parse_subscript(&mut self, node: Node, value: Expression) -> Result<Expression> {
@@ -2071,14 +2069,14 @@ impl Parser {
                 slice: Box::new(slice),
             })));
         }
-        return expr;
+        expr
     }
 
     // https://docs.python.org/3/reference/expressions.html#atoms
     fn parse_atom(&mut self) -> Result<Expression> {
         let node = self.start_node();
         if self.at(Kind::Yield) {
-            return self.parse_yield_expression();
+            self.parse_yield_expression()
         } else if self.at(Kind::LeftBrace) {
             self.nested_expression_list += 1;
             let list_expr = self.parse_list();
@@ -2150,10 +2148,10 @@ impl Parser {
         let node = self.start_node();
         let value = self.cur_token().value.to_string();
         self.expect(Kind::Identifier)?;
-        return Ok(Expression::Name(Box::new(Name {
+        Ok(Expression::Name(Box::new(Name {
             node: self.finish_node(node),
             id: value,
-        })));
+        })))
     }
 
     // https://docs.python.org/3/reference/expressions.html#yield-expressions
@@ -2178,10 +2176,10 @@ impl Parser {
             Ok(expr) => Some(Box::new(expr)),
             _ => None,
         };
-        return Ok(Expression::Yield(Box::new(Yield {
+        Ok(Expression::Yield(Box::new(Yield {
             node: self.finish_node(yield_node),
             value,
-        })));
+        })))
     }
 
     // https://docs.python.org/3/reference/expressions.html#expression-lists
@@ -2267,12 +2265,10 @@ impl Parser {
 
         let slice_lower = if lower.is_some() {
             Some(Box::new(lower.unwrap()))
+        } else if self.eat(Kind::Colon) {
+            None
         } else {
-            if self.eat(Kind::Colon) {
-                None
-            } else {
-                Some(Box::new(self.parse_expression_2()?))
-            }
+            Some(Box::new(self.parse_expression_2()?))
         };
         let upper = if self.eat(Kind::Colon) {
             if self.at(Kind::RightBrace) {
@@ -2333,7 +2329,7 @@ impl Parser {
                 let bytes_val = extract_string_inside(
                     value
                         .to_string()
-                        .strip_prefix("b")
+                        .strip_prefix('b')
                         .expect("bytes literal must start with b")
                         .to_string(),
                 )
@@ -2579,7 +2575,7 @@ impl Parser {
     }
 
     fn is_def_parameter(&mut self) -> bool {
-        return self.cur_kind() == Kind::Identifier;
+        self.cur_kind() == Kind::Identifier
         // && matches!(self.peek_kind(), Ok(Kind::Assign))
         // || matches!(self.peek_kind(), Ok(Kind::Colon))
     }
@@ -2862,7 +2858,8 @@ mod tests {
 
     #[test]
     fn test_named_expression() {
-        for test_case in &["(a := b)"] {
+        {
+            let test_case = &"(a := b)";
             let mut parser = Parser::new(test_case.to_string());
             let program = parser.parse();
 
@@ -3000,7 +2997,8 @@ mod tests {
 
     #[test]
     fn test_starred() {
-        for test_case in &["(*a)"] {
+        {
+            let test_case = &"(*a)";
             let mut parser = Parser::new(test_case.to_string());
             let program = parser.parse();
 
@@ -3015,7 +3013,8 @@ mod tests {
 
     #[test]
     fn test_await_expression() {
-        for test_case in &["await a"] {
+        {
+            let test_case = &"await a";
             let mut parser = Parser::new(test_case.to_string());
             let program = parser.parse();
 
@@ -3139,10 +3138,8 @@ mod tests {
 
     #[test]
     fn test_conditional_expression() {
-        for test_case in &[
-            // "a if b else c",
-            "a if b else c if d else e",
-        ] {
+        {
+            let test_case = &"a if b else c if d else e";
             let mut parser = Parser::new(test_case.to_string());
             let program = parser.parse();
 

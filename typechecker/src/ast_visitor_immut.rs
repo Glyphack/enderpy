@@ -63,43 +63,43 @@ pub trait TraversalVisitorImmut {
             Expression::FormattedValue(f) => self.visit_formatted_value(f),
         }
     }
-    fn visit_import(&self, i: &Import) {
+    fn visit_import(&self, _i: &Import) {
         todo!();
     }
 
-    fn visit_import_from(&self, i: &ImportFrom) {
+    fn visit_import_from(&self, _i: &ImportFrom) {
         todo!();
     }
 
     fn visit_if(&self, i: &parser::ast::If) {
         for stmt in &i.body {
-            self.visit_stmt(&stmt);
+            self.visit_stmt(stmt);
         }
         for stmt in &i.orelse {
-            self.visit_stmt(&stmt);
+            self.visit_stmt(stmt);
         }
     }
 
     fn visit_while(&self, w: &parser::ast::While) {
         for stmt in &w.body {
-            self.visit_stmt(&stmt)
+            self.visit_stmt(stmt)
         }
     }
 
     fn visit_for(&self, f: &parser::ast::For) {
         for stmt in &f.body {
-            self.visit_stmt(&stmt);
+            self.visit_stmt(stmt);
         }
     }
 
     fn visit_with(&self, w: &parser::ast::With) {
         for stmt in &w.body {
-            self.visit_stmt(&stmt);
+            self.visit_stmt(stmt);
         }
         for with_items in &w.items {
-            self.visit_expr(&*&with_items.context_expr);
+            self.visit_expr(&with_items.context_expr);
             match &with_items.optional_vars {
-                Some(items) => self.visit_expr(&items),
+                Some(items) => self.visit_expr(items),
                 None => (),
             }
         }
@@ -107,189 +107,189 @@ pub trait TraversalVisitorImmut {
 
     fn visit_try(&self, t: &parser::ast::Try) {
         for stmt in &t.body {
-            self.visit_stmt(&stmt);
+            self.visit_stmt(stmt);
         }
         for stmt in &t.orelse {
-            self.visit_stmt(&stmt);
+            self.visit_stmt(stmt);
         }
         for stmt in &t.finalbody {
-            self.visit_stmt(&stmt);
+            self.visit_stmt(stmt);
         }
         // TODO: need to visit exception handler name and type but let's keep it simple for now
         for handler in &t.handlers {
             for stmt in &handler.body {
-                self.visit_stmt(&stmt);
+                self.visit_stmt(stmt);
             }
         }
     }
 
     fn visit_try_star(&self, t: &parser::ast::TryStar) {
         for stmt in &t.body {
-            self.visit_stmt(&stmt);
+            self.visit_stmt(stmt);
         }
         for stmt in &t.orelse {
-            self.visit_stmt(&stmt);
+            self.visit_stmt(stmt);
         }
         for stmt in &t.finalbody {
-            self.visit_stmt(&stmt);
+            self.visit_stmt(stmt);
         }
         // TODO: need to visit exception handler name and type but let's keep it simple for now
         for handler in &t.handlers {
             for stmt in &handler.body {
-                self.visit_stmt(&stmt);
+                self.visit_stmt(stmt);
             }
         }
     }
 
     fn visit_function_def(&self, f: &parser::ast::FunctionDef) {
         for stmt in &f.body {
-            self.visit_stmt(&stmt);
+            self.visit_stmt(stmt);
         }
     }
 
     fn visit_class_def(&self, c: &parser::ast::ClassDef) {
         for stmt in &c.body {
-            self.visit_stmt(&stmt);
+            self.visit_stmt(stmt);
         }
     }
 
     fn visit_match(&self, m: &parser::ast::Match) {
         for case in &m.cases {
             for stmt in &case.body {
-                self.visit_stmt(&stmt);
+                self.visit_stmt(stmt);
             }
         }
     }
 
-    fn visit_constant(&self, c: &Constant) {
+    fn visit_constant(&self, _c: &Constant) {
         todo!()
     }
-    fn visit_list(&self, l: &List) {
+    fn visit_list(&self, _l: &List) {
         todo!()
     }
-    fn visit_tuple(&self, t: &Tuple) {
+    fn visit_tuple(&self, _t: &Tuple) {
         todo!()
     }
-    fn visit_dict(&self, d: &Dict) {
+    fn visit_dict(&self, _d: &Dict) {
         todo!()
     }
-    fn visit_set(&self, s: &Set) {
+    fn visit_set(&self, _s: &Set) {
         todo!()
     }
-    fn visit_name(&self, n: &Name) {}
-    fn visit_bool_op(&self, b: &BoolOperation) {
+    fn visit_name(&self, _n: &Name) {}
+    fn visit_bool_op(&self, _b: &BoolOperation) {
         todo!()
     }
-    fn visit_unary_op(&self, u: &UnaryOperation) {
+    fn visit_unary_op(&self, _u: &UnaryOperation) {
         todo!()
     }
-    fn visit_bin_op(&self, b: &BinOp) {
+    fn visit_bin_op(&self, _b: &BinOp) {
         todo!()
     }
-    fn visit_named_expr(&self, n: &NamedExpression) {
+    fn visit_named_expr(&self, _n: &NamedExpression) {
         todo!()
     }
-    fn visit_yield(&self, y: &Yield) {
+    fn visit_yield(&self, _y: &Yield) {
         todo!()
     }
-    fn visit_yield_from(&self, y: &YieldFrom) {
+    fn visit_yield_from(&self, _y: &YieldFrom) {
         todo!()
     }
-    fn visit_starred(&self, s: &Starred) {
+    fn visit_starred(&self, _s: &Starred) {
         todo!()
     }
-    fn visit_generator(&self, g: &Generator) {
+    fn visit_generator(&self, _g: &Generator) {
         todo!()
     }
-    fn visit_list_comp(&self, l: &ListComp) {
+    fn visit_list_comp(&self, _l: &ListComp) {
         todo!()
     }
-    fn visit_set_comp(&self, s: &SetComp) {
+    fn visit_set_comp(&self, _s: &SetComp) {
         todo!()
     }
-    fn visit_dict_comp(&self, d: &DictComp) {
+    fn visit_dict_comp(&self, _d: &DictComp) {
         todo!()
     }
-    fn visit_attribute(&self, a: &Attribute) {
+    fn visit_attribute(&self, _a: &Attribute) {
         todo!()
     }
-    fn visit_subscript(&self, s: &Subscript) {
+    fn visit_subscript(&self, _s: &Subscript) {
         todo!()
     }
-    fn visit_slice(&self, s: &Slice) {
+    fn visit_slice(&self, _s: &Slice) {
         todo!()
     }
-    fn visit_call(&self, c: &Call) {
+    fn visit_call(&self, _c: &Call) {
         todo!()
     }
-    fn visit_await(&self, a: &Await) {
+    fn visit_await(&self, _a: &Await) {
         todo!()
     }
-    fn visit_compare(&self, c: &Compare) {
+    fn visit_compare(&self, _c: &Compare) {
         todo!()
     }
-    fn visit_lambda(&self, l: &Lambda) {
+    fn visit_lambda(&self, _l: &Lambda) {
         todo!()
     }
-    fn visit_if_exp(&self, i: &IfExp) {
+    fn visit_if_exp(&self, _i: &IfExp) {
         todo!()
     }
-    fn visit_joined_str(&self, j: &JoinedStr) {
+    fn visit_joined_str(&self, _j: &JoinedStr) {
         todo!()
     }
-    fn visit_formatted_value(&self, f: &FormattedValue) {
-        todo!()
-    }
-
-    fn visit_alias(&self, a: &Alias) {
+    fn visit_formatted_value(&self, _f: &FormattedValue) {
         todo!()
     }
 
-    fn visit_assign(&self, a: &Assign) {
+    fn visit_alias(&self, _a: &Alias) {
         todo!()
     }
 
-    fn visit_ann_assign(&self, a: &AnnAssign) {
+    fn visit_assign(&self, _a: &Assign) {
         todo!()
     }
 
-    fn visit_aug_assign(&self, a: &AugAssign) {
+    fn visit_ann_assign(&self, _a: &AnnAssign) {
         todo!()
     }
 
-    fn visit_assert(&self, a: &Assert) {
+    fn visit_aug_assign(&self, _a: &AugAssign) {
         todo!()
     }
 
-    fn visit_pass(&self, p: &Pass) {
+    fn visit_assert(&self, _a: &Assert) {
         todo!()
     }
 
-    fn visit_delete(&self, d: &Delete) {
+    fn visit_pass(&self, _p: &Pass) {
         todo!()
     }
 
-    fn visit_return(&self, r: &Return) {
+    fn visit_delete(&self, _d: &Delete) {
         todo!()
     }
 
-    fn visit_raise(&self, r: &Raise) {
+    fn visit_return(&self, _r: &Return) {
         todo!()
     }
 
-    fn visit_break(&self, b: &Break) {
+    fn visit_raise(&self, _r: &Raise) {
         todo!()
     }
 
-    fn visit_continue(&self, c: &Continue) {
+    fn visit_break(&self, _b: &Break) {
         todo!()
     }
 
-    fn visit_global(&self, g: &Global) {
+    fn visit_continue(&self, _c: &Continue) {
         todo!()
     }
 
-    fn visit_nonlocal(&self, n: &Nonlocal) {
+    fn visit_global(&self, _g: &Global) {
+        todo!()
+    }
+
+    fn visit_nonlocal(&self, _n: &Nonlocal) {
         todo!()
     }
 }

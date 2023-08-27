@@ -18,10 +18,8 @@ pub fn is_at_compound_statement(token: &Token) -> bool {
         return true;
     }
 
-    if Kind::Identifier == token.kind {
-        if token.value.to_string() == "match" {
-            return true;
-        }
+    if Kind::Identifier == token.kind && token.value.to_string() == "match" {
+        return true;
     }
 
     false
