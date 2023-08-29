@@ -10,22 +10,22 @@ pub fn extract_string_inside(val: String) -> String {
         val.strip_suffix("\"\"\"")
             .expect("String must be enclosed with \"\"\"")
             .to_string()
-    } else if let Some(val) = val.strip_prefix("\"") {
-        val.strip_suffix("\"")
+    } else if let Some(val) = val.strip_prefix('\"') {
+        val.strip_suffix('\"')
             .expect("String must be enclosed with \"")
             .to_string()
     } else if let Some(val) = val.strip_prefix("'''") {
         val.strip_suffix("'''")
             .expect("String must be enclosed with '''")
             .to_string()
-    } else if let Some(val) = val.strip_prefix("'") {
-        val.strip_suffix("'")
+    } else if let Some(val) = val.strip_prefix('\'') {
+        val.strip_suffix('\'')
             .expect("String must be enclosed with '")
             .to_string()
     } else {
         panic!(
             "String must be enclosed in \"\"\", \"', ''' or ' but got {} ",
-            val.starts_with("\'")
+            val.starts_with('\'')
         );
     }
 }
@@ -63,14 +63,14 @@ pub fn concat_string_exprs(lhs: Expression, rhs: Expression) -> Result<Expressio
                         value: ConstantValue::Bytes(lhs),
                     }))
                 }
-                (ConstantValue::Bytes(lhs), _) => {
+                (ConstantValue::Bytes(_lhs), _) => {
                     return Err(diagnostics::InvalidSyntax(
                         "Cannot concat bytes and string".to_string(),
                         node,
                     )
                     .into())
                 }
-                (_, ConstantValue::Bytes(rhs)) => {
+                (_, ConstantValue::Bytes(_rhs)) => {
                     return Err(diagnostics::InvalidSyntax(
                         "Cannot concat string and bytes".to_string(),
                         node,

@@ -6,6 +6,7 @@ use crate::nodes::EnderpyFile;
 use crate::settings::Settings;
 use crate::state::State;
 use crate::symbol_table::SymbolTable;
+use crate::type_check::checker::TypeChecker;
 
 pub struct BuildSource {
     pub path: PathBuf,
@@ -75,15 +76,15 @@ impl BuildManager {
         }
     }
 
+    // TODO: separate this can build to be able to test pre analysis and type checking separately
     // Performs type checking passes over the code
-    fn type_check(&mut self) {
-        panic!("not implemented")
-    }
-
-    // Performs type checking for a specific file
-    fn type_check_file(&mut self, file_path: &str) {
-        // Logic to perform type checking for a file
-        // Updates self.type_checked_files after successful type checking
+    pub fn type_check(&mut self) {
+        self.pre_analysis();
+        for state in self.modules.iter_mut() {
+            let mut checker = TypeChecker::new(state.1, &self.options);
+            checker.type_check();
+            self.errors.append(&mut checker.errors);
+        }
     }
 }
 
@@ -102,6 +103,21 @@ fn snapshot_symbol_table(source: &str) -> String {
     let module = manager.modules.values().last().unwrap();
 
     format!("{}", module.symbol_table)
+}
+
+fn snapshot_type_check(source: &str) -> String {
+    let mut manager = BuildManager::new(
+        vec![BuildSource {
+            path: PathBuf::from("test.py"),
+            module: String::from("test"),
+            source: source.to_string(),
+            followed: false,
+        }],
+        Settings::test_settings(),
+    );
+    manager.type_check();
+
+    manager.errors.join("\n").to_string()
 }
 
 #[cfg(test)]
@@ -124,6 +140,22 @@ mod tests {
         };
     }
 
+    macro_rules! snap_type {
+        ($name:tt, $path:tt) => {
+            #[test]
+            fn $name() {
+                let contents = include_str!($path);
+                let result = snapshot_type_check(contents);
+                let mut settings = insta::Settings::clone_current();
+                settings.set_snapshot_path("../testdata/output/");
+                settings.set_description(contents);
+                settings.bind(|| {
+                    insta::assert_snapshot!(result);
+                });
+            }
+        };
+    }
+
     snap!(
         test_simple_var_assignments,
         "../testdata/inputs/simple_var_assignment.py"
@@ -135,4 +167,6 @@ mod tests {
     );
 
     snap!(test_class_def, "../testdata/inputs/class_definition.py");
+
+    snap_type!(test_type_check_var, "../testdata/inputs/type_check_var.py");
 }

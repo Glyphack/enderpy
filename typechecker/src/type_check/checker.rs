@@ -1,80 +1,74 @@
-use crate::ast::*;
+use ast::{Expression, Statement};
+use parser::ast::{self, *};
 
-// pub trait FileVisitor<T>: StmtVisitor<T> + ExprVisitor<T> {
-//     fn visit_file(&mut self, f: &EnderpyFile) -> T {
-//         self.visit_module(&f.ast)
-//     }
-//     fn visit_module(&mut self, m: &Module) -> T {
-//         for stmt in m.body {
-//             self.visit_stmt(stmt)
-//         }
-//     }
-// }
-//
-// pub trait StmtVisitor<T> {
-//     fn visit_stmt(&mut self, s: &Statement) -> T;
-//     fn visit_expr(&mut self, e: &Expression) -> T;
-//     fn visit_import(&mut self, i: &Import) -> T;
-//     fn visit_import_from(&mut self, i: &ImportFrom) -> T;
-//     fn visit_alias(&mut self, a: &Alias) -> T;
-//     fn visit_assign(&mut self, a: &Assign) -> T;
-//     fn visit_ann_assign(&mut self, a: &AnnAssign) -> T;
-//     fn visit_aug_assign(&mut self, a: &AugAssign) -> T;
-//     fn visit_assert(&mut self, a: &Assert) -> T;
-//     fn visit_pass(&mut self, p: &Pass) -> T;
-//     fn visit_delete(&mut self, d: &Delete) -> T;
-//     fn visit_return(&mut self, r: &Return) -> T;
-//     fn visit_raise(&mut self, r: &Raise) -> T;
-//     fn visit_break(&mut self, b: &Break) -> T;
-//     fn visit_continue(&mut self, c: &Continue) -> T;
-//     fn visit_global(&mut self, g: &Global) -> T;
-//     fn visit_nonlocal(&mut self, n: &Nonlocal) -> T;
-//     fn visit_if(&mut self, i: &If) -> T;
-//     fn visit_while(&mut self, w: &While) -> T;
-//     fn visit_for(&mut self, f: &For) -> T;
-//     fn visit_with(&mut self, w: &With) -> T;
-//     fn visit_try(&mut self, t: &Try) -> T;
-//     fn visit_try_star(&mut self, t: &TryStar) -> T;
-//     fn visit_function_def(&mut self, f: &FunctionDef) -> T;
-//     fn visit_class_def(&mut self, c: &ClassDef) -> T;
-//     fn visit_match(&mut self, m: &Match) -> T;
-// }
-//
-// pub trait ExprVisitor<T> {
-//     fn visit_constant(&mut self, c: &Constant) -> T;
-//     fn visit_list(&mut self, l: &List) -> T;
-//     fn visit_tuple(&mut self, t: &Tuple) -> T;
-//     fn visit_dict(&mut self, d: &Dict) -> T;
-//     fn visit_set(&mut self, s: &Set) -> T;
-//     fn visit_name(&mut self, n: &Name) -> T;
-//     fn visit_bool_op(&mut self, b: &BoolOperation) -> T;
-//     fn visit_unary_op(&mut self, u: &UnaryOperation) -> T;
-//     fn visit_bin_op(&mut self, b: &BinOp) -> T;
-//     fn visit_named_expr(&mut self, n: &NamedExpression) -> T;
-//     fn visit_yield(&mut self, y: &Yield) -> T;
-//     fn visit_yield_from(&mut self, y: &YieldFrom) -> T;
-//     fn visit_starred(&mut self, s: &Starred) -> T;
-//     fn visit_generator(&mut self, g: &Generator) -> T;
-//     fn visit_list_comp(&mut self, l: &ListComp) -> T;
-//     fn visit_set_comp(&mut self, s: &SetComp) -> T;
-//     fn visit_dict_comp(&mut self, d: &DictComp) -> T;
-//     fn visit_attribute(&mut self, a: &Attribute) -> T;
-//     fn visit_subscript(&mut self, s: &Subscript) -> T;
-//     fn visit_slice(&mut self, s: &Slice) -> T;
-//     fn visit_call(&mut self, c: &Call) -> T;
-//     fn visit_await(&mut self, a: &Await) -> T;
-//     fn visit_compare(&mut self, c: &Compare) -> T;
-//     fn visit_lambda(&mut self, l: &Lambda) -> T;
-//     fn visit_if_exp(&mut self, i: &IfExp) -> T;
-//     fn visit_joined_str(&mut self, j: &JoinedStr) -> T;
-//     fn visit_formatted_value(&mut self, f: &FormattedValue) -> T;
-// }
+use crate::{
+    ast_visitor::TraversalVisitor, ast_visitor_immut::TraversalVisitorImmut, settings::Settings,
+    state::State, symbol_table::Declaration,
+};
 
-/// A visitor that traverses the AST and calls the visit method for each node
-/// This is useful for visitors that only need to visit a few nodes
-/// and don't want to implement all the methods.
-/// The overriden methods must make sure to continue the traversal.
-pub trait TraversalVisitor {
+use super::{
+    type_inference::{self, type_check_bin_op},
+    types::Type,
+};
+
+pub struct TypeChecker<'a> {
+    pub errors: Vec<String>,
+    // TODO: currently only supporting a single file
+    pub module: &'a State,
+    pub options: &'a Settings,
+}
+
+impl<'a> TypeChecker<'a> {
+    pub fn new(module: &'a State, options: &'a Settings) -> Self {
+        TypeChecker {
+            errors: vec![],
+            module,
+            options,
+        }
+    }
+
+    pub fn type_check(&mut self) {
+        for stmt in &self.module.file.body {
+            self.visit_stmt(stmt);
+        }
+    }
+
+    fn infer_declaration_type(&mut self, declaration: &Declaration) -> Type {
+        match declaration {
+            Declaration::Variable(v) => {
+                if let Some(type_annotation) = &v.type_annotation {
+                    type_inference::get_type_from_annotation(type_annotation.clone())
+                } else {
+                    Type::Unknown
+                }
+            }
+            _ => Type::Unknown,
+        }
+    }
+
+    fn infer_expr_type(&mut self, expr: &ast::Expression) -> Type {
+        match expr {
+            ast::Expression::Constant(c) => match c.value {
+                ast::ConstantValue::Int(_) => Type::Int,
+                ast::ConstantValue::Float(_) => Type::Float,
+                ast::ConstantValue::Str(_) => Type::Str,
+                ast::ConstantValue::Bool(_) => Type::Bool,
+                ast::ConstantValue::None => Type::None,
+                _ => Type::Unknown,
+            },
+            ast::Expression::Name(n) => match self.module.symbol_table.lookup_in_scope(&n.id) {
+                Some(symbol) => match symbol.last_declaration() {
+                    Some(declaration) => self.infer_declaration_type(declaration),
+                    None => Type::Unknown,
+                },
+                None => Type::Unknown,
+            },
+            _ => Type::Unknown,
+        }
+    }
+}
+
+impl<'a> TraversalVisitor for TypeChecker<'a> {
     fn visit_stmt(&mut self, s: &Statement) {
         // map all statements and call visit
         match s {
@@ -104,6 +98,7 @@ pub trait TraversalVisitor {
             Statement::Match(m) => self.visit_match(m),
         }
     }
+
     fn visit_expr(&mut self, e: &Expression) {
         match e {
             Expression::Constant(c) => self.visit_constant(c),
@@ -135,6 +130,7 @@ pub trait TraversalVisitor {
             Expression::FormattedValue(f) => self.visit_formatted_value(f),
         }
     }
+
     fn visit_import(&mut self, _i: &Import) {
         todo!();
     }
@@ -144,6 +140,7 @@ pub trait TraversalVisitor {
     }
 
     fn visit_if(&mut self, i: &parser::ast::If) {
+        // self.visit_stmt(i.test);
         for stmt in &i.body {
             self.visit_stmt(stmt);
         }
@@ -233,82 +230,116 @@ pub trait TraversalVisitor {
         }
     }
 
-    fn visit_constant(&mut self, _c: &Constant) {
-        todo!()
-    }
+    fn visit_constant(&mut self, _c: &Constant) {}
+
     fn visit_list(&mut self, _l: &List) {
         todo!()
     }
+
     fn visit_tuple(&mut self, _t: &Tuple) {
         todo!()
     }
+
     fn visit_dict(&mut self, _d: &Dict) {
         todo!()
     }
+
     fn visit_set(&mut self, _s: &Set) {
         todo!()
     }
+
     fn visit_name(&mut self, _n: &Name) {}
+
     fn visit_bool_op(&mut self, _b: &BoolOperation) {
         todo!()
     }
+
     fn visit_unary_op(&mut self, _u: &UnaryOperation) {
         todo!()
     }
-    fn visit_bin_op(&mut self, _b: &BinOp) {
-        todo!()
+
+    fn visit_bin_op(&mut self, b: &BinOp) {
+        self.visit_expr(&b.left);
+        self.visit_expr(&b.right);
+        let l_type = self.infer_expr_type(&b.left);
+        let r_type = self.infer_expr_type(&b.right);
+
+        if !type_check_bin_op(&l_type, &r_type, &b.op) {
+            self.errors.push(format!(
+                "Operator '{}' not supported for types '{}' and '{}'",
+                b.op, l_type, r_type
+            ));
+        }
     }
+
     fn visit_named_expr(&mut self, _n: &NamedExpression) {
         todo!()
     }
+
     fn visit_yield(&mut self, _y: &Yield) {
         todo!()
     }
+
     fn visit_yield_from(&mut self, _y: &YieldFrom) {
         todo!()
     }
+
     fn visit_starred(&mut self, _s: &Starred) {
         todo!()
     }
+
     fn visit_generator(&mut self, _g: &Generator) {
         todo!()
     }
+
     fn visit_list_comp(&mut self, _l: &ListComp) {
         todo!()
     }
+
     fn visit_set_comp(&mut self, _s: &SetComp) {
         todo!()
     }
+
     fn visit_dict_comp(&mut self, _d: &DictComp) {
         todo!()
     }
+
     fn visit_attribute(&mut self, _a: &Attribute) {
         todo!()
     }
+
     fn visit_subscript(&mut self, _s: &Subscript) {
         todo!()
     }
+
     fn visit_slice(&mut self, _s: &Slice) {
         todo!()
     }
+
     fn visit_call(&mut self, _c: &Call) {
         todo!()
     }
+
     fn visit_await(&mut self, _a: &Await) {
         todo!()
     }
+
     fn visit_compare(&mut self, _c: &Compare) {
         todo!()
     }
+
     fn visit_lambda(&mut self, _l: &Lambda) {
         todo!()
     }
+
     fn visit_if_exp(&mut self, _i: &IfExp) {
         todo!()
     }
+
     fn visit_joined_str(&mut self, _j: &JoinedStr) {
         todo!()
     }
+
     fn visit_formatted_value(&mut self, _f: &FormattedValue) {
         todo!()
     }
@@ -317,13 +348,9 @@ pub trait TraversalVisitor {
         todo!()
     }
 
-    fn visit_assign(&mut self, _a: &Assign) {
-        todo!()
-    }
+    fn visit_assign(&mut self, _a: &Assign) {}
 
-    fn visit_ann_assign(&mut self, _a: &AnnAssign) {
-        todo!()
-    }
+    fn visit_ann_assign(&mut self, _a: &AnnAssign) {}
 
     fn visit_aug_assign(&mut self, _a: &AugAssign) {
         todo!()

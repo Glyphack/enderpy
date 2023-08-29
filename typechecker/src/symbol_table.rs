@@ -112,7 +112,7 @@ pub enum SymbolScope {
 }
 
 impl SymbolTable {
-    pub fn new(symbol_table_type: SymbolTableType, start_line_number: u8) -> Self {
+    pub fn new(symbol_table_type: SymbolTableType, _start_line_number: u8) -> Self {
         let global_scope = SymbolTableScope {
             symbol_table_type,
             symbols: HashMap::new(),
@@ -126,7 +126,7 @@ impl SymbolTable {
 
     fn current_scope(&self) -> &SymbolTableScope {
         if let Some(scope) = self.scopes.last() {
-            return &scope;
+            scope
         } else {
             panic!("no scopes")
         }
@@ -166,6 +166,10 @@ impl SymbolTable {
 impl SymbolTableNode {
     pub fn add_declaration(&mut self, decl: Declaration) {
         self.declarations.push(decl);
+    }
+
+    pub fn last_declaration(&self) -> Option<&Declaration> {
+        self.declarations.last()
     }
 }
 

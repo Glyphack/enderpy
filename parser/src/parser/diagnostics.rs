@@ -1,4 +1,4 @@
-use crate::{parser::ast::Node, token::Kind};
+use crate::{parser::ast::Node};
 use miette::{self, Diagnostic};
 use thiserror::{self, Error};
 

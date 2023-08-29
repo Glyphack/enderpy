@@ -1,0 +1,6 @@
+---
+source: typechecker/src/build.rs
+description: "a: int = 1\n\na + \"str\"\n"
+expression: result
+---
+Operator '+' not supported for types 'Int' and 'Str'

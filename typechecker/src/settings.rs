@@ -17,7 +17,7 @@ pub struct Settings {
 
 impl Settings {
     pub fn new() -> Result<Self, ConfigError> {
-        let run_mode = env::var("RUN_MODE").unwrap_or_else(|_| "development".into());
+        let _run_mode = env::var("RUN_MODE").unwrap_or_else(|_| "development".into());
         let s = Config::builder()
             // Start off by merging in the "default" configuration file
             .add_source(File::with_name("examples/hierarchical-env/config/default"))
