@@ -1,5 +1,3 @@
-
-
 use parser::ast::Expression;
 
 use crate::{
@@ -41,8 +39,7 @@ impl SemanticAnalyzer {
     }
 
     fn report_unresolved_reference(&mut self) {
-        self.errors
-            .push(format!("cannot resolve reference {}", ""))
+        self.errors.push(format!("cannot resolve reference {}", ""))
     }
 
     fn current_scope(&self) -> &SymbolTableType {
@@ -416,8 +413,7 @@ impl TraversalVisitor for SemanticAnalyzer {
         todo!()
     }
 
-    fn visit_tuple(&mut self, _t: &parser::ast::Tuple) {
-    }
+    fn visit_tuple(&mut self, _t: &parser::ast::Tuple) {}
 
     fn visit_dict(&mut self, _d: &parser::ast::Dict) {
         todo!()
@@ -485,9 +481,7 @@ impl TraversalVisitor for SemanticAnalyzer {
         todo!()
     }
 
-    fn visit_call(&mut self, _c: &parser::ast::Call) {
-        todo!()
-    }
+    fn visit_call(&mut self, _c: &parser::ast::Call) {}
 
     fn visit_await(&mut self, _a: &parser::ast::Await) {
         todo!()
@@ -565,8 +559,7 @@ impl TraversalVisitor for SemanticAnalyzer {
         todo!()
     }
 
-    fn visit_pass(&mut self, _p: &parser::ast::Pass) {
-    }
+    fn visit_pass(&mut self, _p: &parser::ast::Pass) {}
 
     fn visit_delete(&mut self, _d: &parser::ast::Delete) {
         todo!()

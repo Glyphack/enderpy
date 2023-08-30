@@ -1,4 +1,3 @@
-
 use std::{panic, vec};
 
 use crate::lexer::lexer::Lexer;
@@ -477,6 +476,13 @@ impl Parser {
         self.expect(Kind::LeftParen)?;
         let args = self.parse_parameters(false)?;
         self.expect(Kind::RightParen)?;
+
+        let return_type = if self.eat(Kind::Arrow) {
+            Some(Box::new(self.parse_expression_2()?))
+        } else {
+            None
+        };
+
         self.expect(Kind::Colon)?;
         let body = self.parse_suite()?;
 
@@ -487,7 +493,7 @@ impl Parser {
             body,
             decorator_list: decorators,
             // TODO: return type
-            returns: None,
+            returns: return_type,
             // TODO: type comment
             type_comment: None,
         }))
@@ -675,7 +681,6 @@ impl Parser {
     }
 
     fn parse_closed_pattern(&mut self) -> Result<MatchPattern> {
-        
         match self.cur_kind() {
             Kind::LeftParen => self.parse_sequence_pattern(),
             Kind::LeftBrace => self.parse_sequence_pattern(),
@@ -946,7 +951,7 @@ impl Parser {
     fn parse_assignment_or_expression_statement(&mut self) -> Result<Statement> {
         let node = self.start_node();
         let lhs = self.parse_expression()?;
-        
+
         if self.cur_kind() == Kind::Assign {
             self.parse_assignment_statement(node, lhs)
         } else if matches!(
@@ -991,12 +996,10 @@ impl Parser {
 
     // https://docs.python.org/3/reference/compound_stmts.html#grammar-token-python-grammar-statement
     fn parse_statement(&mut self) -> Result<Vec<Statement>> {
-        
         if is_at_compound_statement(self.cur_token()) {
             let comp_stmt = self.parse_compount_statement()?;
             Ok(vec![comp_stmt])
         } else {
-            
             self.parse_statement_list()
         }
     }
@@ -1636,6 +1639,12 @@ impl Parser {
             self.cur_kind(),
             Kind::WhiteSpace | Kind::NewLine | Kind::Indent | Kind::Dedent
         ) {
+            self.bump(self.cur_kind());
+        }
+    }
+
+    fn consume_whitespace(&mut self) {
+        while matches!(self.cur_kind(), Kind::WhiteSpace) {
             self.bump(self.cur_kind());
         }
     }
@@ -3405,6 +3414,7 @@ except *Exception as e:
 def a(): pass",
             "@decor
 def f(a: 'annotation', b=1, c=2, *d, e, f=3, **g): pass",
+            "def func() -> None: pass",
         ] {
             let mut parser = Parser::new(test_case.to_string());
             let program = parser.parse();

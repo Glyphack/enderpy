@@ -169,4 +169,8 @@ mod tests {
     snap!(test_class_def, "../testdata/inputs/class_definition.py");
 
     snap_type!(test_type_check_var, "../testdata/inputs/type_check_var.py");
+    snap_type!(
+        test_type_check_call,
+        "../testdata/inputs/type_check_call.py"
+    );
 }

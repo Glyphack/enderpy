@@ -37,12 +37,39 @@ impl<'a> TypeChecker<'a> {
         match declaration {
             Declaration::Variable(v) => {
                 if let Some(type_annotation) = &v.type_annotation {
-                    type_inference::get_type_from_annotation(type_annotation.clone())
+                    self.infer_expr_type(&type_annotation)
+                } else if let Some(source) = &v.inferred_type_source {
+                    self.infer_expr_type(&source)
                 } else {
                     Type::Unknown
                 }
             }
-            _ => Type::Unknown,
+            Declaration::Function(f) => {
+                if let Some(type_annotation) = f.function_node.returns.clone() {
+                    type_inference::get_type_from_annotation(*type_annotation)
+                } else {
+                    panic!("Infer the type based on the return statement")
+                }
+            }
+            _ => panic!("TODO: infer type from declaration"),
+        }
+    }
+
+    fn infer_type_from_symbol_table(&mut self, name: &str) -> Type {
+        match self.module.symbol_table.lookup_in_scope(name) {
+            Some(symbol) => match symbol.last_declaration() {
+                Some(declaration) => self.infer_declaration_type(declaration),
+                None => {
+                    self.errors
+                        .push(format!("Symbol '{}' not found", name.to_string()));
+                    Type::Unknown
+                }
+            },
+            None => {
+                self.errors
+                    .push(format!("Symbol '{}' not found", name.to_string()));
+                Type::Unknown
+            }
         }
     }
 
@@ -56,13 +83,15 @@ impl<'a> TypeChecker<'a> {
                 ast::ConstantValue::None => Type::None,
                 _ => Type::Unknown,
             },
-            ast::Expression::Name(n) => match self.module.symbol_table.lookup_in_scope(&n.id) {
-                Some(symbol) => match symbol.last_declaration() {
-                    Some(declaration) => self.infer_declaration_type(declaration),
-                    None => Type::Unknown,
-                },
-                None => Type::Unknown,
-            },
+            ast::Expression::Name(n) => self.infer_type_from_symbol_table(&n.id),
+            ast::Expression::Call(call) => {
+                let func = *call.func.clone();
+                match func {
+                    ast::Expression::Name(n) => self.infer_type_from_symbol_table(n.id.as_str()),
+                    ast::Expression::Attribute(a) => panic!("TODO: infer type from attribute"),
+                    _ => panic!("TODO: infer type from call"),
+                }
+            }
             _ => Type::Unknown,
         }
     }
@@ -264,6 +293,10 @@ impl<'a> TraversalVisitor for TypeChecker<'a> {
         let l_type = self.infer_expr_type(&b.left);
         let r_type = self.infer_expr_type(&b.right);
 
+        println!("{}", self.module.symbol_table);
+
+        println!("{} {} {}", l_type, b.op, r_type);
+
         if !type_check_bin_op(&l_type, &r_type, &b.op) {
             self.errors.push(format!(
                 "Operator '{}' not supported for types '{}' and '{}'",
@@ -316,9 +349,7 @@ impl<'a> TraversalVisitor for TypeChecker<'a> {
         todo!()
     }
 
-    fn visit_call(&mut self, _c: &Call) {
-        todo!()
-    }
+    fn visit_call(&mut self, _c: &Call) {}
 
     fn visit_await(&mut self, _a: &Await) {
         todo!()
@@ -348,8 +379,10 @@ impl<'a> TraversalVisitor for TypeChecker<'a> {
         todo!()
     }
 
-    fn visit_assign(&mut self, _a: &Assign) {}
-
+    fn visit_assign(&mut self, _a: &Assign) {
+        self.visit_expr(&_a.value);
+        // TODO: visit the targets and check they can be assigned to the values
+    }
     fn visit_ann_assign(&mut self, _a: &AnnAssign) {}
 
     fn visit_aug_assign(&mut self, _a: &AugAssign) {
@@ -369,7 +402,7 @@ impl<'a> TraversalVisitor for TypeChecker<'a> {
     }
 
     fn visit_return(&mut self, _r: &Return) {
-        todo!()
+        // TODO: check that the return type matches the function return type
     }
 
     fn visit_raise(&mut self, _r: &Raise) {

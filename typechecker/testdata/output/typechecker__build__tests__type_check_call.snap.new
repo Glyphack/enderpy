@@ -1,0 +1,7 @@
+---
+source: typechecker/src/build.rs
+assertion_line: 172
+description: "def function() -> int:\n    return 1\n\na = function()\nb = function() + \"1\"\nc = a + 1\nd = function() + 1\n"
+expression: result
+---
+Operator '+' not supported for types 'Int' and 'Str'
