@@ -2,7 +2,7 @@ use parser::ast::{self, BinaryOperator};
 
 use super::types::Type;
 
-pub fn get_type_from_annotation(type_annotation: ast::Expression) -> Type {
+pub fn get_type_from_annotation(type_annotation: &ast::Expression) -> Type {
     let expr_type = match type_annotation {
         ast::Expression::Name(name) => match name.id.as_str() {
             "int" => Type::Int,

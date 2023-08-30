@@ -37,7 +37,7 @@ impl<'a> TypeChecker<'a> {
         match declaration {
             Declaration::Variable(v) => {
                 if let Some(type_annotation) = &v.type_annotation {
-                    self.infer_expr_type(&type_annotation)
+                    type_inference::get_type_from_annotation(type_annotation)
                 } else if let Some(source) = &v.inferred_type_source {
                     self.infer_expr_type(&source)
                 } else {
@@ -46,7 +46,7 @@ impl<'a> TypeChecker<'a> {
             }
             Declaration::Function(f) => {
                 if let Some(type_annotation) = f.function_node.returns.clone() {
-                    type_inference::get_type_from_annotation(*type_annotation)
+                    type_inference::get_type_from_annotation(&type_annotation)
                 } else {
                     panic!("Infer the type based on the return statement")
                 }
