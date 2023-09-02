@@ -6,7 +6,7 @@ use crate::{
 };
 
 use super::{
-    type_inference::{self, type_check_bin_op},
+    type_inference::{self, bin_op_result_type, type_check_bin_op},
     types::Type,
 };
 
@@ -60,14 +60,12 @@ impl<'a> TypeChecker<'a> {
             Some(symbol) => match symbol.last_declaration() {
                 Some(declaration) => self.infer_declaration_type(declaration),
                 None => {
-                    self.errors
-                        .push(format!("Symbol '{}' not found", name));
+                    self.errors.push(format!("Symbol '{}' not found", name));
                     Type::Unknown
                 }
             },
             None => {
-                self.errors
-                    .push(format!("Symbol '{}' not found", name));
+                self.errors.push(format!("Symbol '{}' not found", name));
                 Type::Unknown
             }
         }
@@ -92,6 +90,11 @@ impl<'a> TypeChecker<'a> {
                     _ => panic!("TODO: infer type from call"),
                 }
             }
+            ast::Expression::BinOp(b) => bin_op_result_type(
+                &self.infer_expr_type(&b.left),
+                &self.infer_expr_type(&b.right),
+                &b.op,
+            ),
             _ => Type::Unknown,
         }
     }
@@ -292,10 +295,6 @@ impl<'a> TraversalVisitor for TypeChecker<'a> {
         self.visit_expr(&b.right);
         let l_type = self.infer_expr_type(&b.left);
         let r_type = self.infer_expr_type(&b.right);
-
-        println!("{}", self.module.symbol_table);
-
-        println!("{} {} {}", l_type, b.op, r_type);
 
         if !type_check_bin_op(&l_type, &r_type, &b.op) {
             self.errors.push(format!(

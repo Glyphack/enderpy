@@ -34,7 +34,7 @@ fn symbols(path: &PathBuf) -> std::result::Result<(), anyhow::Error> {
     manager.build();
     let module = manager.modules.values().last().unwrap();
 
-    format!("{}", module.symbol_table);
+    println!("{}", module.symbol_table);
 
     Ok(())
 }

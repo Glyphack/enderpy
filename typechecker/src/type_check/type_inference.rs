@@ -59,3 +59,41 @@ pub fn type_check_bin_op(t1: &Type, t2: &Type, op: &BinaryOperator) -> bool {
 
     false
 }
+
+pub fn bin_op_result_type(t1: &Type, t2: &Type, op: &BinaryOperator) -> Type {
+    if !type_check_bin_op(t1, t2, op) {
+        return Type::Unknown;
+    }
+
+    match op {
+        BinaryOperator::Add
+        | BinaryOperator::Sub
+        | BinaryOperator::Mult
+        | BinaryOperator::MatMult
+        | BinaryOperator::Div
+        | BinaryOperator::Mod
+        | BinaryOperator::Pow
+        | BinaryOperator::LShift
+        | BinaryOperator::RShift
+        | BinaryOperator::BitOr
+        | BinaryOperator::BitXor
+        | BinaryOperator::BitAnd
+        | BinaryOperator::FloorDiv => {
+            if type_equal(t1, &Type::Float) || type_equal(t2, &Type::Float) {
+                return Type::Float;
+            }
+            if type_equal(t1, &Type::Int) || type_equal(t2, &Type::Int) {
+                return Type::Int;
+            }
+            match t1 {
+                Type::Str => Type::Str,
+                Type::None => Type::None,
+                Type::Unknown => Type::Unknown,
+                Type::Bool => Type::Bool,
+                Type::Int => Type::Int,
+                Type::Float => Type::Float,
+                _ => Type::Unknown,
+            }
+        }
+    }
+}

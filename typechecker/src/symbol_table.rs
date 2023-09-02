@@ -177,6 +177,7 @@ impl SymbolTableNode {
 
 impl std::fmt::Display for SymbolTable {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        writeln!(f, "-------------------")?;
         writeln!(f, "global scope:")?;
         let mut sorted_scopes = self.scopes.iter().collect::<Vec<&SymbolTableScope>>();
         sorted_scopes.sort_by(|a, b| a.name.cmp(&b.name));
@@ -185,7 +186,6 @@ impl std::fmt::Display for SymbolTable {
             writeln!(f, "{}", scope)?;
         }
 
-        writeln!(f, "-------------------")?;
         writeln!(f, "all scopes:")?;
 
         let mut sorted_all_scopes = self.all_scopes.iter().collect::<Vec<&SymbolTableScope>>();
@@ -193,6 +193,7 @@ impl std::fmt::Display for SymbolTable {
         for scope in sorted_all_scopes {
             writeln!(f, "{}", scope)?;
         }
+        writeln!(f, "-------------------")?;
         Ok(())
     }
 }
