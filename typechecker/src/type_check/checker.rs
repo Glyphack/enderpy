@@ -39,7 +39,7 @@ impl<'a> TypeChecker<'a> {
                 if let Some(type_annotation) = &v.type_annotation {
                     type_inference::get_type_from_annotation(type_annotation)
                 } else if let Some(source) = &v.inferred_type_source {
-                    self.infer_expr_type(&source)
+                    self.infer_expr_type(source)
                 } else {
                     Type::Unknown
                 }
@@ -61,13 +61,13 @@ impl<'a> TypeChecker<'a> {
                 Some(declaration) => self.infer_declaration_type(declaration),
                 None => {
                     self.errors
-                        .push(format!("Symbol '{}' not found", name.to_string()));
+                        .push(format!("Symbol '{}' not found", name));
                     Type::Unknown
                 }
             },
             None => {
                 self.errors
-                    .push(format!("Symbol '{}' not found", name.to_string()));
+                    .push(format!("Symbol '{}' not found", name));
                 Type::Unknown
             }
         }
