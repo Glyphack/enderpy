@@ -15,9 +15,9 @@ pub enum Type {
 
 #[allow(unused)]
 pub struct CallableType {
-    name: String,
-    arguments: ast::Arguments,
-    return_type: Type,
+    pub name: String,
+    pub arguments: ast::Arguments,
+    pub return_type: Type,
 }
 
 impl Display for Type {
