@@ -1,20 +1,5 @@
-use crate::parser::ast::{BooleanOperator, UnaryOperator};
+use crate::parser::ast::UnaryOperator;
 use crate::token::Kind;
-
-pub fn is_bool_op(kind: &Kind) -> bool {
-    match kind {
-        Kind::And | Kind::Or => true,
-        _ => false,
-    }
-}
-
-pub fn map_boolean_operator(kind: &Kind) -> BooleanOperator {
-    match kind {
-        Kind::And => BooleanOperator::And,
-        Kind::Or => BooleanOperator::Or,
-        _ => panic!("Not a binary operator"),
-    }
-}
 
 pub fn is_unary_op(kind: &Kind) -> bool {
     match kind {
@@ -30,26 +15,6 @@ pub fn map_unary_operator(kind: &Kind) -> UnaryOperator {
         Kind::Minus => UnaryOperator::USub,
         Kind::Plus => UnaryOperator::UAdd,
         _ => panic!("Not a unary operator"),
-    }
-}
-
-pub fn is_bin_op(kind: &Kind) -> bool {
-    match kind {
-        Kind::Plus
-        | Kind::Minus
-        | Kind::Mul
-        | Kind::MatrixMul
-        | Kind::MulAssign
-        | Kind::Div
-        | Kind::Mod
-        | Kind::Pow
-        | Kind::IntDiv
-        | Kind::BitAnd
-        | Kind::BitOr
-        | Kind::BitXor
-        | Kind::LeftShift
-        | Kind::RightShift => true,
-        _ => false,
     }
 }
 

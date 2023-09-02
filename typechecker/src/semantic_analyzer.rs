@@ -9,6 +9,7 @@ use crate::{
     },
 };
 
+#[allow(unused)]
 pub struct SemanticAnalyzer {
     pub globals: SymbolTable,
     // TODO: Replace errors with another type
@@ -19,6 +20,7 @@ pub struct SemanticAnalyzer {
     scope: SymbolScope,
 }
 
+#[allow(unused)]
 impl SemanticAnalyzer {
     pub fn new(file: Box<EnderpyFile>) -> Self {
         let globals = SymbolTable::new(crate::symbol_table::SymbolTableType::Module, 0);
@@ -423,9 +425,7 @@ impl TraversalVisitor for SemanticAnalyzer {
         todo!()
     }
 
-    fn visit_name(&mut self, _n: &parser::ast::Name) {
-        todo!()
-    }
+    fn visit_name(&mut self, _n: &parser::ast::Name) {}
 
     fn visit_bool_op(&mut self, _b: &parser::ast::BoolOperation) {
         todo!()

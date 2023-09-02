@@ -14,6 +14,7 @@ use super::operator::{
 use super::statement::is_at_compound_statement;
 use super::string::concat_string_exprs;
 
+#[allow(unused)]
 #[derive(Debug)]
 pub struct Parser {
     source: String,
@@ -28,6 +29,7 @@ pub struct Parser {
     nested_expression_list: usize,
 }
 
+#[allow(unused)]
 impl Parser {
     pub fn new(source: String) -> Self {
         let mut lexer = Lexer::new(&source);

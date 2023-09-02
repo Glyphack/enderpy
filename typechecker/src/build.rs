@@ -10,6 +10,7 @@ use crate::type_check::checker::TypeChecker;
 
 pub struct BuildSource {
     pub path: PathBuf,
+    //  module name should come from path??
     pub module: String,
     pub source: String,
     // If this source was found by following an import
@@ -19,10 +20,9 @@ pub struct BuildSource {
 pub struct BuildManager {
     errors: Vec<String>,
     pub modules: HashMap<String, State>,
-    missing_modules: Vec<String>,
     options: Settings,
 }
-
+#[allow(unused)]
 impl BuildManager {
     pub fn new(sources: Vec<BuildSource>, options: Settings) -> Self {
         if sources.len() > 1 {
@@ -42,7 +42,6 @@ impl BuildManager {
         BuildManager {
             errors: vec![],
             modules,
-            missing_modules: vec![],
             options,
         }
     }
@@ -88,41 +87,40 @@ impl BuildManager {
     }
 }
 
-fn snapshot_symbol_table(source: &str) -> String {
-    let mut manager = BuildManager::new(
-        vec![BuildSource {
-            path: PathBuf::from("test.py"),
-            module: String::from("test"),
-            source: source.to_string(),
-            followed: false,
-        }],
-        Settings::test_settings(),
-    );
-    manager.build();
-
-    let module = manager.modules.values().last().unwrap();
-
-    format!("{}", module.symbol_table)
-}
-
-fn snapshot_type_check(source: &str) -> String {
-    let mut manager = BuildManager::new(
-        vec![BuildSource {
-            path: PathBuf::from("test.py"),
-            module: String::from("test"),
-            source: source.to_string(),
-            followed: false,
-        }],
-        Settings::test_settings(),
-    );
-    manager.type_check();
-
-    manager.errors.join("\n").to_string()
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
+    fn snapshot_symbol_table(source: &str) -> String {
+        let mut manager = BuildManager::new(
+            vec![BuildSource {
+                path: PathBuf::from("test.py"),
+                module: String::from("test"),
+                source: source.to_string(),
+                followed: false,
+            }],
+            Settings::test_settings(),
+        );
+        manager.build();
+
+        let module = manager.modules.values().last().unwrap();
+
+        format!("{}", module.symbol_table)
+    }
+
+    fn snapshot_type_check(source: &str) -> String {
+        let mut manager = BuildManager::new(
+            vec![BuildSource {
+                path: PathBuf::from("test.py"),
+                module: String::from("test"),
+                source: source.to_string(),
+                followed: false,
+            }],
+            Settings::test_settings(),
+        );
+        manager.type_check();
+
+        manager.errors.join("\n").to_string()
+    }
 
     macro_rules! snap {
         ($name:tt, $path:tt) => {

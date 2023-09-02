@@ -2,8 +2,7 @@ use ast::{Expression, Statement};
 use parser::ast::{self, *};
 
 use crate::{
-    ast_visitor::TraversalVisitor, ast_visitor_immut::TraversalVisitorImmut, settings::Settings,
-    state::State, symbol_table::Declaration,
+    ast_visitor::TraversalVisitor, settings::Settings, state::State, symbol_table::Declaration,
 };
 
 use super::{
@@ -18,6 +17,7 @@ pub struct TypeChecker<'a> {
     pub options: &'a Settings,
 }
 
+#[allow(unused)]
 impl<'a> TypeChecker<'a> {
     pub fn new(module: &'a State, options: &'a Settings) -> Self {
         TypeChecker {
@@ -96,7 +96,7 @@ impl<'a> TypeChecker<'a> {
         }
     }
 }
-
+#[allow(unused)]
 impl<'a> TraversalVisitor for TypeChecker<'a> {
     fn visit_stmt(&mut self, s: &Statement) {
         // map all statements and call visit
@@ -381,7 +381,6 @@ impl<'a> TraversalVisitor for TypeChecker<'a> {
 
     fn visit_assign(&mut self, _a: &Assign) {
         self.visit_expr(&_a.value);
-        // TODO: visit the targets and check they can be assigned to the values
     }
     fn visit_ann_assign(&mut self, _a: &AnnAssign) {}
 

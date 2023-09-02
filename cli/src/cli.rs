@@ -24,6 +24,9 @@ pub enum Commands {
     },
     /// Type check
     Check { path: PathBuf },
+    ///  Symbol table
+    Symbols { path: PathBuf },
+
     /// Watch changes to type check
     Watch,
 }

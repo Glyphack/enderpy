@@ -18,7 +18,25 @@ fn main() -> Result<()> {
         Commands::Parse { file } => parse(file),
         Commands::Check { path } => check(path),
         Commands::Watch => watch(),
+        Commands::Symbols { path } => symbols(path),
     }
+}
+
+fn symbols(path: &PathBuf) -> std::result::Result<(), anyhow::Error> {
+    let source = fs::read_to_string(path)?;
+    let initial_source = BuildSource {
+        path: path.to_owned(),
+        module: String::from("test"),
+        source,
+        followed: false,
+    };
+    let mut manager = BuildManager::new(vec![initial_source], Settings::default());
+    manager.build();
+    let module = manager.modules.values().last().unwrap();
+
+    format!("{}", module.symbol_table);
+
+    Ok(())
 }
 
 fn tokenize(file: &PathBuf) -> Result<()> {
