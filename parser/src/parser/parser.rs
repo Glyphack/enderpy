@@ -49,6 +49,11 @@ impl Parser {
         let node = self.start_node();
         let mut body = vec![];
         while self.cur_kind() != Kind::Eof {
+            // TODO: comments can be parsed and used
+            // Also comments can be everywhere
+            if self.at(Kind::Sharp) {
+                self.consume_comment();
+            }
             let stmt = if is_at_compound_statement(self.cur_token()) {
                 self.parse_compount_statement()
             } else {
@@ -1634,6 +1639,13 @@ impl Parser {
             keys,
             values,
         })))
+    }
+
+    fn consume_comment(&mut self) {
+        while !matches!(self.cur_kind(), Kind::NewLine) {
+            self.bump_any();
+        }
+        self.bump_any();
     }
 
     fn consume_whitespace_and_newline(&mut self) {
