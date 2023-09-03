@@ -171,4 +171,8 @@ mod tests {
         test_type_check_call,
         "../testdata/inputs/type_check_call.py"
     );
+    snap_type!(
+        test_type_check_list,
+        "../testdata/inputs/type_check_list.py"
+    );
 }

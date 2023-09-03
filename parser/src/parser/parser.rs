@@ -621,8 +621,6 @@ impl Parser {
             } else {
                 None
             };
-            println!("{:?}", pattern);
-            println!("{:?}", self.cur_token());
             self.expect(Kind::Colon)?;
             let body = self.parse_suite()?;
             cases.push(MatchCase {
