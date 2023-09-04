@@ -18,9 +18,9 @@ pub enum Type {
 #[allow(unused)]
 #[derive(Debug, Clone)]
 pub struct CallableType {
-    name: String,
-    arguments: ast::Arguments,
-    return_type: Type,
+    pub name: String,
+    pub arguments: ast::Arguments,
+    pub return_type: Type,
 }
 
 impl PartialEq for CallableType {

@@ -9,7 +9,7 @@ use crate::{
 
 use super::{
     type_inference::{self, bin_op_result_type, type_check_bin_op},
-    types::Type,
+    types::{CallableType, Type},
 };
 
 pub struct TypeChecker<'a> {
@@ -47,11 +47,20 @@ impl<'a> TypeChecker<'a> {
                 }
             }
             Declaration::Function(f) => {
-                if let Some(type_annotation) = f.function_node.returns.clone() {
+                let return_type = if let Some(type_annotation) = f.function_node.returns.clone() {
                     type_inference::get_type_from_annotation(&type_annotation)
                 } else {
                     panic!("Infer the type based on the return statement")
-                }
+                };
+
+                let arguments = f.function_node.args.clone();
+                let name = f.function_node.name.clone();
+
+                Type::Callable(Box::new(CallableType {
+                    name,
+                    arguments,
+                    return_type,
+                }))
             }
             _ => panic!("TODO: infer type from declaration"),
         }
@@ -82,8 +91,16 @@ impl<'a> TypeChecker<'a> {
                 let func = *call.func.clone();
                 match func {
                     ast::Expression::Name(n) => {
-                        {}
-                        self.infer_type_from_symbol_table(n.id.as_str(), n.node.start)
+                        let f_type = self.infer_type_from_symbol_table(n.id.as_str());
+                        // we know this must be a callable type otherwise raise error cannot call
+                        match f_type {
+                            Type::Callable(callable_type) => callable_type.return_type,
+                            _ => {
+                                self.errors
+                                    .push(format!("Cannot call type '{}' as a function", f_type));
+                                Type::Unknown
+                            }
+                        }
                     }
                     ast::Expression::Attribute(a) => panic!("TODO: infer type from attribute"),
                     _ => panic!("TODO: infer type from call"),
