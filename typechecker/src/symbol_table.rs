@@ -1,5 +1,5 @@
 use parser::ast::{self, Node};
-use std::collections::HashMap;
+use std::{collections::HashMap, fmt::Display};
 
 #[derive(Debug)]
 pub struct SymbolTable {
@@ -63,6 +63,12 @@ impl Declaration {
             Declaration::Class(c) => &c.declaration_path,
             Declaration::Parameter(p) => &p.declaration_path,
         }
+    }
+}
+
+impl Display for DeclarationPath {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}:{:?}", self.module_name, self.node)
     }
 }
 
@@ -153,9 +159,14 @@ impl SymbolTable {
         }
     }
 
-    pub fn add_symbol(&mut self, symbol_node: SymbolTableNode) {
+    pub fn add_symbol(&mut self, mut symbol_node: SymbolTableNode) {
         match self.scopes.last_mut() {
             Some(scope) => {
+                if let Some(existing_symbol) = scope.symbols.get(&symbol_node.name) {
+                    symbol_node
+                        .declarations
+                        .extend(existing_symbol.declarations.clone());
+                }
                 scope.symbols.insert(symbol_node.name.clone(), symbol_node);
             }
             None => panic!("no current scope, there must be a global scope"),
@@ -170,6 +181,23 @@ impl SymbolTableNode {
 
     pub fn last_declaration(&self) -> Option<&Declaration> {
         self.declarations.last()
+    }
+
+    pub fn declaration_until_position(&self, position: usize) -> Option<&Declaration> {
+        let mut filtered_declarations = self
+            .declarations
+            .iter()
+            .filter(|decl| decl.declaration_path().node.start < position)
+            .collect::<Vec<&Declaration>>();
+
+        filtered_declarations.sort_by(|a, b| {
+            a.declaration_path()
+                .node
+                .start
+                .cmp(&b.declaration_path().node.start)
+        });
+
+        filtered_declarations.last().map(|decl| *decl)
     }
 }
 

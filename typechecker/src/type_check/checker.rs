@@ -1,8 +1,10 @@
+use crate::type_check::builtins;
 use ast::{Expression, Statement};
 use parser::ast::{self, *};
 
 use crate::{
     ast_visitor::TraversalVisitor, settings::Settings, state::State, symbol_table::Declaration,
+    type_check::rules::is_reassignment_valid,
 };
 
 use super::{
@@ -64,19 +66,13 @@ impl<'a> TypeChecker<'a> {
         }
     }
 
-    fn infer_type_from_symbol_table(&mut self, name: &str) -> Type {
+    fn infer_type_from_symbol_table(&mut self, name: &str, position: usize) -> Type {
         match self.module.symbol_table.lookup_in_scope(name) {
-            Some(symbol) => match symbol.last_declaration() {
+            Some(symbol) => match symbol.declaration_until_position(position) {
                 Some(declaration) => self.infer_declaration_type(declaration),
-                None => {
-                    self.errors.push(format!("Symbol '{}' not found", name));
-                    Type::Unknown
-                }
+                None => Type::Unknown,
             },
-            None => {
-                self.errors.push(format!("Symbol '{}' not found", name));
-                Type::Unknown
-            }
+            None => Type::Unknown,
         }
     }
 
@@ -90,7 +86,7 @@ impl<'a> TypeChecker<'a> {
                 ast::ConstantValue::None => Type::None,
                 _ => Type::Unknown,
             },
-            ast::Expression::Name(n) => self.infer_type_from_symbol_table(&n.id),
+            ast::Expression::Name(n) => self.infer_type_from_symbol_table(&n.id, n.node.start),
             ast::Expression::Call(call) => {
                 let func = *call.func.clone();
                 match func {
@@ -115,7 +111,60 @@ impl<'a> TypeChecker<'a> {
                 &self.infer_expr_type(&b.right),
                 &b.op,
             ),
-            _ => Type::Unknown,
+            Expression::List(l) => {
+                let mut prev_elm_type = Type::Unknown;
+                for elm in &l.elements {
+                    let elm_type = self.infer_expr_type(elm);
+                    if prev_elm_type == Type::Unknown {
+                        prev_elm_type = elm_type;
+                    } else if prev_elm_type != elm_type {
+                        prev_elm_type = Type::Unknown;
+                        break;
+                    }
+                }
+                let final_elm_type = prev_elm_type;
+                Type::Class(super::types::ClassType {
+                    name: builtins::LIST_TYPE.to_string(),
+                    args: vec![final_elm_type],
+                })
+            }
+            Expression::Tuple(_) => todo!(),
+            Expression::Dict(_) => todo!(),
+            Expression::Set(_) => todo!(),
+            Expression::BoolOp(_) => todo!(),
+            Expression::UnaryOp(_) => todo!(),
+            Expression::NamedExpr(_) => todo!(),
+            Expression::Yield(_) => todo!(),
+            Expression::YieldFrom(_) => todo!(),
+            Expression::Starred(_) => todo!(),
+            Expression::Generator(_) => todo!(),
+            Expression::ListComp(_) => todo!(),
+            Expression::SetComp(_) => todo!(),
+            Expression::DictComp(_) => todo!(),
+            Expression::Attribute(_) => todo!(),
+            Expression::Subscript(s) => {
+                let value_type = &self.infer_expr_type(&s.value);
+                // if the type of value is subscriptable, then return the type of the subscript
+
+                // the type is subscriptable if it is a list, tuple, dict, or set
+                match value_type {
+                    Type::Class(class_type) => {
+                        if let Some(args) = class_type.args.last() {
+                            args.clone()
+                        } else {
+                            Type::Unknown
+                        }
+                    }
+                    _ => Type::Unknown,
+                }
+            }
+            Expression::Slice(_) => todo!(),
+            Expression::Await(_) => todo!(),
+            Expression::Compare(_) => todo!(),
+            Expression::Lambda(_) => todo!(),
+            Expression::IfExp(_) => todo!(),
+            Expression::JoinedStr(_) => todo!(),
+            Expression::FormattedValue(_) => todo!(),
         }
     }
 }
@@ -285,7 +334,7 @@ impl<'a> TraversalVisitor for TypeChecker<'a> {
     fn visit_constant(&mut self, _c: &Constant) {}
 
     fn visit_list(&mut self, _l: &List) {
-        todo!()
+        // TODO: check that all elements in the list are of the same type
     }
 
     fn visit_tuple(&mut self, _t: &Tuple) {
@@ -361,7 +410,11 @@ impl<'a> TraversalVisitor for TypeChecker<'a> {
     }
 
     fn visit_subscript(&mut self, _s: &Subscript) {
-        todo!()
+        let value = &self.infer_expr_type(&_s.value);
+        // let slice = match &_s.slice {
+        //     SubscriptSlice::Index(i) => self.infer_expr_type(i),
+        //     SubscriptSlice::Slice(s) => self.infer_expr_type(s),
+        // };
     }
 
     fn visit_slice(&mut self, _s: &Slice) {
@@ -400,6 +453,22 @@ impl<'a> TraversalVisitor for TypeChecker<'a> {
 
     fn visit_assign(&mut self, _a: &Assign) {
         self.visit_expr(&_a.value);
+        for target in &_a.targets {
+            println!("target: {:?}", target);
+            match target {
+                ast::Expression::Name(n) => {
+                    let prev_target_type = self.infer_type_from_symbol_table(&n.id, n.node.start);
+                    let value_type = self.infer_expr_type(&_a.value);
+                    if !is_reassignment_valid(&prev_target_type, &value_type) {
+                        self.errors.push(format!(
+                            "Cannot assign type '{}' to variable of type '{}'",
+                            value_type, prev_target_type
+                        ));
+                    }
+                }
+                _ => todo!(),
+            }
+        }
     }
     fn visit_ann_assign(&mut self, _a: &AnnAssign) {}
 

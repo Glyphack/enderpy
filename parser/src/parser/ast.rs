@@ -25,10 +25,7 @@ trait GetNode {
 
 impl From<Node> for SourceSpan {
     fn from(val: Node) -> Self {
-        Self::new(
-            SourceOffset::from(val.start),
-            SourceOffset::from(val.len()),
-        )
+        Self::new(SourceOffset::from(val.start), SourceOffset::from(val.len()))
     }
 }
 

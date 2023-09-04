@@ -412,7 +412,9 @@ impl TraversalVisitor for SemanticAnalyzer {
     fn visit_constant(&mut self, _c: &parser::ast::Constant) {}
 
     fn visit_list(&mut self, _l: &parser::ast::List) {
-        todo!()
+        for elm in _l.elements.iter() {
+            self.visit_expr(elm);
+        }
     }
 
     fn visit_tuple(&mut self, _t: &parser::ast::Tuple) {}
