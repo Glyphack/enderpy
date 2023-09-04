@@ -148,7 +148,7 @@ pub fn bin_op_result_type(t1: &Type, t2: &Type, op: &BinaryOperator) -> Type {
 
 pub fn get_builtin_type(name: String) -> String {
     match name.as_str() {
-        "int" => builtins::LIST_TYPE.to_string(),
+        "list" => builtins::LIST_TYPE.to_string(),
         _ => name.clone(),
     }
 }

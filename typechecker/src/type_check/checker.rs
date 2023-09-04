@@ -1,8 +1,10 @@
+use crate::type_check::builtins;
 use ast::{Expression, Statement};
 use parser::ast::{self, *};
 
 use crate::{
     ast_visitor::TraversalVisitor, settings::Settings, state::State, symbol_table::Declaration,
+    type_check::rules::is_reassignment_valid,
 };
 
 use super::{
@@ -59,15 +61,9 @@ impl<'a> TypeChecker<'a> {
         match self.module.symbol_table.lookup_in_scope(name) {
             Some(symbol) => match symbol.declaration_until_position(position) {
                 Some(declaration) => self.infer_declaration_type(declaration),
-                None => {
-                    self.errors.push(format!("Symbol '{}' not found", name));
-                    Type::Unknown
-                }
+                None => Type::Unknown,
             },
-            None => {
-                self.errors.push(format!("Symbol '{}' not found", name));
-                Type::Unknown
-            }
+            None => Type::Unknown,
         }
     }
 
@@ -86,8 +82,7 @@ impl<'a> TypeChecker<'a> {
                 let func = *call.func.clone();
                 match func {
                     ast::Expression::Name(n) => {
-                        {
-                    }
+                        {}
                         self.infer_type_from_symbol_table(n.id.as_str(), n.node.start)
                     }
                     ast::Expression::Attribute(a) => panic!("TODO: infer type from attribute"),
@@ -99,10 +94,23 @@ impl<'a> TypeChecker<'a> {
                 &self.infer_expr_type(&b.right),
                 &b.op,
             ),
-            Expression::List(l) => match l.elements.first() {
-                Some(element) => self.infer_expr_type(element),
-                None => Type::Unknown,
-            },
+            Expression::List(l) => {
+                let mut prev_elm_type = Type::Unknown;
+                for elm in &l.elements {
+                    let elm_type = self.infer_expr_type(elm);
+                    if prev_elm_type == Type::Unknown {
+                        prev_elm_type = elm_type;
+                    } else if prev_elm_type != elm_type {
+                        prev_elm_type = Type::Unknown;
+                        break;
+                    }
+                }
+                let final_elm_type = prev_elm_type;
+                Type::Class(super::types::ClassType {
+                    name: builtins::LIST_TYPE.to_string(),
+                    args: vec![final_elm_type],
+                })
+            }
             Expression::Tuple(_) => todo!(),
             Expression::Dict(_) => todo!(),
             Expression::Set(_) => todo!(),
@@ -428,6 +436,22 @@ impl<'a> TraversalVisitor for TypeChecker<'a> {
 
     fn visit_assign(&mut self, _a: &Assign) {
         self.visit_expr(&_a.value);
+        for target in &_a.targets {
+            println!("target: {:?}", target);
+            match target {
+                ast::Expression::Name(n) => {
+                    let prev_target_type = self.infer_type_from_symbol_table(&n.id, n.node.start);
+                    let value_type = self.infer_expr_type(&_a.value);
+                    if !is_reassignment_valid(&prev_target_type, &value_type) {
+                        self.errors.push(format!(
+                            "Cannot assign type '{}' to variable of type '{}'",
+                            value_type, prev_target_type
+                        ));
+                    }
+                }
+                _ => todo!(),
+            }
+        }
     }
     fn visit_ann_assign(&mut self, _a: &AnnAssign) {}
 

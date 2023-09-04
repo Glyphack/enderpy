@@ -68,7 +68,7 @@ impl Declaration {
 
 impl Display for DeclarationPath {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}:{}", self.module_name, self.node)
+        write!(f, "{}:{:?}", self.module_name, self.node)
     }
 }
 
@@ -187,7 +187,7 @@ impl SymbolTableNode {
         let mut filtered_declarations = self
             .declarations
             .iter()
-            .filter(|decl| decl.declaration_path().node.start <= position)
+            .filter(|decl| decl.declaration_path().node.start < position)
             .collect::<Vec<&Declaration>>();
 
         filtered_declarations.sort_by(|a, b| {
