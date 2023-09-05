@@ -53,6 +53,11 @@ impl Parser {
             // Also comments can be everywhere
             if self.at(Kind::Sharp) {
                 self.consume_comment();
+                continue;
+            }
+            if self.at(Kind::NewLine) {
+                self.bump_any();
+                continue;
             }
             let stmt = if is_at_compound_statement(self.cur_token()) {
                 self.parse_compount_statement()
@@ -63,10 +68,6 @@ impl Parser {
                 body.push(stmt.unwrap());
             } else {
                 println!("Error: {:?}", stmt.err());
-                self.bump_any();
-            }
-
-            while self.at(Kind::NewLine) {
                 self.bump_any();
             }
         }
@@ -1640,10 +1641,9 @@ impl Parser {
     }
 
     fn consume_comment(&mut self) {
-        while !matches!(self.cur_kind(), Kind::NewLine) {
+        while !self.at(Kind::NewLine) && !self.at(Kind::Eof) {
             self.bump_any();
         }
-        self.bump_any();
     }
 
     fn consume_whitespace_and_newline(&mut self) {

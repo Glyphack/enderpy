@@ -19,7 +19,7 @@ impl Node {
     }
 }
 
-trait GetNode {
+pub trait GetNode {
     fn get_node(&self) -> Node;
 }
 

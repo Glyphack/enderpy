@@ -1,22 +1,19 @@
-use crate::type_check::builtins;
 use ast::{Expression, Statement};
 use parser::ast::{self, *};
 
 use crate::{
-    ast_visitor::TraversalVisitor, settings::Settings, state::State, symbol_table::Declaration,
+    ast_visitor::TraversalVisitor, settings::Settings, state::State,
     type_check::rules::is_reassignment_valid,
 };
 
-use super::{
-    type_inference::{self, bin_op_result_type, type_check_bin_op},
-    types::{CallableType, Type},
-};
+use super::{type_evaluator::TypeEvaluator, type_inference::type_check_bin_op, types::Type};
 
 pub struct TypeChecker<'a> {
     pub errors: Vec<String>,
     // TODO: currently only supporting a single file
     pub module: &'a State,
     pub options: &'a Settings,
+    type_evaluator: TypeEvaluator,
 }
 
 #[allow(unused)]
@@ -26,6 +23,7 @@ impl<'a> TypeChecker<'a> {
             errors: vec![],
             module,
             options,
+            type_evaluator: TypeEvaluator::new(module.symbol_table.clone()),
         }
     }
 
@@ -35,137 +33,8 @@ impl<'a> TypeChecker<'a> {
         }
     }
 
-    fn infer_declaration_type(&mut self, declaration: &Declaration) -> Type {
-        match declaration {
-            Declaration::Variable(v) => {
-                if let Some(type_annotation) = &v.type_annotation {
-                    type_inference::get_type_from_annotation(type_annotation)
-                } else if let Some(source) = &v.inferred_type_source {
-                    self.infer_expr_type(source)
-                } else {
-                    Type::Unknown
-                }
-            }
-            Declaration::Function(f) => {
-                let return_type = if let Some(type_annotation) = f.function_node.returns.clone() {
-                    type_inference::get_type_from_annotation(&type_annotation)
-                } else {
-                    panic!("Infer the type based on the return statement")
-                };
-
-                let arguments = f.function_node.args.clone();
-                let name = f.function_node.name.clone();
-
-                Type::Callable(Box::new(CallableType {
-                    name,
-                    arguments,
-                    return_type,
-                }))
-            }
-            _ => panic!("TODO: infer type from declaration"),
-        }
-    }
-
-    fn infer_type_from_symbol_table(&mut self, name: &str, position: usize) -> Type {
-        match self.module.symbol_table.lookup_in_scope(name) {
-            Some(symbol) => match symbol.declaration_until_position(position) {
-                Some(declaration) => self.infer_declaration_type(declaration),
-                None => Type::Unknown,
-            },
-            None => Type::Unknown,
-        }
-    }
-
-    fn infer_expr_type(&mut self, expr: &ast::Expression) -> Type {
-        match expr {
-            ast::Expression::Constant(c) => match c.value {
-                ast::ConstantValue::Int(_) => Type::Int,
-                ast::ConstantValue::Float(_) => Type::Float,
-                ast::ConstantValue::Str(_) => Type::Str,
-                ast::ConstantValue::Bool(_) => Type::Bool,
-                ast::ConstantValue::None => Type::None,
-                _ => Type::Unknown,
-            },
-            ast::Expression::Name(n) => self.infer_type_from_symbol_table(&n.id, n.node.start),
-            ast::Expression::Call(call) => {
-                let func = *call.func.clone();
-                match func {
-                    ast::Expression::Name(n) => {
-                        let f_type = self.infer_type_from_symbol_table(n.id.as_str());
-                        // we know this must be a callable type otherwise raise error cannot call
-                        match f_type {
-                            Type::Callable(callable_type) => callable_type.return_type,
-                            _ => {
-                                self.errors
-                                    .push(format!("Cannot call type '{}' as a function", f_type));
-                                Type::Unknown
-                            }
-                        }
-                    }
-                    ast::Expression::Attribute(a) => panic!("TODO: infer type from attribute"),
-                    _ => panic!("TODO: infer type from call"),
-                }
-            }
-            ast::Expression::BinOp(b) => bin_op_result_type(
-                &self.infer_expr_type(&b.left),
-                &self.infer_expr_type(&b.right),
-                &b.op,
-            ),
-            Expression::List(l) => {
-                let mut prev_elm_type = Type::Unknown;
-                for elm in &l.elements {
-                    let elm_type = self.infer_expr_type(elm);
-                    if prev_elm_type == Type::Unknown {
-                        prev_elm_type = elm_type;
-                    } else if prev_elm_type != elm_type {
-                        prev_elm_type = Type::Unknown;
-                        break;
-                    }
-                }
-                let final_elm_type = prev_elm_type;
-                Type::Class(super::types::ClassType {
-                    name: builtins::LIST_TYPE.to_string(),
-                    args: vec![final_elm_type],
-                })
-            }
-            Expression::Tuple(_) => todo!(),
-            Expression::Dict(_) => todo!(),
-            Expression::Set(_) => todo!(),
-            Expression::BoolOp(_) => todo!(),
-            Expression::UnaryOp(_) => todo!(),
-            Expression::NamedExpr(_) => todo!(),
-            Expression::Yield(_) => todo!(),
-            Expression::YieldFrom(_) => todo!(),
-            Expression::Starred(_) => todo!(),
-            Expression::Generator(_) => todo!(),
-            Expression::ListComp(_) => todo!(),
-            Expression::SetComp(_) => todo!(),
-            Expression::DictComp(_) => todo!(),
-            Expression::Attribute(_) => todo!(),
-            Expression::Subscript(s) => {
-                let value_type = &self.infer_expr_type(&s.value);
-                // if the type of value is subscriptable, then return the type of the subscript
-
-                // the type is subscriptable if it is a list, tuple, dict, or set
-                match value_type {
-                    Type::Class(class_type) => {
-                        if let Some(args) = class_type.args.last() {
-                            args.clone()
-                        } else {
-                            Type::Unknown
-                        }
-                    }
-                    _ => Type::Unknown,
-                }
-            }
-            Expression::Slice(_) => todo!(),
-            Expression::Await(_) => todo!(),
-            Expression::Compare(_) => todo!(),
-            Expression::Lambda(_) => todo!(),
-            Expression::IfExp(_) => todo!(),
-            Expression::JoinedStr(_) => todo!(),
-            Expression::FormattedValue(_) => todo!(),
-        }
+    fn infer_expr_type(&mut self, expr: &Expression) -> Type {
+        self.type_evaluator.get_type(expr)
     }
 }
 #[allow(unused)]
@@ -454,16 +323,20 @@ impl<'a> TraversalVisitor for TypeChecker<'a> {
     fn visit_assign(&mut self, _a: &Assign) {
         self.visit_expr(&_a.value);
         for target in &_a.targets {
-            println!("target: {:?}", target);
             match target {
                 ast::Expression::Name(n) => {
-                    let prev_target_type = self.infer_type_from_symbol_table(&n.id, n.node.start);
-                    let value_type = self.infer_expr_type(&_a.value);
-                    if !is_reassignment_valid(&prev_target_type, &value_type) {
-                        self.errors.push(format!(
-                            "Cannot assign type '{}' to variable of type '{}'",
-                            value_type, prev_target_type
-                        ));
+                    let symbol = self.module.symbol_table.lookup_in_scope(&n.id);
+                    if let Some(symbol) = symbol {
+                        let prev_target_type = self
+                            .type_evaluator
+                            .get_symbol_node_type(symbol, n.node.start);
+                        let value_type = self.infer_expr_type(&_a.value);
+                        if !is_reassignment_valid(&prev_target_type, &value_type) {
+                            self.errors.push(format!(
+                                "Cannot assign type '{}' to variable of type '{}'",
+                                value_type, prev_target_type
+                            ));
+                        }
                     }
                 }
                 _ => todo!(),

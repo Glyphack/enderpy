@@ -1,0 +1,51 @@
+---
+source: typechecker/src/build.rs
+description: "# define variables with various types for testing\na = 1\nb = 2\nc = True\nd = False\ne = \"hello\"\nf = \"world\"\n# g = [1,2,3]\n# h = (1,2,3)\n# i = {1,2,3}\n# j = {\"a\":1,\"b\":2,\"c\":3}\n# k = None\n\na\nb\nc\nd\ne\nf\ng\nh\ni\nj\nk\n\n"
+expression: result
+---
+[
+    (
+        "a",
+        "Int",
+    ),
+    (
+        "b",
+        "Int",
+    ),
+    (
+        "c",
+        "Bool",
+    ),
+    (
+        "d",
+        "Bool",
+    ),
+    (
+        "e",
+        "Str",
+    ),
+    (
+        "f",
+        "Str",
+    ),
+    (
+        "g",
+        "Unknown",
+    ),
+    (
+        "h",
+        "Unknown",
+    ),
+    (
+        "i",
+        "Unknown",
+    ),
+    (
+        "j",
+        "Unknown",
+    ),
+    (
+        "k",
+        "Unknown",
+    ),
+]
