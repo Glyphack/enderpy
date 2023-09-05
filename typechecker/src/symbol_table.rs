@@ -1,7 +1,7 @@
 use parser::ast::{self, Node};
 use std::{collections::HashMap, fmt::Display};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct SymbolTable {
     // Sub tables are scopes inside the current scope
     scopes: Vec<SymbolTableScope>,
@@ -9,7 +9,7 @@ pub struct SymbolTable {
     all_scopes: Vec<SymbolTableScope>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct SymbolTableScope {
     pub symbol_table_type: SymbolTableType,
     pub name: String,
@@ -26,14 +26,14 @@ impl SymbolTableScope {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum SymbolTableType {
     Module,
     Class,
     Function,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct SymbolTableNode {
     pub name: String,
     pub declarations: Vec<Declaration>,
@@ -142,6 +142,7 @@ impl SymbolTable {
         return &self.current_scope().symbol_table_type;
     }
 
+    // TODO: have a way to look up in the parent scopes as well
     pub fn lookup_in_scope(&self, name: &str) -> Option<&SymbolTableNode> {
         let cur_scope = self.current_scope();
         return cur_scope.symbols.get(name);

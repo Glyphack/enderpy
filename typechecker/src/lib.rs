@@ -1,4 +1,5 @@
 mod ast_visitor;
+mod ast_visitor_generic;
 mod ast_visitor_immut;
 mod nodes;
 mod semanal_utils;
