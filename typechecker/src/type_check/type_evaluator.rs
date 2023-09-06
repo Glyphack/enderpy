@@ -421,3 +421,68 @@ impl TraversalVisitorImmutGeneric<Type> for TypeEvaluator {
         todo!()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use std::collections::HashMap;
+
+    use super::*;
+    // TODO: refactor and move the test to type check mod
+    fn snapshot_type_eval(source: &str) -> String {
+        use crate::nodes::EnderpyFile;
+        use crate::state::State;
+        use parser::Parser;
+
+        let mut parser = Parser::new(source.to_string());
+        let ast_module = parser.parse();
+
+        let enderpy_file = EnderpyFile::from(ast_module, "test".to_string());
+
+        let mut module = State::new(Box::new(enderpy_file));
+        module.populate_symbol_table();
+        let symbol_table = module.get_symbol_table();
+
+        let type_eval = TypeEvaluator::new(symbol_table);
+
+        let mut result = HashMap::new();
+
+        for stmt in module.file.body {
+            match stmt {
+                parser::ast::Statement::ExpressionStatement(e) => {
+                    let t = type_eval.get_type(&e);
+                    match e {
+                        parser::ast::Expression::Name(n) => {
+                            result.insert(n.id, t.to_string());
+                        }
+                        _ => panic!("don't use this test for other expressions"),
+                    }
+                }
+                _ => {}
+            }
+        }
+
+        // sort result by key
+        let mut result_sorted = result.clone().into_iter().collect::<Vec<_>>();
+        result_sorted.sort_by(|a, b| a.0.cmp(&b.0));
+
+        return format!("{:#?}", result_sorted);
+    }
+
+    macro_rules! snap_type_eval {
+        ($name:tt, $path:tt) => {
+            #[test]
+            fn $name() {
+                let contents = include_str!($path);
+                let result = snapshot_type_eval(contents);
+                let mut settings = insta::Settings::clone_current();
+                settings.set_snapshot_path("../testdata/output/");
+                settings.set_description(contents);
+                settings.bind(|| {
+                    insta::assert_snapshot!(result);
+                });
+            }
+        };
+    }
+
+    snap_type_eval!(test_type_eval_vars, "./testdata/inputs/type_eval_vars.py");
+}

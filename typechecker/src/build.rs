@@ -36,7 +36,7 @@ impl BuildManager {
             let file = Box::new(Self::parse_file(&build_source.source, build_source.module));
             let symbol_table = SymbolTable::new(crate::symbol_table::SymbolTableType::Module, 0);
 
-            modules.insert(mod_name, State { file, symbol_table });
+            modules.insert(mod_name, State::new(file));
         }
 
         BuildManager {
@@ -75,13 +75,14 @@ impl BuildManager {
         }
     }
 
-    // TODO: separate this can build to be able to test pre analysis and type checking separately
     // Performs type checking passes over the code
     pub fn type_check(&mut self) {
         self.pre_analysis();
         for state in self.modules.iter_mut() {
             let mut checker = TypeChecker::new(state.1, &self.options);
-            checker.type_check();
+            for stmt in &state.1.file.body {
+                checker.type_check(stmt);
+            }
             self.errors.append(&mut checker.errors);
         }
     }
@@ -89,10 +90,6 @@ impl BuildManager {
 
 #[cfg(test)]
 mod tests {
-    use parser::ast::GetNode;
-
-    use crate::type_check::type_evaluator::TypeEvaluator;
-
     use super::*;
     fn snapshot_symbol_table(source: &str) -> String {
         let mut manager = BuildManager::new(
@@ -108,7 +105,7 @@ mod tests {
 
         let module = manager.modules.values().last().unwrap();
 
-        format!("{}", module.symbol_table)
+        format!("{}", module.get_symbol_table())
     }
 
     fn snapshot_type_check(source: &str) -> String {
@@ -124,50 +121,6 @@ mod tests {
         manager.type_check();
 
         manager.errors.join("\n").to_string()
-    }
-
-    // TODO: refactor and move the test to type check mod
-    fn snapshot_type_eval(source: &str) -> String {
-        let mut manager = BuildManager::new(
-            vec![BuildSource {
-                path: PathBuf::from("test.py"),
-                module: String::from("test"),
-                source: source.to_string(),
-                followed: false,
-            }],
-            Settings::test_settings(),
-        );
-
-        manager.build();
-
-        let module = manager.modules.values().last().unwrap();
-        let symbol_table = module.symbol_table.clone();
-        let enderpy_file = module.file.clone();
-
-        let type_eval = TypeEvaluator::new(symbol_table);
-
-        let mut result = HashMap::new();
-
-        for stmt in enderpy_file.body {
-            match stmt {
-                parser::ast::Statement::ExpressionStatement(e) => {
-                    let t = type_eval.get_type(&e);
-                    match e {
-                        parser::ast::Expression::Name(n) => {
-                            result.insert(n.id, t.to_string());
-                        }
-                        _ => panic!("don't use this test for other expressions"),
-                    }
-                }
-                _ => {}
-            }
-        }
-
-        // sort result by key
-        let mut result_sorted = result.clone().into_iter().collect::<Vec<_>>();
-        result_sorted.sort_by(|a, b| a.0.cmp(&b.0));
-
-        return format!("{:#?}", result_sorted);
     }
 
     macro_rules! snap {
@@ -202,22 +155,6 @@ mod tests {
         };
     }
 
-    macro_rules! snap_type_eval {
-        ($name:tt, $path:tt) => {
-            #[test]
-            fn $name() {
-                let contents = include_str!($path);
-                let result = snapshot_type_eval(contents);
-                let mut settings = insta::Settings::clone_current();
-                settings.set_snapshot_path("../testdata/output/");
-                settings.set_description(contents);
-                settings.bind(|| {
-                    insta::assert_snapshot!(result);
-                });
-            }
-        };
-    }
-
     snap!(
         test_simple_var_assignments,
         "../testdata/inputs/simple_var_assignment.py"
@@ -239,6 +176,4 @@ mod tests {
         test_type_check_list,
         "../testdata/inputs/type_check_list.py"
     );
-
-    snap_type_eval!(test_type_eval_vars, "../testdata/inputs/type_eval_vars.py");
 }

@@ -2,16 +2,19 @@ use ast::{Expression, Statement};
 use parser::ast::{self, *};
 
 use crate::{
-    ast_visitor::TraversalVisitor, settings::Settings, state::State,
+    ast_visitor::TraversalVisitor, settings::Settings, state::State, symbol_table::SymbolTable,
     type_check::rules::is_reassignment_valid,
 };
 
 use super::{type_evaluator::TypeEvaluator, type_inference::type_check_bin_op, types::Type};
 
+// TODO: currently only supporting a single file
 pub struct TypeChecker<'a> {
     pub errors: Vec<String>,
-    // TODO: currently only supporting a single file
-    pub module: &'a State,
+    // The symbol table of the module being type checked
+    symbol_table: SymbolTable,
+    // statements to type check
+    statements: Vec<Statement>,
     pub options: &'a Settings,
     type_evaluator: TypeEvaluator,
 }
@@ -19,18 +22,19 @@ pub struct TypeChecker<'a> {
 #[allow(unused)]
 impl<'a> TypeChecker<'a> {
     pub fn new(module: &'a State, options: &'a Settings) -> Self {
+        let symbol_table = module.get_symbol_table();
+        let statements = module.file.body.clone();
         TypeChecker {
             errors: vec![],
-            module,
+            symbol_table,
+            statements,
             options,
-            type_evaluator: TypeEvaluator::new(module.symbol_table.clone()),
+            type_evaluator: TypeEvaluator::new(module.get_symbol_table()),
         }
     }
 
-    pub fn type_check(&mut self) {
-        for stmt in &self.module.file.body {
-            self.visit_stmt(stmt);
-        }
+    pub fn type_check(&mut self, statement: &Statement) {
+        self.visit_stmt(statement);
     }
 
     fn infer_expr_type(&mut self, expr: &Expression) -> Type {
@@ -325,7 +329,7 @@ impl<'a> TraversalVisitor for TypeChecker<'a> {
         for target in &_a.targets {
             match target {
                 ast::Expression::Name(n) => {
-                    let symbol = self.module.symbol_table.lookup_in_scope(&n.id);
+                    let symbol = self.symbol_table.lookup_in_scope(&n.id);
                     if let Some(symbol) = symbol {
                         let prev_target_type = self
                             .type_evaluator
