@@ -59,25 +59,34 @@ impl TypeEvaluator {
                 &b.op,
             ),
             ast::Expression::List(l) => {
-                let mut prev_elm_type = Type::Unknown;
-                for elm in &l.elements {
-                    let elm_type = self.get_type(elm);
-                    if prev_elm_type == Type::Unknown {
-                        prev_elm_type = elm_type;
-                    } else if prev_elm_type != elm_type {
-                        prev_elm_type = Type::Unknown;
-                        break;
-                    }
-                }
-                let final_elm_type = prev_elm_type;
+                let final_elm_type = self.get_sequence_type_from_elements(&l.elements);
                 Type::Class(super::types::ClassType {
                     name: builtins::LIST_TYPE.to_string(),
                     args: vec![final_elm_type],
                 })
             }
-            ast::Expression::Tuple(_) => todo!(),
-            ast::Expression::Dict(_) => todo!(),
-            ast::Expression::Set(_) => todo!(),
+            ast::Expression::Tuple(t) => {
+                let elm_type = self.get_sequence_type_from_elements(&t.elements);
+                Type::Class(super::types::ClassType {
+                    name: builtins::TUPLE_TYPE.to_string(),
+                    args: vec![elm_type],
+                })
+            }
+            ast::Expression::Dict(d) => {
+                let key_type = self.get_sequence_type_from_elements(&d.keys);
+                let value_type = self.get_sequence_type_from_elements(&d.values);
+                Type::Class(super::types::ClassType {
+                    name: builtins::DICT_TYPE.to_string(),
+                    args: vec![key_type, value_type],
+                })
+            }
+            ast::Expression::Set(s) => {
+                let elm_type = self.get_sequence_type_from_elements(&s.elements);
+                Type::Class(super::types::ClassType {
+                    name: builtins::SET_TYPE.to_string(),
+                    args: vec![elm_type],
+                })
+            }
             ast::Expression::BoolOp(_) => todo!(),
             ast::Expression::UnaryOp(_) => todo!(),
             ast::Expression::NamedExpr(_) => todo!(),
@@ -110,8 +119,8 @@ impl TypeEvaluator {
             ast::Expression::Compare(_) => todo!(),
             ast::Expression::Lambda(_) => todo!(),
             ast::Expression::IfExp(_) => todo!(),
-            ast::Expression::JoinedStr(_) => todo!(),
-            ast::Expression::FormattedValue(_) => todo!(),
+            ast::Expression::JoinedStr(_) => Type::Str,
+            ast::Expression::FormattedValue(f) => self.get_type(&f.value),
         }
     }
 
@@ -151,6 +160,20 @@ impl TypeEvaluator {
             Some(symbol) => self.get_symbol_node_type(symbol, position),
             None => Type::Unknown,
         }
+    }
+
+    fn get_sequence_type_from_elements(&self, elements: &Vec<ast::Expression>) -> Type {
+        let mut prev_elm_type = Type::Unknown;
+        for elm in elements {
+            let elm_type = self.get_type(elm);
+            if prev_elm_type == Type::Unknown {
+                prev_elm_type = elm_type;
+            } else if prev_elm_type != elm_type {
+                prev_elm_type = Type::Unknown;
+                break;
+            }
+        }
+        prev_elm_type
     }
 }
 
@@ -425,7 +448,6 @@ impl TraversalVisitorImmutGeneric<Type> for TypeEvaluator {
 #[cfg(test)]
 mod tests {
     use std::collections::HashMap;
-
     use super::*;
     // TODO: refactor and move the test to type check mod
     fn snapshot_type_eval(source: &str) -> String {

@@ -1,6 +1,6 @@
 ---
 source: typechecker/src/type_check/type_evaluator.rs
-description: "# define variables with various types for testing\na = 1\nb = 2\nc = True\nd = False\ne = \"hello\"\nf = \"world\"\n# g = [1,2,3]\n# h = (1,2,3)\n# i = {1,2,3}\n# j = {\"a\":1,\"b\":2,\"c\":3}\n# k = None\n\na\nb\nc\nd\ne\nf\ng\nh\ni\nj\nk\n\n"
+description: "# define variables with various types for testing\na = 1\nb = 2\nc = True\nd = False\ne = \"hello\"\nf = \"world\"\njoined_str = f\"{e} {f}\"\n\ng = [1,2,3]\nh = (1,2,3)\ni = {1,2,3}\nj = {\"a\":1,\"b\":2,\"c\":3}\nk = None\n\na\nb\nc\nd\ne\nf\njoined_str\ng\nh\ni\nj\nk\n\n"
 expression: result
 ---
 [
@@ -30,22 +30,26 @@ expression: result
     ),
     (
         "g",
-        "Unknown",
+        "builtins.list[Int]",
     ),
     (
         "h",
-        "Unknown",
+        "builtins.tuple[Int]",
     ),
     (
         "i",
-        "Unknown",
+        "builtins.set[Int]",
     ),
     (
         "j",
-        "Unknown",
+        "builtins.dict[Str, Int]",
+    ),
+    (
+        "joined_str",
+        "Str",
     ),
     (
         "k",
-        "Unknown",
+        "None",
     ),
 ]
