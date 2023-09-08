@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use parser::ast;
 
 use crate::{
@@ -87,17 +89,74 @@ impl TypeEvaluator {
                     args: vec![elm_type],
                 })
             }
-            ast::Expression::BoolOp(_) => todo!(),
-            ast::Expression::UnaryOp(_) => todo!(),
-            ast::Expression::NamedExpr(_) => todo!(),
-            ast::Expression::Yield(_) => todo!(),
-            ast::Expression::YieldFrom(_) => todo!(),
-            ast::Expression::Starred(_) => todo!(),
-            ast::Expression::Generator(_) => todo!(),
+            ast::Expression::BoolOp(b) => Type::Bool,
+            ast::Expression::UnaryOp(u) => {
+                match u.op {
+                    ast::UnaryOperator::Not => Type::Bool,
+                    ast::UnaryOperator::Invert => {
+                        match self.get_type(&u.operand) {
+                            Type::Int => Type::Int,
+                            // TODO: report some kind of error here
+                            _ => Type::Unknown,
+                        }
+                    }
+                    _ => self.get_type(&u.operand),
+                }
+            }
+            ast::Expression::NamedExpr(e) => self.get_type(&e.value),
+            ast::Expression::Yield(a) => {
+                let yield_type = match a.value {
+                    Some(ref v) => self.get_type(v),
+                    None => Type::None,
+                };
+                Type::Class(super::types::ClassType {
+                    name: builtins::ITER_TYPE.to_string(),
+                    args: vec![yield_type],
+                })
+            }
+            ast::Expression::YieldFrom(yf) => {
+                let yield_type = match *yf.value.clone() {
+                    ast::Expression::List(l) => self.get_sequence_type_from_elements(&l.elements),
+                    _ => panic!("TODO: infer type from yield from"),
+                };
+                Type::Class(super::types::ClassType {
+                    name: builtins::ITER_TYPE.to_string(),
+                    args: vec![yield_type],
+                })
+            }
+            ast::Expression::Starred(s) => self.get_type(&s.value),
+            ast::Expression::Generator(g) => {
+                let mut comp_targets: HashMap<String, Type> = HashMap::new();
+                for gens in &g.generators {
+                    match *gens.target.clone() {
+                        ast::Expression::Name(n) => {
+                            comp_targets.insert(n.id, self.get_type(&gens.iter));
+                        }
+                        _ => panic!("comperhension target must be a name, or does it?"),
+                    }
+                }
+
+                // TODO: Here the comp_targets must be used
+                self.get_type(&g.element);
+
+                Type::Unknown
+            }
             ast::Expression::ListComp(_) => todo!(),
             ast::Expression::SetComp(_) => todo!(),
             ast::Expression::DictComp(_) => todo!(),
-            ast::Expression::Attribute(_) => todo!(),
+            ast::Expression::Attribute(a) => {
+                let value_type = &self.get_type(&a.value);
+                match value_type {
+                    Type::Class(class_type) => {
+                        if let Some(_) = class_type.args.last() {
+                            panic!("resolve attr form class type")
+                        } else {
+                            Type::Unknown
+                        }
+                    }
+                    _ => Type::Unknown,
+                }
+            }
             ast::Expression::Subscript(s) => {
                 let value_type = &self.get_type(&s.value);
                 // if the type of value is subscriptable, then return the type of the subscript
@@ -447,8 +506,8 @@ impl TraversalVisitorImmutGeneric<Type> for TypeEvaluator {
 
 #[cfg(test)]
 mod tests {
-    use std::collections::HashMap;
     use super::*;
+    use std::collections::HashMap;
     // TODO: refactor and move the test to type check mod
     fn snapshot_type_eval(source: &str) -> String {
         use crate::nodes::EnderpyFile;
