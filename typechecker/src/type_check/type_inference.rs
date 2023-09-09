@@ -100,6 +100,9 @@ pub fn type_check_bin_op(t1: &Type, t2: &Type, op: &BinaryOperator) -> bool {
     };
 
     for (t1_, t2_) in check_table {
+        if matches!(t1, Type::Unknown) || matches!(t2, Type::Unknown) {
+            return true;
+        }
         if type_equal(t1, &t1_) && type_equal(t2, &t2_) {
             return true;
         }

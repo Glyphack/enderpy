@@ -10,11 +10,17 @@ use super::{type_evaluator::TypeEvaluator, type_inference::type_check_bin_op, ty
 
 // TODO: currently only supporting a single file
 pub struct TypeChecker<'a> {
-    pub errors: Vec<String>,
+    pub errors: Vec<TypeCheckError>,
     // The symbol table of the module being type checked
     symbol_table: SymbolTable,
     pub options: &'a Settings,
     type_evaluator: TypeEvaluator,
+}
+
+pub struct TypeCheckError {
+    pub msg: String,
+    pub start: usize,
+    pub end: usize,
 }
 
 #[allow(unused)]
@@ -38,8 +44,7 @@ impl<'a> TypeChecker<'a> {
             Ok(t) => t,
             Err(e) => {
             self.make_error(
-                &format!("Failed to infer type for expression: {}", e),
-                &format!("{:?}", expr),
+                e.to_string().as_str(),
                 expr.get_node().start,
                 expr.get_node().end,
             );
@@ -48,8 +53,12 @@ impl<'a> TypeChecker<'a> {
         }
     }
 
-    fn make_error(&mut self, msg: &str, code: &str, start: usize, end: usize) {
-        let error = format!("{}: {} at ({})", msg, code, start);
+    fn make_error(&mut self, msg: &str, start: usize, end: usize) {
+        let error = TypeCheckError {
+            msg: msg.to_string(),
+            start,
+            end,
+        };
         self.errors.push(error);
     }
 }
@@ -237,10 +246,15 @@ impl<'a> TraversalVisitor for TypeChecker<'a> {
         let r_type = self.infer_expr_type(&b.right);
 
         if !type_check_bin_op(&l_type, &r_type, &b.op) {
-            self.errors.push(format!(
+            let msg = format!(
                 "Operator '{}' not supported for types '{}' and '{}'",
                 b.op, l_type, r_type
-            ));
+            );
+            self.errors.push(TypeCheckError {
+                msg,
+                start: b.node.start,
+                end: b.node.end,
+            });
         }
     }
 
@@ -300,10 +314,15 @@ impl<'a> TraversalVisitor for TypeChecker<'a> {
                             .get_symbol_node_type(symbol, n.node.start).unwrap_or(Type::Unknown);
                         let value_type = self.infer_expr_type(&_a.value);
                         if !is_reassignment_valid(&prev_target_type, &value_type) {
-                            self.errors.push(format!(
+                            let msg = format!(
                                 "Cannot assign type '{}' to variable of type '{}'",
                                 value_type, prev_target_type
-                            ));
+                            );
+                            self.errors.push(TypeCheckError {
+                                msg,
+                                start: n.node.start,
+                                end: n.node.end,
+                            });
                         }
                     }
                 }

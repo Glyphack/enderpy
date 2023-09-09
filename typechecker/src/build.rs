@@ -83,7 +83,11 @@ impl BuildManager {
             for stmt in &state.1.file.body {
                 checker.type_check(stmt);
             }
-            self.errors.append(&mut checker.errors);
+            for error in checker.errors {
+                let line = get_line_number_of_character_position(&state.1.file.source, error.start);
+                let error = format!("{} line {}: {}", state.0, line, error.msg);
+                self.errors.push(error);
+            }
         }
     }
 }
@@ -99,7 +103,7 @@ fn get_line_number_of_character_position(source: &str, pos: usize) -> usize {
         }
     }
     line_number
-}
+ }
 
 #[cfg(test)]
 mod tests {
@@ -188,5 +192,10 @@ mod tests {
     snap_type!(
         test_type_check_list,
         "../testdata/inputs/type_check_list.py"
+    );
+
+    snap_type!(
+        test_type_check_undefined,
+        "../testdata/inputs/type_check_undefined.py"
     );
 }
