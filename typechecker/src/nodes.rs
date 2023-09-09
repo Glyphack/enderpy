@@ -25,15 +25,17 @@ pub struct EnderpyFile {
 
     // All high level statements inside the file
     pub body: Vec<Statement>,
+    pub source: String,
 }
 
 impl<'a> EnderpyFile {
-    pub fn from(ast: Module, module_name: String) -> Self {
+    pub fn from(ast: Module, module_name: String, source: String) -> Self {
         let mut file = Self {
             module_name,
             defs: vec![],
             imports: vec![],
             body: vec![],
+            source: source.clone(),
         };
 
         for stmt in &ast.body {

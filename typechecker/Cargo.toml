@@ -7,6 +7,7 @@ edition = "2021"
 parser = { path = "../parser" }
 config = "0.13.3"
 serde = { version = "1.0.164", features = ["derive"] }
+miette = "5.10.0"
 
 [dev-dependencies]
 insta = { version = "1.28.0", features = ["yaml"] }

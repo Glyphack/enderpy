@@ -13,8 +13,6 @@ pub struct TypeChecker<'a> {
     pub errors: Vec<String>,
     // The symbol table of the module being type checked
     symbol_table: SymbolTable,
-    // statements to type check
-    statements: Vec<Statement>,
     pub options: &'a Settings,
     type_evaluator: TypeEvaluator,
 }
@@ -23,11 +21,9 @@ pub struct TypeChecker<'a> {
 impl<'a> TypeChecker<'a> {
     pub fn new(module: &'a State, options: &'a Settings) -> Self {
         let symbol_table = module.get_symbol_table();
-        let statements = module.file.body.clone();
         TypeChecker {
             errors: vec![],
             symbol_table,
-            statements,
             options,
             type_evaluator: TypeEvaluator::new(module.get_symbol_table()),
         }
@@ -38,7 +34,23 @@ impl<'a> TypeChecker<'a> {
     }
 
     fn infer_expr_type(&mut self, expr: &Expression) -> Type {
-        self.type_evaluator.get_type(expr)
+        match self.type_evaluator.get_type(expr) {
+            Ok(t) => t,
+            Err(e) => {
+            self.make_error(
+                &format!("Failed to infer type for expression: {}", e),
+                &format!("{:?}", expr),
+                expr.get_node().start,
+                expr.get_node().end,
+            );
+            return Type::Unknown
+            }
+        }
+    }
+
+    fn make_error(&mut self, msg: &str, code: &str, start: usize, end: usize) {
+        let error = format!("{}: {} at ({})", msg, code, start);
+        self.errors.push(error);
     }
 }
 #[allow(unused)]
@@ -105,13 +117,9 @@ impl<'a> TraversalVisitor for TypeChecker<'a> {
         }
     }
 
-    fn visit_import(&mut self, _i: &Import) {
-        todo!();
-    }
+    fn visit_import(&mut self, _i: &Import) {}
 
-    fn visit_import_from(&mut self, _i: &ImportFrom) {
-        todo!();
-    }
+    fn visit_import_from(&mut self, _i: &ImportFrom) {}
 
     fn visit_if(&mut self, i: &parser::ast::If) {
         // self.visit_stmt(i.test);
@@ -210,27 +218,17 @@ impl<'a> TraversalVisitor for TypeChecker<'a> {
         // TODO: check that all elements in the list are of the same type
     }
 
-    fn visit_tuple(&mut self, _t: &Tuple) {
-        todo!()
-    }
+    fn visit_tuple(&mut self, _t: &Tuple) {}
 
-    fn visit_dict(&mut self, _d: &Dict) {
-        todo!()
-    }
+    fn visit_dict(&mut self, _d: &Dict) {}
 
-    fn visit_set(&mut self, _s: &Set) {
-        todo!()
-    }
+    fn visit_set(&mut self, _s: &Set) {}
 
     fn visit_name(&mut self, _n: &Name) {}
 
-    fn visit_bool_op(&mut self, _b: &BoolOperation) {
-        todo!()
-    }
+    fn visit_bool_op(&mut self, _b: &BoolOperation) {}
 
-    fn visit_unary_op(&mut self, _u: &UnaryOperation) {
-        todo!()
-    }
+    fn visit_unary_op(&mut self, _u: &UnaryOperation) {}
 
     fn visit_bin_op(&mut self, b: &BinOp) {
         self.visit_expr(&b.left);
@@ -246,41 +244,23 @@ impl<'a> TraversalVisitor for TypeChecker<'a> {
         }
     }
 
-    fn visit_named_expr(&mut self, _n: &NamedExpression) {
-        todo!()
-    }
+    fn visit_named_expr(&mut self, _n: &NamedExpression) {}
 
-    fn visit_yield(&mut self, _y: &Yield) {
-        todo!()
-    }
+    fn visit_yield(&mut self, _y: &Yield) {}
 
-    fn visit_yield_from(&mut self, _y: &YieldFrom) {
-        todo!()
-    }
+    fn visit_yield_from(&mut self, _y: &YieldFrom) {}
 
-    fn visit_starred(&mut self, _s: &Starred) {
-        todo!()
-    }
+    fn visit_starred(&mut self, _s: &Starred) {}
 
-    fn visit_generator(&mut self, _g: &Generator) {
-        todo!()
-    }
+    fn visit_generator(&mut self, _g: &Generator) {}
 
-    fn visit_list_comp(&mut self, _l: &ListComp) {
-        todo!()
-    }
+    fn visit_list_comp(&mut self, _l: &ListComp) {}
 
-    fn visit_set_comp(&mut self, _s: &SetComp) {
-        todo!()
-    }
+    fn visit_set_comp(&mut self, _s: &SetComp) {}
 
-    fn visit_dict_comp(&mut self, _d: &DictComp) {
-        todo!()
-    }
+    fn visit_dict_comp(&mut self, _d: &DictComp) {}
 
-    fn visit_attribute(&mut self, _a: &Attribute) {
-        todo!()
-    }
+    fn visit_attribute(&mut self, _a: &Attribute) {}
 
     fn visit_subscript(&mut self, _s: &Subscript) {
         let value = &self.infer_expr_type(&_s.value);
@@ -290,39 +270,23 @@ impl<'a> TraversalVisitor for TypeChecker<'a> {
         // };
     }
 
-    fn visit_slice(&mut self, _s: &Slice) {
-        todo!()
-    }
+    fn visit_slice(&mut self, _s: &Slice) {}
 
     fn visit_call(&mut self, _c: &Call) {}
 
-    fn visit_await(&mut self, _a: &Await) {
-        todo!()
-    }
+    fn visit_await(&mut self, _a: &Await) {}
 
-    fn visit_compare(&mut self, _c: &Compare) {
-        todo!()
-    }
+    fn visit_compare(&mut self, _c: &Compare) {}
 
-    fn visit_lambda(&mut self, _l: &Lambda) {
-        todo!()
-    }
+    fn visit_lambda(&mut self, _l: &Lambda) {}
 
-    fn visit_if_exp(&mut self, _i: &IfExp) {
-        todo!()
-    }
+    fn visit_if_exp(&mut self, _i: &IfExp) {}
 
-    fn visit_joined_str(&mut self, _j: &JoinedStr) {
-        todo!()
-    }
+    fn visit_joined_str(&mut self, _j: &JoinedStr) {}
 
-    fn visit_formatted_value(&mut self, _f: &FormattedValue) {
-        todo!()
-    }
+    fn visit_formatted_value(&mut self, _f: &FormattedValue) {}
 
-    fn visit_alias(&mut self, _a: &Alias) {
-        todo!()
-    }
+    fn visit_alias(&mut self, _a: &Alias) {}
 
     fn visit_assign(&mut self, _a: &Assign) {
         self.visit_expr(&_a.value);
@@ -333,7 +297,7 @@ impl<'a> TraversalVisitor for TypeChecker<'a> {
                     if let Some(symbol) = symbol {
                         let prev_target_type = self
                             .type_evaluator
-                            .get_symbol_node_type(symbol, n.node.start);
+                            .get_symbol_node_type(symbol, n.node.start).unwrap_or(Type::Unknown);
                         let value_type = self.infer_expr_type(&_a.value);
                         if !is_reassignment_valid(&prev_target_type, &value_type) {
                             self.errors.push(format!(
@@ -349,43 +313,25 @@ impl<'a> TraversalVisitor for TypeChecker<'a> {
     }
     fn visit_ann_assign(&mut self, _a: &AnnAssign) {}
 
-    fn visit_aug_assign(&mut self, _a: &AugAssign) {
-        todo!()
-    }
+    fn visit_aug_assign(&mut self, _a: &AugAssign) {}
 
-    fn visit_assert(&mut self, _a: &Assert) {
-        todo!()
-    }
+    fn visit_assert(&mut self, _a: &Assert) {}
 
-    fn visit_pass(&mut self, _p: &Pass) {
-        todo!()
-    }
+    fn visit_pass(&mut self, _p: &Pass) {}
 
-    fn visit_delete(&mut self, _d: &Delete) {
-        todo!()
-    }
+    fn visit_delete(&mut self, _d: &Delete) {}
 
     fn visit_return(&mut self, _r: &Return) {
         // TODO: check that the return type matches the function return type
     }
 
-    fn visit_raise(&mut self, _r: &Raise) {
-        todo!()
-    }
+    fn visit_raise(&mut self, _r: &Raise) {}
 
-    fn visit_break(&mut self, _b: &Break) {
-        todo!()
-    }
+    fn visit_break(&mut self, _b: &Break) {}
 
-    fn visit_continue(&mut self, _c: &Continue) {
-        todo!()
-    }
+    fn visit_continue(&mut self, _c: &Continue) {}
 
-    fn visit_global(&mut self, _g: &Global) {
-        todo!()
-    }
+    fn visit_global(&mut self, _g: &Global) {}
 
-    fn visit_nonlocal(&mut self, _n: &Nonlocal) {
-        todo!()
-    }
+    fn visit_nonlocal(&mut self, _n: &Nonlocal) {}
 }

@@ -13,16 +13,18 @@ i = {1,2,3}
 j = {"a":1,"b":2,"c":3}
 k = None
 
-a
-b
-c
-d
-e
-f
-joined_str
-g
-h
-i
-j
-k
+bool_op = True and False
+
+bin_op = a + b
+unary_op1 = -a
+unary_op2 = not c
+unaray_op3 = ~a
+unaray_op4 = +a
+
+named = (a := 1)
+
+generator = (x for x in g)
+
+gg = (1, "str")
+
 

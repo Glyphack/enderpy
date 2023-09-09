@@ -1,5 +1,4 @@
-use std::collections::HashMap;
-
+use miette::{bail, miette, Result};
 use parser::ast;
 
 use crate::{
@@ -17,87 +16,97 @@ pub struct TypeEvaluator {
     pub symbol_table: SymbolTable,
 }
 
+pub struct TypeEvalError {
+    pub message: String,
+    pub position: usize,
+}
+
 impl TypeEvaluator {
     pub fn new(symbol_table: SymbolTable) -> Self {
         Self { symbol_table }
     }
 
-    pub fn get_symbol_node_type(&self, symbol: &SymbolTableNode, position: usize) -> Type {
-        match symbol.declaration_until_position(position) {
-            Some(declaration) => self.get_type_from_declaration(declaration),
-            None => Type::Unknown,
-        }
+    pub fn get_symbol_node_type(&self, symbol: &SymbolTableNode, position: usize) -> Result<Type> {
+        let decl = symbol
+            .declaration_until_position(position)
+            .ok_or_else(|| miette!("symbol {} is not defined", symbol.name))?;
+        return self
+            .get_type_from_declaration(&decl)
+            .map_err(|e| miette!("cannot infer type for symbol {}: {}", symbol.name, e));
     }
-
-    pub fn get_type(&self, expr: &ast::Expression) -> Type {
+    pub fn get_type(&self, expr: &ast::Expression) -> Result<Type> {
         match expr {
-            ast::Expression::Constant(c) => match c.value {
-                ast::ConstantValue::Int(_) => Type::Int,
-                ast::ConstantValue::Float(_) => Type::Float,
-                ast::ConstantValue::Str(_) => Type::Str,
-                ast::ConstantValue::Bool(_) => Type::Bool,
-                ast::ConstantValue::None => Type::None,
-                _ => Type::Unknown,
+            ast::Expression::Constant(c) => {
+                let typ = match c.value {
+                            ast::ConstantValue::Int(_) => Type::Int,
+                            ast::ConstantValue::Float(_) => Type::Float,
+                            ast::ConstantValue::Str(_) => Type::Str,
+                            ast::ConstantValue::Bool(_) => Type::Bool,
+                            ast::ConstantValue::None => Type::None,
+                            _ => Type::Unknown,
+                        };
+                Ok(typ)
             },
             ast::Expression::Name(n) => self.infer_type_from_symbol_table(&n.id, n.node.start),
             ast::Expression::Call(call) => {
                 let func = *call.func.clone();
                 match func {
                     ast::Expression::Name(n) => {
-                        let f_type = self.infer_type_from_symbol_table(n.id.as_str(), n.node.start);
-                        // we know this must be a callable type otherwise raise error cannot call
+                        let f_type = self.infer_type_from_symbol_table(n.id.as_str(), n.node.start)?;
                         match f_type {
-                            Type::Callable(callable_type) => callable_type.return_type,
-                            _ => Type::Unknown,
+                            Type::Callable(callable_type) => Ok(callable_type.return_type),
+                            _ => bail!("{} is not callable", n.id)
                         }
                     }
                     ast::Expression::Attribute(_a) => panic!("TODO: infer type from attribute"),
-                    _ => panic!("TODO: infer type from call"),
+                    _ => {
+                        println!("infer type from call not implemented");
+                        Ok(Type::Unknown)
+                    },
                 }
             }
-            ast::Expression::BinOp(b) => type_inference::bin_op_result_type(
-                &self.get_type(&b.left),
-                &self.get_type(&b.right),
+            ast::Expression::BinOp(b) => Ok(type_inference::bin_op_result_type(
+                &self.get_type(&b.left)?,
+                &self.get_type(&b.right)?,
                 &b.op,
-            ),
+            )),
             ast::Expression::List(l) => {
                 let final_elm_type = self.get_sequence_type_from_elements(&l.elements);
-                Type::Class(super::types::ClassType {
+                Ok(Type::Class(super::types::ClassType {
                     name: builtins::LIST_TYPE.to_string(),
                     args: vec![final_elm_type],
-                })
+                }))
             }
             ast::Expression::Tuple(t) => {
                 let elm_type = self.get_sequence_type_from_elements(&t.elements);
-                Type::Class(super::types::ClassType {
+                Ok(Type::Class(super::types::ClassType {
                     name: builtins::TUPLE_TYPE.to_string(),
                     args: vec![elm_type],
-                })
+                }))
             }
             ast::Expression::Dict(d) => {
                 let key_type = self.get_sequence_type_from_elements(&d.keys);
                 let value_type = self.get_sequence_type_from_elements(&d.values);
-                Type::Class(super::types::ClassType {
+                Ok(Type::Class(super::types::ClassType {
                     name: builtins::DICT_TYPE.to_string(),
                     args: vec![key_type, value_type],
-                })
+                }))
             }
             ast::Expression::Set(s) => {
                 let elm_type = self.get_sequence_type_from_elements(&s.elements);
-                Type::Class(super::types::ClassType {
+                Ok(Type::Class(super::types::ClassType {
                     name: builtins::SET_TYPE.to_string(),
                     args: vec![elm_type],
-                })
+                }))
             }
-            ast::Expression::BoolOp(b) => Type::Bool,
+            ast::Expression::BoolOp(_) => Ok(Type::Bool),
             ast::Expression::UnaryOp(u) => {
                 match u.op {
-                    ast::UnaryOperator::Not => Type::Bool,
+                    ast::UnaryOperator::Not => Ok(Type::Bool),
                     ast::UnaryOperator::Invert => {
-                        match self.get_type(&u.operand) {
-                            Type::Int => Type::Int,
-                            // TODO: report some kind of error here
-                            _ => Type::Unknown,
+                        match self.get_type(&u.operand)? {
+                            Type::Int => Ok(Type::Int),
+                            _ => bail!("cannot invert type {}", self.get_type(&u.operand)?.to_string()),
                         }
                     }
                     _ => self.get_type(&u.operand),
@@ -106,63 +115,53 @@ impl TypeEvaluator {
             ast::Expression::NamedExpr(e) => self.get_type(&e.value),
             ast::Expression::Yield(a) => {
                 let yield_type = match a.value {
-                    Some(ref v) => self.get_type(v),
+                    Some(ref v) => self.get_type(v)?,
                     None => Type::None,
                 };
-                Type::Class(super::types::ClassType {
+                Ok(Type::Class(super::types::ClassType {
                     name: builtins::ITER_TYPE.to_string(),
                     args: vec![yield_type],
-                })
+                }))
             }
             ast::Expression::YieldFrom(yf) => {
                 let yield_type = match *yf.value.clone() {
                     ast::Expression::List(l) => self.get_sequence_type_from_elements(&l.elements),
                     _ => panic!("TODO: infer type from yield from"),
                 };
-                Type::Class(super::types::ClassType {
+                Ok(Type::Class(super::types::ClassType {
                     name: builtins::ITER_TYPE.to_string(),
                     args: vec![yield_type],
-                })
+                }))
             }
-            ast::Expression::Starred(s) => self.get_type(&s.value),
+            ast::Expression::Starred(s) => {
+                Ok(Type::Unknown)
+            }
             ast::Expression::Generator(g) => {
-                let mut comp_targets: HashMap<String, Type> = HashMap::new();
-                for gens in &g.generators {
-                    match *gens.target.clone() {
-                        ast::Expression::Name(n) => {
-                            comp_targets.insert(n.id, self.get_type(&gens.iter));
-                        }
-                        _ => panic!("comperhension target must be a name, or does it?"),
-                    }
-                }
+                // This is not correct
+                // let mut comp_targets: HashMap<String, Type> = HashMap::new();
+                // for gens in &g.generators {
+                //     match *gens.target.clone() {
+                //         ast::Expression::Name(n) => {
+                //             comp_targets.insert(n.id, self.get_type(&gens.iter));
+                //         }
+                //         _ => panic!("comperhension target must be a name, or does it?"),
+                //     }
+                // }
 
-                // TODO: Here the comp_targets must be used
-                self.get_type(&g.element);
-
-                Type::Unknown
+                Ok(Type::Unknown)
             }
             ast::Expression::ListComp(_) => todo!(),
             ast::Expression::SetComp(_) => todo!(),
             ast::Expression::DictComp(_) => todo!(),
             ast::Expression::Attribute(a) => {
-                let value_type = &self.get_type(&a.value);
-                match value_type {
-                    Type::Class(class_type) => {
-                        if let Some(_) = class_type.args.last() {
-                            panic!("resolve attr form class type")
-                        } else {
-                            Type::Unknown
-                        }
-                    }
-                    _ => Type::Unknown,
-                }
+                Ok(Type::Unknown)
             }
             ast::Expression::Subscript(s) => {
-                let value_type = &self.get_type(&s.value);
+                let value_type = &self.get_type(&s.value)?;
                 // if the type of value is subscriptable, then return the type of the subscript
 
                 // the type is subscriptable if it is a list, tuple, dict, or set
-                match value_type {
+                Ok(match value_type {
                     Type::Class(class_type) => {
                         if let Some(args) = class_type.args.last() {
                             args.clone()
@@ -171,60 +170,64 @@ impl TypeEvaluator {
                         }
                     }
                     _ => Type::Unknown,
-                }
+                })
             }
-            ast::Expression::Slice(_) => todo!(),
-            ast::Expression::Await(_) => todo!(),
-            ast::Expression::Compare(_) => todo!(),
-            ast::Expression::Lambda(_) => todo!(),
-            ast::Expression::IfExp(_) => todo!(),
-            ast::Expression::JoinedStr(_) => Type::Str,
+            ast::Expression::Slice(_) => Ok(Type::Unknown),
+            ast::Expression::Await(_) => Ok(Type::Unknown),
+            ast::Expression::Compare(_) => Ok(Type::Bool),
+            ast::Expression::Lambda(_) => Ok(Type::Unknown),
+            ast::Expression::IfExp(_) => Ok(Type::Unknown),
+            ast::Expression::JoinedStr(_) => Ok(Type::Str),
             ast::Expression::FormattedValue(f) => self.get_type(&f.value),
         }
     }
 
-    fn get_type_from_declaration(&self, declaration: &Declaration) -> Type {
-        match declaration {
+    fn get_type_from_declaration(&self, declaration: &Declaration) -> Result<Type> {
+        let decl_type= match declaration {
             Declaration::Variable(v) => {
                 if let Some(type_annotation) = &v.type_annotation {
-                    type_inference::get_type_from_annotation(type_annotation)
+                    Ok(type_inference::get_type_from_annotation(type_annotation))
                 } else if let Some(source) = &v.inferred_type_source {
                     self.get_type(source)
                 } else {
-                    Type::Unknown
+                    bail!("var declaration must have a type annotation or inferred type")
                 }
             }
             Declaration::Function(f) => {
                 let return_type = if let Some(type_annotation) = f.function_node.returns.clone() {
                     type_inference::get_type_from_annotation(&type_annotation)
                 } else {
-                    panic!("Infer the type based on the return statement")
+                    println!("TODO: infer return type from function body");
+                    Type::Unknown
                 };
 
                 let arguments = f.function_node.args.clone();
                 let name = f.function_node.name.clone();
 
-                Type::Callable(Box::new(CallableType {
+                Ok(Type::Callable(Box::new(CallableType {
                     name,
                     arguments,
                     return_type,
-                }))
+                })))
             }
-            _ => panic!("TODO: infer type from declaration"),
-        }
+            Declaration::Class(_) => Ok(Type::Unknown),
+            Declaration::Parameter(_) => Ok(Type::Unknown),
+        };
+
+        decl_type
     }
 
-    fn infer_type_from_symbol_table(&self, name: &str, position: usize) -> Type {
+    fn infer_type_from_symbol_table(&self, name: &str, position: usize) -> Result<Type> {
         match self.symbol_table.lookup_in_scope(name) {
             Some(symbol) => self.get_symbol_node_type(symbol, position),
-            None => Type::Unknown,
+            None => bail!("symbol {} is not defined", name),
         }
     }
 
     fn get_sequence_type_from_elements(&self, elements: &Vec<ast::Expression>) -> Type {
         let mut prev_elm_type = Type::Unknown;
         for elm in elements {
-            let elm_type = self.get_type(elm);
+            let elm_type = self.get_type(elm).unwrap_or(Type::Unknown);
             if prev_elm_type == Type::Unknown {
                 prev_elm_type = elm_type;
             } else if prev_elm_type != elm_type {
@@ -517,7 +520,7 @@ mod tests {
         let mut parser = Parser::new(source.to_string());
         let ast_module = parser.parse();
 
-        let enderpy_file = EnderpyFile::from(ast_module, "test".to_string());
+        let enderpy_file = EnderpyFile::from(ast_module, "test".to_string(), "".to_string());
 
         let mut module = State::new(Box::new(enderpy_file));
         module.populate_symbol_table();
@@ -533,9 +536,21 @@ mod tests {
                     let t = type_eval.get_type(&e);
                     match e {
                         parser::ast::Expression::Name(n) => {
-                            result.insert(n.id, t.to_string());
+                            result.insert(n.id, t.unwrap_or(Type::Unknown).to_string());
                         }
                         _ => panic!("don't use this test for other expressions"),
+                    }
+                }
+                parser::ast::Statement::AssignStatement(a) => {
+                    let t = type_eval.get_type(&a.value);
+                    match a.targets.first() {
+                        Some(target) => match target {
+                            parser::ast::Expression::Name(n) => {
+                                result.insert(n.id.clone(), t.unwrap_or(Type::Unknown).to_string());
+                            }
+                            _ => panic!("don't use this test for other expressions"),
+                        },
+                        None => panic!("don't use this test for other expressions"),
                     }
                 }
                 _ => {}

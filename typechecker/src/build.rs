@@ -49,7 +49,7 @@ impl BuildManager {
     pub fn parse_file(source: &String, module_name: String) -> EnderpyFile {
         let mut parser = Parser::new(source.clone());
         let tree = parser.parse();
-        EnderpyFile::from(tree, module_name)
+        EnderpyFile::from(tree, module_name, source.clone())
     }
 
     pub fn get_module_name(source: &BuildSource) -> String {
@@ -86,6 +86,19 @@ impl BuildManager {
             self.errors.append(&mut checker.errors);
         }
     }
+}
+
+fn get_line_number_of_character_position(source: &str, pos: usize) -> usize {
+    let mut line_number = 1;
+    for (i, c) in source.chars().enumerate() {
+        if i == pos {
+            break;
+        }
+        if c == '\n' {
+            line_number += 1;
+        }
+    }
+    line_number
 }
 
 #[cfg(test)]
