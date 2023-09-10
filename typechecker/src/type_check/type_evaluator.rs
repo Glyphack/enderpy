@@ -510,6 +510,7 @@ impl TraversalVisitorImmutGeneric<Type> for TypeEvaluator {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::path::PathBuf;
     use std::collections::HashMap;
     // TODO: refactor and move the test to type check mod
     fn snapshot_type_eval(source: &str) -> String {
@@ -520,7 +521,7 @@ mod tests {
         let mut parser = Parser::new(source.to_string());
         let ast_module = parser.parse();
 
-        let enderpy_file = EnderpyFile::from(ast_module, "test".to_string(), "".to_string());
+        let enderpy_file = EnderpyFile::from(ast_module, "test".to_string(), "".to_string(), PathBuf::from("test.py"));
 
         let mut module = State::new(Box::new(enderpy_file));
         module.populate_symbol_table();

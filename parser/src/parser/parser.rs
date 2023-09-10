@@ -1255,7 +1255,7 @@ impl Parser {
         let mut aliases = vec![];
         while self.at(Kind::Identifier) {
             let node = self.start_node();
-            let module = self.parse_module_name();
+            let (module, _) = self.parse_module_name();
             let alias = self.parse_alias(module, node);
             aliases.push(alias);
 
@@ -1273,7 +1273,7 @@ impl Parser {
     fn parse_from_import_statement(&mut self) -> Result<Statement> {
         let import_node = self.start_node();
         self.bump(Kind::From);
-        let module = self.parse_module_name();
+        let (module, level) = self.parse_module_name();
         self.bump(Kind::Import);
         let mut aliases = vec![];
         while self.at(Kind::Identifier) {
@@ -1290,7 +1290,7 @@ impl Parser {
             node: self.finish_node(import_node),
             module,
             names: aliases,
-            level: 0,
+            level,
         }))
     }
 
@@ -1309,7 +1309,11 @@ impl Parser {
         }
     }
 
-    fn parse_module_name(&mut self) -> String {
+    fn parse_module_name(&mut self) -> (String, usize) {
+        let mut level = 0;
+        while self.eat(Kind::Dot) {
+            level += 1;
+        }
         let mut module = self.cur_token().value.to_string();
         self.bump(Kind::Identifier);
         while self.eat(Kind::Dot) {
@@ -1317,7 +1321,7 @@ impl Parser {
             module.push_str(self.cur_token().value.to_string().as_str());
             self.bump(Kind::Identifier);
         }
-        module
+        (module, level)
     }
 
     // https://docs.python.org/3/library/ast.html#ast.Expr

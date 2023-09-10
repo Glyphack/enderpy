@@ -1,12 +1,16 @@
 use std::{collections::HashMap, path::PathBuf};
 
 use parser::Parser;
+use ruff_python_resolver::config::Config;
+use ruff_python_resolver::execution_environment;
 
 use crate::nodes::EnderpyFile;
 use crate::settings::Settings;
 use crate::state::State;
 use crate::symbol_table::SymbolTable;
 use crate::type_check::checker::TypeChecker;
+
+use ruff_python_resolver::resolver::resolve_import;
 
 pub struct BuildSource {
     pub path: PathBuf,
@@ -33,7 +37,7 @@ impl BuildManager {
 
         for build_source in sources {
             let mod_name = Self::get_module_name(&build_source);
-            let file = Box::new(Self::parse_file(&build_source.source, build_source.module));
+            let file = Box::new(Self::parse_file(build_source));
             let symbol_table = SymbolTable::new(crate::symbol_table::SymbolTableType::Module, 0);
 
             modules.insert(mod_name, State::new(file));
@@ -46,10 +50,15 @@ impl BuildManager {
         }
     }
 
-    pub fn parse_file(source: &String, module_name: String) -> EnderpyFile {
-        let mut parser = Parser::new(source.clone());
+    pub fn parse_file(build_source: BuildSource) -> EnderpyFile {
+        let mut parser = Parser::new(build_source.source.clone());
         let tree = parser.parse();
-        EnderpyFile::from(tree, module_name, source.clone())
+        EnderpyFile::from(
+            tree,
+            build_source.module,
+            build_source.source.clone(),
+            build_source.path,
+        )
     }
 
     pub fn get_module_name(source: &BuildSource) -> String {
@@ -64,6 +73,7 @@ impl BuildManager {
 
     // Entry point to analyze the program
     pub fn build(&mut self) {
+        self.resolve_imports();
         self.pre_analysis();
     }
 
@@ -77,7 +87,7 @@ impl BuildManager {
 
     // Performs type checking passes over the code
     pub fn type_check(&mut self) {
-        self.pre_analysis();
+        self.build();
         for state in self.modules.iter_mut() {
             let mut checker = TypeChecker::new(state.1, &self.options);
             for stmt in &state.1.file.body {
@@ -89,6 +99,72 @@ impl BuildManager {
                 self.errors.push(error);
             }
         }
+    }
+
+    fn resolve_imports(&mut self) {
+        let execution_environment = &execution_environment::ExecutionEnvironment {
+            root: self.options.root.clone(),
+            python_version: ruff_python_resolver::python_version::PythonVersion::Py310,
+            python_platform: ruff_python_resolver::python_platform::PythonPlatform::Linux,
+            extra_paths: vec![],
+        };
+        let import_config = &Config {
+            typeshed_path: None,
+            stub_path: None,
+            venv_path: None,
+            venv: None,
+        };
+        let host = &ruff_python_resolver::host::StaticHost::new(vec![]);
+        let mut new_modules = HashMap::new();
+        for state in self.modules.iter() {
+            for import in state.1.file.imports.iter() {
+                let import_desc = match import {
+                    crate::nodes::ImportKinds::Import(i) => {
+                        ruff_python_resolver::module_descriptor::ImportModuleDescriptor {
+                            leading_dots: 0,
+                            name_parts: i.names.iter().map(|x| x.name.clone()).collect(),
+                            imported_symbols: vec![],
+                        }
+                    }
+                    crate::nodes::ImportKinds::ImportFrom(i) => {
+                        ruff_python_resolver::module_descriptor::ImportModuleDescriptor {
+                            leading_dots: i.level,
+                            name_parts: i
+                                .module
+                                .chars()
+                                .skip_while(|c| *c == '.')
+                                .collect::<String>()
+                                .split('.')
+                                .map(std::string::ToString::to_string)
+                                .collect(),
+                            imported_symbols: i.names.iter().map(|x| x.name.clone()).collect(),
+                        }
+                    }
+                };
+                let mut resolved = resolve_import(
+                    state.1.file.path.as_path(),
+                    execution_environment,
+                    &import_desc,
+                    import_config,
+                    host,
+                );
+                if resolved.is_import_found {
+                    for resolved_path in resolved.resolved_paths.iter() {
+                        let source = std::fs::read_to_string(resolved_path).unwrap();
+                        let build_source = BuildSource {
+                            path: resolved_path.clone(),
+                            module: String::from(""),
+                            source,
+                            followed: true,
+                        };
+                        let mod_name = Self::get_module_name(&build_source);
+                        let file = Box::new(Self::parse_file(build_source));
+                        new_modules.insert(mod_name, State::new(file));
+                    }
+                }
+            }
+        }
+        self.modules.extend(new_modules);
     }
 }
 
@@ -103,7 +179,7 @@ fn get_line_number_of_character_position(source: &str, pos: usize) -> usize {
         }
     }
     line_number
- }
+}
 
 #[cfg(test)]
 mod tests {

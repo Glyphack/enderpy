@@ -12,6 +12,7 @@ pub struct ImportDiscovery {
 #[allow(unused)]
 pub struct Settings {
     pub debug: bool,
+    pub root: PathBuf,
     pub import_discovery: ImportDiscovery,
 }
 
@@ -26,18 +27,10 @@ impl Settings {
         s.try_deserialize()
     }
 
-    pub fn default() -> Self {
-        Settings {
-            debug: false,
-            import_discovery: ImportDiscovery {
-                python_executable: PathBuf::from("python"),
-            },
-        }
-    }
-
     pub fn test_settings() -> Self {
         Settings {
             debug: true,
+            root: PathBuf::from(""),
             import_discovery: ImportDiscovery {
                 python_executable: PathBuf::from("python"),
             },

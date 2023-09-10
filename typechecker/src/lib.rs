@@ -12,3 +12,4 @@ pub mod semantic_analyzer;
 pub mod settings;
 
 pub use parser::ast;
+pub use ruff_python_resolver;
