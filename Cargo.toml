@@ -1,6 +1,11 @@
 [workspace]
-members = ["parser", "cli", "typechecker"]
+members = ["parser", "cli", "typechecker", "ruff_python_import_resolver"]
 
+
+[workspace.dependencies]
+log = { version = "0.4.17" }
+serde = { version = "1.0.152", features = ["derive"] }
+insta = { version = "1.31.0", feature = ["filters", "glob"] }
 
 [profile.dev.package.insta]
 opt-level = 3
