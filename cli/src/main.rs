@@ -30,13 +30,28 @@ fn symbols(path: &PathBuf) -> std::result::Result<(), anyhow::Error> {
         source,
         followed: false,
     };
-    let mut manager = BuildManager::new(vec![initial_source], Settings::default());
-    manager.build();
-    let module = manager.modules.values().last().unwrap();
+    let dir_of_path = path.parent().unwrap();
+    let python_executable = get_python_executable()?;
+    let settings = Settings { debug: true, root: dir_of_path.to_path_buf(), import_discovery: ImportDiscovery { python_executable } };
 
-    println!("{}", module.get_symbol_table());
+    let mut manager = BuildManager::new(vec![initial_source], settings);
+    manager.build();
+
+    for (name, module) in manager.modules.iter() {
+        println!("{}", name);
+        println!("{}", module.get_symbol_table());
+    }
 
     Ok(())
+}
+
+fn get_python_executable() -> Result<PathBuf> {
+    let output = std::process::Command::new("python")
+        .arg("-c")
+        .arg("import sys; print(sys.executable)")
+        .output()?;
+    let path = String::from_utf8(output.stdout)?;
+    Ok(PathBuf::from(path))
 }
 
 fn tokenize(file: &PathBuf) -> Result<()> {
@@ -72,17 +87,10 @@ fn check(path: &PathBuf) -> Result<()> {
         source,
         followed: false,
     };
-    let options = Settings {
-        debug: true,
-        import_discovery: ImportDiscovery {
-            python_executable: PathBuf::from(
-                // TODO: discover executable
-                // Python has sys.executable to do this
-                "'/Users/shooshyari/.pyenv/versions/3.11.3/bin/python'",
-            ),
-        },
-    };
-    let mut build_manager = BuildManager::new(vec![initial_source], options);
+    let dir_of_path = path.parent().unwrap();
+    let python_executable = get_python_executable()?;
+    let settings = Settings { debug: true, root: dir_of_path.to_path_buf(), import_discovery: ImportDiscovery { python_executable } };
+    let mut build_manager = BuildManager::new(vec![initial_source], settings);
     build_manager.build();
 
     // TODO: check the build_manager errors and show to user

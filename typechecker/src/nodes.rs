@@ -5,6 +5,8 @@
 // here, so this has the minimum amount of nodes needed to
 // get the type checker working. But can be expanded.
 
+use std::path::PathBuf;
+
 use parser::ast::{Import, ImportFrom, Module, Statement};
 
 use crate::ast_visitor::TraversalVisitor;
@@ -26,16 +28,18 @@ pub struct EnderpyFile {
     // All high level statements inside the file
     pub body: Vec<Statement>,
     pub source: String,
+    pub path: PathBuf,
 }
 
 impl<'a> EnderpyFile {
-    pub fn from(ast: Module, module_name: String, source: String) -> Self {
+    pub fn from(ast: Module, module_name: String, source: String, path:PathBuf) -> Self {
         let mut file = Self {
             module_name,
             defs: vec![],
             imports: vec![],
             body: vec![],
             source: source.clone(),
+            path,
         };
 
         for stmt in &ast.body {
