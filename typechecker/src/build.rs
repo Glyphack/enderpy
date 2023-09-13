@@ -104,9 +104,9 @@ impl BuildManager {
     fn resolve_imports(&mut self) {
         let execution_environment = &execution_environment::ExecutionEnvironment {
             root: self.options.root.clone(),
-            python_version: ruff_python_resolver::python_version::PythonVersion::Py310,
+            python_version: ruff_python_resolver::python_version::PythonVersion::Py311,
             python_platform: ruff_python_resolver::python_platform::PythonPlatform::Linux,
-            extra_paths: vec![],
+            extra_paths: vec![self.options.root.clone().parent().unwrap_or(&self.options.root).to_path_buf()],
         };
         let import_config = &Config {
             typeshed_path: None,
@@ -141,6 +141,7 @@ impl BuildManager {
                         }
                     }
                 };
+                println!("import desc: {:#?}", import_desc);
                 let mut resolved = resolve_import(
                     state.1.file.path.as_path(),
                     execution_environment,
@@ -148,8 +149,16 @@ impl BuildManager {
                     import_config,
                     host,
                 );
+                if !resolved.is_import_found {
+                    let error = format!(
+                        "ImportError: cannot import name '{:#?}'",
+                        import_desc.name_parts,
+                    );
+                    println!("{}", error);
+                }
                 if resolved.is_import_found {
                     for resolved_path in resolved.resolved_paths.iter() {
+                        println!("resolved path: {:#?}", resolved);
                         let source = std::fs::read_to_string(resolved_path).unwrap();
                         let build_source = BuildSource {
                             path: resolved_path.clone(),
