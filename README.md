@@ -38,12 +38,7 @@ If you want to help in building this project feel free to take a look at
 issues and comment on any of them that you want to tackle, feel free to tag
 us and ask for help when you need more information on something.
 
-These learning resources are valuable to get started with the project:
-
-For working on parser and lexer:
-
-- [Writing JavaScript parser in Rust](https://boshen.github.io/javascript-parser-in-rust/)
-- Second chapter of [https://craftinginterpreters.com/](https://craftinginterpreters.com/)
+You can also use [these learning](https://glyphack.com/blog/compiler-resources/) resources for each topic
 
 ## Inspired By
 
