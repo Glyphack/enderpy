@@ -36,7 +36,7 @@ impl BuildManager {
         let mut modules = HashMap::new();
 
         for build_source in sources {
-            let mod_name = Self::get_mod_name(&build_source.path);
+            let mod_name = Self::get_module_name(&build_source.path);
             let file = Box::new(Self::parse_file(build_source));
             let symbol_table = SymbolTable::new(crate::symbol_table::SymbolTableType::Module, 0);
 
@@ -61,21 +61,11 @@ impl BuildManager {
         )
     }
 
-    pub fn get_mod_name(path: &PathBuf) -> String {
+    pub fn get_module_name(path: &PathBuf) -> String {
         path.to_str()
             .unwrap()
             .replace("/", ".")
             .replace("\\", ".")
-    }
-
-    pub fn get_module_name(source: &BuildSource) -> String {
-        source
-            .path
-            .file_stem()
-            .unwrap()
-            .to_str()
-            .unwrap()
-            .to_string()
     }
 
     // Entry point to analyze the program
@@ -207,7 +197,7 @@ impl BuildManager {
             if resolved.is_import_found {
                 for resolved_path in resolved.resolved_paths.iter() {
                     let source = std::fs::read_to_string(resolved_path).unwrap();
-                    let module = Self::get_mod_name(resolved_path);
+                    let module = Self::get_module_name(resolved_path);
                     let build_source = BuildSource {
                         path: resolved_path.clone(),
                         module: module.clone(), 
@@ -220,7 +210,7 @@ impl BuildManager {
 
                 for  (name, implicit_import) in resolved.implicit_imports.iter() {
                     let source = std::fs::read_to_string(implicit_import.path.clone()).unwrap();
-                    let module = Self::get_mod_name(&implicit_import.path);
+                    let module = Self::get_module_name(&implicit_import.path);
                     let build_source = BuildSource {
                         path: implicit_import.path.clone(),
                         module: module.clone(),
