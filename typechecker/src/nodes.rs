@@ -11,13 +11,13 @@ use parser::ast::{Import, ImportFrom, Module, Statement};
 
 use crate::ast_visitor::TraversalVisitor;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum ImportKinds {
     Import(Import),
     ImportFrom(ImportFrom),
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct EnderpyFile {
     pub module_name: String,
     // all the imports inside the file
