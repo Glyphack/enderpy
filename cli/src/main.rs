@@ -87,9 +87,12 @@ fn check(path: &PathBuf) -> Result<()> {
         source,
         followed: false,
     };
-    let dir_of_path = path.parent().unwrap();
+    let root = path
+        .ancestors()
+        .find(|p| p.join("__init__.py").exists())
+        .ok_or_else(|| anyhow!("could not find root of project"))?;
     let python_executable = get_python_executable()?;
-    let settings = Settings { debug: true, root: dir_of_path.to_path_buf(), import_discovery: ImportDiscovery { python_executable } };
+    let settings = Settings { debug: true, root: PathBuf::from(root), import_discovery: ImportDiscovery { python_executable } };
     let mut build_manager = BuildManager::new(vec![initial_source], settings);
     build_manager.build();
 
