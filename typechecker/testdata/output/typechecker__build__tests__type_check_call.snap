@@ -3,5 +3,5 @@ source: typechecker/src/build.rs
 description: "def function() -> int:\n    return 1\n\na = function()\nb = function() + \"1\"\nc = a + 1\nd = function() + 1\n\nfunction + 1\n"
 expression: result
 ---
-test line 5: Operator '+' not supported for types 'Int' and 'Str'
-test line 9: Operator '+' not supported for types 'function' and 'Int'
+test.py line 5: Operator '+' not supported for types 'Int' and 'Str'
+test.py line 9: Operator '+' not supported for types 'function' and 'Int'
