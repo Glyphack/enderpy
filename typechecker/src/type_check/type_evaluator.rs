@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+#![allow(unused_variables)]
 use miette::{bail, miette, Result};
 use parser::ast;
 

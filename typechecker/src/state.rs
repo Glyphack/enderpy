@@ -3,6 +3,7 @@ use crate::{
     symbol_table::SymbolTable,
 };
 
+#[derive(Debug, Clone)]
 pub struct State {
     pub file: Box<EnderpyFile>,
     symbol_table: SymbolTable,
@@ -18,7 +19,7 @@ impl State {
     /// entry point to fill up the symbol table from the global definitions
     pub fn populate_symbol_table(&mut self) {
         let mut sem_anal = SemanticAnalyzer::new(self.file.clone());
-        for stmt in &self.file.defs {
+        for stmt in &self.file.body {
             sem_anal.visit_stmt(stmt)
         }
         self.symbol_table = sem_anal.globals

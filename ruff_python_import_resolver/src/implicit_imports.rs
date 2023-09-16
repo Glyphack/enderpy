@@ -11,7 +11,7 @@ use crate::{native_module, py_typed};
 /// package, the symbols must be present as submodules. This map contains the submodules that are
 /// present in the namespace package, keyed by their module name.
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
-pub(crate) struct ImplicitImports(BTreeMap<String, ImplicitImport>);
+pub struct ImplicitImports(BTreeMap<String, ImplicitImport>);
 
 impl ImplicitImports {
     /// Find the "implicit" imports within the namespace package at the given path.
@@ -155,13 +155,13 @@ impl ImplicitImports {
     }
 
     /// Returns an iterator over the implicit imports in the namespace package.
-    pub(crate) fn iter(&self) -> impl Iterator<Item = (&String, &ImplicitImport)> {
+    pub fn iter(&self) -> impl Iterator<Item = (&String, &ImplicitImport)> {
         self.0.iter()
     }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) struct ImplicitImport {
+pub struct ImplicitImport {
     /// Whether the implicit import is a stub file.
     pub(crate) is_stub_file: bool,
 
@@ -169,7 +169,7 @@ pub(crate) struct ImplicitImport {
     pub(crate) is_native_lib: bool,
 
     /// The path to the implicit import.
-    pub(crate) path: PathBuf,
+    pub path: PathBuf,
 
     /// The `py.typed` information for the implicit import, if any.
     pub(crate) py_typed: Option<py_typed::PyTypedInfo>,

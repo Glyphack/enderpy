@@ -88,6 +88,27 @@ impl SemanticAnalyzer {
         }
     }
 
+    fn create_import_alias_symbol(
+        &mut self,
+        alias: &parser::ast::Alias,
+        declaration_path: DeclarationPath,
+    ) {
+        let import_symbol_name = if let Some(asname) = &alias.asname {
+            asname.clone()
+        } else {
+            alias.name.clone()
+        };
+        // TODO: imports are not variable, just ignoring for now and will fix later
+        let decl = Declaration::Variable(Box::new(Variable {
+            declaration_path,
+            scope: SymbolScope::Global,
+            type_annotation: None,
+            inferred_type_source: None,
+            is_constant: false,
+        }));
+        self.create_symbol(import_symbol_name, decl);
+    }
+
     fn add_arguments_definitions(&mut self, args: &parser::ast::Arguments) {
         let defaults_len = args.defaults.len();
         for (pos_only, index) in args.posonlyargs.iter().zip(0..args.posonlyargs.len()) {
@@ -254,9 +275,26 @@ impl TraversalVisitor for SemanticAnalyzer {
         }
     }
 
-    fn visit_import(&mut self, _i: &parser::ast::Import) {}
+    fn visit_import(&mut self, _i: &parser::ast::Import) {
+        println!("import {:?}", _i);
+        for alias in &_i.names {
+            self.create_import_alias_symbol(alias, DeclarationPath {
+                module_name: self.file.module_name.clone(),
+                node: alias.node,
+            });
+        }
+    }
 
-    fn visit_import_from(&mut self, _i: &parser::ast::ImportFrom) {}
+    fn visit_import_from(&mut self, _i: &parser::ast::ImportFrom) {
+        for alias in &_i.names {
+            let declaration_path = DeclarationPath {
+                module_name: self.file.module_name.clone(),
+                node: alias.node,
+            };
+            self.create_import_alias_symbol(alias, declaration_path);
+        }
+    }
+
 
     fn visit_if(&mut self, i: &parser::ast::If) {
         for stmt in &i.body {
