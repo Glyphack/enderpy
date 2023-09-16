@@ -68,7 +68,7 @@ pub struct ImportResult {
 
     /// A map from file to resolved path, for all implicitly imported
     /// modules that are part of a namespace package.
-    pub(crate) implicit_imports: ImplicitImports,
+    pub implicit_imports: ImplicitImports,
 
     /// Any implicit imports whose symbols were explicitly imported (i.e., via
     /// a `from x import y` statement).
