@@ -9,6 +9,7 @@ ruff_python_resolver = { path = "../ruff_python_import_resolver" }
 config = "0.13.3"
 serde = { version = "1.0.164", features = ["derive"] }
 miette = "5.10.0"
+thiserror = "1.0.48"
 
 [dev-dependencies]
 insta = { version = "1.28.0", features = ["yaml"] }

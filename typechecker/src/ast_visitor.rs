@@ -229,8 +229,46 @@ pub trait TraversalVisitor {
         for case in &m.cases {
             for stmt in &case.body {
                 self.visit_stmt(stmt);
+                self.visit_match_pattern(&case.pattern);
             }
         }
+    }
+
+    fn visit_match_pattern(&mut self, _m: &parser::ast::MatchPattern) {
+            match _m {
+                MatchPattern::MatchValue(m) => self.visit_expr(&m.value),
+                MatchPattern::MatchSingleton(m) => self.visit_expr(&m),
+                MatchPattern::MatchSequence(m) => {
+                    for item in m.iter() {
+                        self.visit_match_pattern(item);
+                    }
+                },
+                MatchPattern::MatchStar(m) => self.visit_expr(&m),
+                MatchPattern::MatchMapping(m) => {
+                    for key in &m.keys {
+                        self.visit_expr(key);
+                    }
+                    for pattern in &m.patterns {
+                        self.visit_match_pattern(pattern);
+                    }
+                },
+                MatchPattern::MatchAs(m) => {
+                    if let Some(pattern) = &m.pattern {
+                        self.visit_match_pattern(pattern);
+                    }
+                },
+                MatchPattern::MatchClass(m) => {
+                    self.visit_expr(&m.cls);
+                    for pattern in &m.patterns {
+                        self.visit_match_pattern(pattern);
+                    }
+                },
+                MatchPattern::MatchOr(m) => {
+                    for pattern in m.iter() {
+                        self.visit_match_pattern(pattern);
+                    }
+                },
+            }
     }
 
     fn visit_constant(&mut self, _c: &Constant) {

@@ -1,7 +1,9 @@
 #![allow(dead_code)]
 #![allow(unused_variables)]
-use miette::{bail, miette, Result};
+
+use miette::{bail, miette, Diagnostic, Result, SourceSpan};
 use parser::ast;
+use thiserror::Error;
 
 use crate::{
     ast_visitor_generic::TraversalVisitorImmutGeneric,
@@ -135,9 +137,7 @@ impl TypeEvaluator {
                     args: vec![yield_type],
                 }))
             }
-            ast::Expression::Starred(s) => {
-                Ok(Type::Unknown)
-            }
+            ast::Expression::Starred(s) => Ok(Type::Unknown),
             ast::Expression::Generator(g) => {
                 // This is not correct
                 // let mut comp_targets: HashMap<String, Type> = HashMap::new();
@@ -155,9 +155,7 @@ impl TypeEvaluator {
             ast::Expression::ListComp(_) => todo!(),
             ast::Expression::SetComp(_) => todo!(),
             ast::Expression::DictComp(_) => todo!(),
-            ast::Expression::Attribute(a) => {
-                Ok(Type::Unknown)
-            }
+            ast::Expression::Attribute(a) => Ok(Type::Unknown),
             ast::Expression::Subscript(s) => {
                 let value_type = &self.get_type(&s.value)?;
                 // if the type of value is subscriptable, then return the type of the subscript
@@ -185,7 +183,7 @@ impl TypeEvaluator {
     }
 
     fn get_type_from_declaration(&self, declaration: &Declaration) -> Result<Type> {
-        let decl_type= match declaration {
+        let decl_type = match declaration {
             Declaration::Variable(v) => {
                 if let Some(type_annotation) = &v.type_annotation {
                     Ok(type_inference::get_type_from_annotation(type_annotation))
@@ -222,7 +220,7 @@ impl TypeEvaluator {
     fn infer_type_from_symbol_table(&self, name: &str, position: usize) -> Result<Type> {
         match self.symbol_table.lookup_in_scope(name) {
             Some(symbol) => self.get_symbol_node_type(symbol, position),
-            None => bail!("symbol {} is not defined", name),
+            None => bail!("undefined name {}", name),
         }
     }
 
@@ -512,8 +510,8 @@ impl TraversalVisitorImmutGeneric<Type> for TypeEvaluator {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::path::PathBuf;
     use std::collections::HashMap;
+    use std::path::PathBuf;
     // TODO: refactor and move the test to type check mod
     fn snapshot_type_eval(source: &str) -> String {
         use crate::nodes::EnderpyFile;
@@ -523,7 +521,12 @@ mod tests {
         let mut parser = Parser::new(source.to_string());
         let ast_module = parser.parse();
 
-        let enderpy_file = EnderpyFile::from(ast_module, "test".to_string(), "".to_string(), PathBuf::from("test.py"));
+        let enderpy_file = EnderpyFile::from(
+            ast_module,
+            "test".to_string(),
+            "".to_string(),
+            PathBuf::from("test.py"),
+        );
 
         let mut module = State::new(Box::new(enderpy_file));
         module.populate_symbol_table();
