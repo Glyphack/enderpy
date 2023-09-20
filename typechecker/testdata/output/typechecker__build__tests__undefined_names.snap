@@ -1,0 +1,11 @@
+---
+source: typechecker/src/build.rs
+description: "# undefined name\nprint(undef_name)\n\n# undefined name in function\ndef func():\n    print(undef_name)\n\n# undefined name in class\nclass MyClass:\n    print(undef_name)\n\n# undefined name in class function\nclass MyClass:\n    def func(self):\n        print(undef_name)\n\ncall_undefined_name()\n\nfor i in undef_name:\n    pass\n\n"
+expression: result
+---
+test.py line 2: undefined name undef_name
+test.py line 6: undefined name undef_name
+test.py line 10: undefined name undef_name
+test.py line 15: undefined name undef_name
+test.py line 17: undefined name call_undefined_name
+test.py line 19: undefined name undef_name

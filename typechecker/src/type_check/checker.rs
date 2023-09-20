@@ -166,6 +166,7 @@ impl<'a> TraversalVisitor for TypeChecker<'a> {
     }
 
     fn visit_for(&mut self, f: &parser::ast::For) {
+        self.visit_expr(&f.iter);
         for stmt in &f.body {
             self.visit_stmt(stmt);
         }
@@ -437,7 +438,6 @@ impl<'a> TraversalVisitor for TypeChecker<'a> {
     }
 
     fn visit_call(&mut self, _c: &Call) {
-        self.visit_expr(&_c.func);
         for arg in &_c.args {
             self.visit_expr(arg);
         }
@@ -514,7 +514,6 @@ impl<'a> TraversalVisitor for TypeChecker<'a> {
         if let Some(value) = &_a.value {
             self.visit_expr(value);
         }
-        self.visit_expr(&_a.annotation);
     }
 
     fn visit_aug_assign(&mut self, _a: &AugAssign) {

@@ -3,5 +3,4 @@ source: typechecker/src/build.rs
 description: "a: int = 1\n\na + \"str\"\n\nb = a + 1\n\nc = b + b\n"
 expression: result
 ---
-test.py line 1: undefined name int
 test.py line 3: Operator '+' not supported for types 'Int' and 'Str'

@@ -50,11 +50,17 @@ impl TypeEvaluator {
                         };
                 Ok(typ)
             },
-            ast::Expression::Name(n) => self.infer_type_from_symbol_table(&n.id, n.node.start),
+            ast::Expression::Name(n) => {
+                self.infer_type_from_symbol_table(&n.id, n.node.start)
+            },
             ast::Expression::Call(call) => {
                 let func = *call.func.clone();
                 match func {
                     ast::Expression::Name(n) => {
+                        // check if name is one of the builtins
+                        if builtins::BUILTINS.contains(&n.id.as_str()) {
+                            return Ok(PythonType::Unknown);
+                        }
                         let f_type = self.infer_type_from_symbol_table(n.id.as_str(), n.node.start)?;
                         match f_type {
                             PythonType::Callable(callable_type) => Ok(callable_type.return_type),

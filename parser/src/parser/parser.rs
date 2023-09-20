@@ -991,6 +991,7 @@ impl Parser {
             while !self.eat(Kind::Dedent) && !self.at(Kind::Eof) {
                 let stmt = self.parse_statement()?;
                 stmts.extend(stmt);
+                self.bump(Kind::NewLine);
             }
             Ok(stmts)
         } else {
