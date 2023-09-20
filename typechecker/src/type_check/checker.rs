@@ -6,7 +6,7 @@ use crate::{
     type_check::rules::is_reassignment_valid,
 };
 
-use super::{type_evaluator::{TypeEvaluator, TypeEvalError}, type_inference::type_check_bin_op, types::Type};
+use super::{type_evaluator::{TypeEvaluator, TypeEvalError}, type_inference::type_check_bin_op, types::PythonType};
 
 // TODO: currently only supporting a single file
 pub struct TypeChecker<'a> {
@@ -39,7 +39,7 @@ impl<'a> TypeChecker<'a> {
         self.visit_stmt(statement);
     }
 
-    fn infer_expr_type(&mut self, expr: &Expression) -> Type {
+    fn infer_expr_type(&mut self, expr: &Expression) -> PythonType {
         match self.type_evaluator.get_type(expr) {
             Ok(t) => t,
             Err(e) => {
@@ -48,7 +48,7 @@ impl<'a> TypeChecker<'a> {
                 expr.get_node().start,
                 expr.get_node().end,
             );
-            return Type::Unknown
+            return PythonType::Unknown
             }
         }
     }
@@ -483,7 +483,7 @@ impl<'a> TraversalVisitor for TypeChecker<'a> {
                         let prev_target_type = self
                             .type_evaluator
                             .get_symbol_node_type(symbol, n.node.start)
-                            .unwrap_or(Type::Unknown);
+                            .unwrap_or(PythonType::Unknown);
                         let value_type = self.infer_expr_type(&_a.value);
                         if !is_reassignment_valid(&prev_target_type, &value_type) {
                             let msg = format!(

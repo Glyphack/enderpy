@@ -4,7 +4,7 @@ use parser::ast;
 
 #[allow(unused)]
 #[derive(Debug, Clone, PartialEq)]
-pub enum Type {
+pub enum PythonType {
     None,
     Unknown,
     Callable(Box<CallableType>),
@@ -20,7 +20,7 @@ pub enum Type {
 pub struct CallableType {
     pub name: String,
     pub arguments: ast::Arguments,
-    pub return_type: Type,
+    pub return_type: PythonType,
 }
 
 impl PartialEq for CallableType {
@@ -36,7 +36,7 @@ impl PartialEq for CallableType {
 pub struct ClassType {
     pub name: String,
     // to represent types like `List[Int]`
-    pub args: Vec<Type>,
+    pub args: Vec<PythonType>,
 }
 
 impl PartialEq for ClassType {
@@ -45,17 +45,17 @@ impl PartialEq for ClassType {
     }
 }
 
-impl Display for Type {
+impl Display for PythonType {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         let type_str = match self {
-            Type::None => "None",
-            Type::Bool => "Bool",
-            Type::Int => "Int",
-            Type::Float => "Float",
-            Type::Str => "Str",
-            Type::Unknown => "Unknown",
-            Type::Callable(callable_type) => callable_type.name.as_str(),
-            Type::Class(class_type) => {
+            PythonType::None => "None",
+            PythonType::Bool => "Bool",
+            PythonType::Int => "Int",
+            PythonType::Float => "Float",
+            PythonType::Str => "Str",
+            PythonType::Unknown => "Unknown",
+            PythonType::Callable(callable_type) => callable_type.name.as_str(),
+            PythonType::Class(class_type) => {
                 // show it like class[args]
                 let args_str = class_type
                     .args

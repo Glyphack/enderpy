@@ -3,24 +3,24 @@
 
 use parser::ast::{self, BinaryOperator, Expression};
 
-use super::{builtins, types::Type};
+use super::{builtins, types::PythonType};
 
-pub fn get_type_from_annotation(type_annotation: &ast::Expression) -> Type {
+pub fn get_type_from_annotation(type_annotation: &ast::Expression) -> PythonType {
     let expr_type = match type_annotation {
         ast::Expression::Name(name) => match name.id.as_str() {
-            "int" => Type::Int,
-            "float" => Type::Float,
-            "str" => Type::Str,
-            "bool" => Type::Bool,
-            "None" => Type::None,
-            _ => Type::Unknown,
+            "int" => PythonType::Int,
+            "float" => PythonType::Float,
+            "str" => PythonType::Str,
+            "bool" => PythonType::Bool,
+            "None" => PythonType::None,
+            _ => PythonType::Unknown,
         },
         Expression::Constant(c) => match c.value.clone() {
-            ast::ConstantValue::Int(_) => Type::Int,
-            ast::ConstantValue::Float(_) => Type::Float,
-            ast::ConstantValue::Str(_) => Type::Str,
-            ast::ConstantValue::Bool(_) => Type::Bool,
-            ast::ConstantValue::None => Type::None,
+            ast::ConstantValue::Int(_) => PythonType::Int,
+            ast::ConstantValue::Float(_) => PythonType::Float,
+            ast::ConstantValue::Str(_) => PythonType::Str,
+            ast::ConstantValue::Bool(_) => PythonType::Bool,
+            ast::ConstantValue::None => PythonType::None,
             ast::ConstantValue::Bytes(_) => todo!(),
             ast::ConstantValue::Tuple(_) => todo!(),
             ast::ConstantValue::Complex { real, imaginary } => todo!(),
@@ -57,53 +57,53 @@ pub fn get_type_from_annotation(type_annotation: &ast::Expression) -> Type {
                 Expression::FormattedValue(_) => todo!(),
             }
             .to_string();
-            Type::Class(super::types::ClassType {
+            PythonType::Class(super::types::ClassType {
                 name,
                 args: vec![get_type_from_annotation(&s.slice)],
             })
         }
 
-        _ => Type::Unknown,
+        _ => PythonType::Unknown,
     };
 
     expr_type
 }
 
-pub fn type_equal(t1: &Type, t2: &Type) -> bool {
+pub fn type_equal(t1: &PythonType, t2: &PythonType) -> bool {
     match (t1, t2) {
-        (Type::Int, Type::Int) => true,
-        (Type::Float, Type::Float) => true,
-        (Type::Str, Type::Str) => true,
-        (Type::Bool, Type::Bool) => true,
-        (Type::None, Type::None) => true,
+        (PythonType::Int, PythonType::Int) => true,
+        (PythonType::Float, PythonType::Float) => true,
+        (PythonType::Str, PythonType::Str) => true,
+        (PythonType::Bool, PythonType::Bool) => true,
+        (PythonType::None, PythonType::None) => true,
         _ => false,
     }
 }
 
-pub fn type_check_bin_op(t1: &Type, t2: &Type, op: &BinaryOperator) -> bool {
+pub fn type_check_bin_op(t1: &PythonType, t2: &PythonType, op: &BinaryOperator) -> bool {
     let check_table = match op {
-        BinaryOperator::Add => vec![(Type::Int, Type::Int), (Type::Float, Type::Float)],
-        BinaryOperator::Sub => vec![(Type::Int, Type::Int), (Type::Float, Type::Float)],
+        BinaryOperator::Add => vec![(PythonType::Int, PythonType::Int), (PythonType::Float, PythonType::Float)],
+        BinaryOperator::Sub => vec![(PythonType::Int, PythonType::Int), (PythonType::Float, PythonType::Float)],
         BinaryOperator::Mult => vec![
-            (Type::Int, Type::Int),
-            (Type::Float, Type::Float),
-            (Type::Str, Type::Int),
-            (Type::Int, Type::Str),
+            (PythonType::Int, PythonType::Int),
+            (PythonType::Float, PythonType::Float),
+            (PythonType::Str, PythonType::Int),
+            (PythonType::Int, PythonType::Str),
         ],
-        BinaryOperator::Div => vec![(Type::Int, Type::Int), (Type::Float, Type::Float)],
-        BinaryOperator::Mod => vec![(Type::Int, Type::Int), (Type::Float, Type::Float)],
-        BinaryOperator::Pow => vec![(Type::Int, Type::Int), (Type::Float, Type::Float)],
-        BinaryOperator::LShift => vec![(Type::Int, Type::Int)],
-        BinaryOperator::RShift => vec![(Type::Int, Type::Int)],
-        BinaryOperator::BitOr => vec![(Type::Int, Type::Int)],
-        BinaryOperator::BitAnd => vec![(Type::Int, Type::Int)],
-        BinaryOperator::BitXor => vec![(Type::Int, Type::Int)],
-        BinaryOperator::FloorDiv => vec![(Type::Int, Type::Int), (Type::Float, Type::Float)],
-        BinaryOperator::MatMult => vec![(Type::Int, Type::Int), (Type::Float, Type::Float)],
+        BinaryOperator::Div => vec![(PythonType::Int, PythonType::Int), (PythonType::Float, PythonType::Float)],
+        BinaryOperator::Mod => vec![(PythonType::Int, PythonType::Int), (PythonType::Float, PythonType::Float)],
+        BinaryOperator::Pow => vec![(PythonType::Int, PythonType::Int), (PythonType::Float, PythonType::Float)],
+        BinaryOperator::LShift => vec![(PythonType::Int, PythonType::Int)],
+        BinaryOperator::RShift => vec![(PythonType::Int, PythonType::Int)],
+        BinaryOperator::BitOr => vec![(PythonType::Int, PythonType::Int)],
+        BinaryOperator::BitAnd => vec![(PythonType::Int, PythonType::Int)],
+        BinaryOperator::BitXor => vec![(PythonType::Int, PythonType::Int)],
+        BinaryOperator::FloorDiv => vec![(PythonType::Int, PythonType::Int), (PythonType::Float, PythonType::Float)],
+        BinaryOperator::MatMult => vec![(PythonType::Int, PythonType::Int), (PythonType::Float, PythonType::Float)],
     };
 
     for (t1_, t2_) in check_table {
-        if matches!(t1, Type::Unknown) || matches!(t2, Type::Unknown) {
+        if matches!(t1, PythonType::Unknown) || matches!(t2, PythonType::Unknown) {
             return true;
         }
         if type_equal(t1, &t1_) && type_equal(t2, &t2_) {
@@ -114,9 +114,9 @@ pub fn type_check_bin_op(t1: &Type, t2: &Type, op: &BinaryOperator) -> bool {
     false
 }
 
-pub fn bin_op_result_type(t1: &Type, t2: &Type, op: &BinaryOperator) -> Type {
+pub fn bin_op_result_type(t1: &PythonType, t2: &PythonType, op: &BinaryOperator) -> PythonType {
     if !type_check_bin_op(t1, t2, op) {
-        return Type::Unknown;
+        return PythonType::Unknown;
     }
 
     match op {
@@ -133,20 +133,20 @@ pub fn bin_op_result_type(t1: &Type, t2: &Type, op: &BinaryOperator) -> Type {
         | BinaryOperator::BitXor
         | BinaryOperator::BitAnd
         | BinaryOperator::FloorDiv => {
-            if type_equal(t1, &Type::Float) || type_equal(t2, &Type::Float) {
-                return Type::Float;
+            if type_equal(t1, &PythonType::Float) || type_equal(t2, &PythonType::Float) {
+                return PythonType::Float;
             }
-            if type_equal(t1, &Type::Int) || type_equal(t2, &Type::Int) {
-                return Type::Int;
+            if type_equal(t1, &PythonType::Int) || type_equal(t2, &PythonType::Int) {
+                return PythonType::Int;
             }
             match t1 {
-                Type::Str => Type::Str,
-                Type::None => Type::None,
-                Type::Unknown => Type::Unknown,
-                Type::Bool => Type::Bool,
-                Type::Int => Type::Int,
-                Type::Float => Type::Float,
-                _ => Type::Unknown,
+                PythonType::Str => PythonType::Str,
+                PythonType::None => PythonType::None,
+                PythonType::Unknown => PythonType::Unknown,
+                PythonType::Bool => PythonType::Bool,
+                PythonType::Int => PythonType::Int,
+                PythonType::Float => PythonType::Float,
+                _ => PythonType::Unknown,
             }
         }
     }
@@ -159,9 +159,9 @@ pub fn get_builtin_type(name: String) -> String {
     }
 }
 
-pub fn is_subscriptable(t: &Type) -> bool {
+pub fn is_subscriptable(t: &PythonType) -> bool {
     match t {
-        Type::Class(c) => match c.name.as_str() {
+        PythonType::Class(c) => match c.name.as_str() {
             builtins::LIST_TYPE => true,
             _ => false,
         },
