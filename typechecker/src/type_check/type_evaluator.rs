@@ -1,5 +1,6 @@
 #![allow(dead_code)]
 #![allow(unused_variables)]
+
 use miette::{bail, miette, Result};
 use parser::ast;
 
@@ -10,7 +11,7 @@ use crate::{
 
 use super::{
     builtins, type_inference,
-    types::{CallableType, Type},
+    types::{CallableType, PythonType},
 };
 
 pub struct TypeEvaluator {
@@ -28,7 +29,7 @@ impl TypeEvaluator {
         Self { symbol_table }
     }
 
-    pub fn get_symbol_node_type(&self, symbol: &SymbolTableNode, position: usize) -> Result<Type> {
+    pub fn get_symbol_node_type(&self, symbol: &SymbolTableNode, position: usize) -> Result<PythonType> {
         let decl = symbol
             .declaration_until_position(position)
             .ok_or_else(|| miette!("symbol {} is not defined", symbol.name))?;
@@ -36,34 +37,40 @@ impl TypeEvaluator {
             .get_type_from_declaration(&decl)
             .map_err(|e| miette!("cannot infer type for symbol {}: {}", symbol.name, e));
     }
-    pub fn get_type(&self, expr: &ast::Expression) -> Result<Type> {
+    pub fn get_type(&self, expr: &ast::Expression) -> Result<PythonType> {
         match expr {
             ast::Expression::Constant(c) => {
                 let typ = match c.value {
-                            ast::ConstantValue::Int(_) => Type::Int,
-                            ast::ConstantValue::Float(_) => Type::Float,
-                            ast::ConstantValue::Str(_) => Type::Str,
-                            ast::ConstantValue::Bool(_) => Type::Bool,
-                            ast::ConstantValue::None => Type::None,
-                            _ => Type::Unknown,
+                            ast::ConstantValue::Int(_) => PythonType::Int,
+                            ast::ConstantValue::Float(_) => PythonType::Float,
+                            ast::ConstantValue::Str(_) => PythonType::Str,
+                            ast::ConstantValue::Bool(_) => PythonType::Bool,
+                            ast::ConstantValue::None => PythonType::None,
+                            _ => PythonType::Unknown,
                         };
                 Ok(typ)
             },
-            ast::Expression::Name(n) => self.infer_type_from_symbol_table(&n.id, n.node.start),
+            ast::Expression::Name(n) => {
+                self.infer_type_from_symbol_table(&n.id, n.node.start)
+            },
             ast::Expression::Call(call) => {
                 let func = *call.func.clone();
                 match func {
                     ast::Expression::Name(n) => {
+                        // check if name is one of the builtins
+                        if builtins::BUILTINS.contains(&n.id.as_str()) {
+                            return Ok(PythonType::Unknown);
+                        }
                         let f_type = self.infer_type_from_symbol_table(n.id.as_str(), n.node.start)?;
                         match f_type {
-                            Type::Callable(callable_type) => Ok(callable_type.return_type),
+                            PythonType::Callable(callable_type) => Ok(callable_type.return_type),
                             _ => bail!("{} is not callable", n.id)
                         }
                     }
                     ast::Expression::Attribute(_a) => panic!("TODO: infer type from attribute"),
                     _ => {
                         println!("infer type from call not implemented");
-                        Ok(Type::Unknown)
+                        Ok(PythonType::Unknown)
                     },
                 }
             }
@@ -74,14 +81,14 @@ impl TypeEvaluator {
             )),
             ast::Expression::List(l) => {
                 let final_elm_type = self.get_sequence_type_from_elements(&l.elements);
-                Ok(Type::Class(super::types::ClassType {
+                Ok(PythonType::Class(super::types::ClassType {
                     name: builtins::LIST_TYPE.to_string(),
                     args: vec![final_elm_type],
                 }))
             }
             ast::Expression::Tuple(t) => {
                 let elm_type = self.get_sequence_type_from_elements(&t.elements);
-                Ok(Type::Class(super::types::ClassType {
+                Ok(PythonType::Class(super::types::ClassType {
                     name: builtins::TUPLE_TYPE.to_string(),
                     args: vec![elm_type],
                 }))
@@ -89,25 +96,25 @@ impl TypeEvaluator {
             ast::Expression::Dict(d) => {
                 let key_type = self.get_sequence_type_from_elements(&d.keys);
                 let value_type = self.get_sequence_type_from_elements(&d.values);
-                Ok(Type::Class(super::types::ClassType {
+                Ok(PythonType::Class(super::types::ClassType {
                     name: builtins::DICT_TYPE.to_string(),
                     args: vec![key_type, value_type],
                 }))
             }
             ast::Expression::Set(s) => {
                 let elm_type = self.get_sequence_type_from_elements(&s.elements);
-                Ok(Type::Class(super::types::ClassType {
+                Ok(PythonType::Class(super::types::ClassType {
                     name: builtins::SET_TYPE.to_string(),
                     args: vec![elm_type],
                 }))
             }
-            ast::Expression::BoolOp(_) => Ok(Type::Bool),
+            ast::Expression::BoolOp(_) => Ok(PythonType::Bool),
             ast::Expression::UnaryOp(u) => {
                 match u.op {
-                    ast::UnaryOperator::Not => Ok(Type::Bool),
+                    ast::UnaryOperator::Not => Ok(PythonType::Bool),
                     ast::UnaryOperator::Invert => {
                         match self.get_type(&u.operand)? {
-                            Type::Int => Ok(Type::Int),
+                            PythonType::Int => Ok(PythonType::Int),
                             _ => bail!("cannot invert type {}", self.get_type(&u.operand)?.to_string()),
                         }
                     }
@@ -118,9 +125,9 @@ impl TypeEvaluator {
             ast::Expression::Yield(a) => {
                 let yield_type = match a.value {
                     Some(ref v) => self.get_type(v)?,
-                    None => Type::None,
+                    None => PythonType::None,
                 };
-                Ok(Type::Class(super::types::ClassType {
+                Ok(PythonType::Class(super::types::ClassType {
                     name: builtins::ITER_TYPE.to_string(),
                     args: vec![yield_type],
                 }))
@@ -130,14 +137,12 @@ impl TypeEvaluator {
                     ast::Expression::List(l) => self.get_sequence_type_from_elements(&l.elements),
                     _ => panic!("TODO: infer type from yield from"),
                 };
-                Ok(Type::Class(super::types::ClassType {
+                Ok(PythonType::Class(super::types::ClassType {
                     name: builtins::ITER_TYPE.to_string(),
                     args: vec![yield_type],
                 }))
             }
-            ast::Expression::Starred(s) => {
-                Ok(Type::Unknown)
-            }
+            ast::Expression::Starred(s) => Ok(PythonType::Unknown),
             ast::Expression::Generator(g) => {
                 // This is not correct
                 // let mut comp_targets: HashMap<String, Type> = HashMap::new();
@@ -150,42 +155,40 @@ impl TypeEvaluator {
                 //     }
                 // }
 
-                Ok(Type::Unknown)
+                Ok(PythonType::Unknown)
             }
             ast::Expression::ListComp(_) => todo!(),
             ast::Expression::SetComp(_) => todo!(),
             ast::Expression::DictComp(_) => todo!(),
-            ast::Expression::Attribute(a) => {
-                Ok(Type::Unknown)
-            }
+            ast::Expression::Attribute(a) => Ok(PythonType::Unknown),
             ast::Expression::Subscript(s) => {
                 let value_type = &self.get_type(&s.value)?;
                 // if the type of value is subscriptable, then return the type of the subscript
 
                 // the type is subscriptable if it is a list, tuple, dict, or set
                 Ok(match value_type {
-                    Type::Class(class_type) => {
+                    PythonType::Class(class_type) => {
                         if let Some(args) = class_type.args.last() {
                             args.clone()
                         } else {
-                            Type::Unknown
+                            PythonType::Unknown
                         }
                     }
-                    _ => Type::Unknown,
+                    _ => PythonType::Unknown,
                 })
             }
-            ast::Expression::Slice(_) => Ok(Type::Unknown),
-            ast::Expression::Await(_) => Ok(Type::Unknown),
-            ast::Expression::Compare(_) => Ok(Type::Bool),
-            ast::Expression::Lambda(_) => Ok(Type::Unknown),
-            ast::Expression::IfExp(_) => Ok(Type::Unknown),
-            ast::Expression::JoinedStr(_) => Ok(Type::Str),
+            ast::Expression::Slice(_) => Ok(PythonType::Unknown),
+            ast::Expression::Await(_) => Ok(PythonType::Unknown),
+            ast::Expression::Compare(_) => Ok(PythonType::Bool),
+            ast::Expression::Lambda(_) => Ok(PythonType::Unknown),
+            ast::Expression::IfExp(_) => Ok(PythonType::Unknown),
+            ast::Expression::JoinedStr(_) => Ok(PythonType::Str),
             ast::Expression::FormattedValue(f) => self.get_type(&f.value),
         }
     }
 
-    fn get_type_from_declaration(&self, declaration: &Declaration) -> Result<Type> {
-        let decl_type= match declaration {
+    fn get_type_from_declaration(&self, declaration: &Declaration) -> Result<PythonType> {
+        let decl_type = match declaration {
             Declaration::Variable(v) => {
                 if let Some(type_annotation) = &v.type_annotation {
                     Ok(type_inference::get_type_from_annotation(type_annotation))
@@ -200,40 +203,40 @@ impl TypeEvaluator {
                     type_inference::get_type_from_annotation(&type_annotation)
                 } else {
                     println!("TODO: infer return type from function body");
-                    Type::Unknown
+                    PythonType::Unknown
                 };
 
                 let arguments = f.function_node.args.clone();
                 let name = f.function_node.name.clone();
 
-                Ok(Type::Callable(Box::new(CallableType {
+                Ok(PythonType::Callable(Box::new(CallableType {
                     name,
                     arguments,
                     return_type,
                 })))
             }
-            Declaration::Class(_) => Ok(Type::Unknown),
-            Declaration::Parameter(_) => Ok(Type::Unknown),
+            Declaration::Class(_) => Ok(PythonType::Unknown),
+            Declaration::Parameter(_) => Ok(PythonType::Unknown),
         };
 
         decl_type
     }
 
-    fn infer_type_from_symbol_table(&self, name: &str, position: usize) -> Result<Type> {
+    fn infer_type_from_symbol_table(&self, name: &str, position: usize) -> Result<PythonType> {
         match self.symbol_table.lookup_in_scope(name) {
             Some(symbol) => self.get_symbol_node_type(symbol, position),
-            None => bail!("symbol {} is not defined", name),
+            None => bail!("undefined name {}", name),
         }
     }
 
-    fn get_sequence_type_from_elements(&self, elements: &Vec<ast::Expression>) -> Type {
-        let mut prev_elm_type = Type::Unknown;
+    fn get_sequence_type_from_elements(&self, elements: &Vec<ast::Expression>) -> PythonType {
+        let mut prev_elm_type = PythonType::Unknown;
         for elm in elements {
-            let elm_type = self.get_type(elm).unwrap_or(Type::Unknown);
-            if prev_elm_type == Type::Unknown {
+            let elm_type = self.get_type(elm).unwrap_or(PythonType::Unknown);
+            if prev_elm_type == PythonType::Unknown {
                 prev_elm_type = elm_type;
             } else if prev_elm_type != elm_type {
-                prev_elm_type = Type::Unknown;
+                prev_elm_type = PythonType::Unknown;
                 break;
             }
         }
@@ -241,8 +244,8 @@ impl TypeEvaluator {
     }
 }
 
-impl TraversalVisitorImmutGeneric<Type> for TypeEvaluator {
-    fn visit_stmt(&self, s: &ast::Statement) -> Type {
+impl TraversalVisitorImmutGeneric<PythonType> for TypeEvaluator {
+    fn visit_stmt(&self, s: &ast::Statement) -> PythonType {
         // map all statements and call visit
         match s {
             ast::Statement::ExpressionStatement(e) => self.visit_expr(e),
@@ -272,7 +275,7 @@ impl TraversalVisitorImmutGeneric<Type> for TypeEvaluator {
         }
     }
 
-    fn visit_expr(&self, e: &ast::Expression) -> Type {
+    fn visit_expr(&self, e: &ast::Expression) -> PythonType {
         match e {
             ast::Expression::Constant(c) => self.visit_constant(c),
             ast::Expression::List(l) => self.visit_list(l),
@@ -304,207 +307,207 @@ impl TraversalVisitorImmutGeneric<Type> for TypeEvaluator {
         }
     }
 
-    fn visit_import(&self, _i: &ast::Import) -> Type {
+    fn visit_import(&self, _i: &ast::Import) -> PythonType {
         todo!();
     }
 
-    fn visit_import_from(&self, _i: &ast::ImportFrom) -> Type {
+    fn visit_import_from(&self, _i: &ast::ImportFrom) -> PythonType {
         todo!();
     }
 
-    fn visit_if(&self, i: &parser::ast::If) -> Type {
+    fn visit_if(&self, i: &parser::ast::If) -> PythonType {
         todo!();
     }
 
-    fn visit_while(&self, w: &parser::ast::While) -> Type {
+    fn visit_while(&self, w: &parser::ast::While) -> PythonType {
         todo!();
     }
 
-    fn visit_for(&self, f: &parser::ast::For) -> Type {
+    fn visit_for(&self, f: &parser::ast::For) -> PythonType {
         todo!();
     }
 
-    fn visit_with(&self, w: &parser::ast::With) -> Type {
+    fn visit_with(&self, w: &parser::ast::With) -> PythonType {
         todo!();
     }
 
-    fn visit_try(&self, t: &parser::ast::Try) -> Type {
+    fn visit_try(&self, t: &parser::ast::Try) -> PythonType {
         todo!();
     }
 
-    fn visit_try_star(&self, t: &parser::ast::TryStar) -> Type {
+    fn visit_try_star(&self, t: &parser::ast::TryStar) -> PythonType {
         todo!();
     }
 
-    fn visit_function_def(&self, f: &parser::ast::FunctionDef) -> Type {
+    fn visit_function_def(&self, f: &parser::ast::FunctionDef) -> PythonType {
         todo!();
     }
 
-    fn visit_class_def(&self, c: &parser::ast::ClassDef) -> Type {
+    fn visit_class_def(&self, c: &parser::ast::ClassDef) -> PythonType {
         todo!();
     }
 
-    fn visit_match(&self, m: &parser::ast::Match) -> Type {
+    fn visit_match(&self, m: &parser::ast::Match) -> PythonType {
         todo!();
     }
 
-    fn visit_constant(&self, _c: &ast::Constant) -> Type {
+    fn visit_constant(&self, _c: &ast::Constant) -> PythonType {
         todo!();
     }
 
-    fn visit_list(&self, _l: &ast::List) -> Type {
+    fn visit_list(&self, _l: &ast::List) -> PythonType {
         todo!()
     }
 
-    fn visit_tuple(&self, _t: &ast::Tuple) -> Type {
+    fn visit_tuple(&self, _t: &ast::Tuple) -> PythonType {
         todo!()
     }
 
-    fn visit_dict(&self, _d: &ast::Dict) -> Type {
+    fn visit_dict(&self, _d: &ast::Dict) -> PythonType {
         todo!()
     }
 
-    fn visit_set(&self, _s: &ast::Set) -> Type {
+    fn visit_set(&self, _s: &ast::Set) -> PythonType {
         todo!()
     }
 
-    fn visit_name(&self, _n: &ast::Name) -> Type {
+    fn visit_name(&self, _n: &ast::Name) -> PythonType {
         todo!()
     }
 
-    fn visit_bool_op(&self, _b: &ast::BoolOperation) -> Type {
+    fn visit_bool_op(&self, _b: &ast::BoolOperation) -> PythonType {
         todo!()
     }
 
-    fn visit_unary_op(&self, _u: &ast::UnaryOperation) -> Type {
+    fn visit_unary_op(&self, _u: &ast::UnaryOperation) -> PythonType {
         todo!()
     }
 
-    fn visit_bin_op(&self, _b: &ast::BinOp) -> Type {
+    fn visit_bin_op(&self, _b: &ast::BinOp) -> PythonType {
         todo!()
     }
 
-    fn visit_named_expr(&self, _n: &ast::NamedExpression) -> Type {
+    fn visit_named_expr(&self, _n: &ast::NamedExpression) -> PythonType {
         todo!()
     }
 
-    fn visit_yield(&self, _y: &ast::Yield) -> Type {
+    fn visit_yield(&self, _y: &ast::Yield) -> PythonType {
         todo!()
     }
 
-    fn visit_yield_from(&self, _y: &ast::YieldFrom) -> Type {
+    fn visit_yield_from(&self, _y: &ast::YieldFrom) -> PythonType {
         todo!()
     }
 
-    fn visit_starred(&self, _s: &ast::Starred) -> Type {
+    fn visit_starred(&self, _s: &ast::Starred) -> PythonType {
         todo!()
     }
 
-    fn visit_generator(&self, _g: &ast::Generator) -> Type {
+    fn visit_generator(&self, _g: &ast::Generator) -> PythonType {
         todo!()
     }
 
-    fn visit_list_comp(&self, _l: &ast::ListComp) -> Type {
+    fn visit_list_comp(&self, _l: &ast::ListComp) -> PythonType {
         todo!()
     }
 
-    fn visit_set_comp(&self, _s: &ast::SetComp) -> Type {
+    fn visit_set_comp(&self, _s: &ast::SetComp) -> PythonType {
         todo!()
     }
 
-    fn visit_dict_comp(&self, _d: &ast::DictComp) -> Type {
+    fn visit_dict_comp(&self, _d: &ast::DictComp) -> PythonType {
         todo!()
     }
 
-    fn visit_attribute(&self, _a: &ast::Attribute) -> Type {
+    fn visit_attribute(&self, _a: &ast::Attribute) -> PythonType {
         todo!()
     }
 
-    fn visit_subscript(&self, _s: &ast::Subscript) -> Type {
+    fn visit_subscript(&self, _s: &ast::Subscript) -> PythonType {
         todo!()
     }
 
-    fn visit_slice(&self, _s: &ast::Slice) -> Type {
+    fn visit_slice(&self, _s: &ast::Slice) -> PythonType {
         todo!()
     }
 
-    fn visit_call(&self, _c: &ast::Call) -> Type {
+    fn visit_call(&self, _c: &ast::Call) -> PythonType {
         todo!()
     }
 
-    fn visit_await(&self, _a: &ast::Await) -> Type {
+    fn visit_await(&self, _a: &ast::Await) -> PythonType {
         todo!()
     }
 
-    fn visit_compare(&self, _c: &ast::Compare) -> Type {
+    fn visit_compare(&self, _c: &ast::Compare) -> PythonType {
         todo!()
     }
 
-    fn visit_lambda(&self, _l: &ast::Lambda) -> Type {
+    fn visit_lambda(&self, _l: &ast::Lambda) -> PythonType {
         todo!()
     }
 
-    fn visit_if_exp(&self, _i: &ast::IfExp) -> Type {
+    fn visit_if_exp(&self, _i: &ast::IfExp) -> PythonType {
         todo!()
     }
 
-    fn visit_joined_str(&self, _j: &ast::JoinedStr) -> Type {
+    fn visit_joined_str(&self, _j: &ast::JoinedStr) -> PythonType {
         todo!()
     }
 
-    fn visit_formatted_value(&self, _f: &ast::FormattedValue) -> Type {
+    fn visit_formatted_value(&self, _f: &ast::FormattedValue) -> PythonType {
         todo!()
     }
 
-    fn visit_alias(&self, _a: &ast::Alias) -> Type {
+    fn visit_alias(&self, _a: &ast::Alias) -> PythonType {
         todo!()
     }
 
-    fn visit_assign(&self, _a: &ast::Assign) -> Type {
+    fn visit_assign(&self, _a: &ast::Assign) -> PythonType {
         todo!()
     }
 
-    fn visit_ann_assign(&self, _a: &ast::AnnAssign) -> Type {
+    fn visit_ann_assign(&self, _a: &ast::AnnAssign) -> PythonType {
         todo!()
     }
 
-    fn visit_aug_assign(&self, _a: &ast::AugAssign) -> Type {
+    fn visit_aug_assign(&self, _a: &ast::AugAssign) -> PythonType {
         todo!()
     }
 
-    fn visit_assert(&self, _a: &ast::Assert) -> Type {
+    fn visit_assert(&self, _a: &ast::Assert) -> PythonType {
         todo!()
     }
 
-    fn visit_pass(&self, _p: &ast::Pass) -> Type {
+    fn visit_pass(&self, _p: &ast::Pass) -> PythonType {
         todo!()
     }
 
-    fn visit_delete(&self, _d: &ast::Delete) -> Type {
+    fn visit_delete(&self, _d: &ast::Delete) -> PythonType {
         todo!()
     }
 
-    fn visit_return(&self, _r: &ast::Return) -> Type {
+    fn visit_return(&self, _r: &ast::Return) -> PythonType {
         todo!()
     }
 
-    fn visit_raise(&self, _r: &ast::Raise) -> Type {
+    fn visit_raise(&self, _r: &ast::Raise) -> PythonType {
         todo!()
     }
 
-    fn visit_break(&self, _b: &ast::Break) -> Type {
+    fn visit_break(&self, _b: &ast::Break) -> PythonType {
         todo!()
     }
 
-    fn visit_continue(&self, _c: &ast::Continue) -> Type {
+    fn visit_continue(&self, _c: &ast::Continue) -> PythonType {
         todo!()
     }
 
-    fn visit_global(&self, _g: &ast::Global) -> Type {
+    fn visit_global(&self, _g: &ast::Global) -> PythonType {
         todo!()
     }
 
-    fn visit_nonlocal(&self, _n: &ast::Nonlocal) -> Type {
+    fn visit_nonlocal(&self, _n: &ast::Nonlocal) -> PythonType {
         todo!()
     }
 }
@@ -512,8 +515,8 @@ impl TraversalVisitorImmutGeneric<Type> for TypeEvaluator {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::path::PathBuf;
     use std::collections::HashMap;
+    use std::path::PathBuf;
     // TODO: refactor and move the test to type check mod
     fn snapshot_type_eval(source: &str) -> String {
         use crate::nodes::EnderpyFile;
@@ -523,7 +526,12 @@ mod tests {
         let mut parser = Parser::new(source.to_string());
         let ast_module = parser.parse();
 
-        let enderpy_file = EnderpyFile::from(ast_module, "test".to_string(), "".to_string(), PathBuf::from("test.py"));
+        let enderpy_file = EnderpyFile::from(
+            ast_module,
+            "test".to_string(),
+            "".to_string(),
+            PathBuf::from("test.py"),
+        );
 
         let mut module = State::new(Box::new(enderpy_file));
         module.populate_symbol_table();
@@ -539,7 +547,7 @@ mod tests {
                     let t = type_eval.get_type(&e);
                     match e {
                         parser::ast::Expression::Name(n) => {
-                            result.insert(n.id, t.unwrap_or(Type::Unknown).to_string());
+                            result.insert(n.id, t.unwrap_or(PythonType::Unknown).to_string());
                         }
                         _ => panic!("don't use this test for other expressions"),
                     }
@@ -549,7 +557,7 @@ mod tests {
                     match a.targets.first() {
                         Some(target) => match target {
                             parser::ast::Expression::Name(n) => {
-                                result.insert(n.id.clone(), t.unwrap_or(Type::Unknown).to_string());
+                                result.insert(n.id.clone(), t.unwrap_or(PythonType::Unknown).to_string());
                             }
                             _ => panic!("don't use this test for other expressions"),
                         },

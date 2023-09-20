@@ -3,6 +3,6 @@ source: typechecker/src/build.rs
 description: "a = b + 1\n\na = c()\n\n"
 expression: result
 ---
-test.py line 1: symbol b is not defined
-test.py line 1: symbol b is not defined
-test.py line 3: symbol c is not defined
+test.py line 1: undefined name b
+test.py line 1: undefined name b
+test.py line 3: undefined name c

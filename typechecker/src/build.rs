@@ -333,4 +333,6 @@ mod tests {
         test_type_check_undefined,
         "../testdata/inputs/type_check_undefined.py"
     );
+
+    snap_type!(test_undefined_names, "../testdata/inputs/test_undefined_name.py");
 }
