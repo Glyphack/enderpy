@@ -6,9 +6,8 @@ use crate::{
     type_check::rules::is_reassignment_valid,
 };
 
-use super::{type_evaluator::{TypeEvaluator, TypeEvalError}, type_inference::type_check_bin_op, types::PythonType};
+use super::{type_evaluator::TypeEvaluator, type_inference::type_check_bin_op, types::PythonType};
 
-// TODO: currently only supporting a single file
 pub struct TypeChecker<'a> {
     pub errors: Vec<TypeCheckError>,
     // The symbol table of the module being type checked
@@ -39,16 +38,18 @@ impl<'a> TypeChecker<'a> {
         self.visit_stmt(statement);
     }
 
-    fn infer_expr_type(&mut self, expr: &Expression) -> PythonType {
+    fn infer_expr_type(&mut self, expr: &Expression, emit_error: bool) -> PythonType {
         match self.type_evaluator.get_type(expr) {
             Ok(t) => t,
             Err(e) => {
-            self.make_error(
-                e.to_string().as_str(),
-                expr.get_node().start,
-                expr.get_node().end,
-            );
-            return PythonType::Unknown
+                if emit_error {
+                    self.make_error(
+                        e.to_string().as_str(),
+                        expr.get_node().start,
+                        expr.get_node().end,
+                    );
+                }
+            PythonType::Unknown
             }
         }
     }
@@ -101,14 +102,16 @@ impl<'a> TraversalVisitor for TypeChecker<'a> {
     }
 
     fn visit_expr(&mut self, e: &Expression) {
-        self.infer_expr_type(e);
         match e {
             Expression::Constant(c) => self.visit_constant(c),
             Expression::List(l) => self.visit_list(l),
             Expression::Tuple(t) => self.visit_tuple(t),
             Expression::Dict(d) => self.visit_dict(d),
             Expression::Set(s) => self.visit_set(s),
-            Expression::Name(n) => self.visit_name(n),
+            Expression::Name(n) => {
+                self.infer_expr_type(e, true);
+                self.visit_name(n)
+            },
             Expression::BoolOp(b) => self.visit_bool_op(b),
             Expression::UnaryOp(u) => self.visit_unary_op(u),
             Expression::BinOp(b) => self.visit_bin_op(b),
@@ -122,8 +125,13 @@ impl<'a> TraversalVisitor for TypeChecker<'a> {
             Expression::DictComp(d) => self.visit_dict_comp(d),
             Expression::Attribute(a) => self.visit_attribute(a),
             Expression::Subscript(s) => self.visit_subscript(s),
-            Expression::Slice(s) => self.visit_slice(s),
-            Expression::Call(c) => self.visit_call(c),
+            Expression::Slice(s) => {
+                self.visit_slice(s)
+            },
+            Expression::Call(c) => {
+                self.infer_expr_type(e, true);
+                self.visit_call(c)
+            },
             Expression::Await(a) => self.visit_await(a),
             Expression::Compare(c) => self.visit_compare(c),
             Expression::Lambda(l) => self.visit_lambda(l),
@@ -331,8 +339,8 @@ impl<'a> TraversalVisitor for TypeChecker<'a> {
     }
 
     fn visit_bin_op(&mut self, b: &BinOp) {
-        let l_type = self.infer_expr_type(&b.left);
-        let r_type = self.infer_expr_type(&b.right);
+        let l_type = self.infer_expr_type(&b.left,  true);
+        let r_type = self.infer_expr_type(&b.right, true);
 
         if !type_check_bin_op(&l_type, &r_type, &b.op) {
             let msg = format!(
@@ -484,7 +492,7 @@ impl<'a> TraversalVisitor for TypeChecker<'a> {
                             .type_evaluator
                             .get_symbol_node_type(symbol, n.node.start)
                             .unwrap_or(PythonType::Unknown);
-                        let value_type = self.infer_expr_type(&_a.value);
+                        let value_type = self.infer_expr_type(&_a.value, true);
                         if !is_reassignment_valid(&prev_target_type, &value_type) {
                             let msg = format!(
                                 "Cannot assign type '{}' to variable of type '{}'",
