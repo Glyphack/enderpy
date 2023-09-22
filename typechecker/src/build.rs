@@ -21,6 +21,7 @@ pub struct BuildSource {
     pub followed: bool,
 }
 
+#[derive(Debug)]
 pub struct BuildManager {
     errors: Vec<String>,
     pub modules: HashMap<String, State>,
@@ -48,6 +49,23 @@ impl BuildManager {
             modules,
             options,
         }
+    }
+
+    pub fn add_source(&mut self, path: &PathBuf) {
+        let source = std::fs::read_to_string(path).unwrap();
+        let module = Self::get_module_name(path);
+        let build_source = BuildSource {
+            path: path.clone(),
+            module: module.clone(),
+            source,
+            followed: false,
+        };
+        let file = Box::new(Self::parse_file(build_source));
+        self.modules.insert(module, State::new(file));
+    }
+
+    pub fn get_errors(&self) -> Vec<String> {
+        self.errors.clone()
     }
 
     pub fn parse_file(build_source: BuildSource) -> EnderpyFile {

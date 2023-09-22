@@ -5,7 +5,7 @@ use std::{env, path::PathBuf};
 #[derive(Debug, Deserialize)]
 #[allow(unused)]
 pub struct ImportDiscovery {
-    pub python_executable: PathBuf,
+    pub python_executable: Option<PathBuf>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -32,7 +32,7 @@ impl Settings {
             debug: true,
             root: PathBuf::from(""),
             import_discovery: ImportDiscovery {
-                python_executable: PathBuf::from("python"),
+                python_executable: None,
             },
         }
     }
