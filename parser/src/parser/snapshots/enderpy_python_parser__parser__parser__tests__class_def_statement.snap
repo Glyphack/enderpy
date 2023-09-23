@@ -1,0 +1,34 @@
+---
+source: parser/src/parser/parser.rs
+description: "class a: pass"
+---
+Module {
+    node: Node {
+        start: 0,
+        end: 13,
+    },
+    body: [
+        ClassDef(
+            ClassDef {
+                node: Node {
+                    start: 0,
+                    end: 13,
+                },
+                name: "a",
+                bases: [],
+                keywords: [],
+                body: [
+                    Pass(
+                        Pass {
+                            node: Node {
+                                start: 9,
+                                end: 13,
+                            },
+                        },
+                    ),
+                ],
+                decorator_list: [],
+            },
+        ),
+    ],
+}

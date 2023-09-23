@@ -2,7 +2,8 @@
 #![allow(unused_variables)]
 
 use miette::{bail, miette, Result};
-use parser::ast;
+use enderpy_python_parser::ast;
+use enderpy_python_parser as parser;
 
 use crate::{
     ast_visitor_generic::TraversalVisitorImmutGeneric,
@@ -521,7 +522,7 @@ mod tests {
     fn snapshot_type_eval(source: &str) -> String {
         use crate::nodes::EnderpyFile;
         use crate::state::State;
-        use parser::Parser;
+        use enderpy_python_parser::Parser;
 
         let mut parser = Parser::new(source.to_string());
         let ast_module = parser.parse();

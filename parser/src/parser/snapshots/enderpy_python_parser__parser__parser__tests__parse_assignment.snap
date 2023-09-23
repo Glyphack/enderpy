@@ -1,0 +1,42 @@
+---
+source: parser/src/parser/parser.rs
+description: a = 1
+---
+Module {
+    node: Node {
+        start: 0,
+        end: 5,
+    },
+    body: [
+        AssignStatement(
+            Assign {
+                node: Node {
+                    start: 0,
+                    end: 5,
+                },
+                targets: [
+                    Name(
+                        Name {
+                            node: Node {
+                                start: 0,
+                                end: 1,
+                            },
+                            id: "a",
+                        },
+                    ),
+                ],
+                value: Constant(
+                    Constant {
+                        node: Node {
+                            start: 4,
+                            end: 5,
+                        },
+                        value: Int(
+                            "1",
+                        ),
+                    },
+                ),
+            },
+        ),
+    ],
+}

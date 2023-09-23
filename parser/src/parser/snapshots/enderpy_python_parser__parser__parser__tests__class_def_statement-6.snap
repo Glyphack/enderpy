@@ -1,0 +1,44 @@
+---
+source: parser/src/parser/parser.rs
+description: "@decor\nclass a: pass"
+---
+Module {
+    node: Node {
+        start: 0,
+        end: 20,
+    },
+    body: [
+        ClassDef(
+            ClassDef {
+                node: Node {
+                    start: 7,
+                    end: 20,
+                },
+                name: "a",
+                bases: [],
+                keywords: [],
+                body: [
+                    Pass(
+                        Pass {
+                            node: Node {
+                                start: 16,
+                                end: 20,
+                            },
+                        },
+                    ),
+                ],
+                decorator_list: [
+                    Name(
+                        Name {
+                            node: Node {
+                                start: 1,
+                                end: 6,
+                            },
+                            id: "decor",
+                        },
+                    ),
+                ],
+            },
+        ),
+    ],
+}

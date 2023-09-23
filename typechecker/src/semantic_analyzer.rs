@@ -1,4 +1,5 @@
-use parser::ast::Expression;
+use enderpy_python_parser::ast::Expression;
+use enderpy_python_parser as parser;
 
 use crate::{
     ast_visitor::TraversalVisitor,

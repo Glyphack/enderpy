@@ -1,0 +1,82 @@
+---
+source: parser/src/parser/parser.rs
+description: "try:\n                pass\nexcept Exception as e:\n                pass\nelse:\n                pass\nfinally:\n                pass"
+---
+Module {
+    node: Node {
+        start: 0,
+        end: 126,
+    },
+    body: [
+        TryStatement(
+            Try {
+                node: Node {
+                    start: 0,
+                    end: 126,
+                },
+                body: [
+                    Pass(
+                        Pass {
+                            node: Node {
+                                start: 21,
+                                end: 25,
+                            },
+                        },
+                    ),
+                ],
+                handlers: [
+                    ExceptHandler {
+                        node: Node {
+                            start: 26,
+                            end: 70,
+                        },
+                        typ: Some(
+                            Name(
+                                Name {
+                                    node: Node {
+                                        start: 33,
+                                        end: 42,
+                                    },
+                                    id: "Exception",
+                                },
+                            ),
+                        ),
+                        name: Some(
+                            "e",
+                        ),
+                        body: [
+                            Pass(
+                                Pass {
+                                    node: Node {
+                                        start: 65,
+                                        end: 69,
+                                    },
+                                },
+                            ),
+                        ],
+                    },
+                ],
+                orelse: [
+                    Pass(
+                        Pass {
+                            node: Node {
+                                start: 92,
+                                end: 96,
+                            },
+                        },
+                    ),
+                ],
+                finalbody: [
+                    Pass(
+                        Pass {
+                            node: Node {
+                                start: 122,
+                                end: 126,
+                            },
+                        },
+                    ),
+                ],
+            },
+        ),
+    ],
+}

@@ -1,0 +1,14 @@
+---
+source: parser/src/lexer/lexer.rs
+description: "rb\"world\""
+---
+[
+    Token {
+        kind: RawBytes,
+        value: Str(
+            "rb\"world\"",
+        ),
+        start: 0,
+        end: 9,
+    },
+]

@@ -1,5 +1,6 @@
 use ast::{Expression, Statement};
-use parser::ast::{self, *};
+use enderpy_python_parser::ast::{self, *};
+use enderpy_python_parser as parser;
 
 use crate::{
     ast_visitor::TraversalVisitor, settings::Settings, state::State, symbol_table::SymbolTable,

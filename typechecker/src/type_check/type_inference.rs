@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 #![allow(unused_variables)]
 
-use parser::ast::{self, BinaryOperator, Expression};
+use enderpy_python_parser::ast::{self, BinaryOperator, Expression};
 
 use super::{builtins, types::PythonType};
 

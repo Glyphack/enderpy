@@ -1,0 +1,47 @@
+---
+source: parser/src/parser/parser.rs
+description: "def a(): pass"
+---
+Module {
+    node: Node {
+        start: 0,
+        end: 13,
+    },
+    body: [
+        FunctionDef(
+            FunctionDef {
+                node: Node {
+                    start: 0,
+                    end: 13,
+                },
+                name: "a",
+                args: Arguments {
+                    node: Node {
+                        start: 6,
+                        end: 6,
+                    },
+                    posonlyargs: [],
+                    args: [],
+                    vararg: None,
+                    kwonlyargs: [],
+                    kw_defaults: [],
+                    kwarg: None,
+                    defaults: [],
+                },
+                body: [
+                    Pass(
+                        Pass {
+                            node: Node {
+                                start: 9,
+                                end: 13,
+                            },
+                        },
+                    ),
+                ],
+                decorator_list: [],
+                returns: None,
+                type_comment: None,
+            },
+        ),
+    ],
+}

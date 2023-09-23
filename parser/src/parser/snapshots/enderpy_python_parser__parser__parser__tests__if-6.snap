@@ -1,0 +1,113 @@
+---
+source: parser/src/parser/parser.rs
+description: "if a is b:\n                pass\nelif a is c:\n                pass"
+---
+Module {
+    node: Node {
+        start: 0,
+        end: 65,
+    },
+    body: [
+        IfStatement(
+            If {
+                node: Node {
+                    start: 3,
+                    end: 65,
+                },
+                test: Compare(
+                    Compare {
+                        node: Node {
+                            start: 3,
+                            end: 9,
+                        },
+                        left: Name(
+                            Name {
+                                node: Node {
+                                    start: 3,
+                                    end: 4,
+                                },
+                                id: "a",
+                            },
+                        ),
+                        ops: [
+                            Is,
+                        ],
+                        comparators: [
+                            Name(
+                                Name {
+                                    node: Node {
+                                        start: 8,
+                                        end: 9,
+                                    },
+                                    id: "b",
+                                },
+                            ),
+                        ],
+                    },
+                ),
+                body: [
+                    Pass(
+                        Pass {
+                            node: Node {
+                                start: 27,
+                                end: 31,
+                            },
+                        },
+                    ),
+                ],
+                orelse: [
+                    IfStatement(
+                        If {
+                            node: Node {
+                                start: 32,
+                                end: 65,
+                            },
+                            test: Compare(
+                                Compare {
+                                    node: Node {
+                                        start: 37,
+                                        end: 43,
+                                    },
+                                    left: Name(
+                                        Name {
+                                            node: Node {
+                                                start: 37,
+                                                end: 38,
+                                            },
+                                            id: "a",
+                                        },
+                                    ),
+                                    ops: [
+                                        Is,
+                                    ],
+                                    comparators: [
+                                        Name(
+                                            Name {
+                                                node: Node {
+                                                    start: 42,
+                                                    end: 43,
+                                                },
+                                                id: "c",
+                                            },
+                                        ),
+                                    ],
+                                },
+                            ),
+                            body: [
+                                Pass(
+                                    Pass {
+                                        node: Node {
+                                            start: 61,
+                                            end: 65,
+                                        },
+                                    },
+                                ),
+                            ],
+                            orelse: [],
+                        },
+                    ),
+                ],
+            },
+        ),
+    ],
+}

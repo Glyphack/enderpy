@@ -1,16 +1,17 @@
 use std::{collections::HashMap, path::PathBuf};
+use log::info;
 
-use parser::Parser;
-use ruff_python_resolver::config::Config;
-use ruff_python_resolver::execution_environment;
+use enderpy_python_parser::Parser;
 
+use crate::ruff_python_import_resolver::config::Config;
+use crate::ruff_python_import_resolver::{execution_environment, resolver};
+use crate::ruff_python_import_resolver as ruff_python_resolver;
 use crate::nodes::EnderpyFile;
 use crate::settings::Settings;
 use crate::state::State;
 use crate::symbol_table::SymbolTable;
 use crate::type_check::checker::TypeChecker;
 
-use ruff_python_resolver::resolver::resolve_import;
 
 pub struct BuildSource {
     pub path: PathBuf,
@@ -21,9 +22,17 @@ pub struct BuildSource {
     pub followed: bool,
 }
 
+#[derive(Debug, Clone)]
+pub struct BuildError {
+    pub msg: String,
+    pub line: u32,
+    pub start: u32,
+    pub end: u32,
+}
+
 #[derive(Debug)]
 pub struct BuildManager {
-    errors: Vec<String>,
+    errors: Vec<BuildError>,
     pub modules: HashMap<String, State>,
     options: Settings,
 }
@@ -64,7 +73,7 @@ impl BuildManager {
         self.modules.insert(module, State::new(file));
     }
 
-    pub fn get_errors(&self) -> Vec<String> {
+    pub fn get_errors(&self) -> Vec<BuildError> {
         self.errors.clone()
     }
 
@@ -81,7 +90,7 @@ impl BuildManager {
 
     pub fn get_module_name(path: &PathBuf) -> String {
         path.to_str()
-            .unwrap()
+            .unwrap_or_default()
             .replace("/", ".")
             .replace("\\", ".")
     }
@@ -89,12 +98,12 @@ impl BuildManager {
     // Entry point to analyze the program
     pub fn build(&mut self) {
         let files = self.modules.values().collect();
+        info!("files: {:#?}", files);
         let new_files = self.gather_files(files);
         for file in new_files {
             self.modules.insert(file.file.module_name.clone(), file);
         }
 
-        println!("modules: {:#?}", self.modules.keys().collect::<Vec<&String>>());
         self.pre_analysis();
     }
 
@@ -116,8 +125,12 @@ impl BuildManager {
             }
             for error in checker.errors {
                 let line = get_line_number_of_character_position(&state.1.file.source, error.start);
-                let error = format!("{} line {}: {}", state.0, line, error.msg);
-                self.errors.push(error);
+                self.errors.push(BuildError {
+                    msg: error.msg,
+                    line: line as u32,
+                    start: error.start as u32,
+                    end: error.end as u32,
+                });
             }
         }
     }
@@ -201,7 +214,7 @@ impl BuildManager {
                     }
                 }
             };
-            let mut resolved = resolve_import(
+            let mut resolved = resolver::resolve_import(
                 state.file.path.as_path(),
                 execution_environment,
                 &import_desc,
@@ -290,7 +303,12 @@ mod tests {
         );
         manager.type_check();
 
-        manager.errors.join("\n").to_string()
+        let errors = manager.get_errors();
+        errors
+            .iter()
+            .map(|x| format!("{}:{}:{}: {}", x.line, x.start, x.end, x.msg))
+            .collect::<Vec<String>>()
+            .join("\n")
     }
 
     macro_rules! snap {

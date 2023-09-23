@@ -1,6 +1,8 @@
 use ast::{Expression, Statement};
 
-use parser::ast::{self, *};
+use enderpy_python_parser::ast::{self, *};
+
+use enderpy_python_parser as parser;
 
 pub trait TraversalVisitorImmut {
     fn visit_stmt(&self, s: &Statement) {
