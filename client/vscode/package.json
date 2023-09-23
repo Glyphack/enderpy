@@ -1,10 +1,13 @@
 {
-	"name": "enderpy-language-client",
-	"description": "Enderpy for Visual Studio Code",
+	"name": "enderpy-python-lsp",
+	"author": "Shaygan Hooshyari",
+	"publisher": "shayganhooshyari",
+	"description": "Enderpy Python LSP for Visual Studio Code",
+	"repository": "https://github.com/glyphack/enderpy",
 	"license": "MIT",
 	"version": "0.0.1",
 	"engines": {
-		"vscode": "^1.65.0"
+		"vscode": "^1.82.0"
 	},
 	"dependencies": {},
 	"devDependencies": {

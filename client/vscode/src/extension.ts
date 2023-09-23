@@ -14,7 +14,7 @@ let client: LanguageClient;
 
 export async function activate(_context: ExtensionContext) {
   const traceOutputChannel = window.createOutputChannel("Enderpy Language Server trace");
-  const command = process.env.SERVER_PATH || "enderpy-lsp";
+  const command = process.env.SERVER_PATH || "enderpy_lsp";
   const run: Executable = {
     command,
     options: {
