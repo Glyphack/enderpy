@@ -3,7 +3,9 @@
 
 use ast::{Expression, Statement};
 
-use parser::ast::{self, *};
+
+use enderpy_python_parser as parser;
+use enderpy_python_parser::ast::{self, *};
 
 pub trait TraversalVisitorImmutGeneric<T> {
     fn visit_stmt(&self, s: &Statement) -> T {

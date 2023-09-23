@@ -1,17 +1,17 @@
 use std::{collections::HashMap, path::PathBuf};
 use log::info;
 
-use parser::Parser;
-use ruff_python_resolver::config::Config;
-use ruff_python_resolver::execution_environment;
+use enderpy_python_parser::Parser;
 
+use crate::ruff_python_import_resolver::config::Config;
+use crate::ruff_python_import_resolver::{execution_environment, resolver};
+use crate::ruff_python_import_resolver as ruff_python_resolver;
 use crate::nodes::EnderpyFile;
 use crate::settings::Settings;
 use crate::state::State;
 use crate::symbol_table::SymbolTable;
 use crate::type_check::checker::TypeChecker;
 
-use ruff_python_resolver::resolver::resolve_import;
 
 pub struct BuildSource {
     pub path: PathBuf,
@@ -214,7 +214,7 @@ impl BuildManager {
                     }
                 }
             };
-            let mut resolved = resolve_import(
+            let mut resolved = resolver::resolve_import(
                 state.file.path.as_path(),
                 execution_environment,
                 &import_desc,
@@ -303,7 +303,12 @@ mod tests {
         );
         manager.type_check();
 
-        manager.errors.join("\n").to_string()
+        let errors = manager.get_errors();
+        errors
+            .iter()
+            .map(|x| format!("{}:{}:{}: {}", x.line, x.start, x.end, x.msg))
+            .collect::<Vec<String>>()
+            .join("\n")
     }
 
     macro_rules! snap {

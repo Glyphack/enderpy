@@ -1,0 +1,58 @@
+---
+source: parser/src/parser/parser.rs
+description: "with a as b: pass"
+---
+Module {
+    node: Node {
+        start: 0,
+        end: 17,
+    },
+    body: [
+        WithStatement(
+            With {
+                node: Node {
+                    start: 0,
+                    end: 17,
+                },
+                items: [
+                    WithItem {
+                        node: Node {
+                            start: 5,
+                            end: 11,
+                        },
+                        context_expr: Name(
+                            Name {
+                                node: Node {
+                                    start: 5,
+                                    end: 6,
+                                },
+                                id: "a",
+                            },
+                        ),
+                        optional_vars: Some(
+                            Name(
+                                Name {
+                                    node: Node {
+                                        start: 10,
+                                        end: 11,
+                                    },
+                                    id: "b",
+                                },
+                            ),
+                        ),
+                    },
+                ],
+                body: [
+                    Pass(
+                        Pass {
+                            node: Node {
+                                start: 13,
+                                end: 17,
+                            },
+                        },
+                    ),
+                ],
+            },
+        ),
+    ],
+}

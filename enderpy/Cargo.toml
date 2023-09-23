@@ -10,5 +10,5 @@ edition = "2021"
 [dependencies]
 anyhow = "1.0.71"
 clap = { version = "4.2.7", features = ["derive"] }
-parser = { path = "../parser" , version = "0.1.0" }
-typechecker = { path = "../typechecker" , version = "0.1.0" }
+enderpy_python_parser = { path = "../parser" , version = "0.1.0" }
+enderpy_python_type_checker = { path = "../typechecker" , version = "0.1.0" }

@@ -6,11 +6,9 @@ mod semanal_utils;
 mod state;
 mod symbol_table;
 mod type_check;
+mod ruff_python_import_resolver;
 
 pub mod build;
 pub mod semantic_analyzer;
 pub mod settings;
 pub mod project;
-
-pub use parser::ast;
-pub use ruff_python_resolver;

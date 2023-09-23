@@ -1,4 +1,5 @@
-use crate::ast::*;
+use enderpy_python_parser::ast::*;
+use enderpy_python_parser as parser;
 
 // pub trait FileVisitor<T>: StmtVisitor<T> + ExprVisitor<T> {
 //     fn visit_file(&mut self, f: &EnderpyFile) -> T {

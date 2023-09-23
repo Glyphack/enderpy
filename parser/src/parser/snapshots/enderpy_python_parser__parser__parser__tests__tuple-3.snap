@@ -1,0 +1,51 @@
+---
+source: parser/src/parser/parser.rs
+description: "(a\n            , b, c)"
+---
+Module {
+    node: Node {
+        start: 0,
+        end: 22,
+    },
+    body: [
+        ExpressionStatement(
+            Tuple(
+                Tuple {
+                    node: Node {
+                        start: 0,
+                        end: 21,
+                    },
+                    elements: [
+                        Name(
+                            Name {
+                                node: Node {
+                                    start: 1,
+                                    end: 2,
+                                },
+                                id: "a",
+                            },
+                        ),
+                        Name(
+                            Name {
+                                node: Node {
+                                    start: 17,
+                                    end: 18,
+                                },
+                                id: "b",
+                            },
+                        ),
+                        Name(
+                            Name {
+                                node: Node {
+                                    start: 20,
+                                    end: 21,
+                                },
+                                id: "c",
+                            },
+                        ),
+                    ],
+                },
+            ),
+        ),
+    ],
+}

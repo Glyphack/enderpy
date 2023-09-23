@@ -1,4 +1,4 @@
-use parser::ast::{self, Node};
+use enderpy_python_parser::ast::{self, Node};
 use std::{collections::HashMap, fmt::Display};
 
 #[derive(Debug, Clone)]

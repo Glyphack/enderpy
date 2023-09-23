@@ -1,5 +1,5 @@
 [workspace]
-members = ["parser", "enderpy", "typechecker", "ruff_python_import_resolver", "lsp"]
+members = ["parser", "enderpy", "typechecker", "lsp"]
 resolver = "2"
 
 [workspace.package]
@@ -8,7 +8,7 @@ rust-version = "1.72.0"
 homepage = "https://github.com/Glyphack/enderpy"
 documentation = "https://github.com/Glyphack/enderpy"
 authors = ["Shaygan Hooshyari"]
-license = "APGL-3.0"
+license = "AGPL-3.0-only"
 repository = "https://github.com/Glyphack/enderpy"
 
 [workspace.dependencies]

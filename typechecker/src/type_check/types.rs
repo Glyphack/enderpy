@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-use parser::ast;
+use enderpy_python_parser::ast;
 
 #[allow(unused)]
 #[derive(Debug, Clone, PartialEq)]

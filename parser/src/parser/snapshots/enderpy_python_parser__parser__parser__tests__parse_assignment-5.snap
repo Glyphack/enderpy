@@ -1,0 +1,43 @@
+---
+source: parser/src/parser/parser.rs
+description: a = 1j
+---
+Module {
+    node: Node {
+        start: 0,
+        end: 6,
+    },
+    body: [
+        AssignStatement(
+            Assign {
+                node: Node {
+                    start: 0,
+                    end: 6,
+                },
+                targets: [
+                    Name(
+                        Name {
+                            node: Node {
+                                start: 0,
+                                end: 1,
+                            },
+                            id: "a",
+                        },
+                    ),
+                ],
+                value: Constant(
+                    Constant {
+                        node: Node {
+                            start: 4,
+                            end: 6,
+                        },
+                        value: Complex {
+                            real: "0",
+                            imaginary: "1j",
+                        },
+                    },
+                ),
+            },
+        ),
+    ],
+}

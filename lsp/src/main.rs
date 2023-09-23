@@ -6,9 +6,9 @@ use tower_lsp::jsonrpc::Result;
 use tower_lsp::lsp_types::*;
 use tower_lsp::{Client, LanguageServer, LspService, Server};
 
-use typechecker::build::BuildManager;
-use typechecker::project::find_project_root;
-use typechecker::settings::{ImportDiscovery, Settings};
+use enderpy_python_type_checker::build::BuildManager;
+use enderpy_python_type_checker::project::find_project_root;
+use enderpy_python_type_checker::settings::{ImportDiscovery, Settings};
 
 #[derive(Debug)]
 struct Backend {

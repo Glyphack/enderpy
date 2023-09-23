@@ -1,0 +1,52 @@
+---
+source: parser/src/parser/parser.rs
+description: "a[::d,]"
+---
+Module {
+    node: Node {
+        start: 0,
+        end: 7,
+    },
+    body: [
+        ExpressionStatement(
+            Subscript(
+                Subscript {
+                    node: Node {
+                        start: 0,
+                        end: 7,
+                    },
+                    value: Name(
+                        Name {
+                            node: Node {
+                                start: 0,
+                                end: 1,
+                            },
+                            id: "a",
+                        },
+                    ),
+                    slice: Slice(
+                        Slice {
+                            node: Node {
+                                start: 2,
+                                end: 5,
+                            },
+                            lower: None,
+                            upper: Some(
+                                Name(
+                                    Name {
+                                        node: Node {
+                                            start: 4,
+                                            end: 5,
+                                        },
+                                        id: "d",
+                                    },
+                                ),
+                            ),
+                            step: None,
+                        },
+                    ),
+                },
+            ),
+        ),
+    ],
+}

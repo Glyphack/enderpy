@@ -1,9 +1,9 @@
 use anyhow::{anyhow, Result, bail};
 use clap::Parser as ClapParser;
 use cli::{Cli, Commands};
-use parser::{token, Lexer, Parser};
+use enderpy_python_parser::{token, Lexer, Parser};
 use std::{fs, path::PathBuf};
-use typechecker::{
+use enderpy_python_type_checker::{
     build::{BuildManager, BuildSource},
     settings::{ImportDiscovery, Settings}, project::find_project_root,
 };

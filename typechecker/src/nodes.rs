@@ -6,8 +6,8 @@
 // get the type checker working. But can be expanded.
 
 use std::path::PathBuf;
-
-use parser::ast::{Import, ImportFrom, Module, Statement};
+use enderpy_python_parser as parser;
+use enderpy_python_parser::ast::{Import, ImportFrom, Module, Statement};
 
 use crate::ast_visitor::TraversalVisitor;
 
