@@ -8,7 +8,7 @@ homepage = { workspace = true }
 documentation = { workspace = true }
 repository = { workspace = true }
 license = { workspace = true }
-readme = "../../README.md"
+readme = "../README.md"
 
 [dependencies]
 typechecker = { path = "../typechecker" , version = "0.1.0"}
