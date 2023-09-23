@@ -1,10 +1,13 @@
 use std::path::PathBuf;
 
+use env_logger::Builder;
+use log::LevelFilter;
 use tower_lsp::jsonrpc::Result;
 use tower_lsp::lsp_types::*;
 use tower_lsp::{Client, LanguageServer, LspService, Server};
 
 use typechecker::build::BuildManager;
+use typechecker::project::find_project_root;
 use typechecker::settings::{ImportDiscovery, Settings};
 
 #[derive(Debug)]
@@ -12,70 +15,112 @@ struct Backend {
     client: Client,
 }
 
+impl Backend {
+    async fn check_file(&self, path: &PathBuf) -> Vec<Diagnostic> {
+        let root = PathBuf::from(find_project_root(path));
+        let python_executable = None;
+        let settings = Settings {
+            debug: false,
+            root,
+            import_discovery: ImportDiscovery { python_executable },
+        };
+
+        let mut manager = BuildManager::new(vec![], settings);
+        manager.add_source(path);
+        manager.type_check();
+        let errors = manager.get_errors();
+        let mut diagnostics = Vec::new();
+        for err in errors {
+            diagnostics.push(Diagnostic {
+                range: Range {
+                    start: Position {
+                        line: err.line,
+                        character: err.start,
+                    },
+                    end: Position {
+                        line: err.line,
+                        character: err.end,
+                    },
+                },
+                severity: Some(DiagnosticSeverity::ERROR),
+                code: None,
+                code_description: None,
+                source: Some("Enderpy".to_string()),
+                message: String::from(err.msg),
+                related_information: None,
+                tags: None,
+                data: None,
+            });
+        }
+        diagnostics
+    }
+}
+
 #[tower_lsp::async_trait]
 impl LanguageServer for Backend {
-    async fn initialize(&self, params: InitializeParams) -> Result<InitializeResult> {
-        Ok(InitializeResult::default())
+    async fn initialize(&self, _: InitializeParams) -> Result<InitializeResult> {
+        Ok(InitializeResult {
+            server_info: None,
+            offset_encoding: None,
+            capabilities: ServerCapabilities {
+                text_document_sync: Some(TextDocumentSyncCapability::Kind(
+                    TextDocumentSyncKind::FULL,
+                )),
+                execute_command_provider: Some(ExecuteCommandOptions {
+                    commands: vec!["dummy.do_something".to_string()],
+                    work_done_progress_options: Default::default(),
+                }),
+                workspace: Some(WorkspaceServerCapabilities {
+                    workspace_folders: Some(WorkspaceFoldersServerCapabilities {
+                        supported: Some(true),
+                        change_notifications: Some(OneOf::Left(true)),
+                    }),
+                    file_operations: None,
+                }),
+                diagnostic_provider: Some(DiagnosticServerCapabilities::Options(
+                    DiagnosticOptions {
+                        identifier: Some("typechecker".to_string()),
+                        inter_file_dependencies: true,
+                        workspace_diagnostics: true,
+                        work_done_progress_options: Default::default(),
+                    },
+                )),
+                ..ServerCapabilities::default()
+            },
+        })
     }
 
     async fn initialized(&self, _: InitializedParams) {
+        log::info!("server initialized!");
         self.client
             .log_message(MessageType::INFO, "server initialized!")
             .await;
     }
 
-    #[allow(unused_variables)]
+    async fn did_save(&self, params: DidSaveTextDocumentParams) {
+        self.client
+            .log_message(MessageType::INFO, "file saved!")
+            .await;
+        let uri = params.text_document.uri;
+        let path = uri.to_file_path();
+        if let Ok(path) = path {
+            let diagnostics = self.check_file(&path).await;
+            self.client
+                .publish_diagnostics(uri, diagnostics, None)
+                .await;
+        }
+    }
+
     async fn did_open(&self, params: DidOpenTextDocumentParams) {
         self.client
             .log_message(MessageType::INFO, "file opened!")
             .await;
         let uri = params.text_document.uri;
-        // check if the uri is path buf or just return
-        let path = uri.to_file_path().unwrap_or_default();
-        let file_name = path
-            .file_name()
-            .unwrap_or_default()
-            .to_str()
-            .unwrap_or_default();
-        let file_name = file_name.to_string();
-        let file_content = params.text_document.text;
-        let settings = Settings {
-            debug: true,
-            root: path.clone(),
-            import_discovery: ImportDiscovery {
-                python_executable: None,
-            },
-        };
-        let mut build_manager = BuildManager::new(vec![], settings);
-        build_manager.add_source(&path);
-        build_manager.build();
-        let errs = build_manager.get_errors();
-        for err in errs {
+        let path = uri.to_file_path();
+        if let Ok(path) = path {
+            let diagnostics = self.check_file(&path).await;
             self.client
-                .publish_diagnostics(
-                    uri.clone(),
-                    vec![Diagnostic {
-                        range: Range {
-                            start: Position {
-                                line: 0,
-                                character: 0,
-                            },
-                            end: Position {
-                                line: 0,
-                                character: 0,
-                            },
-                        },
-                        severity: Some(DiagnosticSeverity::ERROR),
-                        code: None,
-                        code_description: None,
-                        source: Some("typechecker".to_string()),
-                        message: err,
-                        related_information: None,
-                        tags: None,
-                        data: None,
-                    }],
-                    None,
-                )
+                .publish_diagnostics(uri, diagnostics, None)
                 .await;
         }
     }
@@ -87,13 +132,14 @@ impl LanguageServer for Backend {
 
 #[tokio::main]
 async fn main() {
+    let mut builder = Builder::from_default_env();
+
+    builder.filter(None, LevelFilter::Info).init();
+
+    log::info!("starting enderpy language server");
+
     let stdin = tokio::io::stdin();
     let stdout = tokio::io::stdout();
-
-    let build_manager = Box::new(BuildManager::new(vec![], Settings::test_settings()));
-    let (service, socket) = LspService::new(|client| Backend {
-        client,
-        build_manager,
-    });
+    let (service, socket) = LspService::new(|client| Backend { client });
     Server::new(stdin, stdout, socket).serve(service).await;
 }
