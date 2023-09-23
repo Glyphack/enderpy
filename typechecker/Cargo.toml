@@ -10,6 +10,8 @@ config = "0.13.3"
 serde = { version = "1.0.164", features = ["derive"] }
 miette = "5.10.0"
 thiserror = "1.0.48"
+log.workspace = true
+env_logger = "0.10.0"
 
 [dev-dependencies]
 insta = { version = "1.28.0", features = ["yaml"] }

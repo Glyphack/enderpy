@@ -10,6 +10,7 @@ mod type_check;
 pub mod build;
 pub mod semantic_analyzer;
 pub mod settings;
+pub mod project;
 
 pub use parser::ast;
 pub use ruff_python_resolver;
