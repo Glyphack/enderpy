@@ -1,5 +1,5 @@
 [package]
-name = "enderpy-python-parser"
+name = "enderpy_python_parser"
 description = "A Python parser written in Rust"
 version = "0.1.0"
 authors = { workspace = true }
