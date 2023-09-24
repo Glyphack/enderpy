@@ -34,6 +34,7 @@ pub enum Kind {
     Del,      // del
     Elif,     // elif
     Else,     // else
+    Ellipsis, // ...
     Except,   // except
     Finally,  // finally
     For,      // for
@@ -263,6 +264,7 @@ impl Kind {
             Kind::Octal => "Octal",
             Kind::Indent => "Indent",
             Kind::Dedent => "Dedent",
+            Kind::Ellipsis => "Ellipsis",
         }
     }
 }
