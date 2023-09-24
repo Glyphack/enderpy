@@ -1312,8 +1312,17 @@ impl Parser {
 
     fn parse_module_name(&mut self) -> (String, usize) {
         let mut level = 0;
-        while self.eat(Kind::Dot) {
-            level += 1;
+        while self.at(Kind::Dot) | self.at(Kind::Ellipsis) {
+            match self.cur_kind() {
+                Kind::Dot => {
+                    level += 1;
+                }
+                Kind::Ellipsis => {
+                    level += 3;
+                }
+                _ => unreachable!(),
+            }
+            self.bump_any();
         }
         let mut module = self.cur_token().value.to_string();
         self.bump(Kind::Identifier);
@@ -2419,6 +2428,10 @@ impl Parser {
                     imaginary: value.to_string(),
                 },
             })),
+            Kind::Ellipsis => Expression::Constant(Box::new(Constant {
+                node: self.finish_node(start),
+                value: ConstantValue::Ellipsis,
+            })),
             _ => {
                 return Err(diagnostics::InvalidSyntax(
                     format!("unexpected token {:?}", kind),
@@ -2821,6 +2834,12 @@ mod tests {
             "from a import b as c",
             "from a.b import c",
             "from a.b import c as d",
+            "from ...a import b",
+            "from ....a import b",
+            "from .....a import b",
+            "from ......a import b",
+            "from .......a import b",
+            "from ..."
         ] {
             let mut parser = Parser::new(test_case.to_string());
             let program = parser.parse();
@@ -3432,6 +3451,27 @@ def a(): pass",
             "@decor
 def f(a: 'annotation', b=1, c=2, *d, e, f=3, **g): pass",
             "def func() -> None: pass",
+        ] {
+            let mut parser = Parser::new(test_case.to_string());
+            let program = parser.parse();
+
+            insta::with_settings!({
+                    description => test_case.to_string(), // the template source code
+                    omit_expression => true // do not include the default expression
+                }, {
+                    assert_debug_snapshot!(program);
+            });
+        }
+    }
+
+    #[test]
+    fn test_ellipsis_statement() {
+        for test_case in &[
+            "def a(): ...",
+            "def a():
+    ...",
+            "a = ...",
+            "... + 1",
         ] {
             let mut parser = Parser::new(test_case.to_string());
             let program = parser.parse();

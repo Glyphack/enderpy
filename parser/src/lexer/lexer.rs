@@ -307,7 +307,15 @@ impl Lexer {
                     return Ok(Kind::RightBracket);
                 }
                 ',' => return Ok(Kind::Comma),
-                '.' => return Ok(Kind::Dot),
+                '.' => {
+                    if let Some('.') = self.peek() {
+                        if let Some('.') = self.double_peek() {
+                            self.double_next();
+                            return Ok(Kind::Ellipsis);
+                        }
+                    }
+                    return Ok(Kind::Dot);
+                },
                 ';' => return Ok(Kind::SemiColon),
                 '=' => match self.peek() {
                     Some('=') => {
@@ -1130,6 +1138,15 @@ def",
             ],
         )
         .unwrap();
+    }
+
+    #[test]
+    fn test_ellipsis() {
+        snapshot_test_lexer("ellipsis", &[
+            "...",
+            "def a():
+    ..."
+        ]).unwrap();
     }
 
     #[test]
