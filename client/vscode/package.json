@@ -5,7 +5,7 @@
 	"description": "Enderpy Python LSP for Visual Studio Code (under development)",
 	"repository": "https://github.com/glyphack/enderpy",
 	"license": "MIT",
-	"version": "0.0.2",
+	"version": "0.0.3",
 	"engines": {
 		"vscode": "^1.82.0"
 	},

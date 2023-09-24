@@ -17,3 +17,5 @@ typings/
 node_modules
 out/
 client/dist/
+# vscode extension 
+*.vsix
