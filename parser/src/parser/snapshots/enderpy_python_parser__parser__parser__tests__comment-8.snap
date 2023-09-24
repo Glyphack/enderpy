@@ -1,0 +1,50 @@
+---
+source: parser/src/parser/parser.rs
+description: "def a(): ... # a"
+---
+Module {
+    node: Node {
+        start: 0,
+        end: 16,
+    },
+    body: [
+        FunctionDef(
+            FunctionDef {
+                node: Node {
+                    start: 0,
+                    end: 12,
+                },
+                name: "a",
+                args: Arguments {
+                    node: Node {
+                        start: 6,
+                        end: 6,
+                    },
+                    posonlyargs: [],
+                    args: [],
+                    vararg: None,
+                    kwonlyargs: [],
+                    kw_defaults: [],
+                    kwarg: None,
+                    defaults: [],
+                },
+                body: [
+                    ExpressionStatement(
+                        Constant(
+                            Constant {
+                                node: Node {
+                                    start: 9,
+                                    end: 12,
+                                },
+                                value: Ellipsis,
+                            },
+                        ),
+                    ),
+                ],
+                decorator_list: [],
+                returns: None,
+                type_comment: None,
+            },
+        ),
+    ],
+}

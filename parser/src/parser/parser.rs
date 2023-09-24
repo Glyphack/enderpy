@@ -52,7 +52,7 @@ impl Parser {
             // TODO: comments can be parsed and used
             // Also comments can be everywhere
             if self.at(Kind::Sharp) {
-                self.consume_comment();
+                self.bump_comment();
                 continue;
             }
             if self.at(Kind::NewLine) {
@@ -989,6 +989,8 @@ impl Parser {
             self.expect(Kind::Indent)?;
             let mut stmts = vec![];
             while !self.eat(Kind::Dedent) && !self.at(Kind::Eof) {
+                self.bump_comment();
+                self.consume_whitespace_and_newline();
                 let stmt = self.parse_statement()?;
                 stmts.extend(stmt);
                 self.bump(Kind::NewLine);
@@ -1006,6 +1008,8 @@ impl Parser {
         if is_at_compound_statement(self.cur_token()) {
             let comp_stmt = self.parse_compount_statement()?;
             Ok(vec![comp_stmt])
+        } else if matches!(self.cur_kind(), Kind::NewLine | Kind::Sharp | Kind::Eof) {
+            return Ok(vec![]);
         } else {
             self.parse_statement_list()
         }
@@ -1654,17 +1658,17 @@ impl Parser {
         })))
     }
 
-    fn consume_comment(&mut self) {
-        while !self.at(Kind::NewLine) && !self.at(Kind::Eof) {
-            self.bump_any();
+    fn bump_comment(&mut self) {
+        while self.at(Kind::Sharp) {
+            while !self.at(Kind::NewLine) && !self.at(Kind::Eof) {
+                self.bump_any();
+            }
+            self.bump(Kind::NewLine);
         }
     }
 
     fn consume_whitespace_and_newline(&mut self) {
-        while matches!(
-            self.cur_kind(),
-            Kind::WhiteSpace | Kind::NewLine | Kind::Indent | Kind::Dedent
-        ) {
+        while matches!(self.cur_kind(), Kind::WhiteSpace | Kind::NewLine) {
             self.bump(self.cur_kind());
         }
     }
@@ -2839,7 +2843,7 @@ mod tests {
             "from .....a import b",
             "from ......a import b",
             "from .......a import b",
-            "from ..."
+            "from ...",
         ] {
             let mut parser = Parser::new(test_case.to_string());
             let program = parser.parse();
@@ -3476,6 +3480,36 @@ def f(a: 'annotation', b=1, c=2, *d, e, f=3, **g): pass",
             let mut parser = Parser::new(test_case.to_string());
             let program = parser.parse();
 
+            insta::with_settings!({
+                    description => test_case.to_string(), // the template source code
+                    omit_expression => true // do not include the default expression
+                }, {
+                    assert_debug_snapshot!(program);
+            });
+        }
+    }
+
+    #[test]
+    fn test_comment() {
+        for test_case in &[
+            "# a",
+            "# a\n",
+            "# a\n# b",
+            "# a\n# b\n",
+            "# a\n# b\n# c",
+            "# a\n# b\n# c\n",
+            "# a\n# b\n# c\n# d",
+            "def a(): ... # a",
+            "def a(): ... # a\n",
+            "def a():
+    ... # a",
+            "# this is a comment only  program",
+            "if a:
+
+	pass",
+        ] {
+            let mut parser = Parser::new(test_case.to_string());
+            let program = parser.parse();
             insta::with_settings!({
                     description => test_case.to_string(), // the template source code
                     omit_expression => true // do not include the default expression

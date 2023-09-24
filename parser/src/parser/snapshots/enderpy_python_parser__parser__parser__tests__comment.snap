@@ -1,0 +1,11 @@
+---
+source: parser/src/parser/parser.rs
+expression: program
+---
+Module {
+    node: Node {
+        start: 0,
+        end: 3,
+    },
+    body: [],
+}

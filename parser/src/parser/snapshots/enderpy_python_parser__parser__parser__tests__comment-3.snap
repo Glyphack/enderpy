@@ -1,0 +1,11 @@
+---
+source: parser/src/parser/parser.rs
+description: "# a\n# b"
+---
+Module {
+    node: Node {
+        start: 0,
+        end: 7,
+    },
+    body: [],
+}
