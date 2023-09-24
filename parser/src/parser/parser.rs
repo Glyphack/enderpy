@@ -51,8 +51,7 @@ impl Parser {
         while self.cur_kind() != Kind::Eof {
             // TODO: comments can be parsed and used
             // Also comments can be everywhere
-            if self.at(Kind::Sharp) {
-                self.bump_comment();
+            if self.eat(Kind::Comment) {
                 continue;
             }
             if self.at(Kind::NewLine) {
@@ -157,6 +156,26 @@ impl Parser {
         Ok(())
     }
 
+    fn unepxted_token(&mut self,node: Node, kind: Kind)-> Result <()>{
+        self.bump_any();
+        let range = self.finish_node(node);
+        let line_number = self.get_line_number_of_character_position(range.start);
+        Err(diagnostics::UnexpectedToken(line_number, kind.to_str(), range).into())
+    }
+    
+    fn get_line_number_of_character_position(&self, pos: usize) -> u32 {
+        let mut line_number = 1;
+        for (i, c) in self.source.chars().enumerate() {
+            if i == pos {
+                break;
+            }
+            if c == '\n' {
+                line_number += 1;
+            }
+        }
+        line_number
+    }
+
     fn parse_simple_statement(&mut self) -> Result<Statement> {
         let stmt = match self.cur_kind() {
             Kind::Assert => self.parse_assert_statement(),
@@ -179,11 +198,8 @@ impl Parser {
                     let node = self.start_node();
                     let kind = self.cur_kind();
                     self.bump_any();
-                    return Err(diagnostics::UnexpectedToken(
-                        kind.to_str(),
-                        self.finish_node(node),
-                    )
-                    .into());
+                    println!("Error: {:?}", self.cur_token());
+                    return Err(self.unepxted_token(node, kind).err().unwrap());
                 } else {
                     self.parse_assignment_or_expression_statement()
                 }
@@ -989,7 +1005,7 @@ impl Parser {
             self.expect(Kind::Indent)?;
             let mut stmts = vec![];
             while !self.eat(Kind::Dedent) && !self.at(Kind::Eof) {
-                self.bump_comment();
+                self.bump(Kind::Comment);
                 self.consume_whitespace_and_newline();
                 let stmt = self.parse_statement()?;
                 stmts.extend(stmt);
@@ -1008,7 +1024,7 @@ impl Parser {
         if is_at_compound_statement(self.cur_token()) {
             let comp_stmt = self.parse_compount_statement()?;
             Ok(vec![comp_stmt])
-        } else if matches!(self.cur_kind(), Kind::NewLine | Kind::Sharp | Kind::Eof) {
+        } else if matches!(self.cur_kind(), Kind::NewLine | Kind::Comment | Kind::Eof) {
             return Ok(vec![]);
         } else {
             self.parse_statement_list()
@@ -1658,14 +1674,6 @@ impl Parser {
         })))
     }
 
-    fn bump_comment(&mut self) {
-        while self.at(Kind::Sharp) {
-            while !self.at(Kind::NewLine) && !self.at(Kind::Eof) {
-                self.bump_any();
-            }
-            self.bump(Kind::NewLine);
-        }
-    }
 
     fn consume_whitespace_and_newline(&mut self) {
         while matches!(self.cur_kind(), Kind::WhiteSpace | Kind::NewLine) {
@@ -1703,7 +1711,7 @@ impl Parser {
             let expr = self.parse_or_expr()?;
             node = self.finish_node(node);
             if !is_iterable(&expr) {
-                return Err(diagnostics::UnexpectedToken(starred_value_kind.to_str(), node).into());
+                return Err(diagnostics::UnexpectedToken(0, starred_value_kind.to_str(), node).into());
             }
             return Ok(Expression::Starred(Box::new(Starred {
                 node: self.finish_node(node),
@@ -2176,6 +2184,7 @@ impl Parser {
             return Ok(expr);
         } else {
             return Err(diagnostics::UnexpectedToken(
+                0,
                 self.cur_kind().to_str(),
                 self.finish_node(node),
             )
@@ -2471,6 +2480,7 @@ impl Parser {
                 }
                 _ => {
                     return Err(diagnostics::UnexpectedToken(
+                        0,
                         self.cur_kind().to_str(),
                         self.finish_node(node),
                     )
@@ -2479,6 +2489,7 @@ impl Parser {
             },
             _ => {
                 return Err(diagnostics::UnexpectedToken(
+                    0,
                     self.cur_kind().to_str(),
                     self.finish_node(node),
                 )
@@ -2500,6 +2511,7 @@ impl Parser {
             Kind::Pow => Ok(BinaryOperator::Pow),
             Kind::MatrixMul => Ok(BinaryOperator::MatMult),
             _ => Err(diagnostics::UnexpectedToken(
+                0,
                 self.cur_kind().to_str(),
                 self.finish_node(self.start_node()),
             )
@@ -2669,6 +2681,7 @@ impl Parser {
                 }
                 _ => {
                     return Err(diagnostics::UnexpectedToken(
+                        0,
                         "unknown token in fstring",
                         self.finish_node(self.start_node()),
                     )

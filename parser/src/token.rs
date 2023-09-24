@@ -30,6 +30,7 @@ pub enum Kind {
     Break,    // break
     Class,    // class
     Continue, // continue
+    Comment,  // the rest of the line after a # character
     Def,      // def
     Del,      // del
     Elif,     // elif
@@ -136,7 +137,6 @@ pub enum Kind {
     PowAssign,        // **=
 
     // Special
-    Sharp,     // #
     BackSlash, // \
 
     // Unconditional error
@@ -175,7 +175,6 @@ impl Kind {
             Kind::ShiftLeftAssign => "<<=",
             Kind::ShiftRightAssign => ">>=",
             Kind::PowAssign => "**=",
-            Kind::Sharp => "#",
             Kind::BackSlash => "\\",
             Kind::Dollar => "$",
             Kind::QuestionMark => "?",
@@ -195,6 +194,7 @@ impl Kind {
             Kind::RightBracket => "}",
             Kind::Comma => ",",
             Kind::Colon => ":",
+            Kind::Comment => "Comment",
             Kind::Dot => ".",
             Kind::SemiColon => ";",
             Kind::Assign => "=",

@@ -15,8 +15,9 @@ pub struct ExpectToken(
 #[error("Unexpected token")]
 #[diagnostic()]
 pub struct UnexpectedToken(
+    pub u32,
     pub &'static str,
-    #[label("Unexpected token `{0}`")] pub Node,
+    #[label("line: {0} Unexpected token `{1}`")] pub Node,
 );
 
 #[derive(Debug, Error, Diagnostic)]

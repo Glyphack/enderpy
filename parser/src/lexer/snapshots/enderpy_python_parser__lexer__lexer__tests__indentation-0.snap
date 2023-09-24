@@ -1,6 +1,6 @@
 ---
 source: parser/src/lexer/lexer.rs
-description: "if True:\n            pass"
+description: "if True:\n            pass\n"
 ---
 [
     Token {
@@ -40,5 +40,19 @@ description: "if True:\n            pass"
         value: None,
         start: 21,
         end: 25,
+    },
+    Token {
+        kind: NewLine,
+        value: None,
+        start: 25,
+        end: 26,
+    },
+    Token {
+        kind: Dedent,
+        value: Indent(
+            1,
+        ),
+        start: 26,
+        end: 26,
     },
 ]

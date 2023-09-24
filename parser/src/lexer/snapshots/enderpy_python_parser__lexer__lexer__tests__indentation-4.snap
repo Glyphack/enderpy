@@ -1,0 +1,102 @@
+---
+source: parser/src/lexer/lexer.rs
+description: "if a:\n\n    f = c\n\n    # Path: test_local.py\t\n"
+---
+[
+    Token {
+        kind: If,
+        value: None,
+        start: 0,
+        end: 2,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "a",
+        ),
+        start: 3,
+        end: 4,
+    },
+    Token {
+        kind: Colon,
+        value: None,
+        start: 4,
+        end: 5,
+    },
+    Token {
+        kind: NewLine,
+        value: None,
+        start: 5,
+        end: 6,
+    },
+    Token {
+        kind: NewLine,
+        value: None,
+        start: 6,
+        end: 7,
+    },
+    Token {
+        kind: Indent,
+        value: Indent(
+            1,
+        ),
+        start: 7,
+        end: 11,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "f",
+        ),
+        start: 11,
+        end: 12,
+    },
+    Token {
+        kind: Assign,
+        value: None,
+        start: 13,
+        end: 14,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "c",
+        ),
+        start: 15,
+        end: 16,
+    },
+    Token {
+        kind: NewLine,
+        value: None,
+        start: 16,
+        end: 17,
+    },
+    Token {
+        kind: NewLine,
+        value: None,
+        start: 17,
+        end: 18,
+    },
+    Token {
+        kind: Comment,
+        value: Str(
+            "# Path: test_local.py\t",
+        ),
+        start: 22,
+        end: 44,
+    },
+    Token {
+        kind: NewLine,
+        value: None,
+        start: 44,
+        end: 45,
+    },
+    Token {
+        kind: Dedent,
+        value: Indent(
+            1,
+        ),
+        start: 45,
+        end: 45,
+    },
+]

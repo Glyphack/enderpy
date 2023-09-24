@@ -4,8 +4,10 @@ description: "#"
 ---
 [
     Token {
-        kind: Sharp,
-        value: None,
+        kind: Comment,
+        value: Str(
+            "#",
+        ),
         start: 0,
         end: 1,
     },

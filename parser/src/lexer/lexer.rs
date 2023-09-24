@@ -324,7 +324,16 @@ impl Lexer {
                     }
                     _ => return Ok(Kind::Assign),
                 },
-                '#' => return Ok(Kind::Sharp),
+                '#' => {
+                    // consume until new line
+                    while let Some(c) = self.peek() {
+                        if c == '\n' || c == '\r' {
+                            break;
+                        }
+                        self.next();
+                    }
+                    return Ok(Kind::Comment);
+                },
                 '\\' => return Ok(Kind::BackSlash),
                 '$' => return Ok(Kind::Dollar),
                 '?' => return Ok(Kind::QuestionMark),
@@ -754,10 +763,28 @@ impl Lexer {
                 }
             }
         }
+        if spaces_count == 0 {
+            // When there are no spaces and only a new line 
+            // like the following
+            // if True:
+            //
+            //   print("Hello")
+            //
+            // We should not consider that new line as dedent
+            //
+            // But also if this part is the last part of the file
+            // we should not consider it as dedent
+            // Thanks python
+            if self.peek() == Some('\n') && self.double_peek().is_some() {
+                return None
+            }
+        }
+        println!("spaces_count: {}", spaces_count);
         if let Some(top) = self.indent_stack.last() {
             match spaces_count.cmp(top) {
                 Ordering::Less => Some(Kind::Dedent),
-                Ordering::Equal => None,
+                // Returning whitespace to ignore these spaces
+                Ordering::Equal => Some(Kind::WhiteSpace),
                 Ordering::Greater => {
                     self.indent_stack.push(spaces_count);
                     Some(Kind::Indent)
@@ -789,7 +816,8 @@ impl Lexer {
             | Kind::RawString
             | Kind::RawFStringStart
             | Kind::Bytes
-            | Kind::Unicode => TokenValue::Str(kind_value),
+            | Kind::Unicode 
+            | Kind::Comment => TokenValue::Str(kind_value),
             Kind::Dedent => {
                 let mut spaces_count = 0;
                 for c in kind_value.chars() {
@@ -1088,7 +1116,7 @@ mod tests {
             "indentation",
             &[
                 "if True:
-            pass",
+            pass\n",
                 "if True:
     pass
 else:
@@ -1097,6 +1125,17 @@ else:
     if True:
         pass
 def",
+                "def f(x):
+    y = z
+
+    print(y)
+",
+                "if a:
+
+    f = c
+
+    # Path: test_local.py	
+"
             ],
         )
         .unwrap();
