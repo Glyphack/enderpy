@@ -20,7 +20,7 @@ pub fn get_type_from_annotation(type_annotation: &ast::Expression) -> PythonType
             ast::ConstantValue::Float(_) => PythonType::Float,
             ast::ConstantValue::Str(_) => PythonType::Str,
             ast::ConstantValue::Bool(_) => PythonType::Bool,
-            ast::ConstantValue::None => PythonType::None,
+            ast::ConstantValue::None | ast::ConstantValue::Ellipsis => PythonType::None,
             ast::ConstantValue::Bytes(_) => todo!(),
             ast::ConstantValue::Tuple(_) => todo!(),
             ast::ConstantValue::Complex { real, imaginary } => todo!(),

@@ -27,6 +27,7 @@ pub fn is_atom(kind: &Kind) -> bool {
         | Kind::LeftBracket
         | Kind::LeftBrace
         | Kind::Yield
+        | Kind::Ellipsis
         | Kind::None => true,
         _ => false,
     }

@@ -1,0 +1,32 @@
+---
+source: parser/src/parser/parser.rs
+description: from ...a import b
+---
+Module {
+    node: Node {
+        start: 0,
+        end: 18,
+    },
+    body: [
+        ImportFrom(
+            ImportFrom {
+                node: Node {
+                    start: 0,
+                    end: 18,
+                },
+                module: "a",
+                names: [
+                    Alias {
+                        node: Node {
+                            start: 17,
+                            end: 18,
+                        },
+                        name: "b",
+                        asname: None,
+                    },
+                ],
+                level: 3,
+            },
+        ),
+    ],
+}

@@ -1,0 +1,43 @@
+---
+source: parser/src/parser/parser.rs
+description: "... + 1"
+---
+Module {
+    node: Node {
+        start: 0,
+        end: 7,
+    },
+    body: [
+        ExpressionStatement(
+            BinOp(
+                BinOp {
+                    node: Node {
+                        start: 0,
+                        end: 7,
+                    },
+                    op: Add,
+                    left: Constant(
+                        Constant {
+                            node: Node {
+                                start: 0,
+                                end: 3,
+                            },
+                            value: Ellipsis,
+                        },
+                    ),
+                    right: Constant(
+                        Constant {
+                            node: Node {
+                                start: 6,
+                                end: 7,
+                            },
+                            value: Int(
+                                "1",
+                            ),
+                        },
+                    ),
+                },
+            ),
+        ),
+    ],
+}

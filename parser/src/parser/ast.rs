@@ -301,6 +301,7 @@ pub struct Constant {
 #[derive(Clone, Debug, PartialEq)]
 pub enum ConstantValue {
     None,
+    Ellipsis,
     Bool(bool),
     Str(String),
     Bytes(Vec<u8>),
