@@ -2,10 +2,10 @@
 	"name": "enderpy-python-lsp",
 	"author": "Shaygan Hooshyari",
 	"publisher": "shayganhooshyari",
-	"description": "Enderpy Python LSP for Visual Studio Code",
+	"description": "Enderpy Python LSP for Visual Studio Code (under development)",
 	"repository": "https://github.com/glyphack/enderpy",
 	"license": "MIT",
-	"version": "0.0.1",
+	"version": "0.0.2",
 	"engines": {
 		"vscode": "^1.82.0"
 	},
