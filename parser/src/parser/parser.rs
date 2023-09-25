@@ -1007,8 +1007,9 @@ impl Parser {
             self.expect(Kind::Indent)?;
             let mut stmts = vec![];
             while !self.eat(Kind::Dedent) && !self.at(Kind::Eof) {
-                self.bump(Kind::Comment);
-                self.consume_whitespace_and_newline();
+                if self.eat(Kind::Comment) || self.consume_whitespace_and_newline() {
+                    continue;
+                }
                 let stmt = self.parse_statement()?;
                 stmts.extend(stmt);
                 self.bump(Kind::NewLine);
@@ -1026,8 +1027,6 @@ impl Parser {
         if is_at_compound_statement(self.cur_token()) {
             let comp_stmt = self.parse_compount_statement()?;
             Ok(vec![comp_stmt])
-        } else if matches!(self.cur_kind(), Kind::NewLine | Kind::Comment | Kind::Eof) {
-            return Ok(vec![]);
         } else {
             self.parse_statement_list()
         }
@@ -1940,15 +1939,18 @@ impl Parser {
     // https://docs.python.org/3/reference/expressions.html#primaries
     fn parse_primary(&mut self) -> Result<Expression> {
         let node = self.start_node();
-        let atom_or_primary = if is_atom(&self.cur_kind()) {
+        let mut atom_or_primary = if is_atom(&self.cur_kind()) {
             self.parse_atom()?
         } else {
             return Err(self.unepxted_token(node, self.cur_kind()).err().unwrap());
         };
-        let primary = if self.at(Kind::Dot) {
+
+        if self.at(Kind::Dot) {
             // TODO: does not handle cases like a.b[0].c
-            self.parse_atribute_ref(node, atom_or_primary)
-        } else if self.at(Kind::LeftBrace) {
+            atom_or_primary = self.parse_atribute_ref(node, atom_or_primary)?
+        }
+
+        let mut primary = if self.at(Kind::LeftBrace) {
             // https://docs.python.org/3/reference/expressions.html#slicings
             self.parse_subscript(node, atom_or_primary)
         } else if self.eat(Kind::LeftParen) {
@@ -2026,6 +2028,8 @@ impl Parser {
         } else {
             Ok(atom_or_primary)
         };
+
+        println!("primary {:?}", primary);
 
         primary
     }
@@ -3556,6 +3560,36 @@ class a: pass",
                     assert_debug_snapshot!(program);
             });
         }
+    }
+
+    #[test]
+    fn test_complete() {
+        let test_case = "def _handle_ticker_index(symbol):
+    ticker_index = symbols_data.get_ticker_index(symbol)
+
+    if ticker_index is None:
+        market_symbol = get_symbol_info(symbol)
+        if market_symbol is not None:
+            symbols_data.append_symbol_to_file(market_symbol)
+            ticker_index = market_symbol.index
+    return ticker_index
+
+
+def _extract_ticker_client_types_data(ticker_index: str) -> List:
+    url = TSE_CLIENT_TYPE_DATA_URL.format(ticker_index)
+    with requests_retry_session() as session:
+        response = session.get(url, timeout=5)
+    data = response.text.split(';')
+    return data";
+        let mut parser = Parser::new(test_case.to_string());
+        let program = parser.parse();
+
+        insta::with_settings!({
+                description => test_case.to_string(), // the template source code
+                omit_expression => true // do not include the default expression
+            }, {
+                assert_debug_snapshot!(program);
+        });
     }
 
     #[test]
