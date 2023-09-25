@@ -8,12 +8,32 @@ Module {
         end: 12,
     },
     body: [
-        Pass(
-            Pass {
+        IfStatement(
+            If {
                 node: Node {
-                    start: 8,
+                    start: 3,
                     end: 12,
                 },
+                test: Name(
+                    Name {
+                        node: Node {
+                            start: 3,
+                            end: 4,
+                        },
+                        id: "a",
+                    },
+                ),
+                body: [
+                    Pass(
+                        Pass {
+                            node: Node {
+                                start: 8,
+                                end: 12,
+                            },
+                        },
+                    ),
+                ],
+                orelse: [],
             },
         ),
     ],

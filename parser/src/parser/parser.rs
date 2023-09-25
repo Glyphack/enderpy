@@ -150,6 +150,7 @@ impl Parser {
             let found = self.cur_token.kind;
             self.bump_any();
             let range = self.finish_node(node);
+            panic!("Error: {:?}", diagnostics::ExpectToken(kind.to_str(), found.to_str(), range));
             return Err(diagnostics::ExpectToken(kind.to_str(), found.to_str(), range).into());
         }
         self.advance();
@@ -1002,6 +1003,7 @@ impl Parser {
     // https://docs.python.org/3/reference/compound_stmts.html#grammar-token-python-grammar-suite
     fn parse_suite(&mut self) -> Result<Vec<Statement>> {
         if self.eat(Kind::NewLine) {
+            self.consume_whitespace_and_newline();
             self.expect(Kind::Indent)?;
             let mut stmts = vec![];
             while !self.eat(Kind::Dedent) && !self.at(Kind::Eof) {
@@ -1675,16 +1677,13 @@ impl Parser {
     }
 
 
-    fn consume_whitespace_and_newline(&mut self) {
+    fn consume_whitespace_and_newline(&mut self) -> bool {
+        let mut consumed= false;
         while matches!(self.cur_kind(), Kind::WhiteSpace | Kind::NewLine) {
             self.bump(self.cur_kind());
+            consumed = true;
         }
-    }
-
-    fn consume_whitespace(&mut self) {
-        while matches!(self.cur_kind(), Kind::WhiteSpace) {
-            self.bump(self.cur_kind());
-        }
+        return consumed;
     }
 
     // https://docs.python.org/3/reference/expressions.html#expression-lists
@@ -1944,7 +1943,7 @@ impl Parser {
         let atom_or_primary = if is_atom(&self.cur_kind()) {
             self.parse_atom()?
         } else {
-            unimplemented!("parse_primary: {:?}", self.cur_kind())
+            return Err(self.unepxted_token(node, self.cur_kind()).err().unwrap());
         };
         let primary = if self.at(Kind::Dot) {
             // TODO: does not handle cases like a.b[0].c
@@ -1953,6 +1952,7 @@ impl Parser {
             // https://docs.python.org/3/reference/expressions.html#slicings
             self.parse_subscript(node, atom_or_primary)
         } else if self.eat(Kind::LeftParen) {
+            // parse call
             // https://docs.python.org/3/reference/expressions.html#calls
             let mut positional_args = vec![];
             let mut keyword_args = vec![];
