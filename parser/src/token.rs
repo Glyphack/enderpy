@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 #[derive(Debug, Clone)]
 pub struct Token {
     pub kind: Kind,
@@ -5,6 +7,26 @@ pub struct Token {
     pub value: TokenValue,
     pub start: usize,
     pub end: usize,
+}
+
+impl Display for Token {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let kind = self.kind.to_str();
+        let value = format!("({:?})", self.value);
+        let start = self.start.to_string();
+        let end = self.end.to_string();
+        let mut s = format!("{},{}-{}:{} ", start, end, start, end);
+        s.push_str(&kind);
+
+        let mut padding = 50 - s.len();
+        while padding > 0 {
+            s.push(' ');
+            padding -= 1;
+        }
+
+        s.push_str(&value);
+        write!(f, "{}", s)
+    }
 }
 
 // https://docs.python.org/3/reference/lexical_analysis.html
@@ -214,7 +236,7 @@ impl Kind {
             Kind::BitNot => "~",
             Kind::Less => "<",
             Kind::Greater => ">",
-            Kind::NewLine => "\n",
+            Kind::NewLine => "NewLine",
             Kind::Identifier => "Identifier",
             Kind::False => "False",
             Kind::None => "None",
