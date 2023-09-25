@@ -1430,7 +1430,23 @@ impl Parser {
     fn parse_list(&mut self) -> Result<Expression> {
         let node = self.start_node();
         self.bump(Kind::LeftBrace);
-        let elements = self.parse_starred_list(Kind::RightBrace)?;
+        let started_with_star = self.at(Kind::Mul);
+        let first_elm = self.parse_star_named_expression()?;
+        if !started_with_star && self.at(Kind::For) {
+            if self.at(Kind::For) || self.at(Kind::Async) && matches!(self.peek_kind(), Ok(Kind::For)) {
+                let generators = self.parse_comp_for()?;
+                self.expect(Kind::RightBrace)?;
+                return Ok(Expression::ListComp(Box::new(ListComp {
+                    node: self.finish_node(node),
+                    element: Box::new(first_elm),
+                    generators,
+                })));
+            }
+        }
+        self.bump(Kind::Comma);
+        let rest = self.parse_starred_list(Kind::RightBrace)?;
+        let elements = vec![first_elm]; 
+        let elements = elements.into_iter().chain(rest).collect();
         self.expect(Kind::RightBrace)?;
         Ok(Expression::List(Box::new(List {
             node: self.finish_node(node),
@@ -1692,6 +1708,9 @@ impl Parser {
     fn parse_starred_list(&mut self, termination_kind: Kind) -> Result<Vec<Expression>> {
         let mut expressions = vec![];
         while !self.at(Kind::Eof) && !self.at(termination_kind) {
+            if self.eat(Kind::Comment) || self.consume_whitespace_and_newline() {
+                continue;
+            }
             let expr = self.parse_starred_item()?;
             if !self.at(Kind::Eof) && !self.at(termination_kind) {
                 self.expect(Kind::Comma)?;
@@ -2028,8 +2047,6 @@ impl Parser {
         } else {
             Ok(atom_or_primary)
         };
-
-        println!("primary {:?}", primary);
 
         primary
     }
@@ -2952,6 +2969,10 @@ mod tests {
             "[a,
             ]",
             "[a, b, c,]",
+            "month_names = ['Januari', 'Februari', 'Maart',      # These are the
+               'April',   'Mei',      'Juni',       # Dutch names
+               'Juli',    'Augustus', 'September',  # for the months
+               'Oktober', 'November', 'December']   # of the year"
         ] {
             let mut parser = Parser::new(test_case.to_string());
             let program = parser.parse();
@@ -3549,6 +3570,26 @@ def f(a: 'annotation', b=1, c=2, *d, e, f=3, **g): pass",
                 d): pass",
             "@decor
 class a: pass",
+        ] {
+            let mut parser = Parser::new(test_case.to_string());
+            let program = parser.parse();
+
+            insta::with_settings!({
+                    description => test_case.to_string(), // the template source code
+                    omit_expression => true // do not include the default expression
+                }, {
+                    assert_debug_snapshot!(program);
+            });
+        }
+    }
+
+    #[test]
+    fn test_comprehension_expressions() {
+        for test_case in &[
+            "[a for a in b]",
+            "[a for a in b if c]",
+            "[a for a in b if c if d]",
+            "[a for a in b for c in d]",
         ] {
             let mut parser = Parser::new(test_case.to_string());
             let program = parser.parse();

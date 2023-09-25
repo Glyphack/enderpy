@@ -1,0 +1,78 @@
+---
+source: parser/src/parser/parser.rs
+description: "[a for a in b if c if d]"
+---
+Module {
+    node: Node {
+        start: 0,
+        end: 24,
+    },
+    body: [
+        ExpressionStatement(
+            ListComp(
+                ListComp {
+                    node: Node {
+                        start: 0,
+                        end: 24,
+                    },
+                    element: Name(
+                        Name {
+                            node: Node {
+                                start: 1,
+                                end: 2,
+                            },
+                            id: "a",
+                        },
+                    ),
+                    generators: [
+                        Comprehension {
+                            node: Node {
+                                start: 3,
+                                end: 23,
+                            },
+                            target: Name(
+                                Name {
+                                    node: Node {
+                                        start: 7,
+                                        end: 8,
+                                    },
+                                    id: "a",
+                                },
+                            ),
+                            iter: Name(
+                                Name {
+                                    node: Node {
+                                        start: 12,
+                                        end: 13,
+                                    },
+                                    id: "b",
+                                },
+                            ),
+                            ifs: [
+                                Name(
+                                    Name {
+                                        node: Node {
+                                            start: 17,
+                                            end: 18,
+                                        },
+                                        id: "c",
+                                    },
+                                ),
+                                Name(
+                                    Name {
+                                        node: Node {
+                                            start: 22,
+                                            end: 23,
+                                        },
+                                        id: "d",
+                                    },
+                                ),
+                            ],
+                            is_async: false,
+                        },
+                    ],
+                },
+            ),
+        ),
+    ],
+}
