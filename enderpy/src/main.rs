@@ -64,7 +64,9 @@ fn tokenize(file: &PathBuf) -> Result<()> {
             break;
         }
     }
-    println!("{:#?}", tokens);
+    for token in tokens {
+        println!("{}", token);
+    }
     Ok(())
 }
 

@@ -779,7 +779,6 @@ impl Lexer {
                 return None
             }
         }
-        println!("spaces_count: {}", spaces_count);
         if let Some(top) = self.indent_stack.last() {
             match spaces_count.cmp(top) {
                 Ordering::Less => Some(Kind::Dedent),
