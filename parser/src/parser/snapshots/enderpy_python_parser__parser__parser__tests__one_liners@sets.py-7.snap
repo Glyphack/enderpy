@@ -1,0 +1,84 @@
+---
+source: parser/src/parser/parser.rs
+description: "{a for a in range(10)}"
+input_file: parser/test_data/inputs/one_liners/sets.py
+---
+Module {
+    node: Node {
+        start: 0,
+        end: 22,
+    },
+    body: [
+        ExpressionStatement(
+            SetComp(
+                SetComp {
+                    node: Node {
+                        start: 0,
+                        end: 22,
+                    },
+                    element: Name(
+                        Name {
+                            node: Node {
+                                start: 1,
+                                end: 2,
+                            },
+                            id: "a",
+                        },
+                    ),
+                    generators: [
+                        Comprehension {
+                            node: Node {
+                                start: 3,
+                                end: 21,
+                            },
+                            target: Name(
+                                Name {
+                                    node: Node {
+                                        start: 7,
+                                        end: 8,
+                                    },
+                                    id: "a",
+                                },
+                            ),
+                            iter: Call(
+                                Call {
+                                    node: Node {
+                                        start: 12,
+                                        end: 21,
+                                    },
+                                    func: Name(
+                                        Name {
+                                            node: Node {
+                                                start: 12,
+                                                end: 17,
+                                            },
+                                            id: "range",
+                                        },
+                                    ),
+                                    args: [
+                                        Constant(
+                                            Constant {
+                                                node: Node {
+                                                    start: 18,
+                                                    end: 20,
+                                                },
+                                                value: Int(
+                                                    "10",
+                                                ),
+                                            },
+                                        ),
+                                    ],
+                                    keywords: [],
+                                    starargs: None,
+                                    kwargs: None,
+                                },
+                            ),
+                            ifs: [],
+                            is_async: false,
+                        },
+                    ],
+                },
+            ),
+        ),
+    ],
+}

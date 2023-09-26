@@ -1,0 +1,55 @@
+---
+source: parser/src/parser/parser.rs
+description: "{a: b,\n},"
+input_file: parser/test_data/inputs/one_liners/dict.py
+---
+Module {
+    node: Node {
+        start: 0,
+        end: 9,
+    },
+    body: [
+        ExpressionStatement(
+            Tuple(
+                Tuple {
+                    node: Node {
+                        start: 0,
+                        end: 9,
+                    },
+                    elements: [
+                        Dict(
+                            Dict {
+                                node: Node {
+                                    start: 0,
+                                    end: 8,
+                                },
+                                keys: [
+                                    Name(
+                                        Name {
+                                            node: Node {
+                                                start: 1,
+                                                end: 2,
+                                            },
+                                            id: "a",
+                                        },
+                                    ),
+                                ],
+                                values: [
+                                    Name(
+                                        Name {
+                                            node: Node {
+                                                start: 4,
+                                                end: 5,
+                                            },
+                                            id: "b",
+                                        },
+                                    ),
+                                ],
+                            },
+                        ),
+                    ],
+                },
+            ),
+        ),
+    ],
+}

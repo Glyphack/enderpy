@@ -1,0 +1,174 @@
+---
+source: parser/src/parser/parser.rs
+description: "month_names = ['Januari', 'Februari', 'Maart',      # These are the\n   'April',   'Mei',      'Juni',       # Dutch names\n   'Juli',    'Augustus', 'September',  # for the months\n   'Oktober', 'November', 'December']   # of the year,"
+input_file: parser/test_data/inputs/one_liners/lists.py
+---
+Module {
+    node: Node {
+        start: 0,
+        end: 233,
+    },
+    body: [
+        AssignStatement(
+            Assign {
+                node: Node {
+                    start: 0,
+                    end: 216,
+                },
+                targets: [
+                    Name(
+                        Name {
+                            node: Node {
+                                start: 0,
+                                end: 11,
+                            },
+                            id: "month_names",
+                        },
+                    ),
+                ],
+                value: List(
+                    List {
+                        node: Node {
+                            start: 14,
+                            end: 216,
+                        },
+                        elements: [
+                            Constant(
+                                Constant {
+                                    node: Node {
+                                        start: 15,
+                                        end: 24,
+                                    },
+                                    value: Str(
+                                        "Januari",
+                                    ),
+                                },
+                            ),
+                            Constant(
+                                Constant {
+                                    node: Node {
+                                        start: 26,
+                                        end: 36,
+                                    },
+                                    value: Str(
+                                        "Februari",
+                                    ),
+                                },
+                            ),
+                            Constant(
+                                Constant {
+                                    node: Node {
+                                        start: 38,
+                                        end: 45,
+                                    },
+                                    value: Str(
+                                        "Maart",
+                                    ),
+                                },
+                            ),
+                            Constant(
+                                Constant {
+                                    node: Node {
+                                        start: 71,
+                                        end: 78,
+                                    },
+                                    value: Str(
+                                        "April",
+                                    ),
+                                },
+                            ),
+                            Constant(
+                                Constant {
+                                    node: Node {
+                                        start: 82,
+                                        end: 87,
+                                    },
+                                    value: Str(
+                                        "Mei",
+                                    ),
+                                },
+                            ),
+                            Constant(
+                                Constant {
+                                    node: Node {
+                                        start: 94,
+                                        end: 100,
+                                    },
+                                    value: Str(
+                                        "Juni",
+                                    ),
+                                },
+                            ),
+                            Constant(
+                                Constant {
+                                    node: Node {
+                                        start: 125,
+                                        end: 131,
+                                    },
+                                    value: Str(
+                                        "Juli",
+                                    ),
+                                },
+                            ),
+                            Constant(
+                                Constant {
+                                    node: Node {
+                                        start: 136,
+                                        end: 146,
+                                    },
+                                    value: Str(
+                                        "Augustus",
+                                    ),
+                                },
+                            ),
+                            Constant(
+                                Constant {
+                                    node: Node {
+                                        start: 148,
+                                        end: 159,
+                                    },
+                                    value: Str(
+                                        "September",
+                                    ),
+                                },
+                            ),
+                            Constant(
+                                Constant {
+                                    node: Node {
+                                        start: 182,
+                                        end: 191,
+                                    },
+                                    value: Str(
+                                        "Oktober",
+                                    ),
+                                },
+                            ),
+                            Constant(
+                                Constant {
+                                    node: Node {
+                                        start: 193,
+                                        end: 203,
+                                    },
+                                    value: Str(
+                                        "November",
+                                    ),
+                                },
+                            ),
+                            Constant(
+                                Constant {
+                                    node: Node {
+                                        start: 205,
+                                        end: 215,
+                                    },
+                                    value: Str(
+                                        "December",
+                                    ),
+                                },
+                            ),
+                        ],
+                    },
+                ),
+            },
+        ),
+    ],
+}

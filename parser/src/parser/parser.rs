@@ -150,20 +150,23 @@ impl Parser {
             let found = self.cur_token.kind;
             self.bump_any();
             let range = self.finish_node(node);
-            panic!("Error: {:?}", diagnostics::ExpectToken(kind.to_str(), found.to_str(), range));
+            panic!(
+                "Error: {:?}",
+                diagnostics::ExpectToken(kind.to_str(), found.to_str(), range)
+            );
             return Err(diagnostics::ExpectToken(kind.to_str(), found.to_str(), range).into());
         }
         self.advance();
         Ok(())
     }
 
-    fn unepxted_token(&mut self,node: Node, kind: Kind)-> Result <()>{
+    fn unepxted_token(&mut self, node: Node, kind: Kind) -> Result<()> {
         self.bump_any();
         let range = self.finish_node(node);
         let line_number = self.get_line_number_of_character_position(range.start);
         Err(diagnostics::UnexpectedToken(line_number, kind.to_str(), range).into())
     }
-    
+
     fn get_line_number_of_character_position(&self, pos: usize) -> u32 {
         let mut line_number = 1;
         for (i, c) in self.source.chars().enumerate() {
@@ -242,14 +245,14 @@ impl Parser {
     fn parse_if_statement(&mut self) -> Result<Statement> {
         self.bump(Kind::If);
         let node = self.start_node();
-        let test = Box::new(self.parse_assignment_expression()?);
+        let test = Box::new(self.parse_named_expression()?);
         self.expect(Kind::Colon)?;
         let body = self.parse_suite()?;
         let mut orelse: Option<If> = None;
         while self.at(Kind::Elif) {
             let elif_node = self.start_node();
             self.bump(Kind::Elif);
-            let elif_test = Box::new(self.parse_assignment_expression()?);
+            let elif_test = Box::new(self.parse_named_expression()?);
             self.expect(Kind::Colon)?;
             let body = self.parse_suite()?;
             let if_value = If {
@@ -297,7 +300,7 @@ impl Parser {
     fn parse_while_statement(&mut self) -> Result<Statement> {
         let node = self.start_node();
         self.bump(Kind::While);
-        let test = Box::new(self.parse_assignment_expression()?);
+        let test = Box::new(self.parse_named_expression()?);
         self.expect(Kind::Colon)?;
         let body = self.parse_suite()?;
         let orelse = if self.at(Kind::Else) {
@@ -599,7 +602,7 @@ impl Parser {
         if self.at(Kind::Mul) {
             self.parse_or_expr()
         } else {
-            self.parse_assignment_expression()
+            self.parse_named_expression()
         }
     }
 
@@ -654,7 +657,7 @@ impl Parser {
 
     fn parse_guard(&mut self) -> Result<Expression> {
         self.expect(Kind::If)?;
-        self.parse_assignment_expression()
+        self.parse_named_expression()
     }
 
     // https://docs.python.org/3/reference/compound_stmts.html#grammar-token-python-grammar-patterns
@@ -1398,7 +1401,7 @@ impl Parser {
     }
 
     // https://docs.python.org/3/reference/expressions.html#assignment-expressions
-    fn parse_assignment_expression(&mut self) -> Result<Expression> {
+    fn parse_named_expression(&mut self) -> Result<Expression> {
         let node = self.start_node();
         if self.at(Kind::Identifier) && matches!(self.peek_kind()?, Kind::Walrus) {
             let identifier = self.cur_token().value.to_string();
@@ -1433,7 +1436,9 @@ impl Parser {
         let started_with_star = self.at(Kind::Mul);
         let first_elm = self.parse_star_named_expression()?;
         if !started_with_star && self.at(Kind::For) {
-            if self.at(Kind::For) || self.at(Kind::Async) && matches!(self.peek_kind(), Ok(Kind::For)) {
+            if self.at(Kind::For)
+                || self.at(Kind::Async) && matches!(self.peek_kind(), Ok(Kind::For))
+            {
                 let generators = self.parse_comp_for()?;
                 self.expect(Kind::RightBrace)?;
                 return Ok(Expression::ListComp(Box::new(ListComp {
@@ -1445,7 +1450,7 @@ impl Parser {
         }
         self.bump(Kind::Comma);
         let rest = self.parse_starred_list(Kind::RightBrace)?;
-        let elements = vec![first_elm]; 
+        let elements = vec![first_elm];
         let elements = elements.into_iter().chain(rest).collect();
         self.expect(Kind::RightBrace)?;
         Ok(Expression::List(Box::new(List {
@@ -1475,7 +1480,7 @@ impl Parser {
         // or an assignment expression
         let first_expr =
             if self.at(Kind::Identifier) && matches!(self.peek_kind(), Ok(Kind::Walrus)) {
-                self.parse_assignment_expression()?
+                self.parse_named_expression()?
             } else if self.eat(Kind::Mul) {
                 let expr = self.parse_or_expr()?;
                 Expression::Starred(Box::new(Starred {
@@ -1652,16 +1657,44 @@ impl Parser {
     fn parse_dict_or_set(&mut self) -> Result<Expression> {
         let node = self.start_node();
         self.bump(Kind::LeftBracket);
-        if matches!(self.peek_kind(), Ok(Kind::Comma)) {
-            self.parse_set(node)
+        if self.eat(Kind::RightBracket) {
+            return Ok(Expression::Dict(Box::new(Dict {
+                node: self.finish_node(node),
+                keys: vec![],
+                values: vec![],
+            })));
+        }
+        let first_key_or_element = self.parse_star_named_expression()?;
+        if matches!(
+            self.cur_kind(),
+            Kind::Comma | Kind::RightBracket | Kind::Async | Kind::For | Kind::Walrus
+        ) {
+            self.parse_set(node, first_key_or_element)
         } else {
-            self.parse_dict(node)
+            self.parse_dict(node, first_key_or_element)
         }
     }
 
     // https://docs.python.org/3/reference/expressions.html#set-displays
-    fn parse_set(&mut self, node: Node) -> Result<Expression> {
-        let elements = self.parse_starred_list(Kind::RightBracket)?;
+    fn parse_set(&mut self, node: Node, first_elm: Expression) -> Result<Expression> {
+        if !matches!(first_elm, Expression::Starred(_)) && self.at(Kind::For) {
+            if self.at(Kind::For)
+                || self.at(Kind::Async) && matches!(self.peek_kind(), Ok(Kind::For))
+            {
+                let generators = self.parse_comp_for()?;
+                self.consume_whitespace_and_newline();
+                self.expect(Kind::RightBracket)?;
+                return Ok(Expression::SetComp(Box::new(SetComp {
+                    node: self.finish_node(node),
+                    element: Box::new(first_elm),
+                    generators,
+                })));
+            }
+        }
+        self.bump(Kind::Comma);
+        let rest = self.parse_starred_list(Kind::RightBracket)?;
+        let mut elements = vec![first_elm];
+        elements.extend(rest);
         self.expect(Kind::RightBracket)?;
         Ok(Expression::Set(Box::new(Set {
             node: self.finish_node(node),
@@ -1670,30 +1703,48 @@ impl Parser {
     }
 
     // https://docs.python.org/3/reference/expressions.html#dictionary-displays
-    fn parse_dict(&mut self, node: Node) -> Result<Expression> {
-        let mut keys = vec![];
-        let mut values = vec![];
-        while !self.eat(Kind::RightBracket) {
-            let key = self.parse_expression_2()?;
-            self.expect(Kind::Colon)?;
-            let value = self.parse_expression_2()?;
-            keys.push(key);
-            values.push(value);
+    fn parse_dict(&mut self, node: Node, first_key: Expression) -> Result<Expression> {
+        self.expect(Kind::Colon)?;
+        let first_val = self.parse_expression_2()?;
+        if self.at(Kind::For) || self.at(Kind::Async) && matches!(self.peek_kind(), Ok(Kind::For)) {
+            let generators = self.parse_comp_for()?;
+            self.expect(Kind::RightBracket)?;
+            return Ok(Expression::DictComp(Box::new(DictComp {
+                node: self.finish_node(node),
+                key: Box::new(first_key),
+                value: Box::new(first_val),
+                generators,
+            })));
+        } else {
+            // we already consumed the first pair
+            // so if there are more pairs we need to consume the comma
             if !self.at(Kind::RightBracket) {
                 self.expect(Kind::Comma)?;
                 self.consume_whitespace_and_newline();
             }
+            let mut keys = vec![first_key];
+            let mut values = vec![first_val];
+            while !self.eat(Kind::RightBracket) {
+                let key = self.parse_expression_2()?;
+                self.expect(Kind::Colon)?;
+                let value = self.parse_expression_2()?;
+                keys.push(key);
+                values.push(value);
+                if !self.at(Kind::RightBracket) {
+                    self.expect(Kind::Comma)?;
+                    self.consume_whitespace_and_newline();
+                }
+            }
+            Ok(Expression::Dict(Box::new(Dict {
+                node: self.finish_node(node),
+                keys,
+                values,
+            })))
         }
-        Ok(Expression::Dict(Box::new(Dict {
-            node: self.finish_node(node),
-            keys,
-            values,
-        })))
     }
 
-
     fn consume_whitespace_and_newline(&mut self) -> bool {
-        let mut consumed= false;
+        let mut consumed = false;
         while matches!(self.cur_kind(), Kind::WhiteSpace | Kind::NewLine) {
             self.bump(self.cur_kind());
             consumed = true;
@@ -1728,14 +1779,16 @@ impl Parser {
             let expr = self.parse_or_expr()?;
             node = self.finish_node(node);
             if !is_iterable(&expr) {
-                return Err(diagnostics::UnexpectedToken(0, starred_value_kind.to_str(), node).into());
+                return Err(
+                    diagnostics::UnexpectedToken(0, starred_value_kind.to_str(), node).into(),
+                );
             }
             return Ok(Expression::Starred(Box::new(Starred {
                 node: self.finish_node(node),
                 value: Box::new(expr),
             })));
         }
-        self.parse_assignment_expression()
+        self.parse_named_expression()
     }
 
     // https://docs.python.org/3/reference/expressions.html#conditional-expressions
@@ -2025,7 +2078,7 @@ impl Parser {
                         )
                         .into());
                     }
-                    let arg = self.parse_assignment_expression()?;
+                    let arg = self.parse_named_expression()?;
                     positional_args.push(arg);
                 }
                 if !self.eat(Kind::Comma) {
@@ -2103,7 +2156,7 @@ impl Parser {
                     )
                     .into());
                 }
-                let arg = self.parse_assignment_expression()?;
+                let arg = self.parse_named_expression()?;
                 positional_args.push(arg);
             }
             if !self.eat(Kind::Comma) {
@@ -2717,8 +2770,10 @@ impl Parser {
 
 #[cfg(test)]
 mod tests {
+    use std::fs;
+
     use super::*;
-    use insta::assert_debug_snapshot;
+    use insta::{assert_debug_snapshot, glob};
 
     #[test]
     fn test_parse_assignment() {
@@ -2956,37 +3011,6 @@ mod tests {
     }
 
     #[test]
-    fn test_list() {
-        for test_case in &[
-            "[a, b, c]",
-            "[a,
-            b, c]",
-            "[a
-            , b, c]",
-            "[a,
-            b,
-                c]",
-            "[a,
-            ]",
-            "[a, b, c,]",
-            "month_names = ['Januari', 'Februari', 'Maart',      # These are the
-               'April',   'Mei',      'Juni',       # Dutch names
-               'Juli',    'Augustus', 'September',  # for the months
-               'Oktober', 'November', 'December']   # of the year"
-        ] {
-            let mut parser = Parser::new(test_case.to_string());
-            let program = parser.parse();
-
-            insta::with_settings!({
-                    description => test_case.to_string(), // the template source code
-                    omit_expression => true // do not include the default expression
-                }, {
-                    assert_debug_snapshot!(program);
-            });
-        }
-    }
-
-    #[test]
     fn test_tuple() {
         for test_case in &[
             "(a, b, c)",
@@ -3000,60 +3024,6 @@ mod tests {
             "(a,
 )",
             "(a, b, c,)",
-        ] {
-            let mut parser = Parser::new(test_case.to_string());
-            let program = parser.parse();
-
-            insta::with_settings!({
-                    description => test_case.to_string(), // the template source code
-                    omit_expression => true // do not include the default expression
-                }, {
-                    assert_debug_snapshot!(program);
-            });
-        }
-    }
-
-    #[test]
-    fn test_dict() {
-        // do the same here
-        for test_case in &[
-            "{a: b, c: d}",
-            "{a: b,
-            c: d}",
-            "{a: b
-            , c: d}",
-            "{a: b,
-            c: d,
-                e: f}",
-            "{a: b,
-            }",
-            "{a: b, c: d,}",
-        ] {
-            let mut parser = Parser::new(test_case.to_string());
-            let program = parser.parse();
-
-            insta::with_settings!({
-                    description => test_case.to_string(), // the template source code
-                    omit_expression => true // do not include the default expression
-                }, {
-                    assert_debug_snapshot!(program);
-            });
-        }
-    }
-    #[test]
-    fn test_set() {
-        for test_case in &[
-            "{a, b, c}",
-            "{a,
-            b, c}",
-            "{a
-            , b, c}",
-            "{a,
-            b,
-                c}",
-            "{a,
-            }",
-            "{a, b, c,}",
         ] {
             let mut parser = Parser::new(test_case.to_string());
             let program = parser.parse();
@@ -3189,27 +3159,6 @@ mod tests {
             "lambda a, *b, c, **d: a",
             "lambda a=1 : a",
             "lambda a=1 : a,",
-        ] {
-            let mut parser = Parser::new(test_case.to_string());
-            let program = parser.parse();
-
-            insta::with_settings!({
-                    description => test_case.to_string(), // the template source code
-                    omit_expression => true // do not include the default expression
-                }, {
-                    assert_debug_snapshot!(program);
-            });
-        }
-    }
-
-    #[test]
-    fn test_generator_expression() {
-        for test_case in &[
-            "(a for a in b)",
-            "(a for a in b if c)",
-            "(a for a in b if c if d)",
-            "(a for a in b for c in d)",
-            "(ord(c) for line in file for c in line)",
         ] {
             let mut parser = Parser::new(test_case.to_string());
             let program = parser.parse();
@@ -3584,56 +3533,6 @@ class a: pass",
     }
 
     #[test]
-    fn test_comprehension_expressions() {
-        for test_case in &[
-            "[a for a in b]",
-            "[a for a in b if c]",
-            "[a for a in b if c if d]",
-            "[a for a in b for c in d]",
-        ] {
-            let mut parser = Parser::new(test_case.to_string());
-            let program = parser.parse();
-
-            insta::with_settings!({
-                    description => test_case.to_string(), // the template source code
-                    omit_expression => true // do not include the default expression
-                }, {
-                    assert_debug_snapshot!(program);
-            });
-        }
-    }
-
-    #[test]
-    fn test_complete() {
-        let test_case = "def _handle_ticker_index(symbol):
-    ticker_index = symbols_data.get_ticker_index(symbol)
-
-    if ticker_index is None:
-        market_symbol = get_symbol_info(symbol)
-        if market_symbol is not None:
-            symbols_data.append_symbol_to_file(market_symbol)
-            ticker_index = market_symbol.index
-    return ticker_index
-
-
-def _extract_ticker_client_types_data(ticker_index: str) -> List:
-    url = TSE_CLIENT_TYPE_DATA_URL.format(ticker_index)
-    with requests_retry_session() as session:
-        response = session.get(url, timeout=5)
-    data = response.text.split(';')
-    return data";
-        let mut parser = Parser::new(test_case.to_string());
-        let program = parser.parse();
-
-        insta::with_settings!({
-                description => test_case.to_string(), // the template source code
-                omit_expression => true // do not include the default expression
-            }, {
-                assert_debug_snapshot!(program);
-        });
-    }
-
-    #[test]
     fn test_match_statement() {
         for test_case in &[
             "match a:
@@ -3693,5 +3592,39 @@ def _extract_ticker_client_types_data(ticker_index: str) -> List:
                     assert_debug_snapshot!(program);
             });
         }
+    }
+
+    #[test]
+    fn test_complete() {
+        glob!("../../test_data", "inputs/*.py", |path| {
+            let test_case = fs::read_to_string(path).unwrap();
+            let mut parser = Parser::new(test_case.clone());
+            let program = parser.parse();
+
+            insta::with_settings!({
+                    description => test_case, // the template source code
+                    omit_expression => true // do not include the default expression
+                }, {
+                    assert_debug_snapshot!(program);
+            });
+        });
+    }
+
+    #[test]
+    fn test_one_liners() {
+        glob!("../../test_data", "inputs/one_liners/*.py", |path| {
+            let input = fs::read_to_string(path).unwrap();
+            for test_case in input.split("\n\n") {
+                let mut parser = Parser::new(test_case.to_string());
+                let program = parser.parse();
+
+                insta::with_settings!({
+                        description => test_case, // the template source code
+                        omit_expression => true // do not include the default expression
+                    }, {
+                        assert_debug_snapshot!(program);
+                });
+            }
+        });
     }
 }
