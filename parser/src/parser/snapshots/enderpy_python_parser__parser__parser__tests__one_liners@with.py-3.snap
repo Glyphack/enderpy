@@ -1,0 +1,85 @@
+---
+source: parser/src/parser/parser.rs
+description: "with a as b, c as d: pass"
+input_file: parser/test_data/inputs/one_liners/with.py
+---
+Module {
+    node: Node {
+        start: 0,
+        end: 25,
+    },
+    body: [
+        WithStatement(
+            With {
+                node: Node {
+                    start: 0,
+                    end: 25,
+                },
+                items: [
+                    WithItem {
+                        node: Node {
+                            start: 5,
+                            end: 11,
+                        },
+                        context_expr: Name(
+                            Name {
+                                node: Node {
+                                    start: 5,
+                                    end: 6,
+                                },
+                                id: "a",
+                            },
+                        ),
+                        optional_vars: Some(
+                            Name(
+                                Name {
+                                    node: Node {
+                                        start: 10,
+                                        end: 11,
+                                    },
+                                    id: "b",
+                                },
+                            ),
+                        ),
+                    },
+                    WithItem {
+                        node: Node {
+                            start: 13,
+                            end: 19,
+                        },
+                        context_expr: Name(
+                            Name {
+                                node: Node {
+                                    start: 13,
+                                    end: 14,
+                                },
+                                id: "c",
+                            },
+                        ),
+                        optional_vars: Some(
+                            Name(
+                                Name {
+                                    node: Node {
+                                        start: 18,
+                                        end: 19,
+                                    },
+                                    id: "d",
+                                },
+                            ),
+                        ),
+                    },
+                ],
+                body: [
+                    Pass(
+                        Pass {
+                            node: Node {
+                                start: 21,
+                                end: 25,
+                            },
+                        },
+                    ),
+                ],
+            },
+        ),
+    ],
+}

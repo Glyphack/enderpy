@@ -35,6 +35,9 @@ pub trait TraversalVisitorImmutGeneric<T> {
             Statement::FunctionDef(f) => self.visit_function_def(f),
             Statement::ClassDef(c) => self.visit_class_def(c),
             Statement::Match(m) => self.visit_match(m),
+            Statement::AsyncForStatement(f) => self.visit_async_for(f),
+            Statement::AsyncWithStatement(w) => self.visit_async_with(w), 
+            Statement::AsyncFunctionDef(f) => self.visit_async_function_def(f),
         }
     }
     fn visit_expr(&self, e: &Expression) -> T {
@@ -88,7 +91,15 @@ pub trait TraversalVisitorImmutGeneric<T> {
         todo!();
     }
 
+    fn visit_async_for(&self, f: &parser::ast::AsyncFor) -> T {
+        todo!();
+    }
+
     fn visit_with(&self, w: &parser::ast::With) -> T {
+        todo!();
+    }
+
+    fn visit_async_with(&self, w: &parser::ast::AsyncWith) -> T {
         todo!();
     }
 
@@ -101,6 +112,10 @@ pub trait TraversalVisitorImmutGeneric<T> {
     }
 
     fn visit_function_def(&self, f: &parser::ast::FunctionDef) -> T {
+        todo!();
+    }
+
+    fn visit_async_function_def(&self, f: &parser::ast::AsyncFunctionDef) -> T {
         todo!();
     }
 

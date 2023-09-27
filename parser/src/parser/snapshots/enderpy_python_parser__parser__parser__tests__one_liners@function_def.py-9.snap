@@ -1,0 +1,48 @@
+---
+source: parser/src/parser/parser.rs
+description: "async def a(): pass"
+input_file: parser/test_data/inputs/one_liners/function_def.py
+---
+Module {
+    node: Node {
+        start: 0,
+        end: 19,
+    },
+    body: [
+        AsyncFunctionDef(
+            AsyncFunctionDef {
+                node: Node {
+                    start: 0,
+                    end: 19,
+                },
+                name: "a",
+                args: Arguments {
+                    node: Node {
+                        start: 12,
+                        end: 12,
+                    },
+                    posonlyargs: [],
+                    args: [],
+                    vararg: None,
+                    kwonlyargs: [],
+                    kw_defaults: [],
+                    kwarg: None,
+                    defaults: [],
+                },
+                body: [
+                    Pass(
+                        Pass {
+                            node: Node {
+                                start: 15,
+                                end: 19,
+                            },
+                        },
+                    ),
+                ],
+                decorator_list: [],
+                returns: None,
+                type_comment: None,
+            },
+        ),
+    ],
+}

@@ -12,6 +12,7 @@ pub fn is_at_compound_statement(token: &Token) -> bool {
         | Kind::Class
         // Decorators
         | Kind::MatrixMul => true,
+        | Kind::Async => true,
         _ => false,
     };
     if kind_is_statement {

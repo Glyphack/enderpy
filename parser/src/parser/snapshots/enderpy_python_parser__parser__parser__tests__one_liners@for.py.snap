@@ -1,6 +1,7 @@
 ---
 source: parser/src/parser/parser.rs
 description: "for a in b: pass"
+input_file: parser/test_data/inputs/one_liners/for.py
 ---
 Module {
     node: Node {

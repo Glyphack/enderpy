@@ -32,6 +32,9 @@ pub trait TraversalVisitorImmut {
             Statement::FunctionDef(f) => self.visit_function_def(f),
             Statement::ClassDef(c) => self.visit_class_def(c),
             Statement::Match(m) => self.visit_match(m),
+            Statement::AsyncForStatement(f) => self.visit_async_for(f),
+            Statement::AsyncWithStatement(w) => self.visit_async_with(w), 
+            Statement::AsyncFunctionDef(f) => self.visit_async_function_def(f),
         }
     }
     fn visit_expr(&self, e: &Expression) {
@@ -94,7 +97,26 @@ pub trait TraversalVisitorImmut {
         }
     }
 
+    fn visit_async_for(&self, f: &parser::ast::AsyncFor) {
+        for stmt in &f.body {
+            self.visit_stmt(stmt);
+        }
+    }
+
     fn visit_with(&self, w: &parser::ast::With) {
+        for stmt in &w.body {
+            self.visit_stmt(stmt);
+        }
+        for with_items in &w.items {
+            self.visit_expr(&with_items.context_expr);
+            match &with_items.optional_vars {
+                Some(items) => self.visit_expr(items),
+                None => (),
+            }
+        }
+    }
+
+    fn visit_async_with(&self, w: &parser::ast::AsyncWith) {
         for stmt in &w.body {
             self.visit_stmt(stmt);
         }
@@ -144,6 +166,12 @@ pub trait TraversalVisitorImmut {
     }
 
     fn visit_function_def(&self, f: &parser::ast::FunctionDef) {
+        for stmt in &f.body {
+            self.visit_stmt(stmt);
+        }
+    }
+
+    fn visit_async_function_def(&self, f: &parser::ast::AsyncFunctionDef) {
         for stmt in &f.body {
             self.visit_stmt(stmt);
         }

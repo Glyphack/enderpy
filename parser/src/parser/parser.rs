@@ -4,7 +4,7 @@ use crate::lexer::lexer::Lexer;
 use crate::parser::ast::*;
 use crate::parser::string::{extract_string_inside, is_string};
 use crate::token::{Kind, Token, TokenValue};
-use miette::{bail, Result};
+use miette::Result;
 
 use super::diagnostics;
 use super::expression::{is_atom, is_iterable};
@@ -240,6 +240,20 @@ impl Parser {
             Kind::Identifier if self.cur_token().value.to_string() == "match" => {
                 self.parse_match_statement()
             }
+            Kind::Async => {
+                if matches!(self.peek_kind(), Ok(Kind::Def)) {
+                    self.parse_function_definition(vec![])
+                } else if matches!(self.peek_kind(), Ok(Kind::For)) {
+                    self.parse_for_statement()
+                } else if matches!(self.peek_kind(), Ok(Kind::With)) {
+                    self.parse_with_statement()
+                } else {
+                    let node = self.start_node();
+                    let kind = self.cur_kind();
+                    self.bump_any();
+                    Err(self.unepxted_token(node, kind).err().unwrap())
+                }
+            }
             _ => {
                 let range = self.finish_node(self.start_node());
                 Err(
@@ -348,6 +362,7 @@ impl Parser {
 
     fn parse_for_statement(&mut self) -> Result<Statement> {
         let node = self.start_node();
+        let is_async = self.eat(Kind::Async);
         self.bump(Kind::For);
         let target = Box::new(self.parse_target_list()?);
         self.expect(Kind::In)?;
@@ -378,17 +393,28 @@ impl Parser {
 
         self.bump(Kind::Dedent);
 
-        Ok(Statement::ForStatement(For {
-            node: self.finish_node(node),
-            target,
-            iter,
-            body,
-            orelse,
-        }))
+        if is_async {
+            Ok(Statement::AsyncForStatement(AsyncFor {
+                node: self.finish_node(node),
+                target,
+                iter,
+                body,
+                orelse,
+            }))
+        } else {
+            Ok(Statement::ForStatement(For {
+                node: self.finish_node(node),
+                target,
+                iter,
+                body,
+                orelse,
+            }))
+        }
     }
 
     fn parse_with_statement(&mut self) -> Result<Statement> {
         let node = self.start_node();
+        let is_async = self.eat(Kind::Async);
         self.bump(Kind::With);
         let items = self.parse_with_items()?;
         self.expect(Kind::Colon)?;
@@ -396,11 +422,19 @@ impl Parser {
 
         self.bump(Kind::Dedent);
 
-        Ok(Statement::WithStatement(With {
-            node: self.finish_node(node),
-            items,
-            body,
-        }))
+        if is_async {
+            Ok(Statement::AsyncWithStatement(AsyncWith {
+                node: self.finish_node(node),
+                items,
+                body,
+            }))
+        } else {
+            Ok(Statement::WithStatement(With {
+                node: self.finish_node(node),
+                items,
+                body,
+            }))
+        }
     }
 
     fn parse_with_items(&mut self) -> Result<Vec<WithItem>> {
@@ -523,6 +557,7 @@ impl Parser {
         // later we can extract the node for first decorator
         // and start the node from there
         let node = self.start_node();
+        let is_async = self.eat(Kind::Async);
         self.expect(Kind::Def)?;
         let name = self.cur_token().value.to_string();
         self.expect(Kind::Identifier)?;
@@ -538,18 +573,29 @@ impl Parser {
 
         self.expect(Kind::Colon)?;
         let body = self.parse_suite()?;
-
-        Ok(Statement::FunctionDef(FunctionDef {
-            node: self.finish_node(node),
-            name,
-            args,
-            body,
-            decorator_list: decorators,
-            // TODO: return type
-            returns: return_type,
-            // TODO: type comment
-            type_comment: None,
-        }))
+        if is_async {
+            Ok(Statement::AsyncFunctionDef(AsyncFunctionDef {
+                node: self.finish_node(node),
+                name,
+                args,
+                body,
+                decorator_list: decorators,
+                returns: return_type,
+                type_comment: None,
+            }))
+        } else {
+            Ok(Statement::FunctionDef(FunctionDef {
+                node: self.finish_node(node),
+                name,
+                args,
+                body,
+                decorator_list: decorators,
+                // TODO: return type
+                returns: return_type,
+                // TODO: type comment
+                type_comment: None,
+            }))
+        }
     }
 
     fn parse_decorated_function_def_or_class_def(&mut self) -> Result<Statement> {
@@ -3355,52 +3401,6 @@ else:
     }
 
     #[test]
-    fn test_for_statement() {
-        for test_case in &[
-            "for a in b: pass",
-            "for a in b:
-    pass",
-            "for a in range(10):
-    a = 1
-else:
-    b = 1",
-            "for a in range(10), range(10):
-    a = 1
-",
-        ] {
-            let mut parser = Parser::new(test_case.to_string());
-            let program = parser.parse();
-
-            insta::with_settings!({
-                    description => test_case.to_string(), // the template source code
-                    omit_expression => true // do not include the default expression
-                }, {
-                    assert_debug_snapshot!(program);
-            });
-        }
-    }
-
-    #[test]
-    fn test_with_statement() {
-        for test_case in &[
-            "with a: pass",
-            "with a as b: pass",
-            "with a as b, c as d: pass",
-            "with (a as b, c as d): pass",
-        ] {
-            let mut parser = Parser::new(test_case.to_string());
-            let program = parser.parse();
-
-            insta::with_settings!({
-                    description => test_case.to_string(), // the template source code
-                    omit_expression => true // do not include the default expression
-                }, {
-                    assert_debug_snapshot!(program);
-            });
-        }
-    }
-
-    #[test]
     fn test_try_statement() {
         for test_case in &[
             "try:
@@ -3434,35 +3434,6 @@ finally:
 except *Exception as e:
     pass
 ",
-        ] {
-            let mut parser = Parser::new(test_case.to_string());
-            let program = parser.parse();
-
-            insta::with_settings!({
-                    description => test_case.to_string(), // the template source code
-                    omit_expression => true // do not include the default expression
-                }, {
-                    assert_debug_snapshot!(program);
-            });
-        }
-    }
-
-    #[test]
-    fn test_func_def_statement() {
-        for test_case in &[
-            "def a(): pass",
-            "def a():
-    pass",
-            "def a(a, b, c): pass",
-            "def a(a, *b, **c): pass",
-            "def a(a,
-                b,
-                c): pass",
-            "@decor
-def a(): pass",
-            "@decor
-def f(a: 'annotation', b=1, c=2, *d, e, f=3, **g): pass",
-            "def func() -> None: pass",
         ] {
             let mut parser = Parser::new(test_case.to_string());
             let program = parser.parse();

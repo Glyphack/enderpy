@@ -1,5 +1,6 @@
 use enderpy_python_parser::ast::Expression;
 use enderpy_python_parser as parser;
+use parser::ast::Statement;
 
 use crate::{
     ast_visitor::TraversalVisitor,
@@ -241,6 +242,9 @@ impl TraversalVisitor for SemanticAnalyzer {
             parser::ast::Statement::FunctionDef(f) => self.visit_function_def(f),
             parser::ast::Statement::ClassDef(c) => self.visit_class_def(c),
             parser::ast::Statement::Match(m) => self.visit_match(m),
+            Statement::AsyncForStatement(f) => self.visit_async_for(f),
+            Statement::AsyncWithStatement(w) => self.visit_async_with(w), 
+            Statement::AsyncFunctionDef(f) => self.visit_async_function_def(f),
         }
     }
 
@@ -318,7 +322,26 @@ impl TraversalVisitor for SemanticAnalyzer {
         }
     }
 
+    fn visit_async_for(&mut self, f: &parser::ast::AsyncFor) {
+        for stmt in &f.body {
+            self.visit_stmt(stmt);
+        }
+    }
+
     fn visit_with(&mut self, w: &parser::ast::With) {
+        for stmt in &w.body {
+            self.visit_stmt(stmt);
+        }
+        for with_items in &w.items {
+            self.visit_expr(&with_items.context_expr);
+            match &with_items.optional_vars {
+                Some(items) => self.visit_expr(items),
+                None => (),
+            }
+        }
+    }
+
+    fn visit_async_with(&mut self, w: &parser::ast::AsyncWith) {
         for stmt in &w.body {
             self.visit_stmt(stmt);
         }
@@ -406,6 +429,10 @@ impl TraversalVisitor for SemanticAnalyzer {
             raise_statements,
         }));
         self.create_symbol(f.name.clone(), function_declaration);
+    }
+
+    fn visit_async_function_def(&mut self, f: &parser::ast::AsyncFunctionDef) {
+        todo!()
     }
 
     fn visit_class_def(&mut self, c: &parser::ast::ClassDef) {

@@ -1,0 +1,50 @@
+---
+source: parser/src/parser/parser.rs
+description: "for a in b:\n    pass"
+input_file: parser/test_data/inputs/one_liners/for.py
+---
+Module {
+    node: Node {
+        start: 0,
+        end: 20,
+    },
+    body: [
+        ForStatement(
+            For {
+                node: Node {
+                    start: 0,
+                    end: 20,
+                },
+                target: Name(
+                    Name {
+                        node: Node {
+                            start: 4,
+                            end: 5,
+                        },
+                        id: "a",
+                    },
+                ),
+                iter: Name(
+                    Name {
+                        node: Node {
+                            start: 9,
+                            end: 10,
+                        },
+                        id: "b",
+                    },
+                ),
+                body: [
+                    Pass(
+                        Pass {
+                            node: Node {
+                                start: 16,
+                                end: 20,
+                            },
+                        },
+                    ),
+                ],
+                orelse: [],
+            },
+        ),
+    ],
+}

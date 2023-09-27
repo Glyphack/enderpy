@@ -58,10 +58,13 @@ pub enum Statement {
     IfStatement(If),
     WhileStatement(While),
     ForStatement(For),
+    AsyncForStatement(AsyncFor),
     WithStatement(With),
+    AsyncWithStatement(AsyncWith),
     TryStatement(Try),
     TryStarStatement(TryStar),
     FunctionDef(FunctionDef),
+    AsyncFunctionDef(AsyncFunctionDef),
     ClassDef(ClassDef),
     Match(Match),
 }
@@ -87,10 +90,13 @@ impl GetNode for Statement {
             Statement::IfStatement(s) => s.node,
             Statement::WhileStatement(s) => s.node,
             Statement::ForStatement(s) => s.node,
+            Statement::AsyncForStatement(s) => s.node,
             Statement::WithStatement(s) => s.node,
+            Statement::AsyncWithStatement(s) => s.node,
             Statement::TryStatement(s) => s.node,
             Statement::TryStarStatement(s) => s.node,
             Statement::FunctionDef(s) => s.node,
+            Statement::AsyncFunctionDef(s) => s.node,
             Statement::ClassDef(s) => s.node,
             Statement::Match(s) => s.node,
         }
@@ -646,9 +652,27 @@ pub struct For {
     pub orelse: Vec<Statement>,
 }
 
+// https://docs.python.org/3/library/ast.html#ast.AsyncFor
+#[derive(Debug, Clone)]
+pub struct AsyncFor {
+    pub node: Node,
+    pub target: Box<Expression>,
+    pub iter: Box<Expression>,
+    pub body: Vec<Statement>,
+    pub orelse: Vec<Statement>,
+}
+
 // https://docs.python.org/3/library/ast.html#ast.With
 #[derive(Debug, Clone)]
 pub struct With {
+    pub node: Node,
+    pub items: Vec<WithItem>,
+    pub body: Vec<Statement>,
+}
+
+// https://docs.python.org/3/library/ast.html#ast.AsyncWith
+#[derive(Debug, Clone)]
+pub struct AsyncWith {
     pub node: Node,
     pub items: Vec<WithItem>,
     pub body: Vec<Statement>,
@@ -695,6 +719,18 @@ pub struct ExceptHandler {
 // https://docs.python.org/3/library/ast.html#functiondef
 #[derive(Debug, Clone)]
 pub struct FunctionDef {
+    pub node: Node,
+    pub name: String,
+    pub args: Arguments,
+    pub body: Vec<Statement>,
+    pub decorator_list: Vec<Expression>,
+    pub returns: Option<Box<Expression>>,
+    pub type_comment: Option<String>,
+}
+
+// https://docs.python.org/3/library/ast.html#ast.AsyncFunctionDef
+#[derive(Debug, Clone)]
+pub struct AsyncFunctionDef {
     pub node: Node,
     pub name: String,
     pub args: Arguments,

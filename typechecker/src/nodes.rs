@@ -79,6 +79,9 @@ impl<'a> TraversalVisitor for EnderpyFile {
             Statement::FunctionDef(f) => self.visit_function_def(f),
             Statement::ClassDef(c) => self.visit_class_def(c),
             Statement::Match(m) => self.visit_match(m),
+            Statement::AsyncForStatement(f) => self.visit_async_for(f),
+            Statement::AsyncWithStatement(w) => self.visit_async_with(w), 
+            Statement::AsyncFunctionDef(f) => self.visit_async_function_def(f),
         }
     }
 

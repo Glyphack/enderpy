@@ -1,18 +1,19 @@
 ---
 source: parser/src/parser/parser.rs
-description: "for a in range(10), range(10):\n    a = 1\n"
+description: "for a in range(10), range(10):\n    a = 1"
+input_file: parser/test_data/inputs/one_liners/for.py
 ---
 Module {
     node: Node {
         start: 0,
-        end: 41,
+        end: 40,
     },
     body: [
         ForStatement(
             For {
                 node: Node {
                     start: 0,
-                    end: 41,
+                    end: 40,
                 },
                 target: Name(
                     Name {

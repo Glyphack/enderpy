@@ -1,30 +1,31 @@
 ---
 source: parser/src/parser/parser.rs
-description: "with a as b: pass"
+description: "async with a as b: pass"
+input_file: parser/test_data/inputs/one_liners/with.py
 ---
 Module {
     node: Node {
         start: 0,
-        end: 17,
+        end: 23,
     },
     body: [
-        WithStatement(
-            With {
+        AsyncWithStatement(
+            AsyncWith {
                 node: Node {
                     start: 0,
-                    end: 17,
+                    end: 23,
                 },
                 items: [
                     WithItem {
                         node: Node {
-                            start: 5,
-                            end: 11,
+                            start: 11,
+                            end: 17,
                         },
                         context_expr: Name(
                             Name {
                                 node: Node {
-                                    start: 5,
-                                    end: 6,
+                                    start: 11,
+                                    end: 12,
                                 },
                                 id: "a",
                             },
@@ -33,8 +34,8 @@ Module {
                             Name(
                                 Name {
                                     node: Node {
-                                        start: 10,
-                                        end: 11,
+                                        start: 16,
+                                        end: 17,
                                     },
                                     id: "b",
                                 },
@@ -46,8 +47,8 @@ Module {
                     Pass(
                         Pass {
                             node: Node {
-                                start: 13,
-                                end: 17,
+                                start: 19,
+                                end: 23,
                             },
                         },
                     ),

@@ -1,76 +1,6 @@
 use enderpy_python_parser::ast::*;
 use enderpy_python_parser as parser;
 
-// pub trait FileVisitor<T>: StmtVisitor<T> + ExprVisitor<T> {
-//     fn visit_file(&mut self, f: &EnderpyFile) -> T {
-//         self.visit_module(&f.ast)
-//     }
-//     fn visit_module(&mut self, m: &Module) -> T {
-//         for stmt in m.body {
-//             self.visit_stmt(stmt)
-//         }
-//     }
-// }
-//
-// pub trait StmtVisitor<T> {
-//     fn visit_stmt(&mut self, s: &Statement) -> T;
-//     fn visit_expr(&mut self, e: &Expression) -> T;
-//     fn visit_import(&mut self, i: &Import) -> T;
-//     fn visit_import_from(&mut self, i: &ImportFrom) -> T;
-//     fn visit_alias(&mut self, a: &Alias) -> T;
-//     fn visit_assign(&mut self, a: &Assign) -> T;
-//     fn visit_ann_assign(&mut self, a: &AnnAssign) -> T;
-//     fn visit_aug_assign(&mut self, a: &AugAssign) -> T;
-//     fn visit_assert(&mut self, a: &Assert) -> T;
-//     fn visit_pass(&mut self, p: &Pass) -> T;
-//     fn visit_delete(&mut self, d: &Delete) -> T;
-//     fn visit_return(&mut self, r: &Return) -> T;
-//     fn visit_raise(&mut self, r: &Raise) -> T;
-//     fn visit_break(&mut self, b: &Break) -> T;
-//     fn visit_continue(&mut self, c: &Continue) -> T;
-//     fn visit_global(&mut self, g: &Global) -> T;
-//     fn visit_nonlocal(&mut self, n: &Nonlocal) -> T;
-//     fn visit_if(&mut self, i: &If) -> T;
-//     fn visit_while(&mut self, w: &While) -> T;
-//     fn visit_for(&mut self, f: &For) -> T;
-//     fn visit_with(&mut self, w: &With) -> T;
-//     fn visit_try(&mut self, t: &Try) -> T;
-//     fn visit_try_star(&mut self, t: &TryStar) -> T;
-//     fn visit_function_def(&mut self, f: &FunctionDef) -> T;
-//     fn visit_class_def(&mut self, c: &ClassDef) -> T;
-//     fn visit_match(&mut self, m: &Match) -> T;
-// }
-//
-// pub trait ExprVisitor<T> {
-//     fn visit_constant(&mut self, c: &Constant) -> T;
-//     fn visit_list(&mut self, l: &List) -> T;
-//     fn visit_tuple(&mut self, t: &Tuple) -> T;
-//     fn visit_dict(&mut self, d: &Dict) -> T;
-//     fn visit_set(&mut self, s: &Set) -> T;
-//     fn visit_name(&mut self, n: &Name) -> T;
-//     fn visit_bool_op(&mut self, b: &BoolOperation) -> T;
-//     fn visit_unary_op(&mut self, u: &UnaryOperation) -> T;
-//     fn visit_bin_op(&mut self, b: &BinOp) -> T;
-//     fn visit_named_expr(&mut self, n: &NamedExpression) -> T;
-//     fn visit_yield(&mut self, y: &Yield) -> T;
-//     fn visit_yield_from(&mut self, y: &YieldFrom) -> T;
-//     fn visit_starred(&mut self, s: &Starred) -> T;
-//     fn visit_generator(&mut self, g: &Generator) -> T;
-//     fn visit_list_comp(&mut self, l: &ListComp) -> T;
-//     fn visit_set_comp(&mut self, s: &SetComp) -> T;
-//     fn visit_dict_comp(&mut self, d: &DictComp) -> T;
-//     fn visit_attribute(&mut self, a: &Attribute) -> T;
-//     fn visit_subscript(&mut self, s: &Subscript) -> T;
-//     fn visit_slice(&mut self, s: &Slice) -> T;
-//     fn visit_call(&mut self, c: &Call) -> T;
-//     fn visit_await(&mut self, a: &Await) -> T;
-//     fn visit_compare(&mut self, c: &Compare) -> T;
-//     fn visit_lambda(&mut self, l: &Lambda) -> T;
-//     fn visit_if_exp(&mut self, i: &IfExp) -> T;
-//     fn visit_joined_str(&mut self, j: &JoinedStr) -> T;
-//     fn visit_formatted_value(&mut self, f: &FormattedValue) -> T;
-// }
-
 /// A visitor that traverses the AST and calls the visit method for each node
 /// This is useful for visitors that only need to visit a few nodes
 /// and don't want to implement all the methods.
@@ -103,6 +33,9 @@ pub trait TraversalVisitor {
             Statement::FunctionDef(f) => self.visit_function_def(f),
             Statement::ClassDef(c) => self.visit_class_def(c),
             Statement::Match(m) => self.visit_match(m),
+            Statement::AsyncForStatement(f) => self.visit_async_for(f),
+            Statement::AsyncWithStatement(w) => self.visit_async_with(w), 
+            Statement::AsyncFunctionDef(f) => self.visit_async_function_def(f),
         }
     }
     fn visit_expr(&mut self, e: &Expression) {
@@ -165,7 +98,26 @@ pub trait TraversalVisitor {
         }
     }
 
+    fn visit_async_for(&mut self, f: &parser::ast::AsyncFor) {
+        for stmt in &f.body {
+            self.visit_stmt(stmt);
+        }
+    }
+
     fn visit_with(&mut self, w: &parser::ast::With) {
+        for stmt in &w.body {
+            self.visit_stmt(stmt);
+        }
+        for with_items in &w.items {
+            self.visit_expr(&with_items.context_expr);
+            match &with_items.optional_vars {
+                Some(items) => self.visit_expr(items),
+                None => (),
+            }
+        }
+    }
+
+    fn visit_async_with(&mut self, w: &parser::ast::AsyncWith) {
         for stmt in &w.body {
             self.visit_stmt(stmt);
         }
@@ -215,6 +167,12 @@ pub trait TraversalVisitor {
     }
 
     fn visit_function_def(&mut self, f: &parser::ast::FunctionDef) {
+        for stmt in &f.body {
+            self.visit_stmt(stmt);
+        }
+    }
+
+    fn visit_async_function_def(&mut self, f: &parser::ast::AsyncFunctionDef) {
         for stmt in &f.body {
             self.visit_stmt(stmt);
         }

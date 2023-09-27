@@ -4,6 +4,7 @@
 use miette::{bail, miette, Result};
 use enderpy_python_parser::ast;
 use enderpy_python_parser as parser;
+use parser::ast::Statement;
 
 use crate::{
     ast_visitor_generic::TraversalVisitorImmutGeneric,
@@ -273,6 +274,9 @@ impl TraversalVisitorImmutGeneric<PythonType> for TypeEvaluator {
             ast::Statement::FunctionDef(f) => self.visit_function_def(f),
             ast::Statement::ClassDef(c) => self.visit_class_def(c),
             ast::Statement::Match(m) => self.visit_match(m),
+            Statement::AsyncForStatement(f) => self.visit_async_for(f),
+            Statement::AsyncWithStatement(w) => self.visit_async_with(w), 
+            Statement::AsyncFunctionDef(f) => self.visit_async_function_def(f),
         }
     }
 

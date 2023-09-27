@@ -1,0 +1,168 @@
+---
+source: parser/src/parser/parser.rs
+description: "@decor\ndef f(a: 'annotation', b=1, c=2, *d, e, f=3, **g): pass"
+input_file: parser/test_data/inputs/one_liners/function_def.py
+---
+Module {
+    node: Node {
+        start: 0,
+        end: 62,
+    },
+    body: [
+        FunctionDef(
+            FunctionDef {
+                node: Node {
+                    start: 7,
+                    end: 62,
+                },
+                name: "f",
+                args: Arguments {
+                    node: Node {
+                        start: 13,
+                        end: 55,
+                    },
+                    posonlyargs: [],
+                    args: [
+                        Arg {
+                            node: Node {
+                                start: 13,
+                                end: 28,
+                            },
+                            arg: "a",
+                            annotation: Some(
+                                Constant(
+                                    Constant {
+                                        node: Node {
+                                            start: 16,
+                                            end: 28,
+                                        },
+                                        value: Str(
+                                            "annotation",
+                                        ),
+                                    },
+                                ),
+                            ),
+                        },
+                        Arg {
+                            node: Node {
+                                start: 30,
+                                end: 33,
+                            },
+                            arg: "b",
+                            annotation: None,
+                        },
+                        Arg {
+                            node: Node {
+                                start: 35,
+                                end: 38,
+                            },
+                            arg: "c",
+                            annotation: None,
+                        },
+                    ],
+                    vararg: Some(
+                        Arg {
+                            node: Node {
+                                start: 41,
+                                end: 42,
+                            },
+                            arg: "d",
+                            annotation: None,
+                        },
+                    ),
+                    kwonlyargs: [
+                        Arg {
+                            node: Node {
+                                start: 44,
+                                end: 45,
+                            },
+                            arg: "e",
+                            annotation: None,
+                        },
+                        Arg {
+                            node: Node {
+                                start: 47,
+                                end: 50,
+                            },
+                            arg: "f",
+                            annotation: None,
+                        },
+                    ],
+                    kw_defaults: [
+                        None,
+                        Some(
+                            Constant(
+                                Constant {
+                                    node: Node {
+                                        start: 49,
+                                        end: 50,
+                                    },
+                                    value: Int(
+                                        "3",
+                                    ),
+                                },
+                            ),
+                        ),
+                    ],
+                    kwarg: Some(
+                        Arg {
+                            node: Node {
+                                start: 54,
+                                end: 55,
+                            },
+                            arg: "g",
+                            annotation: None,
+                        },
+                    ),
+                    defaults: [
+                        Constant(
+                            Constant {
+                                node: Node {
+                                    start: 32,
+                                    end: 33,
+                                },
+                                value: Int(
+                                    "1",
+                                ),
+                            },
+                        ),
+                        Constant(
+                            Constant {
+                                node: Node {
+                                    start: 37,
+                                    end: 38,
+                                },
+                                value: Int(
+                                    "2",
+                                ),
+                            },
+                        ),
+                    ],
+                },
+                body: [
+                    Pass(
+                        Pass {
+                            node: Node {
+                                start: 58,
+                                end: 62,
+                            },
+                        },
+                    ),
+                ],
+                decorator_list: [
+                    Name(
+                        Name {
+                            node: Node {
+                                start: 1,
+                                end: 6,
+                            },
+                            id: "decor",
+                        },
+                    ),
+                ],
+                returns: None,
+                type_comment: None,
+            },
+        ),
+    ],
+}

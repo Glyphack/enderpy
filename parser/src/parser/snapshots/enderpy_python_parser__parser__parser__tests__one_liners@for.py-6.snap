@@ -1,24 +1,25 @@
 ---
 source: parser/src/parser/parser.rs
-description: "for a in b:\n    pass"
+description: "async for a in b:\n    pass\n"
+input_file: parser/test_data/inputs/one_liners/for.py
 ---
 Module {
     node: Node {
         start: 0,
-        end: 20,
+        end: 27,
     },
     body: [
-        ForStatement(
-            For {
+        AsyncForStatement(
+            AsyncFor {
                 node: Node {
                     start: 0,
-                    end: 20,
+                    end: 27,
                 },
                 target: Name(
                     Name {
                         node: Node {
-                            start: 4,
-                            end: 5,
+                            start: 10,
+                            end: 11,
                         },
                         id: "a",
                     },
@@ -26,8 +27,8 @@ Module {
                 iter: Name(
                     Name {
                         node: Node {
-                            start: 9,
-                            end: 10,
+                            start: 15,
+                            end: 16,
                         },
                         id: "b",
                     },
@@ -36,8 +37,8 @@ Module {
                     Pass(
                         Pass {
                             node: Node {
-                                start: 16,
-                                end: 20,
+                                start: 22,
+                                end: 26,
                             },
                         },
                     ),
