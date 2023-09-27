@@ -1,0 +1,321 @@
+---
+source: parser/src/parser/parser.rs
+description: "# Test case to check that we return correct error when two python statements are on the same line\n\ndef foo():\n    x = 1; y = 2\n    return x + y\n\ndef bar():\n    x = 1 y = 2\n    return x + y\n\na = 1  b = 2\n"
+input_file: parser/test_data/inputs/separate_statements.py
+---
+Module {
+    node: Node {
+        start: 0,
+        end: 203,
+    },
+    body: [
+        FunctionDef(
+            FunctionDef {
+                node: Node {
+                    start: 99,
+                    end: 145,
+                },
+                name: "foo",
+                args: Arguments {
+                    node: Node {
+                        start: 107,
+                        end: 107,
+                    },
+                    posonlyargs: [],
+                    args: [],
+                    vararg: None,
+                    kwonlyargs: [],
+                    kw_defaults: [],
+                    kwarg: None,
+                    defaults: [],
+                },
+                body: [
+                    AssignStatement(
+                        Assign {
+                            node: Node {
+                                start: 114,
+                                end: 119,
+                            },
+                            targets: [
+                                Name(
+                                    Name {
+                                        node: Node {
+                                            start: 114,
+                                            end: 115,
+                                        },
+                                        id: "x",
+                                    },
+                                ),
+                            ],
+                            value: Constant(
+                                Constant {
+                                    node: Node {
+                                        start: 118,
+                                        end: 119,
+                                    },
+                                    value: Int(
+                                        "1",
+                                    ),
+                                },
+                            ),
+                        },
+                    ),
+                    AssignStatement(
+                        Assign {
+                            node: Node {
+                                start: 121,
+                                end: 126,
+                            },
+                            targets: [
+                                Name(
+                                    Name {
+                                        node: Node {
+                                            start: 121,
+                                            end: 122,
+                                        },
+                                        id: "y",
+                                    },
+                                ),
+                            ],
+                            value: Constant(
+                                Constant {
+                                    node: Node {
+                                        start: 125,
+                                        end: 126,
+                                    },
+                                    value: Int(
+                                        "2",
+                                    ),
+                                },
+                            ),
+                        },
+                    ),
+                    Return(
+                        Return {
+                            node: Node {
+                                start: 131,
+                                end: 143,
+                            },
+                            value: Some(
+                                BinOp(
+                                    BinOp {
+                                        node: Node {
+                                            start: 138,
+                                            end: 143,
+                                        },
+                                        op: Add,
+                                        left: Name(
+                                            Name {
+                                                node: Node {
+                                                    start: 138,
+                                                    end: 139,
+                                                },
+                                                id: "x",
+                                            },
+                                        ),
+                                        right: Name(
+                                            Name {
+                                                node: Node {
+                                                    start: 142,
+                                                    end: 143,
+                                                },
+                                                id: "y",
+                                            },
+                                        ),
+                                    },
+                                ),
+                            ),
+                        },
+                    ),
+                ],
+                decorator_list: [],
+                returns: None,
+                type_comment: None,
+            },
+        ),
+        FunctionDef(
+            FunctionDef {
+                node: Node {
+                    start: 145,
+                    end: 190,
+                },
+                name: "bar",
+                args: Arguments {
+                    node: Node {
+                        start: 153,
+                        end: 153,
+                    },
+                    posonlyargs: [],
+                    args: [],
+                    vararg: None,
+                    kwonlyargs: [],
+                    kw_defaults: [],
+                    kwarg: None,
+                    defaults: [],
+                },
+                body: [
+                    AssignStatement(
+                        Assign {
+                            node: Node {
+                                start: 160,
+                                end: 165,
+                            },
+                            targets: [
+                                Name(
+                                    Name {
+                                        node: Node {
+                                            start: 160,
+                                            end: 161,
+                                        },
+                                        id: "x",
+                                    },
+                                ),
+                            ],
+                            value: Constant(
+                                Constant {
+                                    node: Node {
+                                        start: 164,
+                                        end: 165,
+                                    },
+                                    value: Int(
+                                        "1",
+                                    ),
+                                },
+                            ),
+                        },
+                    ),
+                    AssignStatement(
+                        Assign {
+                            node: Node {
+                                start: 166,
+                                end: 171,
+                            },
+                            targets: [
+                                Name(
+                                    Name {
+                                        node: Node {
+                                            start: 166,
+                                            end: 167,
+                                        },
+                                        id: "y",
+                                    },
+                                ),
+                            ],
+                            value: Constant(
+                                Constant {
+                                    node: Node {
+                                        start: 170,
+                                        end: 171,
+                                    },
+                                    value: Int(
+                                        "2",
+                                    ),
+                                },
+                            ),
+                        },
+                    ),
+                    Return(
+                        Return {
+                            node: Node {
+                                start: 176,
+                                end: 188,
+                            },
+                            value: Some(
+                                BinOp(
+                                    BinOp {
+                                        node: Node {
+                                            start: 183,
+                                            end: 188,
+                                        },
+                                        op: Add,
+                                        left: Name(
+                                            Name {
+                                                node: Node {
+                                                    start: 183,
+                                                    end: 184,
+                                                },
+                                                id: "x",
+                                            },
+                                        ),
+                                        right: Name(
+                                            Name {
+                                                node: Node {
+                                                    start: 187,
+                                                    end: 188,
+                                                },
+                                                id: "y",
+                                            },
+                                        ),
+                                    },
+                                ),
+                            ),
+                        },
+                    ),
+                ],
+                decorator_list: [],
+                returns: None,
+                type_comment: None,
+            },
+        ),
+        AssignStatement(
+            Assign {
+                node: Node {
+                    start: 190,
+                    end: 195,
+                },
+                targets: [
+                    Name(
+                        Name {
+                            node: Node {
+                                start: 190,
+                                end: 191,
+                            },
+                            id: "a",
+                        },
+                    ),
+                ],
+                value: Constant(
+                    Constant {
+                        node: Node {
+                            start: 194,
+                            end: 195,
+                        },
+                        value: Int(
+                            "1",
+                        ),
+                    },
+                ),
+            },
+        ),
+        AssignStatement(
+            Assign {
+                node: Node {
+                    start: 197,
+                    end: 202,
+                },
+                targets: [
+                    Name(
+                        Name {
+                            node: Node {
+                                start: 197,
+                                end: 198,
+                            },
+                            id: "b",
+                        },
+                    ),
+                ],
+                value: Constant(
+                    Constant {
+                        node: Node {
+                            start: 201,
+                            end: 202,
+                        },
+                        value: Int(
+                            "2",
+                        ),
+                    },
+                ),
+            },
+        ),
+    ],
+}

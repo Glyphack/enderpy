@@ -1,0 +1,9 @@
+---
+source: parser/src/parser/parser.rs
+description: "# Test case to check that we return correct error when two python statements are on the same line\n\ndef foo():\n    x = 1; y = 2\n    return x + y\n\ndef bar():\n    x = 1 y = 2\n    return x + y\n\na = 1  b = 2\n"
+input_file: parser/test_data/inputs/separate_statements.py
+---
+[
+    "Statement must be seperated with new line or semicolon but found Token { kind: Identifier, value: Str(\"y\"), start: 166, end: 167 }",
+    "Statement must be seperated with new line or semicolon but found Token { kind: Identifier, value: Str(\"b\"), start: 197, end: 198 }",
+]

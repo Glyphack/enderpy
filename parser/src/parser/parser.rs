@@ -4,7 +4,7 @@ use crate::lexer::lexer::Lexer;
 use crate::parser::ast::*;
 use crate::parser::string::{extract_string_inside, is_string};
 use crate::token::{Kind, Token, TokenValue};
-use miette::Result;
+use miette::{bail, Result};
 
 use super::diagnostics;
 use super::expression::{is_atom, is_iterable};
@@ -27,6 +27,7 @@ pub struct Parser {
     // This is incremented when we see an opening bracket and decremented when we
     // see a closing bracket.
     nested_expression_list: usize,
+    errors: Vec<String>,
 }
 
 #[allow(unused)]
@@ -42,6 +43,7 @@ impl Parser {
             cur_token,
             prev_token_end,
             nested_expression_list: 0,
+            errors: vec![],
         }
     }
 
@@ -66,15 +68,23 @@ impl Parser {
             if stmt.is_ok() {
                 body.push(stmt.unwrap());
             } else {
-                println!("Error: {:?}", stmt.err());
+                self.errors.push(stmt.err().unwrap().to_string());
                 self.bump_any();
             }
+        }
+
+        for err in &self.errors {
+            println!("{}", err);
         }
 
         Module {
             node: self.finish_node(node),
             body,
         }
+    }
+
+    pub fn get_errors(&self) -> Vec<String> {
+        self.errors.clone()
     }
 
     fn start_node(&self) -> Node {
@@ -210,7 +220,7 @@ impl Parser {
             }
         };
 
-        self.bump(Kind::NewLine);
+        self.err_if_statement_not_ending_in_new_line_or_semicolon();
 
         stmt
     }
@@ -240,6 +250,21 @@ impl Parser {
         };
 
         stmt
+    }
+
+    fn err_if_statement_not_ending_in_new_line_or_semicolon(&mut self) {
+        while self.eat(Kind::WhiteSpace) || self.eat(Kind::Comment) {}
+
+        if !matches!(self.cur_kind(), Kind::NewLine | Kind::SemiColon | Kind::Eof) {
+            let node = self.start_node();
+            let kind = self.cur_kind();
+            // TODO: Better errors
+            let err = format!(
+                "Statement must be seperated with new line or semicolon but found {:?}",
+                self.cur_token()
+            );
+            self.errors.push(err.to_string());
+        }
     }
 
     fn parse_if_statement(&mut self) -> Result<Statement> {
@@ -1005,7 +1030,7 @@ impl Parser {
 
     // https://docs.python.org/3/reference/compound_stmts.html#grammar-token-python-grammar-suite
     fn parse_suite(&mut self) -> Result<Vec<Statement>> {
-        if self.eat(Kind::NewLine) {
+        let stmts = if self.eat(Kind::NewLine) {
             self.consume_whitespace_and_newline();
             self.expect(Kind::Indent)?;
             let mut stmts = vec![];
@@ -1015,14 +1040,14 @@ impl Parser {
                 }
                 let stmt = self.parse_statement()?;
                 stmts.extend(stmt);
-                self.bump(Kind::NewLine);
             }
             Ok(stmts)
         } else {
             let stmt = self.parse_statement_list()?;
-            self.bump(Kind::NewLine);
             Ok(stmt)
-        }
+        };
+        self.bump(Kind::NewLine);
+        stmts
     }
 
     // https://docs.python.org/3/reference/compound_stmts.html#grammar-token-python-grammar-statement
@@ -3598,11 +3623,20 @@ class a: pass",
             let program = parser.parse();
 
             insta::with_settings!({
-                    description => test_case, // the template source code
-                    omit_expression => true // do not include the default expression
+                    description => test_case.clone(),
+                    omit_expression => true
                 }, {
                     assert_debug_snapshot!(program);
             });
+
+            if !parser.get_errors().is_empty() {
+                insta::with_settings!({
+                        description => test_case,
+                        omit_expression => true
+                    }, {
+                        assert_debug_snapshot!(parser.get_errors());
+                });
+            }
         });
     }
 
@@ -3620,6 +3654,14 @@ class a: pass",
                     }, {
                         assert_debug_snapshot!(program);
                 });
+                if !parser.get_errors().is_empty() {
+                    insta::with_settings!({
+                            description => test_case,
+                            omit_expression => true
+                        }, {
+                            assert_debug_snapshot!(parser.get_errors());
+                    });
+                }
             }
         });
     }
