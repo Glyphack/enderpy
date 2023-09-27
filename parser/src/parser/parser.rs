@@ -4,7 +4,7 @@ use crate::lexer::lexer::Lexer;
 use crate::parser::ast::*;
 use crate::parser::string::{extract_string_inside, is_string};
 use crate::token::{Kind, Token, TokenValue};
-use miette::Result;
+use miette::{Result, ErrReport, miette};
 
 use super::diagnostics;
 use super::expression::{is_atom, is_iterable};
@@ -27,7 +27,7 @@ pub struct Parser {
     // This is incremented when we see an opening bracket and decremented when we
     // see a closing bracket.
     nested_expression_list: usize,
-    errors: Vec<String>,
+    errors: Vec<ErrReport>,
 }
 
 #[allow(unused)]
@@ -68,7 +68,7 @@ impl Parser {
             if stmt.is_ok() {
                 body.push(stmt.unwrap());
             } else {
-                self.errors.push(stmt.err().unwrap().to_string());
+                self.errors.push(stmt.err().unwrap());
                 self.bump_any();
             }
         }
@@ -84,7 +84,12 @@ impl Parser {
     }
 
     pub fn get_errors(&self) -> Vec<String> {
-        self.errors.clone()
+        let mut errors = vec![];
+        for err in &self.errors {
+            errors.push(err.to_string());
+        }
+
+        errors
     }
 
     fn start_node(&self) -> Node {
@@ -273,11 +278,11 @@ impl Parser {
             let node = self.start_node();
             let kind = self.cur_kind();
             // TODO: Better errors
-            let err = format!(
+            let err = miette!(
                 "Statement must be seperated with new line or semicolon but found {:?}",
                 self.cur_token()
             );
-            self.errors.push(err.to_string());
+            self.errors.push(err);
         }
     }
 
@@ -601,7 +606,7 @@ impl Parser {
     fn parse_decorated_function_def_or_class_def(&mut self) -> Result<Statement> {
         let mut decorators = vec![];
         while self.eat(Kind::MatrixMul) {
-            let name = self.parse_identifier()?;
+            let name = self.parse_named_expression()?;
             decorators.push(name);
             self.bump(Kind::NewLine);
         }
@@ -923,7 +928,7 @@ impl Parser {
                 // TODO: here we cannot accept all primary expressions
                 // but python docs do not have the full list of what is allowed
                 // so we just do this for now
-                keys.push(self.parse_primary()?);
+                keys.push(self.parse_primary(None)?);
                 self.expect(Kind::Colon)?;
                 patterns.push(self.parse_pattern()?);
             }
@@ -2058,13 +2063,13 @@ impl Parser {
         let node = self.start_node();
         let base = if self.at(Kind::Await) {
             self.bump(Kind::Await);
-            let value = self.parse_primary()?;
+            let value = self.parse_primary(None)?;
             Ok(Expression::Await(Box::new(Await {
                 node: self.finish_node(node),
                 value: Box::new(value),
             })))
         } else {
-            self.parse_primary()
+            self.parse_primary(None)
         };
         if self.eat(Kind::Pow) {
             let exponent = self.parse_unary_arithmetric_operation()?;
@@ -2080,20 +2085,22 @@ impl Parser {
     }
 
     // https://docs.python.org/3/reference/expressions.html#primaries
-    fn parse_primary(&mut self) -> Result<Expression> {
+    // primaries can be chained together, when they are chained the base is the previous primary
+    fn parse_primary(&mut self, base: Option<Expression>) -> Result<Expression> {
         let node = self.start_node();
-        let mut atom_or_primary = if is_atom(&self.cur_kind()) {
+        let mut atom_or_primary = if base.is_some() {
+            base.unwrap()
+        } else if is_atom(&self.cur_kind()) {
             self.parse_atom()?
         } else {
             return Err(self.unepxted_token(node, self.cur_kind()).err().unwrap());
         };
 
-        if self.at(Kind::Dot) {
-            // TODO: does not handle cases like a.b[0].c
-            atom_or_primary = self.parse_atribute_ref(node, atom_or_primary)?
-        }
 
-        let mut primary = if self.at(Kind::LeftBrace) {
+        let mut primary = if self.at(Kind::Dot) {
+            // TODO: does not handle cases like a.b[0].c
+            self.parse_atribute_ref(node, atom_or_primary)
+        } else if self.at(Kind::LeftBrace) {
             // https://docs.python.org/3/reference/expressions.html#slicings
             self.parse_subscript(node, atom_or_primary)
         } else if self.eat(Kind::LeftParen) {
@@ -2171,6 +2178,10 @@ impl Parser {
         } else {
             Ok(atom_or_primary)
         };
+
+        if matches!(self.cur_kind(), Kind::LeftBrace | Kind::LeftParen | Kind::Dot) {
+            primary = self.parse_primary(Some(primary?));
+        }
 
         primary
     }
