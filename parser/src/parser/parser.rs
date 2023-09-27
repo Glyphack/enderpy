@@ -2808,10 +2808,6 @@ mod tests {
             "a ^= 1",
             "a |= 1",
             // annotated assignment
-            "a: int = 1",
-            "a: int = 1, 2",
-            "a: int = 1, 2, ",
-            "a: int = b",
         ] {
             let mut parser = Parser::new(test_case.to_string());
             let program = parser.parse();

@@ -1,0 +1,110 @@
+---
+source: parser/src/parser/parser.rs
+description: "g: tuple[int,\n         int] = 1, 2"
+input_file: parser/test_data/inputs/one_liners/annotated_assignment.py
+---
+Module {
+    node: Node {
+        start: 0,
+        end: 34,
+    },
+    body: [
+        AnnAssignStatement(
+            AnnAssign {
+                node: Node {
+                    start: 0,
+                    end: 34,
+                },
+                target: Name(
+                    Name {
+                        node: Node {
+                            start: 0,
+                            end: 1,
+                        },
+                        id: "g",
+                    },
+                ),
+                annotation: Subscript(
+                    Subscript {
+                        node: Node {
+                            start: 3,
+                            end: 27,
+                        },
+                        value: Name(
+                            Name {
+                                node: Node {
+                                    start: 3,
+                                    end: 8,
+                                },
+                                id: "tuple",
+                            },
+                        ),
+                        slice: Tuple(
+                            Tuple {
+                                node: Node {
+                                    start: 9,
+                                    end: 27,
+                                },
+                                elements: [
+                                    Name(
+                                        Name {
+                                            node: Node {
+                                                start: 9,
+                                                end: 12,
+                                            },
+                                            id: "int",
+                                        },
+                                    ),
+                                    Name(
+                                        Name {
+                                            node: Node {
+                                                start: 23,
+                                                end: 26,
+                                            },
+                                            id: "int",
+                                        },
+                                    ),
+                                ],
+                            },
+                        ),
+                    },
+                ),
+                value: Some(
+                    Tuple(
+                        Tuple {
+                            node: Node {
+                                start: 30,
+                                end: 34,
+                            },
+                            elements: [
+                                Constant(
+                                    Constant {
+                                        node: Node {
+                                            start: 30,
+                                            end: 31,
+                                        },
+                                        value: Int(
+                                            "1",
+                                        ),
+                                    },
+                                ),
+                                Constant(
+                                    Constant {
+                                        node: Node {
+                                            start: 33,
+                                            end: 34,
+                                        },
+                                        value: Int(
+                                            "2",
+                                        ),
+                                    },
+                                ),
+                            ],
+                        },
+                    ),
+                ),
+                simple: true,
+            },
+        ),
+    ],
+}

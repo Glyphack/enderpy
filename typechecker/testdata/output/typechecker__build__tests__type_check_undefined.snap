@@ -1,8 +1,0 @@
----
-source: typechecker/src/build.rs
-description: "a = b + 1\n\na = c()\n\n"
-expression: result
----
-test.py line 1: undefined name b
-test.py line 1: undefined name b
-test.py line 3: undefined name c

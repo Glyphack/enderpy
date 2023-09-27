@@ -1,0 +1,12 @@
+---
+source: parser/src/parser/parser.rs
+description: ""
+input_file: parser/test_data/inputs/one_liners/annotated_assignment.py
+---
+Module {
+    node: Node {
+        start: 0,
+        end: 0,
+    },
+    body: [],
+}
