@@ -7,6 +7,7 @@ use crate::token::{Kind, Token, TokenValue};
 use miette::{Result, ErrReport, miette, bail};
 
 use super::diagnostics;
+use super::error::ParsingError;
 use super::expression::{is_atom, is_iterable};
 use super::operator::{
     is_bin_arithmetic_op, is_comparison_operator, is_unary_op, map_unary_operator,
@@ -28,11 +29,14 @@ pub struct Parser {
     // see a closing bracket.
     nested_expression_list: usize,
     errors: Vec<ErrReport>,
+    curr_line_string: String,
+    curr_line_number: u32,
+    path: String,
 }
 
 #[allow(unused)]
 impl Parser {
-    pub fn new(source: String) -> Self {
+    pub fn new(source: String, path: String) -> Self {
         let mut lexer = Lexer::new(&source);
         let cur_token = lexer.next_token().unwrap();
         let prev_token_end = 0;
@@ -44,6 +48,9 @@ impl Parser {
             prev_token_end,
             nested_expression_list: 0,
             errors: vec![],
+            curr_line_string: String::new(),
+            path,
+            curr_line_number: 1,
         }
     }
 
@@ -74,7 +81,7 @@ impl Parser {
         }
 
         for err in &self.errors {
-            println!("{}", err);
+            println!("{:#?}", err);
         }
 
         Module {
@@ -146,6 +153,12 @@ impl Parser {
     /// Move to the next token
     fn advance(&mut self) {
         let token = self.lexer.next_token();
+        if self.at(Kind::NewLine) {
+            self.curr_line_string.clear();
+            self.curr_line_number += 1;
+        } else {
+            self.curr_line_string.push_str(&self.source[self.prev_token_end..self.cur_token.end]);
+        }
         match token {
             Err(err) => {
                 println!("Error: {:?}", err);
@@ -161,15 +174,21 @@ impl Parser {
     /// Expect a `Kind` or return error
     pub fn expect(&mut self, kind: Kind) -> Result<()> {
         if !self.at(kind) {
-            let node = self.start_node();
             let found = self.cur_token.kind;
+            let node = self.start_node();
             self.bump_any();
             let range = self.finish_node(node);
-            panic!(
-                "Error: {:?}",
-                diagnostics::ExpectToken(kind.to_str(), found.to_str(), range)
-            );
-            return Err(diagnostics::ExpectToken(kind.to_str(), found.to_str(), range).into());
+            let err = ParsingError::InvalidSyntax {
+                path: Box::from(self.path.as_str()),
+                msg: Box::from(format!("Expected {:?} but found {:?}", kind, found)),
+                line: self.curr_line_number,
+                input: self.curr_line_string.clone(),
+                advice: "maybe you forgot to put this character".to_string(),
+                span: (range.start, range.end),
+            };
+            println!("errors until now: {:?}", self.errors);
+            panic!("{:#?}", err);
+            self.errors.push(err.into());
         }
         self.advance();
         Ok(())
@@ -228,11 +247,11 @@ impl Parser {
                     self.parse_assignment_or_expression_statement()
                 }
             }
-        };
+        }?;
 
-        self.err_if_statement_not_ending_in_new_line_or_semicolon();
+        self.err_if_statement_not_ending_in_new_line_or_semicolon(stmt.get_node(), stmt.clone());
 
-        stmt
+        Ok(stmt)
     }
 
     fn parse_compount_statement(&mut self) -> Result<Statement> {
@@ -276,18 +295,22 @@ impl Parser {
         stmt
     }
 
-    fn err_if_statement_not_ending_in_new_line_or_semicolon(&mut self) {
+    fn err_if_statement_not_ending_in_new_line_or_semicolon(&mut self, node: Node, stmt: Statement) {
         while self.eat(Kind::WhiteSpace) || self.eat(Kind::Comment) {}
 
         if !matches!(self.cur_kind(), Kind::NewLine | Kind::SemiColon | Kind::Eof) {
-            let node = self.start_node();
+            println!("stmt: {:?}", stmt);
+            let node = self.finish_node(node);
             let kind = self.cur_kind();
-            // TODO: Better errors
-            let err = miette!(
-                "Statement must be seperated with new line or semicolon but found {:?}",
-                self.cur_token()
-            );
-            self.errors.push(err);
+            let err = ParsingError::InvalidSyntax {
+                path: Box::from(self.path.as_str()),
+                msg: Box::from("Statement does not end in new line or semicolon"),
+                line: self.curr_line_number,
+                input: self.curr_line_string.clone(),
+                advice: "Split the statements into two seperate lines or add a semicolon".to_string(),
+                span: (node.start, node.end),
+            };
+            self.errors.push(err.into());
         }
     }
 
@@ -1382,15 +1405,34 @@ impl Parser {
         let (module, level) = self.parse_module_name();
         self.bump(Kind::Import);
         let mut aliases = vec![];
-        while self.at(Kind::Identifier) {
-            let alias_name = self.start_node();
-            let name = self.cur_token().value.to_string();
-            self.bump(Kind::Identifier);
-            let asname = self.parse_alias(name, alias_name);
-            aliases.push(asname);
-            if !self.eat(Kind::Comma) {
-                break;
+        if self.eat(Kind::LeftParen) {
+            while self.at(Kind::Identifier) {
+                let alias_name = self.start_node();
+                let name = self.cur_token().value.to_string();
+                self.bump(Kind::Identifier);
+                let asname = self.parse_alias(name, alias_name);
+                aliases.push(asname);
+                if !self.eat(Kind::Comma) {
+                    break;
+                }
             }
+            self.expect(Kind::RightParen)?;
+        } else if self.at(Kind::Identifier) {
+            while self.at(Kind::Identifier) {
+                let alias_name = self.start_node();
+                let name = self.cur_token().value.to_string();
+                self.bump(Kind::Identifier);
+                let asname = self.parse_alias(name, alias_name);
+                aliases.push(asname);
+                if !self.eat(Kind::Comma) {
+                    break;
+                }
+            }
+        } else if self.at(Kind::Mul) {
+            aliases.push(self.parse_alias("*".to_string(), self.start_node()));
+            self.bump(Kind::Mul);
+        } else {
+            return Err(self.unepxted_token(import_node, self.cur_kind()).unwrap_err());
         }
         Ok(Statement::ImportFrom(ImportFrom {
             node: self.finish_node(import_node),
@@ -2862,7 +2904,7 @@ mod tests {
             "a |= 1",
             // annotated assignment
         ] {
-            let mut parser = Parser::new(test_case.to_string());
+            let mut parser = Parser::new(test_case.to_string(), String::from(""));
             let program = parser.parse();
 
             insta::with_settings!({
@@ -2877,7 +2919,7 @@ mod tests {
     #[test]
     fn test_parse_assert_stmt() {
         for test_case in &["assert a", "assert a, b", "assert True, 'fancy message'"] {
-            let mut parser = Parser::new(test_case.to_string());
+            let mut parser = Parser::new(test_case.to_string(), String::from(""));
             let program = parser.parse();
 
             insta::with_settings!({
@@ -2892,7 +2934,7 @@ mod tests {
     #[test]
     fn test_pass_stmt() {
         for test_case in &["pass", "pass ", "pass\n"] {
-            let mut parser = Parser::new(test_case.to_string());
+            let mut parser = Parser::new(test_case.to_string(), String::from(""));
             let program = parser.parse();
 
             insta::with_settings!({
@@ -2907,7 +2949,7 @@ mod tests {
     #[test]
     fn test_parse_del_stmt() {
         for test_case in &["del a", "del a, b", "del a, b, "] {
-            let mut parser = Parser::new(test_case.to_string());
+            let mut parser = Parser::new(test_case.to_string(), String::from(""));
             let program = parser.parse();
 
             insta::with_settings!({
@@ -2922,7 +2964,7 @@ mod tests {
     #[test]
     fn parse_yield_statement() {
         for test_case in &["yield", "yield a", "yield a, b", "yield a, b, "] {
-            let mut parser = Parser::new(test_case.to_string());
+            let mut parser = Parser::new(test_case.to_string(), String::from(""));
             let program = parser.parse();
 
             insta::with_settings!({
@@ -2937,7 +2979,7 @@ mod tests {
     #[test]
     fn test_raise_statement() {
         for test_case in &["raise", "raise a", "raise a from c"] {
-            let mut parser = Parser::new(test_case.to_string());
+            let mut parser = Parser::new(test_case.to_string(), String::from(""));
             let program = parser.parse();
 
             insta::with_settings!({
@@ -2952,7 +2994,7 @@ mod tests {
     #[test]
     fn test_parse_break_continue() {
         for test_case in &["break", "continue"] {
-            let mut parser = Parser::new(test_case.to_string());
+            let mut parser = Parser::new(test_case.to_string(), String::from(""));
             let program = parser.parse();
 
             insta::with_settings!({
@@ -2983,7 +3025,7 @@ mod tests {
             "from .......a import b",
             "from ...",
         ] {
-            let mut parser = Parser::new(test_case.to_string());
+            let mut parser = Parser::new(test_case.to_string(), String::from(""));
             let program = parser.parse();
 
             insta::with_settings!({
@@ -2998,7 +3040,7 @@ mod tests {
     #[test]
     fn test_parse_bool_op() {
         for test_case in &["a or b", "a and b", "a or b or c", "a and b or c"] {
-            let mut parser = Parser::new(test_case.to_string());
+            let mut parser = Parser::new(test_case.to_string(), String::from(""));
             let program = parser.parse();
 
             insta::with_settings!({
@@ -3013,7 +3055,7 @@ mod tests {
     #[test]
     fn test_parse_unary_op() {
         for test_case in &["not a", "+ a", "~ a", "-a"] {
-            let mut parser = Parser::new(test_case.to_string());
+            let mut parser = Parser::new(test_case.to_string(), String::from(""));
             let program = parser.parse();
 
             insta::with_settings!({
@@ -3031,7 +3073,7 @@ mod tests {
             "a + b", "a - b", "a * b", "a / b", "a // b", "a % b", "a ** b", "a << b", "a >> b",
             "a & b", "a ^ b", "a | b", "a @ b",
         ] {
-            let mut parser = Parser::new(test_case.to_string());
+            let mut parser = Parser::new(test_case.to_string(), String::from(""));
             let program = parser.parse();
 
             insta::with_settings!({
@@ -3047,7 +3089,7 @@ mod tests {
     fn test_named_expression() {
         {
             let test_case = &"(a := b)";
-            let mut parser = Parser::new(test_case.to_string());
+            let mut parser = Parser::new(test_case.to_string(), String::from(""));
             let program = parser.parse();
 
             insta::with_settings!({
@@ -3074,7 +3116,7 @@ mod tests {
 )",
             "(a, b, c,)",
         ] {
-            let mut parser = Parser::new(test_case.to_string());
+            let mut parser = Parser::new(test_case.to_string(), String::from(""));
             let program = parser.parse();
 
             insta::with_settings!({
@@ -3089,7 +3131,7 @@ mod tests {
     #[test]
     fn test_yield_expression() {
         for test_case in &["yield", "yield a", "yield from a"] {
-            let mut parser = Parser::new(test_case.to_string());
+            let mut parser = Parser::new(test_case.to_string(), String::from(""));
             let program = parser.parse();
 
             insta::with_settings!({
@@ -3105,7 +3147,7 @@ mod tests {
     fn test_starred() {
         {
             let test_case = &"(*a)";
-            let mut parser = Parser::new(test_case.to_string());
+            let mut parser = Parser::new(test_case.to_string(), String::from(""));
             let program = parser.parse();
 
             insta::with_settings!({
@@ -3121,7 +3163,7 @@ mod tests {
     fn test_await_expression() {
         {
             let test_case = &"await a";
-            let mut parser = Parser::new(test_case.to_string());
+            let mut parser = Parser::new(test_case.to_string(), String::from(""));
             let program = parser.parse();
 
             insta::with_settings!({
@@ -3145,7 +3187,7 @@ mod tests {
             "a[b, c:d:e, f]",
             "a[::d,]",
         ] {
-            let mut parser = Parser::new(test_case.to_string());
+            let mut parser = Parser::new(test_case.to_string(), String::from(""));
             let program = parser.parse();
 
             insta::with_settings!({
@@ -3160,7 +3202,7 @@ mod tests {
     #[test]
     fn test_attribute_ref() {
         for test_case in &["a.b", "a.b.c", "a.b_c", "a.b.c.d"] {
-            let mut parser = Parser::new(test_case.to_string());
+            let mut parser = Parser::new(test_case.to_string(), String::from(""));
             let program = parser.parse();
 
             insta::with_settings!({
@@ -3184,7 +3226,7 @@ mod tests {
             "func(a, b=c, d=e, *f, **g)",
             "func(a,)",
         ] {
-            let mut parser = Parser::new(test_case.to_string());
+            let mut parser = Parser::new(test_case.to_string(), String::from(""));
             let program = parser.parse();
 
             insta::with_settings!({
@@ -3209,7 +3251,7 @@ mod tests {
             "lambda a=1 : a",
             "lambda a=1 : a,",
         ] {
-            let mut parser = Parser::new(test_case.to_string());
+            let mut parser = Parser::new(test_case.to_string(), String::from(""));
             let program = parser.parse();
 
             insta::with_settings!({
@@ -3225,7 +3267,7 @@ mod tests {
     fn test_conditional_expression() {
         {
             let test_case = &"a if b else c if d else e";
-            let mut parser = Parser::new(test_case.to_string());
+            let mut parser = Parser::new(test_case.to_string(), String::from(""));
             let program = parser.parse();
 
             insta::with_settings!({
@@ -3257,7 +3299,7 @@ mod tests {
             "'d' f'a' 'b'",
             "f'a_{1}' 'b' ",
         ] {
-            let mut parser = Parser::new(test_case.to_string());
+            let mut parser = Parser::new(test_case.to_string(), String::from(""));
             let program = parser.parse();
 
             insta::with_settings!({
@@ -3279,7 +3321,7 @@ mod tests {
             // unsupported
             // "f'hello_{f'''{a}'''}'",
         ] {
-            let mut parser = Parser::new(test_case.to_string());
+            let mut parser = Parser::new(test_case.to_string(), String::from(""));
             let program = parser.parse();
 
             insta::with_settings!({
@@ -3306,7 +3348,7 @@ mod tests {
             "a not in b",
             "a < b < c",
         ] {
-            let mut parser = Parser::new(test_case.to_string());
+            let mut parser = Parser::new(test_case.to_string(), String::from(""));
             let program = parser.parse();
 
             insta::with_settings!({
@@ -3346,7 +3388,7 @@ else:
                 pass
 ",
         ] {
-            let mut parser = Parser::new(test_case.to_string());
+            let mut parser = Parser::new(test_case.to_string(), String::from(""));
             let program = parser.parse();
 
             insta::with_settings!({
@@ -3370,7 +3412,7 @@ else:
         b = 1
 ",
         ] {
-            let mut parser = Parser::new(test_case.to_string());
+            let mut parser = Parser::new(test_case.to_string(), String::from(""));
             let program = parser.parse();
 
             insta::with_settings!({
@@ -3417,7 +3459,7 @@ except *Exception as e:
     pass
 ",
         ] {
-            let mut parser = Parser::new(test_case.to_string());
+            let mut parser = Parser::new(test_case.to_string(), String::from(""));
             let program = parser.parse();
 
             insta::with_settings!({
@@ -3438,7 +3480,7 @@ except *Exception as e:
             "a = ...",
             "... + 1",
         ] {
-            let mut parser = Parser::new(test_case.to_string());
+            let mut parser = Parser::new(test_case.to_string(), String::from(""));
             let program = parser.parse();
 
             insta::with_settings!({
@@ -3469,7 +3511,7 @@ except *Exception as e:
 
 	pass",
         ] {
-            let mut parser = Parser::new(test_case.to_string());
+            let mut parser = Parser::new(test_case.to_string(), String::from(""));
             let program = parser.parse();
             insta::with_settings!({
                     description => test_case.to_string(), // the template source code
@@ -3494,7 +3536,7 @@ except *Exception as e:
             "@decor
 class a: pass",
         ] {
-            let mut parser = Parser::new(test_case.to_string());
+            let mut parser = Parser::new(test_case.to_string(), String::from(""));
             let program = parser.parse();
 
             insta::with_settings!({
@@ -3556,7 +3598,7 @@ class a: pass",
     case [a, b, c]:
         pass",
         ] {
-            let mut parser = Parser::new(test_case.to_string());
+            let mut parser = Parser::new(test_case.to_string(), String::from(""));
             let program = parser.parse();
 
             insta::with_settings!({
@@ -3572,7 +3614,7 @@ class a: pass",
     fn test_complete() {
         glob!("../../test_data", "inputs/*.py", |path| {
             let test_case = fs::read_to_string(path).unwrap();
-            let mut parser = Parser::new(test_case.clone());
+            let mut parser = Parser::new(test_case.clone(), String::from(""));
             let program = parser.parse();
 
             insta::with_settings!({
@@ -3598,7 +3640,7 @@ class a: pass",
         glob!("../../test_data", "inputs/one_liners/*.py", |path| {
             let input = fs::read_to_string(path).unwrap();
             for test_case in input.split("\n\n") {
-                let mut parser = Parser::new(test_case.to_string());
+                let mut parser = Parser::new(test_case.to_string(), String::from(""));
                 let program = parser.parse();
 
                 insta::with_settings!({
