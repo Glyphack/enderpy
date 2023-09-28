@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Result, bail};
+use anyhow::{Result, bail};
 use clap::Parser as ClapParser;
 use cli::{Cli, Commands};
 use enderpy_python_parser::{token, Lexer, Parser};

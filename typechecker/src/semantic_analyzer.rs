@@ -431,7 +431,7 @@ impl TraversalVisitor for SemanticAnalyzer {
         self.create_symbol(f.name.clone(), function_declaration);
     }
 
-    fn visit_async_function_def(&mut self, f: &parser::ast::AsyncFunctionDef) {
+    fn visit_async_function_def(&mut self, _f: &parser::ast::AsyncFunctionDef) {
         todo!()
     }
 
