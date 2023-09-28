@@ -381,13 +381,10 @@ fn resolve_best_absolute_import<Host: host::Host>(
             "Looking in typeshed root directory: {}",
             typeshed_root.display()
         );
-        if typeshed_root != execution_environment.root {
-            if best_result_so_far
+        if typeshed_root != execution_environment.root && best_result_so_far
                 .as_ref()
-                .is_some_and(|result| result.py_typed_info.is_some() && !result.is_partly_resolved)
-            {
-                return best_result_so_far;
-            }
+                .is_some_and(|result| result.py_typed_info.is_some() && !result.is_partly_resolved) {
+            return best_result_so_far;
         }
     }
 
@@ -442,12 +439,10 @@ fn find_typeshed_path<Host: host::Host>(
         if let Some(path) = search::stdlib_typeshed_path(config, host) {
             typeshed_paths.push(path);
         }
-    } else {
-        if let Some(paths) =
-            search::third_party_typeshed_package_paths(module_descriptor, config, host)
-        {
-            typeshed_paths.extend(paths);
-        }
+    } else if let Some(paths) =
+        search::third_party_typeshed_package_paths(module_descriptor, config, host)
+    {
+        typeshed_paths.extend(paths);
     }
 
     for typeshed_path in typeshed_paths {
@@ -519,28 +514,23 @@ fn pick_best_import(
 
         // If both results are namespace imports, prefer the result that resolves all
         // imported symbols.
-        if best_import_so_far.is_namespace_package && new_import.is_namespace_package {
-            if !module_descriptor.imported_symbols.is_empty() {
-                if !best_import_so_far
+        if best_import_so_far.is_namespace_package && new_import.is_namespace_package && !module_descriptor.imported_symbols.is_empty() && !best_import_so_far
                     .implicit_imports
-                    .resolves_namespace_package(&module_descriptor.imported_symbols)
-                {
-                    if new_import
-                        .implicit_imports
-                        .resolves_namespace_package(&module_descriptor.imported_symbols)
-                    {
-                        return new_import;
-                    }
+                    .resolves_namespace_package(&module_descriptor.imported_symbols) {
+            if new_import
+                .implicit_imports
+                .resolves_namespace_package(&module_descriptor.imported_symbols)
+            {
+                return new_import;
+            }
 
-                    // Prefer the namespace package that has an `__init__.py[i]` file present in the
-                    // final directory over one that does not.
-                    if best_import_so_far.is_init_file_present && !new_import.is_init_file_present {
-                        return best_import_so_far;
-                    }
-                    if !best_import_so_far.is_init_file_present && new_import.is_init_file_present {
-                        return new_import;
-                    }
-                }
+            // Prefer the namespace package that has an `__init__.py[i]` file present in the
+            // final directory over one that does not.
+            if best_import_so_far.is_init_file_present && !new_import.is_init_file_present {
+                return best_import_so_far;
+            }
+            if !best_import_so_far.is_init_file_present && new_import.is_init_file_present {
+                return new_import;
             }
         }
 

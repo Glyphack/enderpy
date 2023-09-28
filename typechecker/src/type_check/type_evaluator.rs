@@ -35,9 +35,9 @@ impl TypeEvaluator {
         let decl = symbol
             .declaration_until_position(position)
             .ok_or_else(|| miette!("symbol {} is not defined", symbol.name))?;
-        return self
-            .get_type_from_declaration(&decl)
-            .map_err(|e| miette!("cannot infer type for symbol {}: {}", symbol.name, e));
+        self
+            .get_type_from_declaration(decl)
+            .map_err(|e| miette!("cannot infer type for symbol {}: {}", symbol.name, e))
     }
     pub fn get_type(&self, expr: &ast::Expression) -> Result<PythonType> {
         match expr {
@@ -190,7 +190,9 @@ impl TypeEvaluator {
     }
 
     fn get_type_from_declaration(&self, declaration: &Declaration) -> Result<PythonType> {
-        let decl_type = match declaration {
+        
+
+        match declaration {
             Declaration::Variable(v) => {
                 if let Some(type_annotation) = &v.type_annotation {
                     Ok(type_inference::get_type_from_annotation(type_annotation))
@@ -219,9 +221,7 @@ impl TypeEvaluator {
             }
             Declaration::Class(_) => Ok(PythonType::Unknown),
             Declaration::Parameter(_) => Ok(PythonType::Unknown),
-        };
-
-        decl_type
+        }
     }
 
     fn infer_type_from_symbol_table(&self, name: &str, position: usize) -> Result<PythonType> {
@@ -577,7 +577,7 @@ mod tests {
         let mut result_sorted = result.clone().into_iter().collect::<Vec<_>>();
         result_sorted.sort_by(|a, b| a.0.cmp(&b.0));
 
-        return format!("{:#?}", result_sorted);
+        format!("{:#?}", result_sorted)
     }
 
     macro_rules! snap_type_eval {

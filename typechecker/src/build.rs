@@ -91,8 +91,7 @@ impl BuildManager {
     pub fn get_module_name(path: &PathBuf) -> String {
         path.to_str()
             .unwrap_or_default()
-            .replace("/", ".")
-            .replace("\\", ".")
+            .replace(['/', '\\'], ".")
     }
 
     // Entry point to analyze the program
@@ -170,7 +169,7 @@ impl BuildManager {
             discovered_files.extend(next_imports.clone());
             new_imports = next_imports;
         }
-        return discovered_files;
+        discovered_files
     }
 
     // Resolves imports in a file and return the resolved paths
@@ -254,7 +253,7 @@ impl BuildManager {
             }
         }
 
-        return resolved_paths;
+        resolved_paths
     }
 }
 

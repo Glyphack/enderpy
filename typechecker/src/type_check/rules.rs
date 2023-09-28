@@ -8,5 +8,5 @@ pub fn is_reassignment_valid(old_type: &PythonType, new_type: &PythonType) -> bo
         return true;
     }
 
-    return false;
+    false
 }

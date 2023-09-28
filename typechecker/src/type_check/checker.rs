@@ -266,13 +266,13 @@ impl<'a> TraversalVisitor for TypeChecker<'a> {
     fn visit_match_pattern(&mut self, _m: &parser::ast::MatchPattern) {
         match _m {
             MatchPattern::MatchValue(m) => self.visit_expr(&m.value),
-            MatchPattern::MatchSingleton(m) => self.visit_expr(&m),
+            MatchPattern::MatchSingleton(m) => self.visit_expr(m),
             MatchPattern::MatchSequence(m) => {
                 for item in m.iter() {
                     self.visit_match_pattern(item);
                 }
             }
-            MatchPattern::MatchStar(m) => self.visit_expr(&m),
+            MatchPattern::MatchStar(m) => self.visit_expr(m),
             MatchPattern::MatchMapping(m) => {
                 for key in &m.keys {
                     self.visit_expr(key);
@@ -457,7 +457,7 @@ impl<'a> TraversalVisitor for TypeChecker<'a> {
     fn visit_compare(&mut self, _c: &Compare) {
         self.visit_expr(&_c.left);
         for comprators in &_c.comparators {
-            self.visit_expr(&comprators);
+            self.visit_expr(comprators);
         }
     }
 

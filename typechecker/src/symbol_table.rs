@@ -198,7 +198,7 @@ impl SymbolTableNode {
                 .cmp(&b.declaration_path().node.start)
         });
 
-        filtered_declarations.last().map(|decl| *decl)
+        filtered_declarations.last().copied()
     }
 }
 

@@ -16,7 +16,7 @@ impl Display for Token {
         let start = self.start.to_string();
         let end = self.end.to_string();
         let mut s = format!("{},{}-{}:{} ", start, end, start, end);
-        s.push_str(&kind);
+        s.push_str(kind);
 
         let mut padding = 50 - s.len();
         while padding > 0 {

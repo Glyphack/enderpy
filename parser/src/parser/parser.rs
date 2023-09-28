@@ -179,12 +179,12 @@ impl Parser {
         self.bump_any();
         let range = self.finish_node(node);
         let line_number = self.get_line_number_of_character_position(range.start);
-        return Err(miette!(
+        Err(miette!(
             "Unexpected token {:?} at line {} at position {}",
             kind,
             line_number,
             range.start,
-        ));
+        ))
     }
 
     fn get_line_number_of_character_position(&self, pos: usize) -> u32 {
@@ -1522,18 +1522,14 @@ impl Parser {
         }
         let started_with_star = self.at(Kind::Mul);
         let first_elm = self.parse_star_named_expression()?;
-        if !started_with_star && self.at(Kind::For) {
-            if self.at(Kind::For)
-                || self.at(Kind::Async) && matches!(self.peek_kind(), Ok(Kind::For))
-            {
-                let generators = self.parse_comp_for()?;
-                self.expect(Kind::RightBrace)?;
-                return Ok(Expression::ListComp(Box::new(ListComp {
-                    node: self.finish_node(node),
-                    element: Box::new(first_elm),
-                    generators,
-                })));
-            }
+        if !started_with_star && self.at(Kind::For) && (self.at(Kind::For) || self.at(Kind::Async) && matches!(self.peek_kind(), Ok(Kind::For))) {
+            let generators = self.parse_comp_for()?;
+            self.expect(Kind::RightBrace)?;
+            return Ok(Expression::ListComp(Box::new(ListComp {
+                node: self.finish_node(node),
+                element: Box::new(first_elm),
+                generators,
+            })));
         }
         self.bump(Kind::Comma);
         let rest = self.parse_starred_list(Kind::RightBrace)?;
@@ -1764,19 +1760,15 @@ impl Parser {
 
     // https://docs.python.org/3/reference/expressions.html#set-displays
     fn parse_set(&mut self, node: Node, first_elm: Expression) -> Result<Expression> {
-        if !matches!(first_elm, Expression::Starred(_)) && self.at(Kind::For) {
-            if self.at(Kind::For)
-                || self.at(Kind::Async) && matches!(self.peek_kind(), Ok(Kind::For))
-            {
-                let generators = self.parse_comp_for()?;
-                self.consume_whitespace_and_newline();
-                self.expect(Kind::RightBracket)?;
-                return Ok(Expression::SetComp(Box::new(SetComp {
-                    node: self.finish_node(node),
-                    element: Box::new(first_elm),
-                    generators,
-                })));
-            }
+        if !matches!(first_elm, Expression::Starred(_)) && self.at(Kind::For) && (self.at(Kind::For) || self.at(Kind::Async) && matches!(self.peek_kind(), Ok(Kind::For))) {
+            let generators = self.parse_comp_for()?;
+            self.consume_whitespace_and_newline();
+            self.expect(Kind::RightBracket)?;
+            return Ok(Expression::SetComp(Box::new(SetComp {
+                node: self.finish_node(node),
+                element: Box::new(first_elm),
+                generators,
+            })));
         }
         self.bump(Kind::Comma);
         let rest = self.parse_starred_list(Kind::RightBracket)?;
@@ -1796,12 +1788,12 @@ impl Parser {
         if self.at(Kind::For) || self.at(Kind::Async) && matches!(self.peek_kind(), Ok(Kind::For)) {
             let generators = self.parse_comp_for()?;
             self.expect(Kind::RightBracket)?;
-            return Ok(Expression::DictComp(Box::new(DictComp {
+            Ok(Expression::DictComp(Box::new(DictComp {
                 node: self.finish_node(node),
                 key: Box::new(first_key),
                 value: Box::new(first_val),
                 generators,
-            })));
+            })))
         } else {
             // we already consumed the first pair
             // so if there are more pairs we need to consume the comma
@@ -1836,7 +1828,7 @@ impl Parser {
             self.bump(self.cur_kind());
             consumed = true;
         }
-        return consumed;
+        consumed
     }
 
     // https://docs.python.org/3/reference/expressions.html#expression-lists

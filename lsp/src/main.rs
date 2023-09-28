@@ -46,7 +46,7 @@ impl Backend {
                 code: None,
                 code_description: None,
                 source: Some("Enderpy".to_string()),
-                message: String::from(err.msg),
+                message: err.msg,
                 related_information: None,
                 tags: None,
                 data: None,

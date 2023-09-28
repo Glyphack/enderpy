@@ -51,22 +51,16 @@ fn find_site_packages_path(
                 if dir_path
                     .file_name()
                     .and_then(OsStr::to_str)?
-                    .starts_with("python3.")
-                {
-                    if dir_path.join(SITE_PACKAGES).is_dir() {
-                        return Some(dir_path);
-                    }
+                    .starts_with("python3.") && dir_path.join(SITE_PACKAGES).is_dir() {
+                    return Some(dir_path);
                 }
             } else if metadata.file_type().is_symlink() {
                 let symlink_path = fs::read_link(entry.path()).ok()?;
                 if symlink_path
                     .file_name()
                     .and_then(OsStr::to_str)?
-                    .starts_with("python3.")
-                {
-                    if symlink_path.join(SITE_PACKAGES).is_dir() {
-                        return Some(symlink_path);
-                    }
+                    .starts_with("python3.") && symlink_path.join(SITE_PACKAGES).is_dir() {
+                    return Some(symlink_path);
                 }
             }
 
@@ -230,23 +224,20 @@ fn build_typeshed_third_party_package_map(
                         .entry(inner_entry.file_name().to_string_lossy().to_string())
                         .or_insert_with(Vec::new)
                         .push(outer_entry.path());
-                } else if inner_entry.file_type()?.is_file() {
-                    if inner_entry
+                } else if inner_entry.file_type()?.is_file() && inner_entry
                         .path()
                         .extension()
-                        .is_some_and(|extension| extension == "pyi")
+                        .is_some_and(|extension| extension == "pyi") {
+                    if let Some(stripped_file_name) = inner_entry
+                        .path()
+                        .file_stem()
+                        .and_then(std::ffi::OsStr::to_str)
+                        .map(std::string::ToString::to_string)
                     {
-                        if let Some(stripped_file_name) = inner_entry
-                            .path()
-                            .file_stem()
-                            .and_then(std::ffi::OsStr::to_str)
-                            .map(std::string::ToString::to_string)
-                        {
-                            package_map
-                                .entry(stripped_file_name)
-                                .or_insert_with(Vec::new)
-                                .push(outer_entry.path());
-                        }
+                        package_map
+                            .entry(stripped_file_name)
+                            .or_insert_with(Vec::new)
+                            .push(outer_entry.path());
                     }
                 }
             }
