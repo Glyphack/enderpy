@@ -1,5 +1,5 @@
 use std::path::{Path, PathBuf};
-const PROJECT_ROOT_MARKERS: [&str; 2] = ["__init__.py", "pyproject.toml"];
+const PROJECT_ROOT_MARKERS: [&str; 1] = ["pyproject.toml"];
 
 pub fn find_project_root(path: &PathBuf) -> &Path {
     let root = path

@@ -281,7 +281,6 @@ impl TraversalVisitor for SemanticAnalyzer {
     }
 
     fn visit_import(&mut self, _i: &parser::ast::Import) {
-        println!("import {:?}", _i);
         for alias in &_i.names {
             self.create_import_alias_symbol(alias, DeclarationPath {
                 module_name: self.file.module_name.clone(),

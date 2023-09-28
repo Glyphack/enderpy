@@ -12,7 +12,6 @@ mod cli;
 
 fn main() -> Result<()> {
     let cli = Cli::parse();
-
     match &cli.command {
         Commands::Tokenize { file } => tokenize(file),
         Commands::Parse { file } => parse(file),
@@ -80,7 +79,7 @@ fn parse(file: &PathBuf) -> Result<()> {
 
 fn check(path: &PathBuf) -> Result<()> {
     if path.is_dir() {
-        return bail!("Path must be a file");
+        bail!("Path must be a file");
     }
     let source = fs::read_to_string(path)?;
     let initial_source = BuildSource {

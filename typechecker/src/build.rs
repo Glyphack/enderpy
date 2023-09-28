@@ -1,4 +1,5 @@
 use std::{collections::HashMap, path::PathBuf};
+use env_logger::Builder;
 use log::info;
 
 use enderpy_python_parser::Parser;
@@ -52,6 +53,12 @@ impl BuildManager {
 
             modules.insert(mod_name, State::new(file));
         }
+        
+        if options.debug {
+            let mut builder = Builder::new();
+            builder.filter(None, log::LevelFilter::Debug);
+            builder.init();
+        }
 
         BuildManager {
             errors: vec![],
@@ -97,10 +104,12 @@ impl BuildManager {
     // Entry point to analyze the program
     pub fn build(&mut self) {
         let files = self.modules.values().collect();
-        info!("files: {:#?}", files);
         let new_files = self.gather_files(files);
         for file in new_files {
             self.modules.insert(file.file.module_name.clone(), file);
+        }
+        for module in self.modules.values() {
+            info!("file: {:#?}", module.file.module_name);
         }
 
         self.pre_analysis();
@@ -181,6 +190,8 @@ impl BuildManager {
             // Adding a blank path to the extra paths is a hack to make the resolver work
             extra_paths: vec![PathBuf::from("")],
         };
+        log::debug!("import options: {:?}", execution_environment);
+
         let import_config = &Config {
             typeshed_path: None,
             stub_path: None,
@@ -221,8 +232,9 @@ impl BuildManager {
                 host,
             );
             if !resolved.is_import_found {
-                let error = format!("cannot import name '{:#?}'", import_desc.name_parts,);
-                println!("import error: {:#?}", error);
+                let error = format!("cannot import name '{}'", import_desc.name());
+                log::warn!("{}", error);
+
             }
             if resolved.is_import_found {
                 for resolved_path in resolved.resolved_paths.iter() {
