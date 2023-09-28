@@ -4,7 +4,7 @@ use crate::lexer::lexer::Lexer;
 use crate::parser::ast::*;
 use crate::parser::string::{extract_string_inside, is_string};
 use crate::token::{Kind, Token, TokenValue};
-use miette::{Result, ErrReport, miette};
+use miette::{Result, ErrReport, miette, bail};
 
 use super::diagnostics;
 use super::expression::{is_atom, is_iterable};
@@ -179,7 +179,12 @@ impl Parser {
         self.bump_any();
         let range = self.finish_node(node);
         let line_number = self.get_line_number_of_character_position(range.start);
-        Err(diagnostics::UnexpectedToken(line_number, kind.to_str(), range).into())
+        return Err(miette!(
+            "Unexpected token {:?} at line {} at position {}",
+            kind,
+            line_number,
+            range.start,
+        ));
     }
 
     fn get_line_number_of_character_position(&self, pos: usize) -> u32 {
@@ -1509,6 +1514,12 @@ impl Parser {
     fn parse_list(&mut self) -> Result<Expression> {
         let node = self.start_node();
         self.bump(Kind::LeftBrace);
+        if self.eat(Kind::RightBrace) {
+            return Ok(Expression::List(Box::new(List {
+                node: self.finish_node(node),
+                elements: vec![],
+            })));
+        }
         let started_with_star = self.at(Kind::Mul);
         let first_elm = self.parse_star_named_expression()?;
         if !started_with_star && self.at(Kind::For) {
@@ -1855,9 +1866,7 @@ impl Parser {
             let expr = self.parse_or_expr()?;
             node = self.finish_node(node);
             if !is_iterable(&expr) {
-                return Err(
-                    diagnostics::UnexpectedToken(0, starred_value_kind.to_str(), node).into(),
-                );
+                self.unepxted_token(node, starred_value_kind, );
             }
             return Ok(Expression::Starred(Box::new(Starred {
                 node: self.finish_node(node),
@@ -2119,12 +2128,7 @@ impl Parser {
                     let keyword_arg = match self.parse_keyword_item() {
                         Ok(keyword_arg) => keyword_arg,
                         Err(_) => {
-                            return Err(diagnostics::ExpectToken(
-                                "Keyword argument",
-                                self.cur_kind().to_str(),
-                                self.finish_node(self.start_node()),
-                            )
-                            .into());
+                            bail!("Expected keyword argument but found {}, at {:?}", self.cur_kind().to_str(), self.cur_token().start);
                         }
                     };
                     keyword_args.push(keyword_arg);
@@ -2339,12 +2343,7 @@ impl Parser {
 
             return Ok(expr);
         } else {
-            return Err(diagnostics::UnexpectedToken(
-                0,
-                self.cur_kind().to_str(),
-                self.finish_node(node),
-            )
-            .into());
+            return Err(self.unepxted_token(node, self.cur_kind()).err().unwrap());
         }
     }
 
@@ -2635,21 +2634,11 @@ impl Parser {
                     ComparisonOperator::NotIn
                 }
                 _ => {
-                    return Err(diagnostics::UnexpectedToken(
-                        0,
-                        self.cur_kind().to_str(),
-                        self.finish_node(node),
-                    )
-                    .into())
+                    return Err(self.unepxted_token(node, self.cur_kind()).err().unwrap());
                 }
             },
             _ => {
-                return Err(diagnostics::UnexpectedToken(
-                    0,
-                    self.cur_kind().to_str(),
-                    self.finish_node(node),
-                )
-                .into())
+                return Err(self.unepxted_token(node, self.cur_kind()).err().unwrap());
             }
         };
         self.bump_any();
@@ -2666,12 +2655,7 @@ impl Parser {
             Kind::Mod => Ok(BinaryOperator::Mod),
             Kind::Pow => Ok(BinaryOperator::Pow),
             Kind::MatrixMul => Ok(BinaryOperator::MatMult),
-            _ => Err(diagnostics::UnexpectedToken(
-                0,
-                self.cur_kind().to_str(),
-                self.finish_node(self.start_node()),
-            )
-            .into()),
+            _ => Err(self.unepxted_token(self.start_node(), self.cur_kind()).err().unwrap()),
         };
         self.bump_any();
         op
@@ -2836,12 +2820,7 @@ impl Parser {
                     self.expect(Kind::RightBracket)?;
                 }
                 _ => {
-                    return Err(diagnostics::UnexpectedToken(
-                        0,
-                        "unknown token in fstring",
-                        self.finish_node(self.start_node()),
-                    )
-                    .into());
+                    return Err(self.unepxted_token(self.start_node(), self.cur_kind()).err().unwrap());
                 }
             }
         }
