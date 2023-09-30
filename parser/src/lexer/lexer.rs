@@ -26,6 +26,9 @@ pub struct Lexer {
     // Each time we see a right bracket we decrement this
     // This is used to match brackets in fstrings
     inside_fstring_bracket: i8,
+
+    // TODO: Hacky way to handle emitting multiple de indents
+    next_token_is_dedent: u8,
 }
 
 impl Lexer {
@@ -38,10 +41,20 @@ impl Lexer {
             nesting: 0,
             fstring_stack: vec![],
             inside_fstring_bracket: 0,
+            next_token_is_dedent: 0,
         }
     }
 
     pub fn next_token(&mut self) -> Result<Token> {
+        while self.next_token_is_dedent > 0 {
+            self.next_token_is_dedent -= 1;
+            return Ok(Token {
+                kind: Kind::Dedent,
+                value: TokenValue::None,
+                start: self.current,
+                end: self.current,
+            });
+        } 
         let start = self.current;
         let kind = self.next_kind()?;
 
@@ -68,12 +81,14 @@ impl Lexer {
         let fstring_stack = self.fstring_stack.clone();
         let start_of_line = self.start_of_line;
         let inside_fstring_bracket = self.inside_fstring_bracket;
+        let next_token_is_dedent = self.next_token_is_dedent;
         let token = self.next_token();
         self.current = current;
         self.nesting = nesting;
         self.fstring_stack = fstring_stack;
         self.start_of_line = start_of_line;
         self.inside_fstring_bracket = inside_fstring_bracket;
+        self.next_token_is_dedent = next_token_is_dedent;
         token
     }
 
@@ -843,6 +858,9 @@ impl Lexer {
                         Ordering::Less => panic!("Invalid indentation, current indentation is {} which is less than previous {}", spaces_count, top),
                     }
                 }
+                if de_indents != 1 {
+                    self.next_token_is_dedent += 1;
+                } 
                 TokenValue::Indent(de_indents)
             }
             Kind::Indent => TokenValue::Indent(1),

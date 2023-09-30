@@ -1,18 +1,19 @@
 ---
 source: parser/src/parser/parser.rs
-description: "match a:\n    case (a, b):\n        pass\n    case {1: _, 2: _}:\n        pass\n    case {**rest}:\n        pass\n"
+description: "match a:\n    case (a, b):\n        pass\n    case {1: _ ,2: _}:\n        pass\n    case {**rest}:\n        pass"
+input_file: parser/test_data/inputs/one_liners/match.py
 ---
 Module {
     node: Node {
         start: 0,
-        end: 107,
+        end: 106,
     },
     body: [
         Match(
             Match {
                 node: Node {
                     start: 0,
-                    end: 107,
+                    end: 106,
                 },
                 subject: Name(
                     Name {
@@ -144,7 +145,7 @@ Module {
                     MatchCase {
                         node: Node {
                             start: 79,
-                            end: 107,
+                            end: 106,
                         },
                         pattern: MatchMapping(
                             MatchMapping {

@@ -88,6 +88,12 @@ description: "if True:\n    if True:\n        pass\ndef"
         end: 35,
     },
     Token {
+        kind: Dedent,
+        value: None,
+        start: 35,
+        end: 35,
+    },
+    Token {
         kind: Def,
         value: None,
         start: 35,

@@ -13,7 +13,7 @@ Module {
             FunctionDef {
                 node: Node {
                     start: 0,
-                    end: 609,
+                    end: 342,
                 },
                 name: "_handle_ticker_index",
                 args: Arguments {
@@ -102,7 +102,7 @@ Module {
                         If {
                             node: Node {
                                 start: 96,
-                                end: 342,
+                                end: 320,
                             },
                             test: Compare(
                                 Compare {
@@ -307,366 +307,366 @@ Module {
                                         orelse: [],
                                     },
                                 ),
-                                Return(
-                                    Return {
-                                        node: Node {
-                                            start: 320,
-                                            end: 339,
-                                        },
-                                        value: Some(
-                                            Name(
-                                                Name {
-                                                    node: Node {
-                                                        start: 327,
-                                                        end: 339,
-                                                    },
-                                                    id: "ticker_index",
-                                                },
-                                            ),
-                                        ),
-                                    },
-                                ),
                             ],
                             orelse: [],
                         },
                     ),
-                    FunctionDef(
-                        FunctionDef {
+                    Return(
+                        Return {
                             node: Node {
-                                start: 342,
-                                end: 609,
+                                start: 320,
+                                end: 339,
                             },
-                            name: "_extract_ticker_client_types_data",
-                            args: Arguments {
-                                node: Node {
-                                    start: 380,
-                                    end: 397,
-                                },
-                                posonlyargs: [],
-                                args: [
-                                    Arg {
-                                        node: Node {
-                                            start: 380,
-                                            end: 397,
-                                        },
-                                        arg: "ticker_index",
-                                        annotation: Some(
-                                            Name(
-                                                Name {
-                                                    node: Node {
-                                                        start: 394,
-                                                        end: 397,
-                                                    },
-                                                    id: "str",
-                                                },
-                                            ),
-                                        ),
-                                    },
-                                ],
-                                vararg: None,
-                                kwonlyargs: [],
-                                kw_defaults: [],
-                                kwarg: None,
-                                defaults: [],
-                            },
-                            body: [
-                                AssignStatement(
-                                    Assign {
-                                        node: Node {
-                                            start: 412,
-                                            end: 463,
-                                        },
-                                        targets: [
-                                            Name(
-                                                Name {
-                                                    node: Node {
-                                                        start: 412,
-                                                        end: 415,
-                                                    },
-                                                    id: "url",
-                                                },
-                                            ),
-                                        ],
-                                        value: Call(
-                                            Call {
-                                                node: Node {
-                                                    start: 449,
-                                                    end: 463,
-                                                },
-                                                func: Attribute(
-                                                    Attribute {
-                                                        node: Node {
-                                                            start: 418,
-                                                            end: 449,
-                                                        },
-                                                        value: Name(
-                                                            Name {
-                                                                node: Node {
-                                                                    start: 418,
-                                                                    end: 442,
-                                                                },
-                                                                id: "TSE_CLIENT_TYPE_DATA_URL",
-                                                            },
-                                                        ),
-                                                        attr: "format",
-                                                    },
-                                                ),
-                                                args: [
-                                                    Name(
-                                                        Name {
-                                                            node: Node {
-                                                                start: 450,
-                                                                end: 462,
-                                                            },
-                                                            id: "ticker_index",
-                                                        },
-                                                    ),
-                                                ],
-                                                keywords: [],
-                                                starargs: None,
-                                                kwargs: None,
-                                            },
-                                        ),
-                                    },
-                                ),
-                                WithStatement(
-                                    With {
-                                        node: Node {
-                                            start: 468,
-                                            end: 561,
-                                        },
-                                        items: [
-                                            WithItem {
-                                                node: Node {
-                                                    start: 473,
-                                                    end: 508,
-                                                },
-                                                context_expr: Call(
-                                                    Call {
-                                                        node: Node {
-                                                            start: 473,
-                                                            end: 497,
-                                                        },
-                                                        func: Name(
-                                                            Name {
-                                                                node: Node {
-                                                                    start: 473,
-                                                                    end: 495,
-                                                                },
-                                                                id: "requests_retry_session",
-                                                            },
-                                                        ),
-                                                        args: [],
-                                                        keywords: [],
-                                                        starargs: None,
-                                                        kwargs: None,
-                                                    },
-                                                ),
-                                                optional_vars: Some(
-                                                    Name(
-                                                        Name {
-                                                            node: Node {
-                                                                start: 501,
-                                                                end: 508,
-                                                            },
-                                                            id: "session",
-                                                        },
-                                                    ),
-                                                ),
-                                            },
-                                        ],
-                                        body: [
-                                            AssignStatement(
-                                                Assign {
-                                                    node: Node {
-                                                        start: 518,
-                                                        end: 556,
-                                                    },
-                                                    targets: [
-                                                        Name(
-                                                            Name {
-                                                                node: Node {
-                                                                    start: 518,
-                                                                    end: 526,
-                                                                },
-                                                                id: "response",
-                                                            },
-                                                        ),
-                                                    ],
-                                                    value: Call(
-                                                        Call {
-                                                            node: Node {
-                                                                start: 540,
-                                                                end: 556,
-                                                            },
-                                                            func: Attribute(
-                                                                Attribute {
-                                                                    node: Node {
-                                                                        start: 529,
-                                                                        end: 540,
-                                                                    },
-                                                                    value: Name(
-                                                                        Name {
-                                                                            node: Node {
-                                                                                start: 529,
-                                                                                end: 536,
-                                                                            },
-                                                                            id: "session",
-                                                                        },
-                                                                    ),
-                                                                    attr: "get",
-                                                                },
-                                                            ),
-                                                            args: [
-                                                                Name(
-                                                                    Name {
-                                                                        node: Node {
-                                                                            start: 541,
-                                                                            end: 544,
-                                                                        },
-                                                                        id: "url",
-                                                                    },
-                                                                ),
-                                                            ],
-                                                            keywords: [
-                                                                Keyword {
-                                                                    node: Node {
-                                                                        start: 546,
-                                                                        end: 555,
-                                                                    },
-                                                                    arg: Some(
-                                                                        "timeout",
-                                                                    ),
-                                                                    value: Constant(
-                                                                        Constant {
-                                                                            node: Node {
-                                                                                start: 554,
-                                                                                end: 555,
-                                                                            },
-                                                                            value: Int(
-                                                                                "5",
-                                                                            ),
-                                                                        },
-                                                                    ),
-                                                                },
-                                                            ],
-                                                            starargs: None,
-                                                            kwargs: None,
-                                                        },
-                                                    ),
-                                                },
-                                            ),
-                                        ],
-                                    },
-                                ),
-                                AssignStatement(
-                                    Assign {
-                                        node: Node {
-                                            start: 561,
-                                            end: 592,
-                                        },
-                                        targets: [
-                                            Name(
-                                                Name {
-                                                    node: Node {
-                                                        start: 561,
-                                                        end: 565,
-                                                    },
-                                                    id: "data",
-                                                },
-                                            ),
-                                        ],
-                                        value: Call(
-                                            Call {
-                                                node: Node {
-                                                    start: 587,
-                                                    end: 592,
-                                                },
-                                                func: Attribute(
-                                                    Attribute {
-                                                        node: Node {
-                                                            start: 568,
-                                                            end: 587,
-                                                        },
-                                                        value: Attribute(
-                                                            Attribute {
-                                                                node: Node {
-                                                                    start: 568,
-                                                                    end: 581,
-                                                                },
-                                                                value: Name(
-                                                                    Name {
-                                                                        node: Node {
-                                                                            start: 568,
-                                                                            end: 576,
-                                                                        },
-                                                                        id: "response",
-                                                                    },
-                                                                ),
-                                                                attr: "text",
-                                                            },
-                                                        ),
-                                                        attr: "split",
-                                                    },
-                                                ),
-                                                args: [
-                                                    Constant(
-                                                        Constant {
-                                                            node: Node {
-                                                                start: 588,
-                                                                end: 591,
-                                                            },
-                                                            value: Str(
-                                                                ";",
-                                                            ),
-                                                        },
-                                                    ),
-                                                ],
-                                                keywords: [],
-                                                starargs: None,
-                                                kwargs: None,
-                                            },
-                                        ),
-                                    },
-                                ),
-                                Return(
-                                    Return {
-                                        node: Node {
-                                            start: 597,
-                                            end: 608,
-                                        },
-                                        value: Some(
-                                            Name(
-                                                Name {
-                                                    node: Node {
-                                                        start: 604,
-                                                        end: 608,
-                                                    },
-                                                    id: "data",
-                                                },
-                                            ),
-                                        ),
-                                    },
-                                ),
-                            ],
-                            decorator_list: [],
-                            returns: Some(
+                            value: Some(
                                 Name(
                                     Name {
                                         node: Node {
-                                            start: 402,
-                                            end: 406,
+                                            start: 327,
+                                            end: 339,
                                         },
-                                        id: "List",
+                                        id: "ticker_index",
                                     },
                                 ),
                             ),
-                            type_comment: None,
                         },
                     ),
                 ],
                 decorator_list: [],
                 returns: None,
+                type_comment: None,
+            },
+        ),
+        FunctionDef(
+            FunctionDef {
+                node: Node {
+                    start: 342,
+                    end: 609,
+                },
+                name: "_extract_ticker_client_types_data",
+                args: Arguments {
+                    node: Node {
+                        start: 380,
+                        end: 397,
+                    },
+                    posonlyargs: [],
+                    args: [
+                        Arg {
+                            node: Node {
+                                start: 380,
+                                end: 397,
+                            },
+                            arg: "ticker_index",
+                            annotation: Some(
+                                Name(
+                                    Name {
+                                        node: Node {
+                                            start: 394,
+                                            end: 397,
+                                        },
+                                        id: "str",
+                                    },
+                                ),
+                            ),
+                        },
+                    ],
+                    vararg: None,
+                    kwonlyargs: [],
+                    kw_defaults: [],
+                    kwarg: None,
+                    defaults: [],
+                },
+                body: [
+                    AssignStatement(
+                        Assign {
+                            node: Node {
+                                start: 412,
+                                end: 463,
+                            },
+                            targets: [
+                                Name(
+                                    Name {
+                                        node: Node {
+                                            start: 412,
+                                            end: 415,
+                                        },
+                                        id: "url",
+                                    },
+                                ),
+                            ],
+                            value: Call(
+                                Call {
+                                    node: Node {
+                                        start: 449,
+                                        end: 463,
+                                    },
+                                    func: Attribute(
+                                        Attribute {
+                                            node: Node {
+                                                start: 418,
+                                                end: 449,
+                                            },
+                                            value: Name(
+                                                Name {
+                                                    node: Node {
+                                                        start: 418,
+                                                        end: 442,
+                                                    },
+                                                    id: "TSE_CLIENT_TYPE_DATA_URL",
+                                                },
+                                            ),
+                                            attr: "format",
+                                        },
+                                    ),
+                                    args: [
+                                        Name(
+                                            Name {
+                                                node: Node {
+                                                    start: 450,
+                                                    end: 462,
+                                                },
+                                                id: "ticker_index",
+                                            },
+                                        ),
+                                    ],
+                                    keywords: [],
+                                    starargs: None,
+                                    kwargs: None,
+                                },
+                            ),
+                        },
+                    ),
+                    WithStatement(
+                        With {
+                            node: Node {
+                                start: 468,
+                                end: 561,
+                            },
+                            items: [
+                                WithItem {
+                                    node: Node {
+                                        start: 473,
+                                        end: 508,
+                                    },
+                                    context_expr: Call(
+                                        Call {
+                                            node: Node {
+                                                start: 473,
+                                                end: 497,
+                                            },
+                                            func: Name(
+                                                Name {
+                                                    node: Node {
+                                                        start: 473,
+                                                        end: 495,
+                                                    },
+                                                    id: "requests_retry_session",
+                                                },
+                                            ),
+                                            args: [],
+                                            keywords: [],
+                                            starargs: None,
+                                            kwargs: None,
+                                        },
+                                    ),
+                                    optional_vars: Some(
+                                        Name(
+                                            Name {
+                                                node: Node {
+                                                    start: 501,
+                                                    end: 508,
+                                                },
+                                                id: "session",
+                                            },
+                                        ),
+                                    ),
+                                },
+                            ],
+                            body: [
+                                AssignStatement(
+                                    Assign {
+                                        node: Node {
+                                            start: 518,
+                                            end: 556,
+                                        },
+                                        targets: [
+                                            Name(
+                                                Name {
+                                                    node: Node {
+                                                        start: 518,
+                                                        end: 526,
+                                                    },
+                                                    id: "response",
+                                                },
+                                            ),
+                                        ],
+                                        value: Call(
+                                            Call {
+                                                node: Node {
+                                                    start: 540,
+                                                    end: 556,
+                                                },
+                                                func: Attribute(
+                                                    Attribute {
+                                                        node: Node {
+                                                            start: 529,
+                                                            end: 540,
+                                                        },
+                                                        value: Name(
+                                                            Name {
+                                                                node: Node {
+                                                                    start: 529,
+                                                                    end: 536,
+                                                                },
+                                                                id: "session",
+                                                            },
+                                                        ),
+                                                        attr: "get",
+                                                    },
+                                                ),
+                                                args: [
+                                                    Name(
+                                                        Name {
+                                                            node: Node {
+                                                                start: 541,
+                                                                end: 544,
+                                                            },
+                                                            id: "url",
+                                                        },
+                                                    ),
+                                                ],
+                                                keywords: [
+                                                    Keyword {
+                                                        node: Node {
+                                                            start: 546,
+                                                            end: 555,
+                                                        },
+                                                        arg: Some(
+                                                            "timeout",
+                                                        ),
+                                                        value: Constant(
+                                                            Constant {
+                                                                node: Node {
+                                                                    start: 554,
+                                                                    end: 555,
+                                                                },
+                                                                value: Int(
+                                                                    "5",
+                                                                ),
+                                                            },
+                                                        ),
+                                                    },
+                                                ],
+                                                starargs: None,
+                                                kwargs: None,
+                                            },
+                                        ),
+                                    },
+                                ),
+                            ],
+                        },
+                    ),
+                    AssignStatement(
+                        Assign {
+                            node: Node {
+                                start: 561,
+                                end: 592,
+                            },
+                            targets: [
+                                Name(
+                                    Name {
+                                        node: Node {
+                                            start: 561,
+                                            end: 565,
+                                        },
+                                        id: "data",
+                                    },
+                                ),
+                            ],
+                            value: Call(
+                                Call {
+                                    node: Node {
+                                        start: 587,
+                                        end: 592,
+                                    },
+                                    func: Attribute(
+                                        Attribute {
+                                            node: Node {
+                                                start: 568,
+                                                end: 587,
+                                            },
+                                            value: Attribute(
+                                                Attribute {
+                                                    node: Node {
+                                                        start: 568,
+                                                        end: 581,
+                                                    },
+                                                    value: Name(
+                                                        Name {
+                                                            node: Node {
+                                                                start: 568,
+                                                                end: 576,
+                                                            },
+                                                            id: "response",
+                                                        },
+                                                    ),
+                                                    attr: "text",
+                                                },
+                                            ),
+                                            attr: "split",
+                                        },
+                                    ),
+                                    args: [
+                                        Constant(
+                                            Constant {
+                                                node: Node {
+                                                    start: 588,
+                                                    end: 591,
+                                                },
+                                                value: Str(
+                                                    ";",
+                                                ),
+                                            },
+                                        ),
+                                    ],
+                                    keywords: [],
+                                    starargs: None,
+                                    kwargs: None,
+                                },
+                            ),
+                        },
+                    ),
+                    Return(
+                        Return {
+                            node: Node {
+                                start: 597,
+                                end: 608,
+                            },
+                            value: Some(
+                                Name(
+                                    Name {
+                                        node: Node {
+                                            start: 604,
+                                            end: 608,
+                                        },
+                                        id: "data",
+                                    },
+                                ),
+                            ),
+                        },
+                    ),
+                ],
+                decorator_list: [],
+                returns: Some(
+                    Name(
+                        Name {
+                            node: Node {
+                                start: 402,
+                                end: 406,
+                            },
+                            id: "List",
+                        },
+                    ),
+                ),
                 type_comment: None,
             },
         ),

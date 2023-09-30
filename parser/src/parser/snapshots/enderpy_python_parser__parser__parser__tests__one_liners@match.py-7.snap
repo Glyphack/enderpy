@@ -1,18 +1,19 @@
 ---
 source: parser/src/parser/parser.rs
-description: "match x:\n    case Point2D(0, 0):\n        pass\n    case Point3D(x=0, y=0, z=0):\n        pass\n"
+description: "match x:\n    case Point2D(0, 0):\n        pass\n    case Point3D(x=0, y=0, z=0):\n        pass"
+input_file: parser/test_data/inputs/one_liners/match.py
 ---
 Module {
     node: Node {
         start: 0,
-        end: 92,
+        end: 91,
     },
     body: [
         Match(
             Match {
                 node: Node {
                     start: 0,
-                    end: 92,
+                    end: 91,
                 },
                 subject: Name(
                     Name {
@@ -103,7 +104,7 @@ Module {
                     MatchCase {
                         node: Node {
                             start: 50,
-                            end: 92,
+                            end: 91,
                         },
                         pattern: MatchClass(
                             MatchClass {

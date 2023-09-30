@@ -60,7 +60,6 @@ impl BuildManager {
         } else {
             builder.filter(None, log::LevelFilter::Warn);
         }
-        builder.init();
 
         BuildManager {
             errors: vec![],

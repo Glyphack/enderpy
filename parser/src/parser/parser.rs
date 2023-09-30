@@ -167,7 +167,6 @@ impl Parser {
         }
         match token {
             Err(err) => {
-                // println!("Error: {:#?}", err);
                 self.bump_any();
             }
             Ok(token) => {
@@ -192,6 +191,31 @@ impl Parser {
             let err = ParsingError::InvalidSyntax {
                 path: Box::from(self.path.as_str()),
                 msg: Box::from(format!("Expected {:?} but found {:?}", kind, found)),
+                line: self.curr_line_number,
+                input: self.curr_line_string.clone(),
+                advice: "maybe you forgot to put this character".to_string(),
+                span: (range.start, range.end),
+            };
+            self.advance_to_next_line_or_semicolon();
+            return Err(err);
+        }
+        self.bump_any();
+        Ok(())
+    }
+
+    /// Expect any of `Kinds` or return error
+    pub fn expect_any(&mut self, kind: Vec<Kind>) -> Result<(), ParsingError> {
+        if !kind.contains(&self.cur_token.kind) {
+            let found = self.cur_token.kind;
+            let node = self.start_node();
+            let range = self.finish_node(node);
+            let mut expected = String::new();
+            for kind in kind {
+                expected.push_str(&format!("{:?}, ", kind));
+            }
+            let err = ParsingError::InvalidSyntax {
+                path: Box::from(self.path.as_str()),
+                msg: Box::from(format!("Expected one of {:?} but found {:?}", expected, found)),
                 line: self.curr_line_number,
                 input: self.curr_line_string.clone(),
                 advice: "maybe you forgot to put this character".to_string(),
@@ -400,6 +424,7 @@ impl Parser {
                 orelse = Some(if_value);
             }
         }
+
         let mut single_else_body: Option<Vec<Statement>> = None;
          if self.eat(Kind::Else) {
             self.expect(Kind::Colon)?;
@@ -421,10 +446,6 @@ impl Parser {
                 None => vec![],
             }
         };
-
-        // There can be a dedent after the if block
-        // The only other token here can be a eof
-        self.bump(Kind::Dedent);
 
         Ok(Statement::IfStatement(If {
             node: self.finish_node(node),
@@ -753,6 +774,7 @@ impl Parser {
         self.expect(Kind::NewLine)?;
         self.expect(Kind::Indent)?;
         let cases = self.parse_cases()?;
+        self.expect_any(vec![Kind::Dedent, Kind::Eof])?;
 
         Ok(Statement::Match(Match {
             node: self.finish_node(node),
@@ -2248,6 +2270,7 @@ impl Parser {
         } else if is_atom(&self.cur_kind()) {
             self.parse_atom()?
         } else {
+            panic!("invalid primary expression {:?}", self.cur_kind());
             return Err(self.unepxted_token(node, self.cur_kind()).err().unwrap());
         };
 
@@ -3643,68 +3666,6 @@ except *Exception as e:
                 d): pass",
             "@decor
 class a: pass",
-        ] {
-            let mut parser = Parser::new(test_case.to_string(), String::from(""));
-            let program = parser.parse();
-
-            insta::with_settings!({
-                    description => test_case.to_string(), // the template source code
-                    omit_expression => true // do not include the default expression
-                }, {
-                    assert_debug_snapshot!(program);
-            });
-        }
-    }
-
-    #[test]
-    fn test_match_statement() {
-        for test_case in &[
-            "match a:
-    case 1:
-        pass",
-            "match a:
-    case 1 | 2:
-        pass",
-            "match a.b:
-    case 1:
-        pass",
-            "match a:
-    case None:
-        pass
-    case True:
-        pass
-    case False:
-        pass
-    case -1:
-        pass
-    case 1.0:
-        pass
-    case _:
-        pass
-",
-            "match a:
-    case a.b:
-        pass
-    case a:
-        pass
-",
-            "match a:
-    case (a, b):
-        pass
-    case {1: _, 2: _}:
-        pass
-    case {**rest}:
-        pass
-",
-            "match x:
-    case Point2D(0, 0):
-        pass
-    case Point3D(x=0, y=0, z=0):
-        pass
-",
-            "match x:
-    case [a, b, c]:
-        pass",
         ] {
             let mut parser = Parser::new(test_case.to_string(), String::from(""));
             let program = parser.parse();

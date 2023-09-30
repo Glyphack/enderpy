@@ -1,18 +1,19 @@
 ---
 source: parser/src/parser/parser.rs
-description: "match a:\n    case None:\n        pass\n    case True:\n        pass\n    case False:\n        pass\n    case -1:\n        pass\n    case 1.0:\n        pass\n    case _:\n        pass\n"
+description: "match a:\n    case None:\n        pass\n    case True:\n        pass\n    case False:\n        pass\n    case -1:\n        pass\n    case 1.0:\n        pass\n    case _:\n        pass"
+input_file: parser/test_data/inputs/one_liners/match.py
 ---
 Module {
     node: Node {
         start: 0,
-        end: 172,
+        end: 171,
     },
     body: [
         Match(
             Match {
                 node: Node {
                     start: 0,
-                    end: 172,
+                    end: 171,
                 },
                 subject: Name(
                     Name {
@@ -214,7 +215,7 @@ Module {
                     MatchCase {
                         node: Node {
                             start: 151,
-                            end: 172,
+                            end: 171,
                         },
                         pattern: MatchAs(
                             MatchAs {

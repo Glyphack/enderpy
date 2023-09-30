@@ -1,6 +1,7 @@
 ---
 source: parser/src/parser/parser.rs
 description: "match a:\n    case 1:\n        pass"
+input_file: parser/test_data/inputs/one_liners/match.py
 ---
 Module {
     node: Node {
