@@ -400,22 +400,26 @@ impl Parser {
                 orelse = Some(if_value);
             }
         }
-
-        if self.at(Kind::Else) {
-            self.bump(Kind::Else);
+        let mut single_else_body: Option<Vec<Statement>> = None;
+         if self.eat(Kind::Else) {
             self.expect(Kind::Colon)?;
             let else_body = self.parse_suite()?;
             if let Some(val) = &mut orelse {
                 val.update_orelse(else_body);
+            } else {
+                single_else_body = Some(else_body);
             }
-        }
+        };
 
         // if we had any else or elif statements, we need to wrap them in a vec
         // otherwise we just return an empty vec as the else block of the if statement
         let or_else_vec = if let Some(val) = orelse {
             vec![Statement::IfStatement(val)]
         } else {
-            vec![]
+            match single_else_body {
+                Some(val) => val,
+                None => vec![],
+            }
         };
 
         // There can be a dedent after the if block
