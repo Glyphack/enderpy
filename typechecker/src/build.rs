@@ -242,7 +242,13 @@ impl BuildManager {
             }
             if resolved.is_import_found {
                 for resolved_path in resolved.resolved_paths.iter() {
-                    let source = std::fs::read_to_string(resolved_path).unwrap();
+                    let source = match std::fs::read_to_string(resolved_path) {
+                        Ok(source) => source,
+                        Err(e) => {
+                            log::warn!("cannot read file: {}", e);
+                            continue;
+                        }
+                    };
                     let module = Self::get_module_name(resolved_path);
                     let build_source = BuildSource {
                         path: resolved_path.clone(),

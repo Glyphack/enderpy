@@ -1,5 +1,6 @@
 use enderpy_python_parser::ast::Expression;
 use enderpy_python_parser as parser;
+use log::info;
 use parser::ast::Statement;
 
 use crate::{
@@ -86,7 +87,7 @@ impl SemanticAnalyzer {
             Expression::Attribute(_) => print!(
                 "Ignoring attribute assingment. See https://github.com/Glyphack/enderpy/issues/157"
             ),
-            _ => panic!("cannot assign to {:?} is not supported", target),
+            _ => info!("Ignoring assignment to {:?}", target)
         }
     }
 
@@ -431,7 +432,7 @@ impl TraversalVisitor for SemanticAnalyzer {
     }
 
     fn visit_async_function_def(&mut self, _f: &parser::ast::AsyncFunctionDef) {
-        todo!()
+
     }
 
     fn visit_class_def(&mut self, c: &parser::ast::ClassDef) {

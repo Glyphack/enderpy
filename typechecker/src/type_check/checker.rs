@@ -510,7 +510,7 @@ impl<'a> TraversalVisitor for TypeChecker<'a> {
                         }
                     }
                 }
-                _ => todo!(),
+                _ => {},
             }
         }
     }

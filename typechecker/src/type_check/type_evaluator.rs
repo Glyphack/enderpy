@@ -1,9 +1,10 @@
 #![allow(dead_code)]
 #![allow(unused_variables)]
 
-use miette::{bail, miette, Result};
-use enderpy_python_parser::ast;
 use enderpy_python_parser as parser;
+use enderpy_python_parser::ast;
+use log::debug;
+use miette::{bail, miette, Result};
 use parser::ast::Statement;
 
 use crate::{
@@ -31,30 +32,31 @@ impl TypeEvaluator {
         Self { symbol_table }
     }
 
-    pub fn get_symbol_node_type(&self, symbol: &SymbolTableNode, position: usize) -> Result<PythonType> {
+    pub fn get_symbol_node_type(
+        &self,
+        symbol: &SymbolTableNode,
+        position: usize,
+    ) -> Result<PythonType> {
         let decl = symbol
             .declaration_until_position(position)
             .ok_or_else(|| miette!("symbol {} is not defined", symbol.name))?;
-        self
-            .get_type_from_declaration(decl)
+        self.get_type_from_declaration(decl)
             .map_err(|e| miette!("cannot infer type for symbol {}: {}", symbol.name, e))
     }
     pub fn get_type(&self, expr: &ast::Expression) -> Result<PythonType> {
         match expr {
             ast::Expression::Constant(c) => {
                 let typ = match c.value {
-                            ast::ConstantValue::Int(_) => PythonType::Int,
-                            ast::ConstantValue::Float(_) => PythonType::Float,
-                            ast::ConstantValue::Str(_) => PythonType::Str,
-                            ast::ConstantValue::Bool(_) => PythonType::Bool,
-                            ast::ConstantValue::None => PythonType::None,
-                            _ => PythonType::Unknown,
-                        };
+                    ast::ConstantValue::Int(_) => PythonType::Int,
+                    ast::ConstantValue::Float(_) => PythonType::Float,
+                    ast::ConstantValue::Str(_) => PythonType::Str,
+                    ast::ConstantValue::Bool(_) => PythonType::Bool,
+                    ast::ConstantValue::None => PythonType::None,
+                    _ => PythonType::Unknown,
+                };
                 Ok(typ)
-            },
-            ast::Expression::Name(n) => {
-                self.infer_type_from_symbol_table(&n.id, n.node.start)
-            },
+            }
+            ast::Expression::Name(n) => self.infer_type_from_symbol_table(&n.id, n.node.start),
             ast::Expression::Call(call) => {
                 let func = *call.func.clone();
                 match func {
@@ -63,17 +65,18 @@ impl TypeEvaluator {
                         if builtins::BUILTINS.contains(&n.id.as_str()) {
                             return Ok(PythonType::Unknown);
                         }
-                        let f_type = self.infer_type_from_symbol_table(n.id.as_str(), n.node.start)?;
+                        let f_type =
+                            self.infer_type_from_symbol_table(n.id.as_str(), n.node.start)?;
                         match f_type {
                             PythonType::Callable(callable_type) => Ok(callable_type.return_type),
-                            _ => bail!("{} is not callable", n.id)
+                            _ => bail!("{} is not callable", n.id),
                         }
                     }
-                    ast::Expression::Attribute(_a) => panic!("TODO: infer type from attribute"),
+                    ast::Expression::Attribute(_a) => Ok(PythonType::Unknown),
                     _ => {
-                        println!("infer type from call not implemented");
+                        debug!("infer type from call not implemented");
                         Ok(PythonType::Unknown)
-                    },
+                    }
                 }
             }
             ast::Expression::BinOp(b) => Ok(type_inference::bin_op_result_type(
@@ -111,18 +114,17 @@ impl TypeEvaluator {
                 }))
             }
             ast::Expression::BoolOp(_) => Ok(PythonType::Bool),
-            ast::Expression::UnaryOp(u) => {
-                match u.op {
-                    ast::UnaryOperator::Not => Ok(PythonType::Bool),
-                    ast::UnaryOperator::Invert => {
-                        match self.get_type(&u.operand)? {
-                            PythonType::Int => Ok(PythonType::Int),
-                            _ => bail!("cannot invert type {}", self.get_type(&u.operand)?.to_string()),
-                        }
-                    }
-                    _ => self.get_type(&u.operand),
-                }
-            }
+            ast::Expression::UnaryOp(u) => match u.op {
+                ast::UnaryOperator::Not => Ok(PythonType::Bool),
+                ast::UnaryOperator::Invert => match self.get_type(&u.operand)? {
+                    PythonType::Int => Ok(PythonType::Int),
+                    _ => bail!(
+                        "cannot invert type {}",
+                        self.get_type(&u.operand)?.to_string()
+                    ),
+                },
+                _ => self.get_type(&u.operand),
+            },
             ast::Expression::NamedExpr(e) => self.get_type(&e.value),
             ast::Expression::Yield(a) => {
                 let yield_type = match a.value {
@@ -159,9 +161,9 @@ impl TypeEvaluator {
 
                 Ok(PythonType::Unknown)
             }
-            ast::Expression::ListComp(_) => todo!(),
-            ast::Expression::SetComp(_) => todo!(),
-            ast::Expression::DictComp(_) => todo!(),
+            ast::Expression::ListComp(_) => Ok(PythonType::Unknown),
+            ast::Expression::SetComp(_) => Ok(PythonType::Unknown),
+            ast::Expression::DictComp(_) =>Ok(PythonType::Unknown), 
             ast::Expression::Attribute(a) => Ok(PythonType::Unknown),
             ast::Expression::Subscript(s) => {
                 let value_type = &self.get_type(&s.value)?;
@@ -190,8 +192,6 @@ impl TypeEvaluator {
     }
 
     fn get_type_from_declaration(&self, declaration: &Declaration) -> Result<PythonType> {
-        
-
         match declaration {
             Declaration::Variable(v) => {
                 if let Some(type_annotation) = &v.type_annotation {
@@ -206,7 +206,7 @@ impl TypeEvaluator {
                 let return_type = if let Some(type_annotation) = f.function_node.returns.clone() {
                     type_inference::get_type_from_annotation(&type_annotation)
                 } else {
-                    println!("TODO: infer return type from function body");
+                    // TODO infer from function body
                     PythonType::Unknown
                 };
 
@@ -275,7 +275,7 @@ impl TraversalVisitorImmutGeneric<PythonType> for TypeEvaluator {
             ast::Statement::ClassDef(c) => self.visit_class_def(c),
             ast::Statement::Match(m) => self.visit_match(m),
             Statement::AsyncForStatement(f) => self.visit_async_for(f),
-            Statement::AsyncWithStatement(w) => self.visit_async_with(w), 
+            Statement::AsyncWithStatement(w) => self.visit_async_with(w),
             Statement::AsyncFunctionDef(f) => self.visit_async_function_def(f),
         }
     }
@@ -313,207 +313,207 @@ impl TraversalVisitorImmutGeneric<PythonType> for TypeEvaluator {
     }
 
     fn visit_import(&self, _i: &ast::Import) -> PythonType {
-        todo!();
+        return PythonType::Unknown;
     }
 
     fn visit_import_from(&self, _i: &ast::ImportFrom) -> PythonType {
-        todo!();
+        return PythonType::Unknown;
     }
 
     fn visit_if(&self, i: &parser::ast::If) -> PythonType {
-        todo!();
+        return PythonType::Unknown;
     }
 
     fn visit_while(&self, w: &parser::ast::While) -> PythonType {
-        todo!();
+        return PythonType::Unknown;
     }
 
     fn visit_for(&self, f: &parser::ast::For) -> PythonType {
-        todo!();
+        return PythonType::Unknown;
     }
 
     fn visit_with(&self, w: &parser::ast::With) -> PythonType {
-        todo!();
+        return PythonType::Unknown;
     }
 
     fn visit_try(&self, t: &parser::ast::Try) -> PythonType {
-        todo!();
+        return PythonType::Unknown;
     }
 
     fn visit_try_star(&self, t: &parser::ast::TryStar) -> PythonType {
-        todo!();
+        return PythonType::Unknown;
     }
 
     fn visit_function_def(&self, f: &parser::ast::FunctionDef) -> PythonType {
-        todo!();
+        return PythonType::Unknown;
     }
 
     fn visit_class_def(&self, c: &parser::ast::ClassDef) -> PythonType {
-        todo!();
+        return PythonType::Unknown;
     }
 
     fn visit_match(&self, m: &parser::ast::Match) -> PythonType {
-        todo!();
+        return PythonType::Unknown;
     }
 
     fn visit_constant(&self, _c: &ast::Constant) -> PythonType {
-        todo!();
+        return PythonType::Unknown;
     }
 
     fn visit_list(&self, _l: &ast::List) -> PythonType {
-        todo!()
+        return PythonType::Unknown;
     }
 
     fn visit_tuple(&self, _t: &ast::Tuple) -> PythonType {
-        todo!()
+        return PythonType::Unknown;
     }
 
     fn visit_dict(&self, _d: &ast::Dict) -> PythonType {
-        todo!()
+        return PythonType::Unknown;
     }
 
     fn visit_set(&self, _s: &ast::Set) -> PythonType {
-        todo!()
+        return PythonType::Unknown;
     }
 
     fn visit_name(&self, _n: &ast::Name) -> PythonType {
-        todo!()
+        return PythonType::Unknown;
     }
 
     fn visit_bool_op(&self, _b: &ast::BoolOperation) -> PythonType {
-        todo!()
+        return PythonType::Unknown;
     }
 
     fn visit_unary_op(&self, _u: &ast::UnaryOperation) -> PythonType {
-        todo!()
+        return PythonType::Unknown;
     }
 
     fn visit_bin_op(&self, _b: &ast::BinOp) -> PythonType {
-        todo!()
+        return PythonType::Unknown;
     }
 
     fn visit_named_expr(&self, _n: &ast::NamedExpression) -> PythonType {
-        todo!()
+        return PythonType::Unknown;
     }
 
     fn visit_yield(&self, _y: &ast::Yield) -> PythonType {
-        todo!()
+        return PythonType::Unknown;
     }
 
     fn visit_yield_from(&self, _y: &ast::YieldFrom) -> PythonType {
-        todo!()
+        return PythonType::Unknown;
     }
 
     fn visit_starred(&self, _s: &ast::Starred) -> PythonType {
-        todo!()
+        return PythonType::Unknown;
     }
 
     fn visit_generator(&self, _g: &ast::Generator) -> PythonType {
-        todo!()
+        return PythonType::Unknown;
     }
 
     fn visit_list_comp(&self, _l: &ast::ListComp) -> PythonType {
-        todo!()
+        return PythonType::Unknown;
     }
 
     fn visit_set_comp(&self, _s: &ast::SetComp) -> PythonType {
-        todo!()
+        return PythonType::Unknown;
     }
 
     fn visit_dict_comp(&self, _d: &ast::DictComp) -> PythonType {
-        todo!()
+        return PythonType::Unknown;
     }
 
     fn visit_attribute(&self, _a: &ast::Attribute) -> PythonType {
-        todo!()
+        return PythonType::Unknown;
     }
 
     fn visit_subscript(&self, _s: &ast::Subscript) -> PythonType {
-        todo!()
+        return PythonType::Unknown;
     }
 
     fn visit_slice(&self, _s: &ast::Slice) -> PythonType {
-        todo!()
+        return PythonType::Unknown;
     }
 
     fn visit_call(&self, _c: &ast::Call) -> PythonType {
-        todo!()
+        return PythonType::Unknown;
     }
 
     fn visit_await(&self, _a: &ast::Await) -> PythonType {
-        todo!()
+        return PythonType::Unknown;
     }
 
     fn visit_compare(&self, _c: &ast::Compare) -> PythonType {
-        todo!()
+        return PythonType::Unknown;
     }
 
     fn visit_lambda(&self, _l: &ast::Lambda) -> PythonType {
-        todo!()
+        return PythonType::Unknown;
     }
 
     fn visit_if_exp(&self, _i: &ast::IfExp) -> PythonType {
-        todo!()
+        return PythonType::Unknown;
     }
 
     fn visit_joined_str(&self, _j: &ast::JoinedStr) -> PythonType {
-        todo!()
+        return PythonType::Unknown;
     }
 
     fn visit_formatted_value(&self, _f: &ast::FormattedValue) -> PythonType {
-        todo!()
+        return PythonType::Unknown;
     }
 
     fn visit_alias(&self, _a: &ast::Alias) -> PythonType {
-        todo!()
+        return PythonType::Unknown;
     }
 
     fn visit_assign(&self, _a: &ast::Assign) -> PythonType {
-        todo!()
+        return PythonType::Unknown;
     }
 
     fn visit_ann_assign(&self, _a: &ast::AnnAssign) -> PythonType {
-        todo!()
+        return PythonType::Unknown;
     }
 
     fn visit_aug_assign(&self, _a: &ast::AugAssign) -> PythonType {
-        todo!()
+        return PythonType::Unknown;
     }
 
     fn visit_assert(&self, _a: &ast::Assert) -> PythonType {
-        todo!()
+        return PythonType::Unknown;
     }
 
     fn visit_pass(&self, _p: &ast::Pass) -> PythonType {
-        todo!()
+        return PythonType::Unknown;
     }
 
     fn visit_delete(&self, _d: &ast::Delete) -> PythonType {
-        todo!()
+        return PythonType::Unknown;
     }
 
     fn visit_return(&self, _r: &ast::Return) -> PythonType {
-        todo!()
+        return PythonType::Unknown;
     }
 
     fn visit_raise(&self, _r: &ast::Raise) -> PythonType {
-        todo!()
+        return PythonType::Unknown;
     }
 
     fn visit_break(&self, _b: &ast::Break) -> PythonType {
-        todo!()
+        return PythonType::Unknown;
     }
 
     fn visit_continue(&self, _c: &ast::Continue) -> PythonType {
-        todo!()
+        return PythonType::Unknown;
     }
 
     fn visit_global(&self, _g: &ast::Global) -> PythonType {
-        todo!()
+        return PythonType::Unknown;
     }
 
     fn visit_nonlocal(&self, _n: &ast::Nonlocal) -> PythonType {
-        todo!()
+        return PythonType::Unknown;
     }
 }
 
@@ -562,7 +562,10 @@ mod tests {
                     match a.targets.first() {
                         Some(target) => match target {
                             parser::ast::Expression::Name(n) => {
-                                result.insert(n.id.clone(), t.unwrap_or(PythonType::Unknown).to_string());
+                                result.insert(
+                                    n.id.clone(),
+                                    t.unwrap_or(PythonType::Unknown).to_string(),
+                                );
                             }
                             _ => panic!("don't use this test for other expressions"),
                         },
