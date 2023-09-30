@@ -528,7 +528,7 @@ mod tests {
         use crate::state::State;
         use enderpy_python_parser::Parser;
 
-        let mut parser = Parser::new(source.to_string());
+        let mut parser = Parser::new(source.to_string(), "".into());
         let ast_module = parser.parse();
 
         let enderpy_file = EnderpyFile::from(

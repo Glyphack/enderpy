@@ -1,5 +1,5 @@
 pub mod ast;
-mod diagnostics;
+pub mod error;
 mod expression;
 mod operator;
 pub mod parser;

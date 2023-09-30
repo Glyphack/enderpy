@@ -29,7 +29,7 @@ impl Settings {
 
     pub fn test_settings() -> Self {
         Settings {
-            debug: true,
+            debug: false,
             root: PathBuf::from(""),
             import_discovery: ImportDiscovery {
                 python_executable: None,
