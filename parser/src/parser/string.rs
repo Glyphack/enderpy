@@ -1,10 +1,11 @@
 use miette::Result;
 
+use crate::parser::ast::Expression;
 use crate::parser::ast::JoinedStr;
-use crate::parser::{ast::Expression, diagnostics};
 use crate::token::Kind;
 
 use super::ast::Node;
+use super::error::ParsingError;
 pub fn extract_string_inside(val: String) -> String {
     if let Some(val) = val.strip_prefix("\"\"\"") {
         val.strip_suffix("\"\"\"")
@@ -41,7 +42,7 @@ pub fn is_string(kind: &Kind) -> bool {
     }
 }
 
-pub fn concat_string_exprs(lhs: Expression, rhs: Expression) -> Result<Expression> {
+pub fn concat_string_exprs(lhs: Expression, rhs: Expression) -> Result<Expression, ParsingError> {
     use crate::parser::ast::{Constant, ConstantValue};
     match (lhs, rhs) {
         (Expression::Constant(lhs), Expression::Constant(rhs)) => {
@@ -64,18 +65,24 @@ pub fn concat_string_exprs(lhs: Expression, rhs: Expression) -> Result<Expressio
                     }))
                 }
                 (ConstantValue::Bytes(_lhs), _) => {
-                    return Err(diagnostics::InvalidSyntax(
-                        "Cannot concat bytes and string".to_string(),
-                        node,
-                    )
-                    .into())
+                    return Err(ParsingError::InvalidSyntax {
+                        path: "test".into(),
+                        msg: "Cannot concat bytes and string".into(),
+                        line: 0,
+                        input: "test".into(),
+                        advice: "test".into(),
+                        span: (0, 0),
+                    })
                 }
                 (_, ConstantValue::Bytes(_rhs)) => {
-                    return Err(diagnostics::InvalidSyntax(
-                        "Cannot concat string and bytes".to_string(),
-                        node,
-                    )
-                    .into())
+                    return Err(ParsingError::InvalidSyntax {
+                        path: "test".into(),
+                        msg: "Can only concat bytes with other bytes".into(),
+                        line: 0,
+                        input: "test".into(),
+                        advice: "test".into(),
+                        span: (0, 0),
+                    });
                 }
                 _ => panic!("Cannot concat string"),
             };
@@ -102,11 +109,14 @@ pub fn concat_string_exprs(lhs: Expression, rhs: Expression) -> Result<Expressio
                     })));
                 }
                 ConstantValue::Bytes(_) => {
-                    return Err(diagnostics::InvalidSyntax(
-                        "Cannot concat string and bytes".to_string(),
-                        const_rhs.node,
-                    )
-                    .into());
+                    return Err(ParsingError::InvalidSyntax {
+                        path: "test".into(),
+                        msg: "Cannot concat string and bytes".into(),
+                        line: 0,
+                        input: "test".into(),
+                        advice: "test".into(),
+                        span: (0, 0),
+                    });
                 }
                 _ => panic!("Cannot concat string"),
             }
@@ -125,11 +135,14 @@ pub fn concat_string_exprs(lhs: Expression, rhs: Expression) -> Result<Expressio
                     value: ConstantValue::Str(rhs_val),
                 })),
                 ConstantValue::Bytes(_) => {
-                    return Err(diagnostics::InvalidSyntax(
-                        "Cannot concat string and bytes".to_string(),
-                        const_lhs.node,
-                    )
-                    .into());
+                    return Err(ParsingError::InvalidSyntax {
+                        path: "test".into(),
+                        msg: "Cannot concat string and bytes".into(),
+                        line: 0,
+                        input: "test".into(),
+                        advice: "test".into(),
+                        span: (0, 0),
+                    });
                 }
                 _ => panic!("Cannot concat string"),
             };

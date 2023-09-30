@@ -4,6 +4,26 @@ description: "# Test case to check that we return correct error when two python 
 input_file: parser/test_data/inputs/separate_statements.py
 ---
 [
-    "Statement must be seperated with new line or semicolon but found Token { kind: Identifier, value: Str(\"y\"), start: 166, end: 167 }",
-    "Statement must be seperated with new line or semicolon but found Token { kind: Identifier, value: Str(\"b\"), start: 197, end: 198 }",
+    InvalidSyntax {
+        path: "",
+        msg: "Statement does not end in new line or semicolon",
+        line: 8,
+        input: "    x = 1",
+        advice: "Split the statements into two seperate lines or add a semicolon",
+        span: (
+            160,
+            165,
+        ),
+    },
+    InvalidSyntax {
+        path: "",
+        msg: "Statement does not end in new line or semicolon",
+        line: 11,
+        input: "a = 1",
+        advice: "Split the statements into two seperate lines or add a semicolon",
+        span: (
+            190,
+            195,
+        ),
+    },
 ]

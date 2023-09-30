@@ -7,17 +7,5 @@ Module {
         start: 0,
         end: 8,
     },
-    body: [
-        ImportFrom(
-            ImportFrom {
-                node: Node {
-                    start: 0,
-                    end: 8,
-                },
-                module: "None",
-                names: [],
-                level: 3,
-            },
-        ),
-    ],
+    body: [],
 }
