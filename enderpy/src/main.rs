@@ -31,7 +31,7 @@ fn symbols(path: &PathBuf) -> std::result::Result<(), anyhow::Error> {
     };
     let dir_of_path = path.parent().unwrap();
     let python_executable = Some( get_python_executable()? );
-    let settings = Settings { debug: true, root: dir_of_path.to_path_buf(), import_discovery: ImportDiscovery { python_executable } };
+    let settings = Settings { debug: false, root: dir_of_path.to_path_buf(), import_discovery: ImportDiscovery { python_executable } };
 
     let mut manager = BuildManager::new(vec![initial_source], settings);
     manager.build();

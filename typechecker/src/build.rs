@@ -54,11 +54,13 @@ impl BuildManager {
             modules.insert(mod_name, State::new(file));
         }
         
+        let mut builder = Builder::new();
         if options.debug {
-            let mut builder = Builder::new();
             builder.filter(None, log::LevelFilter::Debug);
-            builder.init();
+        } else {
+            builder.filter(None, log::LevelFilter::Warn);
         }
+        builder.init();
 
         BuildManager {
             errors: vec![],

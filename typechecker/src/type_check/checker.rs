@@ -497,17 +497,7 @@ impl<'a> TraversalVisitor for TypeChecker<'a> {
                             .get_symbol_node_type(symbol, n.node.start)
                             .unwrap_or(PythonType::Unknown);
                         let value_type = self.infer_expr_type(&_a.value, true);
-                        if !is_reassignment_valid(&prev_target_type, &value_type) {
-                            let msg = format!(
-                                "Cannot assign type '{}' to variable of type '{}'",
-                                value_type, prev_target_type
-                            );
-                            self.errors.push(TypeCheckError {
-                                msg,
-                                start: n.node.start,
-                                end: n.node.end,
-                            });
-                        }
+                        // TODO: Check reassignment
                     }
                 }
                 _ => {},

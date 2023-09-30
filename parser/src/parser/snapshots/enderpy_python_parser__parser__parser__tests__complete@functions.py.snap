@@ -101,7 +101,7 @@ Module {
                     IfStatement(
                         If {
                             node: Node {
-                                start: 99,
+                                start: 96,
                                 end: 342,
                             },
                             test: Compare(
@@ -189,7 +189,7 @@ Module {
                                 IfStatement(
                                     If {
                                         node: Node {
-                                            start: 180,
+                                            start: 177,
                                             end: 320,
                                         },
                                         test: Compare(

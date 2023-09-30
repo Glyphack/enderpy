@@ -1,6 +1,6 @@
 use enderpy_python_parser::ast::Expression;
 use enderpy_python_parser as parser;
-use log::info;
+use log::{debug};
 use parser::ast::Statement;
 
 use crate::{
@@ -43,10 +43,6 @@ impl SemanticAnalyzer {
         self.globals.add_symbol(symbol_node)
     }
 
-    fn report_unresolved_reference(&mut self) {
-        self.errors.push(format!("cannot resolve reference {}", ""))
-    }
-
     fn current_scope(&self) -> &SymbolTableType {
         return self.globals.current_scope_type();
     }
@@ -84,10 +80,9 @@ impl SemanticAnalyzer {
                     )
                 }
             }
-            Expression::Attribute(_) => print!(
-                "Ignoring attribute assingment. See https://github.com/Glyphack/enderpy/issues/157"
-            ),
-            _ => info!("Ignoring assignment to {:?}", target)
+            Expression::Attribute(_) => {},
+            // TODO: Add oher expressions that can be assigned
+            _ => {}
         }
     }
 

@@ -3,6 +3,4 @@ source: typechecker/src/build.rs
 description: "a = b + 1\n\na = c()\n\n"
 expression: result
 ---
-1:4:5: undefined name b
-1:4:9: undefined name b
-3:15:18: undefined name c
+

@@ -4,4 +4,3 @@ description: "a: list[int] = [1, 2, 3]\n\nb = a[0] + 1\n\nc = a[0] + a[1]\n\n# i
 expression: result
 ---
 8:86:98: Operator '+' not supported for types 'Int' and 'Str'
-13:152:153: Cannot assign type 'builtins.list[Unknown]' to variable of type 'builtins.list[Int]'

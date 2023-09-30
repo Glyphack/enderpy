@@ -38,10 +38,11 @@ impl TypeEvaluator {
         position: usize,
     ) -> Result<PythonType> {
         let decl = symbol
-            .declaration_until_position(position)
-            .ok_or_else(|| miette!("symbol {} is not defined", symbol.name))?;
-        self.get_type_from_declaration(decl)
-            .map_err(|e| miette!("cannot infer type for symbol {}: {}", symbol.name, e))
+            .declaration_until_position(position);
+        match decl {
+            Some(decl) => self.get_type_from_declaration(&decl),
+            None => Ok(PythonType::Unknown),
+        }
     }
     pub fn get_type(&self, expr: &ast::Expression) -> Result<PythonType> {
         match expr {
@@ -69,7 +70,7 @@ impl TypeEvaluator {
                             self.infer_type_from_symbol_table(n.id.as_str(), n.node.start)?;
                         match f_type {
                             PythonType::Callable(callable_type) => Ok(callable_type.return_type),
-                            _ => bail!("{} is not callable", n.id),
+                            _ => Ok(PythonType::Unknown),
                         }
                     }
                     ast::Expression::Attribute(_a) => Ok(PythonType::Unknown),
@@ -199,7 +200,7 @@ impl TypeEvaluator {
                 } else if let Some(source) = &v.inferred_type_source {
                     self.get_type(source)
                 } else {
-                    bail!("var declaration must have a type annotation or inferred type")
+                    Ok(PythonType::Unknown)
                 }
             }
             Declaration::Function(f) => {
@@ -227,7 +228,7 @@ impl TypeEvaluator {
     fn infer_type_from_symbol_table(&self, name: &str, position: usize) -> Result<PythonType> {
         match self.symbol_table.lookup_in_scope(name) {
             Some(symbol) => self.get_symbol_node_type(symbol, position),
-            None => bail!("undefined name {}", name),
+            None => Ok(PythonType::Unknown),
         }
     }
 

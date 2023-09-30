@@ -167,7 +167,7 @@ impl Parser {
         }
         match token {
             Err(err) => {
-                println!("Error: {:?}", err);
+                // println!("Error: {:#?}", err);
                 self.bump_any();
             }
             Ok(token) => {
@@ -278,9 +278,24 @@ impl Parser {
                 if self.cur_kind() == Kind::Indent {
                     let node = self.start_node();
                     let kind = self.cur_kind();
-                    self.bump_any();
-                    println!("Error: {:?}", self.cur_token());
-                    return Err(self.unepxted_token(node, kind).err().unwrap());
+                    return Err(self.unexpected_token_new(
+                        node,
+                        vec![
+                            Kind::Assert,
+                            Kind::Pass,
+                            Kind::Del,
+                            Kind::Return,
+                            Kind::Yield,
+                            Kind::Raise,
+                            Kind::Break,
+                            Kind::Continue,
+                            Kind::Import,
+                            Kind::From,
+                            Kind::Global,
+                            Kind::Nonlocal,
+                        ],
+                        "Unexpted indent",
+                    ));
                 } else {
                     self.parse_assignment_or_expression_statement()
                 }
@@ -345,7 +360,6 @@ impl Parser {
         while self.eat(Kind::WhiteSpace) || self.eat(Kind::Comment) {}
 
         if !matches!(self.cur_kind(), Kind::NewLine | Kind::SemiColon | Kind::Eof) {
-            println!("stmt: {:?}", stmt);
             let node = self.finish_node(node);
             let kind = self.cur_kind();
             let err = ParsingError::InvalidSyntax {
@@ -362,8 +376,8 @@ impl Parser {
     }
 
     fn parse_if_statement(&mut self) -> Result<Statement, ParsingError> {
-        self.bump(Kind::If);
         let node = self.start_node();
+        self.expect(Kind::If)?;
         let test = Box::new(self.parse_named_expression()?);
         self.expect(Kind::Colon)?;
         let body = self.parse_suite()?;

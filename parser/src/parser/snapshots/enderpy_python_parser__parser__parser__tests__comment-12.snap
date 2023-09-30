@@ -11,7 +11,7 @@ Module {
         IfStatement(
             If {
                 node: Node {
-                    start: 3,
+                    start: 0,
                     end: 12,
                 },
                 test: Name(
