@@ -172,6 +172,9 @@ impl Parser {
             Ok(token) => {
                 self.prev_token_end = self.cur_token.end;
                 self.cur_token = token;
+                if self.cur_kind() == Kind::Comment {
+                    self.bump(Kind::Comment);
+                }
             }
         }
     }
@@ -591,7 +594,7 @@ impl Parser {
     fn parse_try_statement(&mut self) -> Result<Statement, ParsingError> {
         let node = self.start_node();
         let mut is_try_star = false;
-        self.bump(Kind::Try);
+        self.expect(Kind::Try);
         self.expect(Kind::Colon)?;
         let body = self.parse_suite()?;
         let handlers = if self.at(Kind::Except) {
@@ -725,7 +728,7 @@ impl Parser {
             self.bump(Kind::NewLine);
         }
 
-        if self.at(Kind::Def) {
+        if self.at(Kind::Def) || self.at(Kind::Async) {
             self.parse_function_definition(decorators)
         } else {
             self.parse_class_definition(decorators)
@@ -2205,16 +2208,16 @@ impl Parser {
     // https://docs.python.org/3/reference/expressions.html#binary-arithmetic-operations
     fn parse_binary_arithmetic_operation(&mut self) -> Result<Expression, ParsingError> {
         let node = self.start_node();
-        let lhs = self.parse_unary_arithmetric_operation()?;
-        if is_bin_arithmetic_op(&self.cur_kind()) {
+        let mut lhs = self.parse_unary_arithmetric_operation()?;
+        while is_bin_arithmetic_op(&self.cur_kind()) {
             let op = self.parse_bin_arithmetic_op()?;
             let rhs = self.parse_unary_arithmetric_operation()?;
-            return Ok(Expression::BinOp(Box::new(BinOp {
+            lhs = Expression::BinOp(Box::new(BinOp {
                 node: self.finish_node(node),
                 op,
                 left: Box::new(lhs),
                 right: Box::new(rhs),
-            })));
+            }));
         }
         Ok(lhs)
     }
@@ -2270,7 +2273,6 @@ impl Parser {
         } else if is_atom(&self.cur_kind()) {
             self.parse_atom()?
         } else {
-            panic!("invalid primary expression {:?}", self.cur_kind());
             return Err(self.unepxted_token(node, self.cur_kind()).err().unwrap());
         };
 
@@ -2281,6 +2283,7 @@ impl Parser {
             // https://docs.python.org/3/reference/expressions.html#slicings
             self.parse_subscript(node, atom_or_primary)
         } else if self.eat(Kind::LeftParen) {
+            self.bump(Kind::NewLine);
             // parse call
             // https://docs.python.org/3/reference/expressions.html#calls
             let mut positional_args = vec![];
@@ -3683,7 +3686,7 @@ class a: pass",
     fn test_complete() {
         glob!("../../test_data", "inputs/*.py", |path| {
             let test_case = fs::read_to_string(path).unwrap();
-            let mut parser = Parser::new(test_case.clone(), String::from(""));
+            let mut parser = Parser::new(test_case.clone(), String::from(path.to_str().unwrap_or("")));
             let program = parser.parse();
 
             insta::with_settings!({
@@ -3709,7 +3712,7 @@ class a: pass",
         glob!("../../test_data", "inputs/one_liners/*.py", |path| {
             let input = fs::read_to_string(path).unwrap();
             for test_case in input.split("\n\n") {
-                let mut parser = Parser::new(test_case.to_string(), String::from(""));
+                let mut parser = Parser::new(test_case.to_string(), String::from(path.to_str().unwrap_or("")));
                 let program = parser.parse();
 
                 insta::with_settings!({

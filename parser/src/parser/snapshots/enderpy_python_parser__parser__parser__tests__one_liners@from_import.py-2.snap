@@ -5,7 +5,7 @@ input_file: parser/test_data/inputs/one_liners/from_import.py
 ---
 [
     InvalidSyntax {
-        path: "",
+        path: "/Users/glyphack/Programming/enderpy/parser/test_data/inputs/one_liners/from_import.py",
         msg: "Expected one of \"Identifier, Mul, \" but found Eof",
         line: 16,
         input: "",

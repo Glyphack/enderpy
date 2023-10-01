@@ -34,7 +34,7 @@ Module {
                             Constant {
                                 node: Node {
                                     start: 9,
-                                    end: 12,
+                                    end: 16,
                                 },
                                 value: Ellipsis,
                             },

@@ -13,7 +13,7 @@ Module {
             Assign {
                 node: Node {
                     start: 0,
-                    end: 216,
+                    end: 233,
                 },
                 targets: [
                     Name(
@@ -30,7 +30,7 @@ Module {
                     List {
                         node: Node {
                             start: 14,
-                            end: 216,
+                            end: 233,
                         },
                         elements: [
                             Constant(

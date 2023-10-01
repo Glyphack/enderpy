@@ -1,12 +1,12 @@
 ---
 source: parser/src/parser/parser.rs
-description: "def _handle_ticker_index(symbol):\n    ticker_index = symbols_data.get_ticker_index(symbol)\n\n    if ticker_index is None:\n        market_symbol = get_symbol_info(symbol)\n        if market_symbol is not None:\n            symbols_data.append_symbol_to_file(market_symbol)\n            ticker_index = market_symbol.index\n    return ticker_index\n\n\ndef _extract_ticker_client_types_data(ticker_index: str) -> List:\n    url = TSE_CLIENT_TYPE_DATA_URL.format(ticker_index)\n    with requests_retry_session() as session:\n        response = session.get(url, timeout=5)\n    data = response.text.split(';')\n    return data\n"
+description: "def _handle_ticker_index(symbol):\n    ticker_index = symbols_data.get_ticker_index(symbol)\n\n    if ticker_index is None:\n        market_symbol = get_symbol_info(symbol)\n        if market_symbol is not None:\n            symbols_data.append_symbol_to_file(market_symbol)\n            ticker_index = market_symbol.index\n    return ticker_index\n\n\ndef _extract_ticker_client_types_data(ticker_index: str) -> List:\n    url = TSE_CLIENT_TYPE_DATA_URL.format(ticker_index)\n    with requests_retry_session() as session:\n        response = session.get(url, timeout=5)\n    data = response.text.split(';')\n    return data\n\ndef common_process(df: pd.DataFrame, date: str):\n    if len(df) == 0:\n        return pd.DataFrame(columns=list(api_to_orderbook_mapping.keys()))\n    df.rename(columns=reversed_keys, inplace=True)\n    df = df.loc[:, list(api_to_orderbook_mapping.keys())]\n    df[\"datetime\"] = pd.to_datetime(\n        date + \" \" + df[\"datetime\"].astype(str), format=\"%Y%m%d %H%M%S\"\n    )\n    df = df.sort_values([\"datetime\", \"depth\"], ascending=[True, True])\n    df.set_index(\"datetime\", inplace=True)\n    df.drop(columns=[\"refID\"], inplace=True)\n    return df\n\n"
 input_file: parser/test_data/inputs/functions.py
 ---
 Module {
     node: Node {
         start: 0,
-        end: 609,
+        end: 1153,
     },
     body: [
         FunctionDef(
@@ -340,7 +340,7 @@ Module {
             FunctionDef {
                 node: Node {
                     start: 342,
-                    end: 609,
+                    end: 610,
                 },
                 name: "_extract_ticker_client_types_data",
                 args: Arguments {
@@ -667,6 +667,914 @@ Module {
                         },
                     ),
                 ),
+                type_comment: None,
+            },
+        ),
+        FunctionDef(
+            FunctionDef {
+                node: Node {
+                    start: 610,
+                    end: 1153,
+                },
+                name: "common_process",
+                args: Arguments {
+                    node: Node {
+                        start: 629,
+                        end: 656,
+                    },
+                    posonlyargs: [],
+                    args: [
+                        Arg {
+                            node: Node {
+                                start: 629,
+                                end: 645,
+                            },
+                            arg: "df",
+                            annotation: Some(
+                                Attribute(
+                                    Attribute {
+                                        node: Node {
+                                            start: 633,
+                                            end: 645,
+                                        },
+                                        value: Name(
+                                            Name {
+                                                node: Node {
+                                                    start: 633,
+                                                    end: 635,
+                                                },
+                                                id: "pd",
+                                            },
+                                        ),
+                                        attr: "DataFrame",
+                                    },
+                                ),
+                            ),
+                        },
+                        Arg {
+                            node: Node {
+                                start: 647,
+                                end: 656,
+                            },
+                            arg: "date",
+                            annotation: Some(
+                                Name(
+                                    Name {
+                                        node: Node {
+                                            start: 653,
+                                            end: 656,
+                                        },
+                                        id: "str",
+                                    },
+                                ),
+                            ),
+                        },
+                    ],
+                    vararg: None,
+                    kwonlyargs: [],
+                    kw_defaults: [],
+                    kwarg: None,
+                    defaults: [],
+                },
+                body: [
+                    IfStatement(
+                        If {
+                            node: Node {
+                                start: 663,
+                                end: 759,
+                            },
+                            test: Compare(
+                                Compare {
+                                    node: Node {
+                                        start: 666,
+                                        end: 678,
+                                    },
+                                    left: Call(
+                                        Call {
+                                            node: Node {
+                                                start: 666,
+                                                end: 673,
+                                            },
+                                            func: Name(
+                                                Name {
+                                                    node: Node {
+                                                        start: 666,
+                                                        end: 669,
+                                                    },
+                                                    id: "len",
+                                                },
+                                            ),
+                                            args: [
+                                                Name(
+                                                    Name {
+                                                        node: Node {
+                                                            start: 670,
+                                                            end: 672,
+                                                        },
+                                                        id: "df",
+                                                    },
+                                                ),
+                                            ],
+                                            keywords: [],
+                                            starargs: None,
+                                            kwargs: None,
+                                        },
+                                    ),
+                                    ops: [
+                                        Eq,
+                                    ],
+                                    comparators: [
+                                        Constant(
+                                            Constant {
+                                                node: Node {
+                                                    start: 677,
+                                                    end: 678,
+                                                },
+                                                value: Int(
+                                                    "0",
+                                                ),
+                                            },
+                                        ),
+                                    ],
+                                },
+                            ),
+                            body: [
+                                Return(
+                                    Return {
+                                        node: Node {
+                                            start: 688,
+                                            end: 754,
+                                        },
+                                        value: Some(
+                                            Call(
+                                                Call {
+                                                    node: Node {
+                                                        start: 707,
+                                                        end: 754,
+                                                    },
+                                                    func: Attribute(
+                                                        Attribute {
+                                                            node: Node {
+                                                                start: 695,
+                                                                end: 707,
+                                                            },
+                                                            value: Name(
+                                                                Name {
+                                                                    node: Node {
+                                                                        start: 695,
+                                                                        end: 697,
+                                                                    },
+                                                                    id: "pd",
+                                                                },
+                                                            ),
+                                                            attr: "DataFrame",
+                                                        },
+                                                    ),
+                                                    args: [],
+                                                    keywords: [
+                                                        Keyword {
+                                                            node: Node {
+                                                                start: 708,
+                                                                end: 753,
+                                                            },
+                                                            arg: Some(
+                                                                "columns",
+                                                            ),
+                                                            value: Call(
+                                                                Call {
+                                                                    node: Node {
+                                                                        start: 716,
+                                                                        end: 753,
+                                                                    },
+                                                                    func: Name(
+                                                                        Name {
+                                                                            node: Node {
+                                                                                start: 716,
+                                                                                end: 720,
+                                                                            },
+                                                                            id: "list",
+                                                                        },
+                                                                    ),
+                                                                    args: [
+                                                                        Call(
+                                                                            Call {
+                                                                                node: Node {
+                                                                                    start: 750,
+                                                                                    end: 752,
+                                                                                },
+                                                                                func: Attribute(
+                                                                                    Attribute {
+                                                                                        node: Node {
+                                                                                            start: 721,
+                                                                                            end: 750,
+                                                                                        },
+                                                                                        value: Name(
+                                                                                            Name {
+                                                                                                node: Node {
+                                                                                                    start: 721,
+                                                                                                    end: 745,
+                                                                                                },
+                                                                                                id: "api_to_orderbook_mapping",
+                                                                                            },
+                                                                                        ),
+                                                                                        attr: "keys",
+                                                                                    },
+                                                                                ),
+                                                                                args: [],
+                                                                                keywords: [],
+                                                                                starargs: None,
+                                                                                kwargs: None,
+                                                                            },
+                                                                        ),
+                                                                    ],
+                                                                    keywords: [],
+                                                                    starargs: None,
+                                                                    kwargs: None,
+                                                                },
+                                                            ),
+                                                        },
+                                                    ],
+                                                    starargs: None,
+                                                    kwargs: None,
+                                                },
+                                            ),
+                                        ),
+                                    },
+                                ),
+                            ],
+                            orelse: [],
+                        },
+                    ),
+                    ExpressionStatement(
+                        Call(
+                            Call {
+                                node: Node {
+                                    start: 768,
+                                    end: 805,
+                                },
+                                func: Attribute(
+                                    Attribute {
+                                        node: Node {
+                                            start: 759,
+                                            end: 768,
+                                        },
+                                        value: Name(
+                                            Name {
+                                                node: Node {
+                                                    start: 759,
+                                                    end: 761,
+                                                },
+                                                id: "df",
+                                            },
+                                        ),
+                                        attr: "rename",
+                                    },
+                                ),
+                                args: [],
+                                keywords: [
+                                    Keyword {
+                                        node: Node {
+                                            start: 769,
+                                            end: 790,
+                                        },
+                                        arg: Some(
+                                            "columns",
+                                        ),
+                                        value: Name(
+                                            Name {
+                                                node: Node {
+                                                    start: 777,
+                                                    end: 790,
+                                                },
+                                                id: "reversed_keys",
+                                            },
+                                        ),
+                                    },
+                                    Keyword {
+                                        node: Node {
+                                            start: 792,
+                                            end: 804,
+                                        },
+                                        arg: Some(
+                                            "inplace",
+                                        ),
+                                        value: Constant(
+                                            Constant {
+                                                node: Node {
+                                                    start: 800,
+                                                    end: 804,
+                                                },
+                                                value: Bool(
+                                                    true,
+                                                ),
+                                            },
+                                        ),
+                                    },
+                                ],
+                                starargs: None,
+                                kwargs: None,
+                            },
+                        ),
+                    ),
+                    AssignStatement(
+                        Assign {
+                            node: Node {
+                                start: 810,
+                                end: 863,
+                            },
+                            targets: [
+                                Name(
+                                    Name {
+                                        node: Node {
+                                            start: 810,
+                                            end: 812,
+                                        },
+                                        id: "df",
+                                    },
+                                ),
+                            ],
+                            value: Subscript(
+                                Subscript {
+                                    node: Node {
+                                        start: 821,
+                                        end: 863,
+                                    },
+                                    value: Attribute(
+                                        Attribute {
+                                            node: Node {
+                                                start: 815,
+                                                end: 821,
+                                            },
+                                            value: Name(
+                                                Name {
+                                                    node: Node {
+                                                        start: 815,
+                                                        end: 817,
+                                                    },
+                                                    id: "df",
+                                                },
+                                            ),
+                                            attr: "loc",
+                                        },
+                                    ),
+                                    slice: Tuple(
+                                        Tuple {
+                                            node: Node {
+                                                start: 822,
+                                                end: 863,
+                                            },
+                                            elements: [
+                                                Slice(
+                                                    Slice {
+                                                        node: Node {
+                                                            start: 822,
+                                                            end: 823,
+                                                        },
+                                                        lower: None,
+                                                        upper: None,
+                                                        step: None,
+                                                    },
+                                                ),
+                                                Call(
+                                                    Call {
+                                                        node: Node {
+                                                            start: 825,
+                                                            end: 862,
+                                                        },
+                                                        func: Name(
+                                                            Name {
+                                                                node: Node {
+                                                                    start: 825,
+                                                                    end: 829,
+                                                                },
+                                                                id: "list",
+                                                            },
+                                                        ),
+                                                        args: [
+                                                            Call(
+                                                                Call {
+                                                                    node: Node {
+                                                                        start: 859,
+                                                                        end: 861,
+                                                                    },
+                                                                    func: Attribute(
+                                                                        Attribute {
+                                                                            node: Node {
+                                                                                start: 830,
+                                                                                end: 859,
+                                                                            },
+                                                                            value: Name(
+                                                                                Name {
+                                                                                    node: Node {
+                                                                                        start: 830,
+                                                                                        end: 854,
+                                                                                    },
+                                                                                    id: "api_to_orderbook_mapping",
+                                                                                },
+                                                                            ),
+                                                                            attr: "keys",
+                                                                        },
+                                                                    ),
+                                                                    args: [],
+                                                                    keywords: [],
+                                                                    starargs: None,
+                                                                    kwargs: None,
+                                                                },
+                                                            ),
+                                                        ],
+                                                        keywords: [],
+                                                        starargs: None,
+                                                        kwargs: None,
+                                                    },
+                                                ),
+                                            ],
+                                        },
+                                    ),
+                                },
+                            ),
+                        },
+                    ),
+                    AssignStatement(
+                        Assign {
+                            node: Node {
+                                start: 868,
+                                end: 978,
+                            },
+                            targets: [
+                                Subscript(
+                                    Subscript {
+                                        node: Node {
+                                            start: 868,
+                                            end: 882,
+                                        },
+                                        value: Name(
+                                            Name {
+                                                node: Node {
+                                                    start: 868,
+                                                    end: 870,
+                                                },
+                                                id: "df",
+                                            },
+                                        ),
+                                        slice: Constant(
+                                            Constant {
+                                                node: Node {
+                                                    start: 871,
+                                                    end: 881,
+                                                },
+                                                value: Str(
+                                                    "datetime",
+                                                ),
+                                            },
+                                        ),
+                                    },
+                                ),
+                            ],
+                            value: Call(
+                                Call {
+                                    node: Node {
+                                        start: 899,
+                                        end: 978,
+                                    },
+                                    func: Attribute(
+                                        Attribute {
+                                            node: Node {
+                                                start: 885,
+                                                end: 899,
+                                            },
+                                            value: Name(
+                                                Name {
+                                                    node: Node {
+                                                        start: 885,
+                                                        end: 887,
+                                                    },
+                                                    id: "pd",
+                                                },
+                                            ),
+                                            attr: "to_datetime",
+                                        },
+                                    ),
+                                    args: [
+                                        BinOp(
+                                            BinOp {
+                                                node: Node {
+                                                    start: 909,
+                                                    end: 948,
+                                                },
+                                                op: Add,
+                                                left: BinOp(
+                                                    BinOp {
+                                                        node: Node {
+                                                            start: 909,
+                                                            end: 919,
+                                                        },
+                                                        op: Add,
+                                                        left: Name(
+                                                            Name {
+                                                                node: Node {
+                                                                    start: 909,
+                                                                    end: 913,
+                                                                },
+                                                                id: "date",
+                                                            },
+                                                        ),
+                                                        right: Constant(
+                                                            Constant {
+                                                                node: Node {
+                                                                    start: 916,
+                                                                    end: 919,
+                                                                },
+                                                                value: Str(
+                                                                    " ",
+                                                                ),
+                                                            },
+                                                        ),
+                                                    },
+                                                ),
+                                                right: Call(
+                                                    Call {
+                                                        node: Node {
+                                                            start: 943,
+                                                            end: 948,
+                                                        },
+                                                        func: Attribute(
+                                                            Attribute {
+                                                                node: Node {
+                                                                    start: 936,
+                                                                    end: 943,
+                                                                },
+                                                                value: Subscript(
+                                                                    Subscript {
+                                                                        node: Node {
+                                                                            start: 922,
+                                                                            end: 936,
+                                                                        },
+                                                                        value: Name(
+                                                                            Name {
+                                                                                node: Node {
+                                                                                    start: 922,
+                                                                                    end: 924,
+                                                                                },
+                                                                                id: "df",
+                                                                            },
+                                                                        ),
+                                                                        slice: Constant(
+                                                                            Constant {
+                                                                                node: Node {
+                                                                                    start: 925,
+                                                                                    end: 935,
+                                                                                },
+                                                                                value: Str(
+                                                                                    "datetime",
+                                                                                ),
+                                                                            },
+                                                                        ),
+                                                                    },
+                                                                ),
+                                                                attr: "astype",
+                                                            },
+                                                        ),
+                                                        args: [
+                                                            Name(
+                                                                Name {
+                                                                    node: Node {
+                                                                        start: 944,
+                                                                        end: 947,
+                                                                    },
+                                                                    id: "str",
+                                                                },
+                                                            ),
+                                                        ],
+                                                        keywords: [],
+                                                        starargs: None,
+                                                        kwargs: None,
+                                                    },
+                                                ),
+                                            },
+                                        ),
+                                    ],
+                                    keywords: [
+                                        Keyword {
+                                            node: Node {
+                                                start: 950,
+                                                end: 972,
+                                            },
+                                            arg: Some(
+                                                "format",
+                                            ),
+                                            value: Constant(
+                                                Constant {
+                                                    node: Node {
+                                                        start: 957,
+                                                        end: 972,
+                                                    },
+                                                    value: Str(
+                                                        "%Y%m%d %H%M%S",
+                                                    ),
+                                                },
+                                            ),
+                                        },
+                                    ],
+                                    starargs: None,
+                                    kwargs: None,
+                                },
+                            ),
+                        },
+                    ),
+                    AssignStatement(
+                        Assign {
+                            node: Node {
+                                start: 983,
+                                end: 1049,
+                            },
+                            targets: [
+                                Name(
+                                    Name {
+                                        node: Node {
+                                            start: 983,
+                                            end: 985,
+                                        },
+                                        id: "df",
+                                    },
+                                ),
+                            ],
+                            value: Call(
+                                Call {
+                                    node: Node {
+                                        start: 1002,
+                                        end: 1049,
+                                    },
+                                    func: Attribute(
+                                        Attribute {
+                                            node: Node {
+                                                start: 988,
+                                                end: 1002,
+                                            },
+                                            value: Name(
+                                                Name {
+                                                    node: Node {
+                                                        start: 988,
+                                                        end: 990,
+                                                    },
+                                                    id: "df",
+                                                },
+                                            ),
+                                            attr: "sort_values",
+                                        },
+                                    ),
+                                    args: [
+                                        List(
+                                            List {
+                                                node: Node {
+                                                    start: 1003,
+                                                    end: 1024,
+                                                },
+                                                elements: [
+                                                    Constant(
+                                                        Constant {
+                                                            node: Node {
+                                                                start: 1004,
+                                                                end: 1014,
+                                                            },
+                                                            value: Str(
+                                                                "datetime",
+                                                            ),
+                                                        },
+                                                    ),
+                                                    Constant(
+                                                        Constant {
+                                                            node: Node {
+                                                                start: 1016,
+                                                                end: 1023,
+                                                            },
+                                                            value: Str(
+                                                                "depth",
+                                                            ),
+                                                        },
+                                                    ),
+                                                ],
+                                            },
+                                        ),
+                                    ],
+                                    keywords: [
+                                        Keyword {
+                                            node: Node {
+                                                start: 1026,
+                                                end: 1048,
+                                            },
+                                            arg: Some(
+                                                "ascending",
+                                            ),
+                                            value: List(
+                                                List {
+                                                    node: Node {
+                                                        start: 1036,
+                                                        end: 1048,
+                                                    },
+                                                    elements: [
+                                                        Constant(
+                                                            Constant {
+                                                                node: Node {
+                                                                    start: 1037,
+                                                                    end: 1041,
+                                                                },
+                                                                value: Bool(
+                                                                    true,
+                                                                ),
+                                                            },
+                                                        ),
+                                                        Constant(
+                                                            Constant {
+                                                                node: Node {
+                                                                    start: 1043,
+                                                                    end: 1047,
+                                                                },
+                                                                value: Bool(
+                                                                    true,
+                                                                ),
+                                                            },
+                                                        ),
+                                                    ],
+                                                },
+                                            ),
+                                        },
+                                    ],
+                                    starargs: None,
+                                    kwargs: None,
+                                },
+                            ),
+                        },
+                    ),
+                    ExpressionStatement(
+                        Call(
+                            Call {
+                                node: Node {
+                                    start: 1066,
+                                    end: 1092,
+                                },
+                                func: Attribute(
+                                    Attribute {
+                                        node: Node {
+                                            start: 1054,
+                                            end: 1066,
+                                        },
+                                        value: Name(
+                                            Name {
+                                                node: Node {
+                                                    start: 1054,
+                                                    end: 1056,
+                                                },
+                                                id: "df",
+                                            },
+                                        ),
+                                        attr: "set_index",
+                                    },
+                                ),
+                                args: [
+                                    Constant(
+                                        Constant {
+                                            node: Node {
+                                                start: 1067,
+                                                end: 1077,
+                                            },
+                                            value: Str(
+                                                "datetime",
+                                            ),
+                                        },
+                                    ),
+                                ],
+                                keywords: [
+                                    Keyword {
+                                        node: Node {
+                                            start: 1079,
+                                            end: 1091,
+                                        },
+                                        arg: Some(
+                                            "inplace",
+                                        ),
+                                        value: Constant(
+                                            Constant {
+                                                node: Node {
+                                                    start: 1087,
+                                                    end: 1091,
+                                                },
+                                                value: Bool(
+                                                    true,
+                                                ),
+                                            },
+                                        ),
+                                    },
+                                ],
+                                starargs: None,
+                                kwargs: None,
+                            },
+                        ),
+                    ),
+                    ExpressionStatement(
+                        Call(
+                            Call {
+                                node: Node {
+                                    start: 1104,
+                                    end: 1137,
+                                },
+                                func: Attribute(
+                                    Attribute {
+                                        node: Node {
+                                            start: 1097,
+                                            end: 1104,
+                                        },
+                                        value: Name(
+                                            Name {
+                                                node: Node {
+                                                    start: 1097,
+                                                    end: 1099,
+                                                },
+                                                id: "df",
+                                            },
+                                        ),
+                                        attr: "drop",
+                                    },
+                                ),
+                                args: [],
+                                keywords: [
+                                    Keyword {
+                                        node: Node {
+                                            start: 1105,
+                                            end: 1122,
+                                        },
+                                        arg: Some(
+                                            "columns",
+                                        ),
+                                        value: List(
+                                            List {
+                                                node: Node {
+                                                    start: 1113,
+                                                    end: 1122,
+                                                },
+                                                elements: [
+                                                    Constant(
+                                                        Constant {
+                                                            node: Node {
+                                                                start: 1114,
+                                                                end: 1121,
+                                                            },
+                                                            value: Str(
+                                                                "refID",
+                                                            ),
+                                                        },
+                                                    ),
+                                                ],
+                                            },
+                                        ),
+                                    },
+                                    Keyword {
+                                        node: Node {
+                                            start: 1124,
+                                            end: 1136,
+                                        },
+                                        arg: Some(
+                                            "inplace",
+                                        ),
+                                        value: Constant(
+                                            Constant {
+                                                node: Node {
+                                                    start: 1132,
+                                                    end: 1136,
+                                                },
+                                                value: Bool(
+                                                    true,
+                                                ),
+                                            },
+                                        ),
+                                    },
+                                ],
+                                starargs: None,
+                                kwargs: None,
+                            },
+                        ),
+                    ),
+                    Return(
+                        Return {
+                            node: Node {
+                                start: 1142,
+                                end: 1151,
+                            },
+                            value: Some(
+                                Name(
+                                    Name {
+                                        node: Node {
+                                            start: 1149,
+                                            end: 1151,
+                                        },
+                                        id: "df",
+                                    },
+                                ),
+                            ),
+                        },
+                    ),
+                ],
+                decorator_list: [],
+                returns: None,
                 type_comment: None,
             },
         ),

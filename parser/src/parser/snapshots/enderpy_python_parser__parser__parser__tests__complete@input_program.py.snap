@@ -13132,14 +13132,14 @@ Module {
                                                                                                 Return {
                                                                                                     node: Node {
                                                                                                         start: 13922,
-                                                                                                        end: 13948,
+                                                                                                        end: 13961,
                                                                                                     },
                                                                                                     value: Some(
                                                                                                         Subscript(
                                                                                                             Subscript {
                                                                                                                 node: Node {
                                                                                                                     start: 13929,
-                                                                                                                    end: 13948,
+                                                                                                                    end: 13961,
                                                                                                                 },
                                                                                                                 value: Name(
                                                                                                                     Name {
@@ -14230,7 +14230,7 @@ Module {
                                                                                                                         Assign {
                                                                                                                             node: Node {
                                                                                                                                 start: 15031,
-                                                                                                                                end: 15072,
+                                                                                                                                end: 15092,
                                                                                                                             },
                                                                                                                             targets: [
                                                                                                                                 Attribute(
@@ -14256,7 +14256,7 @@ Module {
                                                                                                                                 Subscript {
                                                                                                                                     node: Node {
                                                                                                                                         start: 15053,
-                                                                                                                                        end: 15072,
+                                                                                                                                        end: 15092,
                                                                                                                                     },
                                                                                                                                     value: Name(
                                                                                                                                         Name {
@@ -14289,7 +14289,7 @@ Module {
                                                                                                                             Call {
                                                                                                                                 node: Node {
                                                                                                                                     start: 15151,
-                                                                                                                                    end: 15172,
+                                                                                                                                    end: 15189,
                                                                                                                                 },
                                                                                                                                 func: Attribute(
                                                                                                                                     Attribute {

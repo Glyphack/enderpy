@@ -15,3 +15,17 @@ def _extract_ticker_client_types_data(ticker_index: str) -> List:
         response = session.get(url, timeout=5)
     data = response.text.split(';')
     return data
+
+def common_process(df: pd.DataFrame, date: str):
+    if len(df) == 0:
+        return pd.DataFrame(columns=list(api_to_orderbook_mapping.keys()))
+    df.rename(columns=reversed_keys, inplace=True)
+    df = df.loc[:, list(api_to_orderbook_mapping.keys())]
+    df["datetime"] = pd.to_datetime(
+        date + " " + df["datetime"].astype(str), format="%Y%m%d %H%M%S"
+    )
+    df = df.sort_values(["datetime", "depth"], ascending=[True, True])
+    df.set_index("datetime", inplace=True)
+    df.drop(columns=["refID"], inplace=True)
+    return df
+
