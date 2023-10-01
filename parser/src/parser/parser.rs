@@ -3686,7 +3686,7 @@ class a: pass",
     fn test_complete() {
         glob!("../../test_data", "inputs/*.py", |path| {
             let test_case = fs::read_to_string(path).unwrap();
-            let mut parser = Parser::new(test_case.clone(), String::from(path.to_str().unwrap_or("")));
+            let mut parser = Parser::new(test_case.clone(), String::from(path.file_name().unwrap().to_str().unwrap()));
             let program = parser.parse();
 
             insta::with_settings!({
@@ -3712,7 +3712,7 @@ class a: pass",
         glob!("../../test_data", "inputs/one_liners/*.py", |path| {
             let input = fs::read_to_string(path).unwrap();
             for test_case in input.split("\n\n") {
-                let mut parser = Parser::new(test_case.to_string(), String::from(path.to_str().unwrap_or("")));
+                let mut parser = Parser::new(test_case.to_string(), String::from(path.file_name().unwrap().to_str().unwrap()));
                 let program = parser.parse();
 
                 insta::with_settings!({
