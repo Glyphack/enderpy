@@ -28,4 +28,3 @@ aggregated_key_stats[idx_stat] = {
     "symbol": symbol,
     "name": name,
 }
-

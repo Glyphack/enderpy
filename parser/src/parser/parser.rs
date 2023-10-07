@@ -1915,6 +1915,11 @@ impl Parser {
                 values: vec![],
             })));
         }
+        if self.at(Kind::Pow) {
+            // key must be None
+            let (key, value) = self.parse_double_starred_kv_pair()?;
+            return self.parse_dict(node, key, value)
+        }
         let first_key_or_element = self.parse_star_named_expression()?;
         if matches!(
             self.cur_kind(),
@@ -1922,7 +1927,9 @@ impl Parser {
         ) {
             self.parse_set(node, first_key_or_element)
         } else {
-            self.parse_dict(node, first_key_or_element)
+            self.expect(Kind::Colon)?;
+            let first_value = self.parse_expression_2()?;
+            self.parse_dict(node, Some(first_key_or_element), first_value)
         }
     }
 
@@ -1957,17 +1964,30 @@ impl Parser {
     fn parse_dict(
         &mut self,
         node: Node,
-        first_key: Expression,
+        first_key: Option<Expression>,
+        first_value: Expression,
     ) -> Result<Expression, ParsingError> {
-        self.expect(Kind::Colon)?;
-        let first_val = self.parse_expression_2()?;
         if self.at(Kind::For) || self.at(Kind::Async) && matches!(self.peek_kind(), Ok(Kind::For)) {
+            let key = if first_key.is_none() {
+                let err = ParsingError::InvalidSyntax {
+                    path: Box::from(self.path.as_str()),
+                    msg: Box::from("cannot use ** in dict comprehension"),
+                    line: self.get_line_number_of_character_position(self.cur_token.end),
+                    input: self.curr_line_string.clone(),
+                    advice: "".into(),
+                    span: (node.start, node.end),
+                };
+                return Err(err);
+            } else {
+                first_key.unwrap()
+            };
+            // make sure the first key is some
             let generators = self.parse_comp_for()?;
             self.expect(Kind::RightBracket)?;
             Ok(Expression::DictComp(Box::new(DictComp {
                 node: self.finish_node(node),
-                key: Box::new(first_key),
-                value: Box::new(first_val),
+                key: Box::new(key),
+                value: Box::new(first_value),
                 generators,
             })))
         } else {
@@ -1977,13 +1997,17 @@ impl Parser {
                 self.expect(Kind::Comma)?;
                 self.consume_whitespace_and_newline();
             }
-            let mut keys = vec![first_key];
-            let mut values = vec![first_val];
+            let mut keys = match first_key {
+                Some(k) => vec![k],
+                None => vec![],
+            };
+            let mut values = vec![first_value];
             while !self.eat(Kind::RightBracket) {
-                let key = self.parse_expression_2()?;
-                self.expect(Kind::Colon)?;
-                let value = self.parse_expression_2()?;
-                keys.push(key);
+                let (key, value) = self.parse_double_starred_kv_pair()?;
+                match key {
+                    Some(k) => keys.push(k),
+                    None => {}
+                }
                 values.push(value);
                 if !self.at(Kind::RightBracket) {
                     self.expect(Kind::Comma)?;
