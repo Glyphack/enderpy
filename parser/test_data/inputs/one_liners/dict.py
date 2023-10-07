@@ -28,3 +28,5 @@ aggregated_key_stats[idx_stat] = {
     "symbol": symbol,
     "name": name,
 }
+
+di = {1: "name", **{2: "name2"}, 3: "name3"}
