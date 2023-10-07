@@ -1,0 +1,137 @@
+---
+source: parser/src/parser/parser.rs
+description: "aggregated_key_stats[idx_stat] = {\n    **filter_value_NONE,\n    **filter_key_found,\n    **client_types,\n    **market_watch,\n    \"symbol\": symbol,\n    \"name\": name,\n}"
+input_file: parser/test_data/inputs/one_liners/dict.py
+---
+Module {
+    node: Node {
+        start: 0,
+        end: 165,
+    },
+    body: [
+        AssignStatement(
+            Assign {
+                node: Node {
+                    start: 0,
+                    end: 165,
+                },
+                targets: [
+                    Subscript(
+                        Subscript {
+                            node: Node {
+                                start: 0,
+                                end: 30,
+                            },
+                            value: Name(
+                                Name {
+                                    node: Node {
+                                        start: 0,
+                                        end: 20,
+                                    },
+                                    id: "aggregated_key_stats",
+                                },
+                            ),
+                            slice: Name(
+                                Name {
+                                    node: Node {
+                                        start: 21,
+                                        end: 29,
+                                    },
+                                    id: "idx_stat",
+                                },
+                            ),
+                        },
+                    ),
+                ],
+                value: Dict(
+                    Dict {
+                        node: Node {
+                            start: 33,
+                            end: 165,
+                        },
+                        keys: [
+                            Constant(
+                                Constant {
+                                    node: Node {
+                                        start: 128,
+                                        end: 136,
+                                    },
+                                    value: Str(
+                                        "symbol",
+                                    ),
+                                },
+                            ),
+                            Constant(
+                                Constant {
+                                    node: Node {
+                                        start: 150,
+                                        end: 156,
+                                    },
+                                    value: Str(
+                                        "name",
+                                    ),
+                                },
+                            ),
+                        ],
+                        values: [
+                            Name(
+                                Name {
+                                    node: Node {
+                                        start: 41,
+                                        end: 58,
+                                    },
+                                    id: "filter_value_NONE",
+                                },
+                            ),
+                            Name(
+                                Name {
+                                    node: Node {
+                                        start: 66,
+                                        end: 82,
+                                    },
+                                    id: "filter_key_found",
+                                },
+                            ),
+                            Name(
+                                Name {
+                                    node: Node {
+                                        start: 90,
+                                        end: 102,
+                                    },
+                                    id: "client_types",
+                                },
+                            ),
+                            Name(
+                                Name {
+                                    node: Node {
+                                        start: 110,
+                                        end: 122,
+                                    },
+                                    id: "market_watch",
+                                },
+                            ),
+                            Name(
+                                Name {
+                                    node: Node {
+                                        start: 138,
+                                        end: 144,
+                                    },
+                                    id: "symbol",
+                                },
+                            ),
+                            Name(
+                                Name {
+                                    node: Node {
+                                        start: 158,
+                                        end: 162,
+                                    },
+                                    id: "name",
+                                },
+                            ),
+                        ],
+                    },
+                ),
+            },
+        ),
+    ],
+}

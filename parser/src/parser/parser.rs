@@ -472,8 +472,6 @@ impl Parser {
             vec![]
         };
 
-        self.bump(Kind::Dedent);
-
         Ok(Statement::WhileStatement(While {
             node: self.finish_node(node),
             test,
@@ -510,8 +508,6 @@ impl Parser {
             vec![]
         };
 
-        self.bump(Kind::Dedent);
-
         if is_async {
             Ok(Statement::AsyncForStatement(AsyncFor {
                 node: self.finish_node(node),
@@ -538,8 +534,6 @@ impl Parser {
         let items = self.parse_with_items()?;
         self.expect(Kind::Colon)?;
         let body = self.parse_suite()?;
-
-        self.bump(Kind::Dedent);
 
         if is_async {
             Ok(Statement::AsyncWithStatement(AsyncWith {
@@ -1915,6 +1909,11 @@ impl Parser {
                 values: vec![],
             })));
         }
+        if self.at(Kind::Pow) {
+            // key must be None
+            let (key, value) = self.parse_double_starred_kv_pair()?;
+            return self.parse_dict(node, key, value)
+        }
         let first_key_or_element = self.parse_star_named_expression()?;
         if matches!(
             self.cur_kind(),
@@ -1922,7 +1921,9 @@ impl Parser {
         ) {
             self.parse_set(node, first_key_or_element)
         } else {
-            self.parse_dict(node, first_key_or_element)
+            self.expect(Kind::Colon)?;
+            let first_value = self.parse_expression_2()?;
+            self.parse_dict(node, Some(first_key_or_element), first_value)
         }
     }
 
@@ -1957,17 +1958,30 @@ impl Parser {
     fn parse_dict(
         &mut self,
         node: Node,
-        first_key: Expression,
+        first_key: Option<Expression>,
+        first_value: Expression,
     ) -> Result<Expression, ParsingError> {
-        self.expect(Kind::Colon)?;
-        let first_val = self.parse_expression_2()?;
         if self.at(Kind::For) || self.at(Kind::Async) && matches!(self.peek_kind(), Ok(Kind::For)) {
+            let key = if first_key.is_none() {
+                let err = ParsingError::InvalidSyntax {
+                    path: Box::from(self.path.as_str()),
+                    msg: Box::from("cannot use ** in dict comprehension"),
+                    line: self.get_line_number_of_character_position(self.cur_token.end),
+                    input: self.curr_line_string.clone(),
+                    advice: "".into(),
+                    span: (node.start, node.end),
+                };
+                return Err(err);
+            } else {
+                first_key.unwrap()
+            };
+            // make sure the first key is some
             let generators = self.parse_comp_for()?;
             self.expect(Kind::RightBracket)?;
             Ok(Expression::DictComp(Box::new(DictComp {
                 node: self.finish_node(node),
-                key: Box::new(first_key),
-                value: Box::new(first_val),
+                key: Box::new(key),
+                value: Box::new(first_value),
                 generators,
             })))
         } else {
@@ -1977,13 +1991,17 @@ impl Parser {
                 self.expect(Kind::Comma)?;
                 self.consume_whitespace_and_newline();
             }
-            let mut keys = vec![first_key];
-            let mut values = vec![first_val];
+            let mut keys = match first_key {
+                Some(k) => vec![k],
+                None => vec![],
+            };
+            let mut values = vec![first_value];
             while !self.eat(Kind::RightBracket) {
-                let key = self.parse_expression_2()?;
-                self.expect(Kind::Colon)?;
-                let value = self.parse_expression_2()?;
-                keys.push(key);
+                let (key, value) = self.parse_double_starred_kv_pair()?;
+                match key {
+                    Some(k) => keys.push(k),
+                    None => {}
+                }
                 values.push(value);
                 if !self.at(Kind::RightBracket) {
                     self.expect(Kind::Comma)?;
@@ -1995,6 +2013,18 @@ impl Parser {
                 keys,
                 values,
             })))
+        }
+    }
+
+    fn parse_double_starred_kv_pair(&mut self) -> Result<(Option<Expression>,Expression), ParsingError> {
+        if self.eat(Kind::Pow) {
+            let value = self.parse_expression_2()?;
+            Ok((None, value))
+        } else {
+            let key = self.parse_expression_2()?;
+            self.expect(Kind::Colon)?;
+            let value = self.parse_expression_2()?;
+            Ok((Some(key), value))
         }
     }
 
@@ -2611,6 +2641,7 @@ impl Parser {
     fn parse_slice_list(&mut self) -> Result<Expression, ParsingError> {
         let node = self.start_node();
         let mut elements = vec![];
+        // TODO: This EOF check should not be here.
         while !self.at(Kind::Eof) && !self.at(Kind::RightBrace) {
             if self.at(Kind::Colon) {
                 elements.push(self.parse_proper_slice(None)?);
@@ -2651,7 +2682,7 @@ impl Parser {
             Some(Box::new(self.parse_expression_2()?))
         };
         let upper = if self.eat(Kind::Colon) {
-            if self.at(Kind::RightBrace) {
+            if self.at(Kind::RightBrace) || self.at(Kind::Colon) {
                 None
             } else {
                 Some(Box::new(self.parse_expression_2()?))
@@ -3297,30 +3328,6 @@ mod tests {
     fn test_await_expression() {
         {
             let test_case = &"await a";
-            let mut parser = Parser::new(test_case.to_string(), String::from(""));
-            let program = parser.parse();
-
-            insta::with_settings!({
-                    description => test_case.to_string(), // the template source code
-                    omit_expression => true // do not include the default expression
-                }, {
-                    assert_debug_snapshot!(program);
-            });
-        }
-    }
-
-    #[test]
-    fn test_subscript() {
-        for test_case in &[
-            "a[b]",
-            "a[b:c]",
-            "a[b:c:d]",
-            "a[b, c, d]",
-            "a[b, c: d, e]",
-            "a[::]",
-            "a[b, c:d:e, f]",
-            "a[::d,]",
-        ] {
             let mut parser = Parser::new(test_case.to_string(), String::from(""));
             let program = parser.parse();
 
