@@ -472,8 +472,6 @@ impl Parser {
             vec![]
         };
 
-        self.bump(Kind::Dedent);
-
         Ok(Statement::WhileStatement(While {
             node: self.finish_node(node),
             test,
@@ -509,8 +507,6 @@ impl Parser {
         } else {
             vec![]
         };
-
-        self.bump(Kind::Dedent);
 
         if is_async {
             Ok(Statement::AsyncForStatement(AsyncFor {
