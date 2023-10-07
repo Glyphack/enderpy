@@ -859,9 +859,11 @@ impl Lexer {
                     }
                 }
                 if de_indents != 1 {
-                    self.next_token_is_dedent += 1;
+                    // minus 1 because the dedent with actual Indent value is already added
+                    // This is super hacky and I don't like it
+                    self.next_token_is_dedent += de_indents - 1;
                 } 
-                TokenValue::Indent(de_indents)
+                TokenValue::Indent(de_indents.into())
             }
             Kind::Indent => TokenValue::Indent(1),
             _ => TokenValue::None,

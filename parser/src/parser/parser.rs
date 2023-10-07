@@ -539,8 +539,6 @@ impl Parser {
         self.expect(Kind::Colon)?;
         let body = self.parse_suite()?;
 
-        self.bump(Kind::Dedent);
-
         if is_async {
             Ok(Statement::AsyncWithStatement(AsyncWith {
                 node: self.finish_node(node),
