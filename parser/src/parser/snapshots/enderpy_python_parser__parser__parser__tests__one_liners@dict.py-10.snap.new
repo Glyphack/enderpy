@@ -1,0 +1,96 @@
+---
+source: parser/src/parser/parser.rs
+assertion_line: 3706
+description: "aggregated_key_stats[idx_stat] = {\n    **filter_value_NONE,\n    **filter_key_found,\n    **client_types,\n    **market_watch,\n    \"symbol\": symbol,\n    \"name\": name,\n}"
+input_file: parser/test_data/inputs/one_liners/dict.py
+---
+[
+    InvalidSyntax {
+        path: "dict.py",
+        msg: "Unexpected token Pow",
+        line: 2,
+        input: "aggregated_key_stats[idx_stat] = {\n    **",
+        advice: "",
+        span: (
+            39,
+            41,
+        ),
+    },
+    InvalidSyntax {
+        path: "dict.py",
+        msg: "Unexpected token Comma",
+        line: 2,
+        input: "aggregated_key_stats[idx_stat] = {\n    **filter_value_NONE,",
+        advice: "",
+        span: (
+            58,
+            59,
+        ),
+    },
+    InvalidSyntax {
+        path: "dict.py",
+        msg: "Unexpected token Pow",
+        line: 4,
+        input: "aggregated_key_stats[idx_stat] = {\n    **filter_value_NONE,\n    **filter_key_found,\n    **",
+        advice: "",
+        span: (
+            88,
+            90,
+        ),
+    },
+    InvalidSyntax {
+        path: "dict.py",
+        msg: "Unexpected token Comma",
+        line: 4,
+        input: "aggregated_key_stats[idx_stat] = {\n    **filter_value_NONE,\n    **filter_key_found,\n    **client_types,",
+        advice: "",
+        span: (
+            102,
+            103,
+        ),
+    },
+    InvalidSyntax {
+        path: "dict.py",
+        msg: "Statement does not end in new line or semicolon",
+        line: 1,
+        input: "aggregated_key_stats[idx_stat] = {\n    **filter_value_NONE,\n    **filter_key_found,\n    **client_types,\n    **market_watch,\n    \"symbol\": symbol",
+        advice: "Split the statements into two seperate lines or add a semicolon",
+        span: (
+            128,
+            144,
+        ),
+    },
+    InvalidSyntax {
+        path: "dict.py",
+        msg: "Unexpected token Comma",
+        line: 6,
+        input: "aggregated_key_stats[idx_stat] = {\n    **filter_value_NONE,\n    **filter_key_found,\n    **client_types,\n    **market_watch,\n    \"symbol\": symbol,",
+        advice: "",
+        span: (
+            144,
+            145,
+        ),
+    },
+    InvalidSyntax {
+        path: "dict.py",
+        msg: "Unexpected token Colon",
+        line: 7,
+        input: "aggregated_key_stats[idx_stat] = {\n    **filter_value_NONE,\n    **filter_key_found,\n    **client_types,\n    **market_watch,\n    \"symbol\": symbol,\n    \"name\":",
+        advice: "",
+        span: (
+            156,
+            157,
+        ),
+    },
+    InvalidSyntax {
+        path: "dict.py",
+        msg: "Unexpected token Comma",
+        line: 7,
+        input: "aggregated_key_stats[idx_stat] = {\n    **filter_value_NONE,\n    **filter_key_found,\n    **client_types,\n    **market_watch,\n    \"symbol\": symbol,\n    \"name\": name,",
+        advice: "",
+        span: (
+            162,
+            163,
+        ),
+    },
+]

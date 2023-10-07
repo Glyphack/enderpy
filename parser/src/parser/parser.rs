@@ -1998,6 +1998,18 @@ impl Parser {
         }
     }
 
+    fn parse_double_starred_kv_pair(&mut self) -> Result<(Option<Expression>,Expression), ParsingError> {
+        if self.eat(Kind::Pow) {
+            let value = self.parse_expression_2()?;
+            Ok((None, value))
+        } else {
+            let key = self.parse_expression_2()?;
+            self.expect(Kind::Colon)?;
+            let value = self.parse_expression_2()?;
+            Ok((Some(key), value))
+        }
+    }
+
     fn consume_whitespace_and_newline(&mut self) -> bool {
         let mut consumed = false;
         while matches!(self.cur_kind(), Kind::WhiteSpace | Kind::NewLine) {
@@ -2611,6 +2623,7 @@ impl Parser {
     fn parse_slice_list(&mut self) -> Result<Expression, ParsingError> {
         let node = self.start_node();
         let mut elements = vec![];
+        // TODO: This EOF check should not be here.
         while !self.at(Kind::Eof) && !self.at(Kind::RightBrace) {
             if self.at(Kind::Colon) {
                 elements.push(self.parse_proper_slice(None)?);
@@ -2651,7 +2664,7 @@ impl Parser {
             Some(Box::new(self.parse_expression_2()?))
         };
         let upper = if self.eat(Kind::Colon) {
-            if self.at(Kind::RightBrace) {
+            if self.at(Kind::RightBrace) || self.at(Kind::Colon) {
                 None
             } else {
                 Some(Box::new(self.parse_expression_2()?))
@@ -3297,30 +3310,6 @@ mod tests {
     fn test_await_expression() {
         {
             let test_case = &"await a";
-            let mut parser = Parser::new(test_case.to_string(), String::from(""));
-            let program = parser.parse();
-
-            insta::with_settings!({
-                    description => test_case.to_string(), // the template source code
-                    omit_expression => true // do not include the default expression
-                }, {
-                    assert_debug_snapshot!(program);
-            });
-        }
-    }
-
-    #[test]
-    fn test_subscript() {
-        for test_case in &[
-            "a[b]",
-            "a[b:c]",
-            "a[b:c:d]",
-            "a[b, c, d]",
-            "a[b, c: d, e]",
-            "a[::]",
-            "a[b, c:d:e, f]",
-            "a[::d,]",
-        ] {
             let mut parser = Parser::new(test_case.to_string(), String::from(""));
             let program = parser.parse();
 

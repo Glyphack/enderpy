@@ -1,0 +1,41 @@
+---
+source: parser/src/parser/parser.rs
+description: "a[b]"
+input_file: parser/test_data/inputs/one_liners/subscript.py
+---
+Module {
+    node: Node {
+        start: 0,
+        end: 4,
+    },
+    body: [
+        ExpressionStatement(
+            Subscript(
+                Subscript {
+                    node: Node {
+                        start: 0,
+                        end: 4,
+                    },
+                    value: Name(
+                        Name {
+                            node: Node {
+                                start: 0,
+                                end: 1,
+                            },
+                            id: "a",
+                        },
+                    ),
+                    slice: Name(
+                        Name {
+                            node: Node {
+                                start: 2,
+                                end: 3,
+                            },
+                            id: "b",
+                        },
+                    ),
+                },
+            ),
+        ),
+    ],
+}

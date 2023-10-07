@@ -1,0 +1,44 @@
+---
+source: parser/src/parser/parser.rs
+assertion_line: 3699
+description: "aggregated_key_stats[idx_stat] = {\n    **filter_value_NONE,\n    **filter_key_found,\n    **client_types,\n    **market_watch,\n    \"symbol\": symbol,\n    \"name\": name,\n}"
+input_file: parser/test_data/inputs/one_liners/dict.py
+---
+Module {
+    node: Node {
+        start: 0,
+        end: 165,
+    },
+    body: [
+        AnnAssignStatement(
+            AnnAssign {
+                node: Node {
+                    start: 128,
+                    end: 144,
+                },
+                target: Constant(
+                    Constant {
+                        node: Node {
+                            start: 128,
+                            end: 136,
+                        },
+                        value: Str(
+                            "symbol",
+                        ),
+                    },
+                ),
+                annotation: Name(
+                    Name {
+                        node: Node {
+                            start: 138,
+                            end: 144,
+                        },
+                        id: "symbol",
+                    },
+                ),
+                value: None,
+                simple: true,
+            },
+        ),
+    ],
+}
