@@ -5,7 +5,6 @@ use std::path::{Path, PathBuf};
 
 use log::debug;
 
-
 use crate::ruff_python_import_resolver::config::Config;
 use crate::ruff_python_import_resolver::execution_environment::ExecutionEnvironment;
 use crate::ruff_python_import_resolver::implicit_imports::ImplicitImports;
@@ -381,9 +380,11 @@ fn resolve_best_absolute_import<Host: host::Host>(
             "Looking in typeshed root directory: {}",
             typeshed_root.display()
         );
-        if typeshed_root != execution_environment.root && best_result_so_far
+        if typeshed_root != execution_environment.root
+            && best_result_so_far
                 .as_ref()
-                .is_some_and(|result| result.py_typed_info.is_some() && !result.is_partly_resolved) {
+                .is_some_and(|result| result.py_typed_info.is_some() && !result.is_partly_resolved)
+        {
             return best_result_so_far;
         }
     }
@@ -514,9 +515,13 @@ fn pick_best_import(
 
         // If both results are namespace imports, prefer the result that resolves all
         // imported symbols.
-        if best_import_so_far.is_namespace_package && new_import.is_namespace_package && !module_descriptor.imported_symbols.is_empty() && !best_import_so_far
-                    .implicit_imports
-                    .resolves_namespace_package(&module_descriptor.imported_symbols) {
+        if best_import_so_far.is_namespace_package
+            && new_import.is_namespace_package
+            && !module_descriptor.imported_symbols.is_empty()
+            && !best_import_so_far
+                .implicit_imports
+                .resolves_namespace_package(&module_descriptor.imported_symbols)
+        {
             if new_import
                 .implicit_imports
                 .resolves_namespace_package(&module_descriptor.imported_symbols)

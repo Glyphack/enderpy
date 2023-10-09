@@ -3,7 +3,6 @@
 
 use ast::{Expression, Statement};
 
-
 use enderpy_python_parser as parser;
 use enderpy_python_parser::ast::{self, *};
 
@@ -36,7 +35,7 @@ pub trait TraversalVisitorImmutGeneric<T> {
             Statement::ClassDef(c) => self.visit_class_def(c),
             Statement::Match(m) => self.visit_match(m),
             Statement::AsyncForStatement(f) => self.visit_async_for(f),
-            Statement::AsyncWithStatement(w) => self.visit_async_with(w), 
+            Statement::AsyncWithStatement(w) => self.visit_async_with(w),
             Statement::AsyncFunctionDef(f) => self.visit_async_function_def(f),
         }
     }

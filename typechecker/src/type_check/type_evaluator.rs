@@ -37,8 +37,7 @@ impl TypeEvaluator {
         symbol: &SymbolTableNode,
         position: usize,
     ) -> Result<PythonType> {
-        let decl = symbol
-            .declaration_until_position(position);
+        let decl = symbol.declaration_until_position(position);
         match decl {
             Some(decl) => self.get_type_from_declaration(decl),
             None => Ok(PythonType::Unknown),
@@ -164,7 +163,7 @@ impl TypeEvaluator {
             }
             ast::Expression::ListComp(_) => Ok(PythonType::Unknown),
             ast::Expression::SetComp(_) => Ok(PythonType::Unknown),
-            ast::Expression::DictComp(_) =>Ok(PythonType::Unknown), 
+            ast::Expression::DictComp(_) => Ok(PythonType::Unknown),
             ast::Expression::Attribute(a) => Ok(PythonType::Unknown),
             ast::Expression::Subscript(s) => {
                 let value_type = &self.get_type(&s.value)?;

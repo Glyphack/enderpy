@@ -1,7 +1,8 @@
 use std::path::PathBuf;
 
-use crate::ruff_python_import_resolver::{python_version::PythonVersion, python_platform::PythonPlatform};
-
+use crate::ruff_python_import_resolver::{
+    python_platform::PythonPlatform, python_version::PythonVersion,
+};
 
 #[derive(Debug)]
 pub struct ExecutionEnvironment {

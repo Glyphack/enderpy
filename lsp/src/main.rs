@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use env_logger::Builder;
-use log::{LevelFilter, info};
+use log::{info, LevelFilter};
 use tower_lsp::jsonrpc::Result;
 use tower_lsp::lsp_types::*;
 use tower_lsp::{Client, LanguageServer, LspService, Server};
@@ -128,10 +128,13 @@ impl LanguageServer for Backend {
         }
     }
 
-    async fn diagnostic(&self, params: DocumentDiagnosticParams) -> Result<DocumentDiagnosticReportResult> {
+    async fn diagnostic(
+        &self,
+        params: DocumentDiagnosticParams,
+    ) -> Result<DocumentDiagnosticReportResult> {
         self.client
             .log_message(MessageType::INFO, "diagnostic!")
-        .await;
+            .await;
         let uri = params.text_document.uri;
         let path = uri.to_file_path();
 
@@ -141,23 +144,23 @@ impl LanguageServer for Backend {
                 let diagnostics = self.check_file(&path).await;
                 info!("diagnostics: {:?}", diagnostics);
                 Ok(DocumentDiagnosticReportResult::Report(
-                    DocumentDiagnosticReport::Full(RelatedFullDocumentDiagnosticReport{
+                    DocumentDiagnosticReport::Full(RelatedFullDocumentDiagnosticReport {
                         related_documents: None,
-                        full_document_diagnostic_report: FullDocumentDiagnosticReport{
+                        full_document_diagnostic_report: FullDocumentDiagnosticReport {
                             result_id: None,
                             items: diagnostics,
-                        }
-                    })
+                        },
+                    }),
                 ))
             }
-            Err(_) => {
-                Ok(DocumentDiagnosticReportResult::Report(DocumentDiagnosticReport::Unchanged(RelatedUnchangedDocumentDiagnosticReport{
-                    related_documents:None,
-                    unchanged_document_diagnostic_report: UnchangedDocumentDiagnosticReport{
+            Err(_) => Ok(DocumentDiagnosticReportResult::Report(
+                DocumentDiagnosticReport::Unchanged(RelatedUnchangedDocumentDiagnosticReport {
+                    related_documents: None,
+                    unchanged_document_diagnostic_report: UnchangedDocumentDiagnosticReport {
                         result_id: "typechecker".to_string(),
-                    }
-                })))
-            }
+                    },
+                }),
+            )),
         }
     }
 

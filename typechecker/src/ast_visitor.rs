@@ -1,5 +1,5 @@
-use enderpy_python_parser::ast::*;
 use enderpy_python_parser as parser;
+use enderpy_python_parser::ast::*;
 
 /// A visitor that traverses the AST and calls the visit method for each node
 /// This is useful for visitors that only need to visit a few nodes
@@ -34,7 +34,7 @@ pub trait TraversalVisitor {
             Statement::ClassDef(c) => self.visit_class_def(c),
             Statement::Match(m) => self.visit_match(m),
             Statement::AsyncForStatement(f) => self.visit_async_for(f),
-            Statement::AsyncWithStatement(w) => self.visit_async_with(w), 
+            Statement::AsyncWithStatement(w) => self.visit_async_with(w),
             Statement::AsyncFunctionDef(f) => self.visit_async_function_def(f),
         }
     }
@@ -194,40 +194,40 @@ pub trait TraversalVisitor {
     }
 
     fn visit_match_pattern(&mut self, _m: &parser::ast::MatchPattern) {
-            match _m {
-                MatchPattern::MatchValue(m) => self.visit_expr(&m.value),
-                MatchPattern::MatchSingleton(m) => self.visit_expr(m),
-                MatchPattern::MatchSequence(m) => {
-                    for item in m.iter() {
-                        self.visit_match_pattern(item);
-                    }
-                },
-                MatchPattern::MatchStar(m) => self.visit_expr(m),
-                MatchPattern::MatchMapping(m) => {
-                    for key in &m.keys {
-                        self.visit_expr(key);
-                    }
-                    for pattern in &m.patterns {
-                        self.visit_match_pattern(pattern);
-                    }
-                },
-                MatchPattern::MatchAs(m) => {
-                    if let Some(pattern) = &m.pattern {
-                        self.visit_match_pattern(pattern);
-                    }
-                },
-                MatchPattern::MatchClass(m) => {
-                    self.visit_expr(&m.cls);
-                    for pattern in &m.patterns {
-                        self.visit_match_pattern(pattern);
-                    }
-                },
-                MatchPattern::MatchOr(m) => {
-                    for pattern in m.iter() {
-                        self.visit_match_pattern(pattern);
-                    }
-                },
+        match _m {
+            MatchPattern::MatchValue(m) => self.visit_expr(&m.value),
+            MatchPattern::MatchSingleton(m) => self.visit_expr(m),
+            MatchPattern::MatchSequence(m) => {
+                for item in m.iter() {
+                    self.visit_match_pattern(item);
+                }
             }
+            MatchPattern::MatchStar(m) => self.visit_expr(m),
+            MatchPattern::MatchMapping(m) => {
+                for key in &m.keys {
+                    self.visit_expr(key);
+                }
+                for pattern in &m.patterns {
+                    self.visit_match_pattern(pattern);
+                }
+            }
+            MatchPattern::MatchAs(m) => {
+                if let Some(pattern) = &m.pattern {
+                    self.visit_match_pattern(pattern);
+                }
+            }
+            MatchPattern::MatchClass(m) => {
+                self.visit_expr(&m.cls);
+                for pattern in &m.patterns {
+                    self.visit_match_pattern(pattern);
+                }
+            }
+            MatchPattern::MatchOr(m) => {
+                for pattern in m.iter() {
+                    self.visit_match_pattern(pattern);
+                }
+            }
+        }
     }
 
     fn visit_constant(&mut self, _c: &Constant) {

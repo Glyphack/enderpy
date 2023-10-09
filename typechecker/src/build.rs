@@ -1,18 +1,17 @@
-use std::{collections::HashMap, path::PathBuf};
 use env_logger::Builder;
 use log::info;
+use std::{collections::HashMap, path::PathBuf};
 
 use enderpy_python_parser::Parser;
 
+use crate::nodes::EnderpyFile;
+use crate::ruff_python_import_resolver as ruff_python_resolver;
 use crate::ruff_python_import_resolver::config::Config;
 use crate::ruff_python_import_resolver::{execution_environment, resolver};
-use crate::ruff_python_import_resolver as ruff_python_resolver;
-use crate::nodes::EnderpyFile;
 use crate::settings::Settings;
 use crate::state::State;
 use crate::symbol_table::SymbolTable;
 use crate::type_check::checker::TypeChecker;
-
 
 pub struct BuildSource {
     pub path: PathBuf,
@@ -53,7 +52,7 @@ impl BuildManager {
 
             modules.insert(mod_name, State::new(file));
         }
-        
+
         let mut builder = Builder::new();
         if options.debug {
             builder.filter(None, log::LevelFilter::Debug);
@@ -98,9 +97,7 @@ impl BuildManager {
     }
 
     pub fn get_module_name(path: &PathBuf) -> String {
-        path.to_str()
-            .unwrap_or_default()
-            .replace(['/', '\\'], ".")
+        path.to_str().unwrap_or_default().replace(['/', '\\'], ".")
     }
 
     // Entry point to analyze the program
@@ -236,7 +233,6 @@ impl BuildManager {
             if !resolved.is_import_found {
                 let error = format!("cannot import name '{}'", import_desc.name());
                 log::warn!("{}", error);
-
             }
             if resolved.is_import_found {
                 for resolved_path in resolved.resolved_paths.iter() {
@@ -250,7 +246,7 @@ impl BuildManager {
                     let module = Self::get_module_name(resolved_path);
                     let build_source = BuildSource {
                         path: resolved_path.clone(),
-                        module: module.clone(), 
+                        module: module.clone(),
                         source,
                         followed: true,
                     };
@@ -258,7 +254,7 @@ impl BuildManager {
                     resolved_paths.insert(module, State::new(file));
                 }
 
-                for  (name, implicit_import) in resolved.implicit_imports.iter() {
+                for (name, implicit_import) in resolved.implicit_imports.iter() {
                     let source = std::fs::read_to_string(implicit_import.path.clone()).unwrap();
                     let module = Self::get_module_name(&implicit_import.path);
                     let build_source = BuildSource {
@@ -389,5 +385,8 @@ mod tests {
         "../testdata/inputs/type_check_undefined.py"
     );
 
-    snap_type!(test_undefined_names, "../testdata/inputs/test_undefined_name.py");
+    snap_type!(
+        test_undefined_names,
+        "../testdata/inputs/test_undefined_name.py"
+    );
 }

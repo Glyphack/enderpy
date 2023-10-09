@@ -19,8 +19,6 @@ mod tests {
     use std::io::{self, Write};
     use std::path::{Path, PathBuf};
 
-    use log::debug;
-    use tempfile::TempDir;
     use crate::ruff_python_import_resolver::config::Config;
     use crate::ruff_python_import_resolver::execution_environment::ExecutionEnvironment;
     use crate::ruff_python_import_resolver::host;
@@ -29,6 +27,8 @@ mod tests {
     use crate::ruff_python_import_resolver::python_platform::PythonPlatform;
     use crate::ruff_python_import_resolver::python_version::PythonVersion;
     use crate::ruff_python_import_resolver::resolver::resolve_import;
+    use log::debug;
+    use tempfile::TempDir;
 
     /// Create a file at the given path with the given content.
     fn create(path: PathBuf, content: &str) -> io::Result<PathBuf> {

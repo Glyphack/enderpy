@@ -5,9 +5,9 @@
 // here, so this has the minimum amount of nodes needed to
 // get the type checker working. But can be expanded.
 
-use std::path::PathBuf;
 use enderpy_python_parser as parser;
 use enderpy_python_parser::ast::{Import, ImportFrom, Module, Statement};
+use std::path::PathBuf;
 
 use crate::ast_visitor::TraversalVisitor;
 
@@ -32,7 +32,7 @@ pub struct EnderpyFile {
 }
 
 impl<'a> EnderpyFile {
-    pub fn from(ast: Module, module_name: String, source: String, path:PathBuf) -> Self {
+    pub fn from(ast: Module, module_name: String, source: String, path: PathBuf) -> Self {
         let mut file = Self {
             module_name,
             defs: vec![],
@@ -80,7 +80,7 @@ impl<'a> TraversalVisitor for EnderpyFile {
             Statement::ClassDef(c) => self.visit_class_def(c),
             Statement::Match(m) => self.visit_match(m),
             Statement::AsyncForStatement(f) => self.visit_async_for(f),
-            Statement::AsyncWithStatement(w) => self.visit_async_with(w), 
+            Statement::AsyncWithStatement(w) => self.visit_async_with(w),
             Statement::AsyncFunctionDef(f) => self.visit_async_function_def(f),
         }
     }

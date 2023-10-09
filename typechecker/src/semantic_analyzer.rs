@@ -1,5 +1,5 @@
-use enderpy_python_parser::ast::Expression;
 use enderpy_python_parser as parser;
+use enderpy_python_parser::ast::Expression;
 
 use parser::ast::Statement;
 
@@ -80,7 +80,7 @@ impl SemanticAnalyzer {
                     )
                 }
             }
-            Expression::Attribute(_) => {},
+            Expression::Attribute(_) => {}
             // TODO: Add oher expressions that can be assigned
             _ => {}
         }
@@ -239,7 +239,7 @@ impl TraversalVisitor for SemanticAnalyzer {
             parser::ast::Statement::ClassDef(c) => self.visit_class_def(c),
             parser::ast::Statement::Match(m) => self.visit_match(m),
             Statement::AsyncForStatement(f) => self.visit_async_for(f),
-            Statement::AsyncWithStatement(w) => self.visit_async_with(w), 
+            Statement::AsyncWithStatement(w) => self.visit_async_with(w),
             Statement::AsyncFunctionDef(f) => self.visit_async_function_def(f),
         }
     }
@@ -278,10 +278,13 @@ impl TraversalVisitor for SemanticAnalyzer {
 
     fn visit_import(&mut self, _i: &parser::ast::Import) {
         for alias in &_i.names {
-            self.create_import_alias_symbol(alias, DeclarationPath {
-                module_name: self.file.module_name.clone(),
-                node: alias.node,
-            });
+            self.create_import_alias_symbol(
+                alias,
+                DeclarationPath {
+                    module_name: self.file.module_name.clone(),
+                    node: alias.node,
+                },
+            );
         }
     }
 
@@ -294,7 +297,6 @@ impl TraversalVisitor for SemanticAnalyzer {
             self.create_import_alias_symbol(alias, declaration_path);
         }
     }
-
 
     fn visit_if(&mut self, i: &parser::ast::If) {
         for stmt in &i.body {
@@ -426,9 +428,7 @@ impl TraversalVisitor for SemanticAnalyzer {
         self.create_symbol(f.name.clone(), function_declaration);
     }
 
-    fn visit_async_function_def(&mut self, _f: &parser::ast::AsyncFunctionDef) {
-
-    }
+    fn visit_async_function_def(&mut self, _f: &parser::ast::AsyncFunctionDef) {}
 
     fn visit_class_def(&mut self, c: &parser::ast::ClassDef) {
         let declaration_path = DeclarationPath {

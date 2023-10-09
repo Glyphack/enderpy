@@ -54,7 +54,7 @@ impl Lexer {
                 start: self.current,
                 end: self.current,
             });
-        } 
+        }
         let start = self.current;
         let kind = self.next_kind()?;
 
@@ -330,7 +330,7 @@ impl Lexer {
                         }
                     }
                     return Ok(Kind::Dot);
-                },
+                }
                 ';' => return Ok(Kind::SemiColon),
                 '=' => match self.peek() {
                     Some('=') => {
@@ -348,7 +348,7 @@ impl Lexer {
                         self.next();
                     }
                     return Ok(Kind::Comment);
-                },
+                }
                 '\\' => return Ok(Kind::BackSlash),
                 '$' => return Ok(Kind::Dollar),
                 '?' => return Ok(Kind::QuestionMark),
@@ -779,7 +779,7 @@ impl Lexer {
             }
         }
         if spaces_count == 0 {
-            // When there are no spaces and only a new line 
+            // When there are no spaces and only a new line
             // like the following
             // if True:
             //
@@ -791,7 +791,7 @@ impl Lexer {
             // we should not consider it as dedent
             // Thanks python
             if self.peek() == Some('\n') && self.double_peek().is_some() {
-                return None
+                return None;
             }
         }
         if let Some(top) = self.indent_stack.last() {
@@ -830,7 +830,7 @@ impl Lexer {
             | Kind::RawString
             | Kind::RawFStringStart
             | Kind::Bytes
-            | Kind::Unicode 
+            | Kind::Unicode
             | Kind::Comment => TokenValue::Str(kind_value),
             Kind::Dedent => {
                 let mut spaces_count = 0;
@@ -862,7 +862,7 @@ impl Lexer {
                     // minus 1 because the dedent with actual Indent value is already added
                     // This is super hacky and I don't like it
                     self.next_token_is_dedent += de_indents - 1;
-                } 
+                }
                 TokenValue::Indent(de_indents.into())
             }
             Kind::Indent => TokenValue::Indent(1),
@@ -1154,7 +1154,7 @@ def",
     f = c
 
     # Path: test_local.py	
-"
+",
             ],
         )
         .unwrap();
@@ -1200,11 +1200,15 @@ def",
 
     #[test]
     fn test_ellipsis() {
-        snapshot_test_lexer("ellipsis", &[
-            "...",
-            "def a():
-    ..."
-        ]).unwrap();
+        snapshot_test_lexer(
+            "ellipsis",
+            &[
+                "...",
+                "def a():
+    ...",
+            ],
+        )
+        .unwrap();
     }
 
     #[test]

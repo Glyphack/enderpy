@@ -1,12 +1,13 @@
-use anyhow::{Result, bail};
+use anyhow::{bail, Result};
 use clap::Parser as ClapParser;
 use cli::{Cli, Commands};
 use enderpy_python_parser::{token, Lexer, Parser};
-use std::{fs, path::PathBuf};
 use enderpy_python_type_checker::{
     build::{BuildManager, BuildSource},
-    settings::{ImportDiscovery, Settings}, project::find_project_root,
+    project::find_project_root,
+    settings::{ImportDiscovery, Settings},
 };
+use std::{fs, path::PathBuf};
 
 mod cli;
 
@@ -30,8 +31,12 @@ fn symbols(path: &PathBuf) -> std::result::Result<(), anyhow::Error> {
         followed: false,
     };
     let dir_of_path = path.parent().unwrap();
-    let python_executable = Some( get_python_executable()? );
-    let settings = Settings { debug: false, root: dir_of_path.to_path_buf(), import_discovery: ImportDiscovery { python_executable } };
+    let python_executable = Some(get_python_executable()?);
+    let settings = Settings {
+        debug: false,
+        root: dir_of_path.to_path_buf(),
+        import_discovery: ImportDiscovery { python_executable },
+    };
 
     let mut manager = BuildManager::new(vec![initial_source], settings);
     manager.build();
@@ -90,8 +95,12 @@ fn check(path: &PathBuf) -> Result<()> {
         followed: false,
     };
     let root = find_project_root(path);
-    let python_executable = Some( get_python_executable()? );
-    let settings = Settings { debug: true, root: PathBuf::from(root), import_discovery: ImportDiscovery { python_executable } };
+    let python_executable = Some(get_python_executable()?);
+    let settings = Settings {
+        debug: true,
+        root: PathBuf::from(root),
+        import_discovery: ImportDiscovery { python_executable },
+    };
     let mut build_manager = BuildManager::new(vec![initial_source], settings);
     build_manager.type_check();
 

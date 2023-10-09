@@ -5,11 +5,11 @@ use std::ffi::OsStr;
 use std::path::{Path, PathBuf};
 use std::{fs, io};
 
-use log::debug;
 use crate::ruff_python_import_resolver::config::Config;
 use crate::ruff_python_import_resolver::host;
 use crate::ruff_python_import_resolver::module_descriptor::ImportModuleDescriptor;
 use crate::ruff_python_import_resolver::python_version::PythonVersion;
+use log::debug;
 
 const SITE_PACKAGES: &str = "site-packages";
 
@@ -51,7 +51,9 @@ fn find_site_packages_path(
                 if dir_path
                     .file_name()
                     .and_then(OsStr::to_str)?
-                    .starts_with("python3.") && dir_path.join(SITE_PACKAGES).is_dir() {
+                    .starts_with("python3.")
+                    && dir_path.join(SITE_PACKAGES).is_dir()
+                {
                     return Some(dir_path);
                 }
             } else if metadata.file_type().is_symlink() {
@@ -59,7 +61,9 @@ fn find_site_packages_path(
                 if symlink_path
                     .file_name()
                     .and_then(OsStr::to_str)?
-                    .starts_with("python3.") && symlink_path.join(SITE_PACKAGES).is_dir() {
+                    .starts_with("python3.")
+                    && symlink_path.join(SITE_PACKAGES).is_dir()
+                {
                     return Some(symlink_path);
                 }
             }
@@ -224,10 +228,12 @@ fn build_typeshed_third_party_package_map(
                         .entry(inner_entry.file_name().to_string_lossy().to_string())
                         .or_insert_with(Vec::new)
                         .push(outer_entry.path());
-                } else if inner_entry.file_type()?.is_file() && inner_entry
+                } else if inner_entry.file_type()?.is_file()
+                    && inner_entry
                         .path()
                         .extension()
-                        .is_some_and(|extension| extension == "pyi") {
+                        .is_some_and(|extension| extension == "pyi")
+                {
                     if let Some(stripped_file_name) = inner_entry
                         .path()
                         .file_stem()

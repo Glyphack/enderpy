@@ -218,7 +218,10 @@ impl Parser {
             }
             let err = ParsingError::InvalidSyntax {
                 path: Box::from(self.path.as_str()),
-                msg: Box::from(format!("Expected one of {:?} but found {:?}", expected, found)),
+                msg: Box::from(format!(
+                    "Expected one of {:?} but found {:?}",
+                    expected, found
+                )),
                 line: self.curr_line_number,
                 input: self.curr_line_string.clone(),
                 advice: "maybe you forgot to put this character".to_string(),
@@ -429,7 +432,7 @@ impl Parser {
         }
 
         let mut single_else_body: Option<Vec<Statement>> = None;
-         if self.eat(Kind::Else) {
+        if self.eat(Kind::Else) {
             self.expect(Kind::Colon)?;
             let else_body = self.parse_suite()?;
             if let Some(val) = &mut orelse {
@@ -1912,7 +1915,7 @@ impl Parser {
         if self.at(Kind::Pow) {
             // key must be None
             let (key, value) = self.parse_double_starred_kv_pair()?;
-            return self.parse_dict(node, key, value)
+            return self.parse_dict(node, key, value);
         }
         let first_key_or_element = self.parse_star_named_expression()?;
         if matches!(
@@ -2016,7 +2019,9 @@ impl Parser {
         }
     }
 
-    fn parse_double_starred_kv_pair(&mut self) -> Result<(Option<Expression>,Expression), ParsingError> {
+    fn parse_double_starred_kv_pair(
+        &mut self,
+    ) -> Result<(Option<Expression>, Expression), ParsingError> {
         if self.eat(Kind::Pow) {
             let value = self.parse_expression_2()?;
             Ok((None, value))
@@ -3693,7 +3698,10 @@ class a: pass",
     fn test_complete() {
         glob!("../../test_data", "inputs/*.py", |path| {
             let test_case = fs::read_to_string(path).unwrap();
-            let mut parser = Parser::new(test_case.clone(), String::from(path.file_name().unwrap().to_str().unwrap()));
+            let mut parser = Parser::new(
+                test_case.clone(),
+                String::from(path.file_name().unwrap().to_str().unwrap()),
+            );
             let program = parser.parse();
 
             insta::with_settings!({
@@ -3719,7 +3727,10 @@ class a: pass",
         glob!("../../test_data", "inputs/one_liners/*.py", |path| {
             let input = fs::read_to_string(path).unwrap();
             for test_case in input.split("\n\n") {
-                let mut parser = Parser::new(test_case.to_string(), String::from(path.file_name().unwrap().to_str().unwrap()));
+                let mut parser = Parser::new(
+                    test_case.to_string(),
+                    String::from(path.file_name().unwrap().to_str().unwrap()),
+                );
                 let program = parser.parse();
 
                 insta::with_settings!({

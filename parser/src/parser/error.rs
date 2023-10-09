@@ -7,12 +7,8 @@ pub enum ParsingError {
     #[diagnostic(code(gen_color::io_error))]
     IoError(#[from] std::io::Error),
 
-    #[error(
-        "Invalid syntax"
-    )]
-    #[diagnostic(code(
-        gen_color::colors_and_steps_mismatch
-    ))]
+    #[error("Invalid syntax")]
+    #[diagnostic(code(gen_color::colors_and_steps_mismatch))]
     InvalidSyntax {
         path: Box<str>,
         msg: Box<str>,

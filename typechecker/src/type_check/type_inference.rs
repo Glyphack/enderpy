@@ -82,24 +82,45 @@ pub fn type_equal(t1: &PythonType, t2: &PythonType) -> bool {
 
 pub fn type_check_bin_op(t1: &PythonType, t2: &PythonType, op: &BinaryOperator) -> bool {
     let check_table = match op {
-        BinaryOperator::Add => vec![(PythonType::Int, PythonType::Int), (PythonType::Float, PythonType::Float)],
-        BinaryOperator::Sub => vec![(PythonType::Int, PythonType::Int), (PythonType::Float, PythonType::Float)],
+        BinaryOperator::Add => vec![
+            (PythonType::Int, PythonType::Int),
+            (PythonType::Float, PythonType::Float),
+        ],
+        BinaryOperator::Sub => vec![
+            (PythonType::Int, PythonType::Int),
+            (PythonType::Float, PythonType::Float),
+        ],
         BinaryOperator::Mult => vec![
             (PythonType::Int, PythonType::Int),
             (PythonType::Float, PythonType::Float),
             (PythonType::Str, PythonType::Int),
             (PythonType::Int, PythonType::Str),
         ],
-        BinaryOperator::Div => vec![(PythonType::Int, PythonType::Int), (PythonType::Float, PythonType::Float)],
-        BinaryOperator::Mod => vec![(PythonType::Int, PythonType::Int), (PythonType::Float, PythonType::Float)],
-        BinaryOperator::Pow => vec![(PythonType::Int, PythonType::Int), (PythonType::Float, PythonType::Float)],
+        BinaryOperator::Div => vec![
+            (PythonType::Int, PythonType::Int),
+            (PythonType::Float, PythonType::Float),
+        ],
+        BinaryOperator::Mod => vec![
+            (PythonType::Int, PythonType::Int),
+            (PythonType::Float, PythonType::Float),
+        ],
+        BinaryOperator::Pow => vec![
+            (PythonType::Int, PythonType::Int),
+            (PythonType::Float, PythonType::Float),
+        ],
         BinaryOperator::LShift => vec![(PythonType::Int, PythonType::Int)],
         BinaryOperator::RShift => vec![(PythonType::Int, PythonType::Int)],
         BinaryOperator::BitOr => vec![(PythonType::Int, PythonType::Int)],
         BinaryOperator::BitAnd => vec![(PythonType::Int, PythonType::Int)],
         BinaryOperator::BitXor => vec![(PythonType::Int, PythonType::Int)],
-        BinaryOperator::FloorDiv => vec![(PythonType::Int, PythonType::Int), (PythonType::Float, PythonType::Float)],
-        BinaryOperator::MatMult => vec![(PythonType::Int, PythonType::Int), (PythonType::Float, PythonType::Float)],
+        BinaryOperator::FloorDiv => vec![
+            (PythonType::Int, PythonType::Int),
+            (PythonType::Float, PythonType::Float),
+        ],
+        BinaryOperator::MatMult => vec![
+            (PythonType::Int, PythonType::Int),
+            (PythonType::Float, PythonType::Float),
+        ],
     };
 
     for (t1_, t2_) in check_table {

@@ -1,6 +1,6 @@
 use ast::{Expression, Statement};
-use enderpy_python_parser::ast::{self, *};
 use enderpy_python_parser as parser;
+use enderpy_python_parser::ast::{self, *};
 
 use crate::{
     ast_visitor::TraversalVisitor, settings::Settings, state::State, symbol_table::SymbolTable,
@@ -49,7 +49,7 @@ impl<'a> TypeChecker<'a> {
                         expr.get_node().end,
                     );
                 }
-            PythonType::Unknown
+                PythonType::Unknown
             }
         }
     }
@@ -99,7 +99,7 @@ impl<'a> TraversalVisitor for TypeChecker<'a> {
             Statement::ClassDef(c) => self.visit_class_def(c),
             Statement::Match(m) => self.visit_match(m),
             Statement::AsyncForStatement(f) => self.visit_async_for(f),
-            Statement::AsyncWithStatement(w) => self.visit_async_with(w), 
+            Statement::AsyncWithStatement(w) => self.visit_async_with(w),
             Statement::AsyncFunctionDef(f) => self.visit_async_function_def(f),
         }
     }
@@ -114,7 +114,7 @@ impl<'a> TraversalVisitor for TypeChecker<'a> {
             Expression::Name(n) => {
                 self.infer_expr_type(e, true);
                 self.visit_name(n)
-            },
+            }
             Expression::BoolOp(b) => self.visit_bool_op(b),
             Expression::UnaryOp(u) => self.visit_unary_op(u),
             Expression::BinOp(b) => self.visit_bin_op(b),
@@ -128,13 +128,11 @@ impl<'a> TraversalVisitor for TypeChecker<'a> {
             Expression::DictComp(d) => self.visit_dict_comp(d),
             Expression::Attribute(a) => self.visit_attribute(a),
             Expression::Subscript(s) => self.visit_subscript(s),
-            Expression::Slice(s) => {
-                self.visit_slice(s)
-            },
+            Expression::Slice(s) => self.visit_slice(s),
             Expression::Call(c) => {
                 self.infer_expr_type(e, true);
                 self.visit_call(c)
-            },
+            }
             Expression::Await(a) => self.visit_await(a),
             Expression::Compare(c) => self.visit_compare(c),
             Expression::Lambda(l) => self.visit_lambda(l),
@@ -329,8 +327,7 @@ impl<'a> TraversalVisitor for TypeChecker<'a> {
         }
     }
 
-    fn visit_name(&mut self, _n: &Name) {
-    }
+    fn visit_name(&mut self, _n: &Name) {}
 
     fn visit_bool_op(&mut self, _b: &BoolOperation) {
         for expr in &_b.values {
@@ -343,7 +340,7 @@ impl<'a> TraversalVisitor for TypeChecker<'a> {
     }
 
     fn visit_bin_op(&mut self, b: &BinOp) {
-        let l_type = self.infer_expr_type(&b.left,  true);
+        let l_type = self.infer_expr_type(&b.left, true);
         let r_type = self.infer_expr_type(&b.right, true);
 
         if !type_check_bin_op(&l_type, &r_type, &b.op) {
@@ -430,13 +427,13 @@ impl<'a> TraversalVisitor for TypeChecker<'a> {
 
     fn visit_slice(&mut self, _s: &Slice) {
         if let Some(lower) = &_s.lower {
-           self.visit_expr(lower);
-        } 
+            self.visit_expr(lower);
+        }
         if let Some(upper) = &_s.upper {
-           self.visit_expr(upper);
+            self.visit_expr(upper);
         }
         if let Some(step) = &_s.step {
-           self.visit_expr(step);
+            self.visit_expr(step);
         }
     }
 
@@ -481,8 +478,7 @@ impl<'a> TraversalVisitor for TypeChecker<'a> {
         self.visit_expr(&_f.value);
     }
 
-    fn visit_alias(&mut self, _a: &Alias) {
-    }
+    fn visit_alias(&mut self, _a: &Alias) {}
 
     fn visit_assign(&mut self, _a: &Assign) {
         self.visit_expr(&_a.value);
@@ -499,7 +495,7 @@ impl<'a> TraversalVisitor for TypeChecker<'a> {
                         // TODO: Check reassignment
                     }
                 }
-                _ => {},
+                _ => {}
             }
         }
     }
