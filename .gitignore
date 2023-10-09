@@ -16,6 +16,6 @@ Cargo.lock
 typings/
 node_modules
 out/
-client/dist/
+**/dist/
 # vscode extension 
 *.vsix
