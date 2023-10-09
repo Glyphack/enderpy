@@ -70,7 +70,7 @@ impl TypeEvaluator {
                             self.infer_type_from_symbol_table(n.id.as_str(), n.node.start)?;
                         match f_type {
                             PythonType::Callable(callable_type) => Ok(callable_type.return_type),
-                            _ => Ok(PythonType::Unknown),
+                            _ => Err(miette!("{} is not callable", n.id)),
                         }
                     }
                     ast::Expression::Attribute(_a) => Ok(PythonType::Unknown),
