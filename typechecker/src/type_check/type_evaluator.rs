@@ -40,7 +40,7 @@ impl TypeEvaluator {
         let decl = symbol
             .declaration_until_position(position);
         match decl {
-            Some(decl) => self.get_type_from_declaration(&decl),
+            Some(decl) => self.get_type_from_declaration(decl),
             None => Ok(PythonType::Unknown),
         }
     }
@@ -314,207 +314,207 @@ impl TraversalVisitorImmutGeneric<PythonType> for TypeEvaluator {
     }
 
     fn visit_import(&self, _i: &ast::Import) -> PythonType {
-        return PythonType::Unknown;
+        PythonType::Unknown
     }
 
     fn visit_import_from(&self, _i: &ast::ImportFrom) -> PythonType {
-        return PythonType::Unknown;
+        PythonType::Unknown
     }
 
     fn visit_if(&self, i: &parser::ast::If) -> PythonType {
-        return PythonType::Unknown;
+        PythonType::Unknown
     }
 
     fn visit_while(&self, w: &parser::ast::While) -> PythonType {
-        return PythonType::Unknown;
+        PythonType::Unknown
     }
 
     fn visit_for(&self, f: &parser::ast::For) -> PythonType {
-        return PythonType::Unknown;
+        PythonType::Unknown
     }
 
     fn visit_with(&self, w: &parser::ast::With) -> PythonType {
-        return PythonType::Unknown;
+        PythonType::Unknown
     }
 
     fn visit_try(&self, t: &parser::ast::Try) -> PythonType {
-        return PythonType::Unknown;
+        PythonType::Unknown
     }
 
     fn visit_try_star(&self, t: &parser::ast::TryStar) -> PythonType {
-        return PythonType::Unknown;
+        PythonType::Unknown
     }
 
     fn visit_function_def(&self, f: &parser::ast::FunctionDef) -> PythonType {
-        return PythonType::Unknown;
+        PythonType::Unknown
     }
 
     fn visit_class_def(&self, c: &parser::ast::ClassDef) -> PythonType {
-        return PythonType::Unknown;
+        PythonType::Unknown
     }
 
     fn visit_match(&self, m: &parser::ast::Match) -> PythonType {
-        return PythonType::Unknown;
+        PythonType::Unknown
     }
 
     fn visit_constant(&self, _c: &ast::Constant) -> PythonType {
-        return PythonType::Unknown;
+        PythonType::Unknown
     }
 
     fn visit_list(&self, _l: &ast::List) -> PythonType {
-        return PythonType::Unknown;
+        PythonType::Unknown
     }
 
     fn visit_tuple(&self, _t: &ast::Tuple) -> PythonType {
-        return PythonType::Unknown;
+        PythonType::Unknown
     }
 
     fn visit_dict(&self, _d: &ast::Dict) -> PythonType {
-        return PythonType::Unknown;
+        PythonType::Unknown
     }
 
     fn visit_set(&self, _s: &ast::Set) -> PythonType {
-        return PythonType::Unknown;
+        PythonType::Unknown
     }
 
     fn visit_name(&self, _n: &ast::Name) -> PythonType {
-        return PythonType::Unknown;
+        PythonType::Unknown
     }
 
     fn visit_bool_op(&self, _b: &ast::BoolOperation) -> PythonType {
-        return PythonType::Unknown;
+        PythonType::Unknown
     }
 
     fn visit_unary_op(&self, _u: &ast::UnaryOperation) -> PythonType {
-        return PythonType::Unknown;
+        PythonType::Unknown
     }
 
     fn visit_bin_op(&self, _b: &ast::BinOp) -> PythonType {
-        return PythonType::Unknown;
+        PythonType::Unknown
     }
 
     fn visit_named_expr(&self, _n: &ast::NamedExpression) -> PythonType {
-        return PythonType::Unknown;
+        PythonType::Unknown
     }
 
     fn visit_yield(&self, _y: &ast::Yield) -> PythonType {
-        return PythonType::Unknown;
+        PythonType::Unknown
     }
 
     fn visit_yield_from(&self, _y: &ast::YieldFrom) -> PythonType {
-        return PythonType::Unknown;
+        PythonType::Unknown
     }
 
     fn visit_starred(&self, _s: &ast::Starred) -> PythonType {
-        return PythonType::Unknown;
+        PythonType::Unknown
     }
 
     fn visit_generator(&self, _g: &ast::Generator) -> PythonType {
-        return PythonType::Unknown;
+        PythonType::Unknown
     }
 
     fn visit_list_comp(&self, _l: &ast::ListComp) -> PythonType {
-        return PythonType::Unknown;
+        PythonType::Unknown
     }
 
     fn visit_set_comp(&self, _s: &ast::SetComp) -> PythonType {
-        return PythonType::Unknown;
+        PythonType::Unknown
     }
 
     fn visit_dict_comp(&self, _d: &ast::DictComp) -> PythonType {
-        return PythonType::Unknown;
+        PythonType::Unknown
     }
 
     fn visit_attribute(&self, _a: &ast::Attribute) -> PythonType {
-        return PythonType::Unknown;
+        PythonType::Unknown
     }
 
     fn visit_subscript(&self, _s: &ast::Subscript) -> PythonType {
-        return PythonType::Unknown;
+        PythonType::Unknown
     }
 
     fn visit_slice(&self, _s: &ast::Slice) -> PythonType {
-        return PythonType::Unknown;
+        PythonType::Unknown
     }
 
     fn visit_call(&self, _c: &ast::Call) -> PythonType {
-        return PythonType::Unknown;
+        PythonType::Unknown
     }
 
     fn visit_await(&self, _a: &ast::Await) -> PythonType {
-        return PythonType::Unknown;
+        PythonType::Unknown
     }
 
     fn visit_compare(&self, _c: &ast::Compare) -> PythonType {
-        return PythonType::Unknown;
+        PythonType::Unknown
     }
 
     fn visit_lambda(&self, _l: &ast::Lambda) -> PythonType {
-        return PythonType::Unknown;
+        PythonType::Unknown
     }
 
     fn visit_if_exp(&self, _i: &ast::IfExp) -> PythonType {
-        return PythonType::Unknown;
+        PythonType::Unknown
     }
 
     fn visit_joined_str(&self, _j: &ast::JoinedStr) -> PythonType {
-        return PythonType::Unknown;
+        PythonType::Unknown
     }
 
     fn visit_formatted_value(&self, _f: &ast::FormattedValue) -> PythonType {
-        return PythonType::Unknown;
+        PythonType::Unknown
     }
 
     fn visit_alias(&self, _a: &ast::Alias) -> PythonType {
-        return PythonType::Unknown;
+        PythonType::Unknown
     }
 
     fn visit_assign(&self, _a: &ast::Assign) -> PythonType {
-        return PythonType::Unknown;
+        PythonType::Unknown
     }
 
     fn visit_ann_assign(&self, _a: &ast::AnnAssign) -> PythonType {
-        return PythonType::Unknown;
+        PythonType::Unknown
     }
 
     fn visit_aug_assign(&self, _a: &ast::AugAssign) -> PythonType {
-        return PythonType::Unknown;
+        PythonType::Unknown
     }
 
     fn visit_assert(&self, _a: &ast::Assert) -> PythonType {
-        return PythonType::Unknown;
+        PythonType::Unknown
     }
 
     fn visit_pass(&self, _p: &ast::Pass) -> PythonType {
-        return PythonType::Unknown;
+        PythonType::Unknown
     }
 
     fn visit_delete(&self, _d: &ast::Delete) -> PythonType {
-        return PythonType::Unknown;
+        PythonType::Unknown
     }
 
     fn visit_return(&self, _r: &ast::Return) -> PythonType {
-        return PythonType::Unknown;
+        PythonType::Unknown
     }
 
     fn visit_raise(&self, _r: &ast::Raise) -> PythonType {
-        return PythonType::Unknown;
+        PythonType::Unknown
     }
 
     fn visit_break(&self, _b: &ast::Break) -> PythonType {
-        return PythonType::Unknown;
+        PythonType::Unknown
     }
 
     fn visit_continue(&self, _c: &ast::Continue) -> PythonType {
-        return PythonType::Unknown;
+        PythonType::Unknown
     }
 
     fn visit_global(&self, _g: &ast::Global) -> PythonType {
-        return PythonType::Unknown;
+        PythonType::Unknown
     }
 
     fn visit_nonlocal(&self, _n: &ast::Nonlocal) -> PythonType {
-        return PythonType::Unknown;
+        PythonType::Unknown
     }
 }
 

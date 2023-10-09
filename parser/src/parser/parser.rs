@@ -74,7 +74,7 @@ impl Parser {
             if stmt.is_ok() {
                 body.push(stmt.unwrap());
             } else {
-                self.errors.push(stmt.err().unwrap().into());
+                self.errors.push(stmt.err().unwrap());
                 self.bump_any();
             }
         }
@@ -2870,7 +2870,7 @@ impl Parser {
                 .unwrap()),
         };
         self.bump_any();
-        Ok(op?)
+        op
     }
 
     fn parse_keyword_item(&mut self) -> Result<Keyword, ParsingError> {
@@ -3064,7 +3064,7 @@ mod tests {
     use std::fs;
 
     use super::*;
-    use insta::{assert_debug_snapshot, glob, assert_display_snapshot};
+    use insta::{assert_debug_snapshot, glob};
 
     #[test]
     fn test_parse_assignment() {

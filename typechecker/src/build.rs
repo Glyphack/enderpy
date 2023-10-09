@@ -86,10 +86,7 @@ impl BuildManager {
     }
 
     pub fn parse_file(build_source: BuildSource) -> EnderpyFile {
-        let file_path = match build_source.path.to_str() {
-            Some(path) => path,
-            None => "",
-        };
+        let file_path = build_source.path.to_str().unwrap_or("");
         let mut parser = Parser::new(build_source.source.clone(), file_path.into());
         let tree = parser.parse();
         EnderpyFile::from(

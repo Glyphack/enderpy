@@ -4,7 +4,6 @@ use enderpy_python_parser as parser;
 
 use crate::{
     ast_visitor::TraversalVisitor, settings::Settings, state::State, symbol_table::SymbolTable,
-    type_check::rules::is_reassignment_valid,
 };
 
 use super::{type_evaluator::TypeEvaluator, type_inference::type_check_bin_op, types::PythonType};
