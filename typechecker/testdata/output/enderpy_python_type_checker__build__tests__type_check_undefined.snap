@@ -3,4 +3,4 @@ source: typechecker/src/build.rs
 description: "a = b + 1\n\na = c()\n\n"
 expression: result
 ---
-
+3:15:18: c is not callable
