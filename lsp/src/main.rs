@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use env_logger::Builder;
-use log::LevelFilter;
+use log::{LevelFilter, info};
 use tower_lsp::jsonrpc::Result;
 use tower_lsp::lsp_types::*;
 use tower_lsp::{Client, LanguageServer, LspService, Server};
@@ -66,22 +66,11 @@ impl LanguageServer for Backend {
                 text_document_sync: Some(TextDocumentSyncCapability::Kind(
                     TextDocumentSyncKind::FULL,
                 )),
-                execute_command_provider: Some(ExecuteCommandOptions {
-                    commands: vec!["dummy.do_something".to_string()],
-                    work_done_progress_options: Default::default(),
-                }),
-                workspace: Some(WorkspaceServerCapabilities {
-                    workspace_folders: Some(WorkspaceFoldersServerCapabilities {
-                        supported: Some(true),
-                        change_notifications: Some(OneOf::Left(true)),
-                    }),
-                    file_operations: None,
-                }),
                 diagnostic_provider: Some(DiagnosticServerCapabilities::Options(
                     DiagnosticOptions {
                         identifier: Some("typechecker".to_string()),
                         inter_file_dependencies: true,
-                        workspace_diagnostics: true,
+                        workspace_diagnostics: false,
                         work_done_progress_options: Default::default(),
                     },
                 )),
@@ -122,6 +111,53 @@ impl LanguageServer for Backend {
             self.client
                 .publish_diagnostics(uri, diagnostics, None)
                 .await;
+        }
+    }
+
+    async fn did_change(&self, params: DidChangeTextDocumentParams) {
+        self.client
+            .log_message(MessageType::INFO, "file changed!")
+            .await;
+        let uri = params.text_document.uri;
+        let path = uri.to_file_path();
+        if let Ok(path) = path {
+            let diagnostics = self.check_file(&path).await;
+            self.client
+                .publish_diagnostics(uri, diagnostics, None)
+                .await;
+        }
+    }
+
+    async fn diagnostic(&self, params: DocumentDiagnosticParams) -> Result<DocumentDiagnosticReportResult> {
+        self.client
+            .log_message(MessageType::INFO, "diagnostic!")
+        .await;
+        let uri = params.text_document.uri;
+        let path = uri.to_file_path();
+
+        info!("diagnostic: {:?}", path);
+        match path {
+            Ok(path) => {
+                let diagnostics = self.check_file(&path).await;
+                info!("diagnostics: {:?}", diagnostics);
+                Ok(DocumentDiagnosticReportResult::Report(
+                    DocumentDiagnosticReport::Full(RelatedFullDocumentDiagnosticReport{
+                        related_documents: None,
+                        full_document_diagnostic_report: FullDocumentDiagnosticReport{
+                            result_id: None,
+                            items: diagnostics,
+                        }
+                    })
+                ))
+            }
+            Err(_) => {
+                Ok(DocumentDiagnosticReportResult::Report(DocumentDiagnosticReport::Unchanged(RelatedUnchangedDocumentDiagnosticReport{
+                    related_documents:None,
+                    unchanged_document_diagnostic_report: UnchangedDocumentDiagnosticReport{
+                        result_id: "typechecker".to_string(),
+                    }
+                })))
+            }
         }
     }
 
