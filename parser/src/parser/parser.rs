@@ -71,17 +71,14 @@ impl Parser {
             } else {
                 self.parse_simple_statement()
             };
-            if stmt.is_ok() {
-                body.push(stmt.unwrap());
-            } else {
-                self.errors.push(stmt.err().unwrap());
-                self.bump_any();
+            match stmt {
+                Ok(stmt) => body.push(stmt),
+                Err(err) => {
+                    self.errors.push(err);
+                }
             }
         }
 
-        for err in &self.errors {
-            println!("{:#?}", err);
-        }
 
         Module {
             node: self.finish_node(node),
@@ -234,6 +231,7 @@ impl Parser {
         Ok(())
     }
 
+    // deprecated
     fn unepxted_token(&mut self, node: Node, kind: Kind) -> Result<(), ParsingError> {
         self.bump_any();
         let range = self.finish_node(node);
@@ -249,7 +247,6 @@ impl Parser {
         Err(err)
     }
 
-    // write this like the expect function
     fn unexpected_token_new(&mut self, node: Node, kinds: Vec<Kind>, advice: &str) -> ParsingError {
         let curr_kind = self.cur_kind();
         self.bump_any();
@@ -1543,7 +1540,7 @@ impl Parser {
         } else {
             return Err(self.unexpected_token_new(
                import_node,
-               vec![Kind::Identifier, Kind::Mul],
+               vec![Kind::Identifier, Kind::Mul, Kind::LeftParen],
                "Use * for importing everthing or use () to specify names to import or specify the name you want to import"
            ));
         }

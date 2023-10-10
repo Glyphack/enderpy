@@ -28,3 +28,5 @@ month_names = ['Januari', 'Februari', 'Maart',      # These are the
 [a for a in b if c if d]
 
 [a for a in b for c in d]
+
+[a for a in b if c for d in e]

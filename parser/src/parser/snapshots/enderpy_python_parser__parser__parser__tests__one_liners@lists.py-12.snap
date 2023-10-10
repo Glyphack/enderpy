@@ -1,12 +1,12 @@
 ---
 source: parser/src/parser/parser.rs
-description: "[a for a in b for c in d]"
+description: "[a for a in b if c for d in e]\n"
 input_file: parser/test_data/inputs/one_liners/lists.py
 ---
 Module {
     node: Node {
         start: 0,
-        end: 25,
+        end: 31,
     },
     body: [
         ExpressionStatement(
@@ -14,7 +14,7 @@ Module {
                 ListComp {
                     node: Node {
                         start: 0,
-                        end: 25,
+                        end: 30,
                     },
                     element: Name(
                         Name {
@@ -29,7 +29,7 @@ Module {
                         Comprehension {
                             node: Node {
                                 start: 3,
-                                end: 13,
+                                end: 18,
                             },
                             target: Name(
                                 Name {
@@ -49,30 +49,40 @@ Module {
                                     id: "b",
                                 },
                             ),
-                            ifs: [],
+                            ifs: [
+                                Name(
+                                    Name {
+                                        node: Node {
+                                            start: 17,
+                                            end: 18,
+                                        },
+                                        id: "c",
+                                    },
+                                ),
+                            ],
                             is_async: false,
                         },
                         Comprehension {
                             node: Node {
-                                start: 14,
-                                end: 24,
+                                start: 19,
+                                end: 29,
                             },
                             target: Name(
-                                Name {
-                                    node: Node {
-                                        start: 18,
-                                        end: 19,
-                                    },
-                                    id: "c",
-                                },
-                            ),
-                            iter: Name(
                                 Name {
                                     node: Node {
                                         start: 23,
                                         end: 24,
                                     },
                                     id: "d",
+                                },
+                            ),
+                            iter: Name(
+                                Name {
+                                    node: Node {
+                                        start: 28,
+                                        end: 29,
+                                    },
+                                    id: "e",
                                 },
                             ),
                             ifs: [],
