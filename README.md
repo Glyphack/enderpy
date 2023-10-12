@@ -59,11 +59,14 @@ For more information read:
 
 ## Contributing
 
-Contributions are very much appropriated. Take a look at our open issues, to get started.
-Or [ send me a message ](discordapp.com/users/glyphack) for discussions/help.
+If you are here then you want to write some rust code, let's get to it.
+You can [ send me a message ](discordapp.com/users/glyphack) for discussions/help.
 
 You can use [these learning](https://glyphack.com/blog/compiler-resources/) resources
 to learn about each component.
+
+The following will be a brief introduction into the project and how it works.
+But it's always better to consult the code to see what exactly is going on.
 
 ### Core Concepts
 
@@ -122,6 +125,8 @@ There's a struct called `Builder` which manages everything from getting the path
 
 The `Builder` first resolves the imports in the initial files and import those for checking.
 Then it will do a first pass on the files to bind the definitions and store them in symbol table.
+
+Project uses visitor pattern to traverse the AST.
 
 Python has a symbol table that you can use to see symbol table for a program. There's a script in `./scripts` folder.
 
