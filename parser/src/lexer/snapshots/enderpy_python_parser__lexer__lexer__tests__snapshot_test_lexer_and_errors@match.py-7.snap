@@ -1,0 +1,265 @@
+---
+source: parser/src/lexer/lexer.rs
+description: "match x:\n    case Point2D(0, 0):\n        pass\n    case Point3D(x=0, y=0, z=0):\n        pass"
+input_file: parser/test_data/inputs/one_liners/match.py
+---
+[
+    Token {
+        kind: Identifier,
+        value: Str(
+            "match",
+        ),
+        start: 0,
+        end: 5,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "x",
+        ),
+        start: 6,
+        end: 7,
+    },
+    Token {
+        kind: Colon,
+        value: None,
+        start: 7,
+        end: 8,
+    },
+    Token {
+        kind: NewLine,
+        value: None,
+        start: 8,
+        end: 9,
+    },
+    Token {
+        kind: Indent,
+        value: Indent(
+            1,
+        ),
+        start: 9,
+        end: 13,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "case",
+        ),
+        start: 13,
+        end: 17,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "Point2D",
+        ),
+        start: 18,
+        end: 25,
+    },
+    Token {
+        kind: LeftParen,
+        value: None,
+        start: 25,
+        end: 26,
+    },
+    Token {
+        kind: Integer,
+        value: Number(
+            "0",
+        ),
+        start: 26,
+        end: 27,
+    },
+    Token {
+        kind: Comma,
+        value: None,
+        start: 27,
+        end: 28,
+    },
+    Token {
+        kind: Integer,
+        value: Number(
+            "0",
+        ),
+        start: 29,
+        end: 30,
+    },
+    Token {
+        kind: RightParen,
+        value: None,
+        start: 30,
+        end: 31,
+    },
+    Token {
+        kind: Colon,
+        value: None,
+        start: 31,
+        end: 32,
+    },
+    Token {
+        kind: NewLine,
+        value: None,
+        start: 32,
+        end: 33,
+    },
+    Token {
+        kind: Indent,
+        value: Indent(
+            1,
+        ),
+        start: 33,
+        end: 41,
+    },
+    Token {
+        kind: Pass,
+        value: None,
+        start: 41,
+        end: 45,
+    },
+    Token {
+        kind: NewLine,
+        value: None,
+        start: 45,
+        end: 46,
+    },
+    Token {
+        kind: Dedent,
+        value: Indent(
+            1,
+        ),
+        start: 46,
+        end: 50,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "case",
+        ),
+        start: 50,
+        end: 54,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "Point3D",
+        ),
+        start: 55,
+        end: 62,
+    },
+    Token {
+        kind: LeftParen,
+        value: None,
+        start: 62,
+        end: 63,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "x",
+        ),
+        start: 63,
+        end: 64,
+    },
+    Token {
+        kind: Assign,
+        value: None,
+        start: 64,
+        end: 65,
+    },
+    Token {
+        kind: Integer,
+        value: Number(
+            "0",
+        ),
+        start: 65,
+        end: 66,
+    },
+    Token {
+        kind: Comma,
+        value: None,
+        start: 66,
+        end: 67,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "y",
+        ),
+        start: 68,
+        end: 69,
+    },
+    Token {
+        kind: Assign,
+        value: None,
+        start: 69,
+        end: 70,
+    },
+    Token {
+        kind: Integer,
+        value: Number(
+            "0",
+        ),
+        start: 70,
+        end: 71,
+    },
+    Token {
+        kind: Comma,
+        value: None,
+        start: 71,
+        end: 72,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "z",
+        ),
+        start: 73,
+        end: 74,
+    },
+    Token {
+        kind: Assign,
+        value: None,
+        start: 74,
+        end: 75,
+    },
+    Token {
+        kind: Integer,
+        value: Number(
+            "0",
+        ),
+        start: 75,
+        end: 76,
+    },
+    Token {
+        kind: RightParen,
+        value: None,
+        start: 76,
+        end: 77,
+    },
+    Token {
+        kind: Colon,
+        value: None,
+        start: 77,
+        end: 78,
+    },
+    Token {
+        kind: NewLine,
+        value: None,
+        start: 78,
+        end: 79,
+    },
+    Token {
+        kind: Indent,
+        value: Indent(
+            1,
+        ),
+        start: 79,
+        end: 87,
+    },
+    Token {
+        kind: Pass,
+        value: None,
+        start: 87,
+        end: 91,
+    },
+]

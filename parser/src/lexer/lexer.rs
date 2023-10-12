@@ -2,7 +2,7 @@ use crate::token::{Kind, Token, TokenValue};
 use miette::Result;
 use unicode_id_start::{is_id_continue, is_id_start};
 
-use super::diagnostics::SyntaxError;
+use crate::error::ParsingError;
 
 #[derive(Debug)]
 pub struct Lexer {
@@ -10,6 +10,7 @@ pub struct Lexer {
     source: String,
     /// The current position in the source code
     current: usize,
+    current_line: u16,
     /// Keeps track of whether the lexer is at the start of a line
     start_of_line: bool,
     /// keeps track of the indentation level
@@ -36,6 +37,7 @@ impl Lexer {
         Self {
             source: source.to_string(),
             current: 0,
+            current_line: 1,
             start_of_line: true,
             indent_stack: vec![0],
             nesting: 0,
@@ -45,7 +47,7 @@ impl Lexer {
         }
     }
 
-    pub fn next_token(&mut self) -> Result<Token> {
+    pub fn next_token(&mut self) -> Result<Token, ParsingError> {
         while self.next_token_is_dedent > 0 {
             self.next_token_is_dedent -= 1;
             return Ok(Token {
@@ -63,10 +65,10 @@ impl Lexer {
             return self.next_token();
         }
         let raw_value = self.extract_raw_token_value(start);
-        let value = self.parse_token_value(kind, raw_value);
+        let value = self.parse_token_value(kind, raw_value)?;
         let end = self.current;
 
-        Ok(Token {
+     Ok(Token {
             kind,
             value,
             start,
@@ -75,8 +77,9 @@ impl Lexer {
     }
 
     // peek_token is a side-effect free version of next_token
-    pub fn peek_token(&mut self) -> Result<Token> {
+    pub fn peek_token(&mut self) -> Result<Token, ParsingError> {
         let current = self.current;
+        let current_line = self.current_line;
         let nesting = self.nesting;
         let fstring_stack = self.fstring_stack.clone();
         let start_of_line = self.start_of_line;
@@ -84,6 +87,7 @@ impl Lexer {
         let next_token_is_dedent = self.next_token_is_dedent;
         let token = self.next_token();
         self.current = current;
+        self.current_line = self.current_line;
         self.nesting = nesting;
         self.fstring_stack = fstring_stack;
         self.start_of_line = start_of_line;
@@ -168,7 +172,7 @@ impl Lexer {
         None
     }
 
-    fn next_kind(&mut self) -> Result<Kind> {
+    fn next_kind(&mut self) -> Result<Kind, ParsingError> {
         if self.start_of_line {
             if let Some(indent_kind) = self.match_indentation() {
                 self.start_of_line = false; // WHY!?
@@ -186,7 +190,7 @@ impl Lexer {
 
             match c {
                 // Numbers
-                '0'..='9' => return Ok(self.match_numeric_literal()),
+                '0'..='9' => return self.match_numeric_literal(),
                 // Identifiers & Keywords
                 id_start @ 'a'..='z' | id_start @ 'A'..='Z' | id_start @ '_' => {
                     return self.match_id_keyword(id_start);
@@ -388,6 +392,7 @@ impl Lexer {
                     _ => return Ok(Kind::Greater),
                 },
                 '\n' | '\r' => {
+                    self.current_line += 1;
                     // Expressions in parentheses, square brackets or curly braces can be split over more than one physical line without using backslashes.
                     // The indentation of the continuation lines is not important. Blank continuation lines are allowed.
                     // There is no NEWLINE token between implicit continuation lines.
@@ -406,7 +411,7 @@ impl Lexer {
         Ok(Kind::Eof)
     }
 
-    fn match_id_keyword(&mut self, id_start: char) -> Result<Kind> {
+    fn match_id_keyword(&mut self, id_start: char) -> Result<Kind, ParsingError> {
         if let Some(str_kind) = self.match_str(id_start)? {
             return Ok(str_kind);
         }
@@ -438,7 +443,7 @@ impl Lexer {
         id
     }
 
-    fn match_str(&mut self, id_start: char) -> Result<Option<Kind>> {
+    fn match_str(&mut self, id_start: char) -> Result<Option<Kind>, ParsingError> {
         match id_start {
             'r' | 'R' => match self.peek() {
                 // check if is start of string
@@ -583,10 +588,12 @@ impl Lexer {
         }
     }
 
-    fn skip_to_str_end(&mut self, str_start: char) -> Result<()> {
-        // Check if string starts with triple quotes
+    fn skip_to_str_end(&mut self, str_start: char) -> Result<(), ParsingError> {
+        // string start position is current position - 1 because we already consumed the quote
+        let str_start_pos = self.current - 1;
         let mut string_terminated = false;
         let mut last_read_char = str_start;
+        // Check if string starts with triple quotes
         // if string started with triple quotes, we need to read 3 characters at a time
         if self.peek() == Some(str_start) && self.double_peek() == Some(str_start) {
             self.next();
@@ -613,13 +620,24 @@ impl Lexer {
         }
 
         if !string_terminated {
-            Err(SyntaxError("String not terminated").into())
+            Err(ParsingError::InvalidSyntax{
+                // TODO: I think the path must be removed from the error
+                // The caller knows the path
+                path: "".into(),
+                msg: "String is not terminated".into(),
+                line: self.current_line.into(),
+                input: self.extract_raw_token_value(self.current),
+                advice: "Add a closing quote".into(),
+                span: (str_start_pos, self.current),
+            })
         } else {
             Ok(())
         }
     }
 
-    fn match_numeric_literal(&mut self) -> Kind {
+    fn match_numeric_literal(&mut self) -> Result<Kind, ParsingError> {
+        // first number is already consumed
+        let numeric_literal_start = self.current - 1;
         match self.peek() {
             Some('b') | Some('B') => {
                 self.next();
@@ -631,10 +649,17 @@ impl Lexer {
                         '_' => {
                             self.next();
                         }
-                        _ => panic!("Binary literals must be 0 or 1"),
+                        _ => return Err(ParsingError::InvalidSyntax {
+                            path: "".into(),
+                            msg: "invalid binary literal".into(),
+                            line: self.current_line.into(),
+                            input: self.extract_raw_token_value(numeric_literal_start),
+                            advice: "Binary literals must be 0 or 1".into(),
+                            span: (self.current - 1, self.current),
+                        }),
                     }
                 }
-                return Kind::Binary;
+                return Ok(Kind::Binary);
             }
             Some('o') | Some('O') => {
                 self.next();
@@ -646,10 +671,17 @@ impl Lexer {
                         '_' => {
                             self.next();
                         }
-                        _ => panic!("Octal literals must be 0-7"),
+                        _ => return Err(ParsingError::InvalidSyntax {
+                            path: "".into(),
+                            msg: "invalid octal literal".into(),
+                            line: self.current_line.into(),
+                            input: self.extract_raw_token_value(numeric_literal_start),
+                            advice: "Octal literals must be 0-7".into(),
+                            span: (self.current - 1, self.current),
+                        }),
                     }
                 }
-                return Kind::Octal;
+                return Ok(Kind::Octal);
             }
             Some('x') | Some('X') => {
                 self.next();
@@ -661,10 +693,17 @@ impl Lexer {
                         '_' => {
                             self.next();
                         }
-                        _ => panic!("Hexadecimal literals must be 0-9, a-f, A-F"),
+                        _ => return Err(ParsingError::InvalidSyntax {
+                            path: "".into(),
+                            msg: "invalid hexadecimal literal".into(),
+                            line: self.current_line.into(),
+                            input: self.extract_raw_token_value(numeric_literal_start),
+                            advice: "Hexadecimal literals must be 0-9 or a-f or A-F".into(),
+                            span: (self.current - 1, self.current),
+                        }),
                     }
                 }
-                return Kind::Hexadecimal;
+                return Ok(Kind::Hexadecimal);
             }
             _ => {}
         }
@@ -689,8 +728,18 @@ impl Lexer {
                                 match self.peek() {
                                     Some('+') | Some('-') => {
                                         self.next();
+                                    },
+                                    Some('0'..='9') => {
+                                        self.next();
                                     }
-                                    _ => panic!("Exponent must be + or -"),
+                                    _ => return Err(ParsingError::InvalidSyntax{
+                                        path: "".into(),
+                                        msg: "invalid decimal literal".into(),
+                                        line: self.current_line.into(),
+                                        input: self.extract_raw_token_value(numeric_literal_start),
+                                        advice: "There must be a number or +/- after E".into(),
+                                        span: (self.current - 1, self.current),
+                                    })
                                 }
                             }
                             'j' | 'J' => {
@@ -703,14 +752,14 @@ impl Lexer {
                     }
                     if has_exponent {
                         if is_imaginary {
-                            return Kind::ImaginaryExponentFloat;
+                            return Ok(Kind::ImaginaryExponentFloat);
                         }
-                        return Kind::ExponentFloat;
+                        return Ok(Kind::ExponentFloat);
                     }
                     if is_imaginary {
-                        return Kind::ImaginaryPointFloat;
+                        return Ok(Kind::ImaginaryPointFloat);
                     }
-                    return Kind::PointFloat;
+                    return Ok(Kind::PointFloat);
                 }
                 'e' | 'E' => {
                     self.next();
@@ -734,9 +783,9 @@ impl Lexer {
                         }
                     }
                     if is_imaginary {
-                        return Kind::ImaginaryExponentFloat;
+                        return Ok(Kind::ImaginaryExponentFloat);
                     }
-                    return Kind::ExponentFloat;
+                    return Ok(Kind::ExponentFloat);
                 }
                 '0'..='9' => {
                     self.next();
@@ -754,10 +803,10 @@ impl Lexer {
         }
 
         if is_imaginary {
-            return Kind::ImaginaryInteger;
+            return Ok(Kind::ImaginaryInteger);
         }
 
-        Kind::Integer
+        Ok(Kind::Integer)
     }
 
     fn match_indentation(&mut self) -> Option<Kind> {
@@ -809,9 +858,9 @@ impl Lexer {
         }
     }
 
-    fn parse_token_value(&mut self, kind: Kind, kind_value: String) -> TokenValue {
+    fn parse_token_value(&mut self, kind: Kind, kind_value: String) -> Result<TokenValue, ParsingError> {
         use std::cmp::Ordering;
-        match kind {
+        Ok(match kind {
             Kind::Integer
             | Kind::Hexadecimal
             | Kind::Binary
@@ -855,7 +904,14 @@ impl Lexer {
                             de_indents += 1;
                         }
                         Ordering::Equal => break,
-                        Ordering::Less => panic!("Invalid indentation, current indentation is {} which is less than previous {}", spaces_count, top),
+                        Ordering::Less => return Err(ParsingError::InvalidSyntax {
+                            path: "".into(),
+                            msg: "Invalid indentation".into(),
+                            line: self.current_line.into(),
+                            input: self.extract_raw_token_value(self.current),
+                            advice: "Invalid indentation, the current indentation is less than previous one".into(),
+                            span: (self.current - 1, self.current),
+                        }),
                     }
                 }
                 if de_indents != 1 {
@@ -867,7 +923,7 @@ impl Lexer {
             }
             Kind::Indent => TokenValue::Indent(1),
             _ => TokenValue::None,
-        }
+        })
     }
 
     fn create_f_string_start(&mut self, str_start: char) -> String {
@@ -887,9 +943,12 @@ fn match_whitespace(c: char) -> bool {
 
 #[cfg(test)]
 mod tests {
+    use std::fs;
+
     use super::Kind;
     use super::Lexer;
     use insta::assert_debug_snapshot;
+    use insta::glob;
     use miette::Result;
 
     fn snapshot_test_lexer(snap_name: &str, inputs: &[&str]) -> Result<()> {
@@ -1241,9 +1300,7 @@ def",
     #[should_panic]
     fn test_unexpected_indentation() {
         let mut lexer = Lexer::new(
-            "if True:
-        pass
-    pass",
+            "",
         );
         loop {
             let token = lexer.next_token().unwrap();
@@ -1251,5 +1308,57 @@ def",
                 break;
             }
         }
+    }
+
+    fn snapshot_test_lexer_and_errors(test_case: &str) {
+        let mut lexer = Lexer::new(test_case);
+        let mut tokens = vec![];
+        let mut errors = vec![];
+        loop {
+            match lexer.next_token() {
+                Ok(token) => {
+                    if token.kind == Kind::Eof {
+                        break;
+                    }
+                    tokens.push(token);
+                }
+                Err(err) => {
+                    errors.push(err);
+                }
+            }
+        }
+        insta::with_settings!({
+            description => test_case.to_string(), // the template source code
+            omit_expression => true // do not include the default expression
+        }, {
+                assert_debug_snapshot!(tokens);
+        });
+
+        if !errors.is_empty() {
+            insta::with_settings!({
+                description => test_case,
+                omit_expression => true
+            }, {
+                    assert_debug_snapshot!(errors);
+            });
+        }
+    }
+
+    #[test]
+    fn test_complete() {
+        glob!("../../test_data", "inputs/*.py", |path| {
+            let test_case = fs::read_to_string(path).unwrap();
+            snapshot_test_lexer_and_errors(&test_case);
+        })
+    }
+
+    #[test]
+    fn test_one_liners() {
+        glob!("../../test_data", "inputs/one_liners/*.py", |path| {
+            let input = fs::read_to_string(path).unwrap();
+            for test_case in input.split("\n\n") {
+                snapshot_test_lexer_and_errors(&test_case);
+            }
+        });
     }
 }

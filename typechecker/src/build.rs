@@ -4,6 +4,7 @@ use std::{collections::HashMap, path::PathBuf};
 
 use enderpy_python_parser::Parser;
 
+use crate::errors::BuildError;
 use crate::nodes::EnderpyFile;
 use crate::ruff_python_import_resolver as ruff_python_resolver;
 use crate::ruff_python_import_resolver::config::Config;
@@ -20,14 +21,6 @@ pub struct BuildSource {
     pub source: String,
     // If this source was found by following an import
     pub followed: bool,
-}
-
-#[derive(Debug, Clone)]
-pub struct BuildError {
-    pub msg: String,
-    pub line: u32,
-    pub start: u32,
-    pub end: u32,
 }
 
 #[derive(Debug)]
@@ -94,6 +87,23 @@ impl BuildManager {
             build_source.source.clone(),
             build_source.path,
         )
+    }
+
+    pub fn parse(&mut self, build_source: BuildSource) -> Result<EnderpyFile, BuildError> {
+        let file_path = build_source.path.to_str().unwrap_or("");
+        let mut parser = Parser::new(build_source.source.clone(), file_path.into());
+        let tree = parser.parse();
+        if parser.errors.len() > 0 {
+            self.errors.extend(parser.errors);
+            Ok(())
+        } else {
+        Ok(EnderpyFile::from(
+            tree,
+            build_source.module,
+            build_source.source.clone(),
+            build_source.path,
+        ))
+        }
     }
 
     pub fn get_module_name(path: &PathBuf) -> String {

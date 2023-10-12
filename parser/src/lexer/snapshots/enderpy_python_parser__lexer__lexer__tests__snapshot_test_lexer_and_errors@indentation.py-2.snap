@@ -1,0 +1,18 @@
+---
+source: parser/src/lexer/lexer.rs
+description: "# Unindent does not match any outer indentation level\nif True:\n        pass\n    pass\n"
+input_file: parser/test_data/inputs/indentation.py
+---
+[
+    InvalidSyntax {
+        path: "",
+        msg: "Invalid indentation",
+        line: 4,
+        input: "",
+        advice: "Invalid indentation, the current indentation is less than previous one",
+        span: (
+            79,
+            80,
+        ),
+    },
+]

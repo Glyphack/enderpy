@@ -5,7 +5,7 @@ use crate::parser::ast::JoinedStr;
 use crate::token::Kind;
 
 use super::ast::Node;
-use super::error::ParsingError;
+use crate::error::ParsingError;
 pub fn extract_string_inside(val: String) -> String {
     if let Some(val) = val.strip_prefix("\"\"\"") {
         val.strip_suffix("\"\"\"")

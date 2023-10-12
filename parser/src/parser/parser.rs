@@ -6,7 +6,7 @@ use crate::parser::string::{extract_string_inside, is_string};
 use crate::token::{Kind, Token, TokenValue};
 use miette::Result;
 
-use super::error::ParsingError;
+use crate::error::ParsingError;
 use super::expression::{is_atom, is_iterable};
 use super::operator::{
     is_bin_arithmetic_op, is_comparison_operator, is_unary_op, map_unary_operator,

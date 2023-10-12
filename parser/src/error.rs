@@ -10,6 +10,7 @@ pub enum ParsingError {
     #[error("Invalid syntax")]
     #[diagnostic(code(gen_color::colors_and_steps_mismatch))]
     InvalidSyntax {
+        // TODO: Remove path?
         path: Box<str>,
         msg: Box<str>,
         line: u32,
