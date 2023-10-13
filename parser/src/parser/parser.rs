@@ -6,13 +6,13 @@ use crate::parser::string::{extract_string_inside, is_string};
 use crate::token::{Kind, Token, TokenValue};
 use miette::Result;
 
-use crate::error::ParsingError;
 use super::expression::{is_atom, is_iterable};
 use super::operator::{
     is_bin_arithmetic_op, is_comparison_operator, is_unary_op, map_unary_operator,
 };
 use super::statement::is_at_compound_statement;
 use super::string::concat_string_exprs;
+use crate::error::ParsingError;
 
 #[allow(unused)]
 #[derive(Debug)]
@@ -79,7 +79,6 @@ impl Parser {
             }
         }
 
-
         Module {
             node: self.finish_node(node),
             body,
@@ -109,7 +108,6 @@ impl Parser {
                 let pos = self.cur_token.end;
                 let line_number = self.get_line_number_of_character_position(pos);
                 let err = ParsingError::InvalidSyntax {
-                    path: Box::from(self.path.as_str()),
                     msg: Box::from(format!("Syntax error: {:?}", err)),
                     line: line_number,
                     input: self.curr_line_string.clone(),
@@ -189,7 +187,6 @@ impl Parser {
             let node = self.start_node();
             let range = self.finish_node(node);
             let err = ParsingError::InvalidSyntax {
-                path: Box::from(self.path.as_str()),
                 msg: Box::from(format!("Expected {:?} but found {:?}", kind, found)),
                 line: self.curr_line_number,
                 input: self.curr_line_string.clone(),
@@ -214,7 +211,6 @@ impl Parser {
                 expected.push_str(&format!("{:?}, ", kind));
             }
             let err = ParsingError::InvalidSyntax {
-                path: Box::from(self.path.as_str()),
                 msg: Box::from(format!(
                     "Expected one of {:?} but found {:?}",
                     expected, found
@@ -237,7 +233,6 @@ impl Parser {
         let range = self.finish_node(node);
         let line_number = self.get_line_number_of_character_position(range.start);
         let err = ParsingError::InvalidSyntax {
-            path: Box::from(self.path.as_str()),
             msg: Box::from(format!("Unexpected token {:?}", kind)),
             line: line_number,
             input: self.curr_line_string.clone(),
@@ -257,7 +252,6 @@ impl Parser {
             expected.push_str(&format!("{:?}, ", kind));
         }
         let err = ParsingError::InvalidSyntax {
-            path: Box::from(self.path.as_str()),
             msg: Box::from(format!(
                 "Expected one of {:?} but found {:?}",
                 expected,
@@ -366,7 +360,6 @@ impl Parser {
             _ => {
                 let range = self.finish_node(self.start_node());
                 Err(ParsingError::InvalidSyntax {
-                    path: Box::from(self.path.as_str()),
                     msg: Box::from("Expected compound statement"),
                     line: self.curr_line_number,
                     input: self.curr_line_string.clone(),
@@ -390,7 +383,6 @@ impl Parser {
             let node = self.finish_node(node);
             let kind = self.cur_kind();
             let err = ParsingError::InvalidSyntax {
-                path: Box::from(self.path.as_str()),
                 msg: Box::from("Statement does not end in new line or semicolon"),
                 line: self.curr_line_number,
                 input: self.curr_line_string.clone(),
@@ -1122,7 +1114,6 @@ impl Parser {
             } else {
                 if seen_keyword_pattern {
                     return Err(ParsingError::InvalidSyntax {
-                        path: Box::from(self.path.as_str()),
                         msg: Box::from("Positional arguments cannot come after keyword arguments."),
                         line: self.curr_line_number,
                         input: self.curr_line_string.clone(),
@@ -1964,7 +1955,6 @@ impl Parser {
         if self.at(Kind::For) || self.at(Kind::Async) && matches!(self.peek_kind(), Ok(Kind::For)) {
             let key = if first_key.is_none() {
                 let err = ParsingError::InvalidSyntax {
-                    path: Box::from(self.path.as_str()),
                     msg: Box::from("cannot use ** in dict comprehension"),
                     line: self.get_line_number_of_character_position(self.cur_token.end),
                     input: self.curr_line_string.clone(),
@@ -2352,7 +2342,6 @@ impl Parser {
                     if seen_keyword {
                         let node_end = self.finish_node(node);
                         return Err(ParsingError::InvalidSyntax {
-                            path: Box::from(self.path.as_str()),
                             msg: Box::from(
                                 "Positional arguments cannot come after keyword arguments.",
                             ),
@@ -2432,7 +2421,6 @@ impl Parser {
                 if seen_keyword {
                     let node_end = self.finish_node(node);
                     return Err(ParsingError::InvalidSyntax {
-                        path: Box::from(self.path.as_str()),
                         msg: Box::from("Positional arguments cannot come after keyword arguments."),
                         line: self.curr_line_number,
                         input: self.curr_line_string.clone(),
@@ -2909,7 +2897,6 @@ impl Parser {
                     kwonlyargs.push(param);
                 } else if seen_kwarg {
                     return Err(ParsingError::InvalidSyntax {
-                        path: Box::from(self.path.as_str()),
                         msg: Box::from("positional argument follows keyword argument"),
                         line: self.curr_line_number,
                         input: self.curr_line_string.clone(),
@@ -2928,7 +2915,6 @@ impl Parser {
                     defaults.push(default_value);
                 } else if must_have_default {
                     return Err(ParsingError::InvalidSyntax {
-                        path: Box::from(self.path.as_str()),
                         msg: Box::from("non-default argument follows default argument"),
                         line: self.curr_line_number,
                         input: self.curr_line_string.clone(),
@@ -2947,7 +2933,6 @@ impl Parser {
                 // default is not allowed for vararg
                 if default.is_some() {
                     return Err(ParsingError::InvalidSyntax {
-                        path: Box::from(self.path.as_str()),
                         msg: Box::from("var-positional argument cannot have default value"),
                         line: self.curr_line_number,
                         input: self.curr_line_string.clone(),
@@ -2962,7 +2947,6 @@ impl Parser {
                 // default is not allowed for kwarg
                 if default.is_some() {
                     return Err(ParsingError::InvalidSyntax {
-                        path: Box::from(self.path.as_str()),
                         msg: Box::from("var-keyword argument cannot have default value"),
                         line: self.curr_line_number,
                         input: self.curr_line_string.clone(),

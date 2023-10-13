@@ -3,15 +3,9 @@ use thiserror::Error;
 
 #[derive(Error, Diagnostic, Debug)]
 pub enum ParsingError {
-    #[error(transparent)]
-    #[diagnostic(code(gen_color::io_error))]
-    IoError(#[from] std::io::Error),
-
     #[error("Invalid syntax")]
-    #[diagnostic(code(gen_color::colors_and_steps_mismatch))]
+    #[diagnostic(code(parser::invalid_syntax))]
     InvalidSyntax {
-        // TODO: Remove path?
-        path: Box<str>,
         msg: Box<str>,
         line: u32,
         #[source_code]

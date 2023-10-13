@@ -1,13 +1,14 @@
-use anyhow::{bail, Result};
 use clap::Parser as ClapParser;
 use cli::{Cli, Commands};
-use enderpy_python_parser::{token, Lexer, Parser};
+use enderpy_python_parser::{Lexer, Parser, error::ParsingError};
 use enderpy_python_type_checker::{
     build::{BuildManager, BuildSource},
     project::find_project_root,
     settings::{ImportDiscovery, Settings},
 };
 use std::{fs, path::PathBuf};
+use miette::{IntoDiagnostic, Result, bail, LabeledSpan};
+use miette::miette;
 
 mod cli;
 
@@ -22,8 +23,8 @@ fn main() -> Result<()> {
     }
 }
 
-fn symbols(path: &PathBuf) -> std::result::Result<(), anyhow::Error> {
-    let source = fs::read_to_string(path)?;
+fn symbols(path: &PathBuf) -> Result<()> {
+    let source = fs::read_to_string(path).into_diagnostic()?;
     let initial_source = BuildSource {
         path: path.to_owned(),
         module: String::from("test"),
@@ -53,29 +54,31 @@ fn get_python_executable() -> Result<PathBuf> {
     let output = std::process::Command::new("python")
         .arg("-c")
         .arg("import sys; print(sys.executable)")
-        .output()?;
-    let path = String::from_utf8(output.stdout)?;
+        .output().into_diagnostic()?;
+    let path = String::from_utf8(output.stdout).into_diagnostic()?;
     Ok(PathBuf::from(path))
 }
 
 fn tokenize(file: &PathBuf) -> Result<()> {
-    let source = fs::read_to_string(file)?;
+    let source = fs::read_to_string(file).into_diagnostic()?;
     let mut lexer = Lexer::new(&source);
-    let mut tokens = Vec::new();
-    while let Ok(token) = lexer.next_token() {
-        tokens.push(token.clone());
-        if token.kind == token::Kind::Eof {
-            break;
-        }
-    }
+    let (tokens, errs) = enderpy_python_parser::utils::lex(&mut lexer);
     for token in tokens {
         println!("{}", token);
     }
-    Ok(())
+    if !errs.is_empty() {
+        eprintln!("Errors:");
+        for err in errs {
+            eprintln!("{:?}", err);
+        }
+        Ok(())
+    } else {
+        Ok(())
+    }
 }
 
 fn parse(file: &PathBuf) -> Result<()> {
-    let source = fs::read_to_string(file)?;
+    let source = fs::read_to_string(file).into_diagnostic()?;
     let file_path = file.to_str().unwrap_or("");
     let mut parser = Parser::new(source, file_path.into());
     let ast = parser.parse();
@@ -87,7 +90,7 @@ fn check(path: &PathBuf) -> Result<()> {
     if path.is_dir() {
         bail!("Path must be a file");
     }
-    let source = fs::read_to_string(path)?;
+    let source = fs::read_to_string(path).into_diagnostic()?;
     let initial_source = BuildSource {
         path: path.to_owned(),
         module: String::from("test"),
@@ -104,9 +107,9 @@ fn check(path: &PathBuf) -> Result<()> {
     let mut build_manager = BuildManager::new(vec![initial_source], settings);
     build_manager.type_check();
 
-    for err in build_manager.get_errors() {
-        println!("{:#?}", err);
-    }
+    // for err in build_manager.get_errors() {
+    //     println!("{:#?}", err);
+    // }
 
     Ok(())
 }

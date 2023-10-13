@@ -25,7 +25,7 @@ pub struct BuildSource {
 
 #[derive(Debug)]
 pub struct BuildManager {
-    errors: Vec<BuildError>,
+    pub errors: Vec<BuildError>,
     pub modules: HashMap<String, State>,
     options: Settings,
 }
@@ -73,9 +73,6 @@ impl BuildManager {
         self.modules.insert(module, State::new(file));
     }
 
-    pub fn get_errors(&self) -> Vec<BuildError> {
-        self.errors.clone()
-    }
 
     pub fn parse_file(build_source: BuildSource) -> EnderpyFile {
         let file_path = build_source.path.to_str().unwrap_or("");
@@ -94,16 +91,16 @@ impl BuildManager {
         let mut parser = Parser::new(build_source.source.clone(), file_path.into());
         let tree = parser.parse();
         if parser.errors.len() > 0 {
-            self.errors.extend(parser.errors);
-            Ok(())
-        } else {
+            for error in parser.errors {
+                self.errors.push(BuildError::ParsingError(error));
+            }
+        }
         Ok(EnderpyFile::from(
             tree,
             build_source.module,
             build_source.source.clone(),
             build_source.path,
         ))
-        }
     }
 
     pub fn get_module_name(path: &PathBuf) -> String {
@@ -142,11 +139,12 @@ impl BuildManager {
             }
             for error in checker.errors {
                 let line = get_line_number_of_character_position(&state.1.file.source, error.start);
-                self.errors.push(BuildError {
+                self.errors.push(BuildError::TypeError {
+                    path: state.1.file.path.to_str().unwrap().to_string(),
                     msg: error.msg,
                     line: line as u32,
-                    start: error.start as u32,
-                    end: error.end as u32,
+                    advice: "".into(),
+                    span: (error.start, error.end).into(),
                 });
             }
         }
@@ -328,10 +326,10 @@ mod tests {
         );
         manager.type_check();
 
-        let errors = manager.get_errors();
+        let errors = manager.errors;
         errors
             .iter()
-            .map(|x| format!("{}:{}:{}: {}", x.line, x.start, x.end, x.msg))
+            .map(|x| format!("{:?}", x))
             .collect::<Vec<String>>()
             .join("\n")
     }

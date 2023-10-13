@@ -3,4 +3,4 @@ source: typechecker/src/build.rs
 description: "a = b + 1\n\na = c()\n\n"
 expression: result
 ---
-3:15:18: c is not callable
+TypeError { path: "test.py", msg: "c is not callable", line: 3, advice: "", span: SourceSpan { offset: SourceOffset(15), length: 18 } }

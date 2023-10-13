@@ -5,7 +5,6 @@ input_file: parser/test_data/inputs/separate_statements.py
 ---
 [
     InvalidSyntax {
-        path: "separate_statements.py",
         msg: "Statement does not end in new line or semicolon",
         line: 8,
         input: "    x = 1",
@@ -16,7 +15,6 @@ input_file: parser/test_data/inputs/separate_statements.py
         ),
     },
     InvalidSyntax {
-        path: "separate_statements.py",
         msg: "Statement does not end in new line or semicolon",
         line: 11,
         input: "a = 1",

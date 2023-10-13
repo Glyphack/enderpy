@@ -3,4 +3,4 @@ source: typechecker/src/build.rs
 description: "# undefined name\nprint(undef_name)\n\n# undefined name in function\ndef func():\n    print(undef_name)\n\n# undefined name in class\nclass MyClass:\n    print(undef_name)\n\n# undefined name in class function\nclass MyClass:\n    def func(self):\n        print(undef_name)\n\ncall_undefined_name()\n\nfor i in undef_name:\n    pass\n\n"
 expression: result
 ---
-17:261:282: call_undefined_name is not callable
+TypeError { path: "test.py", msg: "call_undefined_name is not callable", line: 17, advice: "", span: SourceSpan { offset: SourceOffset(261), length: 282 } }

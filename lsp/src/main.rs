@@ -28,30 +28,30 @@ impl Backend {
         let mut manager = BuildManager::new(vec![], settings);
         manager.add_source(path);
         manager.type_check();
-        let errors = manager.get_errors();
+        let errors = manager;
         let mut diagnostics = Vec::new();
-        for err in errors {
-            diagnostics.push(Diagnostic {
-                range: Range {
-                    start: Position {
-                        line: err.line,
-                        character: err.start,
-                    },
-                    end: Position {
-                        line: err.line,
-                        character: err.end,
-                    },
-                },
-                severity: Some(DiagnosticSeverity::ERROR),
-                code: None,
-                code_description: None,
-                source: Some("Enderpy".to_string()),
-                message: err.msg,
-                related_information: None,
-                tags: None,
-                data: None,
-            });
-        }
+        // for err in manager.errors {
+        //     diagnostics.push(Diagnostic {
+        //         range: Range {
+        //             start: Position {
+        //                 line: err.line,
+        //                 character: err.start,
+        //             },
+        //             end: Position {
+        //                 line: err.line,
+        //                 character: err.end,
+        //             },
+        //         },
+        //         severity: Some(DiagnosticSeverity::ERROR),
+        //         code: None,
+        //         code_description: None,
+        //         source: Some("Enderpy".to_string()),
+        //         message: err.msg,
+        //         related_information: None,
+        //         tags: None,
+        //         data: None,
+        //     });
+        // }
         diagnostics
     }
 }

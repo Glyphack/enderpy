@@ -66,7 +66,6 @@ pub fn concat_string_exprs(lhs: Expression, rhs: Expression) -> Result<Expressio
                 }
                 (ConstantValue::Bytes(_lhs), _) => {
                     return Err(ParsingError::InvalidSyntax {
-                        path: "test".into(),
                         msg: "Cannot concat bytes and string".into(),
                         line: 0,
                         input: "test".into(),
@@ -76,7 +75,6 @@ pub fn concat_string_exprs(lhs: Expression, rhs: Expression) -> Result<Expressio
                 }
                 (_, ConstantValue::Bytes(_rhs)) => {
                     return Err(ParsingError::InvalidSyntax {
-                        path: "test".into(),
                         msg: "Can only concat bytes with other bytes".into(),
                         line: 0,
                         input: "test".into(),
@@ -110,7 +108,6 @@ pub fn concat_string_exprs(lhs: Expression, rhs: Expression) -> Result<Expressio
                 }
                 ConstantValue::Bytes(_) => {
                     return Err(ParsingError::InvalidSyntax {
-                        path: "test".into(),
                         msg: "Cannot concat string and bytes".into(),
                         line: 0,
                         input: "test".into(),
@@ -136,7 +133,6 @@ pub fn concat_string_exprs(lhs: Expression, rhs: Expression) -> Result<Expressio
                 })),
                 ConstantValue::Bytes(_) => {
                     return Err(ParsingError::InvalidSyntax {
-                        path: "test".into(),
                         msg: "Cannot concat string and bytes".into(),
                         line: 0,
                         input: "test".into(),

@@ -1,4 +1,4 @@
-use enderpy_python_parser::ParsingError;
+use enderpy_python_parser::error::ParsingError;
 use miette::{Diagnostic, SourceSpan};
 use thiserror::Error;
 

@@ -5,7 +5,6 @@ input_file: parser/test_data/inputs/one_liners/from_import.py
 ---
 [
     InvalidSyntax {
-        path: "from_import.py",
         msg: "Expected one of \"Identifier, Mul, LeftParen, \" but found Eof",
         line: 16,
         input: "",

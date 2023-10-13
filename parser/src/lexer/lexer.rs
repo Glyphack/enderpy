@@ -1,5 +1,4 @@
 use crate::token::{Kind, Token, TokenValue};
-use miette::Result;
 use unicode_id_start::{is_id_continue, is_id_start};
 
 use crate::error::ParsingError;
@@ -87,7 +86,7 @@ impl Lexer {
         let next_token_is_dedent = self.next_token_is_dedent;
         let token = self.next_token();
         self.current = current;
-        self.current_line = self.current_line;
+        self.current_line = current_line;
         self.nesting = nesting;
         self.fstring_stack = fstring_stack;
         self.start_of_line = start_of_line;
@@ -621,9 +620,6 @@ impl Lexer {
 
         if !string_terminated {
             Err(ParsingError::InvalidSyntax{
-                // TODO: I think the path must be removed from the error
-                // The caller knows the path
-                path: "".into(),
                 msg: "String is not terminated".into(),
                 line: self.current_line.into(),
                 input: self.extract_raw_token_value(self.current),
@@ -650,7 +646,6 @@ impl Lexer {
                             self.next();
                         }
                         _ => return Err(ParsingError::InvalidSyntax {
-                            path: "".into(),
                             msg: "invalid binary literal".into(),
                             line: self.current_line.into(),
                             input: self.extract_raw_token_value(numeric_literal_start),
@@ -672,7 +667,6 @@ impl Lexer {
                             self.next();
                         }
                         _ => return Err(ParsingError::InvalidSyntax {
-                            path: "".into(),
                             msg: "invalid octal literal".into(),
                             line: self.current_line.into(),
                             input: self.extract_raw_token_value(numeric_literal_start),
@@ -694,7 +688,6 @@ impl Lexer {
                             self.next();
                         }
                         _ => return Err(ParsingError::InvalidSyntax {
-                            path: "".into(),
                             msg: "invalid hexadecimal literal".into(),
                             line: self.current_line.into(),
                             input: self.extract_raw_token_value(numeric_literal_start),
@@ -733,7 +726,6 @@ impl Lexer {
                                         self.next();
                                     }
                                     _ => return Err(ParsingError::InvalidSyntax{
-                                        path: "".into(),
                                         msg: "invalid decimal literal".into(),
                                         line: self.current_line.into(),
                                         input: self.extract_raw_token_value(numeric_literal_start),
@@ -905,7 +897,6 @@ impl Lexer {
                         }
                         Ordering::Equal => break,
                         Ordering::Less => return Err(ParsingError::InvalidSyntax {
-                            path: "".into(),
                             msg: "Invalid indentation".into(),
                             line: self.current_line.into(),
                             input: self.extract_raw_token_value(self.current),
@@ -1294,20 +1285,6 @@ def",
     fn test_unterminated_string_triple_single_quotes_2() {
         let mut lexer = Lexer::new("'''hello'");
         lexer.next_token().unwrap();
-    }
-
-    #[test]
-    #[should_panic]
-    fn test_unexpected_indentation() {
-        let mut lexer = Lexer::new(
-            "",
-        );
-        loop {
-            let token = lexer.next_token().unwrap();
-            if token.kind == Kind::Eof {
-                break;
-            }
-        }
     }
 
     fn snapshot_test_lexer_and_errors(test_case: &str) {

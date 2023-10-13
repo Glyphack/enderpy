@@ -6,3 +6,4 @@ pub use crate::parser::ast;
 pub use crate::parser::parser::Parser;
 pub mod token;
 pub mod error;
+pub mod utils;

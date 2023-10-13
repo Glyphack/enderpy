@@ -5,7 +5,6 @@ input_file: parser/test_data/inputs/indentation.py
 ---
 [
     InvalidSyntax {
-        path: "",
         msg: "Invalid indentation",
         line: 4,
         input: "",
