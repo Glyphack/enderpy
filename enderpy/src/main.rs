@@ -73,6 +73,9 @@ fn parse(file: &PathBuf) -> Result<()> {
     let file_path = file.to_str().unwrap_or("");
     let mut parser = Parser::new(source, file_path.into());
     let ast = parser.parse();
+    for err in parser.errors {
+        println!("{:#?}", err);
+    }
     println!("{:#?}", ast);
     Ok(())
 }

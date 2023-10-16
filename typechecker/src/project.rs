@@ -1,7 +1,7 @@
-use std::path::{Path, PathBuf};
+use std::path::{Path, };
 const PROJECT_ROOT_MARKERS: [&str; 1] = ["pyproject.toml"];
 
-pub fn find_project_root(path: &PathBuf) -> &Path {
+pub fn find_project_root(path: &Path) -> &Path {
     let root = path
         .ancestors()
         .find(|p| PROJECT_ROOT_MARKERS.iter().any(|m| p.join(m).exists()));

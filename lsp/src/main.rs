@@ -6,7 +6,7 @@ use tower_lsp::jsonrpc::Result;
 use tower_lsp::lsp_types::*;
 use tower_lsp::{Client, LanguageServer, LspService, Server};
 
-use enderpy_python_type_checker::build::BuildManager;
+use enderpy_python_type_checker::build::{BuildManager, BuildSource};
 use enderpy_python_type_checker::project::find_project_root;
 use enderpy_python_type_checker::settings::{ImportDiscovery, Settings};
 
@@ -16,8 +16,8 @@ struct Backend {
 }
 
 impl Backend {
-    async fn check_file(&self, path: &PathBuf) -> Vec<Diagnostic> {
-        let root = PathBuf::from(find_project_root(path));
+    async fn check_file(&self, path: PathBuf) -> Vec<Diagnostic> {
+        let root = PathBuf::from(find_project_root(path.as_path()));
         let python_executable = None;
         let settings = Settings {
             debug: false,
@@ -25,8 +25,7 @@ impl Backend {
             import_discovery: ImportDiscovery { python_executable },
         };
 
-        let mut manager = BuildManager::new(vec![], settings);
-        manager.add_source(path);
+        let mut manager = BuildManager::new(vec![BuildSource::from_path(path)], settings);
         manager.type_check();
         let errors = manager;
         let mut diagnostics = Vec::new();
@@ -93,7 +92,7 @@ impl LanguageServer for Backend {
         let uri = params.text_document.uri;
         let path = uri.to_file_path();
         if let Ok(path) = path {
-            let diagnostics = self.check_file(&path).await;
+            let diagnostics = self.check_file(path).await;
             self.client
                 .publish_diagnostics(uri, diagnostics, None)
                 .await;
@@ -107,7 +106,7 @@ impl LanguageServer for Backend {
         let uri = params.text_document.uri;
         let path = uri.to_file_path();
         if let Ok(path) = path {
-            let diagnostics = self.check_file(&path).await;
+            let diagnostics = self.check_file(path).await;
             self.client
                 .publish_diagnostics(uri, diagnostics, None)
                 .await;
@@ -121,7 +120,7 @@ impl LanguageServer for Backend {
         let uri = params.text_document.uri;
         let path = uri.to_file_path();
         if let Ok(path) = path {
-            let diagnostics = self.check_file(&path).await;
+            let diagnostics = self.check_file(path).await;
             self.client
                 .publish_diagnostics(uri, diagnostics, None)
                 .await;
@@ -141,7 +140,7 @@ impl LanguageServer for Backend {
         info!("diagnostic: {:?}", path);
         match path {
             Ok(path) => {
-                let diagnostics = self.check_file(&path).await;
+                let diagnostics = self.check_file(path).await;
                 info!("diagnostics: {:?}", diagnostics);
                 Ok(DocumentDiagnosticReportResult::Report(
                     DocumentDiagnosticReport::Full(RelatedFullDocumentDiagnosticReport {

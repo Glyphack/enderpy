@@ -75,6 +75,10 @@ impl Parser {
                 Ok(stmt) => body.push(stmt),
                 Err(err) => {
                     self.errors.push(err);
+                    // It's better to exit on the first error otherwise we will get
+                    // a lot of errors that are not relevant
+                    // TODO: Implement resilient parsing
+                    break;
                 }
             }
         }

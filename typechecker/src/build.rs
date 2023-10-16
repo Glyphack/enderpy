@@ -11,9 +11,9 @@ use crate::ruff_python_import_resolver::config::Config;
 use crate::ruff_python_import_resolver::{execution_environment, resolver};
 use crate::settings::Settings;
 use crate::state::State;
-use crate::symbol_table::SymbolTable;
 use crate::type_check::checker::TypeChecker;
 
+#[derive(Debug)]
 pub struct BuildSource {
     pub path: PathBuf,
     //  module name should come from path??
@@ -23,10 +23,24 @@ pub struct BuildSource {
     pub followed: bool,
 }
 
+impl BuildSource {
+    pub fn from_path(path: PathBuf) -> Self {
+        let source = std::fs::read_to_string(&path).unwrap();
+        let module = get_module_name(&path);
+        BuildSource {
+            path,
+            module,
+            source,
+            followed: false,
+        }
+    }
+}
+
 #[derive(Debug)]
 pub struct BuildManager {
     pub errors: Vec<BuildError>,
     pub modules: HashMap<String, State>,
+    build_sources: Vec<BuildSource>,
     options: Settings,
 }
 #[allow(unused)]
@@ -38,14 +52,6 @@ impl BuildManager {
 
         let mut modules = HashMap::new();
 
-        for build_source in sources {
-            let mod_name = Self::get_module_name(&build_source.path);
-            let file = Box::new(Self::parse_file(build_source));
-            let symbol_table = SymbolTable::new(crate::symbol_table::SymbolTableType::Module, 0);
-
-            modules.insert(mod_name, State::new(file));
-        }
-
         let mut builder = Builder::new();
         if options.debug {
             builder.filter(None, log::LevelFilter::Debug);
@@ -55,69 +61,35 @@ impl BuildManager {
 
         BuildManager {
             errors: vec![],
+            build_sources: sources,
             modules,
             options,
         }
     }
 
-    pub fn add_source(&mut self, path: &PathBuf) {
-        let source = std::fs::read_to_string(path).unwrap();
-        let module = Self::get_module_name(path);
-        let build_source = BuildSource {
-            path: path.clone(),
-            module: module.clone(),
-            source,
-            followed: false,
-        };
-        let file = Box::new(Self::parse_file(build_source));
-        self.modules.insert(module, State::new(file));
-    }
-
-
-    pub fn parse_file(build_source: BuildSource) -> EnderpyFile {
+    pub fn parse(&self, build_source: &BuildSource) -> EnderpyFile {
         let file_path = build_source.path.to_str().unwrap_or("");
         let mut parser = Parser::new(build_source.source.clone(), file_path.into());
         let tree = parser.parse();
+        // parser only has one error
+        if parser.errors.len() > 0 {
+            for error in parser.errors {
+                // TODO fix propagation of errors from parser
+                // self.errors.push(BuildError::ParsingError(error));
+            }
+        }
         EnderpyFile::from(
             tree,
-            build_source.module,
+            build_source.module.clone(),
             build_source.source.clone(),
-            build_source.path,
+            build_source.path.clone(),
         )
     }
 
-    pub fn parse(&mut self, build_source: BuildSource) -> Result<EnderpyFile, BuildError> {
-        let file_path = build_source.path.to_str().unwrap_or("");
-        let mut parser = Parser::new(build_source.source.clone(), file_path.into());
-        let tree = parser.parse();
-        if parser.errors.len() > 0 {
-            for error in parser.errors {
-                self.errors.push(BuildError::ParsingError(error));
-            }
-        }
-        Ok(EnderpyFile::from(
-            tree,
-            build_source.module,
-            build_source.source.clone(),
-            build_source.path,
-        ))
-    }
-
-    pub fn get_module_name(path: &PathBuf) -> String {
-        path.to_str().unwrap_or_default().replace(['/', '\\'], ".")
-    }
 
     // Entry point to analyze the program
     pub fn build(&mut self) {
-        let files = self.modules.values().collect();
-        let new_files = self.gather_files(files);
-        for file in new_files {
-            self.modules.insert(file.file.module_name.clone(), file);
-        }
-        for module in self.modules.values() {
-            info!("file: {:#?}", module.file.module_name);
-        }
-
+        self.populate_modules();
         self.pre_analysis();
     }
 
@@ -126,6 +98,23 @@ impl BuildManager {
     fn pre_analysis(&mut self) {
         for state in self.modules.iter_mut() {
             state.1.populate_symbol_table();
+        }
+    }
+
+    fn populate_modules(&mut self) {
+        for build_source in self.build_sources.iter() {
+            let mod_name = get_module_name(&build_source.path);
+            let file = self.parse(build_source);
+            let state = State::new(Box::new(file));
+            self.modules.insert(mod_name, state);
+        }
+        let initial_files = self.modules.values().collect();
+        let new_files = self.gather_files(initial_files);
+        for file in new_files {
+            self.modules.insert(file.file.module_name.clone(), file);
+        }
+        for module in self.modules.values() {
+            info!("file: {:#?}", module.file.module_name);
         }
     }
 
@@ -207,6 +196,7 @@ impl BuildManager {
         };
         let host = &ruff_python_resolver::host::StaticHost::new(vec![]);
         let mut resolved_paths = HashMap::new();
+        let mut resolved_imports = vec![];
         for import in state.file.imports.iter() {
             let import_desc = match import {
                 crate::nodes::ImportKinds::Import(i) => {
@@ -251,30 +241,34 @@ impl BuildManager {
                             continue;
                         }
                     };
-                    let module = Self::get_module_name(resolved_path);
+                    let module = get_module_name(resolved_path);
                     let build_source = BuildSource {
                         path: resolved_path.clone(),
                         module: module.clone(),
                         source,
                         followed: true,
                     };
-                    let file = Box::new(Self::parse_file(build_source));
-                    resolved_paths.insert(module, State::new(file));
+                    resolved_imports.push(build_source);
                 }
 
                 for (name, implicit_import) in resolved.implicit_imports.iter() {
                     let source = std::fs::read_to_string(implicit_import.path.clone()).unwrap();
-                    let module = Self::get_module_name(&implicit_import.path);
+                    let module = get_module_name(&implicit_import.path);
                     let build_source = BuildSource {
                         path: implicit_import.path.clone(),
                         module: module.clone(),
                         source,
                         followed: true,
                     };
-                    let file = Box::new(Self::parse_file(build_source));
-                    resolved_paths.insert(module, State::new(file));
+                    resolved_imports.push(build_source);
                 }
             }
+        }
+
+        for resolved_import in resolved_imports {
+            let file = self.parse(&resolved_import);
+            let state = State::new(Box::new(file));
+            resolved_paths.insert(state.file.module_name.clone(), state);
         }
 
         resolved_paths
@@ -294,6 +288,10 @@ fn get_line_number_of_character_position(source: &str, pos: usize) -> usize {
     line_number
 }
 
+
+fn get_module_name(path: &PathBuf) -> String {
+    path.to_str().unwrap_or_default().replace(['/', '\\'], ".")
+}
 #[cfg(test)]
 mod tests {
     use super::*;
