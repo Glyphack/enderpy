@@ -15,11 +15,6 @@ pub enum ParsingError {
         #[label("span")]
         span: (usize, usize),
     },
-
-    #[error("Invalid token")]
-    InvalidToken {
-        msg: Box<str>,
-    },
 }
 
 
