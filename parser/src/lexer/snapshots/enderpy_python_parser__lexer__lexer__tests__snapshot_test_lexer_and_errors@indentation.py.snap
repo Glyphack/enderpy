@@ -63,6 +63,22 @@ input_file: parser/test_data/inputs/indentation.py
         end: 76,
     },
     Token {
+        kind: Error,
+        value: Str(
+            "Unindent does not match any outer indentation level",
+        ),
+        start: 76,
+        end: 80,
+    },
+    Token {
+        kind: Dedent,
+        value: Indent(
+            1,
+        ),
+        start: 80,
+        end: 80,
+    },
+    Token {
         kind: Pass,
         value: None,
         start: 80,

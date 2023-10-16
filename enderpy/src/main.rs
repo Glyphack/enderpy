@@ -1,14 +1,13 @@
 use clap::Parser as ClapParser;
 use cli::{Cli, Commands};
-use enderpy_python_parser::{Lexer, Parser, error::ParsingError};
+use enderpy_python_parser::{Lexer, Parser};
 use enderpy_python_type_checker::{
     build::{BuildManager, BuildSource},
     project::find_project_root,
     settings::{ImportDiscovery, Settings},
 };
 use std::{fs, path::PathBuf};
-use miette::{IntoDiagnostic, Result, bail, LabeledSpan};
-use miette::miette;
+use miette::{IntoDiagnostic, Result, bail};
 
 mod cli;
 
@@ -62,19 +61,11 @@ fn get_python_executable() -> Result<PathBuf> {
 fn tokenize(file: &PathBuf) -> Result<()> {
     let source = fs::read_to_string(file).into_diagnostic()?;
     let mut lexer = Lexer::new(&source);
-    let (tokens, errs) = enderpy_python_parser::utils::lex(&mut lexer);
+    let tokens = enderpy_python_parser::utils::lex(&mut lexer);
     for token in tokens {
         println!("{}", token);
     }
-    if !errs.is_empty() {
-        eprintln!("Errors:");
-        for err in errs {
-            eprintln!("{:?}", err);
-        }
-        Ok(())
-    } else {
-        Ok(())
-    }
+    Ok(())
 }
 
 fn parse(file: &PathBuf) -> Result<()> {

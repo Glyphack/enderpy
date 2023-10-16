@@ -1,21 +1,14 @@
-use crate::{token::{Token, Kind}, error::ParsingError, Lexer};
+use crate::{token::{Token, Kind},  Lexer};
 
 // Helper function to lex a file until the end
-pub fn lex(lexer: &mut Lexer) -> (Vec<Token>, Vec<ParsingError>) {
+pub fn lex(lexer: &mut Lexer) -> Vec<Token> {
     let mut tokens = vec![];
-    let mut errors = vec![];
     loop {
-        match lexer.next_token() {
-            Ok(token) => {
-                if token.kind == Kind::Eof {
-                    break;
-                }
-                tokens.push(token);
-            }
-            Err(err) => {
-                errors.push(err);
-            }
+        let token = lexer.next_token();
+        if token.kind == Kind::Eof {
+            break;
         }
+        tokens.push(token);
     }
-    (tokens, errors)
+    tokens
 }

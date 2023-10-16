@@ -13,7 +13,7 @@ Module {
             If {
                 node: Node {
                     start: 54,
-                    end: 85,
+                    end: 80,
                 },
                 test: Constant(
                     Constant {
@@ -35,16 +35,16 @@ Module {
                             },
                         },
                     ),
-                    Pass(
-                        Pass {
-                            node: Node {
-                                start: 80,
-                                end: 84,
-                            },
-                        },
-                    ),
                 ],
                 orelse: [],
+            },
+        ),
+        Pass(
+            Pass {
+                node: Node {
+                    start: 80,
+                    end: 84,
+                },
             },
         ),
     ],

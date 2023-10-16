@@ -168,6 +168,7 @@ pub enum Kind {
 
     // Others
     WhiteSpace,
+    Error,
     Eof,
 }
 
@@ -203,6 +204,7 @@ impl Kind {
             Kind::BackTick => "`",
             Kind::WhiteSpace => "WhiteSpace",
             Kind::Eof => "Eof",
+            Kind::Error => "Error",
             Kind::GreaterEq => ">=",
             Kind::Eq => "==",
             Kind::NotEq => "!=",

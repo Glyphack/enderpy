@@ -37,7 +37,7 @@ pub struct Parser {
 impl Parser {
     pub fn new(source: String, path: String) -> Self {
         let mut lexer = Lexer::new(&source);
-        let cur_token = lexer.next_token().unwrap();
+        let cur_token = lexer.next_token();
         let prev_token_end = 0;
 
         Self {
@@ -102,21 +102,20 @@ impl Parser {
     }
 
     fn peek_token(&mut self) -> Result<Token, ParsingError> {
-        match self.lexer.peek_token() {
-            Ok(token) => Ok(token),
-            Err(err) => {
-                let pos = self.cur_token.end;
-                let line_number = self.get_line_number_of_character_position(pos);
-                let err = ParsingError::InvalidSyntax {
-                    msg: Box::from(format!("Syntax error: {:?}", err)),
-                    line: line_number,
-                    input: self.curr_line_string.clone(),
-                    advice: "".to_string(),
-                    span: (pos, pos),
-                };
-                Err(err)
-            }
+        let token = self.lexer.peek_token();
+        if matches!(token.kind, Kind::Error) {
+            let pos = self.cur_token.end;
+            let line_number = self.get_line_number_of_character_position(pos);
+            let err = ParsingError::InvalidSyntax {
+                msg: Box::from(format!("Syntax error: {:?}", token.value)),
+                line: line_number,
+                input: self.curr_line_string.clone(),
+                advice: "".to_string(),
+                span: (pos, pos),
+            };
+            return Err(err)
         }
+        Ok(token)
     }
 
     fn peek_kind(&mut self) -> Result<Kind, ParsingError> {
@@ -160,11 +159,9 @@ impl Parser {
             self.curr_line_string
                 .push_str(&self.source[self.prev_token_end..self.cur_token.end]);
         }
-        match token {
-            Err(err) => {
-                self.bump_any();
-            }
-            Ok(token) => {
+        match token.kind {
+            Kind::Error => self.bump_any(),
+            _ => {
                 self.prev_token_end = self.cur_token.end;
                 self.cur_token = token;
                 if self.cur_kind() == Kind::Comment {
