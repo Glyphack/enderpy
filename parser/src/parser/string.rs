@@ -7,37 +7,36 @@ use crate::token::Kind;
 use super::ast::Node;
 use crate::error::ParsingError;
 pub fn extract_string_inside(val: String) -> String {
-    if let Some(val) = val.strip_prefix("\"\"\"") {
-        val.strip_suffix("\"\"\"")
-            .expect("String must be enclosed with \"\"\"")
-            .to_string()
-    } else if let Some(val) = val.strip_prefix('\"') {
-        val.strip_suffix('\"')
-            .expect("String must be enclosed with \"")
-            .to_string()
-    } else if let Some(val) = val.strip_prefix("'''") {
-        val.strip_suffix("'''")
-            .expect("String must be enclosed with '''")
-            .to_string()
-    } else if let Some(val) = val.strip_prefix('\'') {
-        val.strip_suffix('\'')
-            .expect("String must be enclosed with '")
-            .to_string()
+ 
+
+    let delimiters = vec!["\"\"\"", "\"", "'''", "'"];
+    let mut result = String::new();
+    let is_raw = val.starts_with('r') || val.starts_with('R');
+    // drop first char if raw and put in val
+    let val = if is_raw {
+        val.chars().skip(1).collect::<String>()
     } else {
-        panic!(
-            "String must be enclosed in \"\"\", \"', ''' or ' but got {} ",
-            val.starts_with('\'')
-        );
+        val
+    };
+   
+    
+    for delimiter in delimiters {
+        if let Some(val) = val.strip_prefix(delimiter) {
+            let message = format!("String must be enclosed with {}", delimiter);
+            result = val
+                .strip_suffix(delimiter)
+                .expect(&message)
+                .to_string();
+        }
+
     }
+    return result;
+
 }
 
 pub fn is_string(kind: &Kind) -> bool {
     match kind {
-        Kind::StringLiteral
-        | Kind::RawString
-        | Kind::RawBytes
-        | Kind::Bytes
-        | Kind::FStringStart => true,
+        Kind::StringLiteral | Kind::RawBytes | Kind::Bytes | Kind::FStringStart => true,
         _ => false,
     }
 }

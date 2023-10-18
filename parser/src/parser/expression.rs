@@ -5,7 +5,6 @@ pub fn is_atom(kind: &Kind) -> bool {
     match kind {
         Kind::Identifier
         | Kind::StringLiteral
-        | Kind::RawString
         | Kind::RawBytes
         | Kind::Bytes
         | Kind::FStringStart

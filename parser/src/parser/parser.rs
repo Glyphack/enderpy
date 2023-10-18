@@ -952,7 +952,7 @@ impl Parser {
             | Kind::None
             | Kind::True
             | Kind::False
-            | Kind::StringLiteral | Kind::RawBytes | Kind::Bytes | Kind::RawString
+            | Kind::StringLiteral | Kind::RawBytes | Kind::Bytes 
             // The signed numbers are also allowed
             | Kind::Minus | Kind::Plus => {
                 self.parse_literal_pattern()
@@ -982,7 +982,6 @@ impl Parser {
                         Kind::StringLiteral,
                         Kind::RawBytes,
                         Kind::Bytes,
-                        Kind::RawString,
                         Kind::Minus,
                         Kind::Plus,
                     ],
@@ -2772,19 +2771,13 @@ impl Parser {
             }
             Kind::StringLiteral => {
                 let string_val = extract_string_inside(value.to_string());
+                // println!("string val: {}", string_val);
                 Expression::Constant(Box::new(Constant {
                     node: self.finish_node(start),
                     value: ConstantValue::Str(string_val),
                 }))
             }
-            Kind::RawString => {
-                let string_val =
-                    extract_string_inside(value.to_string().chars().skip(1).collect::<String>());
-                Expression::Constant(Box::new(Constant {
-                    node: self.finish_node(start),
-                    value: ConstantValue::Str(string_val),
-                }))
-            }
+ 
             Kind::RawBytes => {
                 // rb or br appear in the beginning of raw bytes
                 let bytes_val =
