@@ -30,6 +30,7 @@ pub struct Parser {
     pub errors: Vec<ParsingError>,
     curr_line_string: String,
     curr_line_number: u32,
+    curr_line_offset: usize,
     path: String,
 }
 
@@ -50,6 +51,7 @@ impl Parser {
             curr_line_string: String::new(),
             path,
             curr_line_number: 1,
+            curr_line_offset: 0,
         }
     }
 
@@ -112,10 +114,9 @@ impl Parser {
             let line_number = self.get_line_number_of_character_position(pos);
             let err = ParsingError::InvalidSyntax {
                 msg: Box::from(format!("Syntax error: {:?}", token.value)),
-                line: line_number,
                 input: self.curr_line_string.clone(),
                 advice: "".to_string(),
-                span: (pos, pos),
+                span: self.get_span_on_line(pos, pos),
             };
             return Err(err)
         }
@@ -163,6 +164,7 @@ impl Parser {
             self.curr_line_string
                 .push_str(&self.source[self.prev_token_end..self.cur_token.end]);
         }
+        self.curr_line_offset = self.cur_token.end;
         match token.kind {
             Kind::Error => self.bump_any(),
             _ => {
@@ -189,10 +191,9 @@ impl Parser {
             let range = self.finish_node(node);
             let err = ParsingError::InvalidSyntax {
                 msg: Box::from(format!("Expected {:?} but found {:?}", kind, found)),
-                line: self.curr_line_number,
                 input: self.curr_line_string.clone(),
                 advice: "maybe you forgot to put this character".to_string(),
-                span: (range.start, range.end),
+                span: self.get_span_on_line(range.start, range.end),
             };
             self.advance_to_next_line_or_semicolon();
             return Err(err);
@@ -216,10 +217,9 @@ impl Parser {
                     "Expected one of {:?} but found {:?}",
                     expected, found
                 )),
-                line: self.curr_line_number,
                 input: self.curr_line_string.clone(),
                 advice: "maybe you forgot to put this character".to_string(),
-                span: (range.start, range.end),
+                span: self.get_span_on_line(range.start, range.end),
             };
             self.advance_to_next_line_or_semicolon();
             return Err(err);
@@ -235,10 +235,9 @@ impl Parser {
         let line_number = self.get_line_number_of_character_position(range.start);
         let err = ParsingError::InvalidSyntax {
             msg: Box::from(format!("Unexpected token {:?}", kind)),
-            line: line_number,
             input: self.curr_line_string.clone(),
             advice: "".to_string(),
-            span: (range.start, range.end),
+            span: self.get_span_on_line(range.start, range.end),
         };
         Err(err)
     }
@@ -258,10 +257,9 @@ impl Parser {
                 expected,
                 self.cur_kind()
             )),
-            line: line_number,
             input: self.curr_line_string.clone(),
             advice: advice.to_string(),
-            span: (range.start, range.end),
+            span: self.get_span_on_line(range.start, range.end),
         };
         err
     }
@@ -362,10 +360,9 @@ impl Parser {
                 let range = self.finish_node(self.start_node());
                 Err(ParsingError::InvalidSyntax {
                     msg: Box::from("Expected compound statement"),
-                    line: self.curr_line_number,
                     input: self.curr_line_string.clone(),
                     advice: "maybe you forgot to put this character".to_string(),
-                    span: (range.start, range.end),
+                    span: self.get_span_on_line(range.start, range.end),
                 })
             }
         };
@@ -385,11 +382,10 @@ impl Parser {
             let kind = self.cur_kind();
             let err = ParsingError::InvalidSyntax {
                 msg: Box::from("Statement does not end in new line or semicolon"),
-                line: self.curr_line_number,
                 input: self.curr_line_string.clone(),
                 advice: "Split the statements into two seperate lines or add a semicolon"
                     .to_string(),
-                span: (node.start, node.end),
+                span: self.get_span_on_line(node.start, node.end),
             };
             self.errors.push(err);
         }
@@ -1116,10 +1112,9 @@ impl Parser {
                 if seen_keyword_pattern {
                     return Err(ParsingError::InvalidSyntax {
                         msg: Box::from("Positional arguments cannot come after keyword arguments."),
-                        line: self.curr_line_number,
                         input: self.curr_line_string.clone(),
                         advice: "you can only use arguments in form a=b here.".to_string(),
-                        span: (node.start, node.end),
+                        span: self.get_span_on_line(node.start, node.end),
                     });
                 }
                 patterns.push(self.parse_pattern()?);
@@ -1957,10 +1952,9 @@ impl Parser {
             let key = if first_key.is_none() {
                 let err = ParsingError::InvalidSyntax {
                     msg: Box::from("cannot use ** in dict comprehension"),
-                    line: self.get_line_number_of_character_position(self.cur_token.end),
                     input: self.curr_line_string.clone(),
                     advice: "".into(),
-                    span: (node.start, node.end),
+                    span: self.get_span_on_line(node.start, node.end),
                 };
                 return Err(err);
             } else {
@@ -2346,10 +2340,9 @@ impl Parser {
                             msg: Box::from(
                                 "Positional arguments cannot come after keyword arguments.",
                             ),
-                            line: self.curr_line_number,
                             input: self.curr_line_string.clone(),
                             advice: "you can only use arguments in form a=b here.".to_string(),
-                            span: (node_end.start, node_end.end),
+                            span: self.get_span_on_line(node_end.start, node_end.end),
                         });
                     }
                     let arg = self.parse_named_expression()?;
@@ -2423,10 +2416,9 @@ impl Parser {
                     let node_end = self.finish_node(node);
                     return Err(ParsingError::InvalidSyntax {
                         msg: Box::from("Positional arguments cannot come after keyword arguments."),
-                        line: self.curr_line_number,
                         input: self.curr_line_string.clone(),
                         advice: "you can only use arguments in form a=b here.".to_string(),
-                        span: (node_end.start, node_end.end),
+                        span: self.get_span_on_line(node_end.start, node_end.end),
                     });
                 }
                 let arg = self.parse_named_expression()?;
@@ -2899,10 +2891,9 @@ impl Parser {
                 } else if seen_kwarg {
                     return Err(ParsingError::InvalidSyntax {
                         msg: Box::from("positional argument follows keyword argument"),
-                        line: self.curr_line_number,
                         input: self.curr_line_string.clone(),
                         advice: "you can only use arguments in form a=b here.".to_string(),
-                        span: (self.cur_token().start, self.cur_token().end),
+                        span: self.get_span_on_line(self.cur_token().start, self.cur_token().end),
                     });
                 } else {
                     args.push(param);
@@ -2917,10 +2908,9 @@ impl Parser {
                 } else if must_have_default {
                     return Err(ParsingError::InvalidSyntax {
                         msg: Box::from("non-default argument follows default argument"),
-                        line: self.curr_line_number,
                         input: self.curr_line_string.clone(),
                         advice: "you can only use arguments with default value here.".to_string(),
-                        span: (self.cur_token().start, self.cur_token().end),
+                        span: self.get_span_on_line(self.cur_token().start, self.cur_token().end),
                     });
                 }
             // If a parameter has a default value, all following parameters up until the “*”
@@ -2935,10 +2925,9 @@ impl Parser {
                 if default.is_some() {
                     return Err(ParsingError::InvalidSyntax {
                         msg: Box::from("var-positional argument cannot have default value"),
-                        line: self.curr_line_number,
                         input: self.curr_line_string.clone(),
                         advice: "remove the default value of this argument".to_string(),
-                        span: (self.cur_token().start, self.cur_token().end),
+                        span: self.get_span_on_line(self.cur_token().start, self.cur_token().end),
                     });
                 }
                 vararg = Some(param);
@@ -2949,10 +2938,9 @@ impl Parser {
                 if default.is_some() {
                     return Err(ParsingError::InvalidSyntax {
                         msg: Box::from("var-keyword argument cannot have default value"),
-                        line: self.curr_line_number,
                         input: self.curr_line_string.clone(),
                         advice: "remove the default value of this argument".to_string(),
-                        span: (self.cur_token().start, self.cur_token().end),
+                        span: self.get_span_on_line(self.cur_token().start, self.cur_token().end),
                     });
                 }
                 kwarg = Some(param);
@@ -3044,7 +3032,14 @@ impl Parser {
         self.bump(Kind::FStringEnd);
         Ok(expressions)
     }
+
+    // This function is just here to make it easier to refactor the spans.
+    // I don't know how the spans and line number should be handled here
+    fn get_span_on_line(&self, start: usize, end: usize) -> (usize, usize) {
+        (start, end)
+    }
 }
+
 
 #[cfg(test)]
 mod tests {
