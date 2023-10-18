@@ -5,7 +5,7 @@ use std::{collections::HashMap, path::PathBuf};
 use enderpy_python_parser::Parser;
 
 use crate::build_source::BuildSource;
-use crate::errors::BuildError;
+use crate::diagnostic::Diagnostic;
 use crate::nodes::EnderpyFile;
 use crate::ruff_python_import_resolver as ruff_python_resolver;
 use crate::ruff_python_import_resolver::config::Config;
@@ -16,7 +16,7 @@ use crate::type_check::checker::TypeChecker;
 
 #[derive(Debug)]
 pub struct BuildManager {
-    pub errors: Vec<BuildError>,
+    pub errors: Vec<Diagnostic>,
     pub modules: HashMap<String, State>,
     build_sources: Vec<BuildSource>,
     options: Settings,
@@ -105,12 +105,20 @@ impl BuildManager {
             }
             for error in checker.errors {
                 let line = get_line_number_of_character_position(&state.1.file.source, error.start);
-                self.errors.push(BuildError::TypeError {
-                    path: state.1.file.path.to_str().unwrap().to_string(),
-                    msg: error.msg,
-                    line: line as u32,
-                    advice: "".into(),
-                    span: (error.start, error.end).into(),
+                self.errors.push(Diagnostic{
+                    name: "type-error".to_string(),
+                    body: error.msg,
+                    suggestion: Some("".into()),
+                    range: crate::diagnostic::Range {
+                        start: crate::diagnostic::Position {
+                            line: line as u32,
+                            character: error.start as u32,
+                        },
+                        end: crate::diagnostic::Position {
+                            line: line as u32,
+                            character: error.end as u32,
+                        },
+                    },
                 });
             }
         }

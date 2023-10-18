@@ -1,5 +1,6 @@
 use std::path::PathBuf;
 
+use enderpy_python_type_checker::errors::BuildError;
 use env_logger::Builder;
 use log::{info, LevelFilter};
 use tower_lsp::jsonrpc::Result;
@@ -28,30 +29,10 @@ impl Backend {
 
         let mut manager = BuildManager::new(vec![BuildSource::from_path(path, false)], settings);
         manager.type_check();
-        let errors = manager;
         let mut diagnostics = Vec::new();
-        // for err in manager.errors {
-        //     diagnostics.push(Diagnostic {
-        //         range: Range {
-        //             start: Position {
-        //                 line: err.line,
-        //                 character: err.start,
-        //             },
-        //             end: Position {
-        //                 line: err.line,
-        //                 character: err.end,
-        //             },
-        //         },
-        //         severity: Some(DiagnosticSeverity::ERROR),
-        //         code: None,
-        //         code_description: None,
-        //         source: Some("Enderpy".to_string()),
-        //         message: err.msg,
-        //         related_information: None,
-        //         tags: None,
-        //         data: None,
-        //     });
-        // }
+        for err in manager.errors.iter() {
+            diagnostics.push(from(err.clone()));
+        }
         diagnostics
     }
 }
@@ -167,6 +148,29 @@ impl LanguageServer for Backend {
     async fn shutdown(&self) -> Result<()> {
         Ok(())
     }
+}
+
+fn from(diagnostic: enderpy_python_type_checker::diagnostic::Diagnostic) -> Diagnostic {
+        Diagnostic {
+            range: Range {
+                start: Position {
+                    line: diagnostic.range.start.line,
+                    character: diagnostic.range.start.character,
+                },
+                end: Position {
+                    line: diagnostic.range.end.line,
+                    character: diagnostic.range.end.character,
+                },
+            },
+            severity: Some(DiagnosticSeverity::ERROR),
+            code: None,
+            code_description: None,
+            source: Some("Enderpy".to_string()),
+            message: diagnostic.body,
+            related_information: None,
+            tags: None,
+            data: None,
+        }
 }
 
 #[tokio::main]

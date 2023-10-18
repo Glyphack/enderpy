@@ -14,3 +14,4 @@ pub mod project;
 pub mod semantic_analyzer;
 pub mod settings;
 pub mod errors;
+pub mod diagnostic;
