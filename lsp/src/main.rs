@@ -1,6 +1,5 @@
 use std::path::PathBuf;
 
-use enderpy_python_type_checker::errors::BuildError;
 use env_logger::Builder;
 use log::{info, LevelFilter};
 use tower_lsp::jsonrpc::Result;

@@ -2,6 +2,7 @@ use ast::{Expression, Statement};
 use enderpy_python_parser as parser;
 use enderpy_python_parser::ast::{self, *};
 
+use crate::diagnostic::CharacterSpan;
 use crate::{
     ast_visitor::TraversalVisitor, settings::Settings, state::State, symbol_table::SymbolTable,
 };
@@ -16,10 +17,10 @@ pub struct TypeChecker<'a> {
     type_evaluator: TypeEvaluator,
 }
 
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct TypeCheckError {
     pub msg: String,
-    pub start: usize,
-    pub end: usize,
+    pub span: CharacterSpan,
 }
 
 #[allow(unused)]
@@ -55,14 +56,10 @@ impl<'a> TypeChecker<'a> {
     }
 
     fn make_error(&mut self, msg: &str, start: usize, end: usize) {
-        let error = TypeCheckError {
-            msg: msg.to_string(),
-            start,
-            end,
-        };
+        let error = TypeCheckError { msg: msg.to_string(), span: CharacterSpan(start, end) };
         // check error doesn't already exist
         for e in &self.errors {
-            if e.msg == error.msg && e.start == error.start && e.end == error.end {
+            if e == &error {
                 return;
             }
         }
@@ -350,8 +347,7 @@ impl<'a> TraversalVisitor for TypeChecker<'a> {
             );
             self.errors.push(TypeCheckError {
                 msg,
-                start: b.node.start,
-                end: b.node.end,
+                span: CharacterSpan(b.left.get_node().start, b.right.get_node().end),
             });
         }
     }

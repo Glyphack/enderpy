@@ -104,19 +104,18 @@ impl BuildManager {
                 checker.type_check(stmt);
             }
             for error in checker.errors {
-                let line = get_line_number_of_character_position(&state.1.file.source, error.start);
+                let line = get_line_number_of_character_position(&state.1.file.source, error.span.0);
                 self.errors.push(Diagnostic{
-                    name: "type-error".to_string(),
                     body: error.msg,
                     suggestion: Some("".into()),
                     range: crate::diagnostic::Range {
                         start: crate::diagnostic::Position {
                             line: line as u32,
-                            character: error.start as u32,
+                            character: error.span.0 as u32,
                         },
                         end: crate::diagnostic::Position {
                             line: line as u32,
-                            character: error.end as u32,
+                            character: error.span.1 as u32,
                         },
                     },
                 });

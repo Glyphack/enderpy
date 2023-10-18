@@ -7,7 +7,6 @@ pub enum ParsingError {
     #[diagnostic(code(parser::invalid_syntax))]
     InvalidSyntax {
         msg: Box<str>,
-        line: u32,
         #[source_code]
         input: String,
         #[help]

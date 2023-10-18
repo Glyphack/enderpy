@@ -6,7 +6,6 @@ input_file: parser/test_data/inputs/one_liners/from_import.py
 [
     InvalidSyntax {
         msg: "Expected one of \"Identifier, Mul, LeftParen, \" but found Eof",
-        line: 16,
         input: "",
         advice: "Use * for importing everthing or use () to specify names to import or specify the name you want to import",
         span: (
