@@ -22,9 +22,7 @@ Module {
                                     start: 1,
                                     end: 20,
                                 },
-                                value: Str(
-                                    "ab",
-                                ),
+                                value: "ab",
                             },
                         ),
                         Constant(
@@ -33,9 +31,7 @@ Module {
                                     start: 22,
                                     end: 25,
                                 },
-                                value: Str(
-                                    "c",
-                                ),
+                                value: "c",
                             },
                         ),
                     ],

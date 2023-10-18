@@ -30,9 +30,7 @@ Module {
                             start: 5,
                             end: 6,
                         },
-                        value: Int(
-                            "1",
-                        ),
+                        value: 1,
                     },
                 ),
             },

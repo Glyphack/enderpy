@@ -40,9 +40,7 @@ Module {
                                 start: 9,
                                 end: 10,
                             },
-                            value: Int(
-                                "1",
-                            ),
+                            value: 1,
                         },
                     ),
                 ),

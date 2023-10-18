@@ -36,9 +36,7 @@ Module {
                                             start: 16,
                                             end: 28,
                                         },
-                                        value: Str(
-                                            "annotation",
-                                        ),
+                                        value: "annotation",
                                     },
                                 ),
                             ),
@@ -97,9 +95,7 @@ Module {
                                         start: 49,
                                         end: 50,
                                     },
-                                    value: Int(
-                                        "3",
-                                    ),
+                                    value: 3,
                                 },
                             ),
                         ),
@@ -121,9 +117,7 @@ Module {
                                     start: 32,
                                     end: 33,
                                 },
-                                value: Int(
-                                    "1",
-                                ),
+                                value: 1,
                             },
                         ),
                         Constant(
@@ -132,9 +126,7 @@ Module {
                                     start: 37,
                                     end: 38,
                                 },
-                                value: Int(
-                                    "2",
-                                ),
+                                value: 2,
                             },
                         ),
                     ],

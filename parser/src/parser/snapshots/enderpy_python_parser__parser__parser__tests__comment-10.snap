@@ -36,7 +36,7 @@ Module {
                                     start: 13,
                                     end: 20,
                                 },
-                                value: Ellipsis,
+                                value: ...,
                             },
                         ),
                     ),

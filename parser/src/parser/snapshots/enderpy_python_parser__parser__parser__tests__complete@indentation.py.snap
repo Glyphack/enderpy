@@ -21,9 +21,7 @@ Module {
                             start: 57,
                             end: 61,
                         },
-                        value: Bool(
-                            true,
-                        ),
+                        value: true,
                     },
                 ),
                 body: [

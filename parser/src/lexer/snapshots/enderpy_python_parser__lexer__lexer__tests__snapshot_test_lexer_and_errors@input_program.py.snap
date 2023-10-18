@@ -1061,7 +1061,7 @@ input_file: parser/test_data/inputs/input_program.py
         end: 742,
     },
     Token {
-        kind: RawString,
+        kind: StringLiteral,
         value: Str(
             "r\"\\;\"",
         ),

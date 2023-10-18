@@ -18,7 +18,7 @@ description: "a = r\"hello\""
         end: 3,
     },
     Token {
-        kind: RawString,
+        kind: StringLiteral,
         value: Str(
             "r\"hello\"",
         ),

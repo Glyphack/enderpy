@@ -31,9 +31,7 @@ Module {
                             start: 4,
                             end: 11,
                         },
-                        value: Str(
-                            "a",
-                        ),
+                        value: "a",
                     },
                 ),
             },

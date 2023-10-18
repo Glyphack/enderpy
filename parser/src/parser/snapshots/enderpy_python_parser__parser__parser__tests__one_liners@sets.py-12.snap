@@ -62,9 +62,7 @@ Module {
                                                     start: 18,
                                                     end: 20,
                                                 },
-                                                value: Int(
-                                                    "10",
-                                                ),
+                                                value: 10,
                                             },
                                         ),
                                     ],
@@ -112,9 +110,7 @@ Module {
                                                     start: 37,
                                                     end: 39,
                                                 },
-                                                value: Int(
-                                                    "10",
-                                                ),
+                                                value: 10,
                                             },
                                         ),
                                     ],

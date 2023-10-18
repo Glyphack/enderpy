@@ -76,9 +76,7 @@ Module {
                                             start: 46,
                                             end: 50,
                                         },
-                                        value: Bool(
-                                            true,
-                                        ),
+                                        value: true,
                                     },
                                 ),
                             },
@@ -112,9 +110,7 @@ Module {
                                             start: 74,
                                             end: 79,
                                         },
-                                        value: Bool(
-                                            false,
-                                        ),
+                                        value: false,
                                     },
                                 ),
                             },
@@ -155,9 +151,7 @@ Module {
                                                     start: 104,
                                                     end: 105,
                                                 },
-                                                value: Int(
-                                                    "1",
-                                                ),
+                                                value: 1,
                                             },
                                         ),
                                     },
@@ -193,9 +187,7 @@ Module {
                                             start: 129,
                                             end: 132,
                                         },
-                                        value: Float(
-                                            "1.0",
-                                        ),
+                                        value: 1.0,
                                     },
                                 ),
                             },

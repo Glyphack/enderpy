@@ -31,11 +31,7 @@ Module {
                             start: 4,
                             end: 8,
                         },
-                        value: Bytes(
-                            [
-                                49,
-                            ],
-                        ),
+                        value: [49],
                     },
                 ),
             },

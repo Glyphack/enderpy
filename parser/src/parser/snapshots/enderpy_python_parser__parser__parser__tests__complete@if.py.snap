@@ -46,9 +46,7 @@ Module {
                                         start: 23,
                                         end: 27,
                                     },
-                                    value: Bool(
-                                        true,
-                                    ),
+                                    value: true,
                                 },
                             ),
                             body: [
@@ -75,9 +73,7 @@ Module {
                                                             start: 43,
                                                             end: 102,
                                                         },
-                                                        value: Str(
-                                                            "adjust is True and adjusted_daily_records_csv_path exists",
-                                                        ),
+                                                        value: "adjust is True and adjusted_daily_records_csv_path exists",
                                                     },
                                                 ),
                                             ],
@@ -112,9 +108,7 @@ Module {
                                                             start: 128,
                                                             end: 144,
                                                         },
-                                                        value: Str(
-                                                            "adjust is True",
-                                                        ),
+                                                        value: "adjust is True",
                                                     },
                                                 ),
                                             ],
@@ -152,9 +146,7 @@ Module {
                                                 start: 162,
                                                 end: 179,
                                             },
-                                            value: Str(
-                                                "adjust is False",
-                                            ),
+                                            value: "adjust is False",
                                         },
                                     ),
                                 ],

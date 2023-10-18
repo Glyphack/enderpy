@@ -15,9 +15,7 @@ Module {
                         start: 0,
                         end: 7,
                     },
-                    value: Str(
-                        "ab",
-                    ),
+                    value: "ab",
                 },
             ),
         ),

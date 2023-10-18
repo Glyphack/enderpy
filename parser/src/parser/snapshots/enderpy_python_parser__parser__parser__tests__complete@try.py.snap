@@ -70,9 +70,7 @@ Module {
                                                             start: 93,
                                                             end: 94,
                                                         },
-                                                        value: Int(
-                                                            "2",
-                                                        ),
+                                                        value: 2,
                                                     },
                                                 ),
                                             },
@@ -220,9 +218,7 @@ Module {
                                                             start: 229,
                                                             end: 230,
                                                         },
-                                                        value: Int(
-                                                            "3",
-                                                        ),
+                                                        value: 3,
                                                     },
                                                 ),
                                             },
@@ -513,9 +509,7 @@ Module {
                                                                 start: 466,
                                                                 end: 469,
                                                             },
-                                                            value: Int(
-                                                                "100",
-                                                            ),
+                                                            value: 100,
                                                         },
                                                     ),
                                                 },
@@ -578,9 +572,7 @@ Module {
                                                                 start: 519,
                                                                 end: 522,
                                                             },
-                                                            value: Int(
-                                                                "503",
-                                                            ),
+                                                            value: 503,
                                                         },
                                                     ),
                                                 ],
@@ -626,9 +618,7 @@ Module {
                                                                                     start: 603,
                                                                                     end: 0,
                                                                                 },
-                                                                                value: Str(
-                                                                                    "Received 503 Service Unavailable on ",
-                                                                                ),
+                                                                                value: "Received 503 Service Unavailable on ",
                                                                             },
                                                                         ),
                                                                         Name(
@@ -646,9 +636,7 @@ Module {
                                                                                     start: 626,
                                                                                     end: 0,
                                                                                 },
-                                                                                value: Str(
-                                                                                    ". Retrying...",
-                                                                                ),
+                                                                                value: ". Retrying...",
                                                                             },
                                                                         ),
                                                                     ],
@@ -683,9 +671,7 @@ Module {
                                                                 start: 669,
                                                                 end: 670,
                                                             },
-                                                            value: Int(
-                                                                "1",
-                                                            ),
+                                                            value: 1,
                                                         },
                                                     ),
                                                 },
@@ -728,9 +714,7 @@ Module {
                                                                                 start: 703,
                                                                                 end: 704,
                                                                             },
-                                                                            value: Int(
-                                                                                "1",
-                                                                            ),
+                                                                            value: 1,
                                                                         },
                                                                     ),
                                                                 ],
@@ -872,9 +856,7 @@ Module {
                                                                                     start: 882,
                                                                                     end: 0,
                                                                                 },
-                                                                                value: Str(
-                                                                                    "Successfully fetched trade details on ",
-                                                                                ),
+                                                                                value: "Successfully fetched trade details on ",
                                                                             },
                                                                         ),
                                                                         Name(
@@ -892,9 +874,7 @@ Module {
                                                                                     start: 901,
                                                                                     end: 0,
                                                                                 },
-                                                                                value: Str(
-                                                                                    " from tse",
-                                                                                ),
+                                                                                value: " from tse",
                                                                             },
                                                                         ),
                                                                     ],
@@ -976,9 +956,7 @@ Module {
                                                                                                     start: 970,
                                                                                                     end: 984,
                                                                                                 },
-                                                                                                value: Str(
-                                                                                                    "tradeHistory",
-                                                                                                ),
+                                                                                                value: "tradeHistory",
                                                                                             },
                                                                                         ),
                                                                                     },
@@ -1097,9 +1075,7 @@ Module {
                                                                     start: 1078,
                                                                     end: 0,
                                                                 },
-                                                                value: Str(
-                                                                    "Request failed for ",
-                                                                ),
+                                                                value: "Request failed for ",
                                                             },
                                                         ),
                                                         Name(
@@ -1117,9 +1093,7 @@ Module {
                                                                     start: 1101,
                                                                     end: 0,
                                                                 },
-                                                                value: Str(
-                                                                    ". Retrying...",
-                                                                ),
+                                                                value: ". Retrying...",
                                                             },
                                                         ),
                                                     ],
@@ -1154,9 +1128,7 @@ Module {
                                                 start: 1123,
                                                 end: 1124,
                                             },
-                                            value: Int(
-                                                "1",
-                                            ),
+                                            value: 1,
                                         },
                                     ),
                                 },
@@ -1199,9 +1171,7 @@ Module {
                                                                 start: 1149,
                                                                 end: 1150,
                                                             },
-                                                            value: Int(
-                                                                "1",
-                                                            ),
+                                                            value: 1,
                                                         },
                                                     ),
                                                 ],

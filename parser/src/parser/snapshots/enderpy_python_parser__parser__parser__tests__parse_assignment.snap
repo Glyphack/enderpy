@@ -31,9 +31,7 @@ Module {
                             start: 4,
                             end: 5,
                         },
-                        value: Int(
-                            "1",
-                        ),
+                        value: 1,
                     },
                 ),
             },

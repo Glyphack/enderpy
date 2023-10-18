@@ -81,9 +81,7 @@ Module {
                                                     start: 27,
                                                     end: 29,
                                                 },
-                                                value: Int(
-                                                    "11",
-                                                ),
+                                                value: 11,
                                             },
                                         ),
                                     ],
@@ -131,9 +129,7 @@ Module {
                                                     start: 46,
                                                     end: 48,
                                                 },
-                                                value: Int(
-                                                    "10",
-                                                ),
+                                                value: 10,
                                             },
                                         ),
                                     ],

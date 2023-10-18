@@ -1,3 +1,5 @@
+use std::fmt;
+
 use miette::{SourceOffset, SourceSpan};
 
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)] // #[serde(tag = "type")]
@@ -304,7 +306,7 @@ pub struct Constant {
     pub value: ConstantValue,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, PartialEq)]
 pub enum ConstantValue {
     None,
     Ellipsis,
@@ -317,7 +319,33 @@ pub enum ConstantValue {
     Float(String),
     Complex { real: String, imaginary: String },
 }
+impl fmt::Debug for ConstantValue {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            ConstantValue::None => write!(f, "None"),
+            ConstantValue::Ellipsis => write!(f, "..."),
+            ConstantValue::Bool(b) => write!(f, "{}", b),
+            ConstantValue::Str(s) => {
+                if s.starts_with("r\"") || s.starts_with("R\"") {
+                let mut s = s.chars().skip(1).collect::<String>();
+                s = s.chars().take(s.len() - 1).collect::<String>();
 
+                    // drop first another char from beginning
+                    s = s.chars().skip(1).collect::<String>();
+
+                    return write!(f, "{:?}", s);
+                }
+
+                return write!(f, "\"{}\"", s);
+            }
+            ConstantValue::Bytes(b) => write!(f, "{:?}", b),
+            ConstantValue::Tuple(t) => write!(f, "{:?}", t),
+            ConstantValue::Int(i) => write!(f, "{}", i),
+            ConstantValue::Float(fl) => write!(f, "{}", fl),
+            ConstantValue::Complex { real, imaginary } => write!(f, "{}+{}j", real, imaginary),
+        }
+    }
+}
 #[derive(Debug, Clone)]
 pub struct List {
     pub node: Node,

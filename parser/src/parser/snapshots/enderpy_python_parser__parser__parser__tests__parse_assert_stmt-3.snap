@@ -20,9 +20,7 @@ Module {
                             start: 7,
                             end: 11,
                         },
-                        value: Bool(
-                            true,
-                        ),
+                        value: true,
                     },
                 ),
                 msg: Some(
@@ -32,9 +30,7 @@ Module {
                                 start: 13,
                                 end: 28,
                             },
-                            value: Str(
-                                "fancy message",
-                            ),
+                            value: "fancy message",
                         },
                     ),
                 ),

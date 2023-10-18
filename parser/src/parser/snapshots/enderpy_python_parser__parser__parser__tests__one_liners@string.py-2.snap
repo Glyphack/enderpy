@@ -1,0 +1,41 @@
+---
+source: parser/src/parser/parser.rs
+description: "raw = r'raw_text\\n'"
+input_file: parser/test_data/inputs/one_liners/string.py
+---
+Module {
+    node: Node {
+        start: 0,
+        end: 19,
+    },
+    body: [
+        AssignStatement(
+            Assign {
+                node: Node {
+                    start: 0,
+                    end: 19,
+                },
+                targets: [
+                    Name(
+                        Name {
+                            node: Node {
+                                start: 0,
+                                end: 3,
+                            },
+                            id: "raw",
+                        },
+                    ),
+                ],
+                value: Constant(
+                    Constant {
+                        node: Node {
+                            start: 6,
+                            end: 19,
+                        },
+                        value: "raw_text\\n",
+                    },
+                ),
+            },
+        ),
+    ],
+}
