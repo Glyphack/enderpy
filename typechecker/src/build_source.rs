@@ -10,6 +10,24 @@ use std::path::PathBuf;
 pub struct BuildSource {
     pub path: PathBuf,
     pub source: String,
+    pub module: String,
     // if this source is found by following an import
     pub followed: bool,
+}
+
+impl BuildSource {
+    pub fn from_path(path: PathBuf, followed: bool) -> Self {
+        let source = std::fs::read_to_string(&path).unwrap();
+        let module = get_module_name(&path);
+        BuildSource {
+            path,
+            module,
+            source,
+            followed,
+        }
+    }
+}
+
+fn get_module_name(path: &PathBuf) -> String {
+    path.to_str().unwrap_or_default().replace(['/', '\\'], ".")
 }

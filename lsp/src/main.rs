@@ -6,7 +6,8 @@ use tower_lsp::jsonrpc::Result;
 use tower_lsp::lsp_types::*;
 use tower_lsp::{Client, LanguageServer, LspService, Server};
 
-use enderpy_python_type_checker::build::{BuildManager, BuildSource};
+use enderpy_python_type_checker::build::BuildManager;
+use enderpy_python_type_checker::build_source::BuildSource;
 use enderpy_python_type_checker::project::find_project_root;
 use enderpy_python_type_checker::settings::{ImportDiscovery, Settings};
 
@@ -25,7 +26,7 @@ impl Backend {
             import_discovery: ImportDiscovery { python_executable },
         };
 
-        let mut manager = BuildManager::new(vec![BuildSource::from_path(path)], settings);
+        let mut manager = BuildManager::new(vec![BuildSource::from_path(path, false)], settings);
         manager.type_check();
         let errors = manager;
         let mut diagnostics = Vec::new();

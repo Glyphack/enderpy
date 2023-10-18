@@ -2,12 +2,13 @@ use clap::Parser as ClapParser;
 use cli::{Cli, Commands};
 use enderpy_python_parser::{Lexer, Parser};
 use enderpy_python_type_checker::{
-    build::{BuildManager, BuildSource},
+    build::BuildManager,
+    build_source::BuildSource,
     project::find_project_root,
     settings::{ImportDiscovery, Settings},
 };
+use miette::{bail, IntoDiagnostic, Result};
 use std::{fs, path::PathBuf};
-use miette::{IntoDiagnostic, Result, bail};
 
 mod cli;
 
@@ -53,7 +54,8 @@ fn get_python_executable() -> Result<PathBuf> {
     let output = std::process::Command::new("python")
         .arg("-c")
         .arg("import sys; print(sys.executable)")
-        .output().into_diagnostic()?;
+        .output()
+        .into_diagnostic()?;
     let path = String::from_utf8(output.stdout).into_diagnostic()?;
     Ok(PathBuf::from(path))
 }

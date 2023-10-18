@@ -4,6 +4,7 @@ use std::{collections::HashMap, path::PathBuf};
 
 use enderpy_python_parser::Parser;
 
+use crate::build_source::BuildSource;
 use crate::errors::BuildError;
 use crate::nodes::EnderpyFile;
 use crate::ruff_python_import_resolver as ruff_python_resolver;
@@ -12,29 +13,6 @@ use crate::ruff_python_import_resolver::{execution_environment, resolver};
 use crate::settings::Settings;
 use crate::state::State;
 use crate::type_check::checker::TypeChecker;
-
-#[derive(Debug)]
-pub struct BuildSource {
-    pub path: PathBuf,
-    //  module name should come from path??
-    pub module: String,
-    pub source: String,
-    // If this source was found by following an import
-    pub followed: bool,
-}
-
-impl BuildSource {
-    pub fn from_path(path: PathBuf) -> Self {
-        let source = std::fs::read_to_string(&path).unwrap();
-        let module = get_module_name(&path);
-        BuildSource {
-            path,
-            module,
-            source,
-            followed: false,
-        }
-    }
-}
 
 #[derive(Debug)]
 pub struct BuildManager {
@@ -103,10 +81,9 @@ impl BuildManager {
 
     fn populate_modules(&mut self) {
         for build_source in self.build_sources.iter() {
-            let mod_name = get_module_name(&build_source.path);
             let file = self.parse(build_source);
             let state = State::new(Box::new(file));
-            self.modules.insert(mod_name, state);
+            self.modules.insert(build_source.module.clone(), state);
         }
         let initial_files = self.modules.values().collect();
         let new_files = self.gather_files(initial_files);
@@ -241,25 +218,13 @@ impl BuildManager {
                             continue;
                         }
                     };
-                    let module = get_module_name(resolved_path);
-                    let build_source = BuildSource {
-                        path: resolved_path.clone(),
-                        module: module.clone(),
-                        source,
-                        followed: true,
-                    };
+                    let build_source = BuildSource::from_path(resolved_path.clone(), true);
                     resolved_imports.push(build_source);
                 }
 
                 for (name, implicit_import) in resolved.implicit_imports.iter() {
                     let source = std::fs::read_to_string(implicit_import.path.clone()).unwrap();
-                    let module = get_module_name(&implicit_import.path);
-                    let build_source = BuildSource {
-                        path: implicit_import.path.clone(),
-                        module: module.clone(),
-                        source,
-                        followed: true,
-                    };
+                    let build_source = BuildSource::from_path(implicit_import.path.clone(), true);
                     resolved_imports.push(build_source);
                 }
             }
@@ -289,9 +254,6 @@ fn get_line_number_of_character_position(source: &str, pos: usize) -> usize {
 }
 
 
-fn get_module_name(path: &PathBuf) -> String {
-    path.to_str().unwrap_or_default().replace(['/', '\\'], ".")
-}
 #[cfg(test)]
 mod tests {
     use super::*;
