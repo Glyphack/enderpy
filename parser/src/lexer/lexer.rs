@@ -481,7 +481,7 @@ impl Lexer {
                 Some(str_start @ '"') | Some(str_start @ '\'') => {
                     self.next();
                     self.skip_to_str_end(str_start)?;
-                    return Ok(Some(Kind::RawString));
+                    return Ok(Some(Kind::StringLiteral));
                 }
                 _ => {}
             },
@@ -868,7 +868,6 @@ impl Lexer {
             | Kind::FStringMiddle
             | Kind::FStringEnd
             | Kind::RawBytes
-            | Kind::RawString
             | Kind::RawFStringStart
             | Kind::Bytes
             | Kind::Unicode

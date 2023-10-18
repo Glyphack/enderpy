@@ -89,8 +89,6 @@ pub enum Kind {
     FStringEnd,    // the closing quote
     // byte string literal
     Bytes, // b or B prefix
-    // raw string literal
-    RawString, // r or R prefix
     // raw f-string literal,
     RawFStringStart, // rf or rF or Rf or RF or fr or fR or Fr or FR prefix
     // raw byte string literal
@@ -280,7 +278,6 @@ impl Kind {
             Kind::FStringMiddle => "FstringMiddle",
             Kind::FStringEnd => "FStringEnd",
             Kind::Bytes => "Bytes",
-            Kind::RawString => "RawString",
             Kind::RawFStringStart => "RawFString",
             Kind::RawBytes => "RawBytes",
             Kind::Unicode => "Unicode",
