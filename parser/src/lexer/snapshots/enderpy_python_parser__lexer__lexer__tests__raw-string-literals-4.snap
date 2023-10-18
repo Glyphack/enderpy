@@ -4,7 +4,7 @@ description: "r'hello'"
 ---
 [
     Token {
-        kind: RawString,
+        kind: StringLiteral,
         value: Str(
             "r'hello'",
         ),

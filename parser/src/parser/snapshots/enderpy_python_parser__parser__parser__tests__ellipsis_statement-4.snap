@@ -22,7 +22,7 @@ Module {
                                 start: 0,
                                 end: 3,
                             },
-                            value: Ellipsis,
+                            value: ...,
                         },
                     ),
                     right: Constant(
@@ -31,9 +31,7 @@ Module {
                                 start: 6,
                                 end: 7,
                             },
-                            value: Int(
-                                "1",
-                            ),
+                            value: 1,
                         },
                     ),
                 },

@@ -1,0 +1,17 @@
+---
+source: parser/src/parser/parser.rs
+description: "raw_err = r'ss\n"
+input_file: parser/test_data/inputs/one_liners/string.py
+---
+[
+    InvalidSyntax {
+        msg: "Unexpected token Eof",
+        line: 2,
+        input: "raw_err = = r'ss\n",
+        advice: "",
+        span: (
+            15,
+            15,
+        ),
+    },
+]

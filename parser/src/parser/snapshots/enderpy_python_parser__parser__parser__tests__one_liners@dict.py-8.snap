@@ -22,9 +22,7 @@ Module {
                                 start: 1,
                                 end: 2,
                             },
-                            value: Int(
-                                "1",
-                            ),
+                            value: 1,
                         },
                     ),
                     value: Constant(
@@ -33,9 +31,7 @@ Module {
                                 start: 4,
                                 end: 10,
                             },
-                            value: Str(
-                                "name",
-                            ),
+                            value: "name",
                         },
                     ),
                     generators: [

@@ -549,9 +549,7 @@ Module {
                                                                     start: 554,
                                                                     end: 555,
                                                                 },
-                                                                value: Int(
-                                                                    "5",
-                                                                ),
+                                                                value: 5,
                                                             },
                                                         ),
                                                     },
@@ -622,9 +620,7 @@ Module {
                                                     start: 588,
                                                     end: 591,
                                                 },
-                                                value: Str(
-                                                    ";",
-                                                ),
+                                                value: ";",
                                             },
                                         ),
                                     ],
@@ -689,9 +685,7 @@ Module {
                                                             start: 615,
                                                             end: 618,
                                                         },
-                                                        value: Str(
-                                                            ",",
-                                                        ),
+                                                        value: ",",
                                                     },
                                                 ),
                                             ],
@@ -870,9 +864,7 @@ Module {
                                                                 start: 742,
                                                                 end: 747,
                                                             },
-                                                            value: Str(
-                                                                "\\;",
-                                                            ),
+                                                            value: "\\;",
                                                         },
                                                     ),
                                                     Name(
@@ -928,9 +920,7 @@ Module {
                                                     start: 771,
                                                     end: 777,
                                                 },
-                                                value: Str(
-                                                    "date",
-                                                ),
+                                                value: "date",
                                             },
                                         ),
                                         Constant(
@@ -939,9 +929,7 @@ Module {
                                                     start: 779,
                                                     end: 785,
                                                 },
-                                                value: Str(
-                                                    "high",
-                                                ),
+                                                value: "high",
                                             },
                                         ),
                                         Constant(
@@ -950,9 +938,7 @@ Module {
                                                     start: 787,
                                                     end: 792,
                                                 },
-                                                value: Str(
-                                                    "low",
-                                                ),
+                                                value: "low",
                                             },
                                         ),
                                         Constant(
@@ -961,9 +947,7 @@ Module {
                                                     start: 794,
                                                     end: 800,
                                                 },
-                                                value: Str(
-                                                    "open",
-                                                ),
+                                                value: "open",
                                             },
                                         ),
                                         Constant(
@@ -972,9 +956,7 @@ Module {
                                                     start: 802,
                                                     end: 809,
                                                 },
-                                                value: Str(
-                                                    "close",
-                                                ),
+                                                value: "close",
                                             },
                                         ),
                                         Constant(
@@ -983,9 +965,7 @@ Module {
                                                     start: 811,
                                                     end: 819,
                                                 },
-                                                value: Str(
-                                                    "volume",
-                                                ),
+                                                value: "volume",
                                             },
                                         ),
                                         Constant(
@@ -994,9 +974,7 @@ Module {
                                                     start: 821,
                                                     end: 825,
                                                 },
-                                                value: Str(
-                                                    "__",
-                                                ),
+                                                value: "__",
                                             },
                                         ),
                                     ],
@@ -1077,9 +1055,7 @@ Module {
                                                                         start: 852,
                                                                         end: 853,
                                                                     },
-                                                                    value: Int(
-                                                                        "0",
-                                                                    ),
+                                                                    value: 0,
                                                                 },
                                                             ),
                                                         },
@@ -1097,9 +1073,7 @@ Module {
                                                     start: 865,
                                                     end: 868,
                                                 },
-                                                value: Str(
-                                                    ",",
-                                                ),
+                                                value: ",",
                                             },
                                         ),
                                     ],
@@ -1118,9 +1092,7 @@ Module {
                                                         start: 877,
                                                         end: 881,
                                                     },
-                                                    value: Bool(
-                                                        true,
-                                                    ),
+                                                    value: true,
                                                 },
                                             ),
                                         },
@@ -1185,9 +1157,7 @@ Module {
                                                                         start: 913,
                                                                         end: 917,
                                                                     },
-                                                                    value: Str(
-                                                                        "__",
-                                                                    ),
+                                                                    value: "__",
                                                                 },
                                                             ),
                                                             Constant(
@@ -1196,9 +1166,7 @@ Module {
                                                                         start: 919,
                                                                         end: 920,
                                                                     },
-                                                                    value: Int(
-                                                                        "0",
-                                                                    ),
+                                                                    value: 0,
                                                                 },
                                                             ),
                                                         ],
@@ -1342,9 +1310,7 @@ Module {
                                                         start: 1013,
                                                         end: 1021,
                                                     },
-                                                    value: Str(
-                                                        "%Y%m%d",
-                                                    ),
+                                                    value: "%Y%m%d",
                                                 },
                                             ),
                                         },
@@ -1399,9 +1365,7 @@ Module {
                                                                 start: 1056,
                                                                 end: 1063,
                                                             },
-                                                            value: Str(
-                                                                "jdate",
-                                                            ),
+                                                            value: "jdate",
                                                         },
                                                     ),
                                                 },
@@ -1413,9 +1377,7 @@ Module {
                                                     start: 1067,
                                                     end: 1069,
                                                 },
-                                                value: Str(
-                                                    "",
-                                                ),
+                                                value: "",
                                             },
                                         ),
                                     },
@@ -1652,9 +1614,7 @@ Module {
                                                     start: 1252,
                                                     end: 1258,
                                                 },
-                                                value: Str(
-                                                    "date",
-                                                ),
+                                                value: "date",
                                             },
                                         ),
                                     },
@@ -1706,9 +1666,7 @@ Module {
                                                             start: 1280,
                                                             end: 1286,
                                                         },
-                                                        value: Str(
-                                                            "date",
-                                                        ),
+                                                        value: "date",
                                                     },
                                                 ),
                                             },
@@ -1729,9 +1687,7 @@ Module {
                                                         start: 1296,
                                                         end: 1304,
                                                     },
-                                                    value: Str(
-                                                        "%Y%m%d",
-                                                    ),
+                                                    value: "%Y%m%d",
                                                 },
                                             ),
                                         },
@@ -1786,9 +1742,7 @@ Module {
                                                                 start: 1339,
                                                                 end: 1346,
                                                             },
-                                                            value: Str(
-                                                                "jdate",
-                                                            ),
+                                                            value: "jdate",
                                                         },
                                                     ),
                                                 },
@@ -2086,9 +2040,7 @@ Module {
                                     start: 1522,
                                     end: 1527,
                                 },
-                                value: Bool(
-                                    false,
-                                ),
+                                value: false,
                             },
                         ),
                         Constant(
@@ -2097,9 +2049,7 @@ Module {
                                     start: 1555,
                                     end: 1560,
                                 },
-                                value: Bool(
-                                    false,
-                                ),
+                                value: false,
                             },
                         ),
                         Attribute(
@@ -2126,9 +2076,7 @@ Module {
                                     start: 1625,
                                     end: 1630,
                                 },
-                                value: Bool(
-                                    false,
-                                ),
+                                value: false,
                             },
                         ),
                     ],
@@ -2165,9 +2113,7 @@ Module {
                                                     start: 1680,
                                                     end: 1685,
                                                 },
-                                                value: Str(
-                                                    "all",
-                                                ),
+                                                value: "all",
                                             },
                                         ),
                                     ],
@@ -2427,9 +2373,7 @@ Module {
                                                                 start: 1887,
                                                                 end: 1889,
                                                             },
-                                                            value: Int(
-                                                                "10",
-                                                            ),
+                                                            value: 10,
                                                         },
                                                     ),
                                                 },
@@ -2791,9 +2735,7 @@ Module {
                                                                                                                     start: 2330,
                                                                                                                     end: 0,
                                                                                                                 },
-                                                                                                                value: Str(
-                                                                                                                    "Cannot find symbol: ",
-                                                                                                                ),
+                                                                                                                value: "Cannot find symbol: ",
                                                                                                             },
                                                                                                         ),
                                                                                                         Name(
@@ -2913,9 +2855,7 @@ Module {
                                                                                     start: 2454,
                                                                                     end: 2455,
                                                                                 },
-                                                                                value: Int(
-                                                                                    "0",
-                                                                                ),
+                                                                                value: 0,
                                                                             },
                                                                         ),
                                                                         Name(
@@ -3347,9 +3287,7 @@ Module {
                                                                                                         start: 3013,
                                                                                                         end: 0,
                                                                                                     },
-                                                                                                    value: Str(
-                                                                                                        "Cannot read daily trade records for symbol: ",
-                                                                                                    ),
+                                                                                                    value: "Cannot read daily trade records for symbol: ",
                                                                                                 },
                                                                                             ),
                                                                                             Name(
@@ -3387,9 +3325,7 @@ Module {
                                                                                                             start: 3051,
                                                                                                             end: 3058,
                                                                                                         },
-                                                                                                        value: Str(
-                                                                                                            "Error",
-                                                                                                        ),
+                                                                                                        value: "Error",
                                                                                                     },
                                                                                                 ),
                                                                                             ],
@@ -3502,9 +3438,7 @@ Module {
                                                                                                             start: 3136,
                                                                                                             end: 3137,
                                                                                                         },
-                                                                                                        value: Int(
-                                                                                                            "1",
-                                                                                                        ),
+                                                                                                        value: 1,
                                                                                                     },
                                                                                                 ),
                                                                                             },
@@ -3534,9 +3468,7 @@ Module {
                                                                                 start: 3156,
                                                                                 end: 3160,
                                                                             },
-                                                                            value: Bool(
-                                                                                true,
-                                                                            ),
+                                                                            value: true,
                                                                         },
                                                                     ),
                                                                 },
@@ -3688,9 +3620,7 @@ Module {
                                                                                             start: 3268,
                                                                                             end: 3275,
                                                                                         },
-                                                                                        value: Str(
-                                                                                            "<PER>",
-                                                                                        ),
+                                                                                        value: "<PER>",
                                                                                     },
                                                                                 ),
                                                                                 Constant(
@@ -3699,9 +3629,7 @@ Module {
                                                                                             start: 3277,
                                                                                             end: 3287,
                                                                                         },
-                                                                                        value: Str(
-                                                                                            "<TICKER>",
-                                                                                        ),
+                                                                                        value: "<TICKER>",
                                                                                     },
                                                                                 ),
                                                                             ],
@@ -3939,9 +3867,7 @@ Module {
                                                                                                                             start: 3502,
                                                                                                                             end: 3506,
                                                                                                                         },
-                                                                                                                        value: Bool(
-                                                                                                                            true,
-                                                                                                                        ),
+                                                                                                                        value: true,
                                                                                                                     },
                                                                                                                 ),
                                                                                                             },
@@ -3959,9 +3885,7 @@ Module {
                                                                                                                             start: 3513,
                                                                                                                             end: 3518,
                                                                                                                         },
-                                                                                                                        value: Bool(
-                                                                                                                            false,
-                                                                                                                        ),
+                                                                                                                        value: false,
                                                                                                                     },
                                                                                                                 ),
                                                                                                             },
@@ -3980,9 +3904,7 @@ Module {
                                                                                                         start: 3574,
                                                                                                         end: 3580,
                                                                                                     },
-                                                                                                    value: Str(
-                                                                                                        "date",
-                                                                                                    ),
+                                                                                                    value: "date",
                                                                                                 },
                                                                                             ),
                                                                                         ],
@@ -4010,9 +3932,7 @@ Module {
                                                                                             start: 3620,
                                                                                             end: 3624,
                                                                                         },
-                                                                                        value: Bool(
-                                                                                            true,
-                                                                                        ),
+                                                                                        value: true,
                                                                                     },
                                                                                 ),
                                                                             },
@@ -4256,9 +4176,7 @@ Module {
                                                                                         start: 3863,
                                                                                         end: 3867,
                                                                                     },
-                                                                                    value: Bool(
-                                                                                        true,
-                                                                                    ),
+                                                                                    value: true,
                                                                                 },
                                                                             ),
                                                                         },
@@ -4276,9 +4194,7 @@ Module {
                                                                                         start: 3878,
                                                                                         end: 3882,
                                                                                     },
-                                                                                    value: Bool(
-                                                                                        true,
-                                                                                    ),
+                                                                                    value: true,
                                                                                 },
                                                                             ),
                                                                         },
@@ -4369,9 +4285,7 @@ Module {
                                                                                                             start: 3993,
                                                                                                             end: 0,
                                                                                                         },
-                                                                                                        value: Str(
-                                                                                                            "/",
-                                                                                                        ),
+                                                                                                        value: "/",
                                                                                                     },
                                                                                                 ),
                                                                                                 Name(
@@ -4389,9 +4303,7 @@ Module {
                                                                                                             start: 4008,
                                                                                                             end: 0,
                                                                                                         },
-                                                                                                        value: Str(
-                                                                                                            "-ت.csv",
-                                                                                                        ),
+                                                                                                        value: "-ت.csv",
                                                                                                     },
                                                                                                 ),
                                                                                             ],
@@ -4413,9 +4325,7 @@ Module {
                                                                                                     start: 4017,
                                                                                                     end: 4022,
                                                                                                 },
-                                                                                                value: Bool(
-                                                                                                    false,
-                                                                                                ),
+                                                                                                value: false,
                                                                                             },
                                                                                         ),
                                                                                     },
@@ -4492,9 +4402,7 @@ Module {
                                                                                                             start: 4149,
                                                                                                             end: 0,
                                                                                                         },
-                                                                                                        value: Str(
-                                                                                                            "/",
-                                                                                                        ),
+                                                                                                        value: "/",
                                                                                                     },
                                                                                                 ),
                                                                                                 Name(
@@ -4512,9 +4420,7 @@ Module {
                                                                                                             start: 4161,
                                                                                                             end: 0,
                                                                                                         },
-                                                                                                        value: Str(
-                                                                                                            ".csv",
-                                                                                                        ),
+                                                                                                        value: ".csv",
                                                                                                     },
                                                                                                 ),
                                                                                             ],
@@ -4536,9 +4442,7 @@ Module {
                                                                                                     start: 4170,
                                                                                                     end: 4175,
                                                                                                 },
-                                                                                                value: Bool(
-                                                                                                    false,
-                                                                                                ),
+                                                                                                value: false,
                                                                                             },
                                                                                         ),
                                                                                     },
@@ -4667,9 +4571,7 @@ Module {
                                                             start: 4250,
                                                             end: 4303,
                                                         },
-                                                        value: Str(
-                                                            "Warning, download did not complete, re-run the code",
-                                                        ),
+                                                        value: "Warning, download did not complete, re-run the code",
                                                     },
                                                 ),
                                             ],
@@ -4851,9 +4753,48 @@ Module {
                                     start: 4402,
                                     end: 5588,
                                 },
-                                value: Str(
-                                    "\n    Adjust historical records of stock\n\n    There is a capital increase/profit sharing,\n    if today \"Final Close Price\" is not equal to next day\n    \"Yesterday Final Close Price\" by using this ratio,\n    performance adjustment of stocks is achieved\n\n    Parameters\n    ----------\n    df : pd.DataFrame\n        DataFrame with historical records.\n\n    Returns\n    -------\n    pd.DataFrame\n        DataFrame with adjusted historical records.\n\n    Notes\n    -----\n    DataFrame can not be empty or else it makes runtime error\n    Type of DataFrame must be RangeIndex to make proper range of records\n    that need to be modified\n\n    diff: list\n        list of indexs of the day after capital increase/profit sharing\n    ratio_list: List\n        List of ratios to adjust historical data of stock\n    ratio: Float\n        ratio = df.loc[i].adjClose / df.loc[i+1].yesterday\n\n    Description\n    -----------\n    # Note: adjustment does not include Tenth and twentieth days\n    df.index = range(0,101,1)\n    # step is 1\n    step = df.index.step\n    diff = [10,20]\n    ratio_list = [0.5, 0.8]\n    df.loc[0:10-step, [open,...]] * ratio[0]\n    df.loc[10:20-step, [open,...]] * ratio[1]\n    ",
-                                ),
+                                value: "
+                                    Adjust historical records of stock
+                                
+                                    There is a capital increase/profit sharing,
+                                    if today "Final Close Price" is not equal to next day
+                                    "Yesterday Final Close Price" by using this ratio,
+                                    performance adjustment of stocks is achieved
+                                
+                                    Parameters
+                                    ----------
+                                    df : pd.DataFrame
+                                        DataFrame with historical records.
+                                
+                                    Returns
+                                    -------
+                                    pd.DataFrame
+                                        DataFrame with adjusted historical records.
+                                
+                                    Notes
+                                    -----
+                                    DataFrame can not be empty or else it makes runtime error
+                                    Type of DataFrame must be RangeIndex to make proper range of records
+                                    that need to be modified
+                                
+                                    diff: list
+                                        list of indexs of the day after capital increase/profit sharing
+                                    ratio_list: List
+                                        List of ratios to adjust historical data of stock
+                                    ratio: Float
+                                        ratio = df.loc[i].adjClose / df.loc[i+1].yesterday
+                                
+                                    Description
+                                    -----------
+                                    # Note: adjustment does not include Tenth and twentieth days
+                                    df.index = range(0,101,1)
+                                    # step is 1
+                                    step = df.index.step
+                                    diff = [10,20]
+                                    ratio_list = [0.5, 0.8]
+                                    df.loc[0:10-step, [open,...]] * ratio[0]
+                                    df.loc[10:20-step, [open,...]] * ratio[1]
+                                    ",
                             },
                         ),
                     ),
@@ -5205,9 +5146,7 @@ Module {
                                                                                         start: 5781,
                                                                                         end: 5782,
                                                                                     },
-                                                                                    value: Int(
-                                                                                        "1",
-                                                                                    ),
+                                                                                    value: 1,
                                                                                 },
                                                                             ),
                                                                         ],
@@ -5307,9 +5246,7 @@ Module {
                                                     start: 5834,
                                                     end: 5835,
                                                 },
-                                                value: Int(
-                                                    "0",
-                                                ),
+                                                value: 0,
                                             },
                                         ),
                                     ],
@@ -5348,9 +5285,7 @@ Module {
                                                             start: 5854,
                                                             end: 5855,
                                                         },
-                                                        value: Int(
-                                                            "0",
-                                                        ),
+                                                        value: 0,
                                                     },
                                                 ),
                                             ],
@@ -5387,9 +5322,7 @@ Module {
                                         start: 5869,
                                         end: 5870,
                                     },
-                                    value: Int(
-                                        "1",
-                                    ),
+                                    value: 1,
                                 },
                             ),
                         },
@@ -5473,9 +5406,7 @@ Module {
                                                                     start: 5912,
                                                                     end: 5913,
                                                                 },
-                                                                value: Int(
-                                                                    "1",
-                                                                ),
+                                                                value: 1,
                                                             },
                                                         ),
                                                     },
@@ -5556,9 +5487,7 @@ Module {
                                                                                 start: 5961,
                                                                                 end: 5972,
                                                                             },
-                                                                            value: Str(
-                                                                                "yesterday",
-                                                                            ),
+                                                                            value: "yesterday",
                                                                         },
                                                                     ),
                                                                 ],
@@ -5609,9 +5538,7 @@ Module {
                                                                                         start: 5989,
                                                                                         end: 5990,
                                                                                     },
-                                                                                    value: Int(
-                                                                                        "1",
-                                                                                    ),
+                                                                                    value: 1,
                                                                                 },
                                                                             ),
                                                                         ],
@@ -5645,9 +5572,7 @@ Module {
                                                                                 start: 5999,
                                                                                 end: 6009,
                                                                             },
-                                                                            value: Str(
-                                                                                "adjClose",
-                                                                            ),
+                                                                            value: "adjClose",
                                                                         },
                                                                     ),
                                                                 ],
@@ -5691,9 +5616,7 @@ Module {
                                                             start: 6047,
                                                             end: 6048,
                                                         },
-                                                        value: Int(
-                                                            "0",
-                                                        ),
+                                                        value: 0,
                                                     },
                                                 ),
                                                 Name(
@@ -5813,9 +5736,7 @@ Module {
                                                                 start: 6106,
                                                                 end: 6107,
                                                             },
-                                                            value: Int(
-                                                                "0",
-                                                            ),
+                                                            value: 0,
                                                         },
                                                     ),
                                                 ],
@@ -5924,9 +5845,7 @@ Module {
                                                                                 start: 6191,
                                                                                 end: 6192,
                                                                             },
-                                                                            value: Int(
-                                                                                "1",
-                                                                            ),
+                                                                            value: 1,
                                                                         },
                                                                     ),
                                                                 },
@@ -6083,9 +6002,7 @@ Module {
                                                                                         start: 6296,
                                                                                         end: 6302,
                                                                                     },
-                                                                                    value: Str(
-                                                                                        "open",
-                                                                                    ),
+                                                                                    value: "open",
                                                                                 },
                                                                             ),
                                                                             Constant(
@@ -6094,9 +6011,7 @@ Module {
                                                                                         start: 6320,
                                                                                         end: 6326,
                                                                                     },
-                                                                                    value: Str(
-                                                                                        "high",
-                                                                                    ),
+                                                                                    value: "high",
                                                                                 },
                                                                             ),
                                                                             Constant(
@@ -6105,9 +6020,7 @@ Module {
                                                                                         start: 6344,
                                                                                         end: 6349,
                                                                                     },
-                                                                                    value: Str(
-                                                                                        "low",
-                                                                                    ),
+                                                                                    value: "low",
                                                                                 },
                                                                             ),
                                                                             Constant(
@@ -6116,9 +6029,7 @@ Module {
                                                                                         start: 6367,
                                                                                         end: 6374,
                                                                                     },
-                                                                                    value: Str(
-                                                                                        "close",
-                                                                                    ),
+                                                                                    value: "close",
                                                                                 },
                                                                             ),
                                                                             Constant(
@@ -6127,9 +6038,7 @@ Module {
                                                                                         start: 6392,
                                                                                         end: 6402,
                                                                                     },
-                                                                                    value: Str(
-                                                                                        "adjClose",
-                                                                                    ),
+                                                                                    value: "adjClose",
                                                                                 },
                                                                             ),
                                                                             Constant(
@@ -6138,9 +6047,7 @@ Module {
                                                                                         start: 6420,
                                                                                         end: 6431,
                                                                                     },
-                                                                                    value: Str(
-                                                                                        "yesterday",
-                                                                                    ),
+                                                                                    value: "yesterday",
                                                                                 },
                                                                             ),
                                                                         ],
@@ -6250,9 +6157,7 @@ Module {
                                                                                                         start: 6556,
                                                                                                         end: 6562,
                                                                                                     },
-                                                                                                    value: Str(
-                                                                                                        "open",
-                                                                                                    ),
+                                                                                                    value: "open",
                                                                                                 },
                                                                                             ),
                                                                                             Constant(
@@ -6261,9 +6166,7 @@ Module {
                                                                                                         start: 6584,
                                                                                                         end: 6590,
                                                                                                     },
-                                                                                                    value: Str(
-                                                                                                        "high",
-                                                                                                    ),
+                                                                                                    value: "high",
                                                                                                 },
                                                                                             ),
                                                                                             Constant(
@@ -6272,9 +6175,7 @@ Module {
                                                                                                         start: 6612,
                                                                                                         end: 6617,
                                                                                                     },
-                                                                                                    value: Str(
-                                                                                                        "low",
-                                                                                                    ),
+                                                                                                    value: "low",
                                                                                                 },
                                                                                             ),
                                                                                             Constant(
@@ -6283,9 +6184,7 @@ Module {
                                                                                                         start: 6639,
                                                                                                         end: 6646,
                                                                                                     },
-                                                                                                    value: Str(
-                                                                                                        "close",
-                                                                                                    ),
+                                                                                                    value: "close",
                                                                                                 },
                                                                                             ),
                                                                                             Constant(
@@ -6294,9 +6193,7 @@ Module {
                                                                                                         start: 6668,
                                                                                                         end: 6678,
                                                                                                     },
-                                                                                                    value: Str(
-                                                                                                        "adjClose",
-                                                                                                    ),
+                                                                                                    value: "adjClose",
                                                                                                 },
                                                                                             ),
                                                                                             Constant(
@@ -6305,9 +6202,7 @@ Module {
                                                                                                         start: 6700,
                                                                                                         end: 6711,
                                                                                                     },
-                                                                                                    value: Str(
-                                                                                                        "yesterday",
-                                                                                                    ),
+                                                                                                    value: "yesterday",
                                                                                                 },
                                                                                             ),
                                                                                         ],
@@ -6595,9 +6490,7 @@ Module {
                                                         start: 7141,
                                                         end: 7143,
                                                     },
-                                                    value: Int(
-                                                        "10",
-                                                    ),
+                                                    value: 10,
                                                 },
                                             ),
                                         },
@@ -6626,9 +6519,7 @@ Module {
                                                 start: 7152,
                                                 end: 7155,
                                             },
-                                            value: Int(
-                                                "400",
-                                            ),
+                                            value: 400,
                                         },
                                     ),
                                     ops: [
@@ -6660,9 +6551,7 @@ Module {
                                                     start: 7182,
                                                     end: 7185,
                                                 },
-                                                value: Int(
-                                                    "500",
-                                                ),
+                                                value: 500,
                                             },
                                         ),
                                     ],
@@ -6708,9 +6597,7 @@ Module {
                                                                         start: 7269,
                                                                         end: 0,
                                                                     },
-                                                                    value: Str(
-                                                                        "Cannot read daily trade records from the url: ",
-                                                                    ),
+                                                                    value: "Cannot read daily trade records from the url: ",
                                                                 },
                                                             ),
                                                             Name(
@@ -6748,9 +6635,7 @@ Module {
                                                                             start: 7296,
                                                                             end: 7306,
                                                                         },
-                                                                        value: Str(
-                                                                            "response",
-                                                                        ),
+                                                                        value: "response",
                                                                     },
                                                                 ),
                                                                 Constant(
@@ -6759,9 +6644,7 @@ Module {
                                                                             start: 7323,
                                                                             end: 7329,
                                                                         },
-                                                                        value: Str(
-                                                                            "code",
-                                                                        ),
+                                                                        value: "code",
                                                                     },
                                                                 ),
                                                             ],
@@ -7055,9 +6938,7 @@ Module {
                                                                 start: 6884,
                                                                 end: 6885,
                                                             },
-                                                            value: Int(
-                                                                "1",
-                                                            ),
+                                                            value: 1,
                                                         },
                                                     ),
                                                 },
@@ -7075,9 +6956,7 @@ Module {
                                                                 start: 6891,
                                                                 end: 6892,
                                                             },
-                                                            value: Int(
-                                                                "4",
-                                                            ),
+                                                            value: 4,
                                                         },
                                                     ),
                                                 },
@@ -7348,9 +7227,7 @@ Module {
                                                         start: 7791,
                                                         end: 7793,
                                                     },
-                                                    value: Int(
-                                                        "10",
-                                                    ),
+                                                    value: 10,
                                                 },
                                             ),
                                         },
@@ -7379,9 +7256,7 @@ Module {
                                                 start: 7802,
                                                 end: 7805,
                                             },
-                                            value: Int(
-                                                "400",
-                                            ),
+                                            value: 400,
                                         },
                                     ),
                                     ops: [
@@ -7413,9 +7288,7 @@ Module {
                                                     start: 7832,
                                                     end: 7835,
                                                 },
-                                                value: Int(
-                                                    "500",
-                                                ),
+                                                value: 500,
                                             },
                                         ),
                                     ],
@@ -7461,9 +7334,7 @@ Module {
                                                                         start: 7919,
                                                                         end: 0,
                                                                     },
-                                                                    value: Str(
-                                                                        "Cannot read daily trade records from the url: ",
-                                                                    ),
+                                                                    value: "Cannot read daily trade records from the url: ",
                                                                 },
                                                             ),
                                                             Name(
@@ -7501,9 +7372,7 @@ Module {
                                                                             start: 7946,
                                                                             end: 7956,
                                                                         },
-                                                                        value: Str(
-                                                                            "response",
-                                                                        ),
+                                                                        value: "response",
                                                                     },
                                                                 ),
                                                                 Constant(
@@ -7512,9 +7381,7 @@ Module {
                                                                             start: 7973,
                                                                             end: 7979,
                                                                         },
-                                                                        value: Str(
-                                                                            "code",
-                                                                        ),
+                                                                        value: "code",
                                                                     },
                                                                 ),
                                                             ],
@@ -7690,9 +7557,7 @@ Module {
                                                                         start: 8091,
                                                                         end: 8094,
                                                                     },
-                                                                    value: Str(
-                                                                        ";",
-                                                                    ),
+                                                                    value: ";",
                                                                 },
                                                             ),
                                                             ops: [
@@ -7723,9 +7588,7 @@ Module {
                                                                         start: 8110,
                                                                         end: 8113,
                                                                     },
-                                                                    value: Str(
-                                                                        ",",
-                                                                    ),
+                                                                    value: ",",
                                                                 },
                                                             ),
                                                             ops: [
@@ -7787,9 +7650,7 @@ Module {
                                                                                 start: 8200,
                                                                                 end: 0,
                                                                             },
-                                                                            value: Str(
-                                                                                "Invalid response from the url: ",
-                                                                            ),
+                                                                            value: "Invalid response from the url: ",
                                                                         },
                                                                     ),
                                                                     Name(
@@ -7807,9 +7668,8 @@ Module {
                                                                                 start: 8270,
                                                                                 end: 0,
                                                                             },
-                                                                            value: Str(
-                                                                                ".\n                         \\nExpected valid financial index data.",
-                                                                            ),
+                                                                            value: ".
+                                                                                                     \nExpected valid financial index data.",
                                                                         },
                                                                     ),
                                                                 ],
@@ -7996,9 +7856,7 @@ Module {
                                                                 start: 7543,
                                                                 end: 7544,
                                                             },
-                                                            value: Int(
-                                                                "1",
-                                                            ),
+                                                            value: 1,
                                                         },
                                                     ),
                                                 },
@@ -8016,9 +7874,7 @@ Module {
                                                                 start: 7550,
                                                                 end: 7551,
                                                             },
-                                                            value: Int(
-                                                                "4",
-                                                            ),
+                                                            value: 4,
                                                         },
                                                     ),
                                                 },
@@ -8230,9 +8086,7 @@ Module {
                                     start: 8446,
                                     end: 8451,
                                 },
-                                value: Bool(
-                                    false,
-                                ),
+                                value: false,
                             },
                         ),
                         Constant(
@@ -8241,9 +8095,7 @@ Module {
                                     start: 8479,
                                     end: 8484,
                                 },
-                                value: Bool(
-                                    false,
-                                ),
+                                value: false,
                             },
                         ),
                         Attribute(
@@ -8298,9 +8150,7 @@ Module {
                                                     start: 8589,
                                                     end: 8594,
                                                 },
-                                                value: Str(
-                                                    "all",
-                                                ),
+                                                value: "all",
                                             },
                                         ),
                                     ],
@@ -8560,9 +8410,7 @@ Module {
                                                                 start: 8804,
                                                                 end: 8806,
                                                             },
-                                                            value: Int(
-                                                                "10",
-                                                            ),
+                                                            value: 10,
                                                         },
                                                     ),
                                                 },
@@ -8985,9 +8833,7 @@ Module {
                                                                                                         start: 9321,
                                                                                                         end: 0,
                                                                                                     },
-                                                                                                    value: Str(
-                                                                                                        "Cannot find financial index: ",
-                                                                                                    ),
+                                                                                                    value: "Cannot find financial index: ",
                                                                                                 },
                                                                                             ),
                                                                                             Name(
@@ -9397,9 +9243,7 @@ Module {
                                                                                                         start: 9821,
                                                                                                         end: 0,
                                                                                                     },
-                                                                                                    value: Str(
-                                                                                                        "Cannot read daily trade records for symbol: ",
-                                                                                                    ),
+                                                                                                    value: "Cannot read daily trade records for symbol: ",
                                                                                                 },
                                                                                             ),
                                                                                             Name(
@@ -9437,9 +9281,7 @@ Module {
                                                                                                             start: 9859,
                                                                                                             end: 9866,
                                                                                                         },
-                                                                                                        value: Str(
-                                                                                                            "Error",
-                                                                                                        ),
+                                                                                                        value: "Error",
                                                                                                     },
                                                                                                 ),
                                                                                             ],
@@ -9644,9 +9486,7 @@ Module {
                                                                                         start: 10086,
                                                                                         end: 10090,
                                                                                     },
-                                                                                    value: Bool(
-                                                                                        true,
-                                                                                    ),
+                                                                                    value: true,
                                                                                 },
                                                                             ),
                                                                         },
@@ -9664,9 +9504,7 @@ Module {
                                                                                         start: 10101,
                                                                                         end: 10105,
                                                                                     },
-                                                                                    value: Bool(
-                                                                                        true,
-                                                                                    ),
+                                                                                    value: true,
                                                                                 },
                                                                             ),
                                                                         },
@@ -9741,9 +9579,7 @@ Module {
                                                                                                 start: 10181,
                                                                                                 end: 0,
                                                                                             },
-                                                                                            value: Str(
-                                                                                                "/",
-                                                                                            ),
+                                                                                            value: "/",
                                                                                         },
                                                                                     ),
                                                                                     Name(
@@ -9761,9 +9597,7 @@ Module {
                                                                                                 start: 10193,
                                                                                                 end: 0,
                                                                                             },
-                                                                                            value: Str(
-                                                                                                ".csv",
-                                                                                            ),
+                                                                                            value: ".csv",
                                                                                         },
                                                                                     ),
                                                                                 ],
@@ -9785,9 +9619,7 @@ Module {
                                                                                         start: 10202,
                                                                                         end: 10207,
                                                                                     },
-                                                                                    value: Bool(
-                                                                                        false,
-                                                                                    ),
+                                                                                    value: false,
                                                                                 },
                                                                             ),
                                                                         },
@@ -9913,9 +9745,7 @@ Module {
                                                             start: 10278,
                                                             end: 10331,
                                                         },
-                                                        value: Str(
-                                                            "Warning, download did not complete, re-run the code",
-                                                        ),
+                                                        value: "Warning, download did not complete, re-run the code",
                                                     },
                                                 ),
                                             ],
@@ -10175,9 +10005,7 @@ Module {
                                     start: 10465,
                                     end: 10470,
                                 },
-                                value: Bool(
-                                    false,
-                                ),
+                                value: false,
                             },
                         ),
                         Constant(
@@ -10186,9 +10014,7 @@ Module {
                                     start: 10498,
                                     end: 10503,
                                 },
-                                value: Bool(
-                                    false,
-                                ),
+                                value: false,
                             },
                         ),
                         Attribute(
@@ -10243,9 +10069,7 @@ Module {
                                                     start: 10583,
                                                     end: 10588,
                                                 },
-                                                value: Str(
-                                                    "all",
-                                                ),
+                                                value: "all",
                                             },
                                         ),
                                     ],
@@ -10505,9 +10329,7 @@ Module {
                                                                 start: 10790,
                                                                 end: 10792,
                                                             },
-                                                            value: Int(
-                                                                "10",
-                                                            ),
+                                                            value: 10,
                                                         },
                                                     ),
                                                 },
@@ -10679,9 +10501,7 @@ Module {
                                                                                                         start: 10985,
                                                                                                         end: 0,
                                                                                                     },
-                                                                                                    value: Str(
-                                                                                                        "Cannot find symbol: ",
-                                                                                                    ),
+                                                                                                    value: "Cannot find symbol: ",
                                                                                                 },
                                                                                             ),
                                                                                             Name(
@@ -11212,9 +11032,7 @@ Module {
                                                                                         start: 11555,
                                                                                         end: 11559,
                                                                                     },
-                                                                                    value: Bool(
-                                                                                        true,
-                                                                                    ),
+                                                                                    value: true,
                                                                                 },
                                                                             ),
                                                                         },
@@ -11232,9 +11050,7 @@ Module {
                                                                                         start: 11570,
                                                                                         end: 11574,
                                                                                     },
-                                                                                    value: Bool(
-                                                                                        true,
-                                                                                    ),
+                                                                                    value: true,
                                                                                 },
                                                                             ),
                                                                         },
@@ -11292,9 +11108,7 @@ Module {
                                                                                                 start: 11616,
                                                                                                 end: 0,
                                                                                             },
-                                                                                            value: Str(
-                                                                                                "/",
-                                                                                            ),
+                                                                                            value: "/",
                                                                                         },
                                                                                     ),
                                                                                     Name(
@@ -11312,9 +11126,7 @@ Module {
                                                                                                 start: 11628,
                                                                                                 end: 0,
                                                                                             },
-                                                                                            value: Str(
-                                                                                                ".csv",
-                                                                                            ),
+                                                                                            value: ".csv",
                                                                                         },
                                                                                     ),
                                                                                 ],
@@ -11443,9 +11255,8 @@ Module {
                                                             start: 11696,
                                                             end: 11817,
                                                         },
-                                                        value: Str(
-                                                            "could not download client types for all the symbols make\n        sure you have what you need or re-run the function",
-                                                        ),
+                                                        value: "could not download client types for all the symbols make
+                                                                sure you have what you need or re-run the function",
                                                     },
                                                 ),
                                             ],
@@ -11644,9 +11455,7 @@ Module {
                                                     start: 12148,
                                                     end: 12149,
                                                 },
-                                                value: Int(
-                                                    "1",
-                                                ),
+                                                value: 1,
                                             },
                                         ),
                                     ],
@@ -11692,9 +11501,7 @@ Module {
                                                                         start: 12233,
                                                                         end: 0,
                                                                     },
-                                                                    value: Str(
-                                                                        "Cannot create client types data for ticker",
-                                                                    ),
+                                                                    value: "Cannot create client types data for ticker",
                                                                 },
                                                             ),
                                                             Name(
@@ -11712,9 +11519,8 @@ Module {
                                                                         start: 12272,
                                                                         end: 0,
                                                                     },
-                                                                    value: Str(
-                                                                        "\n             from data: ",
-                                                                    ),
+                                                                    value: "
+                                                                                 from data: ",
                                                                 },
                                                             ),
                                                             Name(
@@ -11752,9 +11558,7 @@ Module {
                                                                             start: 12302,
                                                                             end: 12316,
                                                                         },
-                                                                        value: Str(
-                                                                            "ticker_index",
-                                                                        ),
+                                                                        value: "ticker_index",
                                                                     },
                                                                 ),
                                                             ],
@@ -11875,9 +11679,7 @@ Module {
                                                                     start: 12451,
                                                                     end: 12457,
                                                                 },
-                                                                value: Str(
-                                                                    "date",
-                                                                ),
+                                                                value: "date",
                                                             },
                                                         ),
                                                         Constant(
@@ -11886,9 +11688,7 @@ Module {
                                                                     start: 12471,
                                                                     end: 12493,
                                                                 },
-                                                                value: Str(
-                                                                    "individual_buy_count",
-                                                                ),
+                                                                value: "individual_buy_count",
                                                             },
                                                         ),
                                                         Constant(
@@ -11897,9 +11697,7 @@ Module {
                                                                     start: 12507,
                                                                     end: 12528,
                                                                 },
-                                                                value: Str(
-                                                                    "corporate_buy_count",
-                                                                ),
+                                                                value: "corporate_buy_count",
                                                             },
                                                         ),
                                                         Constant(
@@ -11908,9 +11706,7 @@ Module {
                                                                     start: 12542,
                                                                     end: 12565,
                                                                 },
-                                                                value: Str(
-                                                                    "individual_sell_count",
-                                                                ),
+                                                                value: "individual_sell_count",
                                                             },
                                                         ),
                                                         Constant(
@@ -11919,9 +11715,7 @@ Module {
                                                                     start: 12579,
                                                                     end: 12601,
                                                                 },
-                                                                value: Str(
-                                                                    "corporate_sell_count",
-                                                                ),
+                                                                value: "corporate_sell_count",
                                                             },
                                                         ),
                                                         Constant(
@@ -11930,9 +11724,7 @@ Module {
                                                                     start: 12615,
                                                                     end: 12635,
                                                                 },
-                                                                value: Str(
-                                                                    "individual_buy_vol",
-                                                                ),
+                                                                value: "individual_buy_vol",
                                                             },
                                                         ),
                                                         Constant(
@@ -11941,9 +11733,7 @@ Module {
                                                                     start: 12649,
                                                                     end: 12668,
                                                                 },
-                                                                value: Str(
-                                                                    "corporate_buy_vol",
-                                                                ),
+                                                                value: "corporate_buy_vol",
                                                             },
                                                         ),
                                                         Constant(
@@ -11952,9 +11742,7 @@ Module {
                                                                     start: 12682,
                                                                     end: 12703,
                                                                 },
-                                                                value: Str(
-                                                                    "individual_sell_vol",
-                                                                ),
+                                                                value: "individual_sell_vol",
                                                             },
                                                         ),
                                                         Constant(
@@ -11963,9 +11751,7 @@ Module {
                                                                     start: 12717,
                                                                     end: 12737,
                                                                 },
-                                                                value: Str(
-                                                                    "corporate_sell_vol",
-                                                                ),
+                                                                value: "corporate_sell_vol",
                                                             },
                                                         ),
                                                         Constant(
@@ -11974,9 +11760,7 @@ Module {
                                                                     start: 12751,
                                                                     end: 12773,
                                                                 },
-                                                                value: Str(
-                                                                    "individual_buy_value",
-                                                                ),
+                                                                value: "individual_buy_value",
                                                             },
                                                         ),
                                                         Constant(
@@ -11985,9 +11769,7 @@ Module {
                                                                     start: 12787,
                                                                     end: 12808,
                                                                 },
-                                                                value: Str(
-                                                                    "corporate_buy_value",
-                                                                ),
+                                                                value: "corporate_buy_value",
                                                             },
                                                         ),
                                                         Constant(
@@ -11996,9 +11778,7 @@ Module {
                                                                     start: 12822,
                                                                     end: 12845,
                                                                 },
-                                                                value: Str(
-                                                                    "individual_sell_value",
-                                                                ),
+                                                                value: "individual_sell_value",
                                                             },
                                                         ),
                                                         Constant(
@@ -12007,9 +11787,7 @@ Module {
                                                                     start: 12859,
                                                                     end: 12881,
                                                                 },
-                                                                value: Str(
-                                                                    "corporate_sell_value",
-                                                                ),
+                                                                value: "corporate_sell_value",
                                                             },
                                                         ),
                                                     ],
@@ -12051,9 +11829,7 @@ Module {
                                                     start: 12923,
                                                     end: 12940,
                                                 },
-                                                value: Str(
-                                                    "individual_buy_",
-                                                ),
+                                                value: "individual_buy_",
                                             },
                                         ),
                                         Constant(
@@ -12062,9 +11838,7 @@ Module {
                                                     start: 12950,
                                                     end: 12968,
                                                 },
-                                                value: Str(
-                                                    "individual_sell_",
-                                                ),
+                                                value: "individual_sell_",
                                             },
                                         ),
                                         Constant(
@@ -12073,9 +11847,7 @@ Module {
                                                     start: 12978,
                                                     end: 12994,
                                                 },
-                                                value: Str(
-                                                    "corporate_buy_",
-                                                ),
+                                                value: "corporate_buy_",
                                             },
                                         ),
                                         Constant(
@@ -12084,9 +11856,7 @@ Module {
                                                     start: 13004,
                                                     end: 13021,
                                                 },
-                                                value: Str(
-                                                    "corporate_sell_",
-                                                ),
+                                                value: "corporate_sell_",
                                             },
                                         ),
                                     ],
@@ -12137,9 +11907,7 @@ Module {
                                                                             start: 13077,
                                                                             end: 0,
                                                                         },
-                                                                        value: Str(
-                                                                            "mean_price",
-                                                                        ),
+                                                                        value: "mean_price",
                                                                     },
                                                                 ),
                                                             ],
@@ -12204,9 +11972,7 @@ Module {
                                                                                                 start: 13129,
                                                                                                 end: 0,
                                                                                             },
-                                                                                            value: Str(
-                                                                                                "value",
-                                                                                            ),
+                                                                                            value: "value",
                                                                                         },
                                                                                     ),
                                                                                 ],
@@ -12282,9 +12048,7 @@ Module {
                                                                                                 start: 13189,
                                                                                                 end: 0,
                                                                                             },
-                                                                                            value: Str(
-                                                                                                "vol",
-                                                                                            ),
+                                                                                            value: "vol",
                                                                                         },
                                                                                     ),
                                                                                 ],
@@ -12347,9 +12111,7 @@ Module {
                                                     start: 13243,
                                                     end: 13272,
                                                 },
-                                                value: Str(
-                                                    "individual_ownership_change",
-                                                ),
+                                                value: "individual_ownership_change",
                                             },
                                         ),
                                     },
@@ -12395,9 +12157,7 @@ Module {
                                                                         start: 13305,
                                                                         end: 13325,
                                                                     },
-                                                                    value: Str(
-                                                                        "corporate_sell_vol",
-                                                                    ),
+                                                                    value: "corporate_sell_vol",
                                                                 },
                                                             ),
                                                         },
@@ -12454,9 +12214,7 @@ Module {
                                                                         start: 13390,
                                                                         end: 13409,
                                                                     },
-                                                                    value: Str(
-                                                                        "corporate_buy_vol",
-                                                                    ),
+                                                                    value: "corporate_buy_vol",
                                                                 },
                                                             ),
                                                         },
@@ -12601,9 +12359,7 @@ Module {
                                                                 start: 11928,
                                                                 end: 11929,
                                                             },
-                                                            value: Int(
-                                                                "1",
-                                                            ),
+                                                            value: 1,
                                                         },
                                                     ),
                                                 },
@@ -12621,9 +12377,7 @@ Module {
                                                                 start: 11935,
                                                                 end: 11936,
                                                             },
-                                                            value: Int(
-                                                                "4",
-                                                            ),
+                                                            value: 4,
                                                         },
                                                     ),
                                                 },
@@ -12909,9 +12663,7 @@ Module {
                                                         start: 13644,
                                                         end: 13646,
                                                     },
-                                                    value: Int(
-                                                        "10",
-                                                    ),
+                                                    value: 10,
                                                 },
                                             ),
                                         },
@@ -13010,9 +12762,7 @@ Module {
                                                                             start: 13739,
                                                                             end: 13774,
                                                                         },
-                                                                        value: Str(
-                                                                            "Sorry, tse server did not respond",
-                                                                        ),
+                                                                        value: "Sorry, tse server did not respond",
                                                                     },
                                                                 ),
                                                             ],
@@ -13107,9 +12857,7 @@ Module {
                                                                             start: 13820,
                                                                             end: 13823,
                                                                         },
-                                                                        value: Str(
-                                                                            ";",
-                                                                        ),
+                                                                        value: ";",
                                                                     },
                                                                 ),
                                                             ],
@@ -13124,9 +12872,7 @@ Module {
                                                                 start: 13825,
                                                                 end: 13826,
                                                             },
-                                                            value: Int(
-                                                                "0",
-                                                            ),
+                                                            value: 0,
                                                         },
                                                     ),
                                                 },
@@ -13141,9 +12887,7 @@ Module {
                                                     start: 13834,
                                                     end: 13837,
                                                 },
-                                                value: Str(
-                                                    ",",
-                                                ),
+                                                value: ",",
                                             },
                                         ),
                                     ],
@@ -13243,9 +12987,7 @@ Module {
                                                                             start: 13902,
                                                                             end: 13903,
                                                                         },
-                                                                        value: Int(
-                                                                            "0",
-                                                                        ),
+                                                                        value: 0,
                                                                     },
                                                                 ),
                                                             },
@@ -13291,9 +13033,7 @@ Module {
                                                                 start: 13946,
                                                                 end: 13947,
                                                             },
-                                                            value: Int(
-                                                                "2",
-                                                            ),
+                                                            value: 2,
                                                         },
                                                     ),
                                                 },
@@ -13538,9 +13278,7 @@ Module {
                                                         start: 14145,
                                                         end: 14147,
                                                     },
-                                                    value: Int(
-                                                        "10",
-                                                    ),
+                                                    value: 10,
                                                 },
                                             ),
                                         },
@@ -13655,9 +13393,7 @@ Module {
                                                                                         start: 14290,
                                                                                         end: 0,
                                                                                     },
-                                                                                    value: Str(
-                                                                                        ": Sorry, tse server did not respond",
-                                                                                    ),
+                                                                                    value: ": Sorry, tse server did not respond",
                                                                                 },
                                                                             ),
                                                                         ],
@@ -13737,9 +13473,7 @@ Module {
                                                     start: 14328,
                                                     end: 14331,
                                                 },
-                                                value: Str(
-                                                    ";",
-                                                ),
+                                                value: ";",
                                             },
                                         ),
                                     ],
@@ -13958,9 +13692,7 @@ Module {
                                                                 start: 14544,
                                                                 end: 14546,
                                                             },
-                                                            value: Str(
-                                                                "",
-                                                            ),
+                                                            value: "",
                                                         },
                                                     ),
                                                 ],
@@ -14027,9 +13759,7 @@ Module {
                                                                 start: 14619,
                                                                 end: 14622,
                                                             },
-                                                            value: Str(
-                                                                ",",
-                                                            ),
+                                                            value: ",",
                                                         },
                                                     ),
                                                 ],
@@ -14098,9 +13828,7 @@ Module {
                                                                                 start: 14675,
                                                                                 end: 14676,
                                                                             },
-                                                                            value: Int(
-                                                                                "0",
-                                                                            ),
+                                                                            value: 0,
                                                                         },
                                                                     ),
                                                                 },
@@ -14161,9 +13889,7 @@ Module {
                                                                                 start: 14764,
                                                                                 end: 14765,
                                                                             },
-                                                                            value: Int(
-                                                                                "7",
-                                                                            ),
+                                                                            value: 7,
                                                                         },
                                                                     ),
                                                                 },
@@ -14178,9 +13904,7 @@ Module {
                                                                             start: 14770,
                                                                             end: 14773,
                                                                         },
-                                                                        value: Str(
-                                                                            "1",
-                                                                        ),
+                                                                        value: "1",
                                                                     },
                                                                 ),
                                                             ],
@@ -14259,9 +13983,7 @@ Module {
                                                                                                 start: 14875,
                                                                                                 end: 14876,
                                                                                             },
-                                                                                            value: Int(
-                                                                                                "0",
-                                                                                            ),
+                                                                                            value: 0,
                                                                                         },
                                                                                     ),
                                                                                 },
@@ -14346,9 +14068,7 @@ Module {
                                                                                                 start: 14994,
                                                                                                 end: 14995,
                                                                                             },
-                                                                                            value: Int(
-                                                                                                "1",
-                                                                                            ),
+                                                                                            value: 1,
                                                                                         },
                                                                                     ),
                                                                                 },
@@ -14408,9 +14128,7 @@ Module {
                                                                                     start: 15070,
                                                                                     end: 15071,
                                                                                 },
-                                                                                value: Int(
-                                                                                    "2",
-                                                                                ),
+                                                                                value: 2,
                                                                             },
                                                                         ),
                                                                     },
@@ -14475,9 +14193,7 @@ Module {
                                                                                             start: 15169,
                                                                                             end: 15170,
                                                                                         },
-                                                                                        value: Int(
-                                                                                            "2",
-                                                                                        ),
+                                                                                        value: 2,
                                                                                     },
                                                                                 ),
                                                                             },

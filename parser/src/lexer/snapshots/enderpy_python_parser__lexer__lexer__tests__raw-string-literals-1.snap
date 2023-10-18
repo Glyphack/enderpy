@@ -4,7 +4,7 @@ description: "r\"world\""
 ---
 [
     Token {
-        kind: RawString,
+        kind: StringLiteral,
         value: Str(
             "r\"world\"",
         ),

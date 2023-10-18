@@ -27,9 +27,16 @@ pub fn extract_string_inside(val: String) -> String {
                 .strip_suffix(delimiter)
                 .expect(&message)
                 .to_string();
+        break;
+
         }
 
     }
+    // add r back if raw ternary
+    if is_raw {
+        result = format!("r\"{}\"", result);
+    }
+    
     return result;
 
 }

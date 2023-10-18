@@ -2771,7 +2771,6 @@ impl Parser {
             }
             Kind::StringLiteral => {
                 let string_val = extract_string_inside(value.to_string());
-                // println!("string val: {}", string_val);
                 Expression::Constant(Box::new(Constant {
                     node: self.finish_node(start),
                     value: ConstantValue::Str(string_val),

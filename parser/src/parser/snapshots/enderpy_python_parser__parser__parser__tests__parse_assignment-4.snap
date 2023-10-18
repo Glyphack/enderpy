@@ -31,9 +31,7 @@ Module {
                             start: 4,
                             end: 9,
                         },
-                        value: Bool(
-                            false,
-                        ),
+                        value: false,
                     },
                 ),
             },

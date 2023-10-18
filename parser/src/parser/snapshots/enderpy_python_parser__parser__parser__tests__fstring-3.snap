@@ -22,9 +22,7 @@ Module {
                                     start: 8,
                                     end: 0,
                                 },
-                                value: Str(
-                                    "hello_",
-                                ),
+                                value: "hello_",
                             },
                         ),
                         Name(
@@ -42,9 +40,7 @@ Module {
                                     start: 12,
                                     end: 0,
                                 },
-                                value: Str(
-                                    " ",
-                                ),
+                                value: " ",
                             },
                         ),
                         Name(

@@ -93,9 +93,7 @@ Module {
                                         start: 47,
                                         end: 48,
                                     },
-                                    value: Int(
-                                        "1",
-                                    ),
+                                    value: 1,
                                 },
                             ),
                         },

@@ -15,12 +15,7 @@ Module {
                         start: 0,
                         end: 9,
                     },
-                    value: Bytes(
-                        [
-                            97,
-                            98,
-                        ],
-                    ),
+                    value: [97, 98],
                 },
             ),
         ),

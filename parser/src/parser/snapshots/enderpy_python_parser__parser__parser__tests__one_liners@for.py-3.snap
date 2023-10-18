@@ -46,9 +46,7 @@ Module {
                                         start: 15,
                                         end: 17,
                                     },
-                                    value: Int(
-                                        "10",
-                                    ),
+                                    value: 10,
                                 },
                             ),
                         ],
@@ -81,9 +79,7 @@ Module {
                                         start: 28,
                                         end: 29,
                                     },
-                                    value: Int(
-                                        "1",
-                                    ),
+                                    value: 1,
                                 },
                             ),
                         },
@@ -113,9 +109,7 @@ Module {
                                         start: 44,
                                         end: 45,
                                     },
-                                    value: Int(
-                                        "1",
-                                    ),
+                                    value: 1,
                                 },
                             ),
                         },

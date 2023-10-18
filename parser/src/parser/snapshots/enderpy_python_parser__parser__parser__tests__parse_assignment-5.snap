@@ -31,10 +31,7 @@ Module {
                             start: 4,
                             end: 6,
                         },
-                        value: Complex {
-                            real: "0",
-                            imaginary: "1j",
-                        },
+                        value: 0+1jj,
                     },
                 ),
             },

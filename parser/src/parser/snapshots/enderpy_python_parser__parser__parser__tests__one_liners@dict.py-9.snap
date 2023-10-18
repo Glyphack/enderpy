@@ -56,9 +56,7 @@ Module {
                                         start: 128,
                                         end: 136,
                                     },
-                                    value: Str(
-                                        "symbol",
-                                    ),
+                                    value: "symbol",
                                 },
                             ),
                             Constant(
@@ -67,9 +65,7 @@ Module {
                                         start: 150,
                                         end: 156,
                                     },
-                                    value: Str(
-                                        "name",
-                                    ),
+                                    value: "name",
                                 },
                             ),
                         ],

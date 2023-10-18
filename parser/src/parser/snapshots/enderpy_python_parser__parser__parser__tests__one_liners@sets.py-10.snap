@@ -62,9 +62,7 @@ Module {
                                                     start: 18,
                                                     end: 20,
                                                 },
-                                                value: Int(
-                                                    "10",
-                                                ),
+                                                value: 10,
                                             },
                                         ),
                                     ],

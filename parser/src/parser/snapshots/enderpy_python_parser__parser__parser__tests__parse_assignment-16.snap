@@ -85,9 +85,7 @@ Module {
                                         start: 12,
                                         end: 13,
                                     },
-                                    value: Int(
-                                        "1",
-                                    ),
+                                    value: 1,
                                 },
                             ),
                             Constant(
@@ -96,9 +94,7 @@ Module {
                                         start: 14,
                                         end: 15,
                                     },
-                                    value: Int(
-                                        "2",
-                                    ),
+                                    value: 2,
                                 },
                             ),
                         ],
