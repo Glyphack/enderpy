@@ -50,6 +50,15 @@ impl BuildManager {
         self.modules.values().cloned().collect()
     }
 
+    pub fn get_state(&self, path: PathBuf) -> Option<&State> {
+        for state in self.modules.values() {
+            info!("state: {:#?}", state.file.path());
+            if state.file.path() == path {
+                return Some(state);
+            }
+        }
+        None
+    }
     pub fn parse(&self, build_source: &BuildSource) -> EnderpyFile {
         let file_path = build_source.path.to_str().unwrap_or("");
         let mut parser = Parser::new(build_source.source.clone(), file_path.into());

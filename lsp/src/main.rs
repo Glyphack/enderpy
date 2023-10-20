@@ -26,11 +26,17 @@ impl Backend {
             import_discovery: ImportDiscovery { python_executable },
         };
 
-        let mut manager = BuildManager::new(vec![BuildSource::from_path(path, false)], settings);
+        let mut manager = BuildManager::new(vec![BuildSource::from_path(path.clone(), false)], settings);
         manager.type_check();
         let mut diagnostics = Vec::new();
-        for err in manager.errors.iter() {
-            diagnostics.push(from(err.clone()));
+        info!("path: {:?}", path);
+        match manager.get_state(path) {
+            Some(state) => {
+                for err in state.diagnostics.iter() {
+                    diagnostics.push(from(err.clone()));
+                }
+            }
+            None => {}
         }
         diagnostics
     }

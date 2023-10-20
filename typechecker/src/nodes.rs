@@ -69,7 +69,7 @@ impl<'a> EnderpyFile {
     }
 
     pub fn get_position(&self, pos: usize) -> Position {
-        let mut line_number = 1;
+        let mut line_number = 0;
         let mut line_start = 0;
         for (i, c) in self.build_source.source.chars().enumerate() {
             if i == pos {
@@ -82,7 +82,7 @@ impl<'a> EnderpyFile {
         }
         Position {
             line: line_number,
-            character: (pos - line_start) as u32
+            character: (pos - line_start - 1) as u32
         }
     }
 }
