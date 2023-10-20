@@ -3,5 +3,5 @@ source: typechecker/src/build.rs
 description: "def function() -> int:\n    return 1\n\na = function()\nb = function() + \"1\"\nc = a + 1\nd = function() + 1\n\nfunction + 1\n"
 expression: result
 ---
-Diagnostic { body: "Operator '+' not supported for types 'Int' and 'Str'", suggestion: Some(""), range: Range { start: Position { line: 5, character: 56 }, end: Position { line: 5, character: 72 } } }
-Diagnostic { body: "Operator '+' not supported for types 'function' and 'Int'", suggestion: Some(""), range: Range { start: Position { line: 9, character: 103 }, end: Position { line: 9, character: 115 } } }
+Diagnostic { body: "Operator '+' not supported for types 'Int' and 'Str'", suggestion: Some(""), range: Range { start: Position { line: 5, character: 5 }, end: Position { line: 5, character: 21 } } }
+Diagnostic { body: "Operator '+' not supported for types 'function' and 'Int'", suggestion: Some(""), range: Range { start: Position { line: 9, character: 1 }, end: Position { line: 9, character: 13 } } }
