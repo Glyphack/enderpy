@@ -1,3 +1,4 @@
+use enderpy_python_parser::error::ParsingError;
 use env_logger::Builder;
 use log::info;
 use std::{collections::HashMap, path::PathBuf};
@@ -49,18 +50,12 @@ impl BuildManager {
         let file_path = build_source.path.to_str().unwrap_or("");
         let mut parser = Parser::new(build_source.source.clone(), file_path.into());
         let tree = parser.parse();
-        // parser only has one error
-        if parser.errors.len() > 0 {
-            for error in parser.errors {
-                // TODO fix propagation of errors from parser
-                // self.errors.push(BuildError::ParsingError(error));
-            }
-        }
         EnderpyFile::from(
             tree,
             build_source.module.clone(),
             build_source.source.clone(),
             build_source.path.clone(),
+            parser.errors,
         )
     }
 
@@ -99,6 +94,29 @@ impl BuildManager {
     pub fn type_check(&mut self) {
         self.build();
         for state in self.modules.iter_mut() {
+            if state.1.file.errors.len() > 0 {
+                for err in state.1.file.errors.iter() {
+                    match err {
+                        ParsingError::InvalidSyntax { msg, input, advice, span } => {
+                            let line = get_line_number_of_character_position(&state.1.file.source, span.0);
+                            self.errors.push(Diagnostic{
+                                body: msg.to_string(),
+                                suggestion: Some(advice.to_string()),
+                                range: crate::diagnostic::Range {
+                                    start: crate::diagnostic::Position {
+                                        line: line as u32,
+                                        character: span.0 as u32,
+                                    },
+                                    end: crate::diagnostic::Position {
+                                        line: line as u32,
+                                        character: span.1 as u32,
+                                    },
+                                },
+                            });
+                        }
+                    }
+                }
+            }
             let mut checker = TypeChecker::new(state.1, &self.options);
             for stmt in &state.1.file.body {
                 checker.type_check(stmt);

@@ -1,7 +1,7 @@
 use miette::Diagnostic;
 use thiserror::Error;
 
-#[derive(Error, Diagnostic, Debug)]
+#[derive(Error, Diagnostic, Debug, Clone)]
 pub enum ParsingError {
     #[error("Invalid syntax")]
     #[diagnostic(code(parser::invalid_syntax))]
@@ -15,7 +15,6 @@ pub enum ParsingError {
         span: (usize, usize),
     },
 }
-
 
 #[derive(Error, Debug)]
 pub enum LexError {

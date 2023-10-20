@@ -536,6 +536,7 @@ mod tests {
             "test".to_string(),
             "".to_string(),
             PathBuf::from("test.py"),
+            vec![],
         );
 
         let mut module = State::new(Box::new(enderpy_file));

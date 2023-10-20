@@ -63,7 +63,14 @@ impl Lexer {
                 kind: Kind::Error,
                 value: TokenValue::Str(e.to_string()),
                 start,
-                end: self.current,
+                end: match e {
+                    //  If the string is not terminated it means that we consumed all the characters
+                    //  in the source code and we are at the end of the file
+                    //  so we return the position of character before the end of the file
+                    LexError::StringNotTerminated => self.current - 1,
+                    _ => self.current,
+
+                },
             }
         };
 

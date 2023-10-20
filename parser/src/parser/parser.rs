@@ -166,7 +166,8 @@ impl Parser {
         }
         self.curr_line_offset = self.cur_token.end;
         match token.kind {
-            Kind::Error => self.bump_any(),
+            Kind::Error => {
+            },
             _ => {
                 self.prev_token_end = self.cur_token.end;
                 self.cur_token = token;
@@ -177,6 +178,17 @@ impl Parser {
         }
     }
 
+    // TODO: Convert this to a into trait
+    fn convert_lexer_error_to_parse(&mut self) -> ParsingError {
+        let token = self.cur_token(); 
+        return ParsingError::InvalidSyntax {
+            msg: token.value.to_string().into(),
+            input: self.curr_line_string.clone(),
+            advice: "".to_string(),
+            span: self.get_span_on_line(token.start, token.end),
+        };
+    }
+
     fn advance_to_next_line_or_semicolon(&mut self) {
         while !self.eat(Kind::NewLine) && !self.eat(Kind::SemiColon) && !self.at(Kind::Eof) {
             self.advance();
@@ -185,6 +197,11 @@ impl Parser {
 
     /// Expect a `Kind` or return error
     pub fn expect(&mut self, kind: Kind) -> Result<(), ParsingError> {
+        if self.at(Kind::Error) {
+            let err = self.convert_lexer_error_to_parse();
+            self.advance_to_next_line_or_semicolon();
+            return Err(err);
+        }
         if !self.at(kind) {
             let found = self.cur_token.kind;
             let node = self.start_node();
@@ -204,6 +221,11 @@ impl Parser {
 
     /// Expect any of `Kinds` or return error
     pub fn expect_any(&mut self, kind: Vec<Kind>) -> Result<(), ParsingError> {
+        if self.at(Kind::Error) {
+            let err = self.convert_lexer_error_to_parse();
+            self.advance_to_next_line_or_semicolon();
+            return Err(err);
+        }
         if !kind.contains(&self.cur_token.kind) {
             let found = self.cur_token.kind;
             let node = self.start_node();
@@ -230,6 +252,11 @@ impl Parser {
 
     // deprecated
     fn unepxted_token(&mut self, node: Node, kind: Kind) -> Result<(), ParsingError> {
+        if kind == Kind::Error {
+            let err = self.convert_lexer_error_to_parse();
+            self.advance_to_next_line_or_semicolon();
+            return Err(err);
+        }
         self.bump_any();
         let range = self.finish_node(node);
         let line_number = self.get_line_number_of_character_position(range.start);
@@ -244,6 +271,11 @@ impl Parser {
 
     fn unexpected_token_new(&mut self, node: Node, kinds: Vec<Kind>, advice: &str) -> ParsingError {
         let curr_kind = self.cur_kind();
+        if curr_kind == Kind::Error {
+            let err = self.convert_lexer_error_to_parse();
+            self.advance_to_next_line_or_semicolon();
+            return err;
+        }
         self.bump_any();
         let range = self.finish_node(node);
         let line_number = self.curr_line_number;

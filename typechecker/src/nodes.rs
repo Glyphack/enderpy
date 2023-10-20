@@ -7,6 +7,7 @@
 
 use enderpy_python_parser as parser;
 use enderpy_python_parser::ast::{Import, ImportFrom, Module, Statement};
+use parser::error::ParsingError;
 use std::path::PathBuf;
 
 use crate::ast_visitor::TraversalVisitor;
@@ -29,10 +30,12 @@ pub struct EnderpyFile {
     pub body: Vec<Statement>,
     pub source: String,
     pub path: PathBuf,
+    // Parser Errors
+    pub errors: Vec<ParsingError>,
 }
 
 impl<'a> EnderpyFile {
-    pub fn from(ast: Module, module_name: String, source: String, path: PathBuf) -> Self {
+    pub fn from(ast: Module, module_name: String, source: String, path: PathBuf, errors: Vec<ParsingError>) -> Self {
         let mut file = Self {
             module_name,
             defs: vec![],
@@ -40,6 +43,7 @@ impl<'a> EnderpyFile {
             body: vec![],
             source: source.clone(),
             path,
+            errors,
         };
 
         for stmt in &ast.body {
