@@ -93,7 +93,7 @@ impl BuildManager {
     pub fn type_check(&mut self) {
         self.build();
         for state in self.modules.iter_mut() {
-            if state.1.file.errors.len() > 0 {
+            if !state.1.file.errors.is_empty() {
                 for err in state.1.file.errors.iter() {
                     match err {
                         ParsingError::InvalidSyntax {

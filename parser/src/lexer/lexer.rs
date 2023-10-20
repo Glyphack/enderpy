@@ -605,7 +605,7 @@ impl Lexer {
 
     fn skip_to_str_end(&mut self, str_start: char) -> Result<(), LexError> {
         // string start position is current position - 1 because we already consumed the quote
-        let str_start_pos = self.current - 1;
+        let _str_start_pos = self.current - 1;
         let mut string_terminated = false;
         let mut last_read_char = str_start;
         // Check if string starts with triple quotes
@@ -643,7 +643,7 @@ impl Lexer {
 
     fn match_numeric_literal(&mut self) -> Result<Kind, LexError> {
         // first number is already consumed
-        let numeric_literal_start = self.current - 1;
+        let _numeric_literal_start = self.current - 1;
         match self.peek() {
             Some('b') | Some('B') => {
                 self.next();
@@ -1302,7 +1302,7 @@ def",
         glob!("../../test_data", "inputs/one_liners/*.py", |path| {
             let input = fs::read_to_string(path).unwrap();
             for test_case in input.split("\n\n") {
-                snapshot_test_lexer_and_errors(&test_case);
+                snapshot_test_lexer_and_errors(test_case);
             }
         });
     }
