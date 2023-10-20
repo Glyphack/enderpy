@@ -11,6 +11,8 @@ use parser::error::ParsingError;
 use std::path::PathBuf;
 
 use crate::ast_visitor::TraversalVisitor;
+use crate::build_source::BuildSource;
+use crate::diagnostic::Position;
 
 #[derive(Clone, Debug)]
 pub enum ImportKinds {
@@ -20,7 +22,6 @@ pub enum ImportKinds {
 
 #[derive(Clone, Debug)]
 pub struct EnderpyFile {
-    pub module_name: String,
     // all the imports inside the file
     pub imports: Vec<ImportKinds>,
     // high level definitions inside the file
@@ -28,8 +29,7 @@ pub struct EnderpyFile {
 
     // All high level statements inside the file
     pub body: Vec<Statement>,
-    pub source: String,
-    pub path: PathBuf,
+    pub build_source: Box<BuildSource>,
     // Parser Errors
     pub errors: Vec<ParsingError>,
 }
@@ -37,18 +37,14 @@ pub struct EnderpyFile {
 impl<'a> EnderpyFile {
     pub fn from(
         ast: Module,
-        module_name: String,
-        source: String,
-        path: PathBuf,
+        build_source: Box<BuildSource>,
         errors: Vec<ParsingError>,
     ) -> Self {
         let mut file = Self {
-            module_name,
             defs: vec![],
             imports: vec![],
             body: vec![],
-            source: source.clone(),
-            path,
+            build_source,
             errors,
         };
 
@@ -58,6 +54,36 @@ impl<'a> EnderpyFile {
         }
 
         file
+    }
+
+    pub fn module_name(&self) -> String {
+        self.build_source.module.clone()
+    }
+
+    pub fn path(&self) -> PathBuf {
+        self.build_source.path.clone()
+    }
+ 
+    pub fn source(&self) -> String {
+        self.build_source.source.clone()
+    }
+
+    pub fn get_position(&self, pos: usize) -> Position {
+        let mut line_number = 1;
+        let mut line_start = 0;
+        for (i, c) in self.build_source.source.chars().enumerate() {
+            if i == pos {
+                break;
+            }
+            if c == '\n' {
+                line_number += 1;
+                line_start = i;
+            }
+        }
+        Position {
+            line: line_number,
+            character: (pos - line_start) as u32
+        }
     }
 }
 

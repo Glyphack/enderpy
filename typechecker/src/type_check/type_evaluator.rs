@@ -35,9 +35,12 @@ impl TypeEvaluator {
     pub fn get_symbol_node_type(
         &self,
         symbol: &SymbolTableNode,
-        position: usize,
+        position: Option<usize>,
     ) -> Result<PythonType> {
-        let decl = symbol.declaration_until_position(position);
+        let decl =match position {
+            Some(position) => symbol.declaration_until_position(position),
+            None => symbol.last_declaration(),
+        };
         match decl {
             Some(decl) => self.get_type_from_declaration(decl),
             None => Ok(PythonType::Unknown),
@@ -56,7 +59,7 @@ impl TypeEvaluator {
                 };
                 Ok(typ)
             }
-            ast::Expression::Name(n) => self.infer_type_from_symbol_table(&n.id, n.node.start),
+            ast::Expression::Name(n) => self.infer_type_from_symbol_table(&n.id, Some(n.node.start)),
             ast::Expression::Call(call) => {
                 let func = *call.func.clone();
                 match func {
@@ -66,7 +69,7 @@ impl TypeEvaluator {
                             return Ok(PythonType::Unknown);
                         }
                         let f_type =
-                            self.infer_type_from_symbol_table(n.id.as_str(), n.node.start)?;
+                            self.infer_type_from_symbol_table(n.id.as_str(), None)?;
                         match f_type {
                             PythonType::Callable(callable_type) => Ok(callable_type.return_type),
                             _ => Err(miette!("{} is not callable", n.id)),
@@ -224,7 +227,7 @@ impl TypeEvaluator {
         }
     }
 
-    fn infer_type_from_symbol_table(&self, name: &str, position: usize) -> Result<PythonType> {
+    fn infer_type_from_symbol_table(&self, name: &str, position: Option<usize>) -> Result<PythonType> {
         match self.symbol_table.lookup_in_scope(name) {
             Some(symbol) => self.get_symbol_node_type(symbol, position),
             None => Ok(PythonType::Unknown),
@@ -519,6 +522,8 @@ impl TraversalVisitorImmutGeneric<PythonType> for TypeEvaluator {
 
 #[cfg(test)]
 mod tests {
+    use crate::build_source::BuildSource;
+
     use super::*;
     use std::collections::HashMap;
     use std::path::PathBuf;
@@ -533,9 +538,12 @@ mod tests {
 
         let enderpy_file = EnderpyFile::from(
             ast_module,
-            "test".to_string(),
-            "".to_string(),
-            PathBuf::from("test.py"),
+            Box::new(BuildSource{
+                path: PathBuf::from(""),
+                source: source.to_string(),
+                module: "test".to_string(),
+                followed: false,
+            }),
             vec![],
         );
 

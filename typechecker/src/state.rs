@@ -1,12 +1,13 @@
 use crate::{
     ast_visitor::TraversalVisitor, nodes::EnderpyFile, semantic_analyzer::SemanticAnalyzer,
-    symbol_table::SymbolTable,
+    symbol_table::SymbolTable, diagnostic::Diagnostic,
 };
 
 #[derive(Debug, Clone)]
 pub struct State {
     pub file: Box<EnderpyFile>,
     symbol_table: SymbolTable,
+    pub diagnostics: Vec<Diagnostic>,
 }
 
 impl State {
@@ -14,6 +15,7 @@ impl State {
         Self {
             file,
             symbol_table: SymbolTable::new(crate::symbol_table::SymbolTableType::Module, 0),
+            diagnostics: Vec::new(),
         }
     }
     /// entry point to fill up the symbol table from the global definitions

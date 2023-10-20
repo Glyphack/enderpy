@@ -488,7 +488,7 @@ impl<'a> TraversalVisitor for TypeChecker<'a> {
                     if let Some(symbol) = symbol {
                         let prev_target_type = self
                             .type_evaluator
-                            .get_symbol_node_type(symbol, n.node.start)
+                            .get_symbol_node_type(symbol, Some(n.node.start))
                             .unwrap_or(PythonType::Unknown);
                         let value_type = self.infer_expr_type(&_a.value, true);
                         // TODO: Check reassignment

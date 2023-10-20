@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 /// BuildSource is a struct that holds metadata about a source file
 /// that is being analyzed.
 /// It only contains information about the source file itself, not any

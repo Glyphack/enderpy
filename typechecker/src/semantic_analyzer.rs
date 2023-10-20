@@ -111,7 +111,7 @@ impl SemanticAnalyzer {
         let defaults_len = args.defaults.len();
         for (pos_only, index) in args.posonlyargs.iter().zip(0..args.posonlyargs.len()) {
             let declaration_path = DeclarationPath {
-                module_name: self.file.module_name.clone(),
+                module_name: self.file.module_name().clone(),
                 node: pos_only.node,
             };
             let default_value = args
@@ -132,7 +132,7 @@ impl SemanticAnalyzer {
 
         for (arg, index) in args.args.iter().zip(0..) {
             let declaration_path = DeclarationPath {
-                module_name: self.file.module_name.clone(),
+                module_name: self.file.module_name().clone(),
                 node: arg.node,
             };
 
@@ -157,7 +157,7 @@ impl SemanticAnalyzer {
 
         for arg in args.kwonlyargs.iter() {
             let declaration_path = DeclarationPath {
-                module_name: self.file.module_name.clone(),
+                module_name: self.file.module_name().clone(),
                 node: arg.node,
             };
             self.create_symbol(
@@ -174,7 +174,7 @@ impl SemanticAnalyzer {
         match args.vararg {
             Some(ref arg) => {
                 let declaration_path = DeclarationPath {
-                    module_name: self.file.module_name.clone(),
+                    module_name: self.file.module_name().clone(),
                     node: arg.node,
                 };
                 self.create_symbol(
@@ -193,7 +193,7 @@ impl SemanticAnalyzer {
         match args.kwarg {
             Some(ref arg) => {
                 let declaration_path = DeclarationPath {
-                    module_name: self.file.module_name.clone(),
+                    module_name: self.file.module_name().clone(),
                     node: arg.node,
                 };
                 self.create_symbol(
@@ -281,7 +281,7 @@ impl TraversalVisitor for SemanticAnalyzer {
             self.create_import_alias_symbol(
                 alias,
                 DeclarationPath {
-                    module_name: self.file.module_name.clone(),
+                    module_name: self.file.module_name().clone(),
                     node: alias.node,
                 },
             );
@@ -291,7 +291,7 @@ impl TraversalVisitor for SemanticAnalyzer {
     fn visit_import_from(&mut self, _i: &parser::ast::ImportFrom) {
         for alias in &_i.names {
             let declaration_path = DeclarationPath {
-                module_name: self.file.module_name.clone(),
+                module_name: self.file.module_name().clone(),
                 node: alias.node,
             };
             self.create_import_alias_symbol(alias, declaration_path);
@@ -389,7 +389,7 @@ impl TraversalVisitor for SemanticAnalyzer {
 
     fn visit_function_def(&mut self, f: &parser::ast::FunctionDef) {
         let declaration_path = DeclarationPath {
-            module_name: self.file.module_name.clone(),
+            module_name: self.file.module_name().clone(),
             node: f.node,
         };
         self.globals.enter_scope(SymbolTableScope::new(
@@ -432,7 +432,7 @@ impl TraversalVisitor for SemanticAnalyzer {
 
     fn visit_class_def(&mut self, c: &parser::ast::ClassDef) {
         let declaration_path = DeclarationPath {
-            module_name: self.file.module_name.clone(),
+            module_name: self.file.module_name().clone(),
             node: c.node,
         };
         self.globals.enter_scope(SymbolTableScope::new(
@@ -533,7 +533,7 @@ impl TraversalVisitor for SemanticAnalyzer {
         }
         let target = assign.targets.last().unwrap();
         let declaration_path = DeclarationPath {
-            module_name: self.file.module_name.clone(),
+            module_name: self.file.module_name().clone(),
             node: assign.node,
         };
         self.create_variable_declaration_symbol(
@@ -550,7 +550,7 @@ impl TraversalVisitor for SemanticAnalyzer {
         let value = &a.value;
         let target = &a.target;
         let declaration_path = DeclarationPath {
-            module_name: self.file.module_name.clone(),
+            module_name: self.file.module_name().clone(),
             node: a.node,
         };
         self.create_variable_declaration_symbol(

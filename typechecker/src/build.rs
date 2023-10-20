@@ -46,15 +46,17 @@ impl BuildManager {
         }
     }
 
+    pub fn get_result(&self) -> Vec<State> {
+        self.modules.values().cloned().collect()
+    }
+
     pub fn parse(&self, build_source: &BuildSource) -> EnderpyFile {
         let file_path = build_source.path.to_str().unwrap_or("");
         let mut parser = Parser::new(build_source.source.clone(), file_path.into());
         let tree = parser.parse();
         EnderpyFile::from(
             tree,
-            build_source.module.clone(),
-            build_source.source.clone(),
-            build_source.path.clone(),
+            Box::new(build_source.clone()),
             parser.errors,
         )
     }
@@ -82,10 +84,10 @@ impl BuildManager {
         let initial_files = self.modules.values().collect();
         let new_files = self.gather_files(initial_files);
         for file in new_files {
-            self.modules.insert(file.file.module_name.clone(), file);
+            self.modules.insert(file.file.module_name().clone(), file);
         }
         for module in self.modules.values() {
-            info!("file: {:#?}", module.file.module_name);
+            info!("file: {:#?}", module.file.module_name());
         }
     }
 
@@ -102,20 +104,20 @@ impl BuildManager {
                             advice,
                             span,
                         } => {
-                            let line =
-                                get_line_number_of_character_position(&state.1.file.source, span.0);
                             self.errors.push(Diagnostic {
                                 body: msg.to_string(),
                                 suggestion: Some(advice.to_string()),
                                 range: crate::diagnostic::Range {
-                                    start: crate::diagnostic::Position {
-                                        line: line as u32,
-                                        character: span.0 as u32,
-                                    },
-                                    end: crate::diagnostic::Position {
-                                        line: line as u32,
-                                        character: span.1 as u32,
-                                    },
+                                    start: state.1.file.get_position(span.0),
+                                    end: state.1.file.get_position(span.1),
+                                },
+                            });
+                            state.1.diagnostics.push(Diagnostic {
+                                body: msg.to_string(),
+                                suggestion: Some(advice.to_string()),
+                                range: crate::diagnostic::Range {
+                                    start: state.1.file.get_position(span.0),
+                                    end: state.1.file.get_position(span.1),
                                 },
                             });
                         }
@@ -127,20 +129,20 @@ impl BuildManager {
                 checker.type_check(stmt);
             }
             for error in checker.errors {
-                let line =
-                    get_line_number_of_character_position(&state.1.file.source, error.span.0);
                 self.errors.push(Diagnostic {
-                    body: error.msg,
+                    body: error.msg.to_string(),
                     suggestion: Some("".into()),
                     range: crate::diagnostic::Range {
-                        start: crate::diagnostic::Position {
-                            line: line as u32,
-                            character: error.span.0 as u32,
-                        },
-                        end: crate::diagnostic::Position {
-                            line: line as u32,
-                            character: error.span.1 as u32,
-                        },
+                        start: state.1.file.get_position(error.span.0),
+                        end: state.1.file.get_position(error.span.1),
+                    },
+                });
+                state.1.diagnostics.push(Diagnostic {
+                    body: error.msg.to_string(),
+                    suggestion: Some("".into()),
+                    range: crate::diagnostic::Range {
+                        start: state.1.file.get_position(error.span.0),
+                        end: state.1.file.get_position(error.span.1),
                     },
                 });
             }
@@ -154,7 +156,7 @@ impl BuildManager {
             let resolved_imports = self.resolve_imports(state);
             // check if the resolved_imports are not in the current files and add them to the new imports
             for (_, state) in resolved_imports {
-                if !self.modules.contains_key(&state.file.module_name) {
+                if !self.modules.contains_key(&state.file.module_name()) {
                     new_imports.push(state);
                 }
             }
@@ -168,11 +170,11 @@ impl BuildManager {
                 let resolved_imports = self.resolve_imports(&state);
                 // check if the resolved_imports are not in the current files and add them to the new imports
                 for (_, state) in resolved_imports {
-                    if !self.modules.contains_key(&state.file.module_name) {
+                    if !self.modules.contains_key(&state.file.module_name()) {
                         // check no discovered file with the same name exists
                         if !discovered_files
                             .iter()
-                            .any(|x| x.file.module_name == state.file.module_name)
+                            .any(|x| x.file.module_name() == state.file.module_name())
                         {
                             next_imports.push(state);
                         }
@@ -230,7 +232,7 @@ impl BuildManager {
                 }
             };
             let mut resolved = resolver::resolve_import(
-                state.file.path.as_path(),
+                state.file.path().as_path(),
                 execution_environment,
                 &import_desc,
                 import_config,
@@ -264,7 +266,7 @@ impl BuildManager {
         for resolved_import in resolved_imports {
             let file = self.parse(&resolved_import);
             let state = State::new(Box::new(file));
-            resolved_paths.insert(state.file.module_name.clone(), state);
+            resolved_paths.insert(state.file.module_name().clone(), state);
         }
 
         resolved_paths

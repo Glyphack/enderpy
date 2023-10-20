@@ -103,9 +103,16 @@ fn check(path: &PathBuf) -> Result<()> {
     let mut build_manager = BuildManager::new(vec![initial_source], settings);
     build_manager.type_check();
 
-    // for err in build_manager.get_errors() {
-    //     println!("{:#?}", err);
-    // }
+    for file_result in build_manager.get_result() {
+        for err in file_result.diagnostics {
+            println!(
+                "{:#?}: line {}: {}",
+                file_result.file.path(),
+                err.range.start.line,
+                err.body
+            );
+        }
+    }
 
     Ok(())
 }
