@@ -1,4 +1,7 @@
-use crate::{token::{Token, Kind},  Lexer};
+use crate::{
+    token::{Kind, Token},
+    Lexer,
+};
 
 // Helper function to lex a file until the end
 pub fn lex(lexer: &mut Lexer) -> Vec<Token> {

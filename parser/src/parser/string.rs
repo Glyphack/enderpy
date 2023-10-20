@@ -7,8 +7,6 @@ use crate::token::Kind;
 use super::ast::Node;
 use crate::error::ParsingError;
 pub fn extract_string_inside(val: String) -> String {
- 
-
     let delimiters = vec!["\"\"\"", "\"", "'''", "'"];
     let mut result = String::new();
     let is_raw = val.starts_with('r') || val.starts_with('R');
@@ -18,29 +16,22 @@ pub fn extract_string_inside(val: String) -> String {
     } else {
         val
     };
-   
-    
+
     for delimiter in delimiters {
         // TODO: The string value data structure should be changed so we can be sure
         // that the string is enclosed with the delimiter and not check for it here
         if let Some(val) = val.strip_prefix(delimiter) {
             let message = format!("String must be enclosed with {}", delimiter);
-            result = val
-                .strip_suffix(delimiter)
-                .expect(&message)
-                .to_string();
-        break;
-
+            result = val.strip_suffix(delimiter).expect(&message).to_string();
+            break;
         }
-
     }
     // add r back if raw ternary
     if is_raw {
         result = format!("r\"{}\"", result);
     }
-    
-    return result;
 
+    return result;
 }
 
 pub fn is_string(kind: &Kind) -> bool {

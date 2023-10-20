@@ -118,7 +118,7 @@ impl Parser {
                 advice: "".to_string(),
                 span: self.get_span_on_line(pos, pos),
             };
-            return Err(err)
+            return Err(err);
         }
         Ok(token)
     }
@@ -178,7 +178,7 @@ impl Parser {
 
     // TODO: Convert this to a into trait
     fn convert_lexer_error_to_parse(&mut self) -> ParsingError {
-        let token = self.cur_token(); 
+        let token = self.cur_token();
         return ParsingError::InvalidSyntax {
             msg: token.value.to_string().into(),
             input: self.curr_line_string.clone(),
@@ -950,7 +950,7 @@ impl Parser {
             | Kind::None
             | Kind::True
             | Kind::False
-            | Kind::StringLiteral | Kind::RawBytes | Kind::Bytes 
+            | Kind::StringLiteral | Kind::RawBytes | Kind::Bytes
             // The signed numbers are also allowed
             | Kind::Minus | Kind::Plus => {
                 self.parse_literal_pattern()
@@ -2774,7 +2774,7 @@ impl Parser {
                     value: ConstantValue::Str(string_val),
                 }))
             }
- 
+
             Kind::RawBytes => {
                 // rb or br appear in the beginning of raw bytes
                 let bytes_val =
@@ -3061,7 +3061,6 @@ impl Parser {
         (start, end)
     }
 }
-
 
 #[cfg(test)]
 mod tests {

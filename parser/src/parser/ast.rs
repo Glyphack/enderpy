@@ -327,8 +327,8 @@ impl fmt::Debug for ConstantValue {
             ConstantValue::Bool(b) => write!(f, "{}", b),
             ConstantValue::Str(s) => {
                 if s.starts_with("r\"") || s.starts_with("R\"") {
-                let mut s = s.chars().skip(1).collect::<String>();
-                s = s.chars().take(s.len() - 1).collect::<String>();
+                    let mut s = s.chars().skip(1).collect::<String>();
+                    s = s.chars().take(s.len() - 1).collect::<String>();
 
                     // drop first another char from beginning
                     s = s.chars().skip(1).collect::<String>();

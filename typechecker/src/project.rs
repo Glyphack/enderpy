@@ -1,4 +1,4 @@
-use std::path::{Path, };
+use std::path::Path;
 const PROJECT_ROOT_MARKERS: [&str; 1] = ["pyproject.toml"];
 
 pub fn find_project_root(path: &Path) -> &Path {
