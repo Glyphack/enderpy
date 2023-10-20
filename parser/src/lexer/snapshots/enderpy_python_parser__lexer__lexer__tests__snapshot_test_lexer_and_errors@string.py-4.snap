@@ -24,6 +24,6 @@ input_file: parser/test_data/inputs/one_liners/string.py
             "String not terminated",
         ),
         start: 10,
-        end: 15,
+        end: 14,
     },
 ]

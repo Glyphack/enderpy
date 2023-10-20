@@ -8,16 +8,16 @@ global scope:
 Symbols:
 a
 - Declarations:
---:   Variable { declaration_path: DeclarationPath { module_name: "test", node: Node { start: 0, end: 17 } }, scope: Global, type_annotation: None, inferred_type_source: Some(Constant(Constant { node: Node { start: 4, end: 17 }, value: Str("hello world") })), is_constant: false }
+--:   Variable { declaration_path: DeclarationPath { module_name: "test", node: Node { start: 0, end: 17 } }, scope: Global, type_annotation: None, inferred_type_source: Some(Constant(Constant { node: Node { start: 4, end: 17 }, value: "hello world" })), is_constant: false }
 b
 - Declarations:
---:   Variable { declaration_path: DeclarationPath { module_name: "test", node: Node { start: 18, end: 29 } }, scope: Global, type_annotation: None, inferred_type_source: Some(BinOp(BinOp { node: Node { start: 22, end: 29 }, op: Add, left: Name(Name { node: Node { start: 22, end: 23 }, id: "a" }), right: Constant(Constant { node: Node { start: 26, end: 29 }, value: Str("!") }) })), is_constant: false }
+--:   Variable { declaration_path: DeclarationPath { module_name: "test", node: Node { start: 18, end: 29 } }, scope: Global, type_annotation: None, inferred_type_source: Some(BinOp(BinOp { node: Node { start: 22, end: 29 }, op: Add, left: Name(Name { node: Node { start: 22, end: 23 }, id: "a" }), right: Constant(Constant { node: Node { start: 26, end: 29 }, value: "!" }) })), is_constant: false }
 c
 - Declarations:
---:   Variable { declaration_path: DeclarationPath { module_name: "test", node: Node { start: 31, end: 41 } }, scope: Global, type_annotation: Some(Name(Name { node: Node { start: 34, end: 37 }, id: "int" })), inferred_type_source: Some(Constant(Constant { node: Node { start: 40, end: 41 }, value: Int("1") })), is_constant: false }
+--:   Variable { declaration_path: DeclarationPath { module_name: "test", node: Node { start: 31, end: 41 } }, scope: Global, type_annotation: Some(Name(Name { node: Node { start: 34, end: 37 }, id: "int" })), inferred_type_source: Some(Constant(Constant { node: Node { start: 40, end: 41 }, value: 1 })), is_constant: false }
 f
 - Declarations:
---:   Variable { declaration_path: DeclarationPath { module_name: "test", node: Node { start: 43, end: 59 } }, scope: Global, type_annotation: Some(Name(Name { node: Node { start: 46, end: 49 }, id: "str" })), inferred_type_source: Some(Constant(Constant { node: Node { start: 52, end: 59 }, value: Str("hello") })), is_constant: false }
+--:   Variable { declaration_path: DeclarationPath { module_name: "test", node: Node { start: 43, end: 59 } }, scope: Global, type_annotation: Some(Name(Name { node: Node { start: 46, end: 49 }, id: "str" })), inferred_type_source: Some(Constant(Constant { node: Node { start: 52, end: 59 }, value: "hello" })), is_constant: false }
 
 all scopes:
 -------------------

@@ -6,7 +6,7 @@ input_file: parser/test_data/inputs/one_liners/string.py
 Module {
     node: Node {
         start: 0,
-        end: 15,
+        end: 14,
     },
     body: [],
 }

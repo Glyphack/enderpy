@@ -21,6 +21,8 @@ pub fn extract_string_inside(val: String) -> String {
    
     
     for delimiter in delimiters {
+        // TODO: The string value data structure should be changed so we can be sure
+        // that the string is enclosed with the delimiter and not check for it here
         if let Some(val) = val.strip_prefix(delimiter) {
             let message = format!("String must be enclosed with {}", delimiter);
             result = val

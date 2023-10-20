@@ -5,13 +5,12 @@ input_file: parser/test_data/inputs/one_liners/string.py
 ---
 [
     InvalidSyntax {
-        msg: "Unexpected token Eof",
-        line: 2,
-        input: "raw_err = = r'ss\n",
+        msg: "String not terminated",
+        input: "raw_err =",
         advice: "",
         span: (
-            15,
-            15,
+            10,
+            14,
         ),
     },
 ]
