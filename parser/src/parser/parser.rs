@@ -166,8 +166,6 @@ impl Parser {
         }
         self.curr_line_offset = self.cur_token.end;
         match token.kind {
-            Kind::Error => {
-            },
             _ => {
                 self.prev_token_end = self.cur_token.end;
                 self.cur_token = token;
@@ -254,7 +252,7 @@ impl Parser {
     fn unepxted_token(&mut self, node: Node, kind: Kind) -> Result<(), ParsingError> {
         if kind == Kind::Error {
             let err = self.convert_lexer_error_to_parse();
-            self.advance_to_next_line_or_semicolon();
+            self.bump_any();
             return Err(err);
         }
         self.bump_any();
@@ -263,7 +261,7 @@ impl Parser {
         let err = ParsingError::InvalidSyntax {
             msg: Box::from(format!("Unexpected token {:?}", kind)),
             input: self.curr_line_string.clone(),
-            advice: "".to_string(),
+            advice: format!(""),
             span: self.get_span_on_line(range.start, range.end),
         };
         Err(err)
