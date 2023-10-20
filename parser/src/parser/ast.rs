@@ -336,7 +336,7 @@ impl fmt::Debug for ConstantValue {
                     return write!(f, "{:?}", s);
                 }
 
-                return write!(f, "\"{}\"", s);
+                write!(f, "\"{}\"", s)
             }
             ConstantValue::Bytes(b) => write!(f, "{:?}", b),
             ConstantValue::Tuple(t) => write!(f, "{:?}", t),

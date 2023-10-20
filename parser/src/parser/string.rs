@@ -31,7 +31,7 @@ pub fn extract_string_inside(val: String) -> String {
         result = format!("r\"{}\"", result);
     }
 
-    return result;
+    result
 }
 
 pub fn is_string(kind: &Kind) -> bool {

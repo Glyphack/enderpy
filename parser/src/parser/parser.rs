@@ -165,13 +165,11 @@ impl Parser {
                 .push_str(&self.source[self.prev_token_end..self.cur_token.end]);
         }
         self.curr_line_offset = self.cur_token.end;
-        match token.kind {
-            _ => {
-                self.prev_token_end = self.cur_token.end;
-                self.cur_token = token;
-                if self.cur_kind() == Kind::Comment {
-                    self.bump(Kind::Comment);
-                }
+        {
+            self.prev_token_end = self.cur_token.end;
+            self.cur_token = token;
+            if self.cur_kind() == Kind::Comment {
+                self.bump(Kind::Comment);
             }
         }
     }
@@ -179,12 +177,12 @@ impl Parser {
     // TODO: Convert this to a into trait
     fn convert_lexer_error_to_parse(&mut self) -> ParsingError {
         let token = self.cur_token();
-        return ParsingError::InvalidSyntax {
+        ParsingError::InvalidSyntax {
             msg: token.value.to_string().into(),
             input: self.curr_line_string.clone(),
             advice: "".to_string(),
             span: self.get_span_on_line(token.start, token.end),
-        };
+        }
     }
 
     fn advance_to_next_line_or_semicolon(&mut self) {
@@ -261,7 +259,7 @@ impl Parser {
         let err = ParsingError::InvalidSyntax {
             msg: Box::from(format!("Unexpected token {:?}", kind)),
             input: self.curr_line_string.clone(),
-            advice: format!(""),
+            advice: String::new(),
             span: self.get_span_on_line(range.start, range.end),
         };
         Err(err)
@@ -281,7 +279,8 @@ impl Parser {
         for kind in kinds {
             expected.push_str(&format!("{:?}, ", kind));
         }
-        let err = ParsingError::InvalidSyntax {
+        
+        ParsingError::InvalidSyntax {
             msg: Box::from(format!(
                 "Expected one of {:?} but found {:?}",
                 expected,
@@ -290,8 +289,7 @@ impl Parser {
             input: self.curr_line_string.clone(),
             advice: advice.to_string(),
             span: self.get_span_on_line(range.start, range.end),
-        };
-        err
+        }
     }
 
     fn get_line_number_of_character_position(&self, pos: usize) -> u32 {
