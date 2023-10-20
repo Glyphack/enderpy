@@ -35,7 +35,13 @@ pub struct EnderpyFile {
 }
 
 impl<'a> EnderpyFile {
-    pub fn from(ast: Module, module_name: String, source: String, path: PathBuf, errors: Vec<ParsingError>) -> Self {
+    pub fn from(
+        ast: Module,
+        module_name: String,
+        source: String,
+        path: PathBuf,
+        errors: Vec<ParsingError>,
+    ) -> Self {
         let mut file = Self {
             module_name,
             defs: vec![],

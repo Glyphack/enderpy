@@ -150,26 +150,26 @@ impl LanguageServer for Backend {
 }
 
 fn from(diagnostic: enderpy_python_type_checker::diagnostic::Diagnostic) -> Diagnostic {
-        Diagnostic {
-            range: Range {
-                start: Position {
-                    line: diagnostic.range.start.line,
-                    character: diagnostic.range.start.character,
-                },
-                end: Position {
-                    line: diagnostic.range.end.line,
-                    character: diagnostic.range.end.character,
-                },
+    Diagnostic {
+        range: Range {
+            start: Position {
+                line: diagnostic.range.start.line,
+                character: diagnostic.range.start.character,
             },
-            severity: Some(DiagnosticSeverity::ERROR),
-            code: None,
-            code_description: None,
-            source: Some("Enderpy".to_string()),
-            message: diagnostic.body,
-            related_information: None,
-            tags: None,
-            data: None,
-        }
+            end: Position {
+                line: diagnostic.range.end.line,
+                character: diagnostic.range.end.character,
+            },
+        },
+        severity: Some(DiagnosticSeverity::ERROR),
+        code: None,
+        code_description: None,
+        source: Some("Enderpy".to_string()),
+        message: diagnostic.body,
+        related_information: None,
+        tags: None,
+        data: None,
+    }
 }
 
 #[tokio::main]

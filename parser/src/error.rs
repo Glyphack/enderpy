@@ -24,7 +24,9 @@ pub enum LexError {
     InvalidDigitInBinaryLiteral(char),
     #[error("Invalid char {0} in octal literal. Must be between 0 and 7")]
     InvalidDigitInOctalLiteral(char),
-    #[error("Invalid char {0} in hexadecimal literal. Must be between 0 and 9, or between A and F")]
+    #[error(
+        "Invalid char {0} in hexadecimal literal. Must be between 0 and 9, or between A and F"
+    )]
     InvalidDigitInHexadecimalLiteral(char),
     #[error("Invalid digit in decimal literal")]
     InvalidDigitInDecimalLiteral,

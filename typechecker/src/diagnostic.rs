@@ -24,7 +24,7 @@ pub struct Position {
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct CharacterSpan(pub usize, pub usize);
 
-impl From<ParsingError> for Diagnostic{
+impl From<ParsingError> for Diagnostic {
     fn from(error: ParsingError) -> Self {
         match error {
             ParsingError::InvalidSyntax {
@@ -32,7 +32,7 @@ impl From<ParsingError> for Diagnostic{
                 input: _,
                 advice,
                 span,
-            } => Diagnostic{
+            } => Diagnostic {
                 body: msg.to_string(),
                 suggestion: Some(advice),
                 range: Range {
@@ -49,4 +49,3 @@ impl From<ParsingError> for Diagnostic{
         }
     }
 }
-

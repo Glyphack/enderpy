@@ -59,7 +59,6 @@ impl BuildManager {
         )
     }
 
-
     // Entry point to analyze the program
     pub fn build(&mut self) {
         self.populate_modules();
@@ -97,9 +96,15 @@ impl BuildManager {
             if state.1.file.errors.len() > 0 {
                 for err in state.1.file.errors.iter() {
                     match err {
-                        ParsingError::InvalidSyntax { msg, input, advice, span } => {
-                            let line = get_line_number_of_character_position(&state.1.file.source, span.0);
-                            self.errors.push(Diagnostic{
+                        ParsingError::InvalidSyntax {
+                            msg,
+                            input,
+                            advice,
+                            span,
+                        } => {
+                            let line =
+                                get_line_number_of_character_position(&state.1.file.source, span.0);
+                            self.errors.push(Diagnostic {
                                 body: msg.to_string(),
                                 suggestion: Some(advice.to_string()),
                                 range: crate::diagnostic::Range {
@@ -122,8 +127,9 @@ impl BuildManager {
                 checker.type_check(stmt);
             }
             for error in checker.errors {
-                let line = get_line_number_of_character_position(&state.1.file.source, error.span.0);
-                self.errors.push(Diagnostic{
+                let line =
+                    get_line_number_of_character_position(&state.1.file.source, error.span.0);
+                self.errors.push(Diagnostic {
                     body: error.msg,
                     suggestion: Some("".into()),
                     range: crate::diagnostic::Range {
@@ -277,7 +283,6 @@ fn get_line_number_of_character_position(source: &str, pos: usize) -> usize {
     }
     line_number
 }
-
 
 #[cfg(test)]
 mod tests {
