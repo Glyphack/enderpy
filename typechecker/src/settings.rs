@@ -14,6 +14,17 @@ pub struct Settings {
     pub debug: bool,
     pub root: PathBuf,
     pub import_discovery: ImportDiscovery,
+    // Indicates whether to check imports
+    pub follow_imports: FollowImports,
+}
+
+#[derive(Debug, Deserialize)]
+#[allow(unused)]
+pub enum FollowImports {
+    #[serde(rename = "all")]
+    All,
+    #[serde(rename = "skip")]
+    Skip,
 }
 
 impl Settings {
@@ -31,6 +42,7 @@ impl Settings {
         Settings {
             debug: false,
             root: PathBuf::from(""),
+            follow_imports: FollowImports::All,
             import_discovery: ImportDiscovery {
                 python_executable: None,
             },

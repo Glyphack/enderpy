@@ -24,28 +24,22 @@ fn main() -> Result<()> {
 }
 
 fn symbols(path: &PathBuf) -> Result<()> {
-    let source = fs::read_to_string(path).into_diagnostic()?;
-    let initial_source = BuildSource {
-        path: path.to_owned(),
-        module: String::from("test"),
-        source,
-        followed: false,
-    };
+    let initial_source = BuildSource::from_path(path.to_path_buf(), false);
     let dir_of_path = path.parent().unwrap();
     let python_executable = Some(get_python_executable()?);
     let settings = Settings {
         debug: false,
         root: dir_of_path.to_path_buf(),
         import_discovery: ImportDiscovery { python_executable },
+        follow_imports: enderpy_python_type_checker::settings::FollowImports::All,
     };
 
     let mut manager = BuildManager::new(vec![initial_source], settings);
     manager.build();
 
-    for (name, module) in manager.modules.iter() {
-        println!("{}", name);
-        println!("{}", module.get_symbol_table());
-    }
+    let module = manager.get_state(path.to_path_buf()).unwrap();
+    println!("{}", module.file.module_name());
+    println!("{}", module.get_symbol_table());
 
     Ok(())
 }
@@ -86,19 +80,14 @@ fn check(path: &PathBuf) -> Result<()> {
     if path.is_dir() {
         bail!("Path must be a file");
     }
-    let source = fs::read_to_string(path).into_diagnostic()?;
-    let initial_source = BuildSource {
-        path: path.to_owned(),
-        module: String::from("test"),
-        source,
-        followed: false,
-    };
+    let initial_source = BuildSource::from_path(path.to_path_buf(), false);
     let root = find_project_root(path);
     let python_executable = Some(get_python_executable()?);
     let settings = Settings {
         debug: true,
         root: PathBuf::from(root),
         import_discovery: ImportDiscovery { python_executable },
+        follow_imports: enderpy_python_type_checker::settings::FollowImports::Skip,
     };
     let mut build_manager = BuildManager::new(vec![initial_source], settings);
     build_manager.type_check();

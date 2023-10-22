@@ -10,6 +10,7 @@ use crate::diagnostic::Diagnostic;
 use crate::nodes::EnderpyFile;
 use crate::ruff_python_import_resolver as ruff_python_resolver;
 use crate::ruff_python_import_resolver::config::Config;
+use crate::ruff_python_import_resolver::module_descriptor::ImportModuleDescriptor;
 use crate::ruff_python_import_resolver::{execution_environment, resolver};
 use crate::settings::Settings;
 use crate::state::State;
@@ -33,7 +34,7 @@ impl BuildManager {
 
         let mut builder = Builder::new();
         if options.debug {
-            builder.filter(None, log::LevelFilter::Debug);
+            builder.filter(None, log::LevelFilter::Debug).init();
         } else {
             builder.filter(None, log::LevelFilter::Warn);
         }
@@ -63,11 +64,7 @@ impl BuildManager {
         let file_path = build_source.path.to_str().unwrap_or("");
         let mut parser = Parser::new(build_source.source.clone(), file_path.into());
         let tree = parser.parse();
-        EnderpyFile::from(
-            tree,
-            Box::new(build_source.clone()),
-            parser.errors,
-        )
+        EnderpyFile::from(tree, Box::new(build_source.clone()), parser.errors)
     }
 
     // Entry point to analyze the program
@@ -79,8 +76,27 @@ impl BuildManager {
     // Performs pre-analysis on the source files
     // Fills up the symbol table for each module
     fn pre_analysis(&mut self) {
+        let execution_environment = &execution_environment::ExecutionEnvironment {
+            root: self.options.root.clone(),
+            python_version: ruff_python_resolver::python_version::PythonVersion::Py311,
+            python_platform: ruff_python_resolver::python_platform::PythonPlatform::Linux,
+            // Adding a blank path to the extra paths is a hack to make the resolver work
+            extra_paths: vec![PathBuf::from("")],
+        };
+
+        let import_config = &Config {
+            typeshed_path: None,
+            stub_path: None,
+            venv_path: Some(self.options.root.clone()),
+            venv: None,
+        };
+        let host = &ruff_python_resolver::host::StaticHost::new(vec![]);
         for state in self.modules.iter_mut() {
             state.1.populate_symbol_table();
+
+            state
+                .1
+                .resolve_file_imports(execution_environment, import_config, host)
         }
     }
 
@@ -91,7 +107,10 @@ impl BuildManager {
             self.modules.insert(build_source.module.clone(), state);
         }
         let initial_files = self.modules.values().collect();
-        let new_files = self.gather_files(initial_files);
+        let new_files = match self.options.follow_imports {
+            crate::settings::FollowImports::All => self.gather_files(initial_files, true),
+            crate::settings::FollowImports::Skip => self.gather_files(initial_files, false),
+        };
         for file in new_files {
             self.modules.insert(file.file.module_name().clone(), file);
         }
@@ -158,11 +177,11 @@ impl BuildManager {
         }
     }
 
-    fn gather_files(&self, current_files: Vec<&State>) -> Vec<State> {
+    fn gather_files(&self, current_files: Vec<&State>, add_indirect_imports: bool) -> Vec<State> {
         let mut new_imports = vec![];
         let mut discovered_files = vec![];
         for state in current_files {
-            let resolved_imports = self.resolve_imports(state);
+            let resolved_imports = self.resolve_file_imports(&state);
             // check if the resolved_imports are not in the current files and add them to the new imports
             for (_, state) in resolved_imports {
                 if !self.modules.contains_key(&state.file.module_name()) {
@@ -171,12 +190,16 @@ impl BuildManager {
             }
         }
 
+        if !add_indirect_imports {
+            return discovered_files;
+        }
+
         discovered_files.extend(new_imports.clone());
 
         while !new_imports.is_empty() {
             let mut next_imports = vec![];
             for state in new_imports {
-                let resolved_imports = self.resolve_imports(&state);
+                let resolved_imports = self.resolve_file_imports(&state);
                 // check if the resolved_imports are not in the current files and add them to the new imports
                 for (_, state) in resolved_imports {
                     if !self.modules.contains_key(&state.file.module_name()) {
@@ -197,7 +220,9 @@ impl BuildManager {
     }
 
     // Resolves imports in a file and return the resolved paths
-    fn resolve_imports(&self, state: &State) -> HashMap<String, State> {
+    // TODO: This function is doing duplicate work because we resolve the imports in the State
+    // module as well. We should refactor this and possibly only do it in the State module
+    fn resolve_file_imports(&self, state: &State) -> HashMap<String, State> {
         let execution_environment = &execution_environment::ExecutionEnvironment {
             root: self.options.root.clone(),
             python_version: ruff_python_resolver::python_version::PythonVersion::Py311,
@@ -217,57 +242,83 @@ impl BuildManager {
         let mut resolved_paths = HashMap::new();
         let mut resolved_imports = vec![];
         for import in state.file.imports.iter() {
-            let import_desc = match import {
-                crate::nodes::ImportKinds::Import(i) => {
-                    ruff_python_resolver::module_descriptor::ImportModuleDescriptor {
-                        leading_dots: 0,
-                        name_parts: i.names.iter().map(|x| x.name.clone()).collect(),
-                        imported_symbols: vec![],
-                    }
-                }
+            let import_descriptions = match import {
+                crate::nodes::ImportKinds::Import(i) => i
+                    .names
+                    .iter()
+                    .map(
+                        |x| ruff_python_resolver::module_descriptor::ImportModuleDescriptor {
+                            leading_dots: 0,
+                            name_parts: x
+                                .name
+                                .chars()
+                                .skip_while(|c| *c == '.')
+                                .collect::<String>()
+                                .split('.')
+                                .map(std::string::ToString::to_string)
+                                .collect(),
+                            imported_symbols: vec![],
+                        },
+                    )
+                    .collect::<Vec<ImportModuleDescriptor>>(),
                 crate::nodes::ImportKinds::ImportFrom(i) => {
-                    ruff_python_resolver::module_descriptor::ImportModuleDescriptor {
-                        leading_dots: i.level,
-                        name_parts: i
-                            .module
-                            .chars()
-                            .skip_while(|c| *c == '.')
-                            .collect::<String>()
-                            .split('.')
-                            .map(std::string::ToString::to_string)
-                            .collect(),
-                        imported_symbols: i.names.iter().map(|x| x.name.clone()).collect(),
-                    }
+                    vec![
+                        ruff_python_resolver::module_descriptor::ImportModuleDescriptor {
+                            leading_dots: i.level,
+                            name_parts: i
+                                .module
+                                .chars()
+                                .skip_while(|c| *c == '.')
+                                .collect::<String>()
+                                .split('.')
+                                .map(std::string::ToString::to_string)
+                                .collect(),
+                            imported_symbols: i.names.iter().map(|x| x.name.clone()).collect(),
+                        },
+                    ]
                 }
             };
-            let mut resolved = resolver::resolve_import(
-                state.file.path().as_path(),
-                execution_environment,
-                &import_desc,
-                import_config,
-                host,
-            );
-            if !resolved.is_import_found {
-                let error = format!("cannot import name '{}'", import_desc.name());
-                log::warn!("{}", error);
-            }
-            if resolved.is_import_found {
-                for resolved_path in resolved.resolved_paths.iter() {
-                    let source = match std::fs::read_to_string(resolved_path) {
-                        Ok(source) => source,
-                        Err(e) => {
-                            log::warn!("cannot read file: {}", e);
-                            continue;
-                        }
-                    };
-                    let build_source = BuildSource::from_path(resolved_path.clone(), true);
-                    resolved_imports.push(build_source);
-                }
 
-                for (name, implicit_import) in resolved.implicit_imports.iter() {
-                    let source = std::fs::read_to_string(implicit_import.path.clone()).unwrap();
-                    let build_source = BuildSource::from_path(implicit_import.path.clone(), true);
-                    resolved_imports.push(build_source);
+            log::debug!("import descriptions: {:?}", import_descriptions);
+
+            for import_desc in import_descriptions {
+                let mut resolved = resolver::resolve_import(
+                    state.file.path().as_path(),
+                    execution_environment,
+                    &import_desc,
+                    import_config,
+                    host,
+                );
+                if !resolved.is_import_found {
+                    let error = format!("cannot import name '{}'", import_desc.name());
+                    log::warn!("{}", error);
+                }
+                if resolved.is_import_found {
+                    for resolved_path in resolved.resolved_paths.iter() {
+                        let source = match std::fs::read_to_string(resolved_path) {
+                            Ok(source) => source,
+                            Err(e) => {
+                                log::warn!("cannot read file: {}", e);
+                                continue;
+                            }
+                        };
+                        let build_source = BuildSource::from_path(resolved_path.clone(), true);
+                        resolved_imports.push(build_source);
+                    }
+
+                    // log what the import resolved to
+                    log::debug!(
+                        "resolved import: {} -> {:?}",
+                        import_desc.name(),
+                        resolved.resolved_paths
+                    );
+
+                    for (name, implicit_import) in resolved.implicit_imports.iter() {
+                        let source = std::fs::read_to_string(implicit_import.path.clone()).unwrap();
+                        let build_source =
+                            BuildSource::from_path(implicit_import.path.clone(), true);
+                        resolved_imports.push(build_source);
+                    }
                 }
             }
         }
@@ -297,6 +348,10 @@ fn get_line_number_of_character_position(source: &str, pos: usize) -> usize {
 
 #[cfg(test)]
 mod tests {
+    use std::fs;
+
+    use insta::glob;
+
     use super::*;
     fn snapshot_symbol_table(source: &str) -> String {
         let mut manager = BuildManager::new(
@@ -335,21 +390,6 @@ mod tests {
             .join("\n")
     }
 
-    macro_rules! snap {
-        ($name:tt, $path:tt) => {
-            #[test]
-            fn $name() {
-                let contents = include_str!($path);
-                let result = snapshot_symbol_table(contents);
-                let mut settings = insta::Settings::clone_current();
-                settings.set_snapshot_path("../testdata/output/");
-                settings.set_description(contents);
-                settings.bind(|| {
-                    insta::assert_snapshot!(result);
-                });
-            }
-        };
-    }
 
     macro_rules! snap_type {
         ($name:tt, $path:tt) => {
@@ -366,18 +406,6 @@ mod tests {
             }
         };
     }
-
-    snap!(
-        test_simple_var_assignments,
-        "../testdata/inputs/simple_var_assignment.py"
-    );
-
-    snap!(
-        test_function_def,
-        "../testdata/inputs/function_definition.py"
-    );
-
-    snap!(test_class_def, "../testdata/inputs/class_definition.py");
 
     snap_type!(test_type_check_var, "../testdata/inputs/type_check_var.py");
     snap_type!(
@@ -398,4 +426,25 @@ mod tests {
         test_undefined_names,
         "../testdata/inputs/test_undefined_name.py"
     );
+
+    #[test]
+    fn test_symbol_table() {
+        glob!("../test_data/inputs/", "symbol_table/*.py", |path| {
+            let mut manager = BuildManager::new(
+                vec![BuildSource::from_path(path.to_path_buf(), false)],
+                Settings::test_settings(),
+            );
+            manager.build();
+
+            let module = manager.get_state(path.to_path_buf()).unwrap();
+
+            let result = format!("{}", module.get_symbol_table());
+            let mut settings = insta::Settings::clone_current();
+            settings.set_snapshot_path("../testdata/output/");
+            settings.set_description(fs::read_to_string(path).unwrap());
+            settings.bind(|| {
+                insta::assert_snapshot!(result);
+            });
+        })
+    }
 }

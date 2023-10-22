@@ -1,6 +1,8 @@
 use enderpy_python_parser::ast::{self, Node};
 use std::{collections::HashMap, fmt::Display};
 
+use crate::ruff_python_import_resolver::import_result::ImportResult;
+
 #[derive(Debug, Clone)]
 pub struct SymbolTable {
     // Sub tables are scopes inside the current scope
@@ -51,6 +53,9 @@ pub enum Declaration {
     Function(Box<Function>),
     Class(Box<Class>),
 
+    // Alias is used for imports
+    Alias(Box<Alias>),
+
     Parameter(Box<Paramter>),
     // TypeParameterDeclaration represents a type parameter in a generic class or function. It models type parameters declared on classes and functions like T in List[T].
 }
@@ -62,6 +67,7 @@ impl Declaration {
             Declaration::Function(f) => &f.declaration_path,
             Declaration::Class(c) => &c.declaration_path,
             Declaration::Parameter(p) => &p.declaration_path,
+            Declaration::Alias(a) => &a.declaration_path,
         }
     }
 }
@@ -107,6 +113,13 @@ pub struct Paramter {
     pub parameter_node: ast::Arg,
     pub type_annotation: Option<ast::Expression>,
     pub default_value: Option<ast::Expression>,
+}
+
+#[derive(Debug, Clone)]
+pub struct Alias {
+    pub declaration_path: DeclarationPath,
+    pub alias_node: ast::Alias,
+    pub import_result: Box<ImportResult>,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -264,6 +277,7 @@ impl std::fmt::Display for Declaration {
             Declaration::Function(fun) => write!(f, "{:?}", fun),
             Declaration::Class(c) => write!(f, "{:?}", c),
             Declaration::Parameter(p) => write!(f, "{:?}", p),
+            Declaration::Alias(a) => write!(f, "{:?}", a),
         }
     }
 }

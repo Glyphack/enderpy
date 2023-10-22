@@ -24,6 +24,7 @@ impl Backend {
             debug: false,
             root,
             import_discovery: ImportDiscovery { python_executable },
+            follow_imports: enderpy_python_type_checker::settings::FollowImports::Skip,
         };
 
         let mut manager = BuildManager::new(vec![BuildSource::from_path(path.clone(), false)], settings);

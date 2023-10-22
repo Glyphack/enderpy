@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use enderpy_python_parser as parser;
 use enderpy_python_parser::ast::Expression;
 
@@ -9,14 +11,15 @@ use crate::{
     symbol_table::{
         Class, Declaration, DeclarationPath, Function, Paramter, SymbolScope, SymbolTable,
         SymbolTableNode, SymbolTableScope, SymbolTableType, Variable,
-    },
+    }, ruff_python_import_resolver::{import_result::ImportResult, module_descriptor::ImportModuleDescriptor},
 };
 
 #[allow(unused)]
 pub struct SemanticAnalyzer {
     pub globals: SymbolTable,
-    // TODO: Replace errors with another type
     file: Box<EnderpyFile>,
+    pub imports: HashMap<String, Box<ImportResult>>,
+    // TODO: Replace errors with another type
     errors: Vec<String>,
 
     // TOD: Not needed?
@@ -25,11 +28,12 @@ pub struct SemanticAnalyzer {
 
 #[allow(unused)]
 impl SemanticAnalyzer {
-    pub fn new(file: Box<EnderpyFile>) -> Self {
+    pub fn new(file: Box<EnderpyFile>, imports: HashMap<String, Box<ImportResult>>) -> Self {
         let globals = SymbolTable::new(crate::symbol_table::SymbolTableType::Module, 0);
         SemanticAnalyzer {
             globals,
             file,
+            imports,
             errors: vec![],
             scope: SymbolScope::Global,
         }
@@ -90,19 +94,17 @@ impl SemanticAnalyzer {
         &mut self,
         alias: &parser::ast::Alias,
         declaration_path: DeclarationPath,
+        import_result: Box<ImportResult>,
     ) {
         let import_symbol_name = if let Some(asname) = &alias.asname {
             asname.clone()
         } else {
             alias.name.clone()
         };
-        // TODO: imports are not variable, just ignoring for now and will fix later
-        let decl = Declaration::Variable(Box::new(Variable {
-            declaration_path,
-            scope: SymbolScope::Global,
-            type_annotation: None,
-            inferred_type_source: None,
-            is_constant: false,
+        let decl = Declaration::Alias(Box::new(crate::symbol_table::Alias {
+            declaration_path: declaration_path.clone(),
+            alias_node: alias.clone(),
+             import_result,
         }));
         self.create_symbol(import_symbol_name, decl);
     }
@@ -278,23 +280,31 @@ impl TraversalVisitor for SemanticAnalyzer {
 
     fn visit_import(&mut self, _i: &parser::ast::Import) {
         for alias in &_i.names {
+            let import_result = match self.imports.get(
+                &ImportModuleDescriptor::from(alias).name()
+            ) {
+                Some(result) => result.clone(),
+                None => Box::new(ImportResult::not_found()),
+            };
+            // TODO: Report unresolved import if import_result is None
             self.create_import_alias_symbol(
                 alias,
                 DeclarationPath {
                     module_name: self.file.module_name().clone(),
                     node: alias.node,
                 },
+                import_result,
             );
         }
     }
 
     fn visit_import_from(&mut self, _i: &parser::ast::ImportFrom) {
         for alias in &_i.names {
-            let declaration_path = DeclarationPath {
+            let _declaration_path = DeclarationPath {
                 module_name: self.file.module_name().clone(),
                 node: alias.node,
             };
-            self.create_import_alias_symbol(alias, declaration_path);
+            // self.create_import_alias_symbol(alias, declaration_path);
         }
     }
 

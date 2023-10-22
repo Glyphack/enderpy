@@ -3,4 +3,4 @@ source: typechecker/src/build.rs
 description: "a: list[int] = [1, 2, 3]\n\nb = a[0] + 1\n\nc = a[0] + a[1]\n\n# invalid usage of types\nd = a[0] + \"str\"\n\n# valid reassignment\na = [1]\n# invalid reassignment\na = [1, 2, \"str\"]\n"
 expression: result
 ---
-Diagnostic { body: "Operator '+' not supported for types 'Int' and 'Str'", suggestion: Some(""), range: Range { start: Position { line: 8, character: 5 }, end: Position { line: 8, character: 17 } } }
+Diagnostic { body: "Operator '+' not supported for types 'Int' and 'Str'", suggestion: Some(""), range: Range { start: Position { line: 7, character: 4 }, end: Position { line: 7, character: 16 } } }

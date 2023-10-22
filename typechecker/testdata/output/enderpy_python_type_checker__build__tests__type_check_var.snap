@@ -3,4 +3,4 @@ source: typechecker/src/build.rs
 description: "a: int = 1\n\na + \"str\"\n\nb = a + 1\n\nc = b + b\n"
 expression: result
 ---
-Diagnostic { body: "Operator '+' not supported for types 'Int' and 'Str'", suggestion: Some(""), range: Range { start: Position { line: 3, character: 1 }, end: Position { line: 3, character: 10 } } }
+Diagnostic { body: "Operator '+' not supported for types 'Int' and 'Str'", suggestion: Some(""), range: Range { start: Position { line: 2, character: 0 }, end: Position { line: 2, character: 9 } } }
