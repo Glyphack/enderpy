@@ -92,11 +92,10 @@ impl BuildManager {
         };
         let host = &ruff_python_resolver::host::StaticHost::new(vec![]);
         for state in self.modules.iter_mut() {
-            state.1.populate_symbol_table();
-
             state
                 .1
-                .resolve_file_imports(execution_environment, import_config, host)
+                .resolve_file_imports(execution_environment, import_config, host);
+            state.1.populate_symbol_table();
         }
     }
 

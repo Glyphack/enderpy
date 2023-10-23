@@ -1,15 +1,158 @@
 ---
 source: typechecker/src/build.rs
-description: "import variables\n"
+description: "import variables\nimport import_test\n\nfrom variables import a\n"
 expression: result
 input_file: typechecker/test_data/inputs/symbol_table/imports.py
 ---
 -------------------
 global scope:
 Symbols:
+a
+- Declarations:
+--:   Alias {
+    declaration_path: DeclarationPath {
+        module_name: ".Users.glyphack.Programming.enderpy.typechecker.test_data.inputs.symbol_table.imports.py",
+        node: Node {
+            start: 59,
+            end: 60,
+        },
+    },
+    alias_node: Alias {
+        node: Node {
+            start: 59,
+            end: 60,
+        },
+        name: "a",
+        asname: None,
+    },
+    import_result: ImportResult {
+        is_relative: false,
+        is_import_found: true,
+        is_partly_resolved: false,
+        is_namespace_package: false,
+        is_init_file_present: false,
+        is_stub_package: false,
+        import_type: Local,
+        resolved_paths: [
+            "/Users/glyphack/Programming/enderpy/typechecker/test_data/inputs/symbol_table/variables.py",
+        ],
+        search_path: Some(
+            "/Users/glyphack/Programming/enderpy/typechecker/test_data/inputs/symbol_table",
+        ),
+        is_stub_file: false,
+        is_native_lib: false,
+        is_stdlib_typeshed_file: false,
+        is_third_party_typeshed_file: false,
+        is_local_typings_file: false,
+        implicit_imports: ImplicitImports(
+            {},
+        ),
+        filtered_implicit_imports: ImplicitImports(
+            {},
+        ),
+        non_stub_import_result: None,
+        py_typed_info: None,
+        package_directory: None,
+    },
+}
+import_test
+- Declarations:
+--:   Alias {
+    declaration_path: DeclarationPath {
+        module_name: ".Users.glyphack.Programming.enderpy.typechecker.test_data.inputs.symbol_table.imports.py",
+        node: Node {
+            start: 24,
+            end: 35,
+        },
+    },
+    alias_node: Alias {
+        node: Node {
+            start: 24,
+            end: 35,
+        },
+        name: "import_test",
+        asname: None,
+    },
+    import_result: ImportResult {
+        is_relative: false,
+        is_import_found: true,
+        is_partly_resolved: false,
+        is_namespace_package: false,
+        is_init_file_present: true,
+        is_stub_package: false,
+        import_type: Local,
+        resolved_paths: [
+            "/Users/glyphack/Programming/enderpy/typechecker/test_data/inputs/symbol_table/import_test/__init__.py",
+        ],
+        search_path: Some(
+            "/Users/glyphack/Programming/enderpy/typechecker/test_data/inputs/symbol_table",
+        ),
+        is_stub_file: false,
+        is_native_lib: false,
+        is_stdlib_typeshed_file: false,
+        is_third_party_typeshed_file: false,
+        is_local_typings_file: false,
+        implicit_imports: ImplicitImports(
+            {},
+        ),
+        filtered_implicit_imports: ImplicitImports(
+            {},
+        ),
+        non_stub_import_result: None,
+        py_typed_info: None,
+        package_directory: Some(
+            "/Users/glyphack/Programming/enderpy/typechecker/test_data/inputs/symbol_table/import_test",
+        ),
+    },
+}
 variables
 - Declarations:
---:   Alias { declaration_path: DeclarationPath { module_name: ".Users.glyphack.Programming.enderpy.typechecker.test_data.inputs.symbol_table.imports.py", node: Node { start: 7, end: 16 } }, alias_node: Alias { node: Node { start: 7, end: 16 }, name: "variables", asname: None }, import_result: ImportResult { is_relative: false, is_import_found: false, is_partly_resolved: false, is_namespace_package: false, is_init_file_present: false, is_stub_package: false, import_type: Local, resolved_paths: [], search_path: None, is_stub_file: false, is_native_lib: false, is_stdlib_typeshed_file: false, is_third_party_typeshed_file: false, is_local_typings_file: false, implicit_imports: ImplicitImports({}), filtered_implicit_imports: ImplicitImports({}), non_stub_import_result: None, py_typed_info: None, package_directory: None } }
+--:   Alias {
+    declaration_path: DeclarationPath {
+        module_name: ".Users.glyphack.Programming.enderpy.typechecker.test_data.inputs.symbol_table.imports.py",
+        node: Node {
+            start: 7,
+            end: 16,
+        },
+    },
+    alias_node: Alias {
+        node: Node {
+            start: 7,
+            end: 16,
+        },
+        name: "variables",
+        asname: None,
+    },
+    import_result: ImportResult {
+        is_relative: false,
+        is_import_found: true,
+        is_partly_resolved: false,
+        is_namespace_package: false,
+        is_init_file_present: false,
+        is_stub_package: false,
+        import_type: Local,
+        resolved_paths: [
+            "/Users/glyphack/Programming/enderpy/typechecker/test_data/inputs/symbol_table/variables.py",
+        ],
+        search_path: Some(
+            "/Users/glyphack/Programming/enderpy/typechecker/test_data/inputs/symbol_table",
+        ),
+        is_stub_file: false,
+        is_native_lib: false,
+        is_stdlib_typeshed_file: false,
+        is_third_party_typeshed_file: false,
+        is_local_typings_file: false,
+        implicit_imports: ImplicitImports(
+            {},
+        ),
+        filtered_implicit_imports: ImplicitImports(
+            {},
+        ),
+        non_stub_import_result: None,
+        py_typed_info: None,
+        package_directory: None,
+    },
+}
 
 all scopes:
 -------------------

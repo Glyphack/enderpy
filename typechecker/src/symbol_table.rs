@@ -119,7 +119,7 @@ pub struct Paramter {
 pub struct Alias {
     pub declaration_path: DeclarationPath,
     pub alias_node: ast::Alias,
-    pub import_result: Box<ImportResult>,
+    pub import_result: ImportResult,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -273,11 +273,11 @@ impl std::fmt::Display for SymbolTableScope {
 impl std::fmt::Display for Declaration {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Declaration::Variable(v) => write!(f, "{:?}", v),
-            Declaration::Function(fun) => write!(f, "{:?}", fun),
-            Declaration::Class(c) => write!(f, "{:?}", c),
-            Declaration::Parameter(p) => write!(f, "{:?}", p),
-            Declaration::Alias(a) => write!(f, "{:?}", a),
+            Declaration::Variable(v) => write!(f, "{:#?}", v),
+            Declaration::Function(fun) => write!(f, "{:#?}", fun),
+            Declaration::Class(c) => write!(f, "{:#?}", c),
+            Declaration::Parameter(p) => write!(f, "{:#?}", p),
+            Declaration::Alias(a) => write!(f, "{:#?}", a),
         }
     }
 }

@@ -13,7 +13,7 @@ pub struct State {
     symbol_table: SymbolTable,
     pub diagnostics: Vec<Diagnostic>,
     // Map of import names to the result of the import
-    pub imports: HashMap<String, Box<ImportResult>>,
+    pub imports: HashMap<String, ImportResult>,
 }
 
 impl State {
@@ -66,7 +66,7 @@ impl State {
                     import_config,
                     host,
                 );
-                self.imports.insert(import_desc.name(), Box::new(resolved));
+                self.imports.insert(import_desc.name(), resolved);
             }
         }
     }

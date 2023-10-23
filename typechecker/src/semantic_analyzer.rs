@@ -18,7 +18,7 @@ use crate::{
 pub struct SemanticAnalyzer {
     pub globals: SymbolTable,
     file: Box<EnderpyFile>,
-    pub imports: HashMap<String, Box<ImportResult>>,
+    pub imports: HashMap<String, ImportResult>,
     // TODO: Replace errors with another type
     errors: Vec<String>,
 
@@ -28,7 +28,7 @@ pub struct SemanticAnalyzer {
 
 #[allow(unused)]
 impl SemanticAnalyzer {
-    pub fn new(file: Box<EnderpyFile>, imports: HashMap<String, Box<ImportResult>>) -> Self {
+    pub fn new(file: Box<EnderpyFile>, imports: HashMap<String, ImportResult>) -> Self {
         let globals = SymbolTable::new(crate::symbol_table::SymbolTableType::Module, 0);
         SemanticAnalyzer {
             globals,
@@ -94,7 +94,7 @@ impl SemanticAnalyzer {
         &mut self,
         alias: &parser::ast::Alias,
         declaration_path: DeclarationPath,
-        import_result: Box<ImportResult>,
+        import_result: ImportResult,
     ) {
         let import_symbol_name = if let Some(asname) = &alias.asname {
             asname.clone()
@@ -284,7 +284,7 @@ impl TraversalVisitor for SemanticAnalyzer {
                 &ImportModuleDescriptor::from(alias).name()
             ) {
                 Some(result) => result.clone(),
-                None => Box::new(ImportResult::not_found()),
+                None => ImportResult::not_found(),
             };
             // TODO: Report unresolved import if import_result is None
             self.create_import_alias_symbol(
@@ -300,11 +300,22 @@ impl TraversalVisitor for SemanticAnalyzer {
 
     fn visit_import_from(&mut self, _i: &parser::ast::ImportFrom) {
         for alias in &_i.names {
-            let _declaration_path = DeclarationPath {
+            let declaration_path = DeclarationPath {
                 module_name: self.file.module_name().clone(),
                 node: alias.node,
             };
-            // self.create_import_alias_symbol(alias, declaration_path);
+            // TODO: Report unresolved import if import_result is None
+            let module_import_result = match self.imports.get(
+                &ImportModuleDescriptor::from(_i).name()
+            ) {
+                Some(result) => result.clone(),
+                None => ImportResult::not_found(),
+            };
+            self.create_import_alias_symbol(
+                alias,
+                declaration_path,
+                module_import_result,
+            );
         }
     }
 

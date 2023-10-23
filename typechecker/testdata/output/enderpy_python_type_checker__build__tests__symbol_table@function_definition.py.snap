@@ -9,22 +9,195 @@ global scope:
 Symbols:
 func
 - Declarations:
---:   Function { declaration_path: DeclarationPath { module_name: ".Users.glyphack.Programming.enderpy.typechecker.test_data.inputs.symbol_table.function_definition.py", node: Node { start: 0, end: 37 } }, function_node: FunctionDef { node: Node { start: 0, end: 37 }, name: "func", args: Arguments { node: Node { start: 9, end: 29 }, posonlyargs: [Arg { node: Node { start: 9, end: 10 }, arg: "a", annotation: None }, Arg { node: Node { start: 12, end: 13 }, arg: "b", annotation: None }], args: [Arg { node: Node { start: 19, end: 24 }, arg: "c", annotation: None }], vararg: None, kwonlyargs: [], kw_defaults: [], kwarg: Some(Arg { node: Node { start: 28, end: 29 }, arg: "e", annotation: None }), defaults: [Constant(Constant { node: Node { start: 23, end: 24 }, value: 2 })] }, body: [Pass(Pass { node: Node { start: 32, end: 36 } })], decorator_list: [], returns: None, type_comment: None }, is_method: false, is_generator: false, return_statements: [], yeild_statements: [], raise_statements: [] }
+--:   Function {
+    declaration_path: DeclarationPath {
+        module_name: ".Users.glyphack.Programming.enderpy.typechecker.test_data.inputs.symbol_table.function_definition.py",
+        node: Node {
+            start: 0,
+            end: 37,
+        },
+    },
+    function_node: FunctionDef {
+        node: Node {
+            start: 0,
+            end: 37,
+        },
+        name: "func",
+        args: Arguments {
+            node: Node {
+                start: 9,
+                end: 29,
+            },
+            posonlyargs: [
+                Arg {
+                    node: Node {
+                        start: 9,
+                        end: 10,
+                    },
+                    arg: "a",
+                    annotation: None,
+                },
+                Arg {
+                    node: Node {
+                        start: 12,
+                        end: 13,
+                    },
+                    arg: "b",
+                    annotation: None,
+                },
+            ],
+            args: [
+                Arg {
+                    node: Node {
+                        start: 19,
+                        end: 24,
+                    },
+                    arg: "c",
+                    annotation: None,
+                },
+            ],
+            vararg: None,
+            kwonlyargs: [],
+            kw_defaults: [],
+            kwarg: Some(
+                Arg {
+                    node: Node {
+                        start: 28,
+                        end: 29,
+                    },
+                    arg: "e",
+                    annotation: None,
+                },
+            ),
+            defaults: [
+                Constant(
+                    Constant {
+                        node: Node {
+                            start: 23,
+                            end: 24,
+                        },
+                        value: 2,
+                    },
+                ),
+            ],
+        },
+        body: [
+            Pass(
+                Pass {
+                    node: Node {
+                        start: 32,
+                        end: 36,
+                    },
+                },
+            ),
+        ],
+        decorator_list: [],
+        returns: None,
+        type_comment: None,
+    },
+    is_method: false,
+    is_generator: false,
+    return_statements: [],
+    yeild_statements: [],
+    raise_statements: [],
+}
 
 all scopes:
 Symbols:
 a
 - Declarations:
---:   Paramter { declaration_path: DeclarationPath { module_name: ".Users.glyphack.Programming.enderpy.typechecker.test_data.inputs.symbol_table.function_definition.py", node: Node { start: 9, end: 10 } }, parameter_node: Arg { node: Node { start: 9, end: 10 }, arg: "a", annotation: None }, type_annotation: None, default_value: None }
+--:   Paramter {
+    declaration_path: DeclarationPath {
+        module_name: ".Users.glyphack.Programming.enderpy.typechecker.test_data.inputs.symbol_table.function_definition.py",
+        node: Node {
+            start: 9,
+            end: 10,
+        },
+    },
+    parameter_node: Arg {
+        node: Node {
+            start: 9,
+            end: 10,
+        },
+        arg: "a",
+        annotation: None,
+    },
+    type_annotation: None,
+    default_value: None,
+}
 b
 - Declarations:
---:   Paramter { declaration_path: DeclarationPath { module_name: ".Users.glyphack.Programming.enderpy.typechecker.test_data.inputs.symbol_table.function_definition.py", node: Node { start: 12, end: 13 } }, parameter_node: Arg { node: Node { start: 12, end: 13 }, arg: "b", annotation: None }, type_annotation: None, default_value: None }
+--:   Paramter {
+    declaration_path: DeclarationPath {
+        module_name: ".Users.glyphack.Programming.enderpy.typechecker.test_data.inputs.symbol_table.function_definition.py",
+        node: Node {
+            start: 12,
+            end: 13,
+        },
+    },
+    parameter_node: Arg {
+        node: Node {
+            start: 12,
+            end: 13,
+        },
+        arg: "b",
+        annotation: None,
+    },
+    type_annotation: None,
+    default_value: None,
+}
 c
 - Declarations:
---:   Paramter { declaration_path: DeclarationPath { module_name: ".Users.glyphack.Programming.enderpy.typechecker.test_data.inputs.symbol_table.function_definition.py", node: Node { start: 19, end: 24 } }, parameter_node: Arg { node: Node { start: 19, end: 24 }, arg: "c", annotation: None }, type_annotation: None, default_value: Some(Constant(Constant { node: Node { start: 23, end: 24 }, value: 2 })) }
+--:   Paramter {
+    declaration_path: DeclarationPath {
+        module_name: ".Users.glyphack.Programming.enderpy.typechecker.test_data.inputs.symbol_table.function_definition.py",
+        node: Node {
+            start: 19,
+            end: 24,
+        },
+    },
+    parameter_node: Arg {
+        node: Node {
+            start: 19,
+            end: 24,
+        },
+        arg: "c",
+        annotation: None,
+    },
+    type_annotation: None,
+    default_value: Some(
+        Constant(
+            Constant {
+                node: Node {
+                    start: 23,
+                    end: 24,
+                },
+                value: 2,
+            },
+        ),
+    ),
+}
 e
 - Declarations:
---:   Paramter { declaration_path: DeclarationPath { module_name: ".Users.glyphack.Programming.enderpy.typechecker.test_data.inputs.symbol_table.function_definition.py", node: Node { start: 28, end: 29 } }, parameter_node: Arg { node: Node { start: 28, end: 29 }, arg: "e", annotation: None }, type_annotation: None, default_value: None }
+--:   Paramter {
+    declaration_path: DeclarationPath {
+        module_name: ".Users.glyphack.Programming.enderpy.typechecker.test_data.inputs.symbol_table.function_definition.py",
+        node: Node {
+            start: 28,
+            end: 29,
+        },
+    },
+    parameter_node: Arg {
+        node: Node {
+            start: 28,
+            end: 29,
+        },
+        arg: "e",
+        annotation: None,
+    },
+    type_annotation: None,
+    default_value: None,
+}
 
 -------------------
 
