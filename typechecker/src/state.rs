@@ -1,10 +1,16 @@
 use std::collections::HashMap;
 
 use crate::{
-    ast_visitor::TraversalVisitor, nodes::EnderpyFile, semantic_analyzer::SemanticAnalyzer,
-    symbol_table::SymbolTable, diagnostic::Diagnostic, ruff_python_import_resolver::{import_result::ImportResult, self, module_descriptor::ImportModuleDescriptor},
+    ast_visitor::TraversalVisitor,
+    diagnostic::Diagnostic,
+    nodes::EnderpyFile,
     ruff_python_import_resolver as ruff_python_resolver,
-    ruff_python_import_resolver::resolver
+    ruff_python_import_resolver::resolver,
+    ruff_python_import_resolver::{
+        self, import_result::ImportResult, module_descriptor::ImportModuleDescriptor,
+    },
+    semantic_analyzer::SemanticAnalyzer,
+    symbol_table::SymbolTable,
 };
 
 #[derive(Debug, Clone)]
@@ -43,18 +49,18 @@ impl State {
         execution_environment: &ruff_python_resolver::execution_environment::ExecutionEnvironment,
         import_config: &ruff_python_resolver::config::Config,
         host: &ruff_python_resolver::host::StaticHost,
-    ){
+    ) {
         for import in self.file.imports.iter() {
             let import_descriptions = match import {
                 crate::nodes::ImportKinds::Import(i) => i
                     .names
                     .iter()
-                    .map(
-                        |x| ruff_python_resolver::module_descriptor::ImportModuleDescriptor::from(x)                    )
+                    .map(|x| {
+                        ruff_python_resolver::module_descriptor::ImportModuleDescriptor::from(x)
+                    })
                     .collect::<Vec<ImportModuleDescriptor>>(),
                 crate::nodes::ImportKinds::ImportFrom(i) => {
-                    vec![
-                        ruff_python_resolver::module_descriptor::ImportModuleDescriptor::from(i)                    ]
+                    vec![ruff_python_resolver::module_descriptor::ImportModuleDescriptor::from(i)]
                 }
             };
 

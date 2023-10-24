@@ -1,7 +1,12 @@
 use enderpy_python_parser::ast::{self, Node};
 use std::{collections::HashMap, fmt::Display};
 
-use crate::ruff_python_import_resolver::import_result::ImportResult;
+use crate::{
+    nodes::ImportKinds,
+    ruff_python_import_resolver::{
+        import_result::ImportResult, module_descriptor::ImportModuleDescriptor,
+    },
+};
 
 #[derive(Debug, Clone)]
 pub struct SymbolTable {
@@ -118,7 +123,13 @@ pub struct Paramter {
 #[derive(Debug, Clone)]
 pub struct Alias {
     pub declaration_path: DeclarationPath,
-    pub alias_node: ast::Alias,
+    /// The import node that this alias is for. Only one of import_node or import_from_node will be set
+    pub import_from_node: Option<ast::ImportFrom>,
+    pub import_node: Option<ast::Import>,
+    /// Name of the imported symbol in case of ImportFrom
+    /// e.g. From bar import baz -> baz is the symbol name
+    pub symbol_name: Option<String>,
+    /// The result of the import
     pub import_result: ImportResult,
 }
 

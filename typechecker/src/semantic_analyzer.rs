@@ -8,16 +8,26 @@ use parser::ast::Statement;
 use crate::{
     ast_visitor::TraversalVisitor,
     nodes::EnderpyFile,
+    ruff_python_import_resolver::{
+        import_result::ImportResult, module_descriptor::ImportModuleDescriptor,
+    },
     symbol_table::{
-        Class, Declaration, DeclarationPath, Function, Paramter, SymbolScope, SymbolTable,
+        Alias, Class, Declaration, DeclarationPath, Function, Paramter, SymbolScope, SymbolTable,
         SymbolTableNode, SymbolTableScope, SymbolTableType, Variable,
-    }, ruff_python_import_resolver::{import_result::ImportResult, module_descriptor::ImportModuleDescriptor},
+    },
 };
 
 #[allow(unused)]
 pub struct SemanticAnalyzer {
     pub globals: SymbolTable,
     file: Box<EnderpyFile>,
+    /// Map of module name to import result
+    /// The imports inside the file are resolved by this map and
+    /// no other imports are resolved
+    /// Example:
+    /// if we have a file with the following imports this is how we use the map
+    /// import os -> imports.get("os")
+    /// from os import path -> imports.get("os")
     pub imports: HashMap<String, ImportResult>,
     // TODO: Replace errors with another type
     errors: Vec<String>,
@@ -88,25 +98,6 @@ impl SemanticAnalyzer {
             // TODO: Add oher expressions that can be assigned
             _ => {}
         }
-    }
-
-    fn create_import_alias_symbol(
-        &mut self,
-        alias: &parser::ast::Alias,
-        declaration_path: DeclarationPath,
-        import_result: ImportResult,
-    ) {
-        let import_symbol_name = if let Some(asname) = &alias.asname {
-            asname.clone()
-        } else {
-            alias.name.clone()
-        };
-        let decl = Declaration::Alias(Box::new(crate::symbol_table::Alias {
-            declaration_path: declaration_path.clone(),
-            alias_node: alias.clone(),
-             import_result,
-        }));
-        self.create_symbol(import_symbol_name, decl);
     }
 
     fn add_arguments_definitions(&mut self, args: &parser::ast::Arguments) {
@@ -278,23 +269,30 @@ impl TraversalVisitor for SemanticAnalyzer {
         }
     }
 
-    fn visit_import(&mut self, _i: &parser::ast::Import) {
-        for alias in &_i.names {
-            let import_result = match self.imports.get(
-                &ImportModuleDescriptor::from(alias).name()
-            ) {
+    fn visit_import(&mut self, i: &parser::ast::Import) {
+        for alias in &i.names {
+            let import_result = match self
+                .imports
+                .get(&ImportModuleDescriptor::from(alias).name())
+            {
                 Some(result) => result.clone(),
                 None => ImportResult::not_found(),
             };
             // TODO: Report unresolved import if import_result is None
-            self.create_import_alias_symbol(
-                alias,
-                DeclarationPath {
-                    module_name: self.file.module_name().clone(),
-                    node: alias.node,
-                },
+            let declaration_path = DeclarationPath {
+                module_name: self.file.module_name().clone(),
+                node: alias.node,
+            };
+
+            let declaration = Declaration::Alias(Box::new(Alias {
+                declaration_path,
+                import_from_node: None,
+                import_node: Some(i.clone()),
+                symbol_name: None,
                 import_result,
-            );
+            }));
+
+            self.create_symbol(alias.name(), declaration);
         }
     }
 
@@ -305,17 +303,20 @@ impl TraversalVisitor for SemanticAnalyzer {
                 node: alias.node,
             };
             // TODO: Report unresolved import if import_result is None
-            let module_import_result = match self.imports.get(
-                &ImportModuleDescriptor::from(_i).name()
-            ) {
-                Some(result) => result.clone(),
-                None => ImportResult::not_found(),
-            };
-            self.create_import_alias_symbol(
-                alias,
+            let module_import_result =
+                match self.imports.get(&ImportModuleDescriptor::from(_i).name()) {
+                    Some(result) => result.clone(),
+                    None => ImportResult::not_found(),
+                };
+            let declaration = Declaration::Alias(Box::new(Alias {
                 declaration_path,
-                module_import_result,
-            );
+                import_from_node: Some(_i.clone()),
+                import_node: None,
+                symbol_name: Some(alias.name()),
+                import_result: module_import_result,
+            }));
+
+            self.create_symbol(alias.name(), declaration);
         }
     }
 

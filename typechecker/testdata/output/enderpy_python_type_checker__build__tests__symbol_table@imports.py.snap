@@ -1,6 +1,6 @@
 ---
 source: typechecker/src/build.rs
-description: "import variables\nimport import_test\n\nfrom variables import a\n"
+description: "import variables\nimport import_test\n\nfrom variables import a\n\nimport os.path\n\nfrom os.path import join\n"
 expression: result
 input_file: typechecker/test_data/inputs/symbol_table/imports.py
 ---
@@ -17,14 +17,30 @@ a
             end: 60,
         },
     },
-    alias_node: Alias {
-        node: Node {
-            start: 59,
-            end: 60,
+    import_from_node: Some(
+        ImportFrom {
+            node: Node {
+                start: 37,
+                end: 60,
+            },
+            module: "variables",
+            names: [
+                Alias {
+                    node: Node {
+                        start: 59,
+                        end: 60,
+                    },
+                    name: "a",
+                    asname: None,
+                },
+            ],
+            level: 0,
         },
-        name: "a",
-        asname: None,
-    },
+    ),
+    import_node: None,
+    symbol_name: Some(
+        "a",
+    ),
     import_result: ImportResult {
         is_relative: false,
         is_import_found: true,
@@ -65,14 +81,26 @@ import_test
             end: 35,
         },
     },
-    alias_node: Alias {
-        node: Node {
-            start: 24,
-            end: 35,
+    import_from_node: None,
+    import_node: Some(
+        Import {
+            node: Node {
+                start: 17,
+                end: 35,
+            },
+            names: [
+                Alias {
+                    node: Node {
+                        start: 24,
+                        end: 35,
+                    },
+                    name: "import_test",
+                    asname: None,
+                },
+            ],
         },
-        name: "import_test",
-        asname: None,
-    },
+    ),
+    symbol_name: None,
     import_result: ImportResult {
         is_relative: false,
         is_import_found: true,
@@ -105,6 +133,122 @@ import_test
         ),
     },
 }
+join
+- Declarations:
+--:   Alias {
+    declaration_path: DeclarationPath {
+        module_name: ".Users.glyphack.Programming.enderpy.typechecker.test_data.inputs.symbol_table.imports.py",
+        node: Node {
+            start: 98,
+            end: 102,
+        },
+    },
+    import_from_node: Some(
+        ImportFrom {
+            node: Node {
+                start: 78,
+                end: 102,
+            },
+            module: "os.path",
+            names: [
+                Alias {
+                    node: Node {
+                        start: 98,
+                        end: 102,
+                    },
+                    name: "join",
+                    asname: None,
+                },
+            ],
+            level: 0,
+        },
+    ),
+    import_node: None,
+    symbol_name: Some(
+        "join",
+    ),
+    import_result: ImportResult {
+        is_relative: false,
+        is_import_found: false,
+        is_partly_resolved: false,
+        is_namespace_package: false,
+        is_init_file_present: false,
+        is_stub_package: false,
+        import_type: Local,
+        resolved_paths: [],
+        search_path: None,
+        is_stub_file: false,
+        is_native_lib: false,
+        is_stdlib_typeshed_file: false,
+        is_third_party_typeshed_file: false,
+        is_local_typings_file: false,
+        implicit_imports: ImplicitImports(
+            {},
+        ),
+        filtered_implicit_imports: ImplicitImports(
+            {},
+        ),
+        non_stub_import_result: None,
+        py_typed_info: None,
+        package_directory: None,
+    },
+}
+os.path
+- Declarations:
+--:   Alias {
+    declaration_path: DeclarationPath {
+        module_name: ".Users.glyphack.Programming.enderpy.typechecker.test_data.inputs.symbol_table.imports.py",
+        node: Node {
+            start: 69,
+            end: 76,
+        },
+    },
+    import_from_node: None,
+    import_node: Some(
+        Import {
+            node: Node {
+                start: 62,
+                end: 76,
+            },
+            names: [
+                Alias {
+                    node: Node {
+                        start: 69,
+                        end: 76,
+                    },
+                    name: "os.path",
+                    asname: None,
+                },
+            ],
+        },
+    ),
+    symbol_name: None,
+    import_result: ImportResult {
+        is_relative: false,
+        is_import_found: false,
+        is_partly_resolved: false,
+        is_namespace_package: false,
+        is_init_file_present: false,
+        is_stub_package: false,
+        import_type: Local,
+        resolved_paths: [],
+        search_path: None,
+        is_stub_file: false,
+        is_native_lib: false,
+        is_stdlib_typeshed_file: false,
+        is_third_party_typeshed_file: false,
+        is_local_typings_file: false,
+        implicit_imports: ImplicitImports(
+            {},
+        ),
+        filtered_implicit_imports: ImplicitImports(
+            {},
+        ),
+        non_stub_import_result: None,
+        py_typed_info: None,
+        package_directory: None,
+    },
+}
 variables
 - Declarations:
 --:   Alias {
@@ -115,14 +259,26 @@ variables
             end: 16,
         },
     },
-    alias_node: Alias {
-        node: Node {
-            start: 7,
-            end: 16,
+    import_from_node: None,
+    import_node: Some(
+        Import {
+            node: Node {
+                start: 0,
+                end: 16,
+            },
+            names: [
+                Alias {
+                    node: Node {
+                        start: 7,
+                        end: 16,
+                    },
+                    name: "variables",
+                    asname: None,
+                },
+            ],
         },
-        name: "variables",
-        asname: None,
-    },
+    ),
+    symbol_name: None,
     import_result: ImportResult {
         is_relative: false,
         is_import_found: true,

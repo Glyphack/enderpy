@@ -205,6 +205,16 @@ pub struct Alias {
     pub asname: Option<String>,
 }
 
+impl Alias {
+    pub fn name(&self) -> String {
+        if let Some(asname) = &self.asname {
+            asname.clone()
+        } else {
+            self.name.clone()
+        }
+    }
+}
+
 // https://docs.python.org/3/library/ast.html#ast.ImportFrom
 #[derive(Debug, Clone)]
 pub struct ImportFrom {
