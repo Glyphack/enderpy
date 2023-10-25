@@ -11,7 +11,7 @@ Symbols:
 - Declarations:
 --:   Alias {
     declaration_path: DeclarationPath {
-        module_name: ".Users.glyphack.Programming.enderpy.typechecker.test_data.inputs.symbol_table.imports.py",
+        module_name: [REDACTED]",
         node: Node {
             start: 83,
             end: 82,
@@ -50,10 +50,10 @@ Symbols:
         is_stub_package: false,
         import_type: Local,
         resolved_paths: [
-            "/Users/glyphack/Programming/enderpy/typechecker/test_data/inputs/symbol_table/variables.py",
+            "[REDACTED]/variables.py",
         ],
         search_path: Some(
-            "/Users/glyphack/Programming/enderpy/typechecker/test_data/inputs/symbol_table",
+            "[REDACTED]",
         ),
         is_stub_file: false,
         is_native_lib: false,
@@ -73,7 +73,7 @@ Symbols:
 }
 --:   Alias {
     declaration_path: DeclarationPath {
-        module_name: ".Users.glyphack.Programming.enderpy.typechecker.test_data.inputs.symbol_table.imports.py",
+        module_name: [REDACTED]",
         node: Node {
             start: 117,
             end: 116,
@@ -133,7 +133,7 @@ a
 - Declarations:
 --:   Alias {
     declaration_path: DeclarationPath {
-        module_name: ".Users.glyphack.Programming.enderpy.typechecker.test_data.inputs.symbol_table.imports.py",
+        module_name: [REDACTED]",
         node: Node {
             start: 59,
             end: 60,
@@ -172,10 +172,10 @@ a
         is_stub_package: false,
         import_type: Local,
         resolved_paths: [
-            "/Users/glyphack/Programming/enderpy/typechecker/test_data/inputs/symbol_table/variables.py",
+            "[REDACTED]/variables.py",
         ],
         search_path: Some(
-            "/Users/glyphack/Programming/enderpy/typechecker/test_data/inputs/symbol_table",
+            "[REDACTED]",
         ),
         is_stub_file: false,
         is_native_lib: false,
@@ -197,7 +197,7 @@ import_test
 - Declarations:
 --:   Alias {
     declaration_path: DeclarationPath {
-        module_name: ".Users.glyphack.Programming.enderpy.typechecker.test_data.inputs.symbol_table.imports.py",
+        module_name: [REDACTED]",
         node: Node {
             start: 24,
             end: 35,
@@ -232,10 +232,10 @@ import_test
         is_stub_package: false,
         import_type: Local,
         resolved_paths: [
-            "/Users/glyphack/Programming/enderpy/typechecker/test_data/inputs/symbol_table/import_test/__init__.py",
+            "[REDACTED]/import_test/__init__.py",
         ],
         search_path: Some(
-            "/Users/glyphack/Programming/enderpy/typechecker/test_data/inputs/symbol_table",
+            "[REDACTED]",
         ),
         is_stub_file: false,
         is_native_lib: false,
@@ -251,7 +251,7 @@ import_test
         non_stub_import_result: None,
         py_typed_info: None,
         package_directory: Some(
-            "/Users/glyphack/Programming/enderpy/typechecker/test_data/inputs/symbol_table/import_test",
+            "[REDACTED]/import_test",
         ),
     },
 }
@@ -259,7 +259,7 @@ join
 - Declarations:
 --:   Alias {
     declaration_path: DeclarationPath {
-        module_name: ".Users.glyphack.Programming.enderpy.typechecker.test_data.inputs.symbol_table.imports.py",
+        module_name: [REDACTED]",
         node: Node {
             start: 140,
             end: 144,
@@ -319,7 +319,7 @@ os.path
 - Declarations:
 --:   Alias {
     declaration_path: DeclarationPath {
-        module_name: ".Users.glyphack.Programming.enderpy.typechecker.test_data.inputs.symbol_table.imports.py",
+        module_name: [REDACTED]",
         node: Node {
             start: 93,
             end: 100,
@@ -375,7 +375,7 @@ variables
 - Declarations:
 --:   Alias {
     declaration_path: DeclarationPath {
-        module_name: ".Users.glyphack.Programming.enderpy.typechecker.test_data.inputs.symbol_table.imports.py",
+        module_name: [REDACTED]",
         node: Node {
             start: 7,
             end: 16,
@@ -410,10 +410,10 @@ variables
         is_stub_package: false,
         import_type: Local,
         resolved_paths: [
-            "/Users/glyphack/Programming/enderpy/typechecker/test_data/inputs/symbol_table/variables.py",
+            "[REDACTED]/variables.py",
         ],
         search_path: Some(
-            "/Users/glyphack/Programming/enderpy/typechecker/test_data/inputs/symbol_table",
+            "[REDACTED]",
         ),
         is_stub_file: false,
         is_native_lib: false,

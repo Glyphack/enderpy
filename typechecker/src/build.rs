@@ -399,6 +399,8 @@ mod tests {
                 let mut settings = insta::Settings::clone_current();
                 settings.set_snapshot_path("../testdata/output/");
                 settings.set_description(contents);
+                settings.add_filter(r"module_name: .*.typechecker.test_data.inputs.symbol_table..*.py",
+                    "module_name: [REDACTED]");
                 settings.bind(|| {
                     insta::assert_snapshot!(result);
                 });
@@ -441,6 +443,12 @@ mod tests {
             let mut settings = insta::Settings::clone_current();
             settings.set_snapshot_path("../testdata/output/");
             settings.set_description(fs::read_to_string(path).unwrap());
+            settings.add_filter(
+                r"/.*/typechecker/test_data/inputs/symbol_table",
+                "[REDACTED]",
+            );
+                settings.add_filter(r"module_name: .*.typechecker.test_data.inputs.symbol_table..*.py",
+                "module_name: [REDACTED]");
             settings.bind(|| {
                 insta::assert_snapshot!(result);
             });

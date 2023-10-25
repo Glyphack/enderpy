@@ -11,7 +11,7 @@ c
 - Declarations:
 --:   Class {
     declaration_path: DeclarationPath {
-        module_name: ".Users.glyphack.Programming.enderpy.typechecker.test_data.inputs.symbol_table.class_definition.py",
+        module_name: [REDACTED]",
         node: Node {
             start: 0,
             end: 47,
@@ -28,7 +28,7 @@ a
 - Declarations:
 --:   Variable {
     declaration_path: DeclarationPath {
-        module_name: ".Users.glyphack.Programming.enderpy.typechecker.test_data.inputs.symbol_table.class_definition.py",
+        module_name: [REDACTED]",
         node: Node {
             start: 41,
             end: 46,
@@ -53,7 +53,7 @@ self
 - Declarations:
 --:   Paramter {
     declaration_path: DeclarationPath {
-        module_name: ".Users.glyphack.Programming.enderpy.typechecker.test_data.inputs.symbol_table.class_definition.py",
+        module_name: [REDACTED]",
         node: Node {
             start: 26,
             end: 30,
@@ -76,7 +76,7 @@ __init__
 - Declarations:
 --:   Function {
     declaration_path: DeclarationPath {
-        module_name: ".Users.glyphack.Programming.enderpy.typechecker.test_data.inputs.symbol_table.class_definition.py",
+        module_name: [REDACTED]",
         node: Node {
             start: 13,
             end: 47,

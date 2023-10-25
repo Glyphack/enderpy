@@ -11,7 +11,7 @@ a
 - Declarations:
 --:   Variable {
     declaration_path: DeclarationPath {
-        module_name: ".Users.glyphack.Programming.enderpy.typechecker.test_data.inputs.symbol_table.variables.py",
+        module_name: [REDACTED]",
         node: Node {
             start: 0,
             end: 5,

@@ -11,7 +11,7 @@ func
 - Declarations:
 --:   Function {
     declaration_path: DeclarationPath {
-        module_name: ".Users.glyphack.Programming.enderpy.typechecker.test_data.inputs.symbol_table.function_definition.py",
+        module_name: [REDACTED]",
         node: Node {
             start: 0,
             end: 37,
@@ -108,7 +108,7 @@ a
 - Declarations:
 --:   Paramter {
     declaration_path: DeclarationPath {
-        module_name: ".Users.glyphack.Programming.enderpy.typechecker.test_data.inputs.symbol_table.function_definition.py",
+        module_name: [REDACTED]",
         node: Node {
             start: 9,
             end: 10,
@@ -129,7 +129,7 @@ b
 - Declarations:
 --:   Paramter {
     declaration_path: DeclarationPath {
-        module_name: ".Users.glyphack.Programming.enderpy.typechecker.test_data.inputs.symbol_table.function_definition.py",
+        module_name: [REDACTED]",
         node: Node {
             start: 12,
             end: 13,
@@ -150,7 +150,7 @@ c
 - Declarations:
 --:   Paramter {
     declaration_path: DeclarationPath {
-        module_name: ".Users.glyphack.Programming.enderpy.typechecker.test_data.inputs.symbol_table.function_definition.py",
+        module_name: [REDACTED]",
         node: Node {
             start: 19,
             end: 24,
@@ -181,7 +181,7 @@ e
 - Declarations:
 --:   Paramter {
     declaration_path: DeclarationPath {
-        module_name: ".Users.glyphack.Programming.enderpy.typechecker.test_data.inputs.symbol_table.function_definition.py",
+        module_name: [REDACTED]",
         node: Node {
             start: 28,
             end: 29,

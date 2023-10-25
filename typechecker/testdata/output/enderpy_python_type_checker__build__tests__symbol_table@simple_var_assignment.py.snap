@@ -11,7 +11,7 @@ a
 - Declarations:
 --:   Variable {
     declaration_path: DeclarationPath {
-        module_name: ".Users.glyphack.Programming.enderpy.typechecker.test_data.inputs.symbol_table.simple_var_assignment.py",
+        module_name: [REDACTED]",
         node: Node {
             start: 0,
             end: 17,
@@ -36,7 +36,7 @@ b
 - Declarations:
 --:   Variable {
     declaration_path: DeclarationPath {
-        module_name: ".Users.glyphack.Programming.enderpy.typechecker.test_data.inputs.symbol_table.simple_var_assignment.py",
+        module_name: [REDACTED]",
         node: Node {
             start: 18,
             end: 29,
@@ -79,7 +79,7 @@ c
 - Declarations:
 --:   Variable {
     declaration_path: DeclarationPath {
-        module_name: ".Users.glyphack.Programming.enderpy.typechecker.test_data.inputs.symbol_table.simple_var_assignment.py",
+        module_name: [REDACTED]",
         node: Node {
             start: 31,
             end: 41,
@@ -114,7 +114,7 @@ f
 - Declarations:
 --:   Variable {
     declaration_path: DeclarationPath {
-        module_name: ".Users.glyphack.Programming.enderpy.typechecker.test_data.inputs.symbol_table.simple_var_assignment.py",
+        module_name: [REDACTED]",
         node: Node {
             start: 43,
             end: 59,
