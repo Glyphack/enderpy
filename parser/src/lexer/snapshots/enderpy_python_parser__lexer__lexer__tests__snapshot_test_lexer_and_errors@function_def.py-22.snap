@@ -1,87 +1,99 @@
 ---
 source: parser/src/lexer/lexer.rs
-description: "async def a(a, b, c): pass"
+description: "def a[T: U, **V](): pass"
 input_file: parser/test_data/inputs/one_liners/function_def.py
 ---
 [
     Token {
-        kind: Async,
+        kind: Def,
         value: None,
         start: 0,
+        end: 3,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "a",
+        ),
+        start: 4,
         end: 5,
     },
     Token {
-        kind: Def,
+        kind: LeftBrace,
         value: None,
+        start: 5,
+        end: 6,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "T",
+        ),
         start: 6,
-        end: 9,
+        end: 7,
     },
     Token {
-        kind: Identifier,
-        value: Str(
-            "a",
-        ),
-        start: 10,
-        end: 11,
-    },
-    Token {
-        kind: LeftParen,
+        kind: Colon,
         value: None,
-        start: 11,
-        end: 12,
+        start: 7,
+        end: 8,
     },
     Token {
         kind: Identifier,
         value: Str(
-            "a",
+            "U",
         ),
-        start: 12,
-        end: 13,
+        start: 9,
+        end: 10,
     },
     Token {
         kind: Comma,
         value: None,
-        start: 13,
+        start: 10,
+        end: 11,
+    },
+    Token {
+        kind: Pow,
+        value: None,
+        start: 12,
         end: 14,
     },
     Token {
         kind: Identifier,
         value: Str(
-            "b",
+            "V",
         ),
+        start: 14,
+        end: 15,
+    },
+    Token {
+        kind: RightBrace,
+        value: None,
         start: 15,
         end: 16,
     },
     Token {
-        kind: Comma,
+        kind: LeftParen,
         value: None,
         start: 16,
         end: 17,
     },
     Token {
-        kind: Identifier,
-        value: Str(
-            "c",
-        ),
-        start: 18,
-        end: 19,
-    },
-    Token {
         kind: RightParen,
         value: None,
-        start: 19,
-        end: 20,
+        start: 17,
+        end: 18,
     },
     Token {
         kind: Colon,
         value: None,
-        start: 20,
-        end: 21,
+        start: 18,
+        end: 19,
     },
     Token {
         kind: Pass,
         value: None,
-        start: 22,
-        end: 26,
+        start: 20,
+        end: 24,
     },
 ]

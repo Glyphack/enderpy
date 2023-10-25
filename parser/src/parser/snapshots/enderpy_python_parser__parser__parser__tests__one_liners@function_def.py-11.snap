@@ -1,19 +1,19 @@
 ---
 source: parser/src/parser/parser.rs
-description: "async def a(a, b, c): pass\n"
+description: "async def a(a, b, c): pass"
 input_file: parser/test_data/inputs/one_liners/function_def.py
 ---
 Module {
     node: Node {
         start: 0,
-        end: 27,
+        end: 26,
     },
     body: [
         AsyncFunctionDef(
             AsyncFunctionDef {
                 node: Node {
                     start: 0,
-                    end: 27,
+                    end: 26,
                 },
                 name: "a",
                 args: Arguments {
