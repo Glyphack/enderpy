@@ -694,6 +694,11 @@ impl Parser {
         self.expect(Kind::Def)?;
         let name = self.cur_token().value.to_string();
         self.expect(Kind::Identifier)?;
+        let type_params = if self.at(Kind::LeftBrace) {
+            self.parse_type_parameters()?
+        } else {
+            vec![]
+        };
         self.expect(Kind::LeftParen)?;
         let args = self.parse_parameters(false)?;
         self.expect(Kind::RightParen)?;
@@ -715,6 +720,7 @@ impl Parser {
                 decorator_list: decorators,
                 returns: return_type,
                 type_comment: None,
+                type_params,
             }))
         } else {
             Ok(Statement::FunctionDef(FunctionDef {
@@ -723,10 +729,10 @@ impl Parser {
                 args,
                 body,
                 decorator_list: decorators,
-                // TODO: return type
                 returns: return_type,
                 // TODO: type comment
                 type_comment: None,
+                type_params,
             }))
         }
     }
@@ -757,6 +763,11 @@ impl Parser {
         self.expect(Kind::Class)?;
         let name = self.cur_token().value.to_string();
         self.expect(Kind::Identifier)?;
+        let type_params = if self.at(Kind::LeftBrace) {
+            self.parse_type_parameters()?
+        } else {
+            vec![]
+        };
         let (bases, keywords) = if self.eat(Kind::LeftParen) {
             let (bases, keywords) = self.parse_argument_list()?;
             self.expect(Kind::RightParen)?;
@@ -774,6 +785,7 @@ impl Parser {
             keywords,
             body,
             decorator_list: decorators,
+            type_params,
         }))
     }
 
@@ -3058,6 +3070,81 @@ impl Parser {
     fn get_span_on_line(&self, start: usize, end: usize) -> (usize, usize) {
         (start, end)
     }
+
+    // https://docs.python.org/3/reference/compound_stmts.html#type-parameter-lists
+    fn parse_type_parameters(&mut self) -> Result<Vec<TypeParam>, ParsingError> {
+        let node = self.start_node();
+        self.expect(Kind::LeftBrace)?;
+        let mut type_params = vec![];
+        while !self.eat(Kind::RightBrace) {
+            match self.cur_kind() {
+                Kind::Identifier => {
+                    let node = self.start_node();
+                    let name = self.cur_token().value.to_string();
+                    self.bump(Kind::Identifier);
+                    let bound = if self.eat(Kind::Colon) {
+                        Some(self.parse_expression_2()?)
+                    } else {
+                        None
+                    };
+                    type_params.push(TypeParam::TypeVar(TypeVar {
+                        node: self.finish_node(node),
+                        name,
+                        bound,
+                    }));
+                }
+                Kind::Pow => {
+                    // param spec
+                    let node = self.start_node();
+                    self.bump(Kind::Pow);
+                    let name = self.cur_token().value.to_string();
+                    self.bump(Kind::Identifier);
+                    type_params.push(TypeParam::ParamSpec(ParamSpec {
+                        node: self.finish_node(node),
+                        name,
+                    }));
+                },
+                Kind::Mul => {
+                    // type var tuple
+                    let node = self.start_node();
+                    self.bump(Kind::Mul);
+                    let name = self.cur_token().value.to_string();
+                    self.bump(Kind::Identifier);
+                    type_params.push(TypeParam::TypeVarTuple(TypeVarTuple {
+                        node: self.finish_node(node),
+                        name,
+                    }));
+                },
+                _ => {
+                    return Err(self.unexpected_token_new(
+                        node,
+                        vec![
+                            Kind::Identifier,
+                            Kind::Pow,
+                            Kind::Mul,
+                            Kind::RightBracket,
+                        ],
+                        "",
+                    ));
+                }
+            }
+            if !self.at(Kind::RightBrace) {
+                self.expect(Kind::Comma)?;
+            }
+        }
+        if type_params.len() == 0 {
+            return Err(self.unexpected_token_new(
+                node,
+                vec![
+                    Kind::Identifier,
+                    Kind::Pow,
+                    Kind::Mul,
+                ],
+                "Type parameter is empty",
+            ));
+        }
+        Ok(type_params)
+    }
 }
 
 #[cfg(test)]
@@ -3655,32 +3742,6 @@ except *Exception as e:
         ] {
             let mut parser = Parser::new(test_case.to_string(), String::from(""));
             let program = parser.parse();
-            insta::with_settings!({
-                    description => test_case.to_string(), // the template source code
-                    omit_expression => true // do not include the default expression
-                }, {
-                    assert_debug_snapshot!(program);
-            });
-        }
-    }
-
-    #[test]
-    fn test_class_def_statement() {
-        for test_case in &[
-            "class a: pass",
-            "class a():
-    pass",
-            "class a(b, c): pass",
-            "class a(b, *c, **d): pass",
-            "class a(b,
-                c,
-                d): pass",
-            "@decor
-class a: pass",
-        ] {
-            let mut parser = Parser::new(test_case.to_string(), String::from(""));
-            let program = parser.parse();
-
             insta::with_settings!({
                     description => test_case.to_string(), // the template source code
                     omit_expression => true // do not include the default expression

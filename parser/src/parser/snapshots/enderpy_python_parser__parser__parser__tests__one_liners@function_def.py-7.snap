@@ -154,6 +154,7 @@ Module {
                 ],
                 returns: None,
                 type_comment: None,
+                type_params: [],
             },
         ),
     ],

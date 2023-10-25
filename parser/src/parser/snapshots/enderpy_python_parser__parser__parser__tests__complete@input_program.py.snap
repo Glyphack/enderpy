@@ -334,6 +334,7 @@ Module {
                 decorator_list: [],
                 returns: None,
                 type_comment: None,
+                type_params: [],
             },
         ),
         FunctionDef(
@@ -759,6 +760,7 @@ Module {
                     ),
                 ),
                 type_comment: None,
+                type_params: [],
             },
         ),
         FunctionDef(
@@ -1185,6 +1187,7 @@ Module {
                 decorator_list: [],
                 returns: None,
                 type_comment: None,
+                type_params: [],
             },
         ),
         FunctionDef(
@@ -1546,6 +1549,7 @@ Module {
                 decorator_list: [],
                 returns: None,
                 type_comment: None,
+                type_params: [],
             },
         ),
         FunctionDef(
@@ -1886,6 +1890,7 @@ Module {
                 decorator_list: [],
                 returns: None,
                 type_comment: None,
+                type_params: [],
             },
         ),
         FunctionDef(
@@ -4695,6 +4700,7 @@ Module {
                     ),
                 ),
                 type_comment: None,
+                type_params: [],
             },
         ),
         FunctionDef(
@@ -6295,6 +6301,7 @@ Module {
                     ),
                 ),
                 type_comment: None,
+                type_params: [],
             },
         ),
         FunctionDef(
@@ -7032,6 +7039,7 @@ Module {
                 ],
                 returns: None,
                 type_comment: None,
+                type_params: [],
             },
         ),
         FunctionDef(
@@ -7950,6 +7958,7 @@ Module {
                 ],
                 returns: None,
                 type_comment: None,
+                type_params: [],
             },
         ),
         FunctionDef(
@@ -9869,6 +9878,7 @@ Module {
                     ),
                 ),
                 type_comment: None,
+                type_params: [],
             },
         ),
         FunctionDef(
@@ -11293,6 +11303,7 @@ Module {
                 decorator_list: [],
                 returns: None,
                 type_comment: None,
+                type_params: [],
             },
         ),
         FunctionDef(
@@ -12453,6 +12464,7 @@ Module {
                 ],
                 returns: None,
                 type_comment: None,
+                type_params: [],
             },
         ),
         FunctionDef(
@@ -13068,6 +13080,7 @@ Module {
                 decorator_list: [],
                 returns: None,
                 type_comment: None,
+                type_params: [],
             },
         ),
         FunctionDef(
@@ -14309,6 +14322,7 @@ Module {
                 decorator_list: [],
                 returns: None,
                 type_comment: None,
+                type_params: [],
             },
         ),
     ],

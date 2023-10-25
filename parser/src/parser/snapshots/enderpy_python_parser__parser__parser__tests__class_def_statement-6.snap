@@ -38,6 +38,7 @@ Module {
                         },
                     ),
                 ],
+                type_params: [],
             },
         ),
     ],

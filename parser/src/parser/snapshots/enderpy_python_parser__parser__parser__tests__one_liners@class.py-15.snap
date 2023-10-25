@@ -1,0 +1,46 @@
+---
+source: parser/src/parser/parser.rs
+description: "class a[**T]: pass"
+input_file: parser/test_data/inputs/one_liners/class.py
+---
+Module {
+    node: Node {
+        start: 0,
+        end: 18,
+    },
+    body: [
+        ClassDef(
+            ClassDef {
+                node: Node {
+                    start: 0,
+                    end: 18,
+                },
+                name: "a",
+                bases: [],
+                keywords: [],
+                body: [
+                    Pass(
+                        Pass {
+                            node: Node {
+                                start: 14,
+                                end: 18,
+                            },
+                        },
+                    ),
+                ],
+                decorator_list: [],
+                type_params: [
+                    ParamSpec(
+                        ParamSpec {
+                            node: Node {
+                                start: 8,
+                                end: 11,
+                            },
+                            name: "T",
+                        },
+                    ),
+                ],
+            },
+        ),
+    ],
+}

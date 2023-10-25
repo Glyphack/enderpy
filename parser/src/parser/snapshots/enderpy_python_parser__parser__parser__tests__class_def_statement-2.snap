@@ -28,6 +28,7 @@ Module {
                     ),
                 ],
                 decorator_list: [],
+                type_params: [],
             },
         ),
     ],
