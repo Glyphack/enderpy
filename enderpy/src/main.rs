@@ -28,7 +28,7 @@ fn symbols(path: &PathBuf) -> Result<()> {
     let dir_of_path = path.parent().unwrap();
     let python_executable = Some(get_python_executable()?);
     let settings = Settings {
-        debug: false,
+        debug: true,
         root: dir_of_path.to_path_buf(),
         import_discovery: ImportDiscovery { python_executable },
         follow_imports: enderpy_python_type_checker::settings::FollowImports::All,

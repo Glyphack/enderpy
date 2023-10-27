@@ -9,21 +9,147 @@ global scope:
 Symbols:
 c
 - Declarations:
---:   Class { declaration_path: DeclarationPath { module_name: ".Users.glyphack.Programming.enderpy.typechecker.test_data.inputs.symbol_table.class_definition.py", node: Node { start: 0, end: 47 } }, methods: ["__init__"] }
+--:   Class {
+    declaration_path: DeclarationPath {
+        module_name: [REDACTED]",
+        node: Node {
+            start: 0,
+            end: 47,
+        },
+    },
+    methods: [
+        "__init__",
+    ],
+}
 
 all scopes:
 Symbols:
 a
 - Declarations:
---:   Variable { declaration_path: DeclarationPath { module_name: ".Users.glyphack.Programming.enderpy.typechecker.test_data.inputs.symbol_table.class_definition.py", node: Node { start: 41, end: 46 } }, scope: Global, type_annotation: None, inferred_type_source: Some(Constant(Constant { node: Node { start: 45, end: 46 }, value: 1 })), is_constant: false }
+--:   Variable {
+    declaration_path: DeclarationPath {
+        module_name: [REDACTED]",
+        node: Node {
+            start: 41,
+            end: 46,
+        },
+    },
+    scope: Global,
+    type_annotation: None,
+    inferred_type_source: Some(
+        Constant(
+            Constant {
+                node: Node {
+                    start: 45,
+                    end: 46,
+                },
+                value: 1,
+            },
+        ),
+    ),
+    is_constant: false,
+}
 self
 - Declarations:
---:   Paramter { declaration_path: DeclarationPath { module_name: ".Users.glyphack.Programming.enderpy.typechecker.test_data.inputs.symbol_table.class_definition.py", node: Node { start: 26, end: 30 } }, parameter_node: Arg { node: Node { start: 26, end: 30 }, arg: "self", annotation: None }, type_annotation: None, default_value: None }
+--:   Paramter {
+    declaration_path: DeclarationPath {
+        module_name: [REDACTED]",
+        node: Node {
+            start: 26,
+            end: 30,
+        },
+    },
+    parameter_node: Arg {
+        node: Node {
+            start: 26,
+            end: 30,
+        },
+        arg: "self",
+        annotation: None,
+    },
+    type_annotation: None,
+    default_value: None,
+}
 
 Symbols:
 __init__
 - Declarations:
---:   Function { declaration_path: DeclarationPath { module_name: ".Users.glyphack.Programming.enderpy.typechecker.test_data.inputs.symbol_table.class_definition.py", node: Node { start: 13, end: 47 } }, function_node: FunctionDef { node: Node { start: 13, end: 47 }, name: "__init__", args: Arguments { node: Node { start: 26, end: 30 }, posonlyargs: [], args: [Arg { node: Node { start: 26, end: 30 }, arg: "self", annotation: None }], vararg: None, kwonlyargs: [], kw_defaults: [], kwarg: None, defaults: [] }, body: [AssignStatement(Assign { node: Node { start: 41, end: 46 }, targets: [Name(Name { node: Node { start: 41, end: 42 }, id: "a" })], value: Constant(Constant { node: Node { start: 45, end: 46 }, value: 1 }) })], decorator_list: [], returns: None, type_comment: None }, is_method: true, is_generator: false, return_statements: [], yeild_statements: [], raise_statements: [] }
+--:   Function {
+    declaration_path: DeclarationPath {
+        module_name: [REDACTED]",
+        node: Node {
+            start: 13,
+            end: 47,
+        },
+    },
+    function_node: FunctionDef {
+        node: Node {
+            start: 13,
+            end: 47,
+        },
+        name: "__init__",
+        args: Arguments {
+            node: Node {
+                start: 26,
+                end: 30,
+            },
+            posonlyargs: [],
+            args: [
+                Arg {
+                    node: Node {
+                        start: 26,
+                        end: 30,
+                    },
+                    arg: "self",
+                    annotation: None,
+                },
+            ],
+            vararg: None,
+            kwonlyargs: [],
+            kw_defaults: [],
+            kwarg: None,
+            defaults: [],
+        },
+        body: [
+            AssignStatement(
+                Assign {
+                    node: Node {
+                        start: 41,
+                        end: 46,
+                    },
+                    targets: [
+                        Name(
+                            Name {
+                                node: Node {
+                                    start: 41,
+                                    end: 42,
+                                },
+                                id: "a",
+                            },
+                        ),
+                    ],
+                    value: Constant(
+                        Constant {
+                            node: Node {
+                                start: 45,
+                                end: 46,
+                            },
+                            value: 1,
+                        },
+                    ),
+                },
+            ),
+        ],
+        decorator_list: [],
+        returns: None,
+        type_comment: None,
+    },
+    is_method: true,
+    is_generator: false,
+    return_statements: [],
+    yeild_statements: [],
+    raise_statements: [],
+}
 
 -------------------
 

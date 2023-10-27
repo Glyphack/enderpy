@@ -1,15 +1,436 @@
 ---
 source: typechecker/src/build.rs
-description: "import variables\n"
+description: "import variables\nimport import_test\n\nfrom variables import a\nfrom variables import *\n\nimport os.path\n\nfrom os import *\n\nfrom os.path import join\n"
 expression: result
 input_file: typechecker/test_data/inputs/symbol_table/imports.py
 ---
 -------------------
 global scope:
 Symbols:
+*
+- Declarations:
+--:   Alias {
+    declaration_path: DeclarationPath {
+        module_name: [REDACTED]",
+        node: Node {
+            start: 83,
+            end: 82,
+        },
+    },
+    import_from_node: Some(
+        ImportFrom {
+            node: Node {
+                start: 61,
+                end: 84,
+            },
+            module: "variables",
+            names: [
+                Alias {
+                    node: Node {
+                        start: 83,
+                        end: 82,
+                    },
+                    name: "*",
+                    asname: None,
+                },
+            ],
+            level: 0,
+        },
+    ),
+    import_node: None,
+    symbol_name: Some(
+        "*",
+    ),
+    import_result: ImportResult {
+        is_relative: false,
+        is_import_found: true,
+        is_partly_resolved: false,
+        is_namespace_package: false,
+        is_init_file_present: false,
+        is_stub_package: false,
+        import_type: Local,
+        resolved_paths: [
+            "[REDACTED]/variables.py",
+        ],
+        search_path: Some(
+            "[REDACTED]",
+        ),
+        is_stub_file: false,
+        is_native_lib: false,
+        is_stdlib_typeshed_file: false,
+        is_third_party_typeshed_file: false,
+        is_local_typings_file: false,
+        implicit_imports: ImplicitImports(
+            {},
+        ),
+        filtered_implicit_imports: ImplicitImports(
+            {},
+        ),
+        non_stub_import_result: None,
+        py_typed_info: None,
+        package_directory: None,
+    },
+}
+--:   Alias {
+    declaration_path: DeclarationPath {
+        module_name: [REDACTED]",
+        node: Node {
+            start: 117,
+            end: 116,
+        },
+    },
+    import_from_node: Some(
+        ImportFrom {
+            node: Node {
+                start: 102,
+                end: 118,
+            },
+            module: "os",
+            names: [
+                Alias {
+                    node: Node {
+                        start: 117,
+                        end: 116,
+                    },
+                    name: "*",
+                    asname: None,
+                },
+            ],
+            level: 0,
+        },
+    ),
+    import_node: None,
+    symbol_name: Some(
+        "*",
+    ),
+    import_result: ImportResult {
+        is_relative: false,
+        is_import_found: false,
+        is_partly_resolved: false,
+        is_namespace_package: false,
+        is_init_file_present: false,
+        is_stub_package: false,
+        import_type: Local,
+        resolved_paths: [],
+        search_path: None,
+        is_stub_file: false,
+        is_native_lib: false,
+        is_stdlib_typeshed_file: false,
+        is_third_party_typeshed_file: false,
+        is_local_typings_file: false,
+        implicit_imports: ImplicitImports(
+            {},
+        ),
+        filtered_implicit_imports: ImplicitImports(
+            {},
+        ),
+        non_stub_import_result: None,
+        py_typed_info: None,
+        package_directory: None,
+    },
+}
+a
+- Declarations:
+--:   Alias {
+    declaration_path: DeclarationPath {
+        module_name: [REDACTED]",
+        node: Node {
+            start: 59,
+            end: 60,
+        },
+    },
+    import_from_node: Some(
+        ImportFrom {
+            node: Node {
+                start: 37,
+                end: 60,
+            },
+            module: "variables",
+            names: [
+                Alias {
+                    node: Node {
+                        start: 59,
+                        end: 60,
+                    },
+                    name: "a",
+                    asname: None,
+                },
+            ],
+            level: 0,
+        },
+    ),
+    import_node: None,
+    symbol_name: Some(
+        "a",
+    ),
+    import_result: ImportResult {
+        is_relative: false,
+        is_import_found: true,
+        is_partly_resolved: false,
+        is_namespace_package: false,
+        is_init_file_present: false,
+        is_stub_package: false,
+        import_type: Local,
+        resolved_paths: [
+            "[REDACTED]/variables.py",
+        ],
+        search_path: Some(
+            "[REDACTED]",
+        ),
+        is_stub_file: false,
+        is_native_lib: false,
+        is_stdlib_typeshed_file: false,
+        is_third_party_typeshed_file: false,
+        is_local_typings_file: false,
+        implicit_imports: ImplicitImports(
+            {},
+        ),
+        filtered_implicit_imports: ImplicitImports(
+            {},
+        ),
+        non_stub_import_result: None,
+        py_typed_info: None,
+        package_directory: None,
+    },
+}
+import_test
+- Declarations:
+--:   Alias {
+    declaration_path: DeclarationPath {
+        module_name: [REDACTED]",
+        node: Node {
+            start: 24,
+            end: 35,
+        },
+    },
+    import_from_node: None,
+    import_node: Some(
+        Import {
+            node: Node {
+                start: 17,
+                end: 35,
+            },
+            names: [
+                Alias {
+                    node: Node {
+                        start: 24,
+                        end: 35,
+                    },
+                    name: "import_test",
+                    asname: None,
+                },
+            ],
+        },
+    ),
+    symbol_name: None,
+    import_result: ImportResult {
+        is_relative: false,
+        is_import_found: true,
+        is_partly_resolved: false,
+        is_namespace_package: false,
+        is_init_file_present: true,
+        is_stub_package: false,
+        import_type: Local,
+        resolved_paths: [
+            "[REDACTED]/import_test/__init__.py",
+        ],
+        search_path: Some(
+            "[REDACTED]",
+        ),
+        is_stub_file: false,
+        is_native_lib: false,
+        is_stdlib_typeshed_file: false,
+        is_third_party_typeshed_file: false,
+        is_local_typings_file: false,
+        implicit_imports: ImplicitImports(
+            {},
+        ),
+        filtered_implicit_imports: ImplicitImports(
+            {},
+        ),
+        non_stub_import_result: None,
+        py_typed_info: None,
+        package_directory: Some(
+            "[REDACTED]/import_test",
+        ),
+    },
+}
+join
+- Declarations:
+--:   Alias {
+    declaration_path: DeclarationPath {
+        module_name: [REDACTED]",
+        node: Node {
+            start: 140,
+            end: 144,
+        },
+    },
+    import_from_node: Some(
+        ImportFrom {
+            node: Node {
+                start: 120,
+                end: 144,
+            },
+            module: "os.path",
+            names: [
+                Alias {
+                    node: Node {
+                        start: 140,
+                        end: 144,
+                    },
+                    name: "join",
+                    asname: None,
+                },
+            ],
+            level: 0,
+        },
+    ),
+    import_node: None,
+    symbol_name: Some(
+        "join",
+    ),
+    import_result: ImportResult {
+        is_relative: false,
+        is_import_found: false,
+        is_partly_resolved: false,
+        is_namespace_package: false,
+        is_init_file_present: false,
+        is_stub_package: false,
+        import_type: Local,
+        resolved_paths: [],
+        search_path: None,
+        is_stub_file: false,
+        is_native_lib: false,
+        is_stdlib_typeshed_file: false,
+        is_third_party_typeshed_file: false,
+        is_local_typings_file: false,
+        implicit_imports: ImplicitImports(
+            {},
+        ),
+        filtered_implicit_imports: ImplicitImports(
+            {},
+        ),
+        non_stub_import_result: None,
+        py_typed_info: None,
+        package_directory: None,
+    },
+}
+os.path
+- Declarations:
+--:   Alias {
+    declaration_path: DeclarationPath {
+        module_name: [REDACTED]",
+        node: Node {
+            start: 93,
+            end: 100,
+        },
+    },
+    import_from_node: None,
+    import_node: Some(
+        Import {
+            node: Node {
+                start: 86,
+                end: 100,
+            },
+            names: [
+                Alias {
+                    node: Node {
+                        start: 93,
+                        end: 100,
+                    },
+                    name: "os.path",
+                    asname: None,
+                },
+            ],
+        },
+    ),
+    symbol_name: None,
+    import_result: ImportResult {
+        is_relative: false,
+        is_import_found: false,
+        is_partly_resolved: false,
+        is_namespace_package: false,
+        is_init_file_present: false,
+        is_stub_package: false,
+        import_type: Local,
+        resolved_paths: [],
+        search_path: None,
+        is_stub_file: false,
+        is_native_lib: false,
+        is_stdlib_typeshed_file: false,
+        is_third_party_typeshed_file: false,
+        is_local_typings_file: false,
+        implicit_imports: ImplicitImports(
+            {},
+        ),
+        filtered_implicit_imports: ImplicitImports(
+            {},
+        ),
+        non_stub_import_result: None,
+        py_typed_info: None,
+        package_directory: None,
+    },
+}
 variables
 - Declarations:
---:   Alias { declaration_path: DeclarationPath { module_name: ".Users.glyphack.Programming.enderpy.typechecker.test_data.inputs.symbol_table.imports.py", node: Node { start: 7, end: 16 } }, alias_node: Alias { node: Node { start: 7, end: 16 }, name: "variables", asname: None }, import_result: ImportResult { is_relative: false, is_import_found: false, is_partly_resolved: false, is_namespace_package: false, is_init_file_present: false, is_stub_package: false, import_type: Local, resolved_paths: [], search_path: None, is_stub_file: false, is_native_lib: false, is_stdlib_typeshed_file: false, is_third_party_typeshed_file: false, is_local_typings_file: false, implicit_imports: ImplicitImports({}), filtered_implicit_imports: ImplicitImports({}), non_stub_import_result: None, py_typed_info: None, package_directory: None } }
+--:   Alias {
+    declaration_path: DeclarationPath {
+        module_name: [REDACTED]",
+        node: Node {
+            start: 7,
+            end: 16,
+        },
+    },
+    import_from_node: None,
+    import_node: Some(
+        Import {
+            node: Node {
+                start: 0,
+                end: 16,
+            },
+            names: [
+                Alias {
+                    node: Node {
+                        start: 7,
+                        end: 16,
+                    },
+                    name: "variables",
+                    asname: None,
+                },
+            ],
+        },
+    ),
+    symbol_name: None,
+    import_result: ImportResult {
+        is_relative: false,
+        is_import_found: true,
+        is_partly_resolved: false,
+        is_namespace_package: false,
+        is_init_file_present: false,
+        is_stub_package: false,
+        import_type: Local,
+        resolved_paths: [
+            "[REDACTED]/variables.py",
+        ],
+        search_path: Some(
+            "[REDACTED]",
+        ),
+        is_stub_file: false,
+        is_native_lib: false,
+        is_stdlib_typeshed_file: false,
+        is_third_party_typeshed_file: false,
+        is_local_typings_file: false,
+        implicit_imports: ImplicitImports(
+            {},
+        ),
+        filtered_implicit_imports: ImplicitImports(
+            {},
+        ),
+        non_stub_import_result: None,
+        py_typed_info: None,
+        package_directory: None,
+    },
+}
 
 all scopes:
 -------------------

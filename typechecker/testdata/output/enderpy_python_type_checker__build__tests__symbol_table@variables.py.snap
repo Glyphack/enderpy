@@ -9,7 +9,29 @@ global scope:
 Symbols:
 a
 - Declarations:
---:   Variable { declaration_path: DeclarationPath { module_name: ".Users.glyphack.Programming.enderpy.typechecker.test_data.inputs.symbol_table.variables.py", node: Node { start: 0, end: 5 } }, scope: Global, type_annotation: None, inferred_type_source: Some(Constant(Constant { node: Node { start: 4, end: 5 }, value: 1 })), is_constant: false }
+--:   Variable {
+    declaration_path: DeclarationPath {
+        module_name: [REDACTED]",
+        node: Node {
+            start: 0,
+            end: 5,
+        },
+    },
+    scope: Global,
+    type_annotation: None,
+    inferred_type_source: Some(
+        Constant(
+            Constant {
+                node: Node {
+                    start: 4,
+                    end: 5,
+                },
+                value: 1,
+            },
+        ),
+    ),
+    is_constant: false,
+}
 
 all scopes:
 -------------------
