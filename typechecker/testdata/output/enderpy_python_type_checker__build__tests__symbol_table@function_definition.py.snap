@@ -9,7 +9,6 @@ global scope:
 Symbols:
 func
 - Declarations:
-<<<<<<< HEAD
 --:   Function {
     declaration_path: DeclarationPath {
         module_name: [REDACTED]",
@@ -95,6 +94,7 @@ func
         decorator_list: [],
         returns: None,
         type_comment: None,
+        type_params: [],
     },
     is_method: false,
     is_generator: false,
@@ -102,9 +102,6 @@ func
     yeild_statements: [],
     raise_statements: [],
 }
-=======
---:   Function { declaration_path: DeclarationPath { module_name: ".Users.glyphack.Programming.enderpy.typechecker.test_data.inputs.symbol_table.function_definition.py", node: Node { start: 0, end: 37 } }, function_node: FunctionDef { node: Node { start: 0, end: 37 }, name: "func", args: Arguments { node: Node { start: 9, end: 29 }, posonlyargs: [Arg { node: Node { start: 9, end: 10 }, arg: "a", annotation: None }, Arg { node: Node { start: 12, end: 13 }, arg: "b", annotation: None }], args: [Arg { node: Node { start: 19, end: 24 }, arg: "c", annotation: None }], vararg: None, kwonlyargs: [], kw_defaults: [], kwarg: Some(Arg { node: Node { start: 28, end: 29 }, arg: "e", annotation: None }), defaults: [Constant(Constant { node: Node { start: 23, end: 24 }, value: 2 })] }, body: [Pass(Pass { node: Node { start: 32, end: 36 } })], decorator_list: [], returns: None, type_comment: None, type_params: [] }, is_method: false, is_generator: false, return_statements: [], yeild_statements: [], raise_statements: [] }
->>>>>>> d6d917b (Check for type alias in ast visitors)
 
 all scopes:
 Symbols:

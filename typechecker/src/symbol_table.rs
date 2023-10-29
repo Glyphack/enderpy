@@ -293,12 +293,12 @@ impl std::fmt::Display for SymbolTableScope {
 impl std::fmt::Display for Declaration {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Declaration::Variable(v) => write!(f, "{:?}", v),
-            Declaration::Function(fun) => write!(f, "{:?}", fun),
-            Declaration::Class(c) => write!(f, "{:?}", c),
-            Declaration::Parameter(p) => write!(f, "{:?}", p),
-            Declaration::Alias(a) => write!(f, "{:?}", a),
-            Declaration::TypeParameter(t) => write!(f, "{:?}", t),
+            Declaration::Variable(v) => write!(f, "{:#?}", v),
+            Declaration::Function(fun) => write!(f, "{:#?}", fun),
+            Declaration::Class(c) => write!(f, "{:#?}", c),
+            Declaration::Parameter(p) => write!(f, "{:#?}", p),
+            Declaration::Alias(a) => write!(f, "{:#?}", a),
+            Declaration::TypeParameter(t) => write!(f, "{:#?}", t),
         }
     }
 }
