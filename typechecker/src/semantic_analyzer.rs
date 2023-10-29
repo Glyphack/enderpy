@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use enderpy_python_parser as parser;
 use enderpy_python_parser::ast::Expression;
 
-use parser::ast::Statement;
+use parser::ast::{Statement, GetNode};
 
 use crate::{
     ast_visitor::TraversalVisitor,
@@ -234,6 +234,7 @@ impl TraversalVisitor for SemanticAnalyzer {
             Statement::AsyncForStatement(f) => self.visit_async_for(f),
             Statement::AsyncWithStatement(w) => self.visit_async_with(w),
             Statement::AsyncFunctionDef(f) => self.visit_async_function_def(f),
+            Statement::TypeAlias(a) => self.visit_type_alias(a),
         }
     }
 
@@ -436,6 +437,20 @@ impl TraversalVisitor for SemanticAnalyzer {
                 _ => (),
             }
         }
+
+        for type_parameter in &f.type_params {
+            let declaration_path = DeclarationPath {
+                module_name: self.file.module_name().clone(),
+                node: type_parameter.get_node(),
+            };
+            self.create_symbol(
+                type_parameter.get_name(),
+                Declaration::TypeParameter(Box::new(crate::symbol_table::TypeParameter {
+                    declaration_path,
+                    type_parameter_node: type_parameter.clone(),
+                })),
+            );
+        }
         self.globals.exit_scope();
 
         let function_declaration = Declaration::Function(Box::new(Function {
@@ -461,6 +476,20 @@ impl TraversalVisitor for SemanticAnalyzer {
             SymbolTableType::Class,
             c.name.clone(),
         ));
+
+        for type_parameter in &c.type_params {
+            let declaration_path = DeclarationPath {
+                module_name: self.file.module_name().clone(),
+                node: type_parameter.get_node(),
+            };
+            self.create_symbol(
+                type_parameter.get_name(),
+                Declaration::TypeParameter(Box::new(crate::symbol_table::TypeParameter {
+                    declaration_path,
+                    type_parameter_node: type_parameter.clone(),
+                })),
+            );
+        }
         let mut methods = vec![];
         for stmt in &c.body {
             match stmt {
@@ -471,6 +500,7 @@ impl TraversalVisitor for SemanticAnalyzer {
             }
             self.visit_stmt(stmt);
         }
+
         self.globals.exit_scope();
 
         let class_declaration = Declaration::Class(Box::new(Class {

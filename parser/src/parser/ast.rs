@@ -69,6 +69,7 @@ pub enum Statement {
     AsyncFunctionDef(AsyncFunctionDef),
     ClassDef(ClassDef),
     Match(Match),
+    TypeAlias(TypeAlias),
 }
 
 impl GetNode for Statement {
@@ -101,6 +102,7 @@ impl GetNode for Statement {
             Statement::AsyncFunctionDef(s) => s.node,
             Statement::ClassDef(s) => s.node,
             Statement::Match(s) => s.node,
+            Statement::TypeAlias(s) => s.node,
         }
     }
 }
@@ -764,6 +766,7 @@ pub struct FunctionDef {
     pub decorator_list: Vec<Expression>,
     pub returns: Option<Box<Expression>>,
     pub type_comment: Option<String>,
+    pub type_params: Vec<TypeParam>,
 }
 
 // https://docs.python.org/3/library/ast.html#ast.AsyncFunctionDef
@@ -776,6 +779,7 @@ pub struct AsyncFunctionDef {
     pub decorator_list: Vec<Expression>,
     pub returns: Option<Box<Expression>>,
     pub type_comment: Option<String>,
+    pub type_params: Vec<TypeParam>,
 }
 
 // https://docs.python.org/3/library/ast.html#ast.ClassDef
@@ -787,6 +791,7 @@ pub struct ClassDef {
     pub keywords: Vec<Keyword>,
     pub body: Vec<Statement>,
     pub decorator_list: Vec<Expression>,
+    pub type_params: Vec<TypeParam>,
 }
 
 // https://docs.python.org/3/library/ast.html#ast.Match
@@ -846,4 +851,64 @@ pub struct MatchClass {
     pub patterns: Vec<MatchPattern>,
     pub kwd_attrs: Vec<String>,
     pub kwd_patterns: Vec<MatchPattern>,
+}
+
+// https://docs.python.org/3/library/ast.html#ast-type-params
+#[derive(Debug, Clone)]
+pub enum TypeParam {
+    TypeVar(TypeVar),
+    ParamSpec(ParamSpec),
+    TypeVarTuple(TypeVarTuple),
+}
+
+impl GetNode for TypeParam {
+    fn get_node(&self) -> Node {
+        match self {
+            TypeParam::TypeVar(t) => t.node,
+            TypeParam::ParamSpec(p) => p.node,
+            TypeParam::TypeVarTuple(t) => t.node,
+        }
+    }
+}
+
+impl TypeParam {
+    pub fn get_name(&self) -> String {
+        match self {
+            TypeParam::TypeVar(t) => t.name.clone(),
+            TypeParam::ParamSpec(p) => p.name.clone(),
+            TypeParam::TypeVarTuple(t) => t.name.clone(),
+        }
+    }
+}
+
+
+// https://docs.python.org/3/library/ast.html#ast.TypeVar
+#[derive(Debug, Clone)]
+pub struct TypeVar {
+    pub node: Node,
+    pub name: String,
+    pub bound: Option<Expression>,
+}
+
+// https://docs.python.org/3/library/ast.html#ast.ParamSpec
+#[derive(Debug, Clone)]
+pub struct ParamSpec {
+    pub node: Node,
+    pub name: String,
+}
+
+// https://docs.python.org/3/library/ast.html#ast.TypeVarTuple
+#[derive(Debug, Clone)]
+pub struct TypeVarTuple {
+    pub node: Node,
+    pub name: String,
+}
+
+// https://docs.python.org/3/library/ast.html#ast.TypeAlias
+#[derive(Debug, Clone)]
+pub struct TypeAlias {
+    pub node: Node,
+    pub name: String,
+    pub type_params: Vec<TypeParam>,
+    pub value: Box<Expression>,
 }

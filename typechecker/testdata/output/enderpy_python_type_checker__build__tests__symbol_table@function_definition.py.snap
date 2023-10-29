@@ -94,6 +94,7 @@ func
         decorator_list: [],
         returns: None,
         type_comment: None,
+        type_params: [],
     },
     is_method: false,
     is_generator: false,

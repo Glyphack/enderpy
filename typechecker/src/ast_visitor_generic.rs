@@ -37,6 +37,7 @@ pub trait TraversalVisitorImmutGeneric<T> {
             Statement::AsyncForStatement(f) => self.visit_async_for(f),
             Statement::AsyncWithStatement(w) => self.visit_async_with(w),
             Statement::AsyncFunctionDef(f) => self.visit_async_function_def(f),
+            Statement::TypeAlias(a) => self.visit_type_alias(a),
         }
     }
     fn visit_expr(&self, e: &Expression) -> T {
@@ -257,6 +258,10 @@ pub trait TraversalVisitorImmutGeneric<T> {
     }
 
     fn visit_nonlocal(&self, _n: &Nonlocal) -> T {
+        todo!()
+    }
+
+    fn visit_type_alias(&self, _a: &TypeAlias) -> T {
         todo!()
     }
 }

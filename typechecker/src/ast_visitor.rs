@@ -36,6 +36,7 @@ pub trait TraversalVisitor {
             Statement::AsyncForStatement(f) => self.visit_async_for(f),
             Statement::AsyncWithStatement(w) => self.visit_async_with(w),
             Statement::AsyncFunctionDef(f) => self.visit_async_function_def(f),
+            Statement::TypeAlias(t) => self.visit_type_alias(t),
         }
     }
     fn visit_expr(&mut self, e: &Expression) {
@@ -359,6 +360,10 @@ pub trait TraversalVisitor {
     }
 
     fn visit_nonlocal(&mut self, _n: &Nonlocal) {
+        todo!()
+    }
+
+    fn visit_type_alias(&mut self, _t: &TypeAlias) {
         todo!()
     }
 }

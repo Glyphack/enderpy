@@ -1,6 +1,6 @@
 ---
 source: parser/src/lexer/lexer.rs
-description: "async def a(a, b, c): pass\n"
+description: "async def a(a, b, c): pass"
 input_file: parser/test_data/inputs/one_liners/function_def.py
 ---
 [
@@ -83,11 +83,5 @@ input_file: parser/test_data/inputs/one_liners/function_def.py
         value: None,
         start: 22,
         end: 26,
-    },
-    Token {
-        kind: NewLine,
-        value: None,
-        start: 26,
-        end: 27,
     },
 ]

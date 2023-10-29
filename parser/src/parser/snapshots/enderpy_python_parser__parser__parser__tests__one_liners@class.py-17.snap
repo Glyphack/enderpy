@@ -1,0 +1,66 @@
+---
+source: parser/src/parser/parser.rs
+description: "class a[T: U, **V]: pass"
+input_file: parser/test_data/inputs/one_liners/class.py
+---
+Module {
+    node: Node {
+        start: 0,
+        end: 24,
+    },
+    body: [
+        ClassDef(
+            ClassDef {
+                node: Node {
+                    start: 0,
+                    end: 24,
+                },
+                name: "a",
+                bases: [],
+                keywords: [],
+                body: [
+                    Pass(
+                        Pass {
+                            node: Node {
+                                start: 20,
+                                end: 24,
+                            },
+                        },
+                    ),
+                ],
+                decorator_list: [],
+                type_params: [
+                    TypeVar(
+                        TypeVar {
+                            node: Node {
+                                start: 8,
+                                end: 12,
+                            },
+                            name: "T",
+                            bound: Some(
+                                Name(
+                                    Name {
+                                        node: Node {
+                                            start: 11,
+                                            end: 12,
+                                        },
+                                        id: "U",
+                                    },
+                                ),
+                            ),
+                        },
+                    ),
+                    ParamSpec(
+                        ParamSpec {
+                            node: Node {
+                                start: 14,
+                                end: 17,
+                            },
+                            name: "V",
+                        },
+                    ),
+                ],
+            },
+        ),
+    ],
+}

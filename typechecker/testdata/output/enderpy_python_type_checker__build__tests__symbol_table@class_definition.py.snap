@@ -143,6 +143,7 @@ __init__
         decorator_list: [],
         returns: None,
         type_comment: None,
+        type_params: [],
     },
     is_method: true,
     is_generator: false,

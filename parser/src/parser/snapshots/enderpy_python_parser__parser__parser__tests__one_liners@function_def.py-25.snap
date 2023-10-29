@@ -1,0 +1,88 @@
+---
+source: parser/src/parser/parser.rs
+description: "def a[T: U, *V, **W](): pass\n"
+input_file: parser/test_data/inputs/one_liners/function_def.py
+---
+Module {
+    node: Node {
+        start: 0,
+        end: 29,
+    },
+    body: [
+        FunctionDef(
+            FunctionDef {
+                node: Node {
+                    start: 0,
+                    end: 29,
+                },
+                name: "a",
+                args: Arguments {
+                    node: Node {
+                        start: 21,
+                        end: 21,
+                    },
+                    posonlyargs: [],
+                    args: [],
+                    vararg: None,
+                    kwonlyargs: [],
+                    kw_defaults: [],
+                    kwarg: None,
+                    defaults: [],
+                },
+                body: [
+                    Pass(
+                        Pass {
+                            node: Node {
+                                start: 24,
+                                end: 28,
+                            },
+                        },
+                    ),
+                ],
+                decorator_list: [],
+                returns: None,
+                type_comment: None,
+                type_params: [
+                    TypeVar(
+                        TypeVar {
+                            node: Node {
+                                start: 6,
+                                end: 10,
+                            },
+                            name: "T",
+                            bound: Some(
+                                Name(
+                                    Name {
+                                        node: Node {
+                                            start: 9,
+                                            end: 10,
+                                        },
+                                        id: "U",
+                                    },
+                                ),
+                            ),
+                        },
+                    ),
+                    TypeVarTuple(
+                        TypeVarTuple {
+                            node: Node {
+                                start: 12,
+                                end: 14,
+                            },
+                            name: "V",
+                        },
+                    ),
+                    ParamSpec(
+                        ParamSpec {
+                            node: Node {
+                                start: 16,
+                                end: 19,
+                            },
+                            name: "W",
+                        },
+                    ),
+                ],
+            },
+        ),
+    ],
+}

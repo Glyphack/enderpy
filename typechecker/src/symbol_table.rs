@@ -62,7 +62,9 @@ pub enum Declaration {
     Alias(Box<Alias>),
 
     Parameter(Box<Paramter>),
-    // TypeParameterDeclaration represents a type parameter in a generic class or function. It models type parameters declared on classes and functions like T in List[T].
+    // TypeParameterDeclaration represents a type parameter in a generic class or function.
+    // It models type parameters declared on classes and functions like T in List[T].
+    TypeParameter(Box<TypeParameter>),
 }
 
 impl Declaration {
@@ -73,6 +75,7 @@ impl Declaration {
             Declaration::Class(c) => &c.declaration_path,
             Declaration::Parameter(p) => &p.declaration_path,
             Declaration::Alias(a) => &a.declaration_path,
+            Declaration::TypeParameter(t) => &t.declaration_path,
         }
     }
 }
@@ -118,6 +121,12 @@ pub struct Paramter {
     pub parameter_node: ast::Arg,
     pub type_annotation: Option<ast::Expression>,
     pub default_value: Option<ast::Expression>,
+}
+
+#[derive(Debug, Clone)]
+pub struct TypeParameter {
+    pub declaration_path: DeclarationPath,
+    pub type_parameter_node: ast::TypeParam,
 }
 
 #[derive(Debug, Clone)]
@@ -289,6 +298,7 @@ impl std::fmt::Display for Declaration {
             Declaration::Class(c) => write!(f, "{:#?}", c),
             Declaration::Parameter(p) => write!(f, "{:#?}", p),
             Declaration::Alias(a) => write!(f, "{:#?}", a),
+            Declaration::TypeParameter(t) => write!(f, "{:#?}", t),
         }
     }
 }

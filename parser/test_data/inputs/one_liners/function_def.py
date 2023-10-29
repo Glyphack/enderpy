@@ -25,3 +25,31 @@ async def a():
     pass
 
 async def a(a, b, c): pass
+
+def a[T](): pass
+
+def a[T, U](): pass
+
+def a[T: U](): pass
+
+def a[T: U, V: W](): pass
+
+def a[*T](): pass
+
+def a[T, *U](): pass
+
+def a[T: U, *V](): pass
+
+def a[T: U, V: W, *X](): pass
+
+def a[**T](): pass
+
+def a[T, **U](): pass
+
+def a[T: U, **V](): pass
+
+def a[T: U, V: W, **X](): pass
+
+def a[T, *U, **V](): pass
+
+def a[T: U, *V, **W](): pass

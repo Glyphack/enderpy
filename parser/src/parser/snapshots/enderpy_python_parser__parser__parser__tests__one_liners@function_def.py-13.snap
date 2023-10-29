@@ -1,0 +1,70 @@
+---
+source: parser/src/parser/parser.rs
+description: "def a[T, U](): pass"
+input_file: parser/test_data/inputs/one_liners/function_def.py
+---
+Module {
+    node: Node {
+        start: 0,
+        end: 19,
+    },
+    body: [
+        FunctionDef(
+            FunctionDef {
+                node: Node {
+                    start: 0,
+                    end: 19,
+                },
+                name: "a",
+                args: Arguments {
+                    node: Node {
+                        start: 12,
+                        end: 12,
+                    },
+                    posonlyargs: [],
+                    args: [],
+                    vararg: None,
+                    kwonlyargs: [],
+                    kw_defaults: [],
+                    kwarg: None,
+                    defaults: [],
+                },
+                body: [
+                    Pass(
+                        Pass {
+                            node: Node {
+                                start: 15,
+                                end: 19,
+                            },
+                        },
+                    ),
+                ],
+                decorator_list: [],
+                returns: None,
+                type_comment: None,
+                type_params: [
+                    TypeVar(
+                        TypeVar {
+                            node: Node {
+                                start: 6,
+                                end: 7,
+                            },
+                            name: "T",
+                            bound: None,
+                        },
+                    ),
+                    TypeVar(
+                        TypeVar {
+                            node: Node {
+                                start: 9,
+                                end: 10,
+                            },
+                            name: "U",
+                            bound: None,
+                        },
+                    ),
+                ],
+            },
+        ),
+    ],
+}

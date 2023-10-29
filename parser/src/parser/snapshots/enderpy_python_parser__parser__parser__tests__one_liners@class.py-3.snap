@@ -1,0 +1,55 @@
+---
+source: parser/src/parser/parser.rs
+description: "class a(b, c): pass"
+input_file: parser/test_data/inputs/one_liners/class.py
+---
+Module {
+    node: Node {
+        start: 0,
+        end: 19,
+    },
+    body: [
+        ClassDef(
+            ClassDef {
+                node: Node {
+                    start: 0,
+                    end: 19,
+                },
+                name: "a",
+                bases: [
+                    Name(
+                        Name {
+                            node: Node {
+                                start: 8,
+                                end: 9,
+                            },
+                            id: "b",
+                        },
+                    ),
+                    Name(
+                        Name {
+                            node: Node {
+                                start: 11,
+                                end: 12,
+                            },
+                            id: "c",
+                        },
+                    ),
+                ],
+                keywords: [],
+                body: [
+                    Pass(
+                        Pass {
+                            node: Node {
+                                start: 15,
+                                end: 19,
+                            },
+                        },
+                    ),
+                ],
+                decorator_list: [],
+                type_params: [],
+            },
+        ),
+    ],
+}
