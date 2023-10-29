@@ -861,6 +861,26 @@ pub enum TypeParam {
     TypeVarTuple(TypeVarTuple),
 }
 
+impl GetNode for TypeParam {
+    fn get_node(&self) -> Node {
+        match self {
+            TypeParam::TypeVar(t) => t.node,
+            TypeParam::ParamSpec(p) => p.node,
+            TypeParam::TypeVarTuple(t) => t.node,
+        }
+    }
+}
+
+impl TypeParam {
+    pub fn get_name(&self) -> String {
+        match self {
+            TypeParam::TypeVar(t) => t.name.clone(),
+            TypeParam::ParamSpec(p) => p.name.clone(),
+            TypeParam::TypeVarTuple(t) => t.name.clone(),
+        }
+    }
+}
+
 
 // https://docs.python.org/3/library/ast.html#ast.TypeVar
 #[derive(Debug, Clone)]

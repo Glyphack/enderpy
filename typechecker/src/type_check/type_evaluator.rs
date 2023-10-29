@@ -225,6 +225,7 @@ impl TypeEvaluator {
             Declaration::Class(_) => Ok(PythonType::Unknown),
             Declaration::Parameter(_) => Ok(PythonType::Unknown),
             Declaration::Alias(_) => Ok(PythonType::Unknown),
+            Declaration::TypeParameter(_) => Ok(PythonType::Unknown),
         }
     }
 
