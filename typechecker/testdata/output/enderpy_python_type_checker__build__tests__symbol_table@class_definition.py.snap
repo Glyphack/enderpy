@@ -74,6 +74,7 @@ self
 Symbols:
 __init__
 - Declarations:
+<<<<<<< HEAD
 --:   Function {
     declaration_path: DeclarationPath {
         module_name: [REDACTED]",
@@ -150,6 +151,9 @@ __init__
     yeild_statements: [],
     raise_statements: [],
 }
+=======
+--:   Function { declaration_path: DeclarationPath { module_name: ".Users.glyphack.Programming.enderpy.typechecker.test_data.inputs.symbol_table.class_definition.py", node: Node { start: 13, end: 47 } }, function_node: FunctionDef { node: Node { start: 13, end: 47 }, name: "__init__", args: Arguments { node: Node { start: 26, end: 30 }, posonlyargs: [], args: [Arg { node: Node { start: 26, end: 30 }, arg: "self", annotation: None }], vararg: None, kwonlyargs: [], kw_defaults: [], kwarg: None, defaults: [] }, body: [AssignStatement(Assign { node: Node { start: 41, end: 46 }, targets: [Name(Name { node: Node { start: 41, end: 42 }, id: "a" })], value: Constant(Constant { node: Node { start: 45, end: 46 }, value: 1 }) })], decorator_list: [], returns: None, type_comment: None, type_params: [] }, is_method: true, is_generator: false, return_statements: [], yeild_statements: [], raise_statements: [] }
+>>>>>>> d6d917b (Check for type alias in ast visitors)
 
 -------------------
 

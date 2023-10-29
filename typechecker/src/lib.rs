@@ -1,6 +1,5 @@
 mod ast_visitor;
 mod ast_visitor_generic;
-mod ast_visitor_immut;
 mod nodes;
 mod ruff_python_import_resolver;
 mod semanal_utils;

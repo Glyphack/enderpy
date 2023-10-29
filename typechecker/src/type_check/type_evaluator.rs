@@ -281,6 +281,7 @@ impl TraversalVisitorImmutGeneric<PythonType> for TypeEvaluator {
             Statement::AsyncForStatement(f) => self.visit_async_for(f),
             Statement::AsyncWithStatement(w) => self.visit_async_with(w),
             Statement::AsyncFunctionDef(f) => self.visit_async_function_def(f),
+            Statement::TypeAlias(a) => self.visit_type_alias(a),
         }
     }
 
