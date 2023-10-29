@@ -465,6 +465,10 @@ impl TraversalVisitor for SemanticAnalyzer {
         self.create_symbol(f.name.clone(), function_declaration);
     }
 
+    fn visit_type_alias(&mut self, _t: &parser::ast::TypeAlias) {
+        todo!() 
+    }
+
     fn visit_async_function_def(&mut self, _f: &parser::ast::AsyncFunctionDef) {}
 
     fn visit_class_def(&mut self, c: &parser::ast::ClassDef) {

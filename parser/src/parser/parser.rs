@@ -323,7 +323,9 @@ impl Parser {
             Kind::Global => self.parse_global_statement(),
             Kind::Nonlocal => self.parse_nonlocal_statement(),
             _ => {
-                if self.cur_kind() == Kind::Indent {
+                if self.cur_kind() == Kind::Identifier && self.cur_token().value.to_string() == "type" {
+                    self.parse_type_alias_statement()
+                } else if self.cur_kind() == Kind::Indent {
                     let node = self.start_node();
                     let kind = self.cur_kind();
                     return Err(self.unexpected_token_new(
@@ -3144,6 +3146,28 @@ impl Parser {
             ));
         }
         Ok(type_params)
+    }
+
+    fn parse_type_alias_statement(&mut self) -> std::result::Result<Statement, ParsingError> {
+        let node = self.start_node();
+        self.expect(Kind::Identifier)?;
+        let name = self.cur_token().value.to_string();
+        self.expect(Kind::Identifier)?;
+        let type_params = if self.eat(Kind::LeftBrace) {
+            let type_params = self.parse_type_parameters()?;
+            self.expect(Kind::RightBrace)?;
+            type_params
+        } else {
+            vec![]
+        };
+        self.expect(Kind::Assign)?;
+        let value = self.parse_expression_2()?;
+        Ok(Statement::TypeAlias(TypeAlias {
+            node: self.finish_node(node),
+            name,
+            type_params,
+            value: Box::new(value),
+        }))
     }
 }
 
