@@ -2,9 +2,8 @@ use enderpy_python_parser::ast::{self, Node};
 use std::{collections::HashMap, fmt::Display};
 
 use crate::{
-    nodes::ImportKinds,
     ruff_python_import_resolver::{
-        import_result::ImportResult, module_descriptor::ImportModuleDescriptor,
+        import_result::ImportResult,
     },
 };
 

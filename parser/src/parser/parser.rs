@@ -3131,7 +3131,7 @@ impl Parser {
                 self.expect(Kind::Comma)?;
             }
         }
-        if type_params.len() == 0 {
+        if type_params.is_empty() {
             return Err(self.unexpected_token_new(
                 node,
                 vec![Kind::Identifier, Kind::Pow, Kind::Mul],

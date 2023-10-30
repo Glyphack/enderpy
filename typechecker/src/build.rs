@@ -180,7 +180,7 @@ impl BuildManager {
         let mut new_imports = vec![];
         let mut discovered_files = vec![];
         for state in current_files {
-            let resolved_imports = self.resolve_file_imports(&state);
+            let resolved_imports = self.resolve_file_imports(state);
             // check if the resolved_imports are not in the current files and add them to the new imports
             for (_, state) in resolved_imports {
                 if !self.modules.contains_key(&state.file.module_name()) {
