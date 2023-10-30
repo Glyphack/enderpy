@@ -503,9 +503,37 @@ impl TraversalVisitor for SemanticAnalyzer {
             );
         }
         let mut methods = vec![];
+        let mut attributes = HashMap::new();
         for stmt in &c.body {
             match stmt {
                 parser::ast::Statement::FunctionDef(f) => {
+                    if f.name == "__init__" {
+                        for stmt in &f.body {
+                            match stmt {
+                                parser::ast::Statement::AssignStatement(assign) => {
+                                    for target in &assign.targets {
+                                        match target {
+                                            parser::ast::Expression::Attribute(attr) => {
+                                                match *attr.value {
+                                                    parser::ast::Expression::Name(ref n) => {
+                                                        if n.id == "self" {
+                                                            attributes.insert(
+                                                                attr.attr.clone(),
+                                                                assign.value.clone(),
+                                                            );
+                                                        }
+                                                    }
+                                                    _ => (),
+                                                }
+                                            }
+                                            _ => (),
+                                        }
+                                    }
+                                }
+                                _ => (),
+                            }
+                        }
+                    }
                     methods.push(f.name.clone());
                 }
                 _ => (),
@@ -517,6 +545,7 @@ impl TraversalVisitor for SemanticAnalyzer {
 
         let class_declaration = Declaration::Class(Class {
             declaration_path,
+            attributes,
             methods,
         });
         self.create_symbol(c.name.clone(), class_declaration);
