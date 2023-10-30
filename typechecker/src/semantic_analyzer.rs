@@ -32,14 +32,13 @@ pub struct SemanticAnalyzer {
     // TODO: Replace errors with another type
     errors: Vec<String>,
 
-    // TOD: Not needed?
     scope: SymbolScope,
 }
 
 #[allow(unused)]
 impl SemanticAnalyzer {
     pub fn new(file: EnderpyFile, imports: HashMap<String, ImportResult>) -> Self {
-        let globals = SymbolTable::new(crate::symbol_table::SymbolTableType::Module, 0);
+        let globals =  SymbolTable::global();
         SemanticAnalyzer {
             globals,
             file,
@@ -74,14 +73,13 @@ impl SemanticAnalyzer {
     ) {
         match target {
             Expression::Name(n) => {
-                let decl = Declaration::Variable(Box::new(Variable {
+                let decl = Declaration::Variable(Variable {
                     declaration_path,
-                    // TODO: Hacky way
                     scope: SymbolScope::Global,
                     type_annotation,
                     inferred_type_source: value,
                     is_constant: false,
-                }));
+                });
                 self.create_symbol(n.id.clone(), decl)
             }
             Expression::Tuple(t) => {
@@ -114,12 +112,12 @@ impl SemanticAnalyzer {
 
             self.create_symbol(
                 pos_only.arg.clone(),
-                Declaration::Parameter(Box::new(Paramter {
+                Declaration::Parameter(Paramter {
                     declaration_path,
                     parameter_node: pos_only.clone(),
                     type_annotation: pos_only.annotation.clone(),
                     default_value,
-                })),
+                }),
             );
         }
 
@@ -139,12 +137,12 @@ impl SemanticAnalyzer {
 
             self.create_symbol(
                 arg.arg.clone(),
-                Declaration::Parameter(Box::new(Paramter {
+                Declaration::Parameter(Paramter {
                     declaration_path,
                     parameter_node: arg.clone(),
                     type_annotation: arg.annotation.clone(),
                     default_value,
-                })),
+                }),
             );
         }
 
@@ -155,12 +153,12 @@ impl SemanticAnalyzer {
             };
             self.create_symbol(
                 arg.arg.clone(),
-                Declaration::Parameter(Box::new(Paramter {
+                Declaration::Parameter(Paramter {
                     declaration_path,
                     parameter_node: arg.clone(),
                     type_annotation: arg.annotation.clone(),
                     default_value: None,
-                })),
+                }),
             );
         }
 
@@ -172,12 +170,12 @@ impl SemanticAnalyzer {
                 };
                 self.create_symbol(
                     arg.arg.clone(),
-                    Declaration::Parameter(Box::new(Paramter {
+                    Declaration::Parameter(Paramter {
                         declaration_path,
                         parameter_node: arg.clone(),
                         type_annotation: arg.annotation.clone(),
                         default_value: None,
-                    })),
+                    }),
                 );
             }
             None => (),
@@ -191,12 +189,12 @@ impl SemanticAnalyzer {
                 };
                 self.create_symbol(
                     arg.arg.clone(),
-                    Declaration::Parameter(Box::new(Paramter {
+                    Declaration::Parameter(Paramter {
                         declaration_path,
                         parameter_node: arg.clone(),
                         type_annotation: arg.annotation.clone(),
                         default_value: None,
-                    })),
+                    }),
                 );
             }
             None => (),
@@ -285,13 +283,13 @@ impl TraversalVisitor for SemanticAnalyzer {
                 node: alias.node,
             };
 
-            let declaration = Declaration::Alias(Box::new(Alias {
+            let declaration = Declaration::Alias(Alias {
                 declaration_path,
                 import_from_node: None,
                 import_node: Some(i.clone()),
                 symbol_name: None,
                 import_result,
-            }));
+            });
 
             self.create_symbol(alias.name(), declaration);
         }
@@ -309,13 +307,13 @@ impl TraversalVisitor for SemanticAnalyzer {
                     Some(result) => result.clone(),
                     None => ImportResult::not_found(),
                 };
-            let declaration = Declaration::Alias(Box::new(Alias {
+            let declaration = Declaration::Alias(Alias {
                 declaration_path,
                 import_from_node: Some(_i.clone()),
                 import_node: None,
                 symbol_name: Some(alias.name()),
                 import_result: module_import_result,
-            }));
+            });
 
             self.create_symbol(alias.name(), declaration);
         }
@@ -445,15 +443,15 @@ impl TraversalVisitor for SemanticAnalyzer {
             };
             self.create_symbol(
                 type_parameter.get_name(),
-                Declaration::TypeParameter(Box::new(crate::symbol_table::TypeParameter {
+                Declaration::TypeParameter(crate::symbol_table::TypeParameter {
                     declaration_path,
                     type_parameter_node: type_parameter.clone(),
-                })),
+                }),
             );
         }
         self.globals.exit_scope();
 
-        let function_declaration = Declaration::Function(Box::new(Function {
+        let function_declaration = Declaration::Function(Function {
             declaration_path,
             function_node: f.clone(),
             is_method: self.is_inside_class(),
@@ -461,7 +459,7 @@ impl TraversalVisitor for SemanticAnalyzer {
             return_statements,
             yeild_statements,
             raise_statements,
-        }));
+        });
         self.create_symbol(f.name.clone(), function_declaration);
     }
 
@@ -498,10 +496,10 @@ impl TraversalVisitor for SemanticAnalyzer {
             };
             self.create_symbol(
                 type_parameter.get_name(),
-                Declaration::TypeParameter(Box::new(crate::symbol_table::TypeParameter {
+                Declaration::TypeParameter(crate::symbol_table::TypeParameter {
                     declaration_path,
                     type_parameter_node: type_parameter.clone(),
-                })),
+                }),
             );
         }
         let mut methods = vec![];
@@ -517,10 +515,10 @@ impl TraversalVisitor for SemanticAnalyzer {
 
         self.globals.exit_scope();
 
-        let class_declaration = Declaration::Class(Box::new(Class {
+        let class_declaration = Declaration::Class(Class {
             declaration_path,
             methods,
-        }));
+        });
         self.create_symbol(c.name.clone(), class_declaration);
     }
 

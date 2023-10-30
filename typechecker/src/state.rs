@@ -26,7 +26,7 @@ impl State {
     pub fn new(file: EnderpyFile) -> Self {
         Self {
             file,
-            symbol_table: SymbolTable::new(crate::symbol_table::SymbolTableType::Module, 0),
+            symbol_table: SymbolTable::global(),
             diagnostics: Vec::new(),
             imports: HashMap::new(),
         }

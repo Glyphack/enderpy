@@ -53,17 +53,17 @@ pub struct DeclarationPath {
 
 #[derive(Debug, Clone)]
 pub enum Declaration {
-    Variable(Box<Variable>),
-    Function(Box<Function>),
-    Class(Box<Class>),
+    Variable(Variable),
+    Function(Function),
+    Class(Class),
 
     // Alias is used for imports
-    Alias(Box<Alias>),
+    Alias(Alias),
 
-    Parameter(Box<Paramter>),
+    Parameter(Paramter),
     // TypeParameterDeclaration represents a type parameter in a generic class or function.
     // It models type parameters declared on classes and functions like T in List[T].
-    TypeParameter(Box<TypeParameter>),
+    TypeParameter(TypeParameter),
 
     TypeAlias(TypeAlias),
 }
@@ -159,14 +159,25 @@ pub enum SymbolScope {
 }
 
 impl SymbolTable {
-    pub fn new(symbol_table_type: SymbolTableType, _start_line_number: u8) -> Self {
+    pub fn global() -> Self {
         let global_scope = SymbolTableScope {
-            symbol_table_type,
+            symbol_table_type: SymbolTableType::Module,
             symbols: HashMap::new(),
             name: String::from("global"),
         };
         SymbolTable {
             scopes: vec![global_scope],
+            all_scopes: vec![],
+        }
+    }
+    pub fn local(symbol_table_type: SymbolTableType, _start_line_number: u8) -> Self {
+        let local_scope = SymbolTableScope {
+            symbol_table_type,
+            symbols: HashMap::new(),
+            name: String::from("local"),
+        };
+        SymbolTable {
+            scopes: vec![local_scope],
             all_scopes: vec![],
         }
     }
