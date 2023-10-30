@@ -15,7 +15,7 @@ use crate::{
 
 #[derive(Debug, Clone)]
 pub struct State {
-    pub file: Box<EnderpyFile>,
+    pub file: EnderpyFile,
     symbol_table: SymbolTable,
     pub diagnostics: Vec<Diagnostic>,
     // Map of import names to the result of the import
@@ -23,7 +23,7 @@ pub struct State {
 }
 
 impl State {
-    pub fn new(file: Box<EnderpyFile>) -> Self {
+    pub fn new(file: EnderpyFile) -> Self {
         Self {
             file,
             symbol_table: SymbolTable::new(crate::symbol_table::SymbolTableType::Module, 0),

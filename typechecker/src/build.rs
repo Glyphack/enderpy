@@ -102,7 +102,7 @@ impl BuildManager {
     fn populate_modules(&mut self) {
         for build_source in self.build_sources.iter() {
             let file = self.parse(build_source);
-            let state = State::new(Box::new(file));
+            let state = State::new(file);
             self.modules.insert(build_source.module.clone(), state);
         }
         let initial_files = self.modules.values().collect();
@@ -324,7 +324,7 @@ impl BuildManager {
 
         for resolved_import in resolved_imports {
             let file = self.parse(&resolved_import);
-            let state = State::new(Box::new(file));
+            let state = State::new(file);
             resolved_paths.insert(state.file.module_name().clone(), state);
         }
 

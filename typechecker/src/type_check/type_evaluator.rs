@@ -551,7 +551,7 @@ mod tests {
             vec![],
         );
 
-        let mut module = State::new(Box::new(enderpy_file));
+        let mut module = State::new(enderpy_file);
         module.populate_symbol_table();
         let symbol_table = module.get_symbol_table();
 

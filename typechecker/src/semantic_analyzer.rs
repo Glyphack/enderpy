@@ -20,7 +20,7 @@ use crate::{
 #[allow(unused)]
 pub struct SemanticAnalyzer {
     pub globals: SymbolTable,
-    file: Box<EnderpyFile>,
+    file: EnderpyFile,
     /// Map of module name to import result
     /// The imports inside the file are resolved by this map and
     /// no other imports are resolved
@@ -38,7 +38,7 @@ pub struct SemanticAnalyzer {
 
 #[allow(unused)]
 impl SemanticAnalyzer {
-    pub fn new(file: Box<EnderpyFile>, imports: HashMap<String, ImportResult>) -> Self {
+    pub fn new(file: EnderpyFile, imports: HashMap<String, ImportResult>) -> Self {
         let globals = SymbolTable::new(crate::symbol_table::SymbolTableType::Module, 0);
         SemanticAnalyzer {
             globals,
