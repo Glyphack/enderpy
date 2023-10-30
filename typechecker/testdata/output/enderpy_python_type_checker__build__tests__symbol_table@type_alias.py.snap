@@ -1,0 +1,125 @@
+---
+source: typechecker/src/build.rs
+description: "# Show me some examples of type aliasing in Python try to give examples for all\n\ntype Alias1 = int\ntype Alias2 = str\ntype Alias3 = float\n\ntype AliasToAnotherAlias = Alias1\n"
+expression: result
+input_file: typechecker/test_data/inputs/symbol_table/type_alias.py
+---
+-------------------
+global scope:
+Symbols:
+Alias1
+- Declarations:
+--:   TypeAlias {
+    declaration_path: DeclarationPath {
+        module_name: [REDACTED]",
+        node: Node {
+            start: 81,
+            end: 98,
+        },
+    },
+    type_alias_node: TypeAlias {
+        node: Node {
+            start: 81,
+            end: 98,
+        },
+        name: "Alias1",
+        type_params: [],
+        value: Name(
+            Name {
+                node: Node {
+                    start: 95,
+                    end: 98,
+                },
+                id: "int",
+            },
+        ),
+    },
+}
+Alias2
+- Declarations:
+--:   TypeAlias {
+    declaration_path: DeclarationPath {
+        module_name: [REDACTED]",
+        node: Node {
+            start: 99,
+            end: 116,
+        },
+    },
+    type_alias_node: TypeAlias {
+        node: Node {
+            start: 99,
+            end: 116,
+        },
+        name: "Alias2",
+        type_params: [],
+        value: Name(
+            Name {
+                node: Node {
+                    start: 113,
+                    end: 116,
+                },
+                id: "str",
+            },
+        ),
+    },
+}
+Alias3
+- Declarations:
+--:   TypeAlias {
+    declaration_path: DeclarationPath {
+        module_name: [REDACTED]",
+        node: Node {
+            start: 117,
+            end: 136,
+        },
+    },
+    type_alias_node: TypeAlias {
+        node: Node {
+            start: 117,
+            end: 136,
+        },
+        name: "Alias3",
+        type_params: [],
+        value: Name(
+            Name {
+                node: Node {
+                    start: 131,
+                    end: 136,
+                },
+                id: "float",
+            },
+        ),
+    },
+}
+AliasToAnotherAlias
+- Declarations:
+--:   TypeAlias {
+    declaration_path: DeclarationPath {
+        module_name: [REDACTED]",
+        node: Node {
+            start: 138,
+            end: 171,
+        },
+    },
+    type_alias_node: TypeAlias {
+        node: Node {
+            start: 138,
+            end: 171,
+        },
+        name: "AliasToAnotherAlias",
+        type_params: [],
+        value: Name(
+            Name {
+                node: Node {
+                    start: 165,
+                    end: 171,
+                },
+                id: "Alias1",
+            },
+        ),
+    },
+}
+
+all scopes:
+-------------------
+

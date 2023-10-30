@@ -337,4 +337,6 @@ impl<'a> TraversalVisitor for EnderpyFile {
     fn visit_global(&mut self, _g: &parser::ast::Global) {}
 
     fn visit_nonlocal(&mut self, _n: &parser::ast::Nonlocal) {}
+
+    fn visit_type_alias(&mut self, _t: &parser::ast::TypeAlias) {}
 }
