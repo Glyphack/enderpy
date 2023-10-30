@@ -13,7 +13,7 @@ use crate::{
     },
     symbol_table::{
         Alias, Class, Declaration, DeclarationPath, Function, Paramter, SymbolScope, SymbolTable,
-        SymbolTableNode, SymbolTableScope, SymbolTableType, Variable,
+        SymbolTableNode, SymbolTableScope, SymbolTableType, Variable, TypeAlias,
     },
 };
 
@@ -463,6 +463,20 @@ impl TraversalVisitor for SemanticAnalyzer {
             raise_statements,
         }));
         self.create_symbol(f.name.clone(), function_declaration);
+    }
+
+    fn visit_type_alias(&mut self, t: &parser::ast::TypeAlias) {
+        let declaration_path = DeclarationPath {
+            module_name: self.file.module_name().clone(),
+            node: t.node,
+        };
+        self.create_symbol(
+            t.name.clone(),
+            Declaration::TypeAlias(TypeAlias {
+                declaration_path,
+                type_alias_node: t.clone(),
+            }
+        ));
     }
 
     fn visit_async_function_def(&mut self, _f: &parser::ast::AsyncFunctionDef) {}

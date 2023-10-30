@@ -44,7 +44,7 @@ impl TypeEvaluator {
         match decl {
             Some(decl) => self.get_type_from_declaration(decl),
             None => Ok(PythonType::Unknown),
-        }
+     }
     }
     pub fn get_type(&self, expr: &ast::Expression) -> Result<PythonType> {
         match expr {
@@ -226,6 +226,7 @@ impl TypeEvaluator {
             Declaration::Parameter(_) => Ok(PythonType::Unknown),
             Declaration::Alias(_) => Ok(PythonType::Unknown),
             Declaration::TypeParameter(_) => Ok(PythonType::Unknown),
+            Declaration::TypeAlias(_) => Ok(PythonType::Unknown),
         }
     }
 
