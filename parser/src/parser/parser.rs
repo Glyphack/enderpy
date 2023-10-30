@@ -279,7 +279,7 @@ impl Parser {
         for kind in kinds {
             expected.push_str(&format!("{:?}, ", kind));
         }
-        
+
         ParsingError::InvalidSyntax {
             msg: Box::from(format!(
                 "Expected one of {:?} but found {:?}",
@@ -323,7 +323,9 @@ impl Parser {
             Kind::Global => self.parse_global_statement(),
             Kind::Nonlocal => self.parse_nonlocal_statement(),
             _ => {
-                if self.cur_kind() == Kind::Identifier && self.cur_token().value.to_string() == "type" {
+                if self.cur_kind() == Kind::Identifier
+                    && self.cur_token().value.to_string() == "type"
+                {
                     self.parse_type_alias_statement()
                 } else if self.cur_kind() == Kind::Indent {
                     let node = self.start_node();
@@ -3105,7 +3107,7 @@ impl Parser {
                         node: self.finish_node(node),
                         name,
                     }));
-                },
+                }
                 Kind::Mul => {
                     // type var tuple
                     let node = self.start_node();
@@ -3116,16 +3118,11 @@ impl Parser {
                         node: self.finish_node(node),
                         name,
                     }));
-                },
+                }
                 _ => {
                     return Err(self.unexpected_token_new(
                         node,
-                        vec![
-                            Kind::Identifier,
-                            Kind::Pow,
-                            Kind::Mul,
-                            Kind::RightBracket,
-                        ],
+                        vec![Kind::Identifier, Kind::Pow, Kind::Mul, Kind::RightBracket],
                         "",
                     ));
                 }
@@ -3137,11 +3134,7 @@ impl Parser {
         if type_params.len() == 0 {
             return Err(self.unexpected_token_new(
                 node,
-                vec![
-                    Kind::Identifier,
-                    Kind::Pow,
-                    Kind::Mul,
-                ],
+                vec![Kind::Identifier, Kind::Pow, Kind::Mul],
                 "Type parameter is empty",
             ));
         }

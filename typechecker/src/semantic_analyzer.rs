@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use enderpy_python_parser as parser;
 use enderpy_python_parser::ast::Expression;
 
-use parser::ast::{Statement, GetNode};
+use parser::ast::{GetNode, Statement};
 
 use crate::{
     ast_visitor::TraversalVisitor,
@@ -13,7 +13,7 @@ use crate::{
     },
     symbol_table::{
         Alias, Class, Declaration, DeclarationPath, Function, Paramter, SymbolScope, SymbolTable,
-        SymbolTableNode, SymbolTableScope, SymbolTableType, Variable, TypeAlias,
+        SymbolTableNode, SymbolTableScope, SymbolTableType, TypeAlias, Variable,
     },
 };
 
@@ -475,8 +475,8 @@ impl TraversalVisitor for SemanticAnalyzer {
             Declaration::TypeAlias(TypeAlias {
                 declaration_path,
                 type_alias_node: t.clone(),
-            }
-        ));
+            }),
+        );
     }
 
     fn visit_async_function_def(&mut self, _f: &parser::ast::AsyncFunctionDef) {}

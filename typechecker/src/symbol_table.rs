@@ -65,7 +65,7 @@ pub enum Declaration {
     // TypeParameterDeclaration represents a type parameter in a generic class or function.
     // It models type parameters declared on classes and functions like T in List[T].
     TypeParameter(Box<TypeParameter>),
-    
+
     TypeAlias(TypeAlias),
 }
 

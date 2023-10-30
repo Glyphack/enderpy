@@ -35,11 +35,7 @@ pub struct EnderpyFile {
 }
 
 impl<'a> EnderpyFile {
-    pub fn from(
-        ast: Module,
-        build_source: Box<BuildSource>,
-        errors: Vec<ParsingError>,
-    ) -> Self {
+    pub fn from(ast: Module, build_source: Box<BuildSource>, errors: Vec<ParsingError>) -> Self {
         let mut file = Self {
             defs: vec![],
             imports: vec![],
@@ -63,7 +59,7 @@ impl<'a> EnderpyFile {
     pub fn path(&self) -> PathBuf {
         self.build_source.path.clone()
     }
- 
+
     pub fn source(&self) -> String {
         self.build_source.source.clone()
     }
@@ -82,7 +78,7 @@ impl<'a> EnderpyFile {
         }
         Position {
             line: line_number,
-            character: (pos - line_start - 1) as u32
+            character: (pos - line_start - 1) as u32,
         }
     }
 }

@@ -881,7 +881,6 @@ impl TypeParam {
     }
 }
 
-
 // https://docs.python.org/3/library/ast.html#ast.TypeVar
 #[derive(Debug, Clone)]
 pub struct TypeVar {

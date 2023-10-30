@@ -17,7 +17,6 @@ impl ImportModuleDescriptor {
     }
 }
 
-
 // Converts an import alias (e.g. impor a) to a module descriptor
 // Since each import can have multiple aliases like import a, b, c
 // we need to convert each alias to a module descriptor
@@ -37,7 +36,6 @@ impl From<&Alias> for ImportModuleDescriptor {
         }
     }
 }
-
 
 // Converts an import from (e.g. from a import b) to a module descriptor
 impl From<&ImportFrom> for ImportModuleDescriptor {

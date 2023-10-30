@@ -27,7 +27,8 @@ impl Backend {
             follow_imports: enderpy_python_type_checker::settings::FollowImports::Skip,
         };
 
-        let mut manager = BuildManager::new(vec![BuildSource::from_path(path.clone(), false)], settings);
+        let mut manager =
+            BuildManager::new(vec![BuildSource::from_path(path.clone(), false)], settings);
         manager.type_check();
         let mut diagnostics = Vec::new();
         info!("path: {:?}", path);

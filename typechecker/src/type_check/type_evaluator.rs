@@ -37,14 +37,14 @@ impl TypeEvaluator {
         symbol: &SymbolTableNode,
         position: Option<usize>,
     ) -> Result<PythonType> {
-        let decl =match position {
+        let decl = match position {
             Some(position) => symbol.declaration_until_position(position),
             None => symbol.last_declaration(),
         };
         match decl {
             Some(decl) => self.get_type_from_declaration(decl),
             None => Ok(PythonType::Unknown),
-     }
+        }
     }
     pub fn get_type(&self, expr: &ast::Expression) -> Result<PythonType> {
         match expr {
@@ -59,7 +59,9 @@ impl TypeEvaluator {
                 };
                 Ok(typ)
             }
-            ast::Expression::Name(n) => self.infer_type_from_symbol_table(&n.id, Some(n.node.start)),
+            ast::Expression::Name(n) => {
+                self.infer_type_from_symbol_table(&n.id, Some(n.node.start))
+            }
             ast::Expression::Call(call) => {
                 let func = *call.func.clone();
                 match func {
@@ -68,8 +70,7 @@ impl TypeEvaluator {
                         if builtins::BUILTINS.contains(&n.id.as_str()) {
                             return Ok(PythonType::Unknown);
                         }
-                        let f_type =
-                            self.infer_type_from_symbol_table(n.id.as_str(), None)?;
+                        let f_type = self.infer_type_from_symbol_table(n.id.as_str(), None)?;
                         match f_type {
                             PythonType::Callable(callable_type) => Ok(callable_type.return_type),
                             _ => Err(miette!("{} is not callable", n.id)),
@@ -230,7 +231,11 @@ impl TypeEvaluator {
         }
     }
 
-    fn infer_type_from_symbol_table(&self, name: &str, position: Option<usize>) -> Result<PythonType> {
+    fn infer_type_from_symbol_table(
+        &self,
+        name: &str,
+        position: Option<usize>,
+    ) -> Result<PythonType> {
         match self.symbol_table.lookup_in_scope(name) {
             Some(symbol) => self.get_symbol_node_type(symbol, position),
             None => Ok(PythonType::Unknown),
@@ -542,7 +547,7 @@ mod tests {
 
         let enderpy_file = EnderpyFile::from(
             ast_module,
-            Box::new(BuildSource{
+            Box::new(BuildSource {
                 path: PathBuf::from(""),
                 source: source.to_string(),
                 module: "test".to_string(),
