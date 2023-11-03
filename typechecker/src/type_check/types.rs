@@ -7,6 +7,10 @@ use enderpy_python_parser::ast;
 pub enum PythonType {
     None,
     Unknown,
+    /// representing that we know nothing about the value a node can contain. 
+    /// For example, if a file contains only the function def f(x): return x, the name x will have an Anyas its value within the function
+    /// because there is no information to determine what value it can contain
+    Any,
     Callable(Box<CallableType>),
     Bool,
     Int,
@@ -49,6 +53,7 @@ impl Display for PythonType {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         let type_str = match self {
             PythonType::None => "None",
+            PythonType::Any=> "Any",
             PythonType::Bool => "Bool",
             PythonType::Int => "Int",
             PythonType::Float => "Float",

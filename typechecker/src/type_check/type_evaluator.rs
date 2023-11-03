@@ -27,11 +27,14 @@ pub struct TypeEvalError {
     pub position: usize,
 }
 
+
+/// Struct for evaluating the type of an expression
 impl TypeEvaluator {
     pub fn new(symbol_table: SymbolTable) -> Self {
         Self { symbol_table }
     }
 
+    /// Get the type of a symbol node based on declarations
     pub fn get_symbol_node_type(
         &self,
         symbol: &SymbolTableNode,
@@ -43,7 +46,7 @@ impl TypeEvaluator {
         };
         match decl {
             Some(decl) => self.get_type_from_declaration(decl),
-            None => Ok(PythonType::Unknown),
+            None => Ok(PythonType::Any),
         }
     }
     pub fn get_type(&self, expr: &ast::Expression) -> Result<PythonType> {
@@ -357,7 +360,7 @@ impl TraversalVisitorImmutGeneric<PythonType> for TypeEvaluator {
     }
 
     fn visit_function_def(&self, f: &parser::ast::FunctionDef) -> PythonType {
-        PythonType::Unknown
+        PythonType::Any
     }
 
     fn visit_class_def(&self, c: &parser::ast::ClassDef) -> PythonType {
@@ -531,12 +534,15 @@ impl TraversalVisitorImmutGeneric<PythonType> for TypeEvaluator {
 
 #[cfg(test)]
 mod tests {
+    use insta::glob;
+
     use crate::build_source::BuildSource;
 
     use super::*;
     use std::collections::HashMap;
+    use std::fs;
     use std::path::PathBuf;
-    // TODO: refactor and move the test to type check mod
+
     fn snapshot_type_eval(source: &str) -> String {
         use crate::nodes::EnderpyFile;
         use crate::state::State;
@@ -589,6 +595,21 @@ mod tests {
                         },
                         None => panic!("don't use this test for other expressions"),
                     }
+                },
+                parser::ast::Statement::FunctionDef(f) => {
+                    // for over the body and get type for the return statement
+                    for stmt in f.body {
+                        match stmt {
+                            parser::ast::Statement::Return(r) => {
+                                let t = type_eval.get_type(&r.value.unwrap());
+                                result.insert(
+                                    f.name.clone(),
+                                    t.unwrap_or(PythonType::Unknown).to_string(),
+                                );
+                            }
+                            _ => {}
+                        }
+                    }
                 }
                 _ => {}
             }
@@ -601,21 +622,18 @@ mod tests {
         format!("{:#?}", result_sorted)
     }
 
-    macro_rules! snap_type_eval {
-        ($name:tt, $path:tt) => {
-            #[test]
-            fn $name() {
-                let contents = include_str!($path);
-                let result = snapshot_type_eval(contents);
-                let mut settings = insta::Settings::clone_current();
-                settings.set_snapshot_path("../testdata/output/");
-                settings.set_description(contents);
-                settings.bind(|| {
-                    insta::assert_snapshot!(result);
-                });
-            }
-        };
-    }
+    #[test]
+    fn test_type_evaluator() {
+        glob!("test_data/inputs/", "*.py", |path| {
+            let contents = fs::read_to_string(path).unwrap();
+            let result = snapshot_type_eval(&contents);
 
-    snap_type_eval!(test_type_eval_vars, "./testdata/inputs/type_eval_vars.py");
+            let mut settings = insta::Settings::clone_current();
+            settings.set_snapshot_path("./test_data/output/");
+            settings.set_description(fs::read_to_string(path).unwrap());
+            settings.bind(|| {
+                insta::assert_snapshot!(result);
+            });
+        })
+    }
 }

@@ -1,0 +1,12 @@
+---
+source: typechecker/src/type_check/type_evaluator.rs
+description: "def func(x):\n    return x + 1\n"
+expression: result
+input_file: typechecker/src/type_check/test_data/inputs/any.py
+---
+[
+    (
+        "func",
+        "Int",
+    ),
+]
