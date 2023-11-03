@@ -1,6 +1,6 @@
 ---
 source: typechecker/src/build.rs
-description: "class c:\n    def __init__(self):\n        a = 1\n"
+description: "class c:\n    def __init__(self):\n        a = 1\n        b = a\n        self.c = b\n"
 expression: result
 input_file: typechecker/test_data/inputs/symbol_table/class_definition.py
 ---
@@ -14,12 +14,23 @@ c
         module_name: [REDACTED]",
         node: Node {
             start: 0,
-            end: 47,
+            end: 80,
         },
     },
     methods: [
         "__init__",
     ],
+    attributes: {
+        "c": Name(
+            Name {
+                node: Node {
+                    start: 78,
+                    end: 79,
+                },
+                id: "b",
+            },
+        ),
+    },
 }
 
 all scopes:
@@ -44,6 +55,31 @@ a
                     end: 46,
                 },
                 value: 1,
+            },
+        ),
+    ),
+    is_constant: false,
+}
+b
+- Declarations:
+--:   Variable {
+    declaration_path: DeclarationPath {
+        module_name: [REDACTED]",
+        node: Node {
+            start: 55,
+            end: 60,
+        },
+    },
+    scope: Global,
+    type_annotation: None,
+    inferred_type_source: Some(
+        Name(
+            Name {
+                node: Node {
+                    start: 59,
+                    end: 60,
+                },
+                id: "a",
             },
         ),
     ),
@@ -79,13 +115,13 @@ __init__
         module_name: [REDACTED]",
         node: Node {
             start: 13,
-            end: 47,
+            end: 80,
         },
     },
     function_node: FunctionDef {
         node: Node {
             start: 13,
-            end: 47,
+            end: 80,
         },
         name: "__init__",
         args: Arguments {
@@ -135,6 +171,71 @@ __init__
                                 end: 46,
                             },
                             value: 1,
+                        },
+                    ),
+                },
+            ),
+            AssignStatement(
+                Assign {
+                    node: Node {
+                        start: 55,
+                        end: 60,
+                    },
+                    targets: [
+                        Name(
+                            Name {
+                                node: Node {
+                                    start: 55,
+                                    end: 56,
+                                },
+                                id: "b",
+                            },
+                        ),
+                    ],
+                    value: Name(
+                        Name {
+                            node: Node {
+                                start: 59,
+                                end: 60,
+                            },
+                            id: "a",
+                        },
+                    ),
+                },
+            ),
+            AssignStatement(
+                Assign {
+                    node: Node {
+                        start: 69,
+                        end: 79,
+                    },
+                    targets: [
+                        Attribute(
+                            Attribute {
+                                node: Node {
+                                    start: 69,
+                                    end: 75,
+                                },
+                                value: Name(
+                                    Name {
+                                        node: Node {
+                                            start: 69,
+                                            end: 73,
+                                        },
+                                        id: "self",
+                                    },
+                                ),
+                                attr: "c",
+                            },
+                        ),
+                    ],
+                    value: Name(
+                        Name {
+                            node: Node {
+                                start: 78,
+                                end: 79,
+                            },
+                            id: "b",
                         },
                     ),
                 },

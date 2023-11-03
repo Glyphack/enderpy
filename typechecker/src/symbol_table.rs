@@ -115,6 +115,10 @@ pub struct Class {
     // Method names, can be used to look up the function in the symbol table
     // of the class
     pub methods: Vec<String>,
+    // instance attibutes that are defined in the __init__ method
+    // if the attribute is referencing another symbol we need to look up that symbol in the
+    // __init__ method
+    pub attributes: HashMap<String, ast::Expression>,
 }
 
 #[derive(Debug, Clone)]
