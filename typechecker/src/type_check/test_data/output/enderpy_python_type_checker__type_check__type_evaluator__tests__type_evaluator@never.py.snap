@@ -1,0 +1,16 @@
+---
+source: typechecker/src/type_check/type_evaluator.rs
+description: "def f():\n    raise Exception('This is the error message.')\n\na = f()\n"
+expression: result
+input_file: typechecker/src/type_check/test_data/inputs/never.py
+---
+[
+    (
+        "(line: 1, character: 10):(line: 1, character: 49)",
+        Unknown,
+    ),
+    (
+        "(line: 3, character: 4):(line: 3, character: 7)",
+        Never,
+    ),
+]

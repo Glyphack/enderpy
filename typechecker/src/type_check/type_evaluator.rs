@@ -48,12 +48,15 @@ impl TypeEvaluator {
             Some(position) => symbol.declaration_until_position(position),
             None => symbol.last_declaration(),
         };
+
+        log::debug!("get_symbol_node_type: {:?}", decl);
         match decl {
             Some(decl) => self.get_type_from_declaration(decl),
             None => Ok(PythonType::Any),
         }
     }
     pub fn get_type(&self, expr: &ast::Expression) -> Result<PythonType> {
+        log::debug!("get_type: {:?}", expr);
         match expr {
             ast::Expression::Constant(c) => {
                 let typ = match c.value {
@@ -78,8 +81,10 @@ impl TypeEvaluator {
                             return Ok(PythonType::Unknown);
                         }
                         let f_type = self.infer_type_from_symbol_table(n.id.as_str(), None)?;
+                        log::debug!("f_type: {:?}", f_type);
                         match f_type {
                             PythonType::Callable(callable_type) => Ok(callable_type.return_type),
+                            PythonType::Never => Ok(PythonType::Never),
                             _ => Err(miette!("{} is not callable", n.id)),
                         }
                     }
@@ -214,12 +219,29 @@ impl TypeEvaluator {
                 }
             }
             Declaration::Function(f) => {
-                let return_type = if let Some(type_annotation) = f.function_node.returns.clone() {
+                let annotated_return_type = if let Some(type_annotation) = f.function_node.returns.clone() {
                     type_inference::get_type_from_annotation(&type_annotation)
                 } else {
                     // TODO infer from function body
                     PythonType::Unknown
                 };
+
+                let is_never = if f.is_abstract() {
+                    false
+                } else {
+                    // TODO: if all code paths are raising then it's never type
+                    f.function_node.body.iter().any(|stmt| match stmt {
+                        ast::Statement::Raise(_) =>  true,
+                        _ => false,
+                   })
+                };
+
+
+                log::debug!("is_never: {}", is_never);
+                if is_never {
+                    // TODO: if type annotation is not correct error
+                    return Ok(PythonType::Never);
+                }
 
                 let arguments = f.function_node.args.clone();
                 let name = f.function_node.name.clone();
@@ -227,7 +249,7 @@ impl TypeEvaluator {
                 Ok(PythonType::Callable(Box::new(CallableType {
                     name,
                     arguments,
-                    return_type,
+                    return_type: annotated_return_type,
                 })))
             }
             Declaration::Class(_) => Ok(PythonType::Unknown),
@@ -639,6 +661,7 @@ impl TypeEvalVisitor {
             .type_eval
             .get_type(expr)
             .unwrap_or(PythonType::Unknown);
+        log::debug!("save_type: {:?} => {:?}", expr, typ);
         let start_pos = self.enderpy_file().get_position(expr.get_node().start);
         let end_pos = self.enderpy_file().get_position(expr.get_node().end);
         self.types.insert(format!("{}:{}", start_pos, end_pos), typ);
@@ -674,7 +697,14 @@ impl TraversalVisitor for TypeEvalVisitor {
                     self.save_type(r);
                 }
             }
-            ast::Statement::Raise(r) => self.visit_raise(r),
+            ast::Statement::Raise(r) => {
+                if let Some(r) = r.exc.as_ref() {
+                    self.save_type(r);
+                }
+                if let Some(r) = r.cause.as_ref() {
+                    self.save_type(r);
+                }
+            }
             ast::Statement::Break(b) => self.visit_break(b),
             ast::Statement::Continue(c) => self.visit_continue(c),
             ast::Statement::Global(g) => self.visit_global(g),
@@ -685,7 +715,11 @@ impl TraversalVisitor for TypeEvalVisitor {
             ast::Statement::WithStatement(w) => self.visit_with(w),
             ast::Statement::TryStatement(t) => self.visit_try(t),
             ast::Statement::TryStarStatement(t) => self.visit_try_star(t),
-            ast::Statement::FunctionDef(f) => self.visit_function_def(f),
+            ast::Statement::FunctionDef(f) => {
+                for stmt in &f.body {
+                    self.visit_stmt(stmt);
+                }
+            },
             ast::Statement::ClassDef(c) => self.visit_class_def(c),
             ast::Statement::Match(m) => self.visit_match(m),
             Statement::AsyncForStatement(f) => self.visit_async_for(f),

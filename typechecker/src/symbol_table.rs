@@ -121,6 +121,22 @@ pub struct Function {
     pub raise_statements: Vec<ast::Raise>,
 }
 
+impl Function {
+    pub fn is_abstract(&self) -> bool {
+        for decorator in self.function_node.decorator_list.iter() {
+            match &decorator {
+                ast::Expression::Name(n) => {
+                    if &n.id == "abstractmethod" {
+                        return true
+                    }        
+                }
+                _ => {},
+            }
+        }
+        false
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct Class {
     pub declaration_path: DeclarationPath,

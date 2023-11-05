@@ -17,6 +17,7 @@ pub enum PythonType {
     Float,
     Str,
     Class(ClassType),
+    Never,
 }
 
 #[allow(unused)]
@@ -70,7 +71,8 @@ impl Display for PythonType {
                     .join(", ");
                 let fmt = format!("{}[{}]", class_type.name, args_str);
                 return write!(f, "{}", fmt);
-            }
+            },
+            PythonType::Never => "Never",
         };
 
         write!(f, "{}", type_str)
