@@ -196,7 +196,7 @@ impl SymbolTable {
         SymbolTable {
             scopes: vec![global_scope],
             all_scopes: vec![],
-            locals: HashMap::new(),
+            _locals: HashMap::new(),
         }
     }
     // pub fn local(symbol_table_type: SymbolTableType, _start_line_number: u8, parent: usize) -> Self {
@@ -363,8 +363,7 @@ impl std::fmt::Display for SymbolTableScope {
             .collect::<Vec<(&String, &SymbolTableNode)>>();
         sorted_symbols.sort_by(|a, b| a.0.cmp(b.0));
 
-        // writeln!(f, "Symbols: in {} (id: {})", self.name, self.id)?;
-        writeln!(f, "Symbols: in {}", self.name)?;
+        writeln!(f, "Symbols: in {} (id: {})", self.name, self.id)?;
         for (name, symbol) in sorted_symbols {
             writeln!(f, "{}", name)?;
             // sort the declarations by line number

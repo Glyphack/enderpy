@@ -553,13 +553,10 @@ mod tests {
     use crate::build_source::BuildSource;
 
     use super::*;
-    use std::collections::HashMap;
     use std::fs;
     use std::path::PathBuf;
 
     fn snapshot_type_eval(source: &str) -> String {
-        use crate::nodes::EnderpyFile;
-        use crate::state::State;
         use enderpy_python_parser::Parser;
 
         let mut parser = Parser::new(source.to_string(), "".into());

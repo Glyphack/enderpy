@@ -6,7 +6,7 @@ input_file: typechecker/test_data/inputs/symbol_table/class_definition.py
 ---
 -------------------
 global scope:
-Symbols: in global
+Symbols: in global (id: [REDACTED])
 c
 - Declarations:
 --:   Class {
@@ -34,7 +34,7 @@ c
 }
 
 all scopes:
-Symbols: in __init__
+Symbols: in __init__ (id: [REDACTED])
 a
 - Declarations:
 --:   Variable {
@@ -107,7 +107,7 @@ self
     default_value: None,
 }
 
-Symbols: in c
+Symbols: in c (id: [REDACTED])
 __init__
 - Declarations:
 --:   Function {

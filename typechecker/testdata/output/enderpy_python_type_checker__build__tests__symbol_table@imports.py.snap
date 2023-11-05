@@ -6,7 +6,7 @@ input_file: typechecker/test_data/inputs/symbol_table/imports.py
 ---
 -------------------
 global scope:
-Symbols: in global
+Symbols: in global (id: [REDACTED])
 *
 - Declarations:
 --:   Alias {

@@ -452,6 +452,10 @@ mod tests {
                 r"module_name: .*.typechecker.test_data.inputs.symbol_table..*.py",
                 "module_name: [REDACTED]",
             );
+            settings.add_filter(
+                r"\(id: .*\)",
+                "(id: [REDACTED])",
+            );
             settings.bind(|| {
                 insta::assert_snapshot!(result);
             });
