@@ -123,6 +123,9 @@ pub struct Function {
 
 impl Function {
     pub fn is_abstract(&self) -> bool {
+        if !self.is_method {
+            return false
+        }
         for decorator in self.function_node.decorator_list.iter() {
             match &decorator {
                 ast::Expression::Name(n) => {

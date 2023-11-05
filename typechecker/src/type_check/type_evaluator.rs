@@ -681,8 +681,8 @@ impl TraversalVisitor for TypeEvalVisitor {
         // map all statements and call visit
         match s {
             ast::Statement::ExpressionStatement(e) => self.visit_expr(e),
-            ast::Statement::Import(i) => self.visit_import(i),
-            ast::Statement::ImportFrom(i) => self.visit_import_from(i),
+            ast::Statement::Import(i) => {},
+            ast::Statement::ImportFrom(i) => {},
             ast::Statement::AssignStatement(a) => {
                 self.save_type(&a.value);
             }
