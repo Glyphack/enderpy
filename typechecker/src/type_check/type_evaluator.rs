@@ -7,11 +7,15 @@ use enderpy_python_parser as parser;
 use enderpy_python_parser::ast;
 use log::debug;
 use miette::{bail, miette, Result};
-use parser::ast::{Statement, GetNode};
+use parser::ast::{GetNode, Statement};
 
 use crate::{
+    ast_visitor::TraversalVisitor,
     ast_visitor_generic::TraversalVisitorImmutGeneric,
-    symbol_table::{Declaration, SymbolTable, SymbolTableNode, LookupSymbolRequest}, nodes::EnderpyFile, diagnostic::Position, state::State, ast_visitor::TraversalVisitor,
+    diagnostic::Position,
+    nodes::EnderpyFile,
+    state::State,
+    symbol_table::{Declaration, LookupSymbolRequest, SymbolTable, SymbolTableNode},
 };
 
 use super::{
@@ -28,7 +32,6 @@ pub struct TypeEvalError {
     pub message: String,
     pub position: usize,
 }
-
 
 /// Struct for evaluating the type of an expression
 impl TypeEvaluator {
@@ -237,7 +240,7 @@ impl TypeEvaluator {
                 } else {
                     Ok(PythonType::Any)
                 }
-            },
+            }
             Declaration::Alias(_) => Ok(PythonType::Unknown),
             Declaration::TypeParameter(_) => Ok(PythonType::Unknown),
             Declaration::TypeAlias(_) => Ok(PythonType::Unknown),
@@ -633,7 +636,10 @@ impl TypeEvalVisitor {
 
     /// This function is called on every expression in the ast
     pub fn save_type(&mut self, expr: &ast::Expression) {
-        let typ = self.type_eval.get_type(&expr).unwrap_or(PythonType::Unknown);
+        let typ = self
+            .type_eval
+            .get_type(&expr)
+            .unwrap_or(PythonType::Unknown);
         let start_pos = self.enderpy_file().get_position(expr.get_node().start);
         let end_pos = self.enderpy_file().get_position(expr.get_node().end);
         self.types.insert(format!("{}:{}", start_pos, end_pos), typ);
@@ -641,7 +647,7 @@ impl TypeEvalVisitor {
 
     fn visit_module(&mut self) -> () {
         let body = self.enderpy_file().body.clone();
-        for statement in  body.iter() {
+        for statement in body.iter() {
             self.visit_stmt(&statement);
         }
     }
@@ -657,7 +663,7 @@ impl TraversalVisitor for TypeEvalVisitor {
             ast::Statement::ImportFrom(i) => self.visit_import_from(i),
             ast::Statement::AssignStatement(a) => {
                 self.save_type(&a.value);
-            },
+            }
             ast::Statement::AnnAssignStatement(a) => self.visit_ann_assign(a),
             ast::Statement::AugAssignStatement(a) => self.visit_aug_assign(a),
             ast::Statement::Assert(a) => self.visit_assert(a),
@@ -668,7 +674,7 @@ impl TraversalVisitor for TypeEvalVisitor {
                     self.visit_expr(r);
                     self.save_type(r);
                 }
-            },
+            }
             ast::Statement::Raise(r) => self.visit_raise(r),
             ast::Statement::Break(b) => self.visit_break(b),
             ast::Statement::Continue(c) => self.visit_continue(c),
@@ -690,7 +696,7 @@ impl TraversalVisitor for TypeEvalVisitor {
         }
     }
 
-    fn visit_expr(&mut self, e: &ast::Expression){
+    fn visit_expr(&mut self, e: &ast::Expression) {
         match e {
             ast::Expression::Constant(c) => self.visit_constant(c),
             ast::Expression::List(l) => self.visit_list(l),
@@ -703,7 +709,7 @@ impl TraversalVisitor for TypeEvalVisitor {
             ast::Expression::BinOp(b) => {
                 self.save_type(&b.left);
                 self.save_type(&b.right);
-            },
+            }
             ast::Expression::NamedExpr(n) => self.visit_named_expr(n),
             ast::Expression::Yield(y) => self.visit_yield(y),
             ast::Expression::YieldFrom(y) => self.visit_yield_from(y),
@@ -725,4 +731,3 @@ impl TraversalVisitor for TypeEvalVisitor {
         }
     }
 }
-    

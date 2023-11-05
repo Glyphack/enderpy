@@ -4,7 +4,6 @@ pub mod type_evaluator;
 mod type_inference;
 mod types;
 
-
 mod builtins {
     pub const LIST_TYPE: &str = "builtins.list";
     pub const TUPLE_TYPE: &str = "builtins.tuple";
@@ -88,4 +87,3 @@ mod builtins {
         "__import__",
     ];
 }
-

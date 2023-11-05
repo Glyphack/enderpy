@@ -1,11 +1,7 @@
 use enderpy_python_parser::ast::{self, Node};
 use std::{collections::HashMap, fmt::Display};
 
-use crate::{
-    ruff_python_import_resolver::{
-        import_result::ImportResult,
-    },
-};
+use crate::ruff_python_import_resolver::import_result::ImportResult;
 
 #[derive(Debug, Clone)]
 pub struct SymbolTable {
@@ -229,7 +225,8 @@ impl SymbolTable {
     /// Retuns scopes until the given position
     /// the scopes are sorted by start position descending
     pub fn innermost_scope(&self, pos: usize) -> Option<&SymbolTableScope> {
-        return self.all_scopes
+        return self
+            .all_scopes
             .iter()
             .filter(|scope| scope.start_pos < pos)
             .last();
@@ -250,8 +247,8 @@ impl SymbolTable {
                     if scope.name == "global" {
                         break;
                     }
-                    innermost_scope =if let Some(parent_id) = scope.parent {
-                         self.all_scopes
+                    innermost_scope = if let Some(parent_id) = scope.parent {
+                        self.all_scopes
                             .iter()
                             .filter(|scope| scope.id == parent_id)
                             .last()

@@ -38,7 +38,7 @@ pub struct SemanticAnalyzer {
 #[allow(unused)]
 impl SemanticAnalyzer {
     pub fn new(file: EnderpyFile, imports: HashMap<String, ImportResult>) -> Self {
-        let globals =  SymbolTable::global();
+        let globals = SymbolTable::global();
         SemanticAnalyzer {
             globals,
             file,
