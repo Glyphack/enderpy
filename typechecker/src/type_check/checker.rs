@@ -3,6 +3,7 @@ use enderpy_python_parser as parser;
 use enderpy_python_parser::ast::{self, *};
 
 use crate::diagnostic::CharacterSpan;
+use crate::symbol_table::LookupSymbolRequest;
 use crate::{
     ast_visitor::TraversalVisitor, settings::Settings, state::State, symbol_table::SymbolTable,
 };
@@ -485,7 +486,11 @@ impl<'a> TraversalVisitor for TypeChecker<'a> {
         for target in &_a.targets {
             match target {
                 ast::Expression::Name(n) => {
-                    let symbol = self.symbol_table.lookup_in_scope(&n.id);
+                    let lookup_request = LookupSymbolRequest {
+                        name: n.id.clone(),
+                        position: None,
+                    };
+                    let symbol = self.symbol_table.lookup_in_scope(lookup_request);
                     if let Some(symbol) = symbol {
                         let prev_target_type = self
                             .type_evaluator

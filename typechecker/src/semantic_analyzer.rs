@@ -38,7 +38,7 @@ pub struct SemanticAnalyzer {
 #[allow(unused)]
 impl SemanticAnalyzer {
     pub fn new(file: EnderpyFile, imports: HashMap<String, ImportResult>) -> Self {
-        let globals =  SymbolTable::global();
+        let globals = SymbolTable::global();
         SemanticAnalyzer {
             globals,
             file,
@@ -416,6 +416,7 @@ impl TraversalVisitor for SemanticAnalyzer {
         self.globals.enter_scope(SymbolTableScope::new(
             crate::symbol_table::SymbolTableType::Function,
             f.name.clone(),
+            0,
         ));
 
         self.add_arguments_definitions(&f.args);
@@ -487,6 +488,7 @@ impl TraversalVisitor for SemanticAnalyzer {
         self.globals.enter_scope(SymbolTableScope::new(
             SymbolTableType::Class,
             c.name.clone(),
+            c.node.start,
         ));
 
         for type_parameter in &c.type_params {

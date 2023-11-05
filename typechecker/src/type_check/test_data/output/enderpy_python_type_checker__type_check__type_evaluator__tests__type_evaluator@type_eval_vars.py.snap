@@ -6,87 +6,123 @@ input_file: typechecker/src/type_check/test_data/inputs/type_eval_vars.py
 ---
 [
     (
-        "a",
-        "Int",
+        "(line: 1, character: 4):(line: 1, character: 5)",
+        Int,
     ),
     (
-        "b",
-        "Int",
+        "(line: 10, character: 4):(line: 10, character: 10)",
+        Class(
+            ClassType {
+                name: "builtins.tuple",
+                args: [
+                    Int,
+                ],
+            },
+        ),
     ),
     (
-        "bin_op",
-        "Int",
+        "(line: 11, character: 4):(line: 11, character: 11)",
+        Class(
+            ClassType {
+                name: "builtins.set",
+                args: [
+                    Int,
+                ],
+            },
+        ),
     ),
     (
-        "bool_op",
-        "Bool",
+        "(line: 12, character: 4):(line: 12, character: 23)",
+        Class(
+            ClassType {
+                name: "builtins.dict",
+                args: [
+                    Str,
+                    Int,
+                ],
+            },
+        ),
     ),
     (
-        "c",
-        "Bool",
+        "(line: 13, character: 4):(line: 13, character: 8)",
+        None,
     ),
     (
-        "d",
-        "Bool",
+        "(line: 15, character: 10):(line: 15, character: 24)",
+        Bool,
     ),
     (
-        "e",
-        "Str",
+        "(line: 17, character: 9):(line: 17, character: 14)",
+        Int,
     ),
     (
-        "f",
-        "Str",
+        "(line: 18, character: 12):(line: 18, character: 14)",
+        Int,
     ),
     (
-        "g",
-        "builtins.list[Int]",
+        "(line: 19, character: 12):(line: 19, character: 17)",
+        Bool,
     ),
     (
-        "generator",
-        "Unknown",
+        "(line: 2, character: 4):(line: 2, character: 5)",
+        Int,
     ),
     (
-        "gg",
-        "builtins.tuple[Unknown]",
+        "(line: 20, character: 13):(line: 20, character: 15)",
+        Int,
     ),
     (
-        "h",
-        "builtins.tuple[Int]",
+        "(line: 21, character: 13):(line: 21, character: 15)",
+        Int,
     ),
     (
-        "i",
-        "builtins.set[Int]",
+        "(line: 23, character: 9):(line: 23, character: 15)",
+        Int,
     ),
     (
-        "j",
-        "builtins.dict[Str, Int]",
+        "(line: 25, character: 12):(line: 25, character: 26)",
+        Unknown,
     ),
     (
-        "joined_str",
-        "Str",
+        "(line: 27, character: 5):(line: 27, character: 14)",
+        Class(
+            ClassType {
+                name: "builtins.tuple",
+                args: [
+                    Unknown,
+                ],
+            },
+        ),
     ),
     (
-        "k",
-        "None",
+        "(line: 3, character: 4):(line: 3, character: 8)",
+        Bool,
     ),
     (
-        "named",
-        "Int",
+        "(line: 4, character: 4):(line: 4, character: 9)",
+        Bool,
     ),
     (
-        "unaray_op3",
-        "Int",
+        "(line: 5, character: 4):(line: 5, character: 11)",
+        Str,
     ),
     (
-        "unaray_op4",
-        "Int",
+        "(line: 6, character: 4):(line: 6, character: 11)",
+        Str,
     ),
     (
-        "unary_op1",
-        "Int",
+        "(line: 7, character: 13):(line: 7, character: 23)",
+        Str,
     ),
     (
-        "unary_op2",
-        "Bool",
+        "(line: 9, character: 4):(line: 9, character: 11)",
+        Class(
+            ClassType {
+                name: "builtins.list",
+                args: [
+                    Int,
+                ],
+            },
+        ),
     ),
 ]

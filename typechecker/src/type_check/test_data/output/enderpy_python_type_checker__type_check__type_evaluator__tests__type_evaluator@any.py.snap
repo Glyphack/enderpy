@@ -6,7 +6,15 @@ input_file: typechecker/src/type_check/test_data/inputs/any.py
 ---
 [
     (
-        "func",
-        "Int",
+        "(line: 1, character: 11):(line: 1, character: 12)",
+        Any,
+    ),
+    (
+        "(line: 1, character: 11):(line: 1, character: 16)",
+        Unknown,
+    ),
+    (
+        "(line: 1, character: 15):(line: 1, character: 16)",
+        Int,
     ),
 ]

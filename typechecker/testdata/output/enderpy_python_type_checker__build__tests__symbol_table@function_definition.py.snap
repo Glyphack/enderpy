@@ -6,7 +6,7 @@ input_file: typechecker/test_data/inputs/symbol_table/function_definition.py
 ---
 -------------------
 global scope:
-Symbols:
+Symbols: in global (id: [REDACTED])
 func
 - Declarations:
 --:   Function {
@@ -104,7 +104,7 @@ func
 }
 
 all scopes:
-Symbols:
+Symbols: in func (id: [REDACTED])
 a
 - Declarations:
 --:   Paramter {

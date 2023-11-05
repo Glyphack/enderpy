@@ -6,7 +6,7 @@ input_file: typechecker/test_data/inputs/symbol_table/variables.py
 ---
 -------------------
 global scope:
-Symbols:
+Symbols: in global (id: [REDACTED])
 a
 - Declarations:
 --:   Variable {
