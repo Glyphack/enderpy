@@ -416,6 +416,7 @@ impl TraversalVisitor for SemanticAnalyzer {
         self.globals.enter_scope(SymbolTableScope::new(
             crate::symbol_table::SymbolTableType::Function,
             f.name.clone(),
+            0,
         ));
 
         self.add_arguments_definitions(&f.args);
@@ -487,6 +488,7 @@ impl TraversalVisitor for SemanticAnalyzer {
         self.globals.enter_scope(SymbolTableScope::new(
             SymbolTableType::Class,
             c.name.clone(),
+            c.node.start,
         ));
 
         for type_parameter in &c.type_params {

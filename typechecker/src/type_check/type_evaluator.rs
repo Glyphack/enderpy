@@ -11,7 +11,7 @@ use parser::ast::{Statement, GetNode};
 
 use crate::{
     ast_visitor_generic::TraversalVisitorImmutGeneric,
-    symbol_table::{Declaration, SymbolTable, SymbolTableNode}, nodes::EnderpyFile, diagnostic::Position, state::State, ast_visitor::TraversalVisitor,
+    symbol_table::{Declaration, SymbolTable, SymbolTableNode, LookupSymbolRequest}, nodes::EnderpyFile, diagnostic::Position, state::State, ast_visitor::TraversalVisitor,
 };
 
 use super::{
@@ -249,7 +249,11 @@ impl TypeEvaluator {
         name: &str,
         position: Option<usize>,
     ) -> Result<PythonType> {
-        match self.symbol_table.lookup_in_scope(name) {
+        let lookup_request = LookupSymbolRequest {
+            name: name.to_string(),
+            position,
+        };
+        match self.symbol_table.lookup_in_scope(lookup_request) {
             Some(symbol) => self.get_symbol_node_type(symbol, position),
             None => Ok(PythonType::Unknown),
         }
