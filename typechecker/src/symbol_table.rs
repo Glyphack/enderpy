@@ -200,12 +200,28 @@ impl SymbolTable {
 
     // TODO: have a way to look up in the parent scopes as well
     pub fn lookup_in_scope(&self, name: &str) -> Option<&SymbolTableNode> {
-        let cur_scope = self.current_scope();
-        return cur_scope.symbols.get(name);
+        let global_scope = self.global_scope();
+        if let Some(symbol) = global_scope.symbols.get(name) {
+            return Some(symbol);
+        } else {
+            for scope in self.all_scopes.iter() {
+                println!("looking in scope: {}", scope.name);
+                println!("symbols: {:?}", scope.symbols);
+                if let Some(symbol) = scope.symbols.get(name) {
+                    return Some(symbol);
+                }
+            }
+        }
+
+        None
     }
 
     pub fn enter_scope(&mut self, new_scope: SymbolTableScope) {
         self.scopes.push(new_scope);
+    }
+
+    pub fn global_scope(&self) -> &SymbolTableScope {
+        return &self.scopes[0];
     }
 
     pub fn exit_scope(&mut self) {
@@ -291,7 +307,7 @@ impl std::fmt::Display for SymbolTableScope {
             .collect::<Vec<(&String, &SymbolTableNode)>>();
         sorted_symbols.sort_by(|a, b| a.0.cmp(b.0));
 
-        writeln!(f, "Symbols:")?;
+        writeln!(f, "Symbols: in {}", self.name)?;
         for (name, symbol) in sorted_symbols {
             writeln!(f, "{}", name)?;
             // sort the declarations by line number

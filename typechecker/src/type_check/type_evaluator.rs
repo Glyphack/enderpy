@@ -1,15 +1,17 @@
 #![allow(dead_code)]
 #![allow(unused_variables)]
 
+use std::collections::HashMap;
+
 use enderpy_python_parser as parser;
 use enderpy_python_parser::ast;
 use log::debug;
 use miette::{bail, miette, Result};
-use parser::ast::Statement;
+use parser::ast::{Statement, GetNode};
 
 use crate::{
     ast_visitor_generic::TraversalVisitorImmutGeneric,
-    symbol_table::{Declaration, SymbolTable, SymbolTableNode},
+    symbol_table::{Declaration, SymbolTable, SymbolTableNode}, nodes::EnderpyFile, diagnostic::Position, state::State, ast_visitor::TraversalVisitor,
 };
 
 use super::{
@@ -227,7 +229,15 @@ impl TypeEvaluator {
                 })))
             }
             Declaration::Class(_) => Ok(PythonType::Unknown),
-            Declaration::Parameter(_) => Ok(PythonType::Unknown),
+            Declaration::Parameter(p) => {
+                return if let Some(type_annotation) = &p.type_annotation {
+                    Ok(type_inference::get_type_from_annotation(type_annotation))
+                } else if let Some(default) = &p.default_value {
+                    self.get_type(default)
+                } else {
+                    Ok(PythonType::Any)
+                }
+            },
             Declaration::Alias(_) => Ok(PythonType::Unknown),
             Declaration::TypeParameter(_) => Ok(PythonType::Unknown),
             Declaration::TypeAlias(_) => Ok(PythonType::Unknown),
@@ -568,52 +578,10 @@ mod tests {
 
         let type_eval = TypeEvaluator::new(symbol_table);
 
-        let mut result = HashMap::new();
+        let mut type_eval_visitor = TypeEvalVisitor::new(module.file);
+        type_eval_visitor.visit_module();
 
-        for stmt in module.file.body {
-            match stmt {
-                parser::ast::Statement::ExpressionStatement(e) => {
-                    let t = type_eval.get_type(&e);
-                    match e {
-                        parser::ast::Expression::Name(n) => {
-                            result.insert(n.id, t.unwrap_or(PythonType::Unknown).to_string());
-                        }
-                        _ => panic!("don't use this test for other expressions"),
-                    }
-                }
-                parser::ast::Statement::AssignStatement(a) => {
-                    let t = type_eval.get_type(&a.value);
-                    match a.targets.first() {
-                        Some(target) => match target {
-                            parser::ast::Expression::Name(n) => {
-                                result.insert(
-                                    n.id.clone(),
-                                    t.unwrap_or(PythonType::Unknown).to_string(),
-                                );
-                            }
-                            _ => panic!("don't use this test for other expressions"),
-                        },
-                        None => panic!("don't use this test for other expressions"),
-                    }
-                },
-                parser::ast::Statement::FunctionDef(f) => {
-                    // for over the body and get type for the return statement
-                    for stmt in f.body {
-                        match stmt {
-                            parser::ast::Statement::Return(r) => {
-                                let t = type_eval.get_type(&r.value.unwrap());
-                                result.insert(
-                                    f.name.clone(),
-                                    t.unwrap_or(PythonType::Unknown).to_string(),
-                                );
-                            }
-                            _ => {}
-                        }
-                    }
-                }
-                _ => {}
-            }
-        }
+        let result = type_eval_visitor.types;
 
         // sort result by key
         let mut result_sorted = result.clone().into_iter().collect::<Vec<_>>();
@@ -637,3 +605,123 @@ mod tests {
         })
     }
 }
+
+/// visits the ast and calls get_type on each expression and saves that type in the types hashmap
+/// the key is the position of the expression in the source: (line, start, end)
+struct TypeEvalVisitor {
+    pub type_eval: TypeEvaluator,
+    pub types: HashMap<String, PythonType>,
+    pub state: State,
+}
+
+impl TypeEvalVisitor {
+    pub fn new(enderpy_file: EnderpyFile) -> Self {
+        let mut state = State::new(enderpy_file);
+        state.populate_symbol_table();
+        let symbol_table = state.get_symbol_table();
+        Self {
+            types: HashMap::new(),
+            type_eval: TypeEvaluator::new(symbol_table),
+            state,
+        }
+    }
+
+    pub fn enderpy_file(&self) -> &EnderpyFile {
+        &self.state.file
+    }
+
+    /// This function is called on every expression in the ast
+    pub fn save_type(&mut self, expr: &ast::Expression) {
+        let typ = self.type_eval.get_type(&expr).unwrap_or(PythonType::Unknown);
+        let start_pos = self.enderpy_file().get_position(expr.get_node().start);
+        let end_pos = self.enderpy_file().get_position(expr.get_node().end);
+        self.types.insert(format!("{}:{}", start_pos, end_pos), typ);
+    }
+
+    fn visit_module(&mut self) -> () {
+        let body = self.enderpy_file().body.clone();
+        for statement in  body.iter() {
+            self.visit_stmt(&statement);
+        }
+    }
+}
+
+/// Traverse the ast and call call save_type on each expression
+impl TraversalVisitor for TypeEvalVisitor {
+    fn visit_stmt(&mut self, s: &ast::Statement) {
+        // map all statements and call visit
+        match s {
+            ast::Statement::ExpressionStatement(e) => self.visit_expr(e),
+            ast::Statement::Import(i) => self.visit_import(i),
+            ast::Statement::ImportFrom(i) => self.visit_import_from(i),
+            ast::Statement::AssignStatement(a) => {
+                self.save_type(&a.value);
+            },
+            ast::Statement::AnnAssignStatement(a) => self.visit_ann_assign(a),
+            ast::Statement::AugAssignStatement(a) => self.visit_aug_assign(a),
+            ast::Statement::Assert(a) => self.visit_assert(a),
+            ast::Statement::Pass(p) => self.visit_pass(p),
+            ast::Statement::Delete(d) => self.visit_delete(d),
+            ast::Statement::Return(r) => {
+                if let Some(r) = r.value.as_ref() {
+                    self.visit_expr(r);
+                    self.save_type(r);
+                }
+            },
+            ast::Statement::Raise(r) => self.visit_raise(r),
+            ast::Statement::Break(b) => self.visit_break(b),
+            ast::Statement::Continue(c) => self.visit_continue(c),
+            ast::Statement::Global(g) => self.visit_global(g),
+            ast::Statement::Nonlocal(n) => self.visit_nonlocal(n),
+            ast::Statement::IfStatement(i) => self.visit_if(i),
+            ast::Statement::WhileStatement(w) => self.visit_while(w),
+            ast::Statement::ForStatement(f) => self.visit_for(f),
+            ast::Statement::WithStatement(w) => self.visit_with(w),
+            ast::Statement::TryStatement(t) => self.visit_try(t),
+            ast::Statement::TryStarStatement(t) => self.visit_try_star(t),
+            ast::Statement::FunctionDef(f) => self.visit_function_def(f),
+            ast::Statement::ClassDef(c) => self.visit_class_def(c),
+            ast::Statement::Match(m) => self.visit_match(m),
+            Statement::AsyncForStatement(f) => self.visit_async_for(f),
+            Statement::AsyncWithStatement(w) => self.visit_async_with(w),
+            Statement::AsyncFunctionDef(f) => self.visit_async_function_def(f),
+            Statement::TypeAlias(a) => self.visit_type_alias(a),
+        }
+    }
+
+    fn visit_expr(&mut self, e: &ast::Expression){
+        match e {
+            ast::Expression::Constant(c) => self.visit_constant(c),
+            ast::Expression::List(l) => self.visit_list(l),
+            ast::Expression::Tuple(t) => self.visit_tuple(t),
+            ast::Expression::Dict(d) => self.visit_dict(d),
+            ast::Expression::Set(s) => self.visit_set(s),
+            ast::Expression::Name(n) => self.visit_name(n),
+            ast::Expression::BoolOp(b) => self.visit_bool_op(b),
+            ast::Expression::UnaryOp(u) => self.visit_unary_op(u),
+            ast::Expression::BinOp(b) => {
+                self.save_type(&b.left);
+                self.save_type(&b.right);
+            },
+            ast::Expression::NamedExpr(n) => self.visit_named_expr(n),
+            ast::Expression::Yield(y) => self.visit_yield(y),
+            ast::Expression::YieldFrom(y) => self.visit_yield_from(y),
+            ast::Expression::Starred(s) => self.visit_starred(s),
+            ast::Expression::Generator(g) => self.visit_generator(g),
+            ast::Expression::ListComp(l) => self.visit_list_comp(l),
+            ast::Expression::SetComp(s) => self.visit_set_comp(s),
+            ast::Expression::DictComp(d) => self.visit_dict_comp(d),
+            ast::Expression::Attribute(a) => self.visit_attribute(a),
+            ast::Expression::Subscript(s) => self.visit_subscript(s),
+            ast::Expression::Slice(s) => self.visit_slice(s),
+            ast::Expression::Call(c) => self.visit_call(c),
+            ast::Expression::Await(a) => self.visit_await(a),
+            ast::Expression::Compare(c) => self.visit_compare(c),
+            ast::Expression::Lambda(l) => self.visit_lambda(l),
+            ast::Expression::IfExp(i) => self.visit_if_exp(i),
+            ast::Expression::JoinedStr(j) => self.visit_joined_str(j),
+            ast::Expression::FormattedValue(f) => self.visit_formatted_value(f),
+        }
+    }
+}
+    

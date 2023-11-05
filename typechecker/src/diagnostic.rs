@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use enderpy_python_parser::error::ParsingError;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -20,6 +22,12 @@ pub struct Position {
     pub line: u32,
     pub character: u32,
 }
+
+impl Display for Position {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "(line: {}, character: {})", self.line, self.character)
+    }
+}   
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct CharacterSpan(pub usize, pub usize);
