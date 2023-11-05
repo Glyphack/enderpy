@@ -12,7 +12,6 @@ use parser::ast::{GetNode, Statement};
 use crate::{
     ast_visitor::TraversalVisitor,
     ast_visitor_generic::TraversalVisitorImmutGeneric,
-    diagnostic::Position,
     nodes::EnderpyFile,
     state::State,
     symbol_table::{Declaration, LookupSymbolRequest, SymbolTable, SymbolTableNode},
@@ -233,7 +232,7 @@ impl TypeEvaluator {
             }
             Declaration::Class(_) => Ok(PythonType::Unknown),
             Declaration::Parameter(p) => {
-                return if let Some(type_annotation) = &p.type_annotation {
+                if let Some(type_annotation) = &p.type_annotation {
                     Ok(type_inference::get_type_from_annotation(type_annotation))
                 } else if let Some(default) = &p.default_value {
                     self.get_type(default)
@@ -638,17 +637,17 @@ impl TypeEvalVisitor {
     pub fn save_type(&mut self, expr: &ast::Expression) {
         let typ = self
             .type_eval
-            .get_type(&expr)
+            .get_type(expr)
             .unwrap_or(PythonType::Unknown);
         let start_pos = self.enderpy_file().get_position(expr.get_node().start);
         let end_pos = self.enderpy_file().get_position(expr.get_node().end);
         self.types.insert(format!("{}:{}", start_pos, end_pos), typ);
     }
 
-    fn visit_module(&mut self) -> () {
+    fn visit_module(&mut self) {
         let body = self.enderpy_file().body.clone();
         for statement in body.iter() {
-            self.visit_stmt(&statement);
+            self.visit_stmt(statement);
         }
     }
 }

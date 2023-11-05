@@ -274,7 +274,7 @@ impl SymbolTable {
     }
 
     pub fn global_scope(&self) -> &SymbolTableScope {
-        return &self.scopes[0];
+        &self.scopes[0]
     }
 
     pub fn exit_scope(&mut self) {
