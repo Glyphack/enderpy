@@ -287,7 +287,39 @@ impl TypeEvaluator {
         if !f.is_abstract() && !f.raise_statements.is_empty() {
             return PythonType::Never;
         }
-        PythonType::Unknown
+        if !f.yeild_statements.is_empty() {
+            let mut yield_types = vec![];
+            for yield_statement in &f.yeild_statements {
+                if let Some(value) = &yield_statement.value {
+                    yield_types.push(self.get_type(value).unwrap_or(PythonType::Unknown));
+                }
+            }
+            if yield_types.len() == 1 {
+                return PythonType::Class(super::types::ClassType {
+                    name: builtins::ITER_TYPE.to_string(),
+                    args: vec![yield_types[0].clone()],
+                });
+            } else {
+                // TODO: Union type
+                return PythonType::Unknown;
+            }
+        }
+        if f.return_statements.is_empty() {
+            return PythonType::None;
+        } else {
+            let mut return_types = vec![];
+            for return_statement in &f.return_statements {
+                if let Some(value) = &return_statement.value {
+                    return_types.push(self.get_type(value).unwrap_or(PythonType::Unknown));
+                }
+            }
+            if return_types.len() == 1 {
+                return return_types[0].clone();
+            } else {
+                // TODO: Union type
+                return PythonType::Unknown;
+            }
+        }
     }
 }
 
