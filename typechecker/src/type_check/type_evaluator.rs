@@ -48,12 +48,15 @@ impl TypeEvaluator {
             Some(position) => symbol.declaration_until_position(position),
             None => symbol.last_declaration(),
         };
+
+        log::debug!("fetch symbol declaration: {:?}", decl);
         match decl {
             Some(decl) => self.get_type_from_declaration(decl),
             None => Ok(PythonType::Any),
         }
     }
     pub fn get_type(&self, expr: &ast::Expression) -> Result<PythonType> {
+        log::debug!("get_type: {:?}", expr);
         match expr {
             ast::Expression::Constant(c) => {
                 let typ = match c.value {
@@ -78,8 +81,10 @@ impl TypeEvaluator {
                             return Ok(PythonType::Unknown);
                         }
                         let f_type = self.infer_type_from_symbol_table(n.id.as_str(), None)?;
+                        log::debug!("f_type: {:?}", f_type);
                         match f_type {
                             PythonType::Callable(callable_type) => Ok(callable_type.return_type),
+                            PythonType::Never => Ok(PythonType::Never),
                             _ => Err(miette!("{} is not callable", n.id)),
                         }
                     }
@@ -214,11 +219,12 @@ impl TypeEvaluator {
                 }
             }
             Declaration::Function(f) => {
-                let return_type = if let Some(type_annotation) = f.function_node.returns.clone() {
+                let annotated_return_type = if let Some(type_annotation) = f.function_node.returns.clone() {
                     type_inference::get_type_from_annotation(&type_annotation)
                 } else {
-                    // TODO infer from function body
-                    PythonType::Unknown
+                    let inferred_return_type = self.infer_function_return_type(f);
+                    log::debug!("infered_return_type: {:?}", inferred_return_type);
+                    inferred_return_type
                 };
 
                 let arguments = f.function_node.args.clone();
@@ -227,7 +233,7 @@ impl TypeEvaluator {
                 Ok(PythonType::Callable(Box::new(CallableType {
                     name,
                     arguments,
-                    return_type,
+                    return_type: annotated_return_type,
                 })))
             }
             Declaration::Class(_) => Ok(PythonType::Unknown),
@@ -255,10 +261,12 @@ impl TypeEvaluator {
             name: name.to_string(),
             position,
         };
-        match self.symbol_table.lookup_in_scope(lookup_request) {
+        let result = match self.symbol_table.lookup_in_scope(lookup_request) {
             Some(symbol) => self.get_symbol_node_type(symbol, position),
             None => Ok(PythonType::Unknown),
-        }
+        };
+        log::debug!("infer_type_from_symbol_table: {:?} => {:?}", name, result);
+        result
     }
 
     fn get_sequence_type_from_elements(&self, elements: &Vec<ast::Expression>) -> PythonType {
@@ -273,6 +281,45 @@ impl TypeEvaluator {
             }
         }
         prev_elm_type
+    }
+
+    fn infer_function_return_type(&self, f: &crate::symbol_table::Function) -> PythonType {
+        if !f.is_abstract() && !f.raise_statements.is_empty() {
+            return PythonType::Never;
+        }
+        if !f.yeild_statements.is_empty() {
+            let mut yield_types = vec![];
+            for yield_statement in &f.yeild_statements {
+                if let Some(value) = &yield_statement.value {
+                    yield_types.push(self.get_type(value).unwrap_or(PythonType::Unknown));
+                }
+            }
+            if yield_types.len() == 1 {
+                return PythonType::Class(super::types::ClassType {
+                    name: builtins::ITER_TYPE.to_string(),
+                    args: vec![yield_types[0].clone()],
+                });
+            } else {
+                // TODO: Union type
+                return PythonType::Unknown;
+            }
+        }
+        if f.return_statements.is_empty() {
+            return PythonType::None;
+        } else {
+            let mut return_types = vec![];
+            for return_statement in &f.return_statements {
+                if let Some(value) = &return_statement.value {
+                    return_types.push(self.get_type(value).unwrap_or(PythonType::Unknown));
+                }
+            }
+            if return_types.len() == 1 {
+                return return_types[0].clone();
+            } else {
+                // TODO: Union type
+                return PythonType::Unknown;
+            }
+        }
     }
 }
 
@@ -639,6 +686,7 @@ impl TypeEvalVisitor {
             .type_eval
             .get_type(expr)
             .unwrap_or(PythonType::Unknown);
+        log::debug!("save_type: {:?} => {:?}", expr, typ);
         let start_pos = self.enderpy_file().get_position(expr.get_node().start);
         let end_pos = self.enderpy_file().get_position(expr.get_node().end);
         self.types.insert(format!("{}:{}", start_pos, end_pos), typ);
@@ -658,8 +706,8 @@ impl TraversalVisitor for TypeEvalVisitor {
         // map all statements and call visit
         match s {
             ast::Statement::ExpressionStatement(e) => self.visit_expr(e),
-            ast::Statement::Import(i) => self.visit_import(i),
-            ast::Statement::ImportFrom(i) => self.visit_import_from(i),
+            ast::Statement::Import(i) => {},
+            ast::Statement::ImportFrom(i) => {},
             ast::Statement::AssignStatement(a) => {
                 self.save_type(&a.value);
             }
@@ -674,7 +722,14 @@ impl TraversalVisitor for TypeEvalVisitor {
                     self.save_type(r);
                 }
             }
-            ast::Statement::Raise(r) => self.visit_raise(r),
+            ast::Statement::Raise(r) => {
+                if let Some(r) = r.exc.as_ref() {
+                    self.save_type(r);
+                }
+                if let Some(r) = r.cause.as_ref() {
+                    self.save_type(r);
+                }
+            }
             ast::Statement::Break(b) => self.visit_break(b),
             ast::Statement::Continue(c) => self.visit_continue(c),
             ast::Statement::Global(g) => self.visit_global(g),
@@ -685,7 +740,11 @@ impl TraversalVisitor for TypeEvalVisitor {
             ast::Statement::WithStatement(w) => self.visit_with(w),
             ast::Statement::TryStatement(t) => self.visit_try(t),
             ast::Statement::TryStarStatement(t) => self.visit_try_star(t),
-            ast::Statement::FunctionDef(f) => self.visit_function_def(f),
+            ast::Statement::FunctionDef(f) => {
+                for stmt in &f.body {
+                    self.visit_stmt(stmt);
+                }
+            },
             ast::Statement::ClassDef(c) => self.visit_class_def(c),
             ast::Statement::Match(m) => self.visit_match(m),
             Statement::AsyncForStatement(f) => self.visit_async_for(f),
