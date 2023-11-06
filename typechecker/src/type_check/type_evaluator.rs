@@ -49,7 +49,7 @@ impl TypeEvaluator {
             None => symbol.last_declaration(),
         };
 
-        log::debug!("get_symbol_node_type: {:?}", decl);
+        log::debug!("fetch symbol declaration: {:?}", decl);
         match decl {
             Some(decl) => self.get_type_from_declaration(decl),
             None => Ok(PythonType::Any),
@@ -222,26 +222,10 @@ impl TypeEvaluator {
                 let annotated_return_type = if let Some(type_annotation) = f.function_node.returns.clone() {
                     type_inference::get_type_from_annotation(&type_annotation)
                 } else {
-                    // TODO infer from function body
-                    PythonType::Unknown
+                    let inferred_return_type = self.infer_function_return_type(f);
+                    log::debug!("infered_return_type: {:?}", inferred_return_type);
+                    inferred_return_type
                 };
-
-                let is_never = if f.is_abstract() {
-                    false
-                } else {
-                    // TODO: if all code paths are raising then it's never type
-                    f.function_node.body.iter().any(|stmt| match stmt {
-                        ast::Statement::Raise(_) =>  true,
-                        _ => false,
-                   })
-                };
-
-
-                log::debug!("is_never: {}", is_never);
-                if is_never {
-                    // TODO: if type annotation is not correct error
-                    return Ok(PythonType::Never);
-                }
 
                 let arguments = f.function_node.args.clone();
                 let name = f.function_node.name.clone();
@@ -277,10 +261,12 @@ impl TypeEvaluator {
             name: name.to_string(),
             position,
         };
-        match self.symbol_table.lookup_in_scope(lookup_request) {
+        let result = match self.symbol_table.lookup_in_scope(lookup_request) {
             Some(symbol) => self.get_symbol_node_type(symbol, position),
             None => Ok(PythonType::Unknown),
-        }
+        };
+        log::debug!("infer_type_from_symbol_table: {:?} => {:?}", name, result);
+        result
     }
 
     fn get_sequence_type_from_elements(&self, elements: &Vec<ast::Expression>) -> PythonType {
@@ -295,6 +281,13 @@ impl TypeEvaluator {
             }
         }
         prev_elm_type
+    }
+
+    fn infer_function_return_type(&self, f: &crate::symbol_table::Function) -> PythonType {
+        if !f.is_abstract() && !f.raise_statements.is_empty() {
+            return PythonType::Never;
+        }
+        PythonType::Unknown
     }
 }
 

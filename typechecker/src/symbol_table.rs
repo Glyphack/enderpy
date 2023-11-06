@@ -115,9 +115,11 @@ pub struct Function {
     pub function_node: ast::FunctionDef,
     pub is_method: bool,
     pub is_generator: bool,
+    /// return statements that are reachable in the top level function body
     pub return_statements: Vec<ast::Return>,
+    /// yield statements that are reachable in the top level function body
     pub yeild_statements: Vec<ast::Yield>,
-    // helpful to later type check exceptions
+    /// raise statements that are reachable in the top level function body
     pub raise_statements: Vec<ast::Raise>,
 }
 
