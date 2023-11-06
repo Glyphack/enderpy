@@ -14,7 +14,7 @@ use crate::{
     ast_visitor_generic::TraversalVisitorImmutGeneric,
     nodes::EnderpyFile,
     state::State,
-    symbol_table::{Declaration, LookupSymbolRequest, SymbolTable, SymbolTableNode},
+    symbol_table::{Declaration, LookupSymbolRequest, SymbolTable, SymbolTableNode}, type_check::types::{KnownValue, self},
 };
 
 use super::{
@@ -59,12 +59,22 @@ impl TypeEvaluator {
         log::debug!("get_type: {:?}", expr);
         match expr {
             ast::Expression::Constant(c) => {
-                let typ = match c.value {
-                    ast::ConstantValue::Int(_) => PythonType::Int,
-                    ast::ConstantValue::Float(_) => PythonType::Float,
-                    ast::ConstantValue::Str(_) => PythonType::Str,
-                    ast::ConstantValue::Bool(_) => PythonType::Bool,
-                    ast::ConstantValue::None => PythonType::None,
+                let typ = match &c.value {
+                    ast::ConstantValue::Int(i) => PythonType::KnownValue(KnownValue {
+                        literal_value: types::LiteralValue::Int(i.to_string()),
+                    }),
+                    ast::ConstantValue::Float(f) => PythonType::KnownValue(KnownValue {
+                        literal_value: types::LiteralValue::Float(f.to_string()),
+                    }),
+                    ast::ConstantValue::Str(s) => PythonType::KnownValue(KnownValue {
+                        literal_value: types::LiteralValue::Str(s.to_string()),
+                    }),
+                    ast::ConstantValue::Bool(b) => PythonType::KnownValue(KnownValue {
+                        literal_value: types::LiteralValue::Bool(*b),
+                    }),
+                    ast::ConstantValue::None => PythonType::KnownValue(KnownValue {
+                        literal_value: types::LiteralValue::None,
+                    }),
                     _ => PythonType::Unknown,
                 };
                 Ok(typ)

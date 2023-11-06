@@ -7,7 +7,13 @@ input_file: typechecker/src/type_check/test_data/inputs/type_eval_vars.py
 [
     (
         "(line: 1, character: 4):(line: 1, character: 5)",
-        Int,
+        KnownValue(
+            KnownValue {
+                literal_value: Int(
+                    "1",
+                ),
+            },
+        ),
     ),
     (
         "(line: 10, character: 4):(line: 10, character: 10)",
@@ -15,7 +21,7 @@ input_file: typechecker/src/type_check/test_data/inputs/type_eval_vars.py
             ClassType {
                 name: "builtins.tuple",
                 args: [
-                    Int,
+                    Unknown,
                 ],
             },
         ),
@@ -26,7 +32,7 @@ input_file: typechecker/src/type_check/test_data/inputs/type_eval_vars.py
             ClassType {
                 name: "builtins.set",
                 args: [
-                    Int,
+                    Unknown,
                 ],
             },
         ),
@@ -37,15 +43,19 @@ input_file: typechecker/src/type_check/test_data/inputs/type_eval_vars.py
             ClassType {
                 name: "builtins.dict",
                 args: [
-                    Str,
-                    Int,
+                    Unknown,
+                    Unknown,
                 ],
             },
         ),
     ),
     (
         "(line: 13, character: 4):(line: 13, character: 8)",
-        None,
+        KnownValue(
+            KnownValue {
+                literal_value: None,
+            },
+        ),
     ),
     (
         "(line: 15, character: 10):(line: 15, character: 24)",
@@ -53,11 +63,17 @@ input_file: typechecker/src/type_check/test_data/inputs/type_eval_vars.py
     ),
     (
         "(line: 17, character: 9):(line: 17, character: 14)",
-        Int,
+        Unknown,
     ),
     (
         "(line: 18, character: 12):(line: 18, character: 14)",
-        Int,
+        KnownValue(
+            KnownValue {
+                literal_value: Int(
+                    "1",
+                ),
+            },
+        ),
     ),
     (
         "(line: 19, character: 12):(line: 19, character: 17)",
@@ -65,19 +81,37 @@ input_file: typechecker/src/type_check/test_data/inputs/type_eval_vars.py
     ),
     (
         "(line: 2, character: 4):(line: 2, character: 5)",
-        Int,
+        KnownValue(
+            KnownValue {
+                literal_value: Int(
+                    "2",
+                ),
+            },
+        ),
     ),
     (
         "(line: 20, character: 13):(line: 20, character: 15)",
-        Int,
+        Unknown,
     ),
     (
         "(line: 21, character: 13):(line: 21, character: 15)",
-        Int,
+        KnownValue(
+            KnownValue {
+                literal_value: Int(
+                    "1",
+                ),
+            },
+        ),
     ),
     (
         "(line: 23, character: 9):(line: 23, character: 15)",
-        Int,
+        KnownValue(
+            KnownValue {
+                literal_value: Int(
+                    "1",
+                ),
+            },
+        ),
     ),
     (
         "(line: 25, character: 12):(line: 25, character: 26)",
@@ -96,19 +130,43 @@ input_file: typechecker/src/type_check/test_data/inputs/type_eval_vars.py
     ),
     (
         "(line: 3, character: 4):(line: 3, character: 8)",
-        Bool,
+        KnownValue(
+            KnownValue {
+                literal_value: Bool(
+                    true,
+                ),
+            },
+        ),
     ),
     (
         "(line: 4, character: 4):(line: 4, character: 9)",
-        Bool,
+        KnownValue(
+            KnownValue {
+                literal_value: Bool(
+                    false,
+                ),
+            },
+        ),
     ),
     (
         "(line: 5, character: 4):(line: 5, character: 11)",
-        Str,
+        KnownValue(
+            KnownValue {
+                literal_value: Str(
+                    "hello",
+                ),
+            },
+        ),
     ),
     (
         "(line: 6, character: 4):(line: 6, character: 11)",
-        Str,
+        KnownValue(
+            KnownValue {
+                literal_value: Str(
+                    "world",
+                ),
+            },
+        ),
     ),
     (
         "(line: 7, character: 13):(line: 7, character: 23)",
@@ -120,7 +178,7 @@ input_file: typechecker/src/type_check/test_data/inputs/type_eval_vars.py
             ClassType {
                 name: "builtins.list",
                 args: [
-                    Int,
+                    Unknown,
                 ],
             },
         ),

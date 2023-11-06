@@ -11,6 +11,10 @@ pub enum PythonType {
     /// For example, if a file contains only the function def f(x): return x, the name x will have an Anyas its value within the function
     /// because there is no information to determine what value it can contain
     Any,
+    /// representing a value with concrete type. 
+    /// For example, if we define some variable foo to have type Literal[3], we are declaring that foo must be exactly equal to 3 and no other value.
+    /// In type inference the values are not assumed to be literals unless they are explicitly declared as such.
+    KnownValue(KnownValue),
     Callable(Box<CallableType>),
     Bool,
     Int,
@@ -50,6 +54,20 @@ impl PartialEq for ClassType {
     }
 }
 
+#[derive(Debug, Clone, PartialEq)]
+pub struct KnownValue {
+    pub literal_value: LiteralValue,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum LiteralValue {
+    Bool(bool),
+    Int(String),
+    Float(String),
+    Str(String),
+    None,
+}
+
 impl Display for PythonType {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         let type_str = match self {
@@ -73,6 +91,16 @@ impl Display for PythonType {
                 return write!(f, "{}", fmt);
             },
             PythonType::Never => "Never",
+            PythonType::KnownValue(value) => {
+                let value = match &value.literal_value {
+                        LiteralValue::Bool(value) => value.to_string(),
+                        LiteralValue::Int(value) => value.to_string(),
+                        LiteralValue::Float(value) => value.to_string(),
+                        LiteralValue::Str(value) => value.to_string(),
+                        LiteralValue::None => "None".to_string(),
+                };
+                return write!(f, "Literal[{}]", value);
+            },
         };
 
         write!(f, "{}", type_str)
