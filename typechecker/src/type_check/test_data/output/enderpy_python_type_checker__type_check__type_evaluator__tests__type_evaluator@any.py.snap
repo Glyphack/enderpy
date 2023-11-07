@@ -15,12 +15,6 @@ input_file: typechecker/src/type_check/test_data/inputs/any.py
     ),
     (
         "(line: 1, character: 15):(line: 1, character: 16)",
-        KnownValue(
-            KnownValue {
-                literal_value: Int(
-                    "1",
-                ),
-            },
-        ),
+        Int,
     ),
 ]

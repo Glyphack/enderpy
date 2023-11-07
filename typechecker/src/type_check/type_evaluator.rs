@@ -14,7 +14,7 @@ use crate::{
     ast_visitor_generic::TraversalVisitorImmutGeneric,
     nodes::EnderpyFile,
     state::State,
-    symbol_table::{Declaration, LookupSymbolRequest, SymbolTable, SymbolTableNode}, type_check::types::{KnownValue, self},
+    symbol_table::{Declaration, LookupSymbolRequest, SymbolTable, SymbolTableNode}, type_check::{types::{KnownValue, self}, type_inference::get_type_from_annotation},
 };
 
 use super::{
@@ -60,21 +60,13 @@ impl TypeEvaluator {
         match expr {
             ast::Expression::Constant(c) => {
                 let typ = match &c.value {
-                    ast::ConstantValue::Int(i) => PythonType::KnownValue(KnownValue {
-                        literal_value: types::LiteralValue::Int(i.to_string()),
-                    }),
-                    ast::ConstantValue::Float(f) => PythonType::KnownValue(KnownValue {
-                        literal_value: types::LiteralValue::Float(f.to_string()),
-                    }),
-                    ast::ConstantValue::Str(s) => PythonType::KnownValue(KnownValue {
-                        literal_value: types::LiteralValue::Str(s.to_string()),
-                    }),
-                    ast::ConstantValue::Bool(b) => PythonType::KnownValue(KnownValue {
-                        literal_value: types::LiteralValue::Bool(*b),
-                    }),
-                    ast::ConstantValue::None => PythonType::KnownValue(KnownValue {
-                        literal_value: types::LiteralValue::None,
-                    }),
+                    // We should consider constants are not literals unless they are explicitly declared as such
+                    // https://peps.python.org/pep-0586/#type-inference
+                    ast::ConstantValue::Int(_) => PythonType::Int,
+                    ast::ConstantValue::Float(_) => PythonType::Float,
+                    ast::ConstantValue::Str(_) => PythonType::Str,
+                    ast::ConstantValue::Bool(_) => PythonType::Bool,
+                    ast::ConstantValue::None => PythonType::None,
                     _ => PythonType::Unknown,
                 };
                 Ok(typ)
@@ -702,6 +694,15 @@ impl TypeEvalVisitor {
         self.types.insert(format!("{}:{}", start_pos, end_pos), typ);
     }
 
+    // TODO: move type annotation tests to its own file
+    pub fn save_type_annotation(&mut self, expr: &ast::Expression) {
+        let typ = get_type_from_annotation(expr);
+        log::debug!("save_type: {:?} => {:?}", expr, typ);
+        let start_pos = self.enderpy_file().get_position(expr.get_node().start);
+        let end_pos = self.enderpy_file().get_position(expr.get_node().end);
+        self.types.insert(format!("{}:{}", start_pos, end_pos), typ);
+    }
+
     fn visit_module(&mut self) {
         let body = self.enderpy_file().body.clone();
         for statement in body.iter() {
@@ -721,7 +722,13 @@ impl TraversalVisitor for TypeEvalVisitor {
             ast::Statement::AssignStatement(a) => {
                 self.save_type(&a.value);
             }
-            ast::Statement::AnnAssignStatement(a) => self.visit_ann_assign(a),
+            ast::Statement::AnnAssignStatement(a) => {
+                match a.value.as_ref() {
+                    Some(v) => self.save_type(v),
+                    None => {},
+                }
+                self.save_type_annotation(&a.annotation)
+            }
             ast::Statement::AugAssignStatement(a) => self.visit_aug_assign(a),
             ast::Statement::Assert(a) => self.visit_assert(a),
             ast::Statement::Pass(p) => self.visit_pass(p),

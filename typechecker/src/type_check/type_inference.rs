@@ -7,6 +7,7 @@ use enderpy_python_parser::ast::{self, BinaryOperator, Expression, Subscript};
 use super::{builtins, types::{PythonType, LiteralValue}};
 
 pub fn get_type_from_annotation(type_annotation: &ast::Expression) -> PythonType {
+    log::debug!("Getting type from annotation: {:?}", type_annotation);
     let expr_type = match type_annotation {
         ast::Expression::Name(name) => match name.id.as_str() {
             "int" => PythonType::Int,
