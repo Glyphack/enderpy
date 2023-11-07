@@ -24,6 +24,19 @@ pub enum PythonType {
     Never,
 }
 
+#[derive(Debug, Clone, PartialEq)]
+pub struct Any {
+    pub source: AnySource,
+}
+
+/// Describes the source of Any
+#[allow(unused)]
+#[derive(PartialEq, Clone, Debug)]
+pub enum AnySource {
+    /// The user wrote 'Any' in an annotation.
+    Explicit,
+}
+
 #[allow(unused)]
 #[derive(Debug, Clone)]
 pub struct CallableType {
@@ -54,6 +67,7 @@ impl PartialEq for ClassType {
     }
 }
 
+/// https://peps.python.org/pep-0586/
 #[derive(Debug, Clone, PartialEq)]
 pub struct KnownValue {
     pub literal_value: LiteralValue,
@@ -66,6 +80,25 @@ pub enum LiteralValue {
     Float(String),
     Str(String),
     None,
+    Bytes(Vec<u8>),
+}
+
+impl Display for LiteralValue {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        let value_str = match self {
+            LiteralValue::Bool(b) => b.to_string(),
+            LiteralValue::Int(i) => i.to_string(),
+            LiteralValue::Float(f) => f.to_string(),
+            LiteralValue::Str(s) => s.to_string(),
+            LiteralValue::None => "None".to_string(),
+            LiteralValue::Bytes(b) => {
+                let bytes_str = b.iter().map(|b| format!("{:02x}", b)).collect::<String>();
+                return write!(f, "b'{}'", bytes_str);
+            },
+        };
+
+        write!(f, "{}", value_str)
+    }
 }
 
 impl Display for PythonType {
@@ -92,13 +125,7 @@ impl Display for PythonType {
             },
             PythonType::Never => "Never",
             PythonType::KnownValue(value) => {
-                let value = match &value.literal_value {
-                        LiteralValue::Bool(value) => value.to_string(),
-                        LiteralValue::Int(value) => value.to_string(),
-                        LiteralValue::Float(value) => value.to_string(),
-                        LiteralValue::Str(value) => value.to_string(),
-                        LiteralValue::None => "None".to_string(),
-                };
+                let value = format!("{}", value.literal_value);
                 return write!(f, "Literal[{}]", value);
             },
         };

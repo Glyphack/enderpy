@@ -1,9 +1,10 @@
 #![allow(dead_code)]
 #![allow(unused_variables)]
+/// This module is resonsible for ineferring type from annotations or python expressions.
 
-use enderpy_python_parser::ast::{self, BinaryOperator, Expression};
+use enderpy_python_parser::ast::{self, BinaryOperator, Expression, Subscript};
 
-use super::{builtins, types::PythonType};
+use super::{builtins, types::{PythonType, LiteralValue}};
 
 pub fn get_type_from_annotation(type_annotation: &ast::Expression) -> PythonType {
     let expr_type = match type_annotation {
@@ -15,16 +16,8 @@ pub fn get_type_from_annotation(type_annotation: &ast::Expression) -> PythonType
             "None" => PythonType::None,
             _ => PythonType::Unknown,
         },
-        Expression::Constant(c) => match c.value.clone() {
-            ast::ConstantValue::Int(_) => PythonType::Int,
-            ast::ConstantValue::Float(_) => PythonType::Float,
-            ast::ConstantValue::Str(_) => PythonType::Str,
-            ast::ConstantValue::Bool(_) => PythonType::Bool,
-            ast::ConstantValue::None | ast::ConstantValue::Ellipsis => PythonType::None,
-            ast::ConstantValue::Bytes(_) => todo!(),
-            ast::ConstantValue::Tuple(_) => todo!(),
-            ast::ConstantValue::Complex { real, imaginary } => todo!(),
-        },
+        // Illegal type annotation
+        Expression::Constant(c) => PythonType::Unknown,
         Expression::Subscript(s) => {
             // This is a generic type
             let name = match *s.value.clone() {
@@ -33,7 +26,13 @@ pub fn get_type_from_annotation(type_annotation: &ast::Expression) -> PythonType
                 Expression::Tuple(_) => todo!(),
                 Expression::Dict(_) => todo!(),
                 Expression::Set(_) => todo!(),
-                Expression::Name(n) => get_builtin_type(n.id),
+                Expression::Name(n) => {
+                    // TODO: handle builtins with enum
+                    if n.id == "Literal" {
+                        return handle_literal_type(s);
+                    }
+                    get_builtin_type(n.id)
+                },
                 Expression::BoolOp(_) => todo!(),
                 Expression::UnaryOp(_) => todo!(),
                 Expression::BinOp(_) => todo!(),
@@ -67,6 +66,58 @@ pub fn get_type_from_annotation(type_annotation: &ast::Expression) -> PythonType
     };
 
     expr_type
+}
+
+fn handle_literal_type(s: &Subscript) -> PythonType {
+    // Only simple parameters are allowed for literal type:
+    // https://peps.python.org/pep-0586/#legal-and-illegal-parameterizations
+    
+    let value = match *s.slice.clone() {
+        Expression::Constant(c) => {
+            match c.value {
+                ast::ConstantValue::Bool(b) => LiteralValue::Bool(b),
+                ast::ConstantValue::Int(i) => LiteralValue::Int(i),
+                ast::ConstantValue::Float(f) => LiteralValue::Float(f),
+                ast::ConstantValue::Str(s) => LiteralValue::Str(s),
+                ast::ConstantValue::Bytes(b) => LiteralValue::Bytes(b),
+                ast::ConstantValue::None => LiteralValue::None,
+                // Tuple is illegal if it has parantheses, otherwise it's allowed and the output a multiValued type
+                // Currently even mypy does not supoort this, who am I to do it?
+                // https://mypy-play.net/?mypy=latest&python=3.10&gist=0df0421d5c85f3b75f65a51cae8616ce
+                ast::ConstantValue::Tuple(t) => {
+                    if t.len() == 1 {
+                        match t[0].value.clone() {
+                            ast::ConstantValue::Bool(b) => LiteralValue::Bool(b.clone()),
+                            ast::ConstantValue::Int(i) => LiteralValue::Int(i),
+                            ast::ConstantValue::Float(f) => LiteralValue::Float(f),
+                            ast::ConstantValue::Str(s) => LiteralValue::Str(s),
+                            ast::ConstantValue::Bytes(b) => LiteralValue::Bytes(b),
+                            ast::ConstantValue::None => LiteralValue::None,
+                            _ => panic!("Tuple type with illegal parameter"),
+                        }
+                    } else {
+                    // TODO: this is a multiValued type
+                    return PythonType::Unknown;
+                    }
+                },
+                // Illegal parameter
+                ast::ConstantValue::Ellipsis => panic!("Literal type with ellipsis value is not supported"),
+                ast::ConstantValue::Complex { real, imaginary } => panic!("Literal type with complex value is not supported"),
+            }
+        },
+        // Only can be enum values
+        Expression::Attribute(a) => {
+            let value = match *a.value.clone() {
+                Expression::Name(n) => n.id,
+                _ => panic!("Literal type with attribute value can only be a name"),
+            };
+            LiteralValue::Str(value)
+        },
+        // Illegal parameter
+        _ => panic!("Literal type with illegal parameter, can only be a constant value or enum"),
+    };
+
+    PythonType::KnownValue(super::types::KnownValue { literal_value: value })
 }
 
 pub fn type_equal(t1: &PythonType, t2: &PythonType) -> bool {
