@@ -1,0 +1,22 @@
+---
+source: typechecker/src/type_check/type_evaluator.rs
+description: "from typing import Literal\n\n\na: Literal[\"foo\"] = \"foo\"\n"
+expression: result
+input_file: typechecker/src/type_check/test_data/inputs/literal.py
+---
+[
+    (
+        "(line: 3, character: 20):(line: 3, character: 25)",
+        Str,
+    ),
+    (
+        "(line: 3, character: 3):(line: 3, character: 17)",
+        KnownValue(
+            KnownValue {
+                literal_value: Str(
+                    "foo",
+                ),
+            },
+        ),
+    ),
+]

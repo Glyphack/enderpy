@@ -11,6 +11,10 @@ pub enum PythonType {
     /// For example, if a file contains only the function def f(x): return x, the name x will have an Anyas its value within the function
     /// because there is no information to determine what value it can contain
     Any,
+    /// representing a value with concrete type.
+    /// For example, if we define some variable foo to have type Literal[3], we are declaring that foo must be exactly equal to 3 and no other value.
+    /// In type inference the values are not assumed to be literals unless they are explicitly declared as such.
+    KnownValue(KnownValue),
     Callable(Box<CallableType>),
     Bool,
     Int,
@@ -18,6 +22,19 @@ pub enum PythonType {
     Str,
     Class(ClassType),
     Never,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct Any {
+    pub source: AnySource,
+}
+
+/// Describes the source of Any
+#[allow(unused)]
+#[derive(PartialEq, Clone, Debug)]
+pub enum AnySource {
+    /// The user wrote 'Any' in an annotation.
+    Explicit,
 }
 
 #[allow(unused)]
@@ -50,6 +67,40 @@ impl PartialEq for ClassType {
     }
 }
 
+/// https://peps.python.org/pep-0586/
+#[derive(Debug, Clone, PartialEq)]
+pub struct KnownValue {
+    pub literal_value: LiteralValue,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum LiteralValue {
+    Bool(bool),
+    Int(String),
+    Float(String),
+    Str(String),
+    None,
+    Bytes(Vec<u8>),
+}
+
+impl Display for LiteralValue {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        let value_str = match self {
+            LiteralValue::Bool(b) => b.to_string(),
+            LiteralValue::Int(i) => i.to_string(),
+            LiteralValue::Float(f) => f.to_string(),
+            LiteralValue::Str(s) => s.to_string(),
+            LiteralValue::None => "None".to_string(),
+            LiteralValue::Bytes(b) => {
+                let bytes_str = b.iter().map(|b| format!("{:02x}", b)).collect::<String>();
+                return write!(f, "b'{}'", bytes_str);
+            }
+        };
+
+        write!(f, "{}", value_str)
+    }
+}
+
 impl Display for PythonType {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         let type_str = match self {
@@ -71,8 +122,12 @@ impl Display for PythonType {
                     .join(", ");
                 let fmt = format!("{}[{}]", class_type.name, args_str);
                 return write!(f, "{}", fmt);
-            },
+            }
             PythonType::Never => "Never",
+            PythonType::KnownValue(value) => {
+                let value = format!("{}", value.literal_value);
+                return write!(f, "Literal[{}]", value);
+            }
         };
 
         write!(f, "{}", type_str)
