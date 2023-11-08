@@ -17,7 +17,6 @@ use crate::{
     symbol_table::{Declaration, LookupSymbolRequest, SymbolTable, SymbolTableNode},
     type_check::{
         type_inference::get_type_from_annotation,
-        types::{self, KnownValue},
     },
 };
 
@@ -312,7 +311,7 @@ impl TypeEvaluator {
             }
         }
         if f.return_statements.is_empty() {
-            return PythonType::None;
+            PythonType::None
         } else {
             let mut return_types = vec![];
             for return_statement in &f.return_statements {
@@ -321,10 +320,10 @@ impl TypeEvaluator {
                 }
             }
             if return_types.len() == 1 {
-                return return_types[0].clone();
+                return_types[0].clone()
             } else {
                 // TODO: Union type
-                return PythonType::Unknown;
+                PythonType::Unknown
             }
         }
     }

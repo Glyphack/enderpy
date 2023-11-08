@@ -108,7 +108,7 @@ pub fn get_literal_value_from_param(expr: &Expression) -> Vec<LiteralValue> {
                 ast::ConstantValue::Tuple(t) => {
                     if t.len() == 1 {
                         match t[0].value.clone() {
-                            ast::ConstantValue::Bool(b) => LiteralValue::Bool(b.clone()),
+                            ast::ConstantValue::Bool(b) => LiteralValue::Bool(b),
                             ast::ConstantValue::Int(i) => LiteralValue::Int(i),
                             ast::ConstantValue::Float(f) => LiteralValue::Float(f),
                             ast::ConstantValue::Str(s) => LiteralValue::Str(s),
@@ -120,7 +120,7 @@ pub fn get_literal_value_from_param(expr: &Expression) -> Vec<LiteralValue> {
                         let literal_values = t
                             .iter()
                             .map(|c| match c.value.clone() {
-                                ast::ConstantValue::Bool(b) => LiteralValue::Bool(b.clone()),
+                                ast::ConstantValue::Bool(b) => LiteralValue::Bool(b),
                                 ast::ConstantValue::Int(i) => LiteralValue::Int(i),
                                 ast::ConstantValue::Float(f) => LiteralValue::Float(f),
                                 ast::ConstantValue::Str(s) => LiteralValue::Str(s),
@@ -150,7 +150,7 @@ pub fn get_literal_value_from_param(expr: &Expression) -> Vec<LiteralValue> {
             LiteralValue::Str(value)
         }
         Expression::Subscript(s) => {
-            let value = match *s.value.clone() {
+            match *s.value.clone() {
                 Expression::Name(n) => {
                     if !is_literal(n.id.clone()) {
                         panic!("{}", LITERAL_TYPE_PARAMETER_MSG)
