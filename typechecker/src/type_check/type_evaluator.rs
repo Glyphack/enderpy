@@ -14,7 +14,11 @@ use crate::{
     ast_visitor_generic::TraversalVisitorImmutGeneric,
     nodes::EnderpyFile,
     state::State,
-    symbol_table::{Declaration, LookupSymbolRequest, SymbolTable, SymbolTableNode}, type_check::{types::{KnownValue, self}, type_inference::get_type_from_annotation},
+    symbol_table::{Declaration, LookupSymbolRequest, SymbolTable, SymbolTableNode},
+    type_check::{
+        type_inference::get_type_from_annotation,
+        types::{self, KnownValue},
+    },
 };
 
 use super::{
@@ -221,13 +225,14 @@ impl TypeEvaluator {
                 }
             }
             Declaration::Function(f) => {
-                let annotated_return_type = if let Some(type_annotation) = f.function_node.returns.clone() {
-                    type_inference::get_type_from_annotation(&type_annotation)
-                } else {
-                    let inferred_return_type = self.infer_function_return_type(f);
-                    log::debug!("infered_return_type: {:?}", inferred_return_type);
-                    inferred_return_type
-                };
+                let annotated_return_type =
+                    if let Some(type_annotation) = f.function_node.returns.clone() {
+                        type_inference::get_type_from_annotation(&type_annotation)
+                    } else {
+                        let inferred_return_type = self.infer_function_return_type(f);
+                        log::debug!("infered_return_type: {:?}", inferred_return_type);
+                        inferred_return_type
+                    };
 
                 let arguments = f.function_node.args.clone();
                 let name = f.function_node.name.clone();
@@ -684,10 +689,7 @@ impl TypeEvalVisitor {
 
     /// This function is called on every expression in the ast
     pub fn save_type(&mut self, expr: &ast::Expression) {
-        let typ = self
-            .type_eval
-            .get_type(expr)
-            .unwrap_or(PythonType::Unknown);
+        let typ = self.type_eval.get_type(expr).unwrap_or(PythonType::Unknown);
         log::debug!("save_type: {:?} => {:?}", expr, typ);
         let start_pos = self.enderpy_file().get_position(expr.get_node().start);
         let end_pos = self.enderpy_file().get_position(expr.get_node().end);
@@ -717,15 +719,15 @@ impl TraversalVisitor for TypeEvalVisitor {
         // map all statements and call visit
         match s {
             ast::Statement::ExpressionStatement(e) => self.visit_expr(e),
-            ast::Statement::Import(i) => {},
-            ast::Statement::ImportFrom(i) => {},
+            ast::Statement::Import(i) => {}
+            ast::Statement::ImportFrom(i) => {}
             ast::Statement::AssignStatement(a) => {
                 self.save_type(&a.value);
             }
             ast::Statement::AnnAssignStatement(a) => {
                 match a.value.as_ref() {
                     Some(v) => self.save_type(v),
-                    None => {},
+                    None => {}
                 }
                 self.save_type_annotation(&a.annotation)
             }
@@ -761,7 +763,7 @@ impl TraversalVisitor for TypeEvalVisitor {
                 for stmt in &f.body {
                     self.visit_stmt(stmt);
                 }
-            },
+            }
             ast::Statement::ClassDef(c) => self.visit_class_def(c),
             ast::Statement::Match(m) => self.visit_match(m),
             Statement::AsyncForStatement(f) => self.visit_async_for(f),

@@ -3,10 +3,12 @@
 use core::panic;
 
 /// This module is resonsible for ineferring type from annotations or python expressions.
-
 use enderpy_python_parser::ast::{self, BinaryOperator, Expression, Subscript};
 
-use super::{builtins, types::{PythonType, LiteralValue}};
+use super::{
+    builtins,
+    types::{LiteralValue, PythonType},
+};
 
 const LITERAL_TYPE_PARAMETER_MSG: &str = "Type arguments for 'Literal' must be None, a literal value (int, bool, str, or bytes), or an enum value";
 
@@ -37,7 +39,7 @@ pub fn get_type_from_annotation(type_annotation: &ast::Expression) -> PythonType
                         return handle_literal_type(s);
                     }
                     get_builtin_type(n.id)
-                },
+                }
                 Expression::BoolOp(_) => todo!(),
                 Expression::UnaryOp(_) => todo!(),
                 Expression::BinOp(_) => todo!(),
@@ -81,7 +83,9 @@ fn handle_literal_type(s: &Subscript) -> PythonType {
         todo!("MultiValue literal type is not supported yet")
     }
 
-    PythonType::KnownValue(super::types::KnownValue { literal_value: value.last().unwrap().clone() })
+    PythonType::KnownValue(super::types::KnownValue {
+        literal_value: value.last().unwrap().clone(),
+    })
 }
 
 /// Write a function that takes in an expression which is a parameter to a literal type and returns
@@ -127,12 +131,16 @@ pub fn get_literal_value_from_param(expr: &Expression) -> Vec<LiteralValue> {
                             .collect();
                         return literal_values;
                     }
-                },
+                }
                 // Illegal parameter
-                ast::ConstantValue::Ellipsis => panic!("Literal type with ellipsis value is not supported"),
-                ast::ConstantValue::Complex { real, imaginary } => panic!("Literal type with complex value is not supported"),
+                ast::ConstantValue::Ellipsis => {
+                    panic!("Literal type with ellipsis value is not supported")
+                }
+                ast::ConstantValue::Complex { real, imaginary } => {
+                    panic!("Literal type with complex value is not supported")
+                }
             }
-        },
+        }
         // Only can be enum values
         Expression::Attribute(a) => {
             let value = match *a.value.clone() {
@@ -140,7 +148,7 @@ pub fn get_literal_value_from_param(expr: &Expression) -> Vec<LiteralValue> {
                 _ => panic!("Literal type with attribute value can only be a name"),
             };
             LiteralValue::Str(value)
-        },
+        }
         Expression::Subscript(s) => {
             let value = match *s.value.clone() {
                 Expression::Name(n) => {
@@ -148,18 +156,17 @@ pub fn get_literal_value_from_param(expr: &Expression) -> Vec<LiteralValue> {
                         panic!("{}", LITERAL_TYPE_PARAMETER_MSG)
                     }
                     // When there is a literal inside a literal we flatten it
-                    return get_literal_value_from_param(&s.slice)
-                },
+                    return get_literal_value_from_param(&s.slice);
+                }
                 _ => panic!("{}", LITERAL_TYPE_PARAMETER_MSG),
             };
-        },
+        }
         // Illegal parameter
         _ => panic!("Literal type with illegal parameter, can only be a constant value or enum"),
     };
 
     vec![val]
 }
-                    
 
 pub fn type_equal(t1: &PythonType, t2: &PythonType) -> bool {
     match (t1, t2) {
