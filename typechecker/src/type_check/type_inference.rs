@@ -76,8 +76,7 @@ pub fn get_type_from_annotation(type_annotation: &ast::Expression) -> PythonType
 fn handle_literal_type(s: &Subscript) -> PythonType {
     // Only simple parameters are allowed for literal type:
     // https://peps.python.org/pep-0586/#legal-and-illegal-parameterizations
-    //
-    let value = get_literal_value_from_param(&s.value.clone());
+    let value = get_literal_value_from_param(&s.slice.clone());
     if value.len() > 1 {
         todo!("MultiValue literal type is not supported yet")
     }
@@ -89,6 +88,7 @@ fn handle_literal_type(s: &Subscript) -> PythonType {
 /// the LiteralValue of the parameter.
 /// Literal values might contain a tuple, that's why the return type is a vector.
 pub fn get_literal_value_from_param(expr: &Expression) -> Vec<LiteralValue> {
+    log::debug!("Getting literal value from param: {:?}", expr);
     let val = match expr {
         Expression::Constant(c) => {
             match c.value.clone() {
