@@ -15,6 +15,8 @@ pub enum PythonType {
     /// For example, if we define some variable foo to have type Literal[3], we are declaring that foo must be exactly equal to 3 and no other value.
     /// In type inference the values are not assumed to be literals unless they are explicitly declared as such.
     KnownValue(KnownValue),
+    /// Union type
+    MultiValue(Vec<PythonType>),
     Callable(Box<CallableType>),
     Bool,
     Int,
@@ -127,6 +129,14 @@ impl Display for PythonType {
             PythonType::KnownValue(value) => {
                 let value = format!("{}", value.literal_value);
                 return write!(f, "Literal[{}]", value);
+            }
+            PythonType::MultiValue(m) => {
+                let values = m
+                    .iter()
+                    .map(|v| v.to_string())
+                    .collect::<Vec<String>>()
+                    .join(", ");
+                return write!(f, "Union[{}]", values);
             }
         };
 

@@ -3,7 +3,7 @@
 use core::panic;
 
 /// This module is resonsible for ineferring type from annotations or python expressions.
-use enderpy_python_parser::ast::{self, BinaryOperator, Expression, Subscript};
+use enderpy_python_parser::ast::{self, BinaryOperator, Expression, Subscript, Name, Attribute};
 
 use super::{
     builtins,
@@ -11,7 +11,10 @@ use super::{
 };
 
 const LITERAL_TYPE_PARAMETER_MSG: &str = "Type arguments for 'Literal' must be None, a literal value (int, bool, str, or bytes), or an enum value";
+const UNION_TYPE_PARAMETER_MSG: &str = "Type arguments for 'Union' must be names or literal values";
 
+// This function tries to find the python type from an annotation expression
+// If the annotation is invalid it returns uknown type
 pub fn get_type_from_annotation(type_annotation: &ast::Expression) -> PythonType {
     log::debug!("Getting type from annotation: {:?}", type_annotation);
     let expr_type = match type_annotation {
@@ -37,6 +40,17 @@ pub fn get_type_from_annotation(type_annotation: &ast::Expression) -> PythonType
                     // TODO: handle builtins with enum
                     if is_literal(n.id.clone()) {
                         return handle_literal_type(s);
+                    }
+                    if is_union(n.id.clone()) {
+                        match *s.slice.clone() {
+                            Expression::Tuple(t) => {
+                                return handle_union_type(t.elements);
+                            },
+                            expr@Expression::Name(_) | expr@Expression::Constant(_) | expr@Expression::Subscript(_) => {
+                                return handle_union_type(vec![expr]);
+                            },
+                            _ => panic!("Union type must have a tuple as parameter"),
+                        }
                     }
                     get_builtin_type(n.id)
                 }
@@ -67,6 +81,20 @@ pub fn get_type_from_annotation(type_annotation: &ast::Expression) -> PythonType
                 name,
                 args: vec![get_type_from_annotation(&s.slice)],
             })
+        },
+        Expression::BinOp(b) => {
+            match b.op {
+                BinaryOperator::BitOr => {
+                    // flatten the bit or expression if the left and right are also bit or
+                    let mut union_paramters = vec![];
+                    // TODO handle when left and right are also binary operator
+                    // Like a | b | c | d
+                    union_paramters.push(*b.left.clone());
+                    union_paramters.push(*b.right.clone());
+                    handle_union_type(union_paramters)
+                },
+                _ => todo!(),
+            }
         }
 
         _ => PythonType::Unknown,
@@ -75,6 +103,46 @@ pub fn get_type_from_annotation(type_annotation: &ast::Expression) -> PythonType
     expr_type
 }
 
+
+enum UnionParameterExpression {
+    /// Only Union type is allowed as a subscript inside a union type
+    Subscript(Box<UnionParameterExpression>),
+    Attribute(Attribute),
+    Name(Name),
+    None,
+}
+/// https://peps.python.org/pep-0484/#union-types
+/// expressions are the parameters of the union type
+/// in case of t1 | t2 | t3, expressions are [t1, t2, t3]
+/// and in case of Union[t1, t2, t3], expressions are [t1, t2, t3]
+fn handle_union_type(expressions: Vec<Expression>) -> PythonType {
+    let mut types = vec![];
+    for expr in expressions {
+        let t = match expr {
+            Expression::Name(_) => {
+                get_type_from_annotation(&expr)
+            }
+            Expression::Subscript(_) => {
+                get_type_from_annotation(&expr)
+            }
+            Expression::Attribute(_) => {
+                get_type_from_annotation(&expr)
+            }
+            Expression::Constant(c) => {
+                match c.value {
+                    ast::ConstantValue::None => PythonType::None,
+                    _ => panic!("Union type can only have literal or name as parameter"),
+                }
+            }
+            _ => panic!("Union type can only have literal or name as parameter"),
+        };
+        types.push(t);
+    }
+
+    PythonType::MultiValue(types)
+}
+
+// https://peps.python.org/pep-0586
 fn handle_literal_type(s: &Subscript) -> PythonType {
     // Only simple parameters are allowed for literal type:
     // https://peps.python.org/pep-0586/#legal-and-illegal-parameterizations
@@ -282,6 +350,12 @@ pub fn get_builtin_type(name: String) -> String {
 pub fn is_literal(name: String) -> bool {
     match name.as_str() {
         "Literal" => true,
+        _ => false,
+    }
+}
+fn is_union(clone: String) -> bool {
+    match clone.as_str() {
+        "Union" => true,
         _ => false,
     }
 }
