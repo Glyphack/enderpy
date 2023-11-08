@@ -1,10 +1,14 @@
 #![allow(dead_code)]
 #![allow(unused_variables)]
+use core::panic;
+
 /// This module is resonsible for ineferring type from annotations or python expressions.
 
 use enderpy_python_parser::ast::{self, BinaryOperator, Expression, Subscript};
 
 use super::{builtins, types::{PythonType, LiteralValue}};
+
+const LITERAL_TYPE_PARAMETER_MSG: &str = "Type arguments for 'Literal' must be None, a literal value (int, bool, str, or bytes), or an enum value";
 
 pub fn get_type_from_annotation(type_annotation: &ast::Expression) -> PythonType {
     log::debug!("Getting type from annotation: {:?}", type_annotation);
@@ -29,7 +33,7 @@ pub fn get_type_from_annotation(type_annotation: &ast::Expression) -> PythonType
                 Expression::Set(_) => todo!(),
                 Expression::Name(n) => {
                     // TODO: handle builtins with enum
-                    if n.id == "Literal" {
+                    if is_literal(n.id.clone()) {
                         return handle_literal_type(s);
                     }
                     get_builtin_type(n.id)
@@ -72,10 +76,22 @@ pub fn get_type_from_annotation(type_annotation: &ast::Expression) -> PythonType
 fn handle_literal_type(s: &Subscript) -> PythonType {
     // Only simple parameters are allowed for literal type:
     // https://peps.python.org/pep-0586/#legal-and-illegal-parameterizations
-    
-    let value = match *s.slice.clone() {
+    //
+    let value = get_literal_value_from_param(&s.value.clone());
+    if value.len() > 1 {
+        todo!("MultiValue literal type is not supported yet")
+    }
+
+    PythonType::KnownValue(super::types::KnownValue { literal_value: value.last().unwrap().clone() })
+}
+
+/// Write a function that takes in an expression which is a parameter to a literal type and returns
+/// the LiteralValue of the parameter.
+/// Literal values might contain a tuple, that's why the return type is a vector.
+pub fn get_literal_value_from_param(expr: &Expression) -> Vec<LiteralValue> {
+    let val = match expr {
         Expression::Constant(c) => {
-            match c.value {
+            match c.value.clone() {
                 ast::ConstantValue::Bool(b) => LiteralValue::Bool(b),
                 ast::ConstantValue::Int(i) => LiteralValue::Int(i),
                 ast::ConstantValue::Float(f) => LiteralValue::Float(f),
@@ -97,8 +113,19 @@ fn handle_literal_type(s: &Subscript) -> PythonType {
                             _ => panic!("Tuple type with illegal parameter"),
                         }
                     } else {
-                    // TODO: this is a multiValued type
-                    return PythonType::Unknown;
+                        let literal_values = t
+                            .iter()
+                            .map(|c| match c.value.clone() {
+                                ast::ConstantValue::Bool(b) => LiteralValue::Bool(b.clone()),
+                                ast::ConstantValue::Int(i) => LiteralValue::Int(i),
+                                ast::ConstantValue::Float(f) => LiteralValue::Float(f),
+                                ast::ConstantValue::Str(s) => LiteralValue::Str(s),
+                                ast::ConstantValue::Bytes(b) => LiteralValue::Bytes(b),
+                                ast::ConstantValue::None => LiteralValue::None,
+                                _ => panic!("Tuple type with illegal parameter"),
+                            })
+                            .collect();
+                        return literal_values;
                     }
                 },
                 // Illegal parameter
@@ -114,12 +141,25 @@ fn handle_literal_type(s: &Subscript) -> PythonType {
             };
             LiteralValue::Str(value)
         },
+        Expression::Subscript(s) => {
+            let value = match *s.value.clone() {
+                Expression::Name(n) => {
+                    if !is_literal(n.id.clone()) {
+                        panic!("{}", LITERAL_TYPE_PARAMETER_MSG)
+                    }
+                    // When there is a literal inside a literal we flatten it
+                    return get_literal_value_from_param(&s.slice)
+                },
+                _ => panic!("{}", LITERAL_TYPE_PARAMETER_MSG),
+            };
+        },
         // Illegal parameter
         _ => panic!("Literal type with illegal parameter, can only be a constant value or enum"),
     };
 
-    PythonType::KnownValue(super::types::KnownValue { literal_value: value })
+    vec![val]
 }
+                    
 
 pub fn type_equal(t1: &PythonType, t2: &PythonType) -> bool {
     match (t1, t2) {
@@ -229,6 +269,13 @@ pub fn get_builtin_type(name: String) -> String {
     match name.as_str() {
         "list" => builtins::LIST_TYPE.to_string(),
         _ => name.clone(),
+    }
+}
+
+pub fn is_literal(name: String) -> bool {
+    match name.as_str() {
+        "Literal" => true,
+        _ => false,
     }
 }
 
