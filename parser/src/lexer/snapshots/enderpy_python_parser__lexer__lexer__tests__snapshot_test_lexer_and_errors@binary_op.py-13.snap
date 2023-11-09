@@ -1,0 +1,43 @@
+---
+source: parser/src/lexer/lexer.rs
+description: 1 | 2 | 3
+input_file: parser/test_data/inputs/one_liners/binary_op.py
+---
+[
+    Token {
+        kind: Integer,
+        value: Number(
+            "1",
+        ),
+        start: 0,
+        end: 1,
+    },
+    Token {
+        kind: BitOr,
+        value: None,
+        start: 2,
+        end: 3,
+    },
+    Token {
+        kind: Integer,
+        value: Number(
+            "2",
+        ),
+        start: 4,
+        end: 5,
+    },
+    Token {
+        kind: BitOr,
+        value: None,
+        start: 6,
+        end: 7,
+    },
+    Token {
+        kind: Integer,
+        value: Number(
+            "3",
+        ),
+        start: 8,
+        end: 9,
+    },
+]

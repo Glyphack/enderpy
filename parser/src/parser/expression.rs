@@ -41,3 +41,16 @@ pub fn is_iterable(expr: &Expression) -> bool {
         _ => false,
     }
 }
+
+/// Checks wether a token kind can start a biwise operation
+/// start of bitwise operation cannot be a await primary
+pub fn is_bitwise_or_op(cur_kind: &Kind) -> bool {
+    match cur_kind {
+        Kind::Plus | Kind::Minus | Kind::BitNot | Kind::Await => return false,
+        _ => (),
+    }
+    if is_atom(&cur_kind) {
+        return false;
+    }
+    true
+}

@@ -6,7 +6,7 @@ use crate::parser::string::{extract_string_inside, is_string};
 use crate::token::{Kind, Token, TokenValue};
 use miette::Result;
 
-use super::expression::{is_atom, is_iterable};
+use super::expression::{is_atom, is_iterable, is_bitwise_or_op};
 use super::operator::{
     is_bin_arithmetic_op, is_comparison_operator, is_unary_op, map_unary_operator,
 };
@@ -2197,31 +2197,31 @@ impl Parser {
     // https://docs.python.org/3/reference/expressions.html#binary-bitwise-operations
     fn parse_or_expr(&mut self) -> Result<Expression, ParsingError> {
         let node = self.start_node();
-        let xor_expr = self.parse_xor_expr()?;
-        if self.eat(Kind::BitOr) {
-            let lhs = self.parse_xor_expr()?;
-            return Ok(Expression::BinOp(Box::new(BinOp {
+        let mut lhs = self.parse_xor_expr()?;
+        while self.eat(Kind::BitOr) {
+            let rhs = self.parse_xor_expr()?;
+            lhs = Expression::BinOp(Box::new(BinOp {
                 node: self.finish_node(node),
                 op: BinaryOperator::BitOr,
-                left: Box::new(xor_expr),
-                right: Box::new(lhs),
-            })));
+                left: Box::new(lhs),
+                right: Box::new(rhs),
+            }));
         }
-        Ok(xor_expr)
+        Ok(lhs)
     }
 
     // https://docs.python.org/3/reference/expressions.html#binary-bitwise-operations
     fn parse_xor_expr(&mut self) -> Result<Expression, ParsingError> {
         let node = self.start_node();
-        let and_expr = self.parse_and_expr()?;
+        let mut and_expr = self.parse_and_expr()?;
         if self.eat(Kind::BitXor) {
-            let lhs = self.parse_and_expr()?;
-            return Ok(Expression::BinOp(Box::new(BinOp {
+            let rhs = self.parse_and_expr()?;
+            and_expr = Expression::BinOp(Box::new(BinOp {
                 node: self.finish_node(node),
                 op: BinaryOperator::BitXor,
                 left: Box::new(and_expr),
-                right: Box::new(lhs),
-            })));
+                right: Box::new(rhs),
+            }));
         }
         Ok(and_expr)
     }
@@ -2229,16 +2229,16 @@ impl Parser {
     // https://docs.python.org/3/reference/expressions.html#binary-bitwise-operations
     fn parse_and_expr(&mut self) -> Result<Expression, ParsingError> {
         let node = self.start_node();
-        let shift_expr = self.parse_shift_expr()?;
+        let mut shift_expr = self.parse_shift_expr()?;
 
-        if self.eat(Kind::BitAnd) {
-            let lhs = self.parse_shift_expr()?;
-            return Ok(Expression::BinOp(Box::new(BinOp {
+        while self.eat(Kind::BitAnd) {
+            let rhs = self.parse_shift_expr()?;
+           shift_expr = Expression::BinOp(Box::new(BinOp {
                 node: self.finish_node(node),
                 op: BinaryOperator::BitAnd,
                 left: Box::new(shift_expr),
-                right: Box::new(lhs),
-            })));
+                right: Box::new(rhs),
+            }));
         }
         Ok(shift_expr)
     }
@@ -2246,7 +2246,7 @@ impl Parser {
     // https://docs.python.org/3/reference/expressions.html#shifting-operations
     fn parse_shift_expr(&mut self) -> Result<Expression, ParsingError> {
         let node = self.start_node();
-        let arith_expr = self.parse_binary_arithmetic_operation()?;
+        let mut arith_expr = self.parse_binary_arithmetic_operation()?;
         if self.at(Kind::LeftShift) || self.at(Kind::RightShift) {
             let op = if self.eat(Kind::LeftShift) {
                 BinaryOperator::LShift
@@ -2255,12 +2255,12 @@ impl Parser {
                 BinaryOperator::RShift
             };
             let lhs = self.parse_binary_arithmetic_operation()?;
-            return Ok(Expression::BinOp(Box::new(BinOp {
+            arith_expr = Expression::BinOp(Box::new(BinOp {
                 node: self.finish_node(node),
                 op,
                 left: Box::new(arith_expr),
                 right: Box::new(lhs),
-            })));
+            }));
         }
         Ok(arith_expr)
     }
@@ -3325,24 +3325,6 @@ mod tests {
     #[test]
     fn test_parse_unary_op() {
         for test_case in &["not a", "+ a", "~ a", "-a"] {
-            let mut parser = Parser::new(test_case.to_string(), String::from(""));
-            let program = parser.parse();
-
-            insta::with_settings!({
-                    description => test_case.to_string(), // the template source code
-                    omit_expression => true // do not include the default expression
-                }, {
-                    assert_debug_snapshot!(program);
-            });
-        }
-    }
-
-    #[test]
-    fn test_binary_op() {
-        for test_case in &[
-            "a + b", "a - b", "a * b", "a / b", "a // b", "a % b", "a ** b", "a << b", "a >> b",
-            "a & b", "a ^ b", "a | b", "a @ b",
-        ] {
             let mut parser = Parser::new(test_case.to_string(), String::from(""));
             let program = parser.parse();
 
