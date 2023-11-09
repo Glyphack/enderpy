@@ -3,7 +3,7 @@
 use core::panic;
 
 /// This module is resonsible for ineferring type from annotations or python expressions.
-use enderpy_python_parser::ast::{self, BinaryOperator, Expression, Subscript};
+use enderpy_python_parser::ast::{self, BinaryOperator, Expression, Subscript, Name, Attribute, BinOp};
 
 use super::{
     builtins,
@@ -11,7 +11,11 @@ use super::{
 };
 
 const LITERAL_TYPE_PARAMETER_MSG: &str = "Type arguments for 'Literal' must be None, a literal value (int, bool, str, or bytes), or an enum value";
+// TODO: this is not the right message there are other types like Dict that are allowed as parameters
+const UNION_TYPE_PARAMETER_MSG: &str = "Type arguments for 'Union' must be names or literal values";
 
+// This function tries to find the python type from an annotation expression
+// If the annotation is invalid it returns uknown type
 pub fn get_type_from_annotation(type_annotation: &ast::Expression) -> PythonType {
     log::debug!("Getting type from annotation: {:?}", type_annotation);
     let expr_type = match type_annotation {
@@ -24,7 +28,13 @@ pub fn get_type_from_annotation(type_annotation: &ast::Expression) -> PythonType
             _ => PythonType::Unknown,
         },
         // Illegal type annotation
-        Expression::Constant(c) => PythonType::Unknown,
+        Expression::Constant(c) => {
+            if let ast::ConstantValue::None = c.value {
+                PythonType::None
+            } else {
+                PythonType::Unknown
+            }
+        },
         Expression::Subscript(s) => {
             // This is a generic type
             let name = match *s.value.clone() {
@@ -37,6 +47,17 @@ pub fn get_type_from_annotation(type_annotation: &ast::Expression) -> PythonType
                     // TODO: handle builtins with enum
                     if is_literal(n.id.clone()) {
                         return handle_literal_type(s);
+                    }
+                    if is_union(n.id.clone()) {
+                        match *s.slice.clone() {
+                            Expression::Tuple(t) => {
+                                return handle_union_type(t.elements);
+                            },
+                            expr@Expression::Name(_) | expr@Expression::Constant(_) | expr@Expression::Subscript(_) | expr@Expression::Slice(_) => {
+                                return handle_union_type(vec![expr]);
+                            },
+                            _ => panic!("Union type must have a tuple as parameter"),
+                        }
                     }
                     get_builtin_type(n.id)
                 }
@@ -67,6 +88,18 @@ pub fn get_type_from_annotation(type_annotation: &ast::Expression) -> PythonType
                 name,
                 args: vec![get_type_from_annotation(&s.slice)],
             })
+        },
+        Expression::BinOp(b) => {
+            match b.op {
+                BinaryOperator::BitOr => {
+                    // flatten the bit or expression if the left and right are also bit or
+                    // TODO handle when left and right are also binary operator
+                    // Like a | b | c | d
+                    let union_paramters = flatten_bit_or(b);
+                    handle_union_type(union_paramters)
+                },
+                _ => todo!(),
+            }
         }
 
         _ => PythonType::Unknown,
@@ -75,6 +108,74 @@ pub fn get_type_from_annotation(type_annotation: &ast::Expression) -> PythonType
     expr_type
 }
 
+/// This function flattens a chain of bit or expressions
+/// For example: a | b | c | d
+/// will be flattened to [a, b, c, d]
+fn flatten_bit_or(b: &BinOp) -> Vec<Expression> {
+    let mut union_parameters = vec![];
+    let mut current_expr = b.left.clone();
+    
+    while let Expression::BinOp(inner_binop) = *current_expr.clone() {
+        if let BinaryOperator::BitOr = inner_binop.op {
+            union_parameters.push(*inner_binop.right.clone());
+            current_expr = inner_binop.left;
+        } else {
+            union_parameters.push(*current_expr.clone());
+            break;
+        }
+    }
+
+    union_parameters.push(*current_expr.clone());
+
+    current_expr = b.right.clone();
+    
+    while let Expression::BinOp(inner_binop) = *current_expr.clone() {
+        if let BinaryOperator::BitOr = inner_binop.op {
+            union_parameters.push(*inner_binop.right.clone());
+            current_expr = inner_binop.left;
+        } else {
+            union_parameters.push(*current_expr.clone());
+            break;
+        }
+    }
+
+    union_parameters.push(*current_expr.clone());
+    union_parameters
+}
+
+/// https://peps.python.org/pep-0484/#union-types
+/// expressions are the parameters of the union type
+/// in case of t1 | t2 | t3, expressions are [t1, t2, t3]
+/// and in case of Union[t1, t2, t3], expressions are [t1, t2, t3]
+fn handle_union_type(expressions: Vec<Expression>) -> PythonType {
+    log::debug!("Handling union type with members: {:?}", expressions);
+    let mut types = vec![];
+    for expr in expressions {
+        let t = get_type_from_annotation(&expr);
+        if is_valid_union_parameter(&t) {
+            log::debug!("Union type parameter: {:?}", t);
+            types.push(t);
+        }
+    }
+
+    // If we don't have any types in the union type, it means that all the parameters were invalid
+    // So we return unknown type
+    if types.is_empty() {
+        return PythonType::Unknown;
+    }
+
+    PythonType::MultiValue(types)
+}
+
+/// TODO: Need to complete this when types are more complete
+/// Check if a type can be used as a parameter for a union type
+fn is_valid_union_parameter(python_type: &PythonType) -> bool {
+    match python_type {
+        _ => true,
+    }
+}
+
+// https://peps.python.org/pep-0586
 fn handle_literal_type(s: &Subscript) -> PythonType {
     // Only simple parameters are allowed for literal type:
     // https://peps.python.org/pep-0586/#legal-and-illegal-parameterizations
@@ -282,6 +383,12 @@ pub fn get_builtin_type(name: String) -> String {
 pub fn is_literal(name: String) -> bool {
     match name.as_str() {
         "Literal" => true,
+        _ => false,
+    }
+}
+fn is_union(clone: String) -> bool {
+    match clone.as_str() {
+        "Union" => true,
         _ => false,
     }
 }

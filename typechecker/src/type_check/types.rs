@@ -6,6 +6,7 @@ use enderpy_python_parser::ast;
 #[derive(Debug, Clone, PartialEq)]
 pub enum PythonType {
     None,
+    /// Unknown and Any type are similar but we are using Uknown when we cannot possibly know the type of a value.
     Unknown,
     /// representing that we know nothing about the value a node can contain.
     /// For example, if a file contains only the function def f(x): return x, the name x will have an Anyas its value within the function
@@ -15,6 +16,8 @@ pub enum PythonType {
     /// For example, if we define some variable foo to have type Literal[3], we are declaring that foo must be exactly equal to 3 and no other value.
     /// In type inference the values are not assumed to be literals unless they are explicitly declared as such.
     KnownValue(KnownValue),
+    /// Union type
+    MultiValue(Vec<PythonType>),
     Callable(Box<CallableType>),
     Bool,
     Int,
@@ -127,6 +130,14 @@ impl Display for PythonType {
             PythonType::KnownValue(value) => {
                 let value = format!("{}", value.literal_value);
                 return write!(f, "Literal[{}]", value);
+            }
+            PythonType::MultiValue(m) => {
+                let values = m
+                    .iter()
+                    .map(|v| v.to_string())
+                    .collect::<Vec<String>>()
+                    .join(", ");
+                return write!(f, "Union[{}]", values);
             }
         };
 
