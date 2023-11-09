@@ -12,3 +12,5 @@ c: Union[str, int, None]
 
 # failing test enable after handling Union types with more than 2 types
 c: str | Empty | None
+
+c: str | Empty | None | int

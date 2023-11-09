@@ -1,6 +1,6 @@
 ---
 source: typechecker/src/type_check/type_evaluator.rs
-description: "from typing import Union, Literal\nfrom enum import Enum\n\nclass Empty(Enum):\n    token = 0\n\na: Union[str, int]\n\nb: str | None\n\nc: Union[str, int, None]\n\n# failing test enable after handling Union types with more than 2 types\n# c: str | Empty | None\n"
+description: "from typing import Union, Literal\nfrom enum import Enum\n\nclass Empty(Enum):\n    token = 0\n\na: Union[str, int]\n\nb: str | None\n\nc: Union[str, int, None]\n\n# failing test enable after handling Union types with more than 2 types\nc: str | Empty | None\n\nc: str | Empty | None | int\n"
 expression: result
 input_file: typechecker/src/type_check/test_data/inputs/union.py
 ---
@@ -12,6 +12,27 @@ input_file: typechecker/src/type_check/test_data/inputs/union.py
                 Str,
                 Int,
                 None,
+            ],
+        ),
+    ),
+    (
+        "(line: 13, character: 3):(line: 13, character: 21)",
+        MultiValue(
+            [
+                Unknown,
+                Str,
+                None,
+            ],
+        ),
+    ),
+    (
+        "(line: 15, character: 3):(line: 15, character: 27)",
+        MultiValue(
+            [
+                None,
+                Unknown,
+                Str,
+                Int,
             ],
         ),
     ),

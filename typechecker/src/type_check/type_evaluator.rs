@@ -651,6 +651,7 @@ mod tests {
         glob!("test_data/inputs/", "*.py", |path| {
             let contents = fs::read_to_string(path).unwrap();
             let result = snapshot_type_eval(&contents);
+            let _ = env_logger::builder().filter_level(log::LevelFilter::Debug).is_test(true).try_init();
 
             let mut settings = insta::Settings::clone_current();
             settings.set_snapshot_path("./test_data/output/");

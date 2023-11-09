@@ -3,7 +3,7 @@
 use core::panic;
 
 /// This module is resonsible for ineferring type from annotations or python expressions.
-use enderpy_python_parser::ast::{self, BinaryOperator, Expression, Subscript, Name, Attribute};
+use enderpy_python_parser::ast::{self, BinaryOperator, Expression, Subscript, Name, Attribute, BinOp};
 
 use super::{
     builtins,
@@ -93,11 +93,9 @@ pub fn get_type_from_annotation(type_annotation: &ast::Expression) -> PythonType
             match b.op {
                 BinaryOperator::BitOr => {
                     // flatten the bit or expression if the left and right are also bit or
-                    let mut union_paramters = vec![];
                     // TODO handle when left and right are also binary operator
                     // Like a | b | c | d
-                    union_paramters.push(*b.left.clone());
-                    union_paramters.push(*b.right.clone());
+                    let union_paramters = flatten_bit_or(b);
                     handle_union_type(union_paramters)
                 },
                 _ => todo!(),
@@ -110,15 +108,50 @@ pub fn get_type_from_annotation(type_annotation: &ast::Expression) -> PythonType
     expr_type
 }
 
+/// This function flattens a chain of bit or expressions
+/// For example: a | b | c | d
+/// will be flattened to [a, b, c, d]
+fn flatten_bit_or(b: &BinOp) -> Vec<Expression> {
+    let mut union_parameters = vec![];
+    let mut current_expr = b.left.clone();
+    
+    while let Expression::BinOp(inner_binop) = *current_expr.clone() {
+        if let BinaryOperator::BitOr = inner_binop.op {
+            union_parameters.push(*inner_binop.right.clone());
+            current_expr = inner_binop.left;
+        } else {
+            union_parameters.push(*current_expr.clone());
+            break;
+        }
+    }
+
+    union_parameters.push(*current_expr.clone());
+
+    current_expr = b.right.clone();
+    
+    while let Expression::BinOp(inner_binop) = *current_expr.clone() {
+        if let BinaryOperator::BitOr = inner_binop.op {
+            union_parameters.push(*inner_binop.right.clone());
+            current_expr = inner_binop.left;
+        } else {
+            union_parameters.push(*current_expr.clone());
+            break;
+        }
+    }
+
+    union_parameters.push(*current_expr.clone());
+    union_parameters
+}
 
 /// https://peps.python.org/pep-0484/#union-types
 /// expressions are the parameters of the union type
 /// in case of t1 | t2 | t3, expressions are [t1, t2, t3]
 /// and in case of Union[t1, t2, t3], expressions are [t1, t2, t3]
 fn handle_union_type(expressions: Vec<Expression>) -> PythonType {
+    log::debug!("Handling union type with members: {:?}", expressions);
     let mut types = vec![];
     for expr in expressions {
-        let t =  get_type_from_annotation(&expr);
+        let t = get_type_from_annotation(&expr);
         if is_valid_union_parameter(&t) {
             log::debug!("Union type parameter: {:?}", t);
             types.push(t);
