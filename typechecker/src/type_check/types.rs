@@ -6,6 +6,7 @@ use enderpy_python_parser::ast;
 #[derive(Debug, Clone, PartialEq)]
 pub enum PythonType {
     None,
+    /// Unknown and Any type are similar but we are using Uknown when we cannot possibly know the type of a value.
     Unknown,
     /// representing that we know nothing about the value a node can contain.
     /// For example, if a file contains only the function def f(x): return x, the name x will have an Anyas its value within the function

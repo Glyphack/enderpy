@@ -11,6 +11,7 @@ use super::{
 };
 
 const LITERAL_TYPE_PARAMETER_MSG: &str = "Type arguments for 'Literal' must be None, a literal value (int, bool, str, or bytes), or an enum value";
+// TODO: this is not the right message there are other types like Dict that are allowed as parameters
 const UNION_TYPE_PARAMETER_MSG: &str = "Type arguments for 'Union' must be names or literal values";
 
 // This function tries to find the python type from an annotation expression
@@ -27,7 +28,13 @@ pub fn get_type_from_annotation(type_annotation: &ast::Expression) -> PythonType
             _ => PythonType::Unknown,
         },
         // Illegal type annotation
-        Expression::Constant(c) => PythonType::Unknown,
+        Expression::Constant(c) => {
+            if let ast::ConstantValue::None = c.value {
+                PythonType::None
+            } else {
+                PythonType::Unknown
+            }
+        },
         Expression::Subscript(s) => {
             // This is a generic type
             let name = match *s.value.clone() {
@@ -46,7 +53,7 @@ pub fn get_type_from_annotation(type_annotation: &ast::Expression) -> PythonType
                             Expression::Tuple(t) => {
                                 return handle_union_type(t.elements);
                             },
-                            expr@Expression::Name(_) | expr@Expression::Constant(_) | expr@Expression::Subscript(_) => {
+                            expr@Expression::Name(_) | expr@Expression::Constant(_) | expr@Expression::Subscript(_) | expr@Expression::Slice(_) => {
                                 return handle_union_type(vec![expr]);
                             },
                             _ => panic!("Union type must have a tuple as parameter"),
@@ -104,13 +111,6 @@ pub fn get_type_from_annotation(type_annotation: &ast::Expression) -> PythonType
 }
 
 
-enum UnionParameterExpression {
-    /// Only Union type is allowed as a subscript inside a union type
-    Subscript(Box<UnionParameterExpression>),
-    Attribute(Attribute),
-    Name(Name),
-    None,
-}
 /// https://peps.python.org/pep-0484/#union-types
 /// expressions are the parameters of the union type
 /// in case of t1 | t2 | t3, expressions are [t1, t2, t3]
@@ -118,28 +118,28 @@ enum UnionParameterExpression {
 fn handle_union_type(expressions: Vec<Expression>) -> PythonType {
     let mut types = vec![];
     for expr in expressions {
-        let t = match expr {
-            Expression::Name(_) => {
-                get_type_from_annotation(&expr)
-            }
-            Expression::Subscript(_) => {
-                get_type_from_annotation(&expr)
-            }
-            Expression::Attribute(_) => {
-                get_type_from_annotation(&expr)
-            }
-            Expression::Constant(c) => {
-                match c.value {
-                    ast::ConstantValue::None => PythonType::None,
-                    _ => panic!("Union type can only have literal or name as parameter"),
-                }
-            }
-            _ => panic!("Union type can only have literal or name as parameter"),
-        };
-        types.push(t);
+        let t =  get_type_from_annotation(&expr);
+        if is_valid_union_parameter(&t) {
+            log::debug!("Union type parameter: {:?}", t);
+            types.push(t);
+        }
+    }
+
+    // If we don't have any types in the union type, it means that all the parameters were invalid
+    // So we return unknown type
+    if types.is_empty() {
+        return PythonType::Unknown;
     }
 
     PythonType::MultiValue(types)
+}
+
+/// TODO: Need to complete this when types are more complete
+/// Check if a type can be used as a parameter for a union type
+fn is_valid_union_parameter(python_type: &PythonType) -> bool {
+    match python_type {
+        _ => true,
+    }
 }
 
 // https://peps.python.org/pep-0586
