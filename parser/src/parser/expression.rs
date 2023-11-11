@@ -49,7 +49,7 @@ pub fn is_bitwise_or_op(cur_kind: &Kind) -> bool {
         Kind::Plus | Kind::Minus | Kind::BitNot | Kind::Await => return false,
         _ => (),
     }
-    if is_atom(&cur_kind) {
+    if is_atom(cur_kind) {
         return false;
     }
     true

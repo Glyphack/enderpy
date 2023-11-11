@@ -1,6 +1,0 @@
----
-source: parser/src/lexer/lexer.rs
-description: ""
-input_file: parser/test_data/inputs/one_liners/string.py
----
-[]

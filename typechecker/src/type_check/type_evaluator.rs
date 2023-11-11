@@ -7,23 +7,30 @@ use enderpy_python_parser as parser;
 use enderpy_python_parser::ast;
 use log::debug;
 use miette::{bail, miette, Result};
-use parser::ast::{GetNode, Statement};
+use parser::ast::{Expression, GetNode, Statement};
 
 use crate::{
     ast_visitor::TraversalVisitor,
     ast_visitor_generic::TraversalVisitorImmutGeneric,
     nodes::EnderpyFile,
     state::State,
-    symbol_table::{Declaration, LookupSymbolRequest, SymbolTable, SymbolTableNode},
-    type_check::{
-        type_inference::get_type_from_annotation,
-    },
+    symbol_table::{self, Declaration, LookupSymbolRequest, SymbolTable, SymbolTableNode},
 };
 
 use super::{
-    builtins, type_inference,
+    builtins,
     types::{CallableType, PythonType},
 };
+
+use core::panic;
+
+use crate::type_check::types::ClassType;
+
+use super::types::LiteralValue;
+
+const LITERAL_TYPE_PARAMETER_MSG: &str = "Type arguments for 'Literal' must be None, a literal value (int, bool, str, or bytes), or an enum value";
+// TODO: this is not the right message there are other types like Dict that are allowed as parameters
+const UNION_TYPE_PARAMETER_MSG: &str = "Type arguments for 'Union' must be names or literal values";
 
 pub struct TypeEvaluator {
     // TODO: make this a reference to the symbol table in the checker
@@ -100,39 +107,43 @@ impl TypeEvaluator {
                     }
                 }
             }
-            ast::Expression::BinOp(b) => Ok(type_inference::bin_op_result_type(
+            ast::Expression::BinOp(b) => Ok(self.bin_op_result_type(
                 &self.get_type(&b.left)?,
                 &self.get_type(&b.right)?,
                 &b.op,
             )),
             ast::Expression::List(l) => {
                 let final_elm_type = self.get_sequence_type_from_elements(&l.elements);
-                Ok(PythonType::Class(super::types::ClassType {
-                    name: builtins::LIST_TYPE.to_string(),
-                    args: vec![final_elm_type],
-                }))
+                let builtin_type = self.get_builtin_type(builtins::LIST_TYPE);
+                Ok(PythonType::Class(ClassType::new(
+                    builtin_type,
+                    vec![final_elm_type],
+                )))
             }
             ast::Expression::Tuple(t) => {
                 let elm_type = self.get_sequence_type_from_elements(&t.elements);
-                Ok(PythonType::Class(super::types::ClassType {
-                    name: builtins::TUPLE_TYPE.to_string(),
-                    args: vec![elm_type],
-                }))
+                let builtin_type = self.get_builtin_type(builtins::TUPLE_TYPE);
+                Ok(PythonType::Class(ClassType::new(
+                    builtin_type,
+                    vec![elm_type],
+                )))
             }
             ast::Expression::Dict(d) => {
                 let key_type = self.get_sequence_type_from_elements(&d.keys);
                 let value_type = self.get_sequence_type_from_elements(&d.values);
-                Ok(PythonType::Class(super::types::ClassType {
-                    name: builtins::DICT_TYPE.to_string(),
-                    args: vec![key_type, value_type],
-                }))
+                let builtin_type = self.get_builtin_type(builtins::DICT_TYPE);
+                Ok(PythonType::Class(ClassType::new(
+                    builtin_type,
+                    vec![key_type, value_type],
+                )))
             }
             ast::Expression::Set(s) => {
                 let elm_type = self.get_sequence_type_from_elements(&s.elements);
-                Ok(PythonType::Class(super::types::ClassType {
-                    name: builtins::SET_TYPE.to_string(),
-                    args: vec![elm_type],
-                }))
+                let builtin_type = self.get_builtin_type(builtins::SET_TYPE);
+                Ok(PythonType::Class(ClassType::new(
+                    builtin_type,
+                    vec![elm_type],
+                )))
             }
             ast::Expression::BoolOp(_) => Ok(PythonType::Bool),
             ast::Expression::UnaryOp(u) => match u.op {
@@ -152,20 +163,15 @@ impl TypeEvaluator {
                     Some(ref v) => self.get_type(v)?,
                     None => PythonType::None,
                 };
-                Ok(PythonType::Class(super::types::ClassType {
-                    name: builtins::ITER_TYPE.to_string(),
-                    args: vec![yield_type],
-                }))
+                let builtin_type = self.get_builtin_type(builtins::ITER_TYPE);
+                todo!()
             }
             ast::Expression::YieldFrom(yf) => {
                 let yield_type = match *yf.value.clone() {
                     ast::Expression::List(l) => self.get_sequence_type_from_elements(&l.elements),
                     _ => panic!("TODO: infer type from yield from"),
                 };
-                Ok(PythonType::Class(super::types::ClassType {
-                    name: builtins::ITER_TYPE.to_string(),
-                    args: vec![yield_type],
-                }))
+                todo!()
             }
             ast::Expression::Starred(s) => Ok(PythonType::Unknown),
             ast::Expression::Generator(g) => {
@@ -188,19 +194,8 @@ impl TypeEvaluator {
             ast::Expression::Attribute(a) => Ok(PythonType::Unknown),
             ast::Expression::Subscript(s) => {
                 let value_type = &self.get_type(&s.value)?;
-                // if the type of value is subscriptable, then return the type of the subscript
-
-                // the type is subscriptable if it is a list, tuple, dict, or set
-                Ok(match value_type {
-                    PythonType::Class(class_type) => {
-                        if let Some(args) = class_type.args.last() {
-                            args.clone()
-                        } else {
-                            PythonType::Unknown
-                        }
-                    }
-                    _ => PythonType::Unknown,
-                })
+                // This only handles container types and TODO
+                Ok(value_type.clone())
             }
             ast::Expression::Slice(_) => Ok(PythonType::Unknown),
             ast::Expression::Await(_) => Ok(PythonType::Unknown),
@@ -216,7 +211,7 @@ impl TypeEvaluator {
         match declaration {
             Declaration::Variable(v) => {
                 if let Some(type_annotation) = &v.type_annotation {
-                    Ok(type_inference::get_type_from_annotation(type_annotation))
+                    Ok(self.get_type_from_annotation(type_annotation))
                 } else if let Some(source) = &v.inferred_type_source {
                     self.get_type(source)
                 } else {
@@ -226,7 +221,7 @@ impl TypeEvaluator {
             Declaration::Function(f) => {
                 let annotated_return_type =
                     if let Some(type_annotation) = f.function_node.returns.clone() {
-                        type_inference::get_type_from_annotation(&type_annotation)
+                        self.get_type_from_annotation(&type_annotation)
                     } else {
                         let inferred_return_type = self.infer_function_return_type(f);
                         log::debug!("infered_return_type: {:?}", inferred_return_type);
@@ -245,7 +240,7 @@ impl TypeEvaluator {
             Declaration::Class(_) => Ok(PythonType::Unknown),
             Declaration::Parameter(p) => {
                 if let Some(type_annotation) = &p.type_annotation {
-                    Ok(type_inference::get_type_from_annotation(type_annotation))
+                    Ok(self.get_type_from_annotation(type_annotation))
                 } else if let Some(default) = &p.default_value {
                     self.get_type(default)
                 } else {
@@ -301,10 +296,11 @@ impl TypeEvaluator {
                 }
             }
             if yield_types.len() == 1 {
-                return PythonType::Class(super::types::ClassType {
-                    name: builtins::ITER_TYPE.to_string(),
-                    args: vec![yield_types[0].clone()],
-                });
+                todo!()
+                // return PythonType::Class(super::types::ClassType {
+                //     name: builtins::ITER_TYPE.to_string(),
+                //     args: vec![yield_types[0].clone()],
+                // });
             } else {
                 // TODO: Union type
                 return PythonType::Unknown;
@@ -325,6 +321,423 @@ impl TypeEvaluator {
                 // TODO: Union type
                 PythonType::Unknown
             }
+        }
+    }
+
+    /// Retrieves a pythoh type that is present in the builtin scope
+    fn get_builtin_type(&self, name: &str) -> symbol_table::Class {
+        let builtin_symbol = self.symbol_table.lookup_in_builtin_scope(name);
+        let cls_declaration = match builtin_symbol {
+            None => panic!("builtin type {} not found", name),
+            Some(node) => {
+                // get the declaration with type class
+                node.declarations.iter().find_map(|decl| match decl {
+                    Declaration::Class(c) => Some(Declaration::Class(c.clone())),
+                    _ => None,
+                })
+            }
+        };
+
+        match cls_declaration {
+            None => panic!("builtin type {} not found", name),
+            Some(Declaration::Class(c)) => c.clone(),
+            _ => panic!("builtin type {} not found", name),
+        }
+    }
+
+    // This function tries to find the python type from an annotation expression
+    // If the annotation is invalid it returns uknown type
+    pub fn get_type_from_annotation(&self, type_annotation: &ast::Expression) -> PythonType {
+        log::debug!("Getting type from annotation: {:?}", type_annotation);
+        let expr_type = match type_annotation {
+            Expression::Name(name) => match name.id.as_str() {
+                "int" => PythonType::Int,
+                "float" => PythonType::Float,
+                "str" => PythonType::Str,
+                "bool" => PythonType::Bool,
+                "None" => PythonType::None,
+                _ => PythonType::Unknown,
+            },
+            // Illegal type annotation
+            Expression::Constant(c) => {
+                if let ast::ConstantValue::None = c.value {
+                    PythonType::None
+                } else {
+                    PythonType::Unknown
+                }
+            }
+            Expression::Subscript(s) => {
+                // This is a generic type
+                let typ = match *s.value.clone() {
+                    Expression::Constant(_) => todo!(),
+                    Expression::List(_) => todo!(),
+                    Expression::Tuple(_) => todo!(),
+                    Expression::Dict(_) => todo!(),
+                    Expression::Set(_) => todo!(),
+                    Expression::Name(n) => {
+                        // TODO: handle builtins with enum
+                        if self.is_literal(n.id.clone()) {
+                            return self.handle_literal_type(s);
+                        }
+                        if self.is_union(n.id.clone()) {
+                            match *s.slice.clone() {
+                                Expression::Tuple(t) => {
+                                    return self.handle_union_type(t.elements);
+                                }
+                                expr @ Expression::Name(_)
+                                | expr @ Expression::Constant(_)
+                                | expr @ Expression::Subscript(_)
+                                | expr @ Expression::Slice(_) => {
+                                    return self.handle_union_type(vec![expr]);
+                                }
+                                _ => panic!("Union type must have a tuple as parameter"),
+                            }
+                        }
+                        self.get_builtin_type(n.id.as_str())
+                    }
+                    Expression::BoolOp(_) => todo!(),
+                    Expression::UnaryOp(_) => todo!(),
+                    Expression::BinOp(_) => todo!(),
+                    Expression::NamedExpr(_) => todo!(),
+                    Expression::Yield(_) => todo!(),
+                    Expression::YieldFrom(_) => todo!(),
+                    Expression::Starred(_) => todo!(),
+                    Expression::Generator(_) => todo!(),
+                    Expression::ListComp(_) => todo!(),
+                    Expression::SetComp(_) => todo!(),
+                    Expression::DictComp(_) => todo!(),
+                    Expression::Attribute(_) => todo!(),
+                    Expression::Subscript(_) => todo!(),
+                    Expression::Slice(_) => todo!(),
+                    Expression::Call(_) => todo!(),
+                    Expression::Await(_) => todo!(),
+                    Expression::Compare(_) => todo!(),
+                    Expression::Lambda(_) => todo!(),
+                    Expression::IfExp(_) => todo!(),
+                    Expression::JoinedStr(_) => todo!(),
+                    Expression::FormattedValue(_) => todo!(),
+                };
+                PythonType::Class(ClassType {
+                    details: typ,
+                    type_parameters: vec![self.get_type_from_annotation(&s.slice)],
+                })
+            }
+            Expression::BinOp(b) => {
+                match b.op {
+                    ast::BinaryOperator::BitOr => {
+                        // flatten the bit or expression if the left and right are also bit or
+                        // TODO handle when left and right are also binary operator
+                        // Like a | b | c | d
+                        let union_paramters = self.flatten_bit_or(b);
+                        self.handle_union_type(union_paramters)
+                    }
+                    _ => todo!(),
+                }
+            }
+
+            _ => PythonType::Unknown,
+        };
+
+        expr_type
+    }
+
+    /// This function flattens a chain of bit or expressions
+    /// For example: a | b | c | d
+    /// will be flattened to [a, b, c, d]
+    fn flatten_bit_or(&self, b: &ast::BinOp) -> Vec<Expression> {
+        let mut union_parameters = vec![];
+        let mut current_expr = b.left.clone();
+
+        while let Expression::BinOp(inner_binop) = *current_expr.clone() {
+            if let ast::BinaryOperator::BitOr = inner_binop.op {
+                union_parameters.push(*inner_binop.right.clone());
+                current_expr = inner_binop.left;
+            } else {
+                union_parameters.push(*current_expr.clone());
+                break;
+            }
+        }
+
+        union_parameters.push(*current_expr.clone());
+
+        current_expr = b.right.clone();
+
+        while let Expression::BinOp(inner_binop) = *current_expr.clone() {
+            if let ast::BinaryOperator::BitOr = inner_binop.op {
+                union_parameters.push(*inner_binop.right.clone());
+                current_expr = inner_binop.left;
+            } else {
+                union_parameters.push(*current_expr.clone());
+                break;
+            }
+        }
+
+        union_parameters.push(*current_expr.clone());
+        union_parameters
+    }
+
+    /// https://peps.python.org/pep-0484/#union-types
+    /// expressions are the parameters of the union type
+    /// in case of t1 | t2 | t3, expressions are [t1, t2, t3]
+    /// and in case of Union[t1, t2, t3], expressions are [t1, t2, t3]
+    fn handle_union_type(&self, expressions: Vec<Expression>) -> PythonType {
+        log::debug!("Handling union type with members: {:?}", expressions);
+        let mut types = vec![];
+        for expr in expressions {
+            let t = self.get_type_from_annotation(&expr);
+            if self.is_valid_union_parameter(&t) {
+                log::debug!("Union type parameter: {:?}", t);
+                types.push(t);
+            }
+        }
+
+        // If we don't have any types in the union type, it means that all the parameters were invalid
+        // So we return unknown type
+        if types.is_empty() {
+            return PythonType::Unknown;
+        }
+
+        PythonType::MultiValue(types)
+    }
+
+    /// TODO: Need to complete this when types are more complete
+    /// Check if a type can be used as a parameter for a union type
+    fn is_valid_union_parameter(&self, python_type: &PythonType) -> bool {
+        true
+    }
+
+    // https://peps.python.org/pep-0586
+    fn handle_literal_type(&self, s: &ast::Subscript) -> PythonType {
+        // Only simple parameters are allowed for literal type:
+        // https://peps.python.org/pep-0586/#legal-and-illegal-parameterizations
+        let value = self.get_literal_value_from_param(&s.slice.clone());
+        if value.len() > 1 {
+            todo!("MultiValue literal type is not supported yet")
+        }
+
+        PythonType::KnownValue(super::types::KnownValue {
+            literal_value: value.last().unwrap().clone(),
+        })
+    }
+
+    /// Write a function that takes in an expression which is a parameter to a literal type and returns
+    /// the LiteralValue of the parameter.
+    /// Literal values might contain a tuple, that's why the return type is a vector.
+    pub fn get_literal_value_from_param(&self, expr: &Expression) -> Vec<LiteralValue> {
+        log::debug!("Getting literal value from param: {:?}", expr);
+        let val = match expr {
+            Expression::Constant(c) => {
+                match c.value.clone() {
+                    ast::ConstantValue::Bool(b) => LiteralValue::Bool(b),
+                    ast::ConstantValue::Int(i) => LiteralValue::Int(i),
+                    ast::ConstantValue::Float(f) => LiteralValue::Float(f),
+                    ast::ConstantValue::Str(s) => LiteralValue::Str(s),
+                    ast::ConstantValue::Bytes(b) => LiteralValue::Bytes(b),
+                    ast::ConstantValue::None => LiteralValue::None,
+                    // Tuple is illegal if it has parantheses, otherwise it's allowed and the output a multiValued type
+                    // Currently even mypy does not supoort this, who am I to do it?
+                    // https://mypy-play.net/?mypy=latest&python=3.10&gist=0df0421d5c85f3b75f65a51cae8616ce
+                    ast::ConstantValue::Tuple(t) => {
+                        if t.len() == 1 {
+                            match t[0].value.clone() {
+                                ast::ConstantValue::Bool(b) => LiteralValue::Bool(b),
+                                ast::ConstantValue::Int(i) => LiteralValue::Int(i),
+                                ast::ConstantValue::Float(f) => LiteralValue::Float(f),
+                                ast::ConstantValue::Str(s) => LiteralValue::Str(s),
+                                ast::ConstantValue::Bytes(b) => LiteralValue::Bytes(b),
+                                ast::ConstantValue::None => LiteralValue::None,
+                                _ => panic!("Tuple type with illegal parameter"),
+                            }
+                        } else {
+                            let literal_values = t
+                                .iter()
+                                .map(|c| match c.value.clone() {
+                                    ast::ConstantValue::Bool(b) => LiteralValue::Bool(b),
+                                    ast::ConstantValue::Int(i) => LiteralValue::Int(i),
+                                    ast::ConstantValue::Float(f) => LiteralValue::Float(f),
+                                    ast::ConstantValue::Str(s) => LiteralValue::Str(s),
+                                    ast::ConstantValue::Bytes(b) => LiteralValue::Bytes(b),
+                                    ast::ConstantValue::None => LiteralValue::None,
+                                    _ => panic!("Tuple type with illegal parameter"),
+                                })
+                                .collect();
+                            return literal_values;
+                        }
+                    }
+                    // Illegal parameter
+                    ast::ConstantValue::Ellipsis => {
+                        panic!("Literal type with ellipsis value is not supported")
+                    }
+                    ast::ConstantValue::Complex { real, imaginary } => {
+                        panic!("Literal type with complex value is not supported")
+                    }
+                }
+            }
+            // Only can be enum values
+            Expression::Attribute(a) => {
+                let value = match *a.value.clone() {
+                    Expression::Name(n) => n.id,
+                    _ => panic!("Literal type with attribute value can only be a name"),
+                };
+                LiteralValue::Str(value)
+            }
+            Expression::Subscript(s) => {
+                match *s.value.clone() {
+                    Expression::Name(n) => {
+                        if !self.is_literal(n.id.clone()) {
+                            panic!("{}", LITERAL_TYPE_PARAMETER_MSG)
+                        }
+                        // When there is a literal inside a literal we flatten it
+                        return self.get_literal_value_from_param(&s.slice);
+                    }
+                    _ => panic!("{}", LITERAL_TYPE_PARAMETER_MSG),
+                };
+            }
+            // Illegal parameter
+            _ => {
+                panic!("Literal type with illegal parameter, can only be a constant value or enum")
+            }
+        };
+
+        vec![val]
+    }
+
+    pub fn type_equal(&self, t1: &PythonType, t2: &PythonType) -> bool {
+        match (t1, t2) {
+            (PythonType::Int, PythonType::Int) => true,
+            (PythonType::Float, PythonType::Float) => true,
+            (PythonType::Str, PythonType::Str) => true,
+            (PythonType::Bool, PythonType::Bool) => true,
+            (PythonType::None, PythonType::None) => true,
+            _ => false,
+        }
+    }
+
+    pub fn type_check_bin_op(
+        &self,
+        t1: &PythonType,
+        t2: &PythonType,
+        op: &ast::BinaryOperator,
+    ) -> bool {
+        let check_table = match op {
+            ast::BinaryOperator::Add => vec![
+                (PythonType::Int, PythonType::Int),
+                (PythonType::Float, PythonType::Float),
+            ],
+            ast::BinaryOperator::Sub => vec![
+                (PythonType::Int, PythonType::Int),
+                (PythonType::Float, PythonType::Float),
+            ],
+            ast::BinaryOperator::Mult => vec![
+                (PythonType::Int, PythonType::Int),
+                (PythonType::Float, PythonType::Float),
+                (PythonType::Str, PythonType::Int),
+                (PythonType::Int, PythonType::Str),
+            ],
+            ast::BinaryOperator::Div => vec![
+                (PythonType::Int, PythonType::Int),
+                (PythonType::Float, PythonType::Float),
+            ],
+            ast::BinaryOperator::Mod => vec![
+                (PythonType::Int, PythonType::Int),
+                (PythonType::Float, PythonType::Float),
+            ],
+            ast::BinaryOperator::Pow => vec![
+                (PythonType::Int, PythonType::Int),
+                (PythonType::Float, PythonType::Float),
+            ],
+            ast::BinaryOperator::LShift => vec![(PythonType::Int, PythonType::Int)],
+            ast::BinaryOperator::RShift => vec![(PythonType::Int, PythonType::Int)],
+            ast::BinaryOperator::BitOr => vec![(PythonType::Int, PythonType::Int)],
+            ast::BinaryOperator::BitAnd => vec![(PythonType::Int, PythonType::Int)],
+            ast::BinaryOperator::BitXor => vec![(PythonType::Int, PythonType::Int)],
+            ast::BinaryOperator::FloorDiv => vec![
+                (PythonType::Int, PythonType::Int),
+                (PythonType::Float, PythonType::Float),
+            ],
+            ast::BinaryOperator::MatMult => vec![
+                (PythonType::Int, PythonType::Int),
+                (PythonType::Float, PythonType::Float),
+            ],
+        };
+
+        for (t1_, t2_) in check_table {
+            if matches!(t1, PythonType::Unknown) || matches!(t2, PythonType::Unknown) {
+                return true;
+            }
+            if self.type_equal(t1, &t1_) && self.type_equal(t2, &t2_) {
+                return true;
+            }
+        }
+
+        false
+    }
+
+    pub fn bin_op_result_type(
+        &self,
+        t1: &PythonType,
+        t2: &PythonType,
+        op: &ast::BinaryOperator,
+    ) -> PythonType {
+        if !self.type_check_bin_op(t1, t2, op) {
+            return PythonType::Unknown;
+        }
+
+        match op {
+            ast::BinaryOperator::Add
+            | ast::BinaryOperator::Sub
+            | ast::BinaryOperator::Mult
+            | ast::BinaryOperator::MatMult
+            | ast::BinaryOperator::Div
+            | ast::BinaryOperator::Mod
+            | ast::BinaryOperator::Pow
+            | ast::BinaryOperator::LShift
+            | ast::BinaryOperator::RShift
+            | ast::BinaryOperator::BitOr
+            | ast::BinaryOperator::BitXor
+            | ast::BinaryOperator::BitAnd
+            | ast::BinaryOperator::FloorDiv => {
+                if self.type_equal(t1, &PythonType::Float)
+                    || self.type_equal(t2, &PythonType::Float)
+                {
+                    return PythonType::Float;
+                }
+                if self.type_equal(t1, &PythonType::Int) || self.type_equal(t2, &PythonType::Int) {
+                    return PythonType::Int;
+                }
+                match t1 {
+                    PythonType::Str => PythonType::Str,
+                    PythonType::None => PythonType::None,
+                    PythonType::Unknown => PythonType::Unknown,
+                    PythonType::Bool => PythonType::Bool,
+                    PythonType::Int => PythonType::Int,
+                    PythonType::Float => PythonType::Float,
+                    _ => PythonType::Unknown,
+                }
+            }
+        }
+    }
+
+    pub fn is_literal(&self, name: String) -> bool {
+        match name.as_str() {
+            "Literal" => true,
+            _ => false,
+        }
+    }
+    fn is_union(&self, clone: String) -> bool {
+        match clone.as_str() {
+            "Union" => true,
+            _ => false,
+        }
+    }
+
+    pub fn is_subscriptable(&self, t: &PythonType) -> bool {
+        match t {
+            PythonType::Class(c) => match c.details.name.as_str() {
+                builtins::LIST_TYPE => true,
+                _ => false,
+            },
+            _ => todo!(),
         }
     }
 }
@@ -651,7 +1064,10 @@ mod tests {
         glob!("test_data/inputs/", "*.py", |path| {
             let contents = fs::read_to_string(path).unwrap();
             let result = snapshot_type_eval(&contents);
-            let _ = env_logger::builder().filter_level(log::LevelFilter::Debug).is_test(true).try_init();
+            let _ = env_logger::builder()
+                .filter_level(log::LevelFilter::Debug)
+                .is_test(true)
+                .try_init();
 
             let mut settings = insta::Settings::clone_current();
             settings.set_snapshot_path("./test_data/output/");
@@ -698,7 +1114,7 @@ impl TypeEvalVisitor {
 
     // TODO: move type annotation tests to its own file
     pub fn save_type_annotation(&mut self, expr: &ast::Expression) {
-        let typ = get_type_from_annotation(expr);
+        let typ = self.type_eval.get_type_from_annotation(expr);
         log::debug!("save_type: {:?} => {:?}", expr, typ);
         let start_pos = self.enderpy_file().get_position(expr.get_node().start);
         let end_pos = self.enderpy_file().get_position(expr.get_node().end);

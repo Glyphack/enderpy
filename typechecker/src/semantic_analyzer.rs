@@ -546,6 +546,7 @@ impl TraversalVisitor for SemanticAnalyzer {
         self.globals.exit_scope();
 
         let class_declaration = Declaration::Class(Class {
+            name: c.name.clone(),
             declaration_path,
             attributes,
             methods,

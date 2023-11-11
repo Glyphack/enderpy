@@ -1,14 +1,13 @@
 pub mod checker;
 mod rules;
 pub mod type_evaluator;
-mod type_inference;
 mod types;
 
-mod builtins {
-    pub const LIST_TYPE: &str = "builtins.list";
-    pub const TUPLE_TYPE: &str = "builtins.tuple";
-    pub const DICT_TYPE: &str = "builtins.dict";
-    pub const SET_TYPE: &str = "builtins.set";
+pub(crate) mod builtins {
+    pub const LIST_TYPE: &str = "list";
+    pub const TUPLE_TYPE: &str = "tuple";
+    pub const DICT_TYPE: &str = "dict";
+    pub const SET_TYPE: &str = "set";
 
     pub const ITER_TYPE: &str = "Iterator";
 

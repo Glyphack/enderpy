@@ -13,8 +13,19 @@ input_file: typechecker/src/type_check/test_data/inputs/type_eval_vars.py
         "(line: 10, character: 4):(line: 10, character: 10)",
         Class(
             ClassType {
-                name: "builtins.tuple",
-                args: [
+                details: Class {
+                    name: "tuple",
+                    declaration_path: DeclarationPath {
+                        module_name: "builtins",
+                        node: Node {
+                            start: 0,
+                            end: 0,
+                        },
+                    },
+                    methods: [],
+                    attributes: {},
+                },
+                type_parameters: [
                     Int,
                 ],
             },
@@ -24,8 +35,19 @@ input_file: typechecker/src/type_check/test_data/inputs/type_eval_vars.py
         "(line: 11, character: 4):(line: 11, character: 11)",
         Class(
             ClassType {
-                name: "builtins.set",
-                args: [
+                details: Class {
+                    name: "set",
+                    declaration_path: DeclarationPath {
+                        module_name: "builtins",
+                        node: Node {
+                            start: 0,
+                            end: 0,
+                        },
+                    },
+                    methods: [],
+                    attributes: {},
+                },
+                type_parameters: [
                     Int,
                 ],
             },
@@ -35,8 +57,19 @@ input_file: typechecker/src/type_check/test_data/inputs/type_eval_vars.py
         "(line: 12, character: 4):(line: 12, character: 23)",
         Class(
             ClassType {
-                name: "builtins.dict",
-                args: [
+                details: Class {
+                    name: "dict",
+                    declaration_path: DeclarationPath {
+                        module_name: "builtins",
+                        node: Node {
+                            start: 0,
+                            end: 0,
+                        },
+                    },
+                    methods: [],
+                    attributes: {},
+                },
+                type_parameters: [
                     Str,
                     Int,
                 ],
@@ -87,8 +120,19 @@ input_file: typechecker/src/type_check/test_data/inputs/type_eval_vars.py
         "(line: 27, character: 5):(line: 27, character: 14)",
         Class(
             ClassType {
-                name: "builtins.tuple",
-                args: [
+                details: Class {
+                    name: "tuple",
+                    declaration_path: DeclarationPath {
+                        module_name: "builtins",
+                        node: Node {
+                            start: 0,
+                            end: 0,
+                        },
+                    },
+                    methods: [],
+                    attributes: {},
+                },
+                type_parameters: [
                     Unknown,
                 ],
             },
@@ -118,8 +162,19 @@ input_file: typechecker/src/type_check/test_data/inputs/type_eval_vars.py
         "(line: 9, character: 4):(line: 9, character: 11)",
         Class(
             ClassType {
-                name: "builtins.list",
-                args: [
+                details: Class {
+                    name: "list",
+                    declaration_path: DeclarationPath {
+                        module_name: "builtins",
+                        node: Node {
+                            start: 0,
+                            end: 0,
+                        },
+                    },
+                    methods: [],
+                    attributes: {},
+                },
+                type_parameters: [
                     Int,
                 ],
             },

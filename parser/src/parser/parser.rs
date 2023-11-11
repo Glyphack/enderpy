@@ -6,7 +6,7 @@ use crate::parser::string::{extract_string_inside, is_string};
 use crate::token::{Kind, Token, TokenValue};
 use miette::Result;
 
-use super::expression::{is_atom, is_iterable, is_bitwise_or_op};
+use super::expression::{is_atom, is_iterable};
 use super::operator::{
     is_bin_arithmetic_op, is_comparison_operator, is_unary_op, map_unary_operator,
 };
@@ -2233,7 +2233,7 @@ impl Parser {
 
         while self.eat(Kind::BitAnd) {
             let rhs = self.parse_shift_expr()?;
-           shift_expr = Expression::BinOp(Box::new(BinOp {
+            shift_expr = Expression::BinOp(Box::new(BinOp {
                 node: self.finish_node(node),
                 op: BinaryOperator::BitAnd,
                 left: Box::new(shift_expr),

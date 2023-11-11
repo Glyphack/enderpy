@@ -10,6 +10,7 @@ Symbols: in global (id: [REDACTED])
 c
 - Declarations:
 --:   Class {
+    name: "c",
     declaration_path: DeclarationPath {
         module_name: [REDACTED]",
         node: Node {

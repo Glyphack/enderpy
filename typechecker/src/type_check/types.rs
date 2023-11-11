@@ -2,6 +2,8 @@ use std::fmt::Display;
 
 use enderpy_python_parser::ast;
 
+use crate::symbol_table;
+
 #[allow(unused)]
 #[derive(Debug, Clone, PartialEq)]
 pub enum PythonType {
@@ -25,6 +27,15 @@ pub enum PythonType {
     Str,
     Class(ClassType),
     Never,
+}
+
+#[allow(unused)]
+pub enum TypeFlags {
+    /// This type refers to an instance of a class.
+    Instance,
+
+    /// This type refers to a class.
+    Instantiable,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -59,14 +70,24 @@ impl PartialEq for CallableType {
 #[allow(unused)]
 #[derive(Debug, Clone)]
 pub struct ClassType {
-    pub name: String,
+    /// The class details from the symbol table
+    pub details: symbol_table::Class,
     // to represent types like `List[Int]`
-    pub args: Vec<PythonType>,
+    pub type_parameters: Vec<PythonType>,
+}
+
+impl ClassType {
+    pub fn new(details: symbol_table::Class, type_parameters: Vec<PythonType>) -> Self {
+        Self {
+            details,
+            type_parameters,
+        }
+    }
 }
 
 impl PartialEq for ClassType {
     fn eq(&self, other: &Self) -> bool {
-        self.name == other.name && self.args == other.args
+        self.details.name == other.details.name && self.type_parameters == other.type_parameters
     }
 }
 
@@ -118,12 +139,12 @@ impl Display for PythonType {
             PythonType::Class(class_type) => {
                 // show it like class[args]
                 let args_str = class_type
-                    .args
+                    .type_parameters
                     .iter()
                     .map(|arg| arg.to_string())
                     .collect::<Vec<String>>()
                     .join(", ");
-                let fmt = format!("{}[{}]", class_type.name, args_str);
+                let fmt = format!("{}[{}]", class_type.details.name, args_str);
                 return write!(f, "{}", fmt);
             }
             PythonType::Never => "Never",

@@ -8,7 +8,7 @@ use crate::{
     ast_visitor::TraversalVisitor, settings::Settings, state::State, symbol_table::SymbolTable,
 };
 
-use super::{type_evaluator::TypeEvaluator, type_inference::type_check_bin_op, types::PythonType};
+use super::{type_evaluator::TypeEvaluator, types::PythonType};
 
 pub struct TypeChecker<'a> {
     pub errors: Vec<TypeCheckError>,
@@ -345,7 +345,10 @@ impl<'a> TraversalVisitor for TypeChecker<'a> {
         let l_type = self.infer_expr_type(&b.left, true);
         let r_type = self.infer_expr_type(&b.right, true);
 
-        if !type_check_bin_op(&l_type, &r_type, &b.op) {
+        if !self
+            .type_evaluator
+            .type_check_bin_op(&l_type, &r_type, &b.op)
+        {
             let msg = format!(
                 "Operator '{}' not supported for types '{}' and '{}'",
                 b.op, l_type, r_type

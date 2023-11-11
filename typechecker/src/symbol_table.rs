@@ -1,7 +1,7 @@
 use enderpy_python_parser::ast::{self, Node};
 use std::{collections::HashMap, fmt::Display};
 
-use crate::ruff_python_import_resolver::import_result::ImportResult;
+use crate::{ruff_python_import_resolver::import_result::ImportResult, type_check::builtins};
 
 #[derive(Debug, Clone)]
 pub struct SymbolTable {
@@ -44,8 +44,10 @@ impl SymbolTableScope {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum SymbolTableType {
+    /// BUILTIN scope is used for builtins like len, print, etc.
+    BUILTIN,
     Module,
     Class,
     Function,
@@ -144,6 +146,7 @@ impl Function {
 
 #[derive(Debug, Clone)]
 pub struct Class {
+    pub name: String,
     pub declaration_path: DeclarationPath,
     // Method names, can be used to look up the function in the symbol table
     // of the class
@@ -202,33 +205,94 @@ pub enum SymbolScope {
 
 impl SymbolTable {
     pub fn global() -> Self {
+        let mut builtin_scope = SymbolTableScope {
+            id: get_id(),
+            symbol_table_type: SymbolTableType::BUILTIN,
+            symbols: HashMap::new(),
+            name: String::from("builtins"),
+            parent: None,
+            start_pos: 0,
+        };
+        // TODO: This will be removed once we can import the builtins from the stdlib
+        // Hacky way of putting the builtin in symbol table so I can implement some tests
+        let list_class = Class {
+            name: builtins::LIST_TYPE.to_string(),
+            declaration_path: DeclarationPath {
+                module_name: String::from("builtins"),
+                node: Node { start: 0, end: 0 },
+            },
+            methods: vec![],
+            attributes: HashMap::new(),
+        };
+        builtin_scope.symbols.insert(
+            builtins::LIST_TYPE.to_string(),
+            SymbolTableNode {
+                name: builtins::LIST_TYPE.to_string(),
+                declarations: vec![Declaration::Class(list_class)],
+            },
+        );
+        let tuple_class = Class {
+            name: builtins::TUPLE_TYPE.to_string(),
+            declaration_path: DeclarationPath {
+                module_name: String::from("builtins"),
+                node: Node { start: 0, end: 0 },
+            },
+            methods: vec![],
+            attributes: HashMap::new(),
+        };
+        builtin_scope.symbols.insert(
+            builtins::TUPLE_TYPE.to_string(),
+            SymbolTableNode {
+                name: builtins::TUPLE_TYPE.to_string(),
+                declarations: vec![Declaration::Class(tuple_class)],
+            },
+        );
+        let set_class = Class {
+            name: builtins::SET_TYPE.to_string(),
+            declaration_path: DeclarationPath {
+                module_name: String::from("builtins"),
+                node: Node { start: 0, end: 0 },
+            },
+            methods: vec![],
+            attributes: HashMap::new(),
+        };
+        builtin_scope.symbols.insert(
+            builtins::SET_TYPE.to_string(),
+            SymbolTableNode {
+                name: builtins::SET_TYPE.to_string(),
+                declarations: vec![Declaration::Class(set_class)],
+            },
+        );
+        let dict_class = Class {
+            name: builtins::DICT_TYPE.to_string(),
+            declaration_path: DeclarationPath {
+                module_name: String::from("builtins"),
+                node: Node { start: 0, end: 0 },
+            },
+            methods: vec![],
+            attributes: HashMap::new(),
+        };
+        builtin_scope.symbols.insert(
+            builtins::DICT_TYPE.to_string(),
+            SymbolTableNode {
+                name: builtins::DICT_TYPE.to_string(),
+                declarations: vec![Declaration::Class(dict_class)],
+            },
+        );
         let global_scope = SymbolTableScope {
             id: get_id(),
             symbol_table_type: SymbolTableType::Module,
             symbols: HashMap::new(),
             name: String::from("global"),
-            parent: None,
+            parent: Some(builtin_scope.id),
             start_pos: 0,
         };
         SymbolTable {
-            scopes: vec![global_scope],
+            scopes: vec![builtin_scope, global_scope],
             all_scopes: vec![],
             _locals: HashMap::new(),
         }
     }
-    // pub fn local(symbol_table_type: SymbolTableType, _start_line_number: u8, parent: usize) -> Self {
-    //     let local_scope = SymbolTableScope {
-    //         id: get_id(),
-    //         symbol_table_type,
-    //         symbols: HashMap::new(),
-    //         name: String::from("local"),
-    //         parent: Some(parent),
-    //     };
-    //     SymbolTable {
-    //         scopes: vec![local_scope],
-    //         all_scopes: vec![],
-    //     }
-    // }
 
     /// Do not use for lookup operations
     fn current_scope(&self) -> &SymbolTableScope {
@@ -265,7 +329,8 @@ impl SymbolTable {
                     if let Some(symbol) = scope.symbols.get(&lookup_request.name) {
                         return Some(symbol);
                     }
-                    if scope.name == "global" {
+                    // We reach the global scope
+                    if scope.parent.is_none() {
                         break;
                     }
                     innermost_scope = if let Some(parent_id) = scope.parent {
@@ -290,12 +355,21 @@ impl SymbolTable {
         None
     }
 
+    pub fn lookup_in_builtin_scope(&self, name: &str) -> Option<&SymbolTableNode> {
+        let builtin_scope = self.get_builtin_scope();
+        builtin_scope.symbols.get(name)
+    }
+
     pub fn enter_scope(&mut self, new_scope: SymbolTableScope) {
         self.scopes.push(new_scope);
     }
 
     pub fn global_scope(&self) -> &SymbolTableScope {
-        &self.scopes[0]
+        self.scopes
+            .iter()
+            .filter(|scope| scope.symbol_table_type == SymbolTableType::Module)
+            .last()
+            .unwrap()
     }
 
     pub fn exit_scope(&mut self) {
@@ -318,6 +392,15 @@ impl SymbolTable {
             }
             None => panic!("no current scope, there must be a global scope"),
         };
+    }
+
+    pub(crate) fn get_builtin_scope(&self) -> &SymbolTableScope {
+        // builtin scope always exists
+        self.scopes
+            .iter()
+            .filter(|scope| scope.symbol_table_type == SymbolTableType::BUILTIN)
+            .last()
+            .unwrap()
     }
 }
 
@@ -358,6 +441,10 @@ impl std::fmt::Display for SymbolTable {
         sorted_scopes.sort_by(|a, b| a.name.cmp(&b.name));
 
         for scope in sorted_scopes {
+            // Skip printing the builtin scope
+            if scope.symbol_table_type == SymbolTableType::BUILTIN {
+                continue;
+            }
             writeln!(f, "{}", scope)?;
         }
 
@@ -366,6 +453,12 @@ impl std::fmt::Display for SymbolTable {
         let mut sorted_all_scopes = self.all_scopes.iter().collect::<Vec<&SymbolTableScope>>();
         sorted_all_scopes.sort_by(|a, b| a.name.cmp(&b.name));
         for scope in sorted_all_scopes {
+            // Skip printing the builtin scope
+            // Maybe we can make this a flag
+            // Most of the time we don't care about the builtin scope
+            if scope.symbol_table_type == SymbolTableType::BUILTIN {
+                continue;
+            }
             writeln!(f, "{}", scope)?;
         }
         writeln!(f, "-------------------")?;
