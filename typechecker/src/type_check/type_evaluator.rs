@@ -65,6 +65,11 @@ impl TypeEvaluator {
             None => Ok(PythonType::Any),
         }
     }
+
+    /// Entry point function to get type of an expression. The expression passed to this function
+    /// must not be annotations, for example if you want to get the type of a variable declaration
+    /// you should pass the value of the declaration to this function.
+    /// To get the type of an annotation expression use get_type_from_annotation
     pub fn get_type(&self, expr: &ast::Expression) -> Result<PythonType> {
         log::debug!("get_type: {:?}", expr);
         match expr {
@@ -207,6 +212,102 @@ impl TypeEvaluator {
         }
     }
 
+    // This function tries to find the python type from an annotation expression
+    // If the annotation is invalid it returns uknown type
+    pub fn get_type_from_annotation(&self, type_annotation: &ast::Expression) -> PythonType {
+        log::debug!("Getting type from annotation: {:?}", type_annotation);
+        let expr_type = match type_annotation {
+            Expression::Name(name) => match name.id.as_str() {
+                "int" => PythonType::Int,
+                "float" => PythonType::Float,
+                "str" => PythonType::Str,
+                "bool" => PythonType::Bool,
+                "None" => PythonType::None,
+                _ => PythonType::Unknown,
+            },
+            // Illegal type annotation
+            Expression::Constant(c) => {
+                if let ast::ConstantValue::None = c.value {
+                    PythonType::None
+                } else {
+                    PythonType::Unknown
+                }
+            }
+            Expression::Subscript(s) => {
+                // This is a generic type
+                let typ = match *s.value.clone() {
+                    Expression::Constant(_) => todo!(),
+                    Expression::List(_) => todo!(),
+                    Expression::Tuple(_) => todo!(),
+                    Expression::Dict(_) => todo!(),
+                    Expression::Set(_) => todo!(),
+                    Expression::Name(n) => {
+                        // TODO: handle builtins with enum
+                        if self.is_literal(n.id.clone()) {
+                            return self.handle_literal_type(s);
+                        }
+                        if self.is_union(n.id.clone()) {
+                            match *s.slice.clone() {
+                                Expression::Tuple(t) => {
+                                    return self.handle_union_type(t.elements);
+                                }
+                                expr @ Expression::Name(_)
+                                | expr @ Expression::Constant(_)
+                                | expr @ Expression::Subscript(_)
+                                | expr @ Expression::Slice(_) => {
+                                    return self.handle_union_type(vec![expr]);
+                                }
+                                _ => panic!("Union type must have a tuple as parameter"),
+                            }
+                        }
+                        self.get_builtin_type(n.id.as_str())
+                    }
+                    Expression::BoolOp(_) => todo!(),
+                    Expression::UnaryOp(_) => todo!(),
+                    Expression::BinOp(_) => todo!(),
+                    Expression::NamedExpr(_) => todo!(),
+                    Expression::Yield(_) => todo!(),
+                    Expression::YieldFrom(_) => todo!(),
+                    Expression::Starred(_) => todo!(),
+                    Expression::Generator(_) => todo!(),
+                    Expression::ListComp(_) => todo!(),
+                    Expression::SetComp(_) => todo!(),
+                    Expression::DictComp(_) => todo!(),
+                    Expression::Attribute(_) => todo!(),
+                    Expression::Subscript(_) => todo!(),
+                    Expression::Slice(_) => todo!(),
+                    Expression::Call(_) => todo!(),
+                    Expression::Await(_) => todo!(),
+                    Expression::Compare(_) => todo!(),
+                    Expression::Lambda(_) => todo!(),
+                    Expression::IfExp(_) => todo!(),
+                    Expression::JoinedStr(_) => todo!(),
+                    Expression::FormattedValue(_) => todo!(),
+                };
+                PythonType::Class(ClassType {
+                    details: typ,
+                    type_parameters: vec![self.get_type_from_annotation(&s.slice)],
+                })
+            }
+            Expression::BinOp(b) => {
+                match b.op {
+                    ast::BinaryOperator::BitOr => {
+                        // flatten the bit or expression if the left and right are also bit or
+                        // TODO handle when left and right are also binary operator
+                        // Like a | b | c | d
+                        let union_paramters = self.flatten_bit_or(b);
+                        self.handle_union_type(union_paramters)
+                    }
+                    _ => todo!(),
+                }
+            }
+
+            _ => PythonType::Unknown,
+        };
+
+        expr_type
+    }
+
     fn get_type_from_declaration(&self, declaration: &Declaration) -> Result<PythonType> {
         match declaration {
             Declaration::Variable(v) => {
@@ -343,102 +444,6 @@ impl TypeEvaluator {
             Some(Declaration::Class(c)) => c.clone(),
             _ => panic!("builtin type {} not found", name),
         }
-    }
-
-    // This function tries to find the python type from an annotation expression
-    // If the annotation is invalid it returns uknown type
-    pub fn get_type_from_annotation(&self, type_annotation: &ast::Expression) -> PythonType {
-        log::debug!("Getting type from annotation: {:?}", type_annotation);
-        let expr_type = match type_annotation {
-            Expression::Name(name) => match name.id.as_str() {
-                "int" => PythonType::Int,
-                "float" => PythonType::Float,
-                "str" => PythonType::Str,
-                "bool" => PythonType::Bool,
-                "None" => PythonType::None,
-                _ => PythonType::Unknown,
-            },
-            // Illegal type annotation
-            Expression::Constant(c) => {
-                if let ast::ConstantValue::None = c.value {
-                    PythonType::None
-                } else {
-                    PythonType::Unknown
-                }
-            }
-            Expression::Subscript(s) => {
-                // This is a generic type
-                let typ = match *s.value.clone() {
-                    Expression::Constant(_) => todo!(),
-                    Expression::List(_) => todo!(),
-                    Expression::Tuple(_) => todo!(),
-                    Expression::Dict(_) => todo!(),
-                    Expression::Set(_) => todo!(),
-                    Expression::Name(n) => {
-                        // TODO: handle builtins with enum
-                        if self.is_literal(n.id.clone()) {
-                            return self.handle_literal_type(s);
-                        }
-                        if self.is_union(n.id.clone()) {
-                            match *s.slice.clone() {
-                                Expression::Tuple(t) => {
-                                    return self.handle_union_type(t.elements);
-                                }
-                                expr @ Expression::Name(_)
-                                | expr @ Expression::Constant(_)
-                                | expr @ Expression::Subscript(_)
-                                | expr @ Expression::Slice(_) => {
-                                    return self.handle_union_type(vec![expr]);
-                                }
-                                _ => panic!("Union type must have a tuple as parameter"),
-                            }
-                        }
-                        self.get_builtin_type(n.id.as_str())
-                    }
-                    Expression::BoolOp(_) => todo!(),
-                    Expression::UnaryOp(_) => todo!(),
-                    Expression::BinOp(_) => todo!(),
-                    Expression::NamedExpr(_) => todo!(),
-                    Expression::Yield(_) => todo!(),
-                    Expression::YieldFrom(_) => todo!(),
-                    Expression::Starred(_) => todo!(),
-                    Expression::Generator(_) => todo!(),
-                    Expression::ListComp(_) => todo!(),
-                    Expression::SetComp(_) => todo!(),
-                    Expression::DictComp(_) => todo!(),
-                    Expression::Attribute(_) => todo!(),
-                    Expression::Subscript(_) => todo!(),
-                    Expression::Slice(_) => todo!(),
-                    Expression::Call(_) => todo!(),
-                    Expression::Await(_) => todo!(),
-                    Expression::Compare(_) => todo!(),
-                    Expression::Lambda(_) => todo!(),
-                    Expression::IfExp(_) => todo!(),
-                    Expression::JoinedStr(_) => todo!(),
-                    Expression::FormattedValue(_) => todo!(),
-                };
-                PythonType::Class(ClassType {
-                    details: typ,
-                    type_parameters: vec![self.get_type_from_annotation(&s.slice)],
-                })
-            }
-            Expression::BinOp(b) => {
-                match b.op {
-                    ast::BinaryOperator::BitOr => {
-                        // flatten the bit or expression if the left and right are also bit or
-                        // TODO handle when left and right are also binary operator
-                        // Like a | b | c | d
-                        let union_paramters = self.flatten_bit_or(b);
-                        self.handle_union_type(union_paramters)
-                    }
-                    _ => todo!(),
-                }
-            }
-
-            _ => PythonType::Unknown,
-        };
-
-        expr_type
     }
 
     /// This function flattens a chain of bit or expressions
