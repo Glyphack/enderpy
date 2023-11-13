@@ -39,6 +39,10 @@ impl BuildManager {
             builder.filter(None, log::LevelFilter::Warn);
         }
 
+        log::debug!("Initialized build manager");
+        log::debug!("build sources: {:?}", sources);
+        log::debug!("options: {:?}", options);
+
         BuildManager {
             errors: vec![],
             build_sources: sources,
@@ -78,14 +82,14 @@ impl BuildManager {
     fn pre_analysis(&mut self) {
         let execution_environment = &execution_environment::ExecutionEnvironment {
             root: self.options.root.clone(),
-            python_version: ruff_python_resolver::python_version::PythonVersion::Py311,
-            python_platform: ruff_python_resolver::python_platform::PythonPlatform::Linux,
+            python_version: ruff_python_resolver::python_version::PythonVersion::Py312,
+            python_platform: ruff_python_resolver::python_platform::PythonPlatform::Darwin,
             // Adding a blank path to the extra paths is a hack to make the resolver work
             extra_paths: vec![PathBuf::from("")],
         };
 
         let import_config = &Config {
-            typeshed_path: None,
+            typeshed_path: self.options.import_discovery.typeshed_path.clone(),
             stub_path: None,
             venv_path: Some(self.options.root.clone()),
             venv: None,
@@ -119,8 +123,15 @@ impl BuildManager {
     }
 
     // Performs type checking passes over the code
+    // This step hapens after the binding phase
     pub fn type_check(&mut self) {
         self.build();
+        // TODO: This is a hack to get all the symbol tables so we can resolve imports
+        let mut all_symbol_tables = Vec::new();
+        for module in  self.modules.values() {
+            all_symbol_tables.push(module.get_symbol_table());
+        }
+
         for state in self.modules.iter_mut() {
             if !state.1.file.errors.is_empty() {
                 for err in state.1.file.errors.iter() {
@@ -151,7 +162,7 @@ impl BuildManager {
                     }
                 }
             }
-            let mut checker = TypeChecker::new(state.1, &self.options);
+            let mut checker = TypeChecker::new(state.1, &self.options, all_symbol_tables.clone());
             for stmt in &state.1.file.body {
                 checker.type_check(stmt);
             }
@@ -177,10 +188,25 @@ impl BuildManager {
     }
 
     fn gather_files(&self, current_files: Vec<&State>, add_indirect_imports: bool) -> Vec<State> {
+        let execution_environment = &execution_environment::ExecutionEnvironment {
+            root: self.options.root.clone(),
+            python_version: ruff_python_resolver::python_version::PythonVersion::Py312,
+            python_platform: ruff_python_resolver::python_platform::PythonPlatform::Darwin,
+            // Adding a blank path to the extra paths is a hack to make the resolver work
+            extra_paths: vec![PathBuf::from("")],
+        };
+        let import_config = &Config {
+            typeshed_path: self.options.import_discovery.typeshed_path.clone(),
+            stub_path: None,
+            venv_path: Some(self.options.root.clone()),
+            venv: None,
+        };
+
+        log::debug!("import options: {:?}", execution_environment);
         let mut new_imports = vec![];
         let mut discovered_files = vec![];
         for state in current_files {
-            let resolved_imports = self.resolve_file_imports(state);
+            let resolved_imports = self.resolve_file_imports(state, execution_environment, import_config);
             // check if the resolved_imports are not in the current files and add them to the new imports
             for (_, state) in resolved_imports {
                 if !self.modules.contains_key(&state.file.module_name()) {
@@ -194,11 +220,12 @@ impl BuildManager {
         }
 
         discovered_files.extend(new_imports.clone());
+        
 
         while !new_imports.is_empty() {
             let mut next_imports = vec![];
             for state in new_imports {
-                let resolved_imports = self.resolve_file_imports(&state);
+                let resolved_imports = self.resolve_file_imports(&state, execution_environment, import_config);
                 // check if the resolved_imports are not in the current files and add them to the new imports
                 for (_, state) in resolved_imports {
                     if !self.modules.contains_key(&state.file.module_name()) {
@@ -221,22 +248,12 @@ impl BuildManager {
     // Resolves imports in a file and return the resolved paths
     // TODO: This function is doing duplicate work because we resolve the imports in the State
     // module as well. We should refactor this and possibly only do it in the State module
-    fn resolve_file_imports(&self, state: &State) -> HashMap<String, State> {
-        let execution_environment = &execution_environment::ExecutionEnvironment {
-            root: self.options.root.clone(),
-            python_version: ruff_python_resolver::python_version::PythonVersion::Py311,
-            python_platform: ruff_python_resolver::python_platform::PythonPlatform::Linux,
-            // Adding a blank path to the extra paths is a hack to make the resolver work
-            extra_paths: vec![PathBuf::from("")],
-        };
-        log::debug!("import options: {:?}", execution_environment);
-
-        let import_config = &Config {
-            typeshed_path: None,
-            stub_path: None,
-            venv_path: Some(self.options.root.clone()),
-            venv: None,
-        };
+    fn resolve_file_imports(
+        &self,
+        state: &State,
+        execution_environment: &execution_environment::ExecutionEnvironment,
+        import_config: &Config
+    ) -> HashMap<String, State> {
         let host = &ruff_python_resolver::host::StaticHost::new(vec![]);
         let mut resolved_paths = HashMap::new();
         let mut resolved_imports = vec![];
@@ -278,8 +295,6 @@ impl BuildManager {
                 }
             };
 
-            log::debug!("import descriptions: {:?}", import_descriptions);
-
             for import_desc in import_descriptions {
                 let mut resolved = resolver::resolve_import(
                     state.file.path().as_path(),
@@ -288,10 +303,6 @@ impl BuildManager {
                     import_config,
                     host,
                 );
-                if !resolved.is_import_found {
-                    let error = format!("cannot import name '{}'", import_desc.name());
-                    log::warn!("{}", error);
-                }
                 if resolved.is_import_found {
                     for resolved_path in resolved.resolved_paths.iter() {
                         let source = match std::fs::read_to_string(resolved_path) {
@@ -305,12 +316,6 @@ impl BuildManager {
                         resolved_imports.push(build_source);
                     }
 
-                    // log what the import resolved to
-                    log::debug!(
-                        "resolved import: {} -> {:?}",
-                        import_desc.name(),
-                        resolved.resolved_paths
-                    );
 
                     for (name, implicit_import) in resolved.implicit_imports.iter() {
                         let source = std::fs::read_to_string(implicit_import.path.clone()).unwrap();
@@ -330,19 +335,6 @@ impl BuildManager {
 
         resolved_paths
     }
-}
-
-fn get_line_number_of_character_position(source: &str, pos: usize) -> usize {
-    let mut line_number = 1;
-    for (i, c) in source.chars().enumerate() {
-        if i == pos {
-            break;
-        }
-        if c == '\n' {
-            line_number += 1;
-        }
-    }
-    line_number
 }
 
 #[cfg(test)]

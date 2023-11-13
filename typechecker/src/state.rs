@@ -50,6 +50,7 @@ impl State {
         import_config: &ruff_python_resolver::config::Config,
         host: &ruff_python_resolver::host::StaticHost,
     ) {
+        log::debug!("resolving imports for file: {}", self.file.module_name());
         for import in self.file.imports.iter() {
             let import_descriptions = match import {
                 crate::nodes::ImportKinds::Import(i) => i
@@ -63,6 +64,7 @@ impl State {
                     vec![ruff_python_resolver::module_descriptor::ImportModuleDescriptor::from(i)]
                 }
             };
+            log::debug!("import descriptions: {:?}", import_descriptions);
 
             for import_desc in import_descriptions {
                 let resolved = resolver::resolve_import(
@@ -71,6 +73,16 @@ impl State {
                     &import_desc,
                     import_config,
                     host,
+                );
+                if !resolved.is_import_found {
+                    let error = format!("cannot import name '{}'", import_desc.name());
+                    log::warn!("{}", error);
+                    continue;
+                }
+                log::debug!(
+                    "resolved import: {} -> {:?}",
+                    import_desc.name(),
+                    resolved.resolved_paths
                 );
                 self.imports.insert(import_desc.name(), resolved);
             }

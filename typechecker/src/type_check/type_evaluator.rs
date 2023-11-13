@@ -1,14 +1,12 @@
 #![allow(dead_code)]
 #![allow(unused_variables)]
 
-use std::collections::HashMap;
-
-use enderpy_python_parser as parser;
-use enderpy_python_parser::ast;
-use log::debug;
-use miette::{bail, miette, Result};
-use parser::ast::{Expression, GetNode, Statement};
-
+use super::types::LiteralValue;
+use super::{
+    builtins,
+    types::{CallableType, PythonType},
+};
+use crate::type_check::types::ClassType;
 use crate::{
     ast_visitor::TraversalVisitor,
     ast_visitor_generic::TraversalVisitorImmutGeneric,
@@ -16,17 +14,13 @@ use crate::{
     state::State,
     symbol_table::{self, Declaration, LookupSymbolRequest, SymbolTable, SymbolTableNode},
 };
-
-use super::{
-    builtins,
-    types::{CallableType, PythonType},
-};
-
 use core::panic;
-
-use crate::type_check::types::ClassType;
-
-use super::types::LiteralValue;
+use enderpy_python_parser as parser;
+use enderpy_python_parser::ast;
+use log::debug;
+use miette::{bail, miette, Result};
+use parser::ast::{Expression, GetNode, Statement};
+use std::collections::HashMap;
 
 const LITERAL_TYPE_PARAMETER_MSG: &str = "Type arguments for 'Literal' must be None, a literal value (int, bool, str, or bytes), or an enum value";
 // TODO: this is not the right message there are other types like Dict that are allowed as parameters
@@ -35,6 +29,7 @@ const UNION_TYPE_PARAMETER_MSG: &str = "Type arguments for 'Union' must be names
 pub struct TypeEvaluator {
     // TODO: make this a reference to the symbol table in the checker
     pub symbol_table: SymbolTable,
+    pub imported_symbol_tables: Vec<SymbolTable>,
 }
 
 pub struct TypeEvalError {
@@ -44,10 +39,6 @@ pub struct TypeEvalError {
 
 /// Struct for evaluating the type of an expression
 impl TypeEvaluator {
-    pub fn new(symbol_table: SymbolTable) -> Self {
-        Self { symbol_table }
-    }
-
     /// Get the type of a symbol node based on declarations
     pub fn get_symbol_node_type(
         &self,
@@ -179,7 +170,7 @@ impl TypeEvaluator {
                 todo!()
             }
             ast::Expression::Starred(s) => Ok(PythonType::Unknown),
-            ast::Expression::Generator(g) => {
+            ast::Expression::Generator(g) => {typeeval
                 // This is not correct
                 // let mut comp_targets: HashMap<String, Type> = HashMap::new();
                 // for gens in &g.generators {
@@ -1050,7 +1041,7 @@ mod tests {
         module.populate_symbol_table();
         let symbol_table = module.get_symbol_table();
 
-        let type_eval = TypeEvaluator::new(symbol_table);
+        let type_eval = TypeEvaluator{ symbol_table, imported_symbol_tables: vec![] };
 
         let mut type_eval_visitor = TypeEvalVisitor::new(module.file);
         type_eval_visitor.visit_module();
@@ -1099,7 +1090,7 @@ impl TypeEvalVisitor {
         let symbol_table = state.get_symbol_table();
         Self {
             types: HashMap::new(),
-            type_eval: TypeEvaluator::new(symbol_table),
+            type_eval: TypeEvaluator { symbol_table, imported_symbol_tables: vec![] },
             state,
         }
     }

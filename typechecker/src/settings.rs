@@ -6,6 +6,7 @@ use std::{env, path::PathBuf};
 #[allow(unused)]
 pub struct ImportDiscovery {
     pub python_executable: Option<PathBuf>,
+    pub typeshed_path: Option<PathBuf>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -45,6 +46,7 @@ impl Settings {
             follow_imports: FollowImports::All,
             import_discovery: ImportDiscovery {
                 python_executable: None,
+                typeshed_path: None,
             },
         }
     }

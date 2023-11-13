@@ -1,9 +1,11 @@
+use std::collections::HashMap;
+
 use ast::{Expression, Statement};
 use enderpy_python_parser as parser;
 use enderpy_python_parser::ast::{self, *};
 
 use crate::diagnostic::CharacterSpan;
-use crate::symbol_table::LookupSymbolRequest;
+use crate::symbol_table::{LookupSymbolRequest, self};
 use crate::{
     ast_visitor::TraversalVisitor, settings::Settings, state::State, symbol_table::SymbolTable,
 };
@@ -12,8 +14,6 @@ use super::{type_evaluator::TypeEvaluator, types::PythonType};
 
 pub struct TypeChecker<'a> {
     pub errors: Vec<TypeCheckError>,
-    // The symbol table of the module being type checked
-    symbol_table: SymbolTable,
     pub options: &'a Settings,
     type_evaluator: TypeEvaluator,
 }
@@ -26,13 +26,12 @@ pub struct TypeCheckError {
 
 #[allow(unused)]
 impl<'a> TypeChecker<'a> {
-    pub fn new(module: &'a State, options: &'a Settings) -> Self {
+    pub fn new(module: &'a State, options: &'a Settings, symbol_tables: Vec<SymbolTable>) -> Self {
         let symbol_table = module.get_symbol_table();
         TypeChecker {
             errors: vec![],
-            symbol_table,
             options,
-            type_evaluator: TypeEvaluator::new(module.get_symbol_table()),
+            type_evaluator: TypeEvaluator { symbol_table: symbol_table.clone(), imported_symbol_tables: symbol_tables.clone() },
         }
     }
 
@@ -489,19 +488,7 @@ impl<'a> TraversalVisitor for TypeChecker<'a> {
         for target in &_a.targets {
             match target {
                 ast::Expression::Name(n) => {
-                    let lookup_request = LookupSymbolRequest {
-                        name: n.id.clone(),
-                        position: None,
-                    };
-                    let symbol = self.symbol_table.lookup_in_scope(lookup_request);
-                    if let Some(symbol) = symbol {
-                        let prev_target_type = self
-                            .type_evaluator
-                            .get_symbol_node_type(symbol, Some(n.node.start))
-                            .unwrap_or(PythonType::Unknown);
-                        let value_type = self.infer_expr_type(&_a.value, true);
-                        // TODO: Check reassignment
-                    }
+                    // TODO: Check reassignment
                 }
                 _ => {}
             }
