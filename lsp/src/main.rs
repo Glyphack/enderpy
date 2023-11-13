@@ -20,10 +20,12 @@ impl Backend {
     async fn check_file(&self, path: PathBuf) -> Vec<Diagnostic> {
         let root = PathBuf::from(find_project_root(path.as_path()));
         let python_executable = None;
+        let path = std::env::current_dir().unwrap();
+        let typeshed_path = Some(path.join("typeshed"));
         let settings = Settings {
             debug: false,
             root,
-            import_discovery: ImportDiscovery { python_executable },
+            import_discovery: ImportDiscovery { typeshed_path, python_executable },
             follow_imports: enderpy_python_type_checker::settings::FollowImports::Skip,
         };
 

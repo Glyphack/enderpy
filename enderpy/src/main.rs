@@ -27,10 +27,11 @@ fn symbols(path: &PathBuf) -> Result<()> {
     let initial_source = BuildSource::from_path(path.to_path_buf(), false);
     let dir_of_path = path.parent().unwrap();
     let python_executable = Some(get_python_executable()?);
+    let typeshed_path = Some(get_typeshed_path()?);
     let settings = Settings {
         debug: true,
         root: dir_of_path.to_path_buf(),
-        import_discovery: ImportDiscovery { python_executable },
+        import_discovery: ImportDiscovery { python_executable, typeshed_path },
         follow_imports: enderpy_python_type_checker::settings::FollowImports::All,
     };
 
@@ -52,6 +53,12 @@ fn get_python_executable() -> Result<PathBuf> {
         .into_diagnostic()?;
     let path = String::from_utf8(output.stdout).into_diagnostic()?;
     Ok(PathBuf::from(path))
+}
+
+fn get_typeshed_path() -> Result<PathBuf> {
+    // imagine the path is in the same directory as user ran this command   
+    let path = std::env::current_dir().into_diagnostic()?;
+    Ok(path.join("typeshed"))
 }
 
 fn tokenize(file: &PathBuf) -> Result<()> {
@@ -83,10 +90,11 @@ fn check(path: &PathBuf) -> Result<()> {
     let initial_source = BuildSource::from_path(path.to_path_buf(), false);
     let root = find_project_root(path);
     let python_executable = Some(get_python_executable()?);
+    let typeshed_path = Some(get_typeshed_path()?);
     let settings = Settings {
         debug: true,
         root: PathBuf::from(root),
-        import_discovery: ImportDiscovery { python_executable },
+        import_discovery: ImportDiscovery { python_executable, typeshed_path },
         follow_imports: enderpy_python_type_checker::settings::FollowImports::Skip,
     };
     let mut build_manager = BuildManager::new(vec![initial_source], settings);
