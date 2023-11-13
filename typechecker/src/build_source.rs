@@ -16,15 +16,15 @@ pub struct BuildSource {
 }
 
 impl BuildSource {
-    pub fn from_path(path: PathBuf, followed: bool) -> Self {
-        let source = std::fs::read_to_string(&path).unwrap();
+    pub fn from_path(path: PathBuf, followed: bool) -> Result<Self, std::io::Error> {
+        let source = std::fs::read_to_string(&path)?;
         let module = get_module_name(&path);
-        BuildSource {
+        Ok(BuildSource {
             path,
             module,
             source,
             followed,
-        }
+        })
     }
 }
 

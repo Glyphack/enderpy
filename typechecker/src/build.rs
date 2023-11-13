@@ -312,7 +312,7 @@ impl BuildManager {
                                 continue;
                             }
                         };
-                        let build_source = BuildSource::from_path(resolved_path.clone(), true);
+                        let build_source = BuildSource::from_path(resolved_path.clone(), true).unwrap();
                         resolved_imports.push(build_source);
                     }
 
@@ -320,7 +320,7 @@ impl BuildManager {
                     for (name, implicit_import) in resolved.implicit_imports.iter() {
                         let source = std::fs::read_to_string(implicit_import.path.clone()).unwrap();
                         let build_source =
-                            BuildSource::from_path(implicit_import.path.clone(), true);
+                            BuildSource::from_path(implicit_import.path.clone(), true).unwrap();
                         resolved_imports.push(build_source);
                     }
                 }
@@ -425,7 +425,7 @@ mod tests {
     fn test_symbol_table() {
         glob!("../test_data/inputs/", "symbol_table/*.py", |path| {
             let mut manager = BuildManager::new(
-                vec![BuildSource::from_path(path.to_path_buf(), false)],
+                vec![BuildSource::from_path(path.to_path_buf(), false).unwrap()],
                 Settings::test_settings(),
             );
             manager.build();

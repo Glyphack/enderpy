@@ -24,7 +24,7 @@ fn main() -> Result<()> {
 }
 
 fn symbols(path: &PathBuf) -> Result<()> {
-    let initial_source = BuildSource::from_path(path.to_path_buf(), false);
+    let initial_source = BuildSource::from_path(path.to_path_buf(), false).unwrap();
     let dir_of_path = path.parent().unwrap();
     let python_executable = Some(get_python_executable()?);
     let typeshed_path = Some(get_typeshed_path()?);
@@ -87,7 +87,7 @@ fn check(path: &PathBuf) -> Result<()> {
     if path.is_dir() {
         bail!("Path must be a file");
     }
-    let initial_source = BuildSource::from_path(path.to_path_buf(), false);
+    let initial_source = BuildSource::from_path(path.to_path_buf(), false).unwrap();
     let root = find_project_root(path);
     let python_executable = Some(get_python_executable()?);
     let typeshed_path = Some(get_typeshed_path()?);

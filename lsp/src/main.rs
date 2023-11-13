@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use env_logger::Builder;
-use log::{info, LevelFilter};
+use log::{info, LevelFilter, error};
 use tower_lsp::jsonrpc::Result;
 use tower_lsp::lsp_types::*;
 use tower_lsp::{Client, LanguageServer, LspService, Server};
@@ -29,8 +29,15 @@ impl Backend {
             follow_imports: enderpy_python_type_checker::settings::FollowImports::Skip,
         };
 
-        let mut manager =
-            BuildManager::new(vec![BuildSource::from_path(path.clone(), false)], settings);
+        let source = match BuildSource::from_path(path.clone(), false) {
+            Ok(source) => source,
+            Err(err) => {
+                error!("error: {:?}", err);
+                return Vec::new();
+            }
+        };
+
+        let mut manager = BuildManager::new(vec![source], settings);
         manager.type_check();
         let mut diagnostics = Vec::new();
         info!("path: {:?}", path);

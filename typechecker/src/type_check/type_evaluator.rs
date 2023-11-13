@@ -170,7 +170,7 @@ impl TypeEvaluator {
                 todo!()
             }
             ast::Expression::Starred(s) => Ok(PythonType::Unknown),
-            ast::Expression::Generator(g) => {typeeval
+            ast::Expression::Generator(g) => {
                 // This is not correct
                 // let mut comp_targets: HashMap<String, Type> = HashMap::new();
                 // for gens in &g.generators {
