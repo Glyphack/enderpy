@@ -28,7 +28,7 @@ export async function activate(_context: ExtensionContext) {
     run,
     debug: run,
   };
-  let clientOptions: LanguageClientOptions = {
+  const clientOptions: LanguageClientOptions = {
     documentSelector: [{ scheme: "file", language: "python" }],
     traceOutputChannel,
   };
