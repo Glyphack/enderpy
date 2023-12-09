@@ -2115,6 +2115,15 @@ impl Parser {
     // https://docs.python.org/3/reference/expressions.html#conditional-expressions
     fn parse_expression_2(&mut self) -> Result<Expression, ParsingError> {
         let node = self.start_node();
+        // This is a hack to make this function parse  () as tuple
+        if self.at(Kind::LeftParen) && matches!(self.peek_kind(), Ok(Kind::RightParen)) {
+            self.bump(Kind::LeftParen);
+            self.bump(Kind::RightParen);
+            return Ok(Expression::Tuple(Box::new(Tuple {
+                node: self.finish_node(node),
+                elements: vec![],
+            })))
+        }
         if self.eat(Kind::Lambda) {
             let params_list = self.parse_parameters(true).expect("lambda params");
             self.expect(Kind::Colon)?;
@@ -2963,6 +2972,11 @@ impl Parser {
                 // after seeing vararg the must_have_default is reset
                 // until we see a default value again
                 must_have_default = false;
+                // In this case this is not a vararg but only marks the end of positional arguments
+                // e.g. def foo(a, b, *, c, d)
+                if self.eat(Kind::Comma) {
+                    continue;
+                }
                 let (param, default) = self.parse_parameter(is_lambda)?;
                 // default is not allowed for vararg
                 if default.is_some() {
