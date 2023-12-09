@@ -41,13 +41,14 @@ impl Settings {
     }
 
     pub fn test_settings() -> Self {
+        let file_dir = env::current_dir().unwrap();
         Settings {
             debug: false,
             root: PathBuf::from(""),
             follow_imports: FollowImports::All,
             import_discovery: ImportDiscovery {
                 python_executable: None,
-                typeshed_path: None,
+                typeshed_path: Some(PathBuf::from(file_dir.parent().unwrap().join("typeshed"))),
             },
         }
     }

@@ -23,9 +23,10 @@ pub struct State {
 
 impl State {
     pub fn new(file: EnderpyFile) -> Self {
+        let module_name = file.module_name();
         Self {
             file,
-            symbol_table: SymbolTable::global(),
+            symbol_table: SymbolTable::global(module_name),
             diagnostics: Vec::new(),
             imports: HashMap::new(),
         }
@@ -36,7 +37,9 @@ impl State {
         for stmt in &self.file.body {
             sem_anal.visit_stmt(stmt)
         }
-        self.symbol_table = sem_anal.globals
+        // TODO: Hacky way to add the global scope to all scopes in symbol table after finishing
+        sem_anal.globals.exit_scope();
+        self.symbol_table = sem_anal.globals;
     }
 
     pub fn get_symbol_table(&self) -> SymbolTable {

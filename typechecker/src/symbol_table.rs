@@ -15,6 +15,9 @@ pub struct SymbolTable {
     /// The distance between the current scope and the scope where the symbol
     /// was defined
     _locals: HashMap<ast::Expression, u8>,
+
+    /// Name of the module that this symbol table is for
+    pub module_name: String,
 }
 
 #[derive(Debug, Clone)]
@@ -205,7 +208,7 @@ pub enum SymbolScope {
 }
 
 impl SymbolTable {
-    pub fn global() -> Self {
+    pub fn global(module_name: String) -> Self {
         let mut builtin_scope = SymbolTableScope {
             id: get_id(),
             symbol_table_type: SymbolTableType::BUILTIN,
@@ -293,6 +296,7 @@ impl SymbolTable {
             scopes: vec![builtin_scope, global_scope],
             all_scopes: vec![],
             _locals: HashMap::new(),
+            module_name,
         }
     }
 
@@ -328,6 +332,7 @@ impl SymbolTable {
             Some(pos) => {
                 let mut innermost_scope = self.innermost_scope(pos);
                 while let Some(scope) = innermost_scope {
+                    log::debug!("lookin in scope: {:?}", scope.name);
                     if let Some(symbol) = scope.symbols.get(&lookup_request.name) {
                         return Some(symbol);
                     }
@@ -346,7 +351,7 @@ impl SymbolTable {
                 }
             }
             None => {
-                if let Some(symbol) = self.current_scope().symbols.get(&lookup_request.name) {
+                if let Some(symbol) = self.global_scope().symbols.get(&lookup_request.name) {
                     return Some(symbol);
                 }
             }
@@ -367,7 +372,7 @@ impl SymbolTable {
     }
 
     pub fn global_scope(&self) -> &SymbolTableScope {
-        self.scopes
+        self.all_scopes
             .iter()
             .filter(|scope| scope.symbol_table_type == SymbolTableType::Module)
             .last()
@@ -376,9 +381,12 @@ impl SymbolTable {
 
     pub fn exit_scope(&mut self) {
         let finished_scope = self.scopes.pop();
-        match finished_scope {
-            Some(scope) => self.all_scopes.push(scope),
-            None => panic!("tried to exit non-existent scope"),
+        if let Some(scope) = finished_scope {
+            // Also pop the builtin scope if we are exiting the global scope
+            // if scope.symbol_table_type == SymbolTableType::Module {
+            //     self.all_scopes.push(self.scopes.pop().unwrap());
+            // }
+            self.all_scopes.push(scope);
         }
     }
 
