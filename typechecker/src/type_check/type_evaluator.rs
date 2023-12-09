@@ -114,35 +114,51 @@ impl TypeEvaluator {
             ast::Expression::List(l) => {
                 let final_elm_type = self.get_sequence_type_from_elements(&l.elements);
                 let builtin_type = self.get_builtin_type(builtins::LIST_TYPE);
-                Ok(PythonType::Class(ClassType::new(
-                    builtin_type,
-                    vec![final_elm_type],
-                )))
+                if let Some(builtin_type) = builtin_type {
+                    Ok(PythonType::Class(ClassType::new(
+                        builtin_type,
+                        vec![final_elm_type],
+                    )))
+                } else {
+                    Ok(PythonType::Unknown)
+                }
             }
             ast::Expression::Tuple(t) => {
                 let elm_type = self.get_sequence_type_from_elements(&t.elements);
                 let builtin_type = self.get_builtin_type(builtins::TUPLE_TYPE);
-                Ok(PythonType::Class(ClassType::new(
-                    builtin_type,
-                    vec![elm_type],
-                )))
+                if let Some(builtin_type) = builtin_type {
+                    Ok(PythonType::Class(ClassType::new(
+                        builtin_type,
+                        vec![elm_type],
+                    )))
+                } else {
+                    Ok(PythonType::Unknown)
+                }
             }
             ast::Expression::Dict(d) => {
                 let key_type = self.get_sequence_type_from_elements(&d.keys);
                 let value_type = self.get_sequence_type_from_elements(&d.values);
                 let builtin_type = self.get_builtin_type(builtins::DICT_TYPE);
-                Ok(PythonType::Class(ClassType::new(
-                    builtin_type,
-                    vec![key_type, value_type],
-                )))
+                if let Some(builtin_type) = builtin_type {
+                    Ok(PythonType::Class(ClassType::new(
+                        builtin_type,
+                        vec![key_type, value_type],
+                    )))
+                } else {
+                    Ok(PythonType::Unknown)
+                }
             }
             ast::Expression::Set(s) => {
                 let elm_type = self.get_sequence_type_from_elements(&s.elements);
                 let builtin_type = self.get_builtin_type(builtins::SET_TYPE);
-                Ok(PythonType::Class(ClassType::new(
-                    builtin_type,
-                    vec![elm_type],
-                )))
+                if let Some(builtin_type) = builtin_type {
+                    Ok(PythonType::Class(ClassType::new(
+                        builtin_type,
+                        vec![elm_type],
+                    )))
+                } else {
+                    Ok(PythonType::Unknown)
+                }
             }
             ast::Expression::BoolOp(_) => Ok(PythonType::Bool),
             ast::Expression::UnaryOp(u) => match u.op {
@@ -228,59 +244,12 @@ impl TypeEvaluator {
                 }
             }
             Expression::Subscript(s) => {
+                let type_parameters = vec![self.get_type_from_annotation(&s.slice)];
                 // This is a generic type
-                let typ = match *s.value.clone() {
-                    Expression::Constant(_) => todo!(),
-                    Expression::List(_) => todo!(),
-                    Expression::Tuple(_) => todo!(),
-                    Expression::Dict(_) => todo!(),
-                    Expression::Set(_) => todo!(),
-                    Expression::Name(n) => {
-                        // TODO: handle builtins with enum
-                        if self.is_literal(n.id.clone()) {
-                            return self.handle_literal_type(s);
-                        }
-                        if self.is_union(n.id.clone()) {
-                            match *s.slice.clone() {
-                                Expression::Tuple(t) => {
-                                    return self.handle_union_type(t.elements);
-                                }
-                                expr @ Expression::Name(_)
-                                | expr @ Expression::Constant(_)
-                                | expr @ Expression::Subscript(_)
-                                | expr @ Expression::Slice(_) => {
-                                    return self.handle_union_type(vec![expr]);
-                                }
-                                _ => panic!("Union type must have a tuple as parameter"),
-                            }
-                        }
-                        self.get_builtin_type(n.id.as_str())
-                    }
-                    Expression::BoolOp(_) => todo!(),
-                    Expression::UnaryOp(_) => todo!(),
-                    Expression::BinOp(_) => todo!(),
-                    Expression::NamedExpr(_) => todo!(),
-                    Expression::Yield(_) => todo!(),
-                    Expression::YieldFrom(_) => todo!(),
-                    Expression::Starred(_) => todo!(),
-                    Expression::Generator(_) => todo!(),
-                    Expression::ListComp(_) => todo!(),
-                    Expression::SetComp(_) => todo!(),
-                    Expression::DictComp(_) => todo!(),
-                    Expression::Attribute(_) => todo!(),
-                    Expression::Subscript(_) => todo!(),
-                    Expression::Slice(_) => todo!(),
-                    Expression::Call(_) => todo!(),
-                    Expression::Await(_) => todo!(),
-                    Expression::Compare(_) => todo!(),
-                    Expression::Lambda(_) => todo!(),
-                    Expression::IfExp(_) => todo!(),
-                    Expression::JoinedStr(_) => todo!(),
-                    Expression::FormattedValue(_) => todo!(),
-                };
+                let typ = self.get_class_declaration(*s.value.clone(), None);
                 PythonType::Class(ClassType {
                     details: typ,
-                    type_parameters: vec![self.get_type_from_annotation(&s.slice)],
+                    type_parameters,
                 })
             }
             Expression::BinOp(b) => {
@@ -420,10 +389,13 @@ impl TypeEvaluator {
     }
 
     /// Retrieves a pythoh type that is present in the builtin scope
-    fn get_builtin_type(&self, name: &str) -> symbol_table::Class {
+    fn get_builtin_type(&self, name: &str) -> Option<symbol_table::Class> {
         let builtin_symbol = self.symbol_table.lookup_in_builtin_scope(name);
         let cls_declaration = match builtin_symbol {
-            None => panic!("builtin type {} not found", name),
+            None => {
+                log::debug!("builtin type {} not found", name);
+                None
+            }
             Some(node) => {
                 // get the declaration with type class
                 node.declarations.iter().find_map(|decl| match decl {
@@ -434,8 +406,8 @@ impl TypeEvaluator {
         };
 
         match cls_declaration {
-            None => panic!("builtin type {} not found", name),
-            Some(Declaration::Class(c)) => c.clone(),
+            None => None,
+            Some(Declaration::Class(c)) => Some(c),
             _ => panic!("builtin type {} not found", name),
         }
     }
@@ -729,6 +701,115 @@ impl TypeEvaluator {
         }
 
         false
+    }
+
+    fn get_class_declaration(&self, value: Expression, symbbol_table: Option<SymbolTable>) -> symbol_table::Class {
+        let symbol_table = match symbbol_table {
+            Some(s) => s,
+            None => self.symbol_table.clone(),
+        }; 
+        match value {
+            Expression::Constant(_) => todo!(),
+            Expression::List(_) => todo!(),
+            Expression::Tuple(_) => todo!(),
+            Expression::Dict(_) => todo!(),
+            Expression::Set(_) => todo!(),
+            // This is a Generic type with a param: Container[type, ...]
+            Expression::Name(n) => {
+                if let Some(builtin_type) = self.get_builtin_type(n.id.as_str()) {
+                    builtin_type
+                // if it's not a builtin we want to get the class declaration form symbol table
+                // and find where this class is defined
+                } else {
+                    let container_decl =
+                        match symbol_table.lookup_in_scope(LookupSymbolRequest {
+                            name: n.id.clone(),
+                            position: Some(n.node.start),
+                        }) {
+                            Some(decl) => decl.last_declaration(),
+                            None => panic!("Type {} has no declaration", n.id),
+                        };
+                    match container_decl {
+                        Some(Declaration::Class(c)) => c.clone(),
+                        Some(Declaration::Alias(a)) => self.resolve_alias(a),
+                        _ => panic!("Type {} not found {:?}", n.id, container_decl),
+                    }
+                }
+            }
+            Expression::BoolOp(_) => todo!(),
+            Expression::UnaryOp(_) => todo!(),
+            Expression::BinOp(_) => todo!(),
+            Expression::NamedExpr(_) => todo!(),
+            Expression::Yield(_) => todo!(),
+            Expression::YieldFrom(_) => todo!(),
+            Expression::Starred(_) => todo!(),
+            Expression::Generator(_) => todo!(),
+            Expression::ListComp(_) => todo!(),
+            Expression::SetComp(_) => todo!(),
+            Expression::DictComp(_) => todo!(),
+            Expression::Attribute(_) => todo!(),
+            Expression::Subscript(_) => todo!(),
+            Expression::Slice(_) => todo!(),
+            Expression::Call(_) => todo!(),
+            Expression::Await(_) => todo!(),
+            Expression::Compare(_) => todo!(),
+            Expression::Lambda(_) => todo!(),
+            Expression::IfExp(_) => todo!(),
+            Expression::JoinedStr(_) => todo!(),
+            Expression::FormattedValue(_) => todo!(),
+        }
+    }
+
+    // Follows Alias declaration and resolves it to a class declaration
+    // It searches through imported symbol tables for the module alias imports
+    // and resolves the alias to the class declaration
+    // TODO: refactor to resolve all aliases and not only classes
+    fn resolve_alias(&self, a: &symbol_table::Alias) -> symbol_table::Class {
+        let class_name = match a.symbol_name {
+            Some(ref name) => name.clone(),
+            None => panic!("Alias {:?} has no symbol name", a.import_node),
+        };
+        let imported_symbol_tables = self.imported_symbol_tables.clone();
+        log::debug!(
+            "Searching for alias {}",
+            class_name,
+        );
+        for symbol_table in imported_symbol_tables {
+            // TODO: only check the imports from typing for now.
+            if symbol_table.module_name
+                != ".Users.glyphack.Programming.enderpy.typeshed.stdlib.typing.pyi"
+            {
+                continue;
+            }
+            if let Some(decl) = symbol_table.lookup_in_scope(LookupSymbolRequest {
+                name: class_name.clone(),
+                position: None,
+            }) {
+                match decl.last_declaration() {
+                    Some(c) => {
+                        log::debug!("Found declaration: {:?}", c);
+                        match c {
+                            Declaration::Class(c) => return c.clone(),
+                            Declaration::Alias(a) => return self.resolve_alias(a),
+                            Declaration::Variable(v) => {
+                                let type_annotation = v.type_annotation.clone();
+                                log::debug!("Type annotation for class is {:?} now searching for {:?} in symbol table", type_annotation, type_annotation.clone());
+                                match type_annotation {
+                                    Some(t) => {
+                                        log::debug!("Type annotation for class is {:?} now searching for {:?} in symbol table", t, t.clone());
+                                        return self.get_class_declaration(t, Some(symbol_table));
+                                    }
+                                    None => continue,
+                                }
+                            }
+                            _ => panic!("Cannot resolve alias to class"),
+                        }
+                    }
+                    _ => panic!("Alias has no declaration"),
+                }
+            }
+        }
+        panic!("Alias {} not found", class_name);
     }
 }
 
