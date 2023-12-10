@@ -1,8 +1,10 @@
 //! Support for native Python extension modules.
 
-use std::ffi::OsStr;
-use std::io;
-use std::path::{Path, PathBuf};
+use std::{
+    ffi::OsStr,
+    io,
+    path::{Path, PathBuf},
+};
 
 /// Returns `true` if the given file extension is that of a native module.
 pub(crate) fn is_native_module_file_extension(file_extension: &OsStr) -> bool {
@@ -23,7 +25,8 @@ pub(crate) fn native_module_name(file_name: &Path) -> Option<&str> {
         })
 }
 
-/// Returns `true` if the given file name is that of a native module with the given name.
+/// Returns `true` if the given file name is that of a native module with the
+/// given name.
 pub(crate) fn is_native_module_file_name(module_name: &str, file_name: &Path) -> bool {
     // The file name must be that of a native module.
     if !file_name

@@ -1,20 +1,24 @@
-use std::collections::BTreeMap;
-use std::ffi::OsStr;
-use std::io;
-use std::path::{Path, PathBuf};
+use std::{
+    collections::BTreeMap,
+    ffi::OsStr,
+    io,
+    path::{Path, PathBuf},
+};
 
 use crate::ruff_python_import_resolver::{native_module, py_typed};
 
 /// A map of the submodules that are present in a namespace package.
 ///
-/// Namespace packages lack an `__init__.py` file. So when resolving symbols from a namespace
-/// package, the symbols must be present as submodules. This map contains the submodules that are
-/// present in the namespace package, keyed by their module name.
+/// Namespace packages lack an `__init__.py` file. So when resolving symbols
+/// from a namespace package, the symbols must be present as submodules. This
+/// map contains the submodules that are present in the namespace package, keyed
+/// by their module name.
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct ImplicitImports(BTreeMap<String, ImplicitImport>);
 
 impl ImplicitImports {
-    /// Find the "implicit" imports within the namespace package at the given path.
+    /// Find the "implicit" imports within the namespace package at the given
+    /// path.
     pub(crate) fn find(dir_path: &Path, exclusions: &[&Path]) -> io::Result<Self> {
         let mut submodules: BTreeMap<String, ImplicitImport> = BTreeMap::new();
 
@@ -117,8 +121,8 @@ impl ImplicitImports {
         Some(Self(filtered))
     }
 
-    /// Returns `true` if the [`ImplicitImports`] resolves all the symbols requested by a
-    /// module descriptor.
+    /// Returns `true` if the [`ImplicitImports`] resolves all the symbols
+    /// requested by a module descriptor.
     pub(crate) fn resolves_namespace_package(&self, imported_symbols: &[String]) -> bool {
         if !imported_symbols.is_empty() {
             // TODO(charlie): Pyright uses:
@@ -127,7 +131,8 @@ impl ImplicitImports {
             // !Array.from(moduleDescriptor.importedSymbols.keys()).some((symbol) => implicitImports.has(symbol))`
             // ```
             //
-            // However, that only checks if _any_ of the symbols are in the implicit imports.
+            // However, that only checks if _any_ of the symbols are in the implicit
+            // imports.
             for symbol in imported_symbols {
                 if !self.has(symbol) {
                     return false;
@@ -149,7 +154,8 @@ impl ImplicitImports {
         self.0.len()
     }
 
-    /// Returns `true` if there are no implicit imports in the namespace package.
+    /// Returns `true` if there are no implicit imports in the namespace
+    /// package.
     pub(crate) fn is_empty(&self) -> bool {
         self.0.is_empty()
     }

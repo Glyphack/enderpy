@@ -1,16 +1,21 @@
 //! Resolves Python imports to their corresponding files on disk.
 
-use std::ffi::OsStr;
-use std::path::{Path, PathBuf};
+use std::{
+    ffi::OsStr,
+    path::{Path, PathBuf},
+};
 
 use log::debug;
 
-use crate::ruff_python_import_resolver::config::Config;
-use crate::ruff_python_import_resolver::execution_environment::ExecutionEnvironment;
-use crate::ruff_python_import_resolver::implicit_imports::ImplicitImports;
-use crate::ruff_python_import_resolver::import_result::{ImportResult, ImportType};
-use crate::ruff_python_import_resolver::module_descriptor::ImportModuleDescriptor;
-use crate::ruff_python_import_resolver::{host, native_module, py_typed, search};
+use crate::ruff_python_import_resolver::{
+    config::Config,
+    execution_environment::ExecutionEnvironment,
+    host,
+    implicit_imports::ImplicitImports,
+    import_result::{ImportResult, ImportType},
+    module_descriptor::ImportModuleDescriptor,
+    native_module, py_typed, search,
+};
 
 #[allow(clippy::fn_params_excessive_bools)]
 fn resolve_module_descriptor(
@@ -28,7 +33,8 @@ fn resolve_module_descriptor(
         debug!("Attempting to resolve using root path: {root:?}");
     }
 
-    // Starting at the specified path, walk the file system to find the specified module.
+    // Starting at the specified path, walk the file system to find the specified
+    // module.
     let mut resolved_paths: Vec<PathBuf> = Vec::new();
     let mut dir_path = root.to_path_buf();
     let mut is_namespace_package = false;
@@ -217,9 +223,9 @@ fn resolve_absolute_import(
     look_for_py_typed: bool,
 ) -> ImportResult {
     if allow_pyi && use_stub_package {
-        // Search for packaged stubs first. PEP 561 indicates that package authors can ship
-        // stubs separately from the package implementation by appending `-stubs` to its
-        // top-level directory name.
+        // Search for packaged stubs first. PEP 561 indicates that package authors can
+        // ship stubs separately from the package implementation by appending
+        // `-stubs` to its top-level directory name.
         let import_result = resolve_module_descriptor(
             root,
             module_descriptor,
@@ -372,9 +378,9 @@ fn resolve_best_absolute_import<Host: host::Host>(
         ));
     }
 
-    // If a library is fully `py.typed`, prefer the current result. There's one exception:
-    // we're executing from `typeshed` itself. In that case, use the `typeshed` lookup below,
-    // rather than favoring `py.typed` libraries.
+    // If a library is fully `py.typed`, prefer the current result. There's one
+    // exception: we're executing from `typeshed` itself. In that case, use the
+    // `typeshed` lookup below, rather than favoring `py.typed` libraries.
     if let Some(typeshed_root) = search::typeshed_root(config, host) {
         debug!(
             "Looking in typeshed root directory: {}",
@@ -502,7 +508,7 @@ fn pick_best_import(
                         best_import_so_far
                     } else {
                         new_import
-                    }
+                    };
                 }
                 _ => {}
             }
@@ -578,7 +584,7 @@ fn pick_best_import(
                         best_import_so_far
                     } else {
                         new_import
-                    }
+                    };
                 }
                 _ => {}
             }
@@ -685,11 +691,13 @@ fn resolve_import_strict<Host: host::Host>(
 /// The algorithm is as follows:
 ///
 /// 1. If the import is relative, convert it to an absolute import.
-/// 2. Find the "best" match for the import, allowing stub files. Search local imports, any
-///    configured search paths, the Python path, the typeshed path, etc.
-/// 3. If a stub file was found, find the "best" match for the import, disallowing stub files.
-/// 4. If the import wasn't resolved, try to resolve it in the parent directory, then the parent's
-///    parent, and so on, until the import root is reached.
+/// 2. Find the "best" match for the import, allowing stub files. Search local
+///    imports, any configured search paths, the Python path, the typeshed path,
+///    etc.
+/// 3. If a stub file was found, find the "best" match for the import,
+///    disallowing stub files.
+/// 4. If the import wasn't resolved, try to resolve it in the parent directory,
+///    then the parent's parent, and so on, until the import root is reached.
 pub fn resolve_import<Host: host::Host>(
     source_file: &Path,
     execution_environment: &ExecutionEnvironment,

@@ -141,7 +141,8 @@ pub trait TraversalVisitor {
         for stmt in &t.finalbody {
             self.visit_stmt(stmt);
         }
-        // TODO: need to visit exception handler name and type but let's keep it simple for now
+        // TODO: need to visit exception handler name and type but let's keep it simple
+        // for now
         for handler in &t.handlers {
             for stmt in &handler.body {
                 self.visit_stmt(stmt);
@@ -159,7 +160,8 @@ pub trait TraversalVisitor {
         for stmt in &t.finalbody {
             self.visit_stmt(stmt);
         }
-        // TODO: need to visit exception handler name and type but let's keep it simple for now
+        // TODO: need to visit exception handler name and type but let's keep it simple
+        // for now
         for handler in &t.handlers {
             for stmt in &handler.body {
                 self.visit_stmt(stmt);

@@ -298,13 +298,13 @@ pub enum TokenValue {
     Indent(usize),
 }
 
-impl TokenValue {
-    pub fn to_string(&self) -> String {
+impl Display for TokenValue {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            TokenValue::None => "None".to_string(),
-            TokenValue::Number(n) => n.to_string(),
-            TokenValue::Str(s) => s.to_string(),
-            TokenValue::Indent(_i) => panic!("not a string"),
+            TokenValue::None => write!(f, "None"),
+            TokenValue::Number(n) => write!(f, "{}", n),
+            TokenValue::Str(s) => write!(f, "{}", s),
+            TokenValue::Indent(i) => write!(f, "{}", i),
         }
     }
 }

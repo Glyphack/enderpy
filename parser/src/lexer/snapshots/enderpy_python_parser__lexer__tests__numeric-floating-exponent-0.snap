@@ -1,0 +1,46 @@
+---
+source: parser/src/lexer/lexer.rs
+description: 0e0 0e-1 0e+2 0e+3j 0e+3J
+---
+[
+    Token {
+        kind: ExponentFloat,
+        value: Number(
+            "0e0",
+        ),
+        start: 0,
+        end: 3,
+    },
+    Token {
+        kind: ExponentFloat,
+        value: Number(
+            "0e-1",
+        ),
+        start: 4,
+        end: 8,
+    },
+    Token {
+        kind: ExponentFloat,
+        value: Number(
+            "0e+2",
+        ),
+        start: 9,
+        end: 13,
+    },
+    Token {
+        kind: ImaginaryExponentFloat,
+        value: Number(
+            "0e+3j",
+        ),
+        start: 14,
+        end: 19,
+    },
+    Token {
+        kind: ImaginaryExponentFloat,
+        value: Number(
+            "0e+3J",
+        ),
+        start: 20,
+        end: 25,
+    },
+]

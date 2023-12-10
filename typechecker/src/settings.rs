@@ -1,6 +1,7 @@
+use std::{env, path::PathBuf};
+
 use config::{Config, ConfigError, File};
 use serde::Deserialize;
-use std::{env, path::PathBuf};
 
 #[derive(Debug, Deserialize)]
 #[allow(unused)]

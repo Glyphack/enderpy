@@ -1,9 +1,10 @@
 mod lexer;
 mod parser;
 
-pub use crate::lexer::lexer::Lexer;
-pub use crate::parser::ast;
-pub use crate::parser::parser::Parser;
+pub use crate::{
+    lexer::Lexer,
+    parser::{ast, parser::Parser},
+};
 pub mod error;
 pub mod token;
 pub mod utils;

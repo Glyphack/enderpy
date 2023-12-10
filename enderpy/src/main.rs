@@ -1,3 +1,8 @@
+use std::{
+    fs,
+    path::{Path, PathBuf},
+};
+
 use clap::Parser as ClapParser;
 use cli::{Cli, Commands};
 use enderpy_python_parser::{Lexer, Parser};
@@ -8,7 +13,6 @@ use enderpy_python_type_checker::{
     settings::{ImportDiscovery, Settings},
 };
 use miette::{bail, IntoDiagnostic, Result};
-use std::{fs, path::PathBuf};
 
 mod cli;
 
@@ -23,7 +27,7 @@ fn main() -> Result<()> {
     }
 }
 
-fn symbols(path: &PathBuf) -> Result<()> {
+fn symbols(path: &Path) -> Result<()> {
     let initial_source = BuildSource::from_path(path.to_path_buf(), false).unwrap();
     let dir_of_path = path.parent().unwrap();
     let python_executable = Some(get_python_executable()?);
@@ -31,7 +35,10 @@ fn symbols(path: &PathBuf) -> Result<()> {
     let settings = Settings {
         debug: true,
         root: dir_of_path.to_path_buf(),
-        import_discovery: ImportDiscovery { python_executable, typeshed_path },
+        import_discovery: ImportDiscovery {
+            python_executable,
+            typeshed_path,
+        },
         follow_imports: enderpy_python_type_checker::settings::FollowImports::All,
     };
 
@@ -56,7 +63,7 @@ fn get_python_executable() -> Result<PathBuf> {
 }
 
 fn get_typeshed_path() -> Result<PathBuf> {
-    // imagine the path is in the same directory as user ran this command   
+    // imagine the path is in the same directory as user ran this command
     let path = std::env::current_dir().into_diagnostic()?;
     Ok(path.join("typeshed"))
 }
@@ -83,7 +90,7 @@ fn parse(file: &PathBuf) -> Result<()> {
     Ok(())
 }
 
-fn check(path: &PathBuf) -> Result<()> {
+fn check(path: &Path) -> Result<()> {
     if path.is_dir() {
         bail!("Path must be a file");
     }
@@ -94,7 +101,10 @@ fn check(path: &PathBuf) -> Result<()> {
     let settings = Settings {
         debug: true,
         root: PathBuf::from(root),
-        import_discovery: ImportDiscovery { python_executable, typeshed_path },
+        import_discovery: ImportDiscovery {
+            python_executable,
+            typeshed_path,
+        },
         follow_imports: enderpy_python_type_checker::settings::FollowImports::Skip,
     };
     let mut build_manager = BuildManager::new(vec![initial_source], settings);

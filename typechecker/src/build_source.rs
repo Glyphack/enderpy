@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 #[derive(Debug, Clone)]
 /// BuildSource is a struct that holds metadata about a source file
@@ -28,6 +28,6 @@ impl BuildSource {
     }
 }
 
-fn get_module_name(path: &PathBuf) -> String {
+fn get_module_name(path: &Path) -> String {
     path.to_str().unwrap_or_default().replace(['/', '\\'], ".")
 }

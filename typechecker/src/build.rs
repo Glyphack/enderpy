@@ -1,20 +1,21 @@
-use enderpy_python_parser::error::ParsingError;
-use env_logger::Builder;
-use log::info;
 use std::{collections::HashMap, path::PathBuf};
 
-use enderpy_python_parser::Parser;
+use enderpy_python_parser::{error::ParsingError, Parser};
+use env_logger::Builder;
+use log::info;
 
-use crate::build_source::BuildSource;
-use crate::diagnostic::Diagnostic;
-use crate::nodes::EnderpyFile;
-use crate::ruff_python_import_resolver as ruff_python_resolver;
-use crate::ruff_python_import_resolver::config::Config;
-use crate::ruff_python_import_resolver::module_descriptor::ImportModuleDescriptor;
-use crate::ruff_python_import_resolver::{execution_environment, resolver};
-use crate::settings::Settings;
-use crate::state::State;
-use crate::type_check::checker::TypeChecker;
+use crate::{
+    build_source::BuildSource,
+    diagnostic::Diagnostic,
+    nodes::EnderpyFile,
+    ruff_python_import_resolver as ruff_python_resolver,
+    ruff_python_import_resolver::{
+        config::Config, execution_environment, module_descriptor::ImportModuleDescriptor, resolver,
+    },
+    settings::Settings,
+    state::State,
+    type_check::checker::TypeChecker,
+};
 
 #[derive(Debug)]
 pub struct BuildManager {
@@ -128,7 +129,7 @@ impl BuildManager {
         self.build();
         // TODO: This is a hack to get all the symbol tables so we can resolve imports
         let mut all_symbol_tables = Vec::new();
-        for module in  self.modules.values() {
+        for module in self.modules.values() {
             all_symbol_tables.push(module.get_symbol_table());
         }
 
@@ -206,8 +207,10 @@ impl BuildManager {
         let mut new_imports = vec![];
         let mut discovered_files = vec![];
         for state in current_files {
-            let resolved_imports = self.resolve_file_imports(state, execution_environment, import_config);
-            // check if the resolved_imports are not in the current files and add them to the new imports
+            let resolved_imports =
+                self.resolve_file_imports(state, execution_environment, import_config);
+            // check if the resolved_imports are not in the current files and add them to
+            // the new imports
             for (_, state) in resolved_imports {
                 if !self.modules.contains_key(&state.file.module_name()) {
                     new_imports.push(state);
@@ -220,13 +223,14 @@ impl BuildManager {
         }
 
         discovered_files.extend(new_imports.clone());
-        
 
         while !new_imports.is_empty() {
             let mut next_imports = vec![];
             for state in new_imports {
-                let resolved_imports = self.resolve_file_imports(&state, execution_environment, import_config);
-                // check if the resolved_imports are not in the current files and add them to the new imports
+                let resolved_imports =
+                    self.resolve_file_imports(&state, execution_environment, import_config);
+                // check if the resolved_imports are not in the current files and add them to
+                // the new imports
                 for (_, state) in resolved_imports {
                     if !self.modules.contains_key(&state.file.module_name()) {
                         // check no discovered file with the same name exists
@@ -246,13 +250,14 @@ impl BuildManager {
     }
 
     // Resolves imports in a file and return the resolved paths
-    // TODO: This function is doing duplicate work because we resolve the imports in the State
-    // module as well. We should refactor this and possibly only do it in the State module
+    // TODO: This function is doing duplicate work because we resolve the imports in
+    // the State module as well. We should refactor this and possibly only do it
+    // in the State module
     fn resolve_file_imports(
         &self,
         state: &State,
         execution_environment: &execution_environment::ExecutionEnvironment,
-        import_config: &Config
+        import_config: &Config,
     ) -> HashMap<String, State> {
         let host = &ruff_python_resolver::host::StaticHost::new(vec![]);
         let mut resolved_paths = HashMap::new();
@@ -312,10 +317,10 @@ impl BuildManager {
                                 continue;
                             }
                         };
-                        let build_source = BuildSource::from_path(resolved_path.clone(), true).unwrap();
+                        let build_source =
+                            BuildSource::from_path(resolved_path.clone(), true).unwrap();
                         resolved_imports.push(build_source);
                     }
-
 
                     for (name, implicit_import) in resolved.implicit_imports.iter() {
                         let source = std::fs::read_to_string(implicit_import.path.clone()).unwrap();
@@ -344,6 +349,8 @@ mod tests {
     use insta::glob;
 
     use super::*;
+
+    #[allow(dead_code)]
     fn snapshot_symbol_table(source: &str) -> String {
         let mut manager = BuildManager::new(
             vec![BuildSource {

@@ -2,7 +2,6 @@ use std::collections::HashMap;
 
 use enderpy_python_parser as parser;
 use enderpy_python_parser::ast::Expression;
-
 use parser::ast::{GetNode, Statement};
 
 use crate::{
@@ -163,42 +162,36 @@ impl SemanticAnalyzer {
             );
         }
 
-        match args.vararg {
-            Some(ref arg) => {
-                let declaration_path = DeclarationPath {
-                    module_name: self.file.module_name().clone(),
-                    node: arg.node,
-                };
-                self.create_symbol(
-                    arg.arg.clone(),
-                    Declaration::Parameter(Paramter {
-                        declaration_path,
-                        parameter_node: arg.clone(),
-                        type_annotation: arg.annotation.clone(),
-                        default_value: None,
-                    }),
-                );
-            }
-            None => (),
+        if let Some(ref arg) = args.vararg {
+            let declaration_path = DeclarationPath {
+                module_name: self.file.module_name().clone(),
+                node: arg.node,
+            };
+            self.create_symbol(
+                arg.arg.clone(),
+                Declaration::Parameter(Paramter {
+                    declaration_path,
+                    parameter_node: arg.clone(),
+                    type_annotation: arg.annotation.clone(),
+                    default_value: None,
+                }),
+            );
         }
 
-        match args.kwarg {
-            Some(ref arg) => {
-                let declaration_path = DeclarationPath {
-                    module_name: self.file.module_name().clone(),
-                    node: arg.node,
-                };
-                self.create_symbol(
-                    arg.arg.clone(),
-                    Declaration::Parameter(Paramter {
-                        declaration_path,
-                        parameter_node: arg.clone(),
-                        type_annotation: arg.annotation.clone(),
-                        default_value: None,
-                    }),
-                );
-            }
-            None => (),
+        if let Some(ref arg) = args.kwarg {
+            let declaration_path = DeclarationPath {
+                module_name: self.file.module_name().clone(),
+                node: arg.node,
+            };
+            self.create_symbol(
+                arg.arg.clone(),
+                Declaration::Parameter(Paramter {
+                    declaration_path,
+                    parameter_node: arg.clone(),
+                    type_annotation: arg.annotation.clone(),
+                    default_value: None,
+                }),
+            );
         }
     }
 }
@@ -383,7 +376,8 @@ impl TraversalVisitor for SemanticAnalyzer {
         for stmt in &t.finalbody {
             self.visit_stmt(stmt);
         }
-        // TODO: need to visit exception handler name and type but let's keep it simple for now
+        // TODO: need to visit exception handler name and type but let's keep it simple
+        // for now
         for handler in &t.handlers {
             for stmt in &handler.body {
                 self.visit_stmt(stmt);
@@ -401,7 +395,8 @@ impl TraversalVisitor for SemanticAnalyzer {
         for stmt in &t.finalbody {
             self.visit_stmt(stmt);
         }
-        // TODO: need to visit exception handler name and type but let's keep it simple for now
+        // TODO: need to visit exception handler name and type but let's keep it simple
+        // for now
         for handler in &t.handlers {
             for stmt in &handler.body {
                 self.visit_stmt(stmt);
@@ -430,10 +425,9 @@ impl TraversalVisitor for SemanticAnalyzer {
             match &stmt {
                 parser::ast::Statement::Raise(r) => raise_statements.push(r.clone()),
                 parser::ast::Statement::Return(r) => return_statements.push(r.clone()),
-                parser::ast::Statement::ExpressionStatement(e) => match e {
-                    parser::ast::Expression::Yield(y) => yeild_statements.push(*y.clone()),
-                    _ => (),
-                },
+                parser::ast::Statement::ExpressionStatement(parser::ast::Expression::Yield(y)) => {
+                    yeild_statements.push(*y.clone())
+                }
                 _ => (),
             }
         }
@@ -507,39 +501,26 @@ impl TraversalVisitor for SemanticAnalyzer {
         }
         let mut methods = vec![];
         let mut attributes = HashMap::new();
+
         for stmt in &c.body {
-            match stmt {
-                parser::ast::Statement::FunctionDef(f) => {
-                    if f.name == "__init__" {
-                        for stmt in &f.body {
-                            match stmt {
-                                parser::ast::Statement::AssignStatement(assign) => {
-                                    for target in &assign.targets {
-                                        match target {
-                                            parser::ast::Expression::Attribute(attr) => {
-                                                match *attr.value {
-                                                    parser::ast::Expression::Name(ref n) => {
-                                                        if n.id == "self" {
-                                                            attributes.insert(
-                                                                attr.attr.clone(),
-                                                                assign.value.clone(),
-                                                            );
-                                                        }
-                                                    }
-                                                    _ => (),
-                                                }
-                                            }
-                                            _ => (),
+            if let parser::ast::Statement::FunctionDef(f) = stmt {
+                if f.name == "__init__" {
+                    for stmt in &f.body {
+                        if let parser::ast::Statement::AssignStatement(assign) = stmt {
+                            for target in &assign.targets {
+                                if let parser::ast::Expression::Attribute(attr) = target {
+                                    if let parser::ast::Expression::Name(ref n) = *attr.value {
+                                        if n.id == "self" {
+                                            attributes
+                                                .insert(attr.attr.clone(), assign.value.clone());
                                         }
                                     }
                                 }
-                                _ => (),
                             }
                         }
                     }
-                    methods.push(f.name.clone());
                 }
-                _ => (),
+                methods.push(f.name.clone());
             }
             self.visit_stmt(stmt);
         }

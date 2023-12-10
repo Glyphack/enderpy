@@ -1,0 +1,14 @@
+---
+source: parser/src/lexer/lexer.rs
+description: "0x0"
+---
+[
+    Token {
+        kind: Hexadecimal,
+        value: Number(
+            "0x0",
+        ),
+        start: 0,
+        end: 3,
+    },
+]

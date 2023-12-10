@@ -1,11 +1,11 @@
 use miette::Result;
 
-use crate::parser::ast::Expression;
-use crate::parser::ast::JoinedStr;
-use crate::token::Kind;
-
 use super::ast::Node;
-use crate::error::ParsingError;
+use crate::{
+    error::ParsingError,
+    parser::ast::{Expression, JoinedStr},
+    token::Kind,
+};
 pub fn extract_string_inside(val: String) -> String {
     let delimiters = vec!["\"\"\"", "\"", "'''", "'"];
     let mut result = String::new();
@@ -35,10 +35,10 @@ pub fn extract_string_inside(val: String) -> String {
 }
 
 pub fn is_string(kind: &Kind) -> bool {
-    match kind {
-        Kind::StringLiteral | Kind::RawBytes | Kind::Bytes | Kind::FStringStart => true,
-        _ => false,
-    }
+    matches!(
+        kind,
+        Kind::StringLiteral | Kind::RawBytes | Kind::Bytes | Kind::FStringStart
+    )
 }
 
 pub fn concat_string_exprs(lhs: Expression, rhs: Expression) -> Result<Expression, ParsingError> {
@@ -69,7 +69,7 @@ pub fn concat_string_exprs(lhs: Expression, rhs: Expression) -> Result<Expressio
                         input: "test".into(),
                         advice: "test".into(),
                         span: (0, 0),
-                    })
+                    });
                 }
                 (_, ConstantValue::Bytes(_rhs)) => {
                     return Err(ParsingError::InvalidSyntax {

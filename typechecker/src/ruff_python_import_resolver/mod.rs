@@ -15,20 +15,25 @@ mod search;
 
 #[cfg(test)]
 mod tests {
-    use std::fs::{create_dir_all, File};
-    use std::io::{self, Write};
-    use std::path::{Path, PathBuf};
+    use std::{
+        fs::{create_dir_all, File},
+        io::{self, Write},
+        path::{Path, PathBuf},
+    };
 
-    use crate::ruff_python_import_resolver::config::Config;
-    use crate::ruff_python_import_resolver::execution_environment::ExecutionEnvironment;
-    use crate::ruff_python_import_resolver::host;
-    use crate::ruff_python_import_resolver::import_result::{ImportResult, ImportType};
-    use crate::ruff_python_import_resolver::module_descriptor::ImportModuleDescriptor;
-    use crate::ruff_python_import_resolver::python_platform::PythonPlatform;
-    use crate::ruff_python_import_resolver::python_version::PythonVersion;
-    use crate::ruff_python_import_resolver::resolver::resolve_import;
     use log::debug;
     use tempfile::TempDir;
+
+    use crate::ruff_python_import_resolver::{
+        config::Config,
+        execution_environment::ExecutionEnvironment,
+        host,
+        import_result::{ImportResult, ImportType},
+        module_descriptor::ImportModuleDescriptor,
+        python_platform::PythonPlatform,
+        python_version::PythonVersion,
+        resolver::resolve_import,
+    };
 
     /// Create a file at the given path with the given content.
     fn create(path: PathBuf, content: &str) -> io::Result<PathBuf> {
@@ -128,11 +133,11 @@ mod tests {
     }
 
     macro_rules! assert_debug_snapshot_normalize_paths {
-        ($value: ident) => {{
+        ($value:ident) => {{
             // The debug representation for the backslash are two backslashes (escaping)
             let $value = std::format!("{:#?}", $value).replace("\\\\", "/");
-            // `insta::assert_snapshot` uses the debug representation of the string, which would
-            // be a single line containing `\n`
+            // `insta::assert_snapshot` uses the debug representation of the string, which
+            // would be a single line containing `\n`
             insta::assert_display_snapshot!($value);
         }};
     }
@@ -352,8 +357,8 @@ mod tests {
             },
         );
 
-        // If the package exists in typing folder, that gets picked up first (so we resolve to
-        // `myLib.pyi`).
+        // If the package exists in typing folder, that gets picked up first (so we
+        // resolve to `myLib.pyi`).
         assert!(result.is_import_found);
         assert!(result.is_stub_file);
         assert_eq!(result.resolved_paths, vec![my_lib_pyi]);
@@ -387,8 +392,8 @@ mod tests {
             },
         );
 
-        // If the package exists in typing folder, that gets picked up first (so we resolve to
-        // `myLib.pyi`).
+        // If the package exists in typing folder, that gets picked up first (so we
+        // resolve to `myLib.pyi`).
         assert!(result.is_import_found);
         assert!(result.is_stub_file);
         assert_eq!(result.resolved_paths, vec![my_lib_stubs_init_pyi]);

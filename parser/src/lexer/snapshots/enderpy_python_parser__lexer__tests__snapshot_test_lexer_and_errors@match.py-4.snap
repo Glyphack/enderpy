@@ -1,0 +1,365 @@
+---
+source: parser/src/lexer/lexer.rs
+description: "match a:\n    case None:\n        pass\n    case True:\n        pass\n    case False:\n        pass\n    case -1:\n        pass\n    case 1.0:\n        pass\n    case _:\n        pass"
+input_file: parser/test_data/inputs/one_liners/match.py
+---
+[
+    Token {
+        kind: Identifier,
+        value: Str(
+            "match",
+        ),
+        start: 0,
+        end: 5,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "a",
+        ),
+        start: 6,
+        end: 7,
+    },
+    Token {
+        kind: Colon,
+        value: None,
+        start: 7,
+        end: 8,
+    },
+    Token {
+        kind: NewLine,
+        value: None,
+        start: 8,
+        end: 9,
+    },
+    Token {
+        kind: Indent,
+        value: Indent(
+            1,
+        ),
+        start: 9,
+        end: 13,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "case",
+        ),
+        start: 13,
+        end: 17,
+    },
+    Token {
+        kind: None,
+        value: None,
+        start: 18,
+        end: 22,
+    },
+    Token {
+        kind: Colon,
+        value: None,
+        start: 22,
+        end: 23,
+    },
+    Token {
+        kind: NewLine,
+        value: None,
+        start: 23,
+        end: 24,
+    },
+    Token {
+        kind: Indent,
+        value: Indent(
+            1,
+        ),
+        start: 24,
+        end: 32,
+    },
+    Token {
+        kind: Pass,
+        value: None,
+        start: 32,
+        end: 36,
+    },
+    Token {
+        kind: NewLine,
+        value: None,
+        start: 36,
+        end: 37,
+    },
+    Token {
+        kind: Dedent,
+        value: Indent(
+            1,
+        ),
+        start: 37,
+        end: 41,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "case",
+        ),
+        start: 41,
+        end: 45,
+    },
+    Token {
+        kind: True,
+        value: None,
+        start: 46,
+        end: 50,
+    },
+    Token {
+        kind: Colon,
+        value: None,
+        start: 50,
+        end: 51,
+    },
+    Token {
+        kind: NewLine,
+        value: None,
+        start: 51,
+        end: 52,
+    },
+    Token {
+        kind: Indent,
+        value: Indent(
+            1,
+        ),
+        start: 52,
+        end: 60,
+    },
+    Token {
+        kind: Pass,
+        value: None,
+        start: 60,
+        end: 64,
+    },
+    Token {
+        kind: NewLine,
+        value: None,
+        start: 64,
+        end: 65,
+    },
+    Token {
+        kind: Dedent,
+        value: Indent(
+            1,
+        ),
+        start: 65,
+        end: 69,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "case",
+        ),
+        start: 69,
+        end: 73,
+    },
+    Token {
+        kind: False,
+        value: None,
+        start: 74,
+        end: 79,
+    },
+    Token {
+        kind: Colon,
+        value: None,
+        start: 79,
+        end: 80,
+    },
+    Token {
+        kind: NewLine,
+        value: None,
+        start: 80,
+        end: 81,
+    },
+    Token {
+        kind: Indent,
+        value: Indent(
+            1,
+        ),
+        start: 81,
+        end: 89,
+    },
+    Token {
+        kind: Pass,
+        value: None,
+        start: 89,
+        end: 93,
+    },
+    Token {
+        kind: NewLine,
+        value: None,
+        start: 93,
+        end: 94,
+    },
+    Token {
+        kind: Dedent,
+        value: Indent(
+            1,
+        ),
+        start: 94,
+        end: 98,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "case",
+        ),
+        start: 98,
+        end: 102,
+    },
+    Token {
+        kind: Minus,
+        value: None,
+        start: 103,
+        end: 104,
+    },
+    Token {
+        kind: Integer,
+        value: Number(
+            "1",
+        ),
+        start: 104,
+        end: 105,
+    },
+    Token {
+        kind: Colon,
+        value: None,
+        start: 105,
+        end: 106,
+    },
+    Token {
+        kind: NewLine,
+        value: None,
+        start: 106,
+        end: 107,
+    },
+    Token {
+        kind: Indent,
+        value: Indent(
+            1,
+        ),
+        start: 107,
+        end: 115,
+    },
+    Token {
+        kind: Pass,
+        value: None,
+        start: 115,
+        end: 119,
+    },
+    Token {
+        kind: NewLine,
+        value: None,
+        start: 119,
+        end: 120,
+    },
+    Token {
+        kind: Dedent,
+        value: Indent(
+            1,
+        ),
+        start: 120,
+        end: 124,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "case",
+        ),
+        start: 124,
+        end: 128,
+    },
+    Token {
+        kind: PointFloat,
+        value: Number(
+            "1.0",
+        ),
+        start: 129,
+        end: 132,
+    },
+    Token {
+        kind: Colon,
+        value: None,
+        start: 132,
+        end: 133,
+    },
+    Token {
+        kind: NewLine,
+        value: None,
+        start: 133,
+        end: 134,
+    },
+    Token {
+        kind: Indent,
+        value: Indent(
+            1,
+        ),
+        start: 134,
+        end: 142,
+    },
+    Token {
+        kind: Pass,
+        value: None,
+        start: 142,
+        end: 146,
+    },
+    Token {
+        kind: NewLine,
+        value: None,
+        start: 146,
+        end: 147,
+    },
+    Token {
+        kind: Dedent,
+        value: Indent(
+            1,
+        ),
+        start: 147,
+        end: 151,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "case",
+        ),
+        start: 151,
+        end: 155,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "_",
+        ),
+        start: 156,
+        end: 157,
+    },
+    Token {
+        kind: Colon,
+        value: None,
+        start: 157,
+        end: 158,
+    },
+    Token {
+        kind: NewLine,
+        value: None,
+        start: 158,
+        end: 159,
+    },
+    Token {
+        kind: Indent,
+        value: Indent(
+            1,
+        ),
+        start: 159,
+        end: 167,
+    },
+    Token {
+        kind: Pass,
+        value: None,
+        start: 167,
+        end: 171,
+    },
+]

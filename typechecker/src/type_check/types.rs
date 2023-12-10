@@ -4,19 +4,22 @@ use enderpy_python_parser::ast;
 
 use crate::symbol_table;
 
-#[allow(unused)]
 #[derive(Debug, Clone, PartialEq)]
 pub enum PythonType {
     None,
-    /// Unknown and Any type are similar but we are using Uknown when we cannot possibly know the type of a value.
+    /// Unknown and Any type are similar but we are using Uknown when we cannot
+    /// possibly know the type of a value.
     Unknown,
     /// representing that we know nothing about the value a node can contain.
-    /// For example, if a file contains only the function def f(x): return x, the name x will have an Anyas its value within the function
+    /// For example, if a file contains only the function def f(x): return x,
+    /// the name x will have an Anyas its value within the function
     /// because there is no information to determine what value it can contain
     Any,
     /// representing a value with concrete type.
-    /// For example, if we define some variable foo to have type Literal[3], we are declaring that foo must be exactly equal to 3 and no other value.
-    /// In type inference the values are not assumed to be literals unless they are explicitly declared as such.
+    /// For example, if we define some variable foo to have type Literal[3], we
+    /// are declaring that foo must be exactly equal to 3 and no other value.
+    /// In type inference the values are not assumed to be literals unless they
+    /// are explicitly declared as such.
     KnownValue(KnownValue),
     /// Union type
     MultiValue(Vec<PythonType>),
@@ -27,6 +30,38 @@ pub enum PythonType {
     Str,
     Class(ClassType),
     Never,
+}
+
+impl PythonType {
+    pub fn type_equal(&self, other: &Self) -> bool {
+        match (self, other) {
+            (PythonType::None, PythonType::None) => true,
+            (PythonType::Unknown, PythonType::Unknown) => true,
+            (PythonType::Any, PythonType::Any) => true,
+            (PythonType::Bool, PythonType::Bool) => true,
+            (PythonType::Int, PythonType::Int) => true,
+            (PythonType::Float, PythonType::Float) => true,
+            (PythonType::Str, PythonType::Str) => true,
+            (PythonType::Never, PythonType::Never) => true,
+            (PythonType::KnownValue(v1), PythonType::KnownValue(v2)) => v1 == v2,
+            (PythonType::MultiValue(m1), PythonType::MultiValue(m2)) => {
+                if m1.len() != m2.len() {
+                    return false;
+                }
+
+                for (t1, t2) in m1.iter().zip(m2.iter()) {
+                    if !t1.type_equal(t2) {
+                        return false;
+                    }
+                }
+
+                true
+            }
+            (PythonType::Callable(c1), PythonType::Callable(c2)) => c1.type_equal(c2),
+            (PythonType::Class(c1), PythonType::Class(c2)) => c1.type_equal(c2),
+            _ => false,
+        }
+    }
 }
 
 #[allow(unused)]
@@ -59,10 +94,17 @@ pub struct CallableType {
     pub return_type: PythonType,
 }
 
+impl CallableType {
+    pub fn type_equal(&self, other: &Self) -> bool {
+        // TODO: add check for args too. We need to check what should be the rule for
+        self.return_type.type_equal(&other.return_type)
+    }
+}
+
 impl PartialEq for CallableType {
     fn eq(&self, other: &Self) -> bool {
-        // TODO: add check for args too. We need to check what should be the rule for two args to
-        // be equal
+        // TODO: add check for args too. We need to check what should be the rule for
+        // two args to be equal
         self.return_type == other.return_type
     }
 }
@@ -82,6 +124,16 @@ impl ClassType {
             details,
             type_parameters,
         }
+    }
+
+    pub fn type_equal(&self, other: &Self) -> bool {
+        self.details.name == other.details.name
+            && self.type_parameters.len() == other.type_parameters.len()
+            && self
+                .type_parameters
+                .iter()
+                .zip(other.type_parameters.iter())
+                .all(|(t1, t2)| t1.type_equal(t2))
     }
 }
 
@@ -116,8 +168,10 @@ impl Display for LiteralValue {
             LiteralValue::Str(s) => s.to_string(),
             LiteralValue::None => "None".to_string(),
             LiteralValue::Bytes(b) => {
-                let bytes_str = b.iter().map(|b| format!("{:02x}", b)).collect::<String>();
-                return write!(f, "b'{}'", bytes_str);
+                for byte in b {
+                    write!(f, "{:02x}", byte)?;
+                }
+                return Ok(());
             }
         };
 

@@ -1,5 +1,6 @@
-use enderpy_python_parser::ast::{self, Node};
 use std::{collections::HashMap, fmt::Display};
+
+use enderpy_python_parser::ast::{self, Node};
 
 use crate::{ruff_python_import_resolver::import_result::ImportResult, type_check::builtins};
 
@@ -11,7 +12,8 @@ pub struct SymbolTable {
     // When a symbol goes out of scope we save it here to be able to look it up later
     all_scopes: Vec<SymbolTableScope>,
 
-    /// The distance between the current scope and the scope where the symbol was defined
+    /// The distance between the current scope and the scope where the symbol
+    /// was defined
     _locals: HashMap<ast::Expression, u8>,
 }
 
@@ -45,6 +47,7 @@ impl SymbolTableScope {
 }
 
 #[derive(Debug, Clone, PartialEq)]
+#[allow(clippy::upper_case_acronyms)]
 pub enum SymbolTableType {
     /// BUILTIN scope is used for builtins like len, print, etc.
     BUILTIN,
@@ -131,13 +134,10 @@ impl Function {
             return false;
         }
         for decorator in self.function_node.decorator_list.iter() {
-            match &decorator {
-                ast::Expression::Name(n) => {
-                    if &n.id == "abstractmethod" {
-                        return true;
-                    }
+            if let ast::Expression::Name(n) = &decorator {
+                if &n.id == "abstractmethod" {
+                    return true;
                 }
-                _ => {}
             }
         }
         false
@@ -174,7 +174,8 @@ pub struct TypeParameter {
 #[derive(Debug, Clone)]
 pub struct Alias {
     pub declaration_path: DeclarationPath,
-    /// The import node that this alias is for. Only one of import_node or import_from_node will be set
+    /// The import node that this alias is for. Only one of import_node or
+    /// import_from_node will be set
     pub import_from_node: Option<ast::ImportFrom>,
     pub import_node: Option<ast::Import>,
     /// Name of the imported symbol in case of ImportFrom
@@ -214,7 +215,8 @@ impl SymbolTable {
             start_pos: 0,
         };
         // TODO: This will be removed once we can import the builtins from the stdlib
-        // Hacky way of putting the builtin in symbol table so I can implement some tests
+        // Hacky way of putting the builtin in symbol table so I can implement some
+        // tests
         let list_class = Class {
             name: builtins::LIST_TYPE.to_string(),
             declaration_path: DeclarationPath {

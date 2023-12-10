@@ -1,15 +1,14 @@
 use std::path::PathBuf;
 
+use enderpy_python_type_checker::{
+    build::BuildManager,
+    build_source::BuildSource,
+    project::find_project_root,
+    settings::{ImportDiscovery, Settings},
+};
 use env_logger::Builder;
-use log::{info, LevelFilter, error};
-use tower_lsp::jsonrpc::Result;
-use tower_lsp::lsp_types::*;
-use tower_lsp::{Client, LanguageServer, LspService, Server};
-
-use enderpy_python_type_checker::build::BuildManager;
-use enderpy_python_type_checker::build_source::BuildSource;
-use enderpy_python_type_checker::project::find_project_root;
-use enderpy_python_type_checker::settings::{ImportDiscovery, Settings};
+use log::{error, info, LevelFilter};
+use tower_lsp::{jsonrpc::Result, lsp_types::*, Client, LanguageServer, LspService, Server};
 
 #[derive(Debug)]
 struct Backend {
@@ -25,7 +24,10 @@ impl Backend {
         let settings = Settings {
             debug: false,
             root,
-            import_discovery: ImportDiscovery { typeshed_path, python_executable },
+            import_discovery: ImportDiscovery {
+                typeshed_path,
+                python_executable,
+            },
             follow_imports: enderpy_python_type_checker::settings::FollowImports::Skip,
         };
 
@@ -40,15 +42,14 @@ impl Backend {
         let mut manager = BuildManager::new(vec![source], settings);
         manager.type_check();
         let mut diagnostics = Vec::new();
-        info!("path: {:?}", path);
-        match manager.get_state(path) {
-            Some(state) => {
-                for err in state.diagnostics.iter() {
-                    diagnostics.push(from(err.clone()));
-                }
+        info!("path: {path:?}");
+
+        if let Some(state) = manager.get_state(path) {
+            for err in state.diagnostics.iter() {
+                diagnostics.push(from(err.clone()));
             }
-            None => {}
         }
+
         diagnostics
     }
 }

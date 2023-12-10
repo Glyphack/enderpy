@@ -1,0 +1,22 @@
+---
+source: parser/src/lexer/lexer.rs
+description: "rf\"\""
+---
+[
+    Token {
+        kind: RawFStringStart,
+        value: Str(
+            "rf\"",
+        ),
+        start: 0,
+        end: 3,
+    },
+    Token {
+        kind: FStringEnd,
+        value: Str(
+            "\"",
+        ),
+        start: 3,
+        end: 4,
+    },
+]
