@@ -1,0 +1,7 @@
+---
+source: parser/src/lexer/mod.rs
+assertion_line: 1290
+description: ""
+input_file: parser/test_data/inputs/one_liners/annotated_assignment.py
+---
+[]

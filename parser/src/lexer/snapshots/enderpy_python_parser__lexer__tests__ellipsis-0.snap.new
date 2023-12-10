@@ -1,0 +1,13 @@
+---
+source: parser/src/lexer/mod.rs
+assertion_line: 965
+description: "..."
+---
+[
+    Token {
+        kind: Ellipsis,
+        value: None,
+        start: 0,
+        end: 3,
+    },
+]

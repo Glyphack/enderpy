@@ -19,6 +19,10 @@ impl Node {
     pub fn len(&self) -> usize {
         self.end - self.start
     }
+
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
 }
 
 pub trait GetNode {

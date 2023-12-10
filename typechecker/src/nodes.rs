@@ -5,14 +5,13 @@
 // here, so this has the minimum amount of nodes needed to
 // get the type checker working. But can be expanded.
 
+use std::path::PathBuf;
+
 use enderpy_python_parser as parser;
 use enderpy_python_parser::ast::{Import, ImportFrom, Module, Statement};
 use parser::error::ParsingError;
-use std::path::PathBuf;
 
-use crate::ast_visitor::TraversalVisitor;
-use crate::build_source::BuildSource;
-use crate::diagnostic::Position;
+use crate::{ast_visitor::TraversalVisitor, build_source::BuildSource, diagnostic::Position};
 
 #[derive(Clone, Debug)]
 pub enum ImportKinds {
@@ -34,7 +33,7 @@ pub struct EnderpyFile {
     pub errors: Vec<ParsingError>,
 }
 
-impl<'a> EnderpyFile {
+impl EnderpyFile {
     pub fn from(ast: Module, build_source: Box<BuildSource>, errors: Vec<ParsingError>) -> Self {
         let mut file = Self {
             defs: vec![],
@@ -83,7 +82,7 @@ impl<'a> EnderpyFile {
     }
 }
 
-impl<'a> TraversalVisitor for EnderpyFile {
+impl TraversalVisitor for EnderpyFile {
     fn visit_stmt(&mut self, s: &Statement) {
         // map all statements and call visit
         match s {
@@ -204,7 +203,8 @@ impl<'a> TraversalVisitor for EnderpyFile {
         for stmt in &t.finalbody {
             self.visit_stmt(stmt);
         }
-        // TODO: need to visit exception handler name and type but let's keep it simple for now
+        // TODO: need to visit exception handler name and type but let's keep it simple
+        // for now
         for handler in &t.handlers {
             for stmt in &handler.body {
                 self.visit_stmt(stmt);
@@ -222,7 +222,8 @@ impl<'a> TraversalVisitor for EnderpyFile {
         for stmt in &t.finalbody {
             self.visit_stmt(stmt);
         }
-        // TODO: need to visit exception handler name and type but let's keep it simple for now
+        // TODO: need to visit exception handler name and type but let's keep it simple
+        // for now
         for handler in &t.handlers {
             for stmt in &handler.body {
                 self.visit_stmt(stmt);

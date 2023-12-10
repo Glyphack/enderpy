@@ -5,9 +5,8 @@ use crate::{
     diagnostic::Diagnostic,
     nodes::EnderpyFile,
     ruff_python_import_resolver as ruff_python_resolver,
-    ruff_python_import_resolver::resolver,
     ruff_python_import_resolver::{
-        import_result::ImportResult, module_descriptor::ImportModuleDescriptor,
+        import_result::ImportResult, module_descriptor::ImportModuleDescriptor, resolver,
     },
     semantic_analyzer::SemanticAnalyzer,
     symbol_table::SymbolTable,

@@ -1,11 +1,7 @@
-use crate::parser::ast::UnaryOperator;
-use crate::token::Kind;
+use crate::{parser::ast::UnaryOperator, token::Kind};
 
 pub fn is_unary_op(kind: &Kind) -> bool {
-    match kind {
-        Kind::Not | Kind::BitNot | Kind::Minus | Kind::Plus => true,
-        _ => false,
-    }
+    matches!(kind, Kind::Not | Kind::BitNot | Kind::Minus | Kind::Plus)
 }
 
 pub fn map_unary_operator(kind: &Kind) -> UnaryOperator {
@@ -19,17 +15,17 @@ pub fn map_unary_operator(kind: &Kind) -> UnaryOperator {
 }
 
 pub fn is_bin_arithmetic_op(kind: &Kind) -> bool {
-    match kind {
+    matches!(
+        kind,
         Kind::Plus
-        | Kind::Minus
-        | Kind::Mul
-        | Kind::MatrixMul
-        | Kind::Div
-        | Kind::Mod
-        | Kind::Pow
-        | Kind::IntDiv => true,
-        _ => false,
-    }
+            | Kind::Minus
+            | Kind::Mul
+            | Kind::MatrixMul
+            | Kind::Div
+            | Kind::Mod
+            | Kind::Pow
+            | Kind::IntDiv
+    )
 }
 
 pub fn is_comparison_operator(kind: &Kind) -> bool {

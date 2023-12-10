@@ -1,15 +1,17 @@
 //! Determine the appropriate search paths for the Python environment.
 
-use std::collections::HashMap;
-use std::ffi::OsStr;
-use std::path::{Path, PathBuf};
-use std::{fs, io};
+use std::{
+    collections::HashMap,
+    ffi::OsStr,
+    fs, io,
+    path::{Path, PathBuf},
+};
 
-use crate::ruff_python_import_resolver::config::Config;
-use crate::ruff_python_import_resolver::host;
-use crate::ruff_python_import_resolver::module_descriptor::ImportModuleDescriptor;
-use crate::ruff_python_import_resolver::python_version::PythonVersion;
 use log::debug;
+
+use crate::ruff_python_import_resolver::{
+    config::Config, host, module_descriptor::ImportModuleDescriptor, python_version::PythonVersion,
+};
 
 const SITE_PACKAGES: &str = "site-packages";
 
@@ -38,8 +40,8 @@ fn find_site_packages_path(
         site_packages_path.display()
     );
 
-    // There's no `site-packages` directory in the library directory; look for a `python3.X`
-    // directory instead.
+    // There's no `site-packages` directory in the library directory; look for a
+    // `python3.X` directory instead.
     let candidate_dirs: Vec<PathBuf> = fs::read_dir(lib_path)
         .ok()?
         .filter_map(|entry| {
@@ -72,8 +74,8 @@ fn find_site_packages_path(
         })
         .collect();
 
-    // If a `python3.X` directory does exist (and `3.X` matches the current Python version),
-    // prefer it over any other Python directories.
+    // If a `python3.X` directory does exist (and `3.X` matches the current Python
+    // version), prefer it over any other Python directories.
     if let Some(python_version) = python_version {
         if let Some(preferred_dir) = candidate_dirs.iter().find(|dir| {
             dir.file_name()
@@ -113,7 +115,7 @@ fn find_paths_from_pth_files(parent_dir: &Path) -> io::Result<impl Iterator<Item
             file_len > 0 && file_len < 64 * 1024
         })
         .filter_map(|path| {
-            let data = fs::read_to_string(&path).ok()?;
+            let data = fs::read_to_string(path).ok()?;
             for line in data.lines() {
                 let trimmed_line = line.trim();
                 if !trimmed_line.is_empty()

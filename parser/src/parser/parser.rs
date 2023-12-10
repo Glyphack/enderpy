@@ -1,18 +1,22 @@
 use std::{panic, vec};
 
-use crate::lexer::lexer::Lexer;
-use crate::parser::ast::*;
-use crate::parser::string::{extract_string_inside, is_string};
-use crate::token::{Kind, Token, TokenValue};
 use miette::Result;
 
-use super::expression::{is_atom, is_iterable};
-use super::operator::{
-    is_bin_arithmetic_op, is_comparison_operator, is_unary_op, map_unary_operator,
+use super::{
+    expression::{is_atom, is_iterable},
+    operator::{is_bin_arithmetic_op, is_comparison_operator, is_unary_op, map_unary_operator},
+    statement::is_at_compound_statement,
+    string::concat_string_exprs,
 };
-use super::statement::is_at_compound_statement;
-use super::string::concat_string_exprs;
-use crate::error::ParsingError;
+use crate::{
+    error::ParsingError,
+    lexer::Lexer,
+    parser::{
+        ast::*,
+        string::{extract_string_inside, is_string},
+    },
+    token::{Kind, Token, TokenValue},
+};
 
 #[allow(unused)]
 #[derive(Debug)]
@@ -510,16 +514,17 @@ impl Parser {
         // TODO: I think this would not work for:
         // for a in [1, 2, 3]:
         let iter_list = self.parse_starred_list(Kind::Colon)?;
-        let iter = if iter_list.len() > 1 {
-            Box::new(Expression::Tuple(Box::new(Tuple {
+        let iter = match iter_list.len() {
+            0 => {
+                return Err(self.unexpected_token_new(node, vec![], "Expected expression"));
+            }
+            1 => Box::new(iter_list.into_iter().next().unwrap()),
+            _ => Box::new(Expression::Tuple(Box::new(Tuple {
                 node: self.finish_node(node),
                 elements: iter_list,
-            })))
-        } else if iter_list.len() == 1 {
-            Box::new(iter_list.into_iter().next().unwrap())
-        } else {
-            return Err(self.unexpected_token_new(node, vec![], "Expected expression"));
+            }))),
         };
+
         self.expect(Kind::Colon)?;
         let body = self.parse_suite()?;
         let orelse = if self.eat(Kind::Else) {
@@ -1612,7 +1617,7 @@ impl Parser {
                         self.start_node(),
                         vec![Kind::Dot, Kind::Ellipsis],
                         "use . or ... to specify relative import",
-                    ))
+                    ));
                 }
             }
             self.bump_any();
@@ -1992,17 +1997,15 @@ impl Parser {
         first_value: Expression,
     ) -> Result<Expression, ParsingError> {
         if self.at(Kind::For) || self.at(Kind::Async) && matches!(self.peek_kind(), Ok(Kind::For)) {
-            let key = if first_key.is_none() {
-                let err = ParsingError::InvalidSyntax {
+            let Some(key) = first_key else {
+                return Err(ParsingError::InvalidSyntax {
                     msg: Box::from("cannot use ** in dict comprehension"),
                     input: self.curr_line_string.clone(),
                     advice: "".into(),
                     span: self.get_span_on_line(node.start, node.end),
-                };
-                return Err(err);
-            } else {
-                first_key.unwrap()
+                });
             };
+
             // make sure the first key is some
             let generators = self.parse_comp_for()?;
             self.expect(Kind::RightBracket)?;
@@ -2026,10 +2029,11 @@ impl Parser {
             let mut values = vec![first_value];
             while !self.eat(Kind::RightBracket) {
                 let (key, value) = self.parse_double_starred_kv_pair()?;
-                match key {
-                    Some(k) => keys.push(k),
-                    None => {}
+
+                if let Some(k) = key {
+                    keys.push(k)
                 }
+
                 values.push(value);
                 if !self.at(Kind::RightBracket) {
                     self.expect(Kind::Comma)?;
@@ -2070,7 +2074,8 @@ impl Parser {
     // https://docs.python.org/3/reference/expressions.html#expression-lists
     // termination_kind is used to know when to stop parsing the list
     // for example to parse a tuple the termination_kind is Kind::RightParen
-    // caller is responsible to consume the first & last occurrence of the termination_kind
+    // caller is responsible to consume the first & last occurrence of the
+    // termination_kind
     fn parse_starred_list(
         &mut self,
         termination_kind: Kind,
@@ -2325,11 +2330,12 @@ impl Parser {
     }
 
     // https://docs.python.org/3/reference/expressions.html#primaries
-    // primaries can be chained together, when they are chained the base is the previous primary
+    // primaries can be chained together, when they are chained the base is the
+    // previous primary
     fn parse_primary(&mut self, base: Option<Expression>) -> Result<Expression, ParsingError> {
         let node = self.start_node();
-        let mut atom_or_primary = if base.is_some() {
-            base.unwrap()
+        let mut atom_or_primary = if let Some(base) = base {
+            base
         } else if is_atom(&self.cur_kind()) {
             self.parse_atom()?
         } else {
@@ -2700,8 +2706,8 @@ impl Parser {
     ) -> Result<Expression, ParsingError> {
         let node = self.start_node();
 
-        let slice_lower = if lower.is_some() {
-            Some(Box::new(lower.unwrap()))
+        let slice_lower = if let Some(lower) = lower {
+            Some(Box::new(lower))
         } else if self.eat(Kind::Colon) {
             None
         } else {
@@ -2949,8 +2955,9 @@ impl Parser {
                         span: self.get_span_on_line(self.cur_token().start, self.cur_token().end),
                     });
                 }
-            // If a parameter has a default value, all following parameters up until the “*”
-            // must also have a default value — this is a syntactic restriction that is not expressed by the grammar.
+            // If a parameter has a default value, all following parameters up
+            // until the “*” must also have a default value — this
+            // is a syntactic restriction that is not expressed by the grammar.
             } else if self.eat(Kind::Mul) {
                 seen_vararg = true;
                 // after seeing vararg the must_have_default is reset
@@ -3168,8 +3175,9 @@ impl Parser {
 mod tests {
     use std::fs;
 
-    use super::*;
     use insta::{assert_debug_snapshot, glob};
+
+    use super::*;
 
     #[test]
     fn test_parse_assignment() {

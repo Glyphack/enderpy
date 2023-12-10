@@ -1,16 +1,12 @@
-use std::collections::HashMap;
-
 use ast::{Expression, Statement};
 use enderpy_python_parser as parser;
 use enderpy_python_parser::ast::{self, *};
 
-use crate::diagnostic::CharacterSpan;
-use crate::symbol_table::{LookupSymbolRequest, self};
-use crate::{
-    ast_visitor::TraversalVisitor, settings::Settings, state::State, symbol_table::SymbolTable,
-};
-
 use super::{type_evaluator::TypeEvaluator, types::PythonType};
+use crate::{
+    ast_visitor::TraversalVisitor, diagnostic::CharacterSpan, settings::Settings, state::State,
+    symbol_table::SymbolTable,
+};
 
 pub struct TypeChecker<'a> {
     pub errors: Vec<TypeCheckError>,
@@ -31,7 +27,10 @@ impl<'a> TypeChecker<'a> {
         TypeChecker {
             errors: vec![],
             options,
-            type_evaluator: TypeEvaluator { symbol_table: symbol_table.clone(), imported_symbol_tables: symbol_tables.clone() },
+            type_evaluator: TypeEvaluator {
+                symbol_table: symbol_table.clone(),
+                imported_symbol_tables: symbol_tables.clone(),
+            },
         }
     }
 
@@ -486,6 +485,7 @@ impl<'a> TraversalVisitor for TypeChecker<'a> {
     fn visit_assign(&mut self, _a: &Assign) {
         self.visit_expr(&_a.value);
         for target in &_a.targets {
+            #[allow(clippy::single_match)]
             match target {
                 ast::Expression::Name(n) => {
                     // TODO: Check reassignment

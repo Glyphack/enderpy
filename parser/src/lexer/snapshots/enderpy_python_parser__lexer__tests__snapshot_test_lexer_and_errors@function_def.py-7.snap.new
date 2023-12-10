@@ -1,0 +1,226 @@
+---
+source: parser/src/lexer/mod.rs
+assertion_line: 1290
+description: "@decor\ndef f(a: 'annotation', b=1, c=2, *d, e, f=3, **g): pass"
+input_file: parser/test_data/inputs/one_liners/function_def.py
+---
+[
+    Token {
+        kind: MatrixMul,
+        value: None,
+        start: 0,
+        end: 1,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "decor",
+        ),
+        start: 1,
+        end: 6,
+    },
+    Token {
+        kind: NewLine,
+        value: None,
+        start: 6,
+        end: 7,
+    },
+    Token {
+        kind: Def,
+        value: None,
+        start: 7,
+        end: 10,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "f",
+        ),
+        start: 11,
+        end: 12,
+    },
+    Token {
+        kind: LeftParen,
+        value: None,
+        start: 12,
+        end: 13,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "a",
+        ),
+        start: 13,
+        end: 14,
+    },
+    Token {
+        kind: Colon,
+        value: None,
+        start: 14,
+        end: 15,
+    },
+    Token {
+        kind: StringLiteral,
+        value: Str(
+            "'annotation'",
+        ),
+        start: 16,
+        end: 28,
+    },
+    Token {
+        kind: Comma,
+        value: None,
+        start: 28,
+        end: 29,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "b",
+        ),
+        start: 30,
+        end: 31,
+    },
+    Token {
+        kind: Assign,
+        value: None,
+        start: 31,
+        end: 32,
+    },
+    Token {
+        kind: Integer,
+        value: Number(
+            "1",
+        ),
+        start: 32,
+        end: 33,
+    },
+    Token {
+        kind: Comma,
+        value: None,
+        start: 33,
+        end: 34,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "c",
+        ),
+        start: 35,
+        end: 36,
+    },
+    Token {
+        kind: Assign,
+        value: None,
+        start: 36,
+        end: 37,
+    },
+    Token {
+        kind: Integer,
+        value: Number(
+            "2",
+        ),
+        start: 37,
+        end: 38,
+    },
+    Token {
+        kind: Comma,
+        value: None,
+        start: 38,
+        end: 39,
+    },
+    Token {
+        kind: Mul,
+        value: None,
+        start: 40,
+        end: 41,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "d",
+        ),
+        start: 41,
+        end: 42,
+    },
+    Token {
+        kind: Comma,
+        value: None,
+        start: 42,
+        end: 43,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "e",
+        ),
+        start: 44,
+        end: 45,
+    },
+    Token {
+        kind: Comma,
+        value: None,
+        start: 45,
+        end: 46,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "f",
+        ),
+        start: 47,
+        end: 48,
+    },
+    Token {
+        kind: Assign,
+        value: None,
+        start: 48,
+        end: 49,
+    },
+    Token {
+        kind: Integer,
+        value: Number(
+            "3",
+        ),
+        start: 49,
+        end: 50,
+    },
+    Token {
+        kind: Comma,
+        value: None,
+        start: 50,
+        end: 51,
+    },
+    Token {
+        kind: Pow,
+        value: None,
+        start: 52,
+        end: 54,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "g",
+        ),
+        start: 54,
+        end: 55,
+    },
+    Token {
+        kind: RightParen,
+        value: None,
+        start: 55,
+        end: 56,
+    },
+    Token {
+        kind: Colon,
+        value: None,
+        start: 56,
+        end: 57,
+    },
+    Token {
+        kind: Pass,
+        value: None,
+        start: 58,
+        end: 62,
+    },
+]

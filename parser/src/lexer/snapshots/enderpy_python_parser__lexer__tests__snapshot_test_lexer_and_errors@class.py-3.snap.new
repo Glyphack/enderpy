@@ -1,0 +1,68 @@
+---
+source: parser/src/lexer/mod.rs
+assertion_line: 1290
+description: "class a(b, c): pass"
+input_file: parser/test_data/inputs/one_liners/class.py
+---
+[
+    Token {
+        kind: Class,
+        value: None,
+        start: 0,
+        end: 5,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "a",
+        ),
+        start: 6,
+        end: 7,
+    },
+    Token {
+        kind: LeftParen,
+        value: None,
+        start: 7,
+        end: 8,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "b",
+        ),
+        start: 8,
+        end: 9,
+    },
+    Token {
+        kind: Comma,
+        value: None,
+        start: 9,
+        end: 10,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "c",
+        ),
+        start: 11,
+        end: 12,
+    },
+    Token {
+        kind: RightParen,
+        value: None,
+        start: 12,
+        end: 13,
+    },
+    Token {
+        kind: Colon,
+        value: None,
+        start: 13,
+        end: 14,
+    },
+    Token {
+        kind: Pass,
+        value: None,
+        start: 15,
+        end: 19,
+    },
+]

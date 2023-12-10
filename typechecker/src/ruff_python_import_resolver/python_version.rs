@@ -10,7 +10,8 @@ pub enum PythonVersion {
 }
 
 impl PythonVersion {
-    /// The directory name (e.g., in a virtual environment) for this Python version.
+    /// The directory name (e.g., in a virtual environment) for this Python
+    /// version.
     pub(crate) fn dir(self) -> &'static str {
         match self {
             PythonVersion::Py37 => "python3.7",

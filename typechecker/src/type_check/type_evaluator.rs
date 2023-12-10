@@ -1,29 +1,31 @@
 #![allow(dead_code)]
 #![allow(unused_variables)]
 
-use super::types::LiteralValue;
+use core::panic;
+use std::collections::HashMap;
+
+use enderpy_python_parser as parser;
+use enderpy_python_parser::ast;
+use log::debug;
+use miette::{bail, miette, Result};
+use parser::ast::{Expression, GetNode, Statement};
+
 use super::{
     builtins,
-    types::{CallableType, PythonType},
+    types::{CallableType, LiteralValue, PythonType},
 };
-use crate::type_check::types::ClassType;
 use crate::{
     ast_visitor::TraversalVisitor,
     ast_visitor_generic::TraversalVisitorImmutGeneric,
     nodes::EnderpyFile,
     state::State,
     symbol_table::{self, Declaration, LookupSymbolRequest, SymbolTable, SymbolTableNode},
+    type_check::types::ClassType,
 };
-use core::panic;
-use enderpy_python_parser as parser;
-use enderpy_python_parser::ast;
-use log::debug;
-use miette::{bail, miette, Result};
-use parser::ast::{Expression, GetNode, Statement};
-use std::collections::HashMap;
 
 const LITERAL_TYPE_PARAMETER_MSG: &str = "Type arguments for 'Literal' must be None, a literal value (int, bool, str, or bytes), or an enum value";
-// TODO: this is not the right message there are other types like Dict that are allowed as parameters
+// TODO: this is not the right message there are other types like Dict that are
+// allowed as parameters
 const UNION_TYPE_PARAMETER_MSG: &str = "Type arguments for 'Union' must be names or literal values";
 
 pub struct TypeEvaluator {
@@ -57,17 +59,18 @@ impl TypeEvaluator {
         }
     }
 
-    /// Entry point function to get type of an expression. The expression passed to this function
-    /// must not be annotations, for example if you want to get the type of a variable declaration
-    /// you should pass the value of the declaration to this function.
-    /// To get the type of an annotation expression use get_type_from_annotation
+    /// Entry point function to get type of an expression. The expression passed
+    /// to this function must not be annotations, for example if you want to
+    /// get the type of a variable declaration you should pass the value of
+    /// the declaration to this function. To get the type of an annotation
+    /// expression use get_type_from_annotation
     pub fn get_type(&self, expr: &ast::Expression) -> Result<PythonType> {
         log::debug!("get_type: {:?}", expr);
         match expr {
             ast::Expression::Constant(c) => {
                 let typ = match &c.value {
-                    // We should consider constants are not literals unless they are explicitly declared as such
-                    // https://peps.python.org/pep-0586/#type-inference
+                    // We should consider constants are not literals unless they are explicitly
+                    // declared as such https://peps.python.org/pep-0586/#type-inference
                     ast::ConstantValue::Int(_) => PythonType::Int,
                     ast::ConstantValue::Float(_) => PythonType::Float,
                     ast::ConstantValue::Str(_) => PythonType::Str,
@@ -487,8 +490,8 @@ impl TypeEvaluator {
             }
         }
 
-        // If we don't have any types in the union type, it means that all the parameters were invalid
-        // So we return unknown type
+        // If we don't have any types in the union type, it means that all the
+        // parameters were invalid So we return unknown type
         if types.is_empty() {
             return PythonType::Unknown;
         }
@@ -516,9 +519,10 @@ impl TypeEvaluator {
         })
     }
 
-    /// Write a function that takes in an expression which is a parameter to a literal type and returns
-    /// the LiteralValue of the parameter.
-    /// Literal values might contain a tuple, that's why the return type is a vector.
+    /// Write a function that takes in an expression which is a parameter to a
+    /// literal type and returns the LiteralValue of the parameter.
+    /// Literal values might contain a tuple, that's why the return type is a
+    /// vector.
     pub fn get_literal_value_from_param(&self, expr: &Expression) -> Vec<LiteralValue> {
         log::debug!("Getting literal value from param: {:?}", expr);
         let val = match expr {
@@ -530,9 +534,9 @@ impl TypeEvaluator {
                     ast::ConstantValue::Str(s) => LiteralValue::Str(s),
                     ast::ConstantValue::Bytes(b) => LiteralValue::Bytes(b),
                     ast::ConstantValue::None => LiteralValue::None,
-                    // Tuple is illegal if it has parantheses, otherwise it's allowed and the output a multiValued type
-                    // Currently even mypy does not supoort this, who am I to do it?
-                    // https://mypy-play.net/?mypy=latest&python=3.10&gist=0df0421d5c85f3b75f65a51cae8616ce
+                    // Tuple is illegal if it has parantheses, otherwise it's allowed and the output
+                    // a multiValued type Currently even mypy does not supoort
+                    // this, who am I to do it? https://mypy-play.net/?mypy=latest&python=3.10&gist=0df0421d5c85f3b75f65a51cae8616ce
                     ast::ConstantValue::Tuple(t) => {
                         if t.len() == 1 {
                             match t[0].value.clone() {
@@ -599,14 +603,7 @@ impl TypeEvaluator {
     }
 
     pub fn type_equal(&self, t1: &PythonType, t2: &PythonType) -> bool {
-        match (t1, t2) {
-            (PythonType::Int, PythonType::Int) => true,
-            (PythonType::Float, PythonType::Float) => true,
-            (PythonType::Str, PythonType::Str) => true,
-            (PythonType::Bool, PythonType::Bool) => true,
-            (PythonType::None, PythonType::None) => true,
-            _ => false,
-        }
+        t1.type_equal(t2)
     }
 
     pub fn type_check_bin_op(
@@ -715,26 +712,23 @@ impl TypeEvaluator {
     }
 
     pub fn is_literal(&self, name: String) -> bool {
-        match name.as_str() {
-            "Literal" => true,
-            _ => false,
-        }
+        name.as_str() == "Literal"
     }
+
     fn is_union(&self, clone: String) -> bool {
-        match clone.as_str() {
-            "Union" => true,
-            _ => false,
-        }
+        clone.as_str() == "Union"
     }
 
     pub fn is_subscriptable(&self, t: &PythonType) -> bool {
-        match t {
-            PythonType::Class(c) => match c.details.name.as_str() {
-                builtins::LIST_TYPE => true,
-                _ => false,
-            },
-            _ => todo!(),
+        if let PythonType::Class(c) = t {
+            let class_name = c.details.name.as_str();
+            return matches!(class_name, builtins::LIST_TYPE)
+                || matches!(class_name, builtins::TUPLE_TYPE)
+                || matches!(class_name, builtins::DICT_TYPE)
+                || matches!(class_name, builtins::SET_TYPE);
         }
+
+        false
     }
 }
 
@@ -1010,73 +1004,9 @@ impl TraversalVisitorImmutGeneric<PythonType> for TypeEvaluator {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use insta::glob;
-
-    use crate::build_source::BuildSource;
-
-    use super::*;
-    use std::fs;
-    use std::path::PathBuf;
-
-    fn snapshot_type_eval(source: &str) -> String {
-        use enderpy_python_parser::Parser;
-
-        let mut parser = Parser::new(source.to_string(), "".into());
-        let ast_module = parser.parse();
-
-        let enderpy_file = EnderpyFile::from(
-            ast_module,
-            Box::new(BuildSource {
-                path: PathBuf::from(""),
-                source: source.to_string(),
-                module: "test".to_string(),
-                followed: false,
-            }),
-            vec![],
-        );
-
-        let mut module = State::new(enderpy_file);
-        module.populate_symbol_table();
-        let symbol_table = module.get_symbol_table();
-
-        let type_eval = TypeEvaluator{ symbol_table, imported_symbol_tables: vec![] };
-
-        let mut type_eval_visitor = TypeEvalVisitor::new(module.file);
-        type_eval_visitor.visit_module();
-
-        let result = type_eval_visitor.types;
-
-        // sort result by key
-        let mut result_sorted = result.clone().into_iter().collect::<Vec<_>>();
-        result_sorted.sort_by(|a, b| a.0.cmp(&b.0));
-
-        format!("{:#?}", result_sorted)
-    }
-
-    #[test]
-    fn test_type_evaluator() {
-        glob!("test_data/inputs/", "*.py", |path| {
-            let contents = fs::read_to_string(path).unwrap();
-            let result = snapshot_type_eval(&contents);
-            let _ = env_logger::builder()
-                .filter_level(log::LevelFilter::Debug)
-                .is_test(true)
-                .try_init();
-
-            let mut settings = insta::Settings::clone_current();
-            settings.set_snapshot_path("./test_data/output/");
-            settings.set_description(fs::read_to_string(path).unwrap());
-            settings.bind(|| {
-                insta::assert_snapshot!(result);
-            });
-        })
-    }
-}
-
-/// visits the ast and calls get_type on each expression and saves that type in the types hashmap
-/// the key is the position of the expression in the source: (line, start, end)
+/// visits the ast and calls get_type on each expression and saves that type in
+/// the types hashmap the key is the position of the expression in the source:
+/// (line, start, end)
 struct TypeEvalVisitor {
     pub type_eval: TypeEvaluator,
     pub types: HashMap<String, PythonType>,
@@ -1090,7 +1020,10 @@ impl TypeEvalVisitor {
         let symbol_table = state.get_symbol_table();
         Self {
             types: HashMap::new(),
-            type_eval: TypeEvaluator { symbol_table, imported_symbol_tables: vec![] },
+            type_eval: TypeEvaluator {
+                symbol_table,
+                imported_symbol_tables: vec![],
+            },
             state,
         }
     }
@@ -1137,10 +1070,10 @@ impl TraversalVisitor for TypeEvalVisitor {
                 self.save_type(&a.value);
             }
             ast::Statement::AnnAssignStatement(a) => {
-                match a.value.as_ref() {
-                    Some(v) => self.save_type(v),
-                    None => {}
+                if let Some(v) = a.value.as_ref() {
+                    self.save_type(v);
                 }
+
                 self.save_type_annotation(&a.annotation)
             }
             ast::Statement::AugAssignStatement(a) => self.visit_aug_assign(a),
@@ -1218,5 +1151,72 @@ impl TraversalVisitor for TypeEvalVisitor {
             ast::Expression::JoinedStr(j) => self.visit_joined_str(j),
             ast::Expression::FormattedValue(f) => self.visit_formatted_value(f),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::{fs, path::PathBuf};
+
+    use insta::glob;
+
+    use super::*;
+    use crate::build_source::BuildSource;
+
+    fn snapshot_type_eval(source: &str) -> String {
+        use enderpy_python_parser::Parser;
+
+        let mut parser = Parser::new(source.to_string(), "".into());
+        let ast_module = parser.parse();
+
+        let enderpy_file = EnderpyFile::from(
+            ast_module,
+            Box::new(BuildSource {
+                path: PathBuf::from(""),
+                source: source.to_string(),
+                module: "test".to_string(),
+                followed: false,
+            }),
+            vec![],
+        );
+
+        let mut module = State::new(enderpy_file);
+        module.populate_symbol_table();
+        let symbol_table = module.get_symbol_table();
+
+        let type_eval = TypeEvaluator {
+            symbol_table,
+            imported_symbol_tables: vec![],
+        };
+
+        let mut type_eval_visitor = TypeEvalVisitor::new(module.file);
+        type_eval_visitor.visit_module();
+
+        let result = type_eval_visitor.types;
+
+        // sort result by key
+        let mut result_sorted = result.clone().into_iter().collect::<Vec<_>>();
+        result_sorted.sort_by(|a, b| a.0.cmp(&b.0));
+
+        format!("{:#?}", result_sorted)
+    }
+
+    #[test]
+    fn test_type_evaluator() {
+        glob!("test_data/inputs/", "*.py", |path| {
+            let contents = fs::read_to_string(path).unwrap();
+            let result = snapshot_type_eval(&contents);
+            let _ = env_logger::builder()
+                .filter_level(log::LevelFilter::Debug)
+                .is_test(true)
+                .try_init();
+
+            let mut settings = insta::Settings::clone_current();
+            settings.set_snapshot_path("./test_data/output/");
+            settings.set_description(fs::read_to_string(path).unwrap());
+            settings.bind(|| {
+                insta::assert_snapshot!(result);
+            });
+        })
     }
 }

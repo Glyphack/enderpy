@@ -2,8 +2,9 @@
 
 use std::path::PathBuf;
 
-use crate::ruff_python_import_resolver::implicit_imports::ImplicitImports;
-use crate::ruff_python_import_resolver::py_typed::PyTypedInfo;
+use crate::ruff_python_import_resolver::{
+    implicit_imports::ImplicitImports, py_typed::PyTypedInfo,
+};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[allow(clippy::struct_excessive_bools)]
@@ -40,8 +41,9 @@ pub struct ImportResult {
     /// structure can vary. For example, namespace packages will be represented
     /// by empty `PathBuf` segments in the vector.
     ///
-    /// For example, resolving `import foo.bar` might yield `./foo/__init__.py` and `./foo/bar.py`,
-    /// or `./foo/__init__.py` and `./foo/bar/__init__.py`.
+    /// For example, resolving `import foo.bar` might yield `./foo/__init__.py`
+    /// and `./foo/bar.py`, or `./foo/__init__.py` and
+    /// `./foo/bar/__init__.py`.
     pub resolved_paths: Vec<PathBuf>,
 
     /// The search path used to resolve the module.

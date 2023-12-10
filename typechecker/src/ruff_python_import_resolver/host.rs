@@ -2,8 +2,9 @@
 
 use std::path::PathBuf;
 
-use crate::ruff_python_import_resolver::python_platform::PythonPlatform;
-use crate::ruff_python_import_resolver::python_version::PythonVersion;
+use crate::ruff_python_import_resolver::{
+    python_platform::PythonPlatform, python_version::PythonVersion,
+};
 
 /// A trait to expose the host environment to the resolver.
 pub trait Host {

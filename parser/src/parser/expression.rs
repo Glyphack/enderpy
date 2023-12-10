@@ -1,5 +1,4 @@
-use crate::parser::ast::Expression;
-use crate::token::Kind;
+use crate::{parser::ast::Expression, token::Kind};
 
 pub fn is_atom(kind: &Kind) -> bool {
     match kind {
@@ -33,17 +32,18 @@ pub fn is_atom(kind: &Kind) -> bool {
 }
 
 pub fn is_iterable(expr: &Expression) -> bool {
-    match expr {
+    matches!(
+        expr,
         Expression::List { .. }
-        | Expression::Tuple { .. }
-        | Expression::Set { .. }
-        | Expression::Name { .. } => true,
-        _ => false,
-    }
+            | Expression::Tuple { .. }
+            | Expression::Set { .. }
+            | Expression::Name { .. }
+    )
 }
 
 /// Checks wether a token kind can start a biwise operation
 /// start of bitwise operation cannot be a await primary
+#[allow(dead_code)]
 pub fn is_bitwise_or_op(cur_kind: &Kind) -> bool {
     match cur_kind {
         Kind::Plus | Kind::Minus | Kind::BitNot | Kind::Await => return false,

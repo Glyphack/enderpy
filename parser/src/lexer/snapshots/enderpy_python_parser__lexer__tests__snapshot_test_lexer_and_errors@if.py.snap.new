@@ -1,0 +1,278 @@
+---
+source: parser/src/lexer/mod.rs
+assertion_line: 1290
+description: "if self.adjust:\n    if True:\n        print(\"adjust is True and adjusted_daily_records_csv_path exists\")\n    else:\n        print(\"adjust is True\")\nelse:\n    print(\"adjust is False\")\n\n"
+input_file: parser/test_data/inputs/if.py
+---
+[
+    Token {
+        kind: If,
+        value: None,
+        start: 0,
+        end: 2,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "self",
+        ),
+        start: 3,
+        end: 7,
+    },
+    Token {
+        kind: Dot,
+        value: None,
+        start: 7,
+        end: 8,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "adjust",
+        ),
+        start: 8,
+        end: 14,
+    },
+    Token {
+        kind: Colon,
+        value: None,
+        start: 14,
+        end: 15,
+    },
+    Token {
+        kind: NewLine,
+        value: None,
+        start: 15,
+        end: 16,
+    },
+    Token {
+        kind: Indent,
+        value: Indent(
+            1,
+        ),
+        start: 16,
+        end: 20,
+    },
+    Token {
+        kind: If,
+        value: None,
+        start: 20,
+        end: 22,
+    },
+    Token {
+        kind: True,
+        value: None,
+        start: 23,
+        end: 27,
+    },
+    Token {
+        kind: Colon,
+        value: None,
+        start: 27,
+        end: 28,
+    },
+    Token {
+        kind: NewLine,
+        value: None,
+        start: 28,
+        end: 29,
+    },
+    Token {
+        kind: Indent,
+        value: Indent(
+            1,
+        ),
+        start: 29,
+        end: 37,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "print",
+        ),
+        start: 37,
+        end: 42,
+    },
+    Token {
+        kind: LeftParen,
+        value: None,
+        start: 42,
+        end: 43,
+    },
+    Token {
+        kind: StringLiteral,
+        value: Str(
+            "\"adjust is True and adjusted_daily_records_csv_path exists\"",
+        ),
+        start: 43,
+        end: 102,
+    },
+    Token {
+        kind: RightParen,
+        value: None,
+        start: 102,
+        end: 103,
+    },
+    Token {
+        kind: NewLine,
+        value: None,
+        start: 103,
+        end: 104,
+    },
+    Token {
+        kind: Dedent,
+        value: Indent(
+            1,
+        ),
+        start: 104,
+        end: 108,
+    },
+    Token {
+        kind: Else,
+        value: None,
+        start: 108,
+        end: 112,
+    },
+    Token {
+        kind: Colon,
+        value: None,
+        start: 112,
+        end: 113,
+    },
+    Token {
+        kind: NewLine,
+        value: None,
+        start: 113,
+        end: 114,
+    },
+    Token {
+        kind: Indent,
+        value: Indent(
+            1,
+        ),
+        start: 114,
+        end: 122,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "print",
+        ),
+        start: 122,
+        end: 127,
+    },
+    Token {
+        kind: LeftParen,
+        value: None,
+        start: 127,
+        end: 128,
+    },
+    Token {
+        kind: StringLiteral,
+        value: Str(
+            "\"adjust is True\"",
+        ),
+        start: 128,
+        end: 144,
+    },
+    Token {
+        kind: RightParen,
+        value: None,
+        start: 144,
+        end: 145,
+    },
+    Token {
+        kind: NewLine,
+        value: None,
+        start: 145,
+        end: 146,
+    },
+    Token {
+        kind: Dedent,
+        value: Indent(
+            2,
+        ),
+        start: 146,
+        end: 146,
+    },
+    Token {
+        kind: Dedent,
+        value: None,
+        start: 146,
+        end: 146,
+    },
+    Token {
+        kind: Else,
+        value: None,
+        start: 146,
+        end: 150,
+    },
+    Token {
+        kind: Colon,
+        value: None,
+        start: 150,
+        end: 151,
+    },
+    Token {
+        kind: NewLine,
+        value: None,
+        start: 151,
+        end: 152,
+    },
+    Token {
+        kind: Indent,
+        value: Indent(
+            1,
+        ),
+        start: 152,
+        end: 156,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "print",
+        ),
+        start: 156,
+        end: 161,
+    },
+    Token {
+        kind: LeftParen,
+        value: None,
+        start: 161,
+        end: 162,
+    },
+    Token {
+        kind: StringLiteral,
+        value: Str(
+            "\"adjust is False\"",
+        ),
+        start: 162,
+        end: 179,
+    },
+    Token {
+        kind: RightParen,
+        value: None,
+        start: 179,
+        end: 180,
+    },
+    Token {
+        kind: NewLine,
+        value: None,
+        start: 180,
+        end: 181,
+    },
+    Token {
+        kind: Dedent,
+        value: Indent(
+            1,
+        ),
+        start: 181,
+        end: 181,
+    },
+    Token {
+        kind: NewLine,
+        value: None,
+        start: 181,
+        end: 182,
+    },
+]

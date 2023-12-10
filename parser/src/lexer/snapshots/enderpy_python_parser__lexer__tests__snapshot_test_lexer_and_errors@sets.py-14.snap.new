@@ -1,0 +1,156 @@
+---
+source: parser/src/lexer/mod.rs
+assertion_line: 1290
+description: "{\n    (a,b) for a in range(11) for b in range(10)\n}\n"
+input_file: parser/test_data/inputs/one_liners/sets.py
+---
+[
+    Token {
+        kind: LeftBracket,
+        value: None,
+        start: 0,
+        end: 1,
+    },
+    Token {
+        kind: LeftParen,
+        value: None,
+        start: 6,
+        end: 7,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "a",
+        ),
+        start: 7,
+        end: 8,
+    },
+    Token {
+        kind: Comma,
+        value: None,
+        start: 8,
+        end: 9,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "b",
+        ),
+        start: 9,
+        end: 10,
+    },
+    Token {
+        kind: RightParen,
+        value: None,
+        start: 10,
+        end: 11,
+    },
+    Token {
+        kind: For,
+        value: None,
+        start: 12,
+        end: 15,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "a",
+        ),
+        start: 16,
+        end: 17,
+    },
+    Token {
+        kind: In,
+        value: None,
+        start: 18,
+        end: 20,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "range",
+        ),
+        start: 21,
+        end: 26,
+    },
+    Token {
+        kind: LeftParen,
+        value: None,
+        start: 26,
+        end: 27,
+    },
+    Token {
+        kind: Integer,
+        value: Number(
+            "11",
+        ),
+        start: 27,
+        end: 29,
+    },
+    Token {
+        kind: RightParen,
+        value: None,
+        start: 29,
+        end: 30,
+    },
+    Token {
+        kind: For,
+        value: None,
+        start: 31,
+        end: 34,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "b",
+        ),
+        start: 35,
+        end: 36,
+    },
+    Token {
+        kind: In,
+        value: None,
+        start: 37,
+        end: 39,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "range",
+        ),
+        start: 40,
+        end: 45,
+    },
+    Token {
+        kind: LeftParen,
+        value: None,
+        start: 45,
+        end: 46,
+    },
+    Token {
+        kind: Integer,
+        value: Number(
+            "10",
+        ),
+        start: 46,
+        end: 48,
+    },
+    Token {
+        kind: RightParen,
+        value: None,
+        start: 48,
+        end: 49,
+    },
+    Token {
+        kind: RightBracket,
+        value: None,
+        start: 50,
+        end: 51,
+    },
+    Token {
+        kind: NewLine,
+        value: None,
+        start: 51,
+        end: 52,
+    },
+]
