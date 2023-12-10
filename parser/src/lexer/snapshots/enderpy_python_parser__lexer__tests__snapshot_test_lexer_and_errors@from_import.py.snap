@@ -1,0 +1,637 @@
+---
+source: parser/src/lexer/lexer.rs
+description: "import a\nimport a as b\nimport a.b\nimport a.b as c\nimport a.b.c\nfrom a import b\nfrom a import b as c\nfrom a.b import c\nfrom a.b import c as d\nfrom ...a import b\nfrom ....a import b\nfrom .....a import b\nfrom ......a import b\nfrom .......a import b\nfrom ...\n"
+input_file: parser/test_data/inputs/one_liners/from_import.py
+---
+[
+    Token {
+        kind: Import,
+        value: None,
+        start: 0,
+        end: 6,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "a",
+        ),
+        start: 7,
+        end: 8,
+    },
+    Token {
+        kind: NewLine,
+        value: None,
+        start: 8,
+        end: 9,
+    },
+    Token {
+        kind: Import,
+        value: None,
+        start: 9,
+        end: 15,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "a",
+        ),
+        start: 16,
+        end: 17,
+    },
+    Token {
+        kind: As,
+        value: None,
+        start: 18,
+        end: 20,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "b",
+        ),
+        start: 21,
+        end: 22,
+    },
+    Token {
+        kind: NewLine,
+        value: None,
+        start: 22,
+        end: 23,
+    },
+    Token {
+        kind: Import,
+        value: None,
+        start: 23,
+        end: 29,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "a",
+        ),
+        start: 30,
+        end: 31,
+    },
+    Token {
+        kind: Dot,
+        value: None,
+        start: 31,
+        end: 32,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "b",
+        ),
+        start: 32,
+        end: 33,
+    },
+    Token {
+        kind: NewLine,
+        value: None,
+        start: 33,
+        end: 34,
+    },
+    Token {
+        kind: Import,
+        value: None,
+        start: 34,
+        end: 40,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "a",
+        ),
+        start: 41,
+        end: 42,
+    },
+    Token {
+        kind: Dot,
+        value: None,
+        start: 42,
+        end: 43,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "b",
+        ),
+        start: 43,
+        end: 44,
+    },
+    Token {
+        kind: As,
+        value: None,
+        start: 45,
+        end: 47,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "c",
+        ),
+        start: 48,
+        end: 49,
+    },
+    Token {
+        kind: NewLine,
+        value: None,
+        start: 49,
+        end: 50,
+    },
+    Token {
+        kind: Import,
+        value: None,
+        start: 50,
+        end: 56,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "a",
+        ),
+        start: 57,
+        end: 58,
+    },
+    Token {
+        kind: Dot,
+        value: None,
+        start: 58,
+        end: 59,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "b",
+        ),
+        start: 59,
+        end: 60,
+    },
+    Token {
+        kind: Dot,
+        value: None,
+        start: 60,
+        end: 61,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "c",
+        ),
+        start: 61,
+        end: 62,
+    },
+    Token {
+        kind: NewLine,
+        value: None,
+        start: 62,
+        end: 63,
+    },
+    Token {
+        kind: From,
+        value: None,
+        start: 63,
+        end: 67,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "a",
+        ),
+        start: 68,
+        end: 69,
+    },
+    Token {
+        kind: Import,
+        value: None,
+        start: 70,
+        end: 76,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "b",
+        ),
+        start: 77,
+        end: 78,
+    },
+    Token {
+        kind: NewLine,
+        value: None,
+        start: 78,
+        end: 79,
+    },
+    Token {
+        kind: From,
+        value: None,
+        start: 79,
+        end: 83,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "a",
+        ),
+        start: 84,
+        end: 85,
+    },
+    Token {
+        kind: Import,
+        value: None,
+        start: 86,
+        end: 92,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "b",
+        ),
+        start: 93,
+        end: 94,
+    },
+    Token {
+        kind: As,
+        value: None,
+        start: 95,
+        end: 97,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "c",
+        ),
+        start: 98,
+        end: 99,
+    },
+    Token {
+        kind: NewLine,
+        value: None,
+        start: 99,
+        end: 100,
+    },
+    Token {
+        kind: From,
+        value: None,
+        start: 100,
+        end: 104,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "a",
+        ),
+        start: 105,
+        end: 106,
+    },
+    Token {
+        kind: Dot,
+        value: None,
+        start: 106,
+        end: 107,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "b",
+        ),
+        start: 107,
+        end: 108,
+    },
+    Token {
+        kind: Import,
+        value: None,
+        start: 109,
+        end: 115,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "c",
+        ),
+        start: 116,
+        end: 117,
+    },
+    Token {
+        kind: NewLine,
+        value: None,
+        start: 117,
+        end: 118,
+    },
+    Token {
+        kind: From,
+        value: None,
+        start: 118,
+        end: 122,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "a",
+        ),
+        start: 123,
+        end: 124,
+    },
+    Token {
+        kind: Dot,
+        value: None,
+        start: 124,
+        end: 125,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "b",
+        ),
+        start: 125,
+        end: 126,
+    },
+    Token {
+        kind: Import,
+        value: None,
+        start: 127,
+        end: 133,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "c",
+        ),
+        start: 134,
+        end: 135,
+    },
+    Token {
+        kind: As,
+        value: None,
+        start: 136,
+        end: 138,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "d",
+        ),
+        start: 139,
+        end: 140,
+    },
+    Token {
+        kind: NewLine,
+        value: None,
+        start: 140,
+        end: 141,
+    },
+    Token {
+        kind: From,
+        value: None,
+        start: 141,
+        end: 145,
+    },
+    Token {
+        kind: Ellipsis,
+        value: None,
+        start: 146,
+        end: 149,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "a",
+        ),
+        start: 149,
+        end: 150,
+    },
+    Token {
+        kind: Import,
+        value: None,
+        start: 151,
+        end: 157,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "b",
+        ),
+        start: 158,
+        end: 159,
+    },
+    Token {
+        kind: NewLine,
+        value: None,
+        start: 159,
+        end: 160,
+    },
+    Token {
+        kind: From,
+        value: None,
+        start: 160,
+        end: 164,
+    },
+    Token {
+        kind: Ellipsis,
+        value: None,
+        start: 165,
+        end: 168,
+    },
+    Token {
+        kind: Dot,
+        value: None,
+        start: 168,
+        end: 169,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "a",
+        ),
+        start: 169,
+        end: 170,
+    },
+    Token {
+        kind: Import,
+        value: None,
+        start: 171,
+        end: 177,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "b",
+        ),
+        start: 178,
+        end: 179,
+    },
+    Token {
+        kind: NewLine,
+        value: None,
+        start: 179,
+        end: 180,
+    },
+    Token {
+        kind: From,
+        value: None,
+        start: 180,
+        end: 184,
+    },
+    Token {
+        kind: Ellipsis,
+        value: None,
+        start: 185,
+        end: 188,
+    },
+    Token {
+        kind: Dot,
+        value: None,
+        start: 188,
+        end: 189,
+    },
+    Token {
+        kind: Dot,
+        value: None,
+        start: 189,
+        end: 190,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "a",
+        ),
+        start: 190,
+        end: 191,
+    },
+    Token {
+        kind: Import,
+        value: None,
+        start: 192,
+        end: 198,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "b",
+        ),
+        start: 199,
+        end: 200,
+    },
+    Token {
+        kind: NewLine,
+        value: None,
+        start: 200,
+        end: 201,
+    },
+    Token {
+        kind: From,
+        value: None,
+        start: 201,
+        end: 205,
+    },
+    Token {
+        kind: Ellipsis,
+        value: None,
+        start: 206,
+        end: 209,
+    },
+    Token {
+        kind: Ellipsis,
+        value: None,
+        start: 209,
+        end: 212,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "a",
+        ),
+        start: 212,
+        end: 213,
+    },
+    Token {
+        kind: Import,
+        value: None,
+        start: 214,
+        end: 220,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "b",
+        ),
+        start: 221,
+        end: 222,
+    },
+    Token {
+        kind: NewLine,
+        value: None,
+        start: 222,
+        end: 223,
+    },
+    Token {
+        kind: From,
+        value: None,
+        start: 223,
+        end: 227,
+    },
+    Token {
+        kind: Ellipsis,
+        value: None,
+        start: 228,
+        end: 231,
+    },
+    Token {
+        kind: Ellipsis,
+        value: None,
+        start: 231,
+        end: 234,
+    },
+    Token {
+        kind: Dot,
+        value: None,
+        start: 234,
+        end: 235,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "a",
+        ),
+        start: 235,
+        end: 236,
+    },
+    Token {
+        kind: Import,
+        value: None,
+        start: 237,
+        end: 243,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "b",
+        ),
+        start: 244,
+        end: 245,
+    },
+    Token {
+        kind: NewLine,
+        value: None,
+        start: 245,
+        end: 246,
+    },
+    Token {
+        kind: From,
+        value: None,
+        start: 246,
+        end: 250,
+    },
+    Token {
+        kind: Ellipsis,
+        value: None,
+        start: 251,
+        end: 254,
+    },
+    Token {
+        kind: NewLine,
+        value: None,
+        start: 254,
+        end: 255,
+    },
+]

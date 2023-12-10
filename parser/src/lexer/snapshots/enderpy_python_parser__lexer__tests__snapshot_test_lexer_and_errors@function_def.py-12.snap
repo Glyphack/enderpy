@@ -1,0 +1,65 @@
+---
+source: parser/src/lexer/lexer.rs
+description: "def a[T](): pass"
+input_file: parser/test_data/inputs/one_liners/function_def.py
+---
+[
+    Token {
+        kind: Def,
+        value: None,
+        start: 0,
+        end: 3,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "a",
+        ),
+        start: 4,
+        end: 5,
+    },
+    Token {
+        kind: LeftBrace,
+        value: None,
+        start: 5,
+        end: 6,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "T",
+        ),
+        start: 6,
+        end: 7,
+    },
+    Token {
+        kind: RightBrace,
+        value: None,
+        start: 7,
+        end: 8,
+    },
+    Token {
+        kind: LeftParen,
+        value: None,
+        start: 8,
+        end: 9,
+    },
+    Token {
+        kind: RightParen,
+        value: None,
+        start: 9,
+        end: 10,
+    },
+    Token {
+        kind: Colon,
+        value: None,
+        start: 10,
+        end: 11,
+    },
+    Token {
+        kind: Pass,
+        value: None,
+        start: 12,
+        end: 16,
+    },
+]

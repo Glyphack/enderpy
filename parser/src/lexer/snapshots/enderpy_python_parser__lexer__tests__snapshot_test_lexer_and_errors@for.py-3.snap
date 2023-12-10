@@ -1,0 +1,159 @@
+---
+source: parser/src/lexer/lexer.rs
+description: "for a in range(10):\n    a = 1\nelse:\n    b = 1"
+input_file: parser/test_data/inputs/one_liners/for.py
+---
+[
+    Token {
+        kind: For,
+        value: None,
+        start: 0,
+        end: 3,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "a",
+        ),
+        start: 4,
+        end: 5,
+    },
+    Token {
+        kind: In,
+        value: None,
+        start: 6,
+        end: 8,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "range",
+        ),
+        start: 9,
+        end: 14,
+    },
+    Token {
+        kind: LeftParen,
+        value: None,
+        start: 14,
+        end: 15,
+    },
+    Token {
+        kind: Integer,
+        value: Number(
+            "10",
+        ),
+        start: 15,
+        end: 17,
+    },
+    Token {
+        kind: RightParen,
+        value: None,
+        start: 17,
+        end: 18,
+    },
+    Token {
+        kind: Colon,
+        value: None,
+        start: 18,
+        end: 19,
+    },
+    Token {
+        kind: NewLine,
+        value: None,
+        start: 19,
+        end: 20,
+    },
+    Token {
+        kind: Indent,
+        value: Indent(
+            1,
+        ),
+        start: 20,
+        end: 24,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "a",
+        ),
+        start: 24,
+        end: 25,
+    },
+    Token {
+        kind: Assign,
+        value: None,
+        start: 26,
+        end: 27,
+    },
+    Token {
+        kind: Integer,
+        value: Number(
+            "1",
+        ),
+        start: 28,
+        end: 29,
+    },
+    Token {
+        kind: NewLine,
+        value: None,
+        start: 29,
+        end: 30,
+    },
+    Token {
+        kind: Dedent,
+        value: Indent(
+            1,
+        ),
+        start: 30,
+        end: 30,
+    },
+    Token {
+        kind: Else,
+        value: None,
+        start: 30,
+        end: 34,
+    },
+    Token {
+        kind: Colon,
+        value: None,
+        start: 34,
+        end: 35,
+    },
+    Token {
+        kind: NewLine,
+        value: None,
+        start: 35,
+        end: 36,
+    },
+    Token {
+        kind: Indent,
+        value: Indent(
+            1,
+        ),
+        start: 36,
+        end: 40,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "b",
+        ),
+        start: 40,
+        end: 41,
+    },
+    Token {
+        kind: Assign,
+        value: None,
+        start: 42,
+        end: 43,
+    },
+    Token {
+        kind: Integer,
+        value: Number(
+            "1",
+        ),
+        start: 44,
+        end: 45,
+    },
+]
