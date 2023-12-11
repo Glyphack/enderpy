@@ -11,21 +11,21 @@ pub struct Token {
 
 impl Display for Token {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let kind = self.kind.to_str();
+        let kind: &str = self.kind.into();
         let value = format!("({:?})", self.value);
         let start = self.start.to_string();
         let end = self.end.to_string();
-        let mut s = format!("{},{}-{}:{} ", start, end, start, end);
-        s.push_str(kind);
+        let padding = 50 - (start.len() + end.len() + kind.len() + value.len());
 
-        let mut padding = 50 - s.len();
-        while padding > 0 {
-            s.push(' ');
-            padding -= 1;
-        }
-
-        s.push_str(&value);
-        write!(f, "{}", s)
+        write!(
+            f,
+            "{},{}: {:padding$}{}",
+            start,
+            end,
+            kind,
+            value,
+            padding = padding
+        )
     }
 }
 
@@ -170,11 +170,9 @@ pub enum Kind {
     Eof,
 }
 
-impl Kind {
-    #[allow(clippy::too_many_lines)]
-    #[must_use]
-    pub fn to_str(self) -> &'static str {
-        match self {
+impl From<Kind> for &str {
+    fn from(val: Kind) -> Self {
+        match val {
             Kind::Hexadecimal => "Hexadecimal",
             Kind::PointFloat => "PointFloat",
             Kind::ExponentFloat => "ExponentFloat",
@@ -290,6 +288,12 @@ impl Kind {
     }
 }
 
+impl Display for Kind {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", Into::<&str>::into(*self))
+    }
+}
+
 #[derive(Debug, PartialEq, Clone)]
 pub enum TokenValue {
     None,
@@ -305,6 +309,17 @@ impl Display for TokenValue {
             TokenValue::Number(n) => write!(f, "{}", n),
             TokenValue::Str(s) => write!(f, "{}", s),
             TokenValue::Indent(i) => write!(f, "{}", i),
+        }
+    }
+}
+
+impl From<TokenValue> for &str {
+    fn from(val: TokenValue) -> Self {
+        match val {
+            TokenValue::None => "None",
+            TokenValue::Number(_) => "Number",
+            TokenValue::Str(_) => "Str",
+            TokenValue::Indent(_) => "Indent",
         }
     }
 }
