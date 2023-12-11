@@ -1,0 +1,431 @@
+---
+source: parser/src/lexer/mod.rs
+description: "def dataclass_transform(\n    *,\n    eq_default: bool = True,\n    order_default: bool = False,\n    kw_only_default: bool = False,\n    frozen_default: bool = False,  # on 3.11, runtime accepts it as part of kwargs\n    # this next annotation cannot be parsed need fix\n    field_specifiers: tuple[type[Any] | Callable[..., Any], ...] = (),\n    **kwargs: Any,\n) -> IdentityFunction: ...\n"
+input_file: parser/test_data/inputs/one_liners/function_def.py
+---
+[
+    Token {
+        kind: Def,
+        value: None,
+        start: 0,
+        end: 3,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "dataclass_transform",
+        ),
+        start: 4,
+        end: 23,
+    },
+    Token {
+        kind: LeftParen,
+        value: None,
+        start: 23,
+        end: 24,
+    },
+    Token {
+        kind: Mul,
+        value: None,
+        start: 29,
+        end: 30,
+    },
+    Token {
+        kind: Comma,
+        value: None,
+        start: 30,
+        end: 31,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "eq_default",
+        ),
+        start: 36,
+        end: 46,
+    },
+    Token {
+        kind: Colon,
+        value: None,
+        start: 46,
+        end: 47,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "bool",
+        ),
+        start: 48,
+        end: 52,
+    },
+    Token {
+        kind: Assign,
+        value: None,
+        start: 53,
+        end: 54,
+    },
+    Token {
+        kind: True,
+        value: None,
+        start: 55,
+        end: 59,
+    },
+    Token {
+        kind: Comma,
+        value: None,
+        start: 59,
+        end: 60,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "order_default",
+        ),
+        start: 65,
+        end: 78,
+    },
+    Token {
+        kind: Colon,
+        value: None,
+        start: 78,
+        end: 79,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "bool",
+        ),
+        start: 80,
+        end: 84,
+    },
+    Token {
+        kind: Assign,
+        value: None,
+        start: 85,
+        end: 86,
+    },
+    Token {
+        kind: False,
+        value: None,
+        start: 87,
+        end: 92,
+    },
+    Token {
+        kind: Comma,
+        value: None,
+        start: 92,
+        end: 93,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "kw_only_default",
+        ),
+        start: 98,
+        end: 113,
+    },
+    Token {
+        kind: Colon,
+        value: None,
+        start: 113,
+        end: 114,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "bool",
+        ),
+        start: 115,
+        end: 119,
+    },
+    Token {
+        kind: Assign,
+        value: None,
+        start: 120,
+        end: 121,
+    },
+    Token {
+        kind: False,
+        value: None,
+        start: 122,
+        end: 127,
+    },
+    Token {
+        kind: Comma,
+        value: None,
+        start: 127,
+        end: 128,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "frozen_default",
+        ),
+        start: 133,
+        end: 147,
+    },
+    Token {
+        kind: Colon,
+        value: None,
+        start: 147,
+        end: 148,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "bool",
+        ),
+        start: 149,
+        end: 153,
+    },
+    Token {
+        kind: Assign,
+        value: None,
+        start: 154,
+        end: 155,
+    },
+    Token {
+        kind: False,
+        value: None,
+        start: 156,
+        end: 161,
+    },
+    Token {
+        kind: Comma,
+        value: None,
+        start: 161,
+        end: 162,
+    },
+    Token {
+        kind: Comment,
+        value: Str(
+            "# on 3.11, runtime accepts it as part of kwargs",
+        ),
+        start: 164,
+        end: 211,
+    },
+    Token {
+        kind: Comment,
+        value: Str(
+            "# this next annotation cannot be parsed need fix",
+        ),
+        start: 216,
+        end: 264,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "field_specifiers",
+        ),
+        start: 269,
+        end: 285,
+    },
+    Token {
+        kind: Colon,
+        value: None,
+        start: 285,
+        end: 286,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "tuple",
+        ),
+        start: 287,
+        end: 292,
+    },
+    Token {
+        kind: LeftBrace,
+        value: None,
+        start: 292,
+        end: 293,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "type",
+        ),
+        start: 293,
+        end: 297,
+    },
+    Token {
+        kind: LeftBrace,
+        value: None,
+        start: 297,
+        end: 298,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "Any",
+        ),
+        start: 298,
+        end: 301,
+    },
+    Token {
+        kind: RightBrace,
+        value: None,
+        start: 301,
+        end: 302,
+    },
+    Token {
+        kind: BitOr,
+        value: None,
+        start: 303,
+        end: 304,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "Callable",
+        ),
+        start: 305,
+        end: 313,
+    },
+    Token {
+        kind: LeftBrace,
+        value: None,
+        start: 313,
+        end: 314,
+    },
+    Token {
+        kind: Ellipsis,
+        value: None,
+        start: 314,
+        end: 317,
+    },
+    Token {
+        kind: Comma,
+        value: None,
+        start: 317,
+        end: 318,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "Any",
+        ),
+        start: 319,
+        end: 322,
+    },
+    Token {
+        kind: RightBrace,
+        value: None,
+        start: 322,
+        end: 323,
+    },
+    Token {
+        kind: Comma,
+        value: None,
+        start: 323,
+        end: 324,
+    },
+    Token {
+        kind: Ellipsis,
+        value: None,
+        start: 325,
+        end: 328,
+    },
+    Token {
+        kind: RightBrace,
+        value: None,
+        start: 328,
+        end: 329,
+    },
+    Token {
+        kind: Assign,
+        value: None,
+        start: 330,
+        end: 331,
+    },
+    Token {
+        kind: LeftParen,
+        value: None,
+        start: 332,
+        end: 333,
+    },
+    Token {
+        kind: RightParen,
+        value: None,
+        start: 333,
+        end: 334,
+    },
+    Token {
+        kind: Comma,
+        value: None,
+        start: 334,
+        end: 335,
+    },
+    Token {
+        kind: Pow,
+        value: None,
+        start: 340,
+        end: 342,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "kwargs",
+        ),
+        start: 342,
+        end: 348,
+    },
+    Token {
+        kind: Colon,
+        value: None,
+        start: 348,
+        end: 349,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "Any",
+        ),
+        start: 350,
+        end: 353,
+    },
+    Token {
+        kind: Comma,
+        value: None,
+        start: 353,
+        end: 354,
+    },
+    Token {
+        kind: RightParen,
+        value: None,
+        start: 355,
+        end: 356,
+    },
+    Token {
+        kind: Arrow,
+        value: None,
+        start: 357,
+        end: 359,
+    },
+    Token {
+        kind: Identifier,
+        value: Str(
+            "IdentityFunction",
+        ),
+        start: 360,
+        end: 376,
+    },
+    Token {
+        kind: Colon,
+        value: None,
+        start: 376,
+        end: 377,
+    },
+    Token {
+        kind: Ellipsis,
+        value: None,
+        start: 378,
+        end: 381,
+    },
+    Token {
+        kind: NewLine,
+        value: None,
+        start: 381,
+        end: 382,
+    },
+]

@@ -1,6 +1,6 @@
 ---
-source: parser/src/lexer/lexer.rs
-description: "def a[T: U, *V, **W](): pass\n"
+source: parser/src/lexer/mod.rs
+description: "def a[T: U, *V, **W](): pass"
 input_file: parser/test_data/inputs/one_liners/function_def.py
 ---
 [
@@ -115,11 +115,5 @@ input_file: parser/test_data/inputs/one_liners/function_def.py
         value: None,
         start: 24,
         end: 28,
-    },
-    Token {
-        kind: NewLine,
-        value: None,
-        start: 28,
-        end: 29,
     },
 ]

@@ -1,19 +1,19 @@
 ---
 source: parser/src/parser/parser.rs
-description: "def a[T: U, *V, **W](): pass\n"
+description: "def a[T: U, *V, **W](): pass"
 input_file: parser/test_data/inputs/one_liners/function_def.py
 ---
 Module {
     node: Node {
         start: 0,
-        end: 29,
+        end: 28,
     },
     body: [
         FunctionDef(
             FunctionDef {
                 node: Node {
                     start: 0,
-                    end: 29,
+                    end: 28,
                 },
                 name: "a",
                 args: Arguments {

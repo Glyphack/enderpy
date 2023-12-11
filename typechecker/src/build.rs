@@ -342,6 +342,7 @@ impl BuildManager {
     }
 }
 
+// TODO: refactor type check tests to be like symbol table tests
 #[cfg(test)]
 mod tests {
     use std::fs;
@@ -444,8 +445,12 @@ mod tests {
             settings.set_snapshot_path("../testdata/output/");
             settings.set_description(fs::read_to_string(path).unwrap());
             settings.add_filter(
-                r"/.*/typechecker/test_data/inputs/symbol_table",
-                "[REDACTED]",
+                r"/.*/typechecker",
+                "[TYPECHECKER]",
+            );
+            settings.add_filter(
+                r"/.*/typeshed",
+                "[TYPESHED]",
             );
             settings.add_filter(
                 r"module_name: .*.typechecker.test_data.inputs.symbol_table..*.py",
