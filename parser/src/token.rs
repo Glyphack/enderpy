@@ -19,9 +19,7 @@ impl Display for Token {
 
         write!(
             f,
-            "{},{}-{}:{} {:padding$}{}",
-            start,
-            end,
+            "{},{}: {:padding$}{}",
             start,
             end,
             kind,
