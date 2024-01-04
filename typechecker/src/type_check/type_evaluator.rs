@@ -724,9 +724,10 @@ impl TypeEvaluator {
             Expression::Name(n) => {
                 if let Some(builtin_type) = self.get_builtin_type(n.id.as_str()) {
                     builtin_type
-                // if it's not a builtin we want to get the class declaration form symbol table
-                // and find where this class is defined
-                // TODO it's good to have a function that finds the initial declaration of a symbol
+                // if it's not a builtin we want to get the class declaration
+                // form symbol table and find where this class
+                // is defined TODO it's good to have a function
+                // that finds the initial declaration of a symbol
                 } else {
                     let container_decl = match symbol_table.lookup_in_scope(LookupSymbolRequest {
                         name: n.id.clone(),
@@ -1115,15 +1116,12 @@ impl TraversalVisitorImmutGeneric<PythonType> for TypeEvaluator {
 
 #[cfg(test)]
 mod tests {
+    use std::{fs, path::PathBuf};
+
     use insta::glob;
 
-    use crate::build::BuildManager;
-    use crate::build_source::BuildSource;
-    use crate::settings::Settings;
-
     use super::*;
-    use std::fs;
-    use std::path::PathBuf;
+    use crate::{build::BuildManager, build_source::BuildSource, settings::Settings};
 
     fn snapshot_type_eval(source: &str) -> String {
         use enderpy_python_parser::Parser;
@@ -1189,8 +1187,9 @@ mod tests {
     }
 }
 
-/// visits the ast and calls get_type on each expression and saves that type in the types hashmap
-/// the key is the position of the expression in the source: (line, start, end)
+/// visits the ast and calls get_type on each expression and saves that type in
+/// the types hashmap the key is the position of the expression in the source:
+/// (line, start, end)
 struct DumpTypes {
     pub type_eval: TypeEvaluator,
     pub types: HashMap<String, PythonType>,
@@ -1200,8 +1199,8 @@ struct DumpTypes {
 impl DumpTypes {
     pub fn new(enderpy_file: EnderpyFile, type_eval: TypeEvaluator) -> Self {
         let mut state = State::new(enderpy_file);
-        // TODO: this line runs on every test and it needs to add all of stdlib to symbol table.
-        // This is not efficient and needs to be refactored
+        // TODO: this line runs on every test and it needs to add all of stdlib to
+        // symbol table. This is not efficient and needs to be refactored
         state.populate_symbol_table(&HashMap::new());
         let symbol_table = state.get_symbol_table();
         Self {

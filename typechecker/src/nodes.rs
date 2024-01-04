@@ -9,8 +9,7 @@ use std::path::PathBuf;
 
 use enderpy_python_parser as parser;
 use enderpy_python_parser::ast::{Import, ImportFrom, Statement};
-use parser::error::ParsingError;
-use parser::Parser;
+use parser::{error::ParsingError, Parser};
 
 use crate::{ast_visitor::TraversalVisitor, build_source::BuildSource, diagnostic::Position};
 

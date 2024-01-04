@@ -232,36 +232,41 @@ impl BuildManager {
                         };
                     }
 
-                    // TODO: not sure if this part is needed. Need to check when we have more tests
-                    // on builder. This is supposed to add implicit imports to the build sources
+                    // TODO: not sure if this part is needed. Need to check when
+                    // we have more tests on builder. This
+                    // is supposed to add implicit imports to the build sources
                     // implicit import example: import foo.bar
                     // foo/bar/__init__.py
-                    // In this case, we need to add foo/bar/__init__.py to the build sources
-                    // for (name, implicit_import) in resolved.implicit_imports.iter() {
+                    // In this case, we need to add foo/bar/__init__.py to the
+                    // build sources for (name,
+                    // implicit_import) in resolved.implicit_imports.iter() {
                     //     if self
                     //         .modules
-                    //         .contains_key(&get_module_name(&implicit_import.path))
-                    //     {
+                    //         .contains_key(&get_module_name(&implicit_import.
+                    // path))     {
                     //         log::debug!(
                     //             "implicit import already exists: {}",
                     //             get_module_name(&implicit_import.path)
                     //         );
                     //         continue;
                     //     }
-                    //     let source = std::fs::read_to_string(implicit_import.path.clone()).unwrap();
-                    //     let build_source =
-                    //         BuildSource::from_path(implicit_import.path.clone(), true).unwrap();
+                    //     let source =
+                    // std::fs::read_to_string(implicit_import.path.clone()).
+                    // unwrap();     let build_source =
+                    //         BuildSource::from_path(implicit_import.path.
+                    // clone(), true).unwrap();
                     // self.build_sources.push(build_source);
                     // self.add_to_modules(&build_source);
                     // match self.modules.get(&build_source.module) {
                     //     Some(discovered_module) => {
-                    //         if !self.modules.contains_key(&build_source.module) {
+                    //         if
+                    // !self.modules.contains_key(&build_source.module) {
                     //             new_imports.push(discovered_module);
                     //         }
                     //     }
                     //     None => {
-                    //         panic!("cannot find module: {}", build_source.module);
-                    //     }
+                    //         panic!("cannot find module: {}",
+                    // build_source.module);     }
                     // }
                     // }
                 }
@@ -282,20 +287,21 @@ impl BuildManager {
         //             host,
         //             &cached_imports,
         //         );
-        //         // check if the resolved_imports are not in the current files and add them to
-        //         // the new imports
+        //         // check if the resolved_imports are not in the current files and add
+        // them to         // the new imports
         //         for (_, resolved_import) in resolved_imports {
         //             if !resolved_import.is_import_found {
         //                 continue;
         //             }
         //             for resolved_path in resolved_import.resolved_paths {
-        //                 if self.modules.contains_key(&get_module_name(&resolved_path)) {
-        //                     log::debug!("imported file already in modules: {:?}", resolved_path);
-        //                     continue;
+        //                 if
+        // self.modules.contains_key(&get_module_name(&resolved_path)) {
+        //                     log::debug!("imported file already in modules: {:?}",
+        // resolved_path);                     continue;
         //                 }
-        //                 let build_source = match BuildSource::from_path(resolved_path, true) {
-        //                     Ok(build_source) => build_source,
-        //                     Err(e) => {
+        //                 let build_source = match
+        // BuildSource::from_path(resolved_path, true) {                     
+        // Ok(build_source) => build_source,                     Err(e) => {
         //                         log::warn!("cannot read file: {}", e);
         //                         continue;
         //                     }
@@ -307,8 +313,8 @@ impl BuildManager {
         //                         }
         //                     }
         //                     None => {
-        //                         panic!("cannot find module: {}", build_source.module);
-        //                     }
+        //                         panic!("cannot find module: {}",
+        // build_source.module);                     }
         //                 }
         //             }
         //         }

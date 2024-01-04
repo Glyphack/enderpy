@@ -36,7 +36,8 @@ impl State {
         for stmt in &self.file.body {
             sem_anal.visit_stmt(stmt)
         }
-        // TODO: Hacky way to add the global scope to all scopes in symbol table after finishing
+        // TODO: Hacky way to add the global scope to all scopes in symbol table after
+        // finishing
         sem_anal.globals.exit_scope();
         self.symbol_table = sem_anal.globals;
     }

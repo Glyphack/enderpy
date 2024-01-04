@@ -2113,7 +2113,7 @@ impl Parser {
             return Ok(Expression::Tuple(Box::new(Tuple {
                 node: self.finish_node(node),
                 elements: vec![],
-            })))
+            })));
         }
         if self.eat(Kind::Lambda) {
             let params_list = self.parse_parameters(true).expect("lambda params");
@@ -2962,8 +2962,8 @@ impl Parser {
                 // after seeing vararg the must_have_default is reset
                 // until we see a default value again
                 must_have_default = false;
-                // In this case this is not a vararg but only marks the end of positional arguments
-                // e.g. def foo(a, b, *, c, d)
+                // In this case this is not a vararg but only marks the end of positional
+                // arguments e.g. def foo(a, b, *, c, d)
                 if self.eat(Kind::Comma) {
                     continue;
                 }
