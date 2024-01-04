@@ -1177,7 +1177,9 @@ mod tests {
                 .is_test(true)
                 .try_init();
 
+            // TODO move this redaction setting to a central place
             let mut settings = insta::Settings::clone_current();
+            settings.add_filter(r"module_name: .*.typeshed.", "module_name: [TYPESHED].");
             settings.set_snapshot_path("./test_data/output/");
             settings.set_description(fs::read_to_string(path).unwrap());
             settings.bind(|| {

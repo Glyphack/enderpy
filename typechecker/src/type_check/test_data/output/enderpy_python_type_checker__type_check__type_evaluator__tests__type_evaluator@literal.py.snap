@@ -24,7 +24,7 @@ input_file: typechecker/src/type_check/test_data/inputs/literal.py
                 details: Class {
                     name: "Literal",
                     declaration_path: DeclarationPath {
-                        module_name: ".Users.glyphack.Programming.enderpy.typeshed.stdlib.typing.pyi",
+                        module_name: [TYPESHED].stdlib.typing.pyi",
                         node: Node {
                             start: 5140,
                             end: 5161,
