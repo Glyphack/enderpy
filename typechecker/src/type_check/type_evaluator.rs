@@ -19,7 +19,10 @@ use crate::{
     ast_visitor_generic::TraversalVisitorImmutGeneric,
     nodes::EnderpyFile,
     state::State,
-    symbol_table::{self, Declaration, LookupSymbolRequest, SymbolTable, SymbolTableNode},
+    symbol_table::{
+        self, Class, Declaration, DeclarationPath, LookupSymbolRequest, SymbolTable,
+        SymbolTableNode,
+    },
     type_check::types::ClassType,
 };
 
@@ -197,7 +200,7 @@ impl TypeEvaluator {
                 //         ast::Expression::Name(n) => {
                 //             comp_targets.insert(n.id, self.get_type(&gens.iter));
                 //         }
-                //         _ => panic!("comperhension target must be a name, or does it?"),
+                //         _ => panic!("comprehension target must be a name, or does it?"),
                 //     }
                 // }
 
@@ -223,7 +226,7 @@ impl TypeEvaluator {
     }
 
     // This function tries to find the python type from an annotation expression
-    // If the annotation is invalid it returns uknown type
+    // If the annotation is invalid it returns unknown type
     pub fn get_type_from_annotation(&self, type_annotation: &ast::Expression) -> PythonType {
         log::debug!("Getting type from annotation: {:?}", type_annotation);
         let expr_type = match type_annotation {
@@ -258,8 +261,8 @@ impl TypeEvaluator {
                         // flatten the bit or expression if the left and right are also bit or
                         // TODO handle when left and right are also binary operator
                         // Like a | b | c | d
-                        let union_paramters = self.flatten_bit_or(b);
-                        self.handle_union_type(union_paramters)
+                        let union_parameters = self.flatten_bit_or(b);
+                        self.handle_union_type(union_parameters)
                     }
                     _ => todo!(),
                 }
@@ -287,7 +290,7 @@ impl TypeEvaluator {
                         self.get_type_from_annotation(&type_annotation)
                     } else {
                         let inferred_return_type = self.infer_function_return_type(f);
-                        log::debug!("infered_return_type: {:?}", inferred_return_type);
+                        log::debug!("inferred_return_type: {:?}", inferred_return_type);
                         inferred_return_type
                     };
 
@@ -351,9 +354,9 @@ impl TypeEvaluator {
         if !f.is_abstract() && !f.raise_statements.is_empty() {
             return PythonType::Never;
         }
-        if !f.yeild_statements.is_empty() {
+        if !f.yield_statements.is_empty() {
             let mut yield_types = vec![];
-            for yield_statement in &f.yeild_statements {
+            for yield_statement in &f.yield_statements {
                 if let Some(value) = &yield_statement.value {
                     yield_types.push(self.get_type(value).unwrap_or(PythonType::Unknown));
                 }
@@ -505,8 +508,8 @@ impl TypeEvaluator {
                     ast::ConstantValue::Str(s) => LiteralValue::Str(s),
                     ast::ConstantValue::Bytes(b) => LiteralValue::Bytes(b),
                     ast::ConstantValue::None => LiteralValue::None,
-                    // Tuple is illegal if it has parantheses, otherwise it's allowed and the output
-                    // a multiValued type Currently even mypy does not supoort
+                    // Tuple is illegal if it has parentheses, otherwise it's allowed and the output
+                    // a multiValued type Currently even mypy does not support
                     // this, who am I to do it? https://mypy-play.net/?mypy=latest&python=3.10&gist=0df0421d5c85f3b75f65a51cae8616ce
                     ast::ConstantValue::Tuple(t) => {
                         if t.len() == 1 {
@@ -723,6 +726,7 @@ impl TypeEvaluator {
                     builtin_type
                 // if it's not a builtin we want to get the class declaration form symbol table
                 // and find where this class is defined
+                // TODO it's good to have a function that finds the initial declaration of a symbol
                 } else {
                     let container_decl = match symbol_table.lookup_in_scope(LookupSymbolRequest {
                         name: n.id.clone(),
@@ -731,12 +735,40 @@ impl TypeEvaluator {
                         Some(decl) => decl.last_declaration(),
                         None => panic!("Type {} has no declaration", n.id),
                     };
+                    log::debug!("container_decl: {:?}", container_decl);
                     match container_decl {
                         Some(Declaration::Class(c)) => c.clone(),
                         Some(Declaration::Alias(a)) => {
-                            if let Some(decl) = self.resolve_alias(a) {
+                            if let Some((found_in_symbol_table, decl)) = self.resolve_alias(a) {
                                 match decl.last_declaration() {
                                     Some(Declaration::Class(c)) => c.clone(),
+                                    // The container type here can be a variable, e.g. in
+                                    // typing.pyi there is Literal: _SpecialForm
+                                    // If it's a variable then try to find the class node
+                                    // of that variable
+                                    // TODO: need to clean up here to check special classes and
+                                    // creata a class with their methods on it. For example Literal
+                                    // and Union
+                                    Some(Declaration::Variable(v)) => {
+                                        if let Some(annotation) = &v.type_annotation {
+                                            let pointing_class = self.get_class_declaration(
+                                                annotation.clone(),
+                                                Some(found_in_symbol_table.clone()),
+                                            );
+                                            if pointing_class.name == "_SpecialForm" {
+                                                return Class {
+                                                    name: n.id,
+                                                    declaration_path: v.declaration_path.clone(),
+                                                    methods: vec![],
+                                                    attributes: HashMap::new(),
+                                                };
+                                            } else {
+                                                pointing_class
+                                            }
+                                        } else {
+                                            panic!("not implemented")
+                                        }
+                                    }
                                     _ => panic!("Alias {:?} is not a class", a),
                                 }
                             } else {
@@ -774,20 +806,35 @@ impl TypeEvaluator {
     // Follows Alias declaration and resolves it to a class declaration
     // It searches through imported symbol tables for the module alias imports
     // and resolves the alias to the class declaration
-    // TODO: refactor to resolve all aliases and not only classes
-    fn resolve_alias(&self, a: &symbol_table::Alias) -> Option<&symbol_table::SymbolTableNode> {
+    // TODO: refactor all liases and not only classes
+    fn resolve_alias(
+        &self,
+        a: &symbol_table::Alias,
+    ) -> Option<(symbol_table::SymbolTable, symbol_table::SymbolTableNode)> {
         let class_name = match a.symbol_name {
             Some(ref name) => name.clone(),
             None => panic!("Alias {:?} has no symbol name", a.import_node),
         };
-        let imported_symbol_tables = self.imported_symbol_tables.clone();
-        log::debug!("Searching for alias {}", class_name,);
-        for symbol_table in imported_symbol_tables {
+        // log::debug!("symbol tables: {:#?}", self.imported_symbol_tables);
+        for symbol_table in self.imported_symbol_tables.iter() {
+            if !a
+                .import_result
+                .resolved_paths
+                .contains(&symbol_table.file_path)
+            {
+                continue;
+            }
+            log::debug!(
+                "Searching for alias {}, in symbol table for file {}",
+                class_name,
+                symbol_table.module_name
+            );
             if let Some(decl) = symbol_table.lookup_in_scope(LookupSymbolRequest {
                 name: class_name.clone(),
                 position: None,
             }) {
-                return Some(decl);
+                log::debug!("Found alias {:#?} in symbol table", decl);
+                return Some((symbol_table.clone(), decl.clone()));
             }
         }
         panic!("Alias {} not found", class_name);
@@ -1090,7 +1137,7 @@ mod tests {
             followed: false,
         };
 
-        // we use the manager to also import the python typeshed into moduels
+        // we use the manager to also import the python typeshed into modules
         // This can be refactored but for now it's fine
         let mut manager = BuildManager::new(vec![build_source], Settings::test_settings());
         manager.build();
@@ -1153,7 +1200,7 @@ impl DumpTypes {
         let mut state = State::new(enderpy_file);
         // TODO: this line runs on every test and it needs to add all of stdlib to symbol table.
         // This is not efficient and needs to be refactored
-        state.populate_symbol_table();
+        state.populate_symbol_table(&HashMap::new());
         let symbol_table = state.get_symbol_table();
         Self {
             types: HashMap::new(),
@@ -1277,7 +1324,12 @@ impl TraversalVisitor for DumpTypes {
             ast::Expression::Attribute(a) => self.visit_attribute(a),
             ast::Expression::Subscript(s) => self.visit_subscript(s),
             ast::Expression::Slice(s) => self.visit_slice(s),
-            ast::Expression::Call(c) => self.visit_call(c),
+            ast::Expression::Call(c) => {
+                self.save_type(&c.func);
+                for arg in &c.args {
+                    self.save_type(arg);
+                }
+            }
             ast::Expression::Await(a) => self.visit_await(a),
             ast::Expression::Compare(c) => self.visit_compare(c),
             ast::Expression::Lambda(l) => self.visit_lambda(l),

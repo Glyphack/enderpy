@@ -1,6 +1,6 @@
 use enderpy_python_parser::ast::{Alias, ImportFrom};
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct ImportModuleDescriptor {
     pub leading_dots: usize,
     pub name_parts: Vec<String>,

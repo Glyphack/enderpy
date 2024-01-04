@@ -1206,7 +1206,7 @@ def",
 
     f = c
 
-    # Path: test_local.py	
+    # Path: test_local.py
 ",
             ],
         )

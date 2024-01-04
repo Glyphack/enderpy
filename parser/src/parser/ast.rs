@@ -346,7 +346,6 @@ impl fmt::Debug for ConstantValue {
                     let mut s = s.chars().skip(1).collect::<String>();
                     s = s.chars().take(s.len() - 1).collect::<String>();
 
-                    // drop first another char from beginning
                     s = s.chars().skip(1).collect::<String>();
 
                     return write!(f, "{:?}", s);

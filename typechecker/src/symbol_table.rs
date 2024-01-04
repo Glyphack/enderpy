@@ -1,8 +1,11 @@
-use std::{collections::HashMap, fmt::Display};
+use std::{collections::HashMap, fmt::Display, path::PathBuf};
 
 use enderpy_python_parser::ast::{self, Node};
 
-use crate::{ruff_python_import_resolver::import_result::ImportResult, type_check::builtins};
+use crate::{
+    nodes::EnderpyFile, ruff_python_import_resolver::import_result::ImportResult,
+    type_check::builtins,
+};
 
 #[derive(Debug, Clone)]
 pub struct SymbolTable {
@@ -18,6 +21,7 @@ pub struct SymbolTable {
 
     /// Name of the module that this symbol table is for
     pub module_name: String,
+    pub file_path: PathBuf,
 }
 
 #[derive(Debug, Clone)]
@@ -80,7 +84,7 @@ pub enum Declaration {
     // Alias is used for imports
     Alias(Alias),
 
-    Parameter(Paramter),
+    Parameter(Parameter),
     // TypeParameterDeclaration represents a type parameter in a generic class or function.
     // It models type parameters declared on classes and functions like T in List[T].
     TypeParameter(TypeParameter),
@@ -126,7 +130,7 @@ pub struct Function {
     /// return statements that are reachable in the top level function body
     pub return_statements: Vec<ast::Return>,
     /// yield statements that are reachable in the top level function body
-    pub yeild_statements: Vec<ast::Yield>,
+    pub yield_statements: Vec<ast::Yield>,
     /// raise statements that are reachable in the top level function body
     pub raise_statements: Vec<ast::Raise>,
 }
@@ -154,14 +158,14 @@ pub struct Class {
     // Method names, can be used to look up the function in the symbol table
     // of the class
     pub methods: Vec<String>,
-    // instance attibutes that are defined in the __init__ method
+    // instance attributes that are defined in the __init__ method
     // if the attribute is referencing another symbol we need to look up that symbol in the
     // __init__ method
     pub attributes: HashMap<String, ast::Expression>,
 }
 
 #[derive(Debug, Clone)]
-pub struct Paramter {
+pub struct Parameter {
     pub declaration_path: DeclarationPath,
     pub parameter_node: ast::Arg,
     pub type_annotation: Option<ast::Expression>,
@@ -208,7 +212,7 @@ pub enum SymbolScope {
 }
 
 impl SymbolTable {
-    pub fn global(module_name: String) -> Self {
+    pub fn global(enderpy_file: EnderpyFile) -> Self {
         let mut builtin_scope = SymbolTableScope {
             id: get_id(),
             symbol_table_type: SymbolTableType::BUILTIN,
@@ -296,7 +300,8 @@ impl SymbolTable {
             scopes: vec![builtin_scope, global_scope],
             all_scopes: vec![],
             _locals: HashMap::new(),
-            module_name,
+            module_name: enderpy_file.module_name(),
+            file_path: enderpy_file.path(),
         }
     }
 
@@ -313,13 +318,15 @@ impl SymbolTable {
         return &self.current_scope().symbol_table_type;
     }
 
-    /// Retuns scopes until the given position
+    /// Returns scopes until the given position
     /// the scopes are sorted by start position descending
     pub fn innermost_scope(&self, pos: usize) -> Option<&SymbolTableScope> {
+        log::debug!("looking for innermost scope for pos: {}", pos);
+        log::debug!("all scopes: {:#?}", self.all_scopes);
         return self
             .all_scopes
             .iter()
-            .filter(|scope| scope.start_pos < pos)
+            .filter(|scope| scope.start_pos <= pos)
             .last();
     }
 
@@ -327,6 +334,7 @@ impl SymbolTable {
     /// search for symbol in that scope
     /// if not found search in parent scope
     /// continue until found or no parent scope
+    /// TODO: This function does not work on the literal test
     pub fn lookup_in_scope(&self, lookup_request: LookupSymbolRequest) -> Option<&SymbolTableNode> {
         match lookup_request.position {
             Some(pos) => {

@@ -8,8 +8,9 @@
 use std::path::PathBuf;
 
 use enderpy_python_parser as parser;
-use enderpy_python_parser::ast::{Import, ImportFrom, Module, Statement};
+use enderpy_python_parser::ast::{Import, ImportFrom, Statement};
 use parser::error::ParsingError;
+use parser::Parser;
 
 use crate::{ast_visitor::TraversalVisitor, build_source::BuildSource, diagnostic::Position};
 
@@ -28,29 +29,12 @@ pub struct EnderpyFile {
 
     // All high level statements inside the file
     pub body: Vec<Statement>,
-    pub build_source: Box<BuildSource>,
+    pub build_source: BuildSource,
     // Parser Errors
     pub errors: Vec<ParsingError>,
 }
 
 impl EnderpyFile {
-    pub fn from(ast: Module, build_source: Box<BuildSource>, errors: Vec<ParsingError>) -> Self {
-        let mut file = Self {
-            defs: vec![],
-            imports: vec![],
-            body: vec![],
-            build_source,
-            errors,
-        };
-
-        for stmt in &ast.body {
-            file.visit_stmt(stmt);
-            file.body.push(stmt.clone());
-        }
-
-        file
-    }
-
     pub fn module_name(&self) -> String {
         self.build_source.module.clone()
     }
@@ -79,6 +63,31 @@ impl EnderpyFile {
             line: line_number,
             character: (pos - line_start - 1) as u32,
         }
+    }
+}
+
+impl From<BuildSource> for EnderpyFile {
+    fn from(build_source: BuildSource) -> Self {
+        let mut parser = Parser::new(
+            build_source.source.clone(),
+            build_source.path.as_path().to_str().unwrap().to_owned(),
+        );
+        let tree = parser.parse();
+
+        let mut file = EnderpyFile {
+            defs: vec![],
+            imports: vec![],
+            body: vec![],
+            build_source,
+            errors: parser.errors,
+        };
+
+        for stmt in &tree.body {
+            file.visit_stmt(stmt);
+            file.body.push(stmt.clone());
+        }
+
+        file
     }
 }
 

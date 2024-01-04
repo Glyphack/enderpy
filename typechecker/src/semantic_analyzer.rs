@@ -11,7 +11,7 @@ use crate::{
         import_result::ImportResult, module_descriptor::ImportModuleDescriptor,
     },
     symbol_table::{
-        Alias, Class, Declaration, DeclarationPath, Function, Paramter, SymbolScope, SymbolTable,
+        Alias, Class, Declaration, DeclarationPath, Function, Parameter, SymbolScope, SymbolTable,
         SymbolTableNode, SymbolTableScope, SymbolTableType, TypeAlias, Variable,
     },
 };
@@ -27,7 +27,7 @@ pub struct SemanticAnalyzer {
     /// if we have a file with the following imports this is how we use the map
     /// import os -> imports.get("os")
     /// from os import path -> imports.get("os")
-    pub imports: HashMap<String, ImportResult>,
+    pub imports: HashMap<ImportModuleDescriptor, ImportResult>,
     // TODO: Replace errors with another type
     errors: Vec<String>,
 
@@ -36,9 +36,9 @@ pub struct SemanticAnalyzer {
 
 #[allow(unused)]
 impl SemanticAnalyzer {
-    pub fn new(file: EnderpyFile, imports: HashMap<String, ImportResult>) -> Self {
-        let globals = SymbolTable::global(file.module_name());
+    pub fn new(file: EnderpyFile, imports: HashMap<ImportModuleDescriptor, ImportResult>) -> Self {
         log::debug!("Creating semantic analyzer for {}", file.module_name());
+        let globals = SymbolTable::global(file.clone());
         SemanticAnalyzer {
             globals,
             file,
@@ -93,7 +93,7 @@ impl SemanticAnalyzer {
                 }
             }
             Expression::Attribute(_) => {}
-            // TODO: Add oher expressions that can be assigned
+            // TODO: Add other expressions that can be assigned
             _ => {}
         }
     }
@@ -112,7 +112,7 @@ impl SemanticAnalyzer {
 
             self.create_symbol(
                 pos_only.arg.clone(),
-                Declaration::Parameter(Paramter {
+                Declaration::Parameter(Parameter {
                     declaration_path,
                     parameter_node: pos_only.clone(),
                     type_annotation: pos_only.annotation.clone(),
@@ -137,7 +137,7 @@ impl SemanticAnalyzer {
 
             self.create_symbol(
                 arg.arg.clone(),
-                Declaration::Parameter(Paramter {
+                Declaration::Parameter(Parameter {
                     declaration_path,
                     parameter_node: arg.clone(),
                     type_annotation: arg.annotation.clone(),
@@ -153,7 +153,7 @@ impl SemanticAnalyzer {
             };
             self.create_symbol(
                 arg.arg.clone(),
-                Declaration::Parameter(Paramter {
+                Declaration::Parameter(Parameter {
                     declaration_path,
                     parameter_node: arg.clone(),
                     type_annotation: arg.annotation.clone(),
@@ -169,7 +169,7 @@ impl SemanticAnalyzer {
             };
             self.create_symbol(
                 arg.arg.clone(),
-                Declaration::Parameter(Paramter {
+                Declaration::Parameter(Parameter {
                     declaration_path,
                     parameter_node: arg.clone(),
                     type_annotation: arg.annotation.clone(),
@@ -185,7 +185,7 @@ impl SemanticAnalyzer {
             };
             self.create_symbol(
                 arg.arg.clone(),
-                Declaration::Parameter(Paramter {
+                Declaration::Parameter(Parameter {
                     declaration_path,
                     parameter_node: arg.clone(),
                     type_annotation: arg.annotation.clone(),
@@ -264,10 +264,7 @@ impl TraversalVisitor for SemanticAnalyzer {
 
     fn visit_import(&mut self, i: &parser::ast::Import) {
         for alias in &i.names {
-            let import_result = match self
-                .imports
-                .get(&ImportModuleDescriptor::from(alias).name())
-            {
+            let import_result = match self.imports.get(&ImportModuleDescriptor::from(alias)) {
                 Some(result) => result.clone(),
                 None => ImportResult::not_found(),
             };
@@ -296,11 +293,10 @@ impl TraversalVisitor for SemanticAnalyzer {
                 node: alias.node,
             };
             // TODO: Report unresolved import if import_result is None
-            let module_import_result =
-                match self.imports.get(&ImportModuleDescriptor::from(_i).name()) {
-                    Some(result) => result.clone(),
-                    None => ImportResult::not_found(),
-                };
+            let module_import_result = match self.imports.get(&ImportModuleDescriptor::from(_i)) {
+                Some(result) => result.clone(),
+                None => ImportResult::not_found(),
+            };
             let declaration = Declaration::Alias(Alias {
                 declaration_path,
                 import_from_node: Some(_i.clone()),
@@ -453,7 +449,7 @@ impl TraversalVisitor for SemanticAnalyzer {
             is_method: self.is_inside_class(),
             is_generator: !yeild_statements.is_empty(),
             return_statements,
-            yeild_statements,
+            yield_statements: yeild_statements,
             raise_statements,
         });
         self.create_symbol(f.name.clone(), function_declaration);

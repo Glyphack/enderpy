@@ -1,16 +1,17 @@
 use std::{collections::HashMap, path::PathBuf};
 
-use enderpy_python_parser::{error::ParsingError, Parser};
+use enderpy_python_parser::error::ParsingError;
 use env_logger::Builder;
 use log::info;
 
 use crate::{
     build_source::BuildSource,
     diagnostic::Diagnostic,
-    nodes::EnderpyFile,
+    nodes::{EnderpyFile, ImportKinds},
     ruff_python_import_resolver as ruff_python_resolver,
     ruff_python_import_resolver::{
-        config::Config, execution_environment, module_descriptor::ImportModuleDescriptor, resolver,
+        config::Config, execution_environment, import_result::ImportResult,
+        module_descriptor::ImportModuleDescriptor, resolver,
     },
     settings::Settings,
     state::State,
@@ -65,66 +66,39 @@ impl BuildManager {
         }
         None
     }
-    pub fn parse(&self, build_source: &BuildSource) -> EnderpyFile {
-        let file_path = build_source.path.to_str().unwrap_or("");
-        let mut parser = Parser::new(build_source.source.clone(), file_path.into());
-        let tree = parser.parse();
-        EnderpyFile::from(tree, Box::new(build_source.clone()), parser.errors)
-    }
 
     // Entry point to analyze the program
     pub fn build(&mut self) {
         self.populate_modules();
-        self.pre_analysis();
     }
 
-    // Performs pre-analysis on the source files
-    // Fills up the symbol table for each module
-    fn pre_analysis(&mut self) {
-        let execution_environment = &execution_environment::ExecutionEnvironment {
-            root: self.options.root.clone(),
-            python_version: ruff_python_resolver::python_version::PythonVersion::Py312,
-            python_platform: ruff_python_resolver::python_platform::PythonPlatform::Darwin,
-            // Adding a blank path to the extra paths is a hack to make the resolver work
-            extra_paths: vec![PathBuf::from("")],
-        };
-
-        let import_config = &Config {
-            typeshed_path: self.options.import_discovery.typeshed_path.clone(),
-            stub_path: None,
-            venv_path: Some(self.options.root.clone()),
-            venv: None,
-        };
-        let host = &ruff_python_resolver::host::StaticHost::new(vec![]);
-        for state in self.modules.iter_mut() {
-            state
-                .1
-                .resolve_file_imports(execution_environment, import_config, host);
-            state.1.populate_symbol_table();
-        }
-    }
-
+    // Resolves imports in all files and then populates the symbol table
     fn populate_modules(&mut self) {
         for build_source in self.build_sources.iter() {
-            let file = self.parse(build_source);
-            let state = State::new(file);
-            self.modules.insert(build_source.module.clone(), state);
+            let build_source: BuildSource = build_source.clone();
+            let state = State::new(build_source.into());
+            self.modules.insert(state.file.module_name(), state);
         }
-        let initial_files = self.modules.values().collect();
-        let new_files = match self.options.follow_imports {
-            crate::settings::FollowImports::All => self.gather_files(initial_files, true),
-            crate::settings::FollowImports::Skip => self.gather_files(initial_files, false),
+        let (new_files, imports) = match self.options.follow_imports {
+            crate::settings::FollowImports::All => {
+                self.gather_files(self.build_sources.clone(), true)
+            }
+            crate::settings::FollowImports::Skip => {
+                self.gather_files(self.build_sources.clone(), false)
+            }
         };
-        for file in new_files {
-            self.modules.insert(file.file.module_name().clone(), file);
+        for build_source in new_files {
+            let module = self.create_module(build_source);
+            self.modules.insert(module.file.module_name(), module);
         }
-        for module in self.modules.values() {
+        for module in self.modules.values_mut() {
             info!("file: {:#?}", module.file.module_name());
+            module.populate_symbol_table(&imports);
         }
     }
 
     // Performs type checking passes over the code
-    // This step hapens after the binding phase
+    // This step happens after the binding phase
     pub fn type_check(&mut self) {
         self.build();
         // TODO: This is a hack to get all the symbol tables so we can resolve imports
@@ -188,7 +162,16 @@ impl BuildManager {
         }
     }
 
-    fn gather_files(&self, current_files: Vec<&State>, add_indirect_imports: bool) -> Vec<State> {
+    // Given a list of files, this function will resolve the imports in the files
+    // and add them to the modules.
+    fn gather_files(
+        &self,
+        initial_files: Vec<BuildSource>,
+        add_indirect_imports: bool,
+    ) -> (
+        Vec<BuildSource>,
+        HashMap<ImportModuleDescriptor, ImportResult>,
+    ) {
         let execution_environment = &execution_environment::ExecutionEnvironment {
             root: self.options.root.clone(),
             python_version: ruff_python_resolver::python_version::PythonVersion::Py312,
@@ -203,111 +186,30 @@ impl BuildManager {
             venv: None,
         };
 
+        let mut files_to_resolve: Vec<BuildSource> = vec![];
+        files_to_resolve.extend(initial_files);
+        let mut import_results = HashMap::new();
+        let mut imported_sources = Vec::new();
+
         log::debug!("import options: {:?}", execution_environment);
-        let mut new_imports = vec![];
-        let mut discovered_files = vec![];
-        for state in current_files {
-            let resolved_imports =
-                self.resolve_file_imports(state, execution_environment, import_config);
+        let mut new_imports: Vec<BuildSource> = vec![];
+        let host = &ruff_python_resolver::host::StaticHost::new(vec![]);
+        loop {
+            let enderpy_file = match files_to_resolve.pop() {
+                Some(source) => EnderpyFile::from(source),
+                None => break,
+            };
+            let resolved_imports = self.resolve_file_imports(
+                enderpy_file,
+                execution_environment,
+                import_config,
+                host,
+                &import_results,
+            );
             // check if the resolved_imports are not in the current files and add them to
             // the new imports
-            for (_, state) in resolved_imports {
-                if !self.modules.contains_key(&state.file.module_name()) {
-                    new_imports.push(state);
-                }
-            }
-        }
-
-        if !add_indirect_imports {
-            return discovered_files;
-        }
-
-        discovered_files.extend(new_imports.clone());
-
-        while !new_imports.is_empty() {
-            let mut next_imports = vec![];
-            for state in new_imports {
-                let resolved_imports =
-                    self.resolve_file_imports(&state, execution_environment, import_config);
-                // check if the resolved_imports are not in the current files and add them to
-                // the new imports
-                for (_, state) in resolved_imports {
-                    if !self.modules.contains_key(&state.file.module_name()) {
-                        // check no discovered file with the same name exists
-                        if !discovered_files
-                            .iter()
-                            .any(|x| x.file.module_name() == state.file.module_name())
-                        {
-                            next_imports.push(state);
-                        }
-                    }
-                }
-            }
-            discovered_files.extend(next_imports.clone());
-            new_imports = next_imports;
-        }
-        discovered_files
-    }
-
-    // Resolves imports in a file and return the resolved paths
-    // TODO: This function is doing duplicate work because we resolve the imports in
-    // the State module as well. We should refactor this and possibly only do it
-    // in the State module
-    fn resolve_file_imports(
-        &self,
-        state: &State,
-        execution_environment: &execution_environment::ExecutionEnvironment,
-        import_config: &Config,
-    ) -> HashMap<String, State> {
-        let host = &ruff_python_resolver::host::StaticHost::new(vec![]);
-        let mut resolved_paths = HashMap::new();
-        let mut resolved_imports = vec![];
-        for import in state.file.imports.iter() {
-            let import_descriptions = match import {
-                crate::nodes::ImportKinds::Import(i) => i
-                    .names
-                    .iter()
-                    .map(
-                        |x| ruff_python_resolver::module_descriptor::ImportModuleDescriptor {
-                            leading_dots: 0,
-                            name_parts: x
-                                .name
-                                .chars()
-                                .skip_while(|c| *c == '.')
-                                .collect::<String>()
-                                .split('.')
-                                .map(std::string::ToString::to_string)
-                                .collect(),
-                            imported_symbols: vec![],
-                        },
-                    )
-                    .collect::<Vec<ImportModuleDescriptor>>(),
-                crate::nodes::ImportKinds::ImportFrom(i) => {
-                    vec![
-                        ruff_python_resolver::module_descriptor::ImportModuleDescriptor {
-                            leading_dots: i.level,
-                            name_parts: i
-                                .module
-                                .chars()
-                                .skip_while(|c| *c == '.')
-                                .collect::<String>()
-                                .split('.')
-                                .map(std::string::ToString::to_string)
-                                .collect(),
-                            imported_symbols: i.names.iter().map(|x| x.name.clone()).collect(),
-                        },
-                    ]
-                }
-            };
-
-            for import_desc in import_descriptions {
-                let mut resolved = resolver::resolve_import(
-                    state.file.path().as_path(),
-                    execution_environment,
-                    &import_desc,
-                    import_config,
-                    host,
-                );
+            for (import_desc, resolved) in resolved_imports {
+                import_results.insert(import_desc, resolved.clone());
                 if resolved.is_import_found {
                     for resolved_path in resolved.resolved_paths.iter() {
                         let source = match std::fs::read_to_string(resolved_path) {
@@ -317,28 +219,163 @@ impl BuildManager {
                                 continue;
                             }
                         };
-                        let build_source =
-                            BuildSource::from_path(resolved_path.clone(), true).unwrap();
-                        resolved_imports.push(build_source);
+                        let build_source = match BuildSource::from_path(resolved_path.clone(), true)
+                        {
+                            Ok(build_source) => {
+                                imported_sources.push(build_source.clone());
+                                files_to_resolve.push(build_source);
+                            }
+                            Err(e) => {
+                                log::warn!("cannot read file: {}", e);
+                                continue;
+                            }
+                        };
                     }
 
-                    for (name, implicit_import) in resolved.implicit_imports.iter() {
-                        let source = std::fs::read_to_string(implicit_import.path.clone()).unwrap();
-                        let build_source =
-                            BuildSource::from_path(implicit_import.path.clone(), true).unwrap();
-                        resolved_imports.push(build_source);
-                    }
+                    // TODO: not sure if this part is needed. Need to check when we have more tests
+                    // on builder. This is supposed to add implicit imports to the build sources
+                    // implicit import example: import foo.bar
+                    // foo/bar/__init__.py
+                    // In this case, we need to add foo/bar/__init__.py to the build sources
+                    // for (name, implicit_import) in resolved.implicit_imports.iter() {
+                    //     if self
+                    //         .modules
+                    //         .contains_key(&get_module_name(&implicit_import.path))
+                    //     {
+                    //         log::debug!(
+                    //             "implicit import already exists: {}",
+                    //             get_module_name(&implicit_import.path)
+                    //         );
+                    //         continue;
+                    //     }
+                    //     let source = std::fs::read_to_string(implicit_import.path.clone()).unwrap();
+                    //     let build_source =
+                    //         BuildSource::from_path(implicit_import.path.clone(), true).unwrap();
+                    // self.build_sources.push(build_source);
+                    // self.add_to_modules(&build_source);
+                    // match self.modules.get(&build_source.module) {
+                    //     Some(discovered_module) => {
+                    //         if !self.modules.contains_key(&build_source.module) {
+                    //             new_imports.push(discovered_module);
+                    //         }
+                    //     }
+                    //     None => {
+                    //         panic!("cannot find module: {}", build_source.module);
+                    //     }
+                    // }
+                    // }
                 }
             }
         }
 
-        for resolved_import in resolved_imports {
-            let file = self.parse(&resolved_import);
-            let state = State::new(file);
-            resolved_paths.insert(state.file.module_name().clone(), state);
+        // if !add_indirect_imports {
+        //     return;
+        // }
+        //
+        // // Follow the import files and add them to the modules as well
+        // while !new_imports.is_empty() {
+        //     let mut next_imports = vec![];
+        //     for state in new_imports {
+        //         let resolved_imports = state.resolve_file_imports(
+        //             execution_environment,
+        //             import_config,
+        //             host,
+        //             &cached_imports,
+        //         );
+        //         // check if the resolved_imports are not in the current files and add them to
+        //         // the new imports
+        //         for (_, resolved_import) in resolved_imports {
+        //             if !resolved_import.is_import_found {
+        //                 continue;
+        //             }
+        //             for resolved_path in resolved_import.resolved_paths {
+        //                 if self.modules.contains_key(&get_module_name(&resolved_path)) {
+        //                     log::debug!("imported file already in modules: {:?}", resolved_path);
+        //                     continue;
+        //                 }
+        //                 let build_source = match BuildSource::from_path(resolved_path, true) {
+        //                     Ok(build_source) => build_source,
+        //                     Err(e) => {
+        //                         log::warn!("cannot read file: {}", e);
+        //                         continue;
+        //                     }
+        //                 };
+        //                 match self.modules.get(&build_source.module) {
+        //                     Some(state) => {
+        //                         if !self.modules.contains_key(&build_source.module) {
+        //                             next_imports.push(state);
+        //                         }
+        //                     }
+        //                     None => {
+        //                         panic!("cannot find module: {}", build_source.module);
+        //                     }
+        //                 }
+        //             }
+        //         }
+        //     }
+        //     new_imports = next_imports;
+        // }
+        (imported_sources, import_results)
+    }
+
+    // TODO: refactor to implement From/to trait
+    fn create_module(&self, build_source: BuildSource) -> State {
+        let state = State::new(EnderpyFile::from(build_source));
+        state
+    }
+
+    fn resolve_file_imports(
+        &self,
+        file: EnderpyFile,
+        execution_environment: &ruff_python_resolver::execution_environment::ExecutionEnvironment,
+        import_config: &ruff_python_resolver::config::Config,
+        host: &ruff_python_resolver::host::StaticHost,
+        cached_imports: &HashMap<ImportModuleDescriptor, ImportResult>,
+    ) -> HashMap<ImportModuleDescriptor, ImportResult> {
+        log::debug!("resolving imports for file: {}", file.module_name());
+        let mut imports = HashMap::new();
+        for import in file.imports.iter() {
+            let import_descriptions = match import {
+                ImportKinds::Import(i) => i
+                    .names
+                    .iter()
+                    .map(|x| {
+                        ruff_python_resolver::module_descriptor::ImportModuleDescriptor::from(x)
+                    })
+                    .collect::<Vec<ImportModuleDescriptor>>(),
+                ImportKinds::ImportFrom(i) => {
+                    vec![ruff_python_resolver::module_descriptor::ImportModuleDescriptor::from(i)]
+                }
+            };
+            log::debug!("import descriptions: {:?}", import_descriptions);
+
+            for import_desc in import_descriptions {
+                let resolved = match cached_imports.contains_key(&import_desc) {
+                    true => continue,
+                    false => resolver::resolve_import(
+                        file.path().as_path(),
+                        execution_environment,
+                        &import_desc,
+                        import_config,
+                        host,
+                    ),
+                };
+
+                if !resolved.is_import_found {
+                    let error = format!("cannot import name '{}'", import_desc.name());
+                    log::warn!("{}", error);
+                    continue;
+                }
+                log::debug!(
+                    "resolved import: {} -> {:?}",
+                    import_desc.name(),
+                    resolved.resolved_paths
+                );
+                imports.insert(import_desc, resolved.clone());
+            }
         }
 
-        resolved_paths
+        return imports.clone();
     }
 }
 
@@ -444,14 +481,8 @@ mod tests {
             let mut settings = insta::Settings::clone_current();
             settings.set_snapshot_path("../testdata/output/");
             settings.set_description(fs::read_to_string(path).unwrap());
-            settings.add_filter(
-                r"/.*/typechecker",
-                "[TYPECHECKER]",
-            );
-            settings.add_filter(
-                r"/.*/typeshed",
-                "[TYPESHED]",
-            );
+            settings.add_filter(r"/.*/typechecker", "[TYPECHECKER]");
+            settings.add_filter(r"/.*/typeshed", "[TYPESHED]");
             settings.add_filter(
                 r"module_name: .*.typechecker.test_data.inputs.symbol_table..*.py",
                 "module_name: [REDACTED]",
