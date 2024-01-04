@@ -20,7 +20,7 @@ use crate::{
     nodes::EnderpyFile,
     state::State,
     symbol_table::{
-        self, Class, Declaration, DeclarationPath, LookupSymbolRequest, SymbolTable,
+        self, Class, Declaration, LookupSymbolRequest, SymbolTable,
         SymbolTableNode,
     },
     type_check::types::ClassType,
@@ -757,12 +757,12 @@ impl TypeEvaluator {
                                                 Some(found_in_symbol_table.clone()),
                                             );
                                             if pointing_class.name == "_SpecialForm" {
-                                                return Class {
+                                                Class {
                                                     name: n.id,
                                                     declaration_path: v.declaration_path.clone(),
                                                     methods: vec![],
                                                     attributes: HashMap::new(),
-                                                };
+                                                }
                                             } else {
                                                 pointing_class
                                             }
@@ -1114,79 +1114,6 @@ impl TraversalVisitorImmutGeneric<PythonType> for TypeEvaluator {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use std::{fs, path::PathBuf};
-
-    use insta::glob;
-
-    use super::*;
-    use crate::{build::BuildManager, build_source::BuildSource, settings::Settings};
-
-    fn snapshot_type_eval(source: &str) -> String {
-        use enderpy_python_parser::Parser;
-
-        let mut parser = Parser::new(source.to_string(), "".into());
-        let ast_module = parser.parse();
-        let build_source = BuildSource {
-            path: PathBuf::from("test-file"),
-            source: source.to_string(),
-            module: "test".to_string(),
-            followed: false,
-        };
-
-        // we use the manager to also import the python typeshed into modules
-        // This can be refactored but for now it's fine
-        let mut manager = BuildManager::new(vec![build_source], Settings::test_settings());
-        manager.build();
-
-        let mut all_symbol_tables = Vec::new();
-        for module in manager.modules.values() {
-            all_symbol_tables.push(module.get_symbol_table());
-        }
-
-        let module = manager.get_state("test-file".into()).unwrap();
-        let symbol_table = module.get_symbol_table();
-
-        let type_eval = TypeEvaluator {
-            symbol_table,
-            imported_symbol_tables: all_symbol_tables,
-        };
-
-        let mut type_eval_visitor = DumpTypes::new(module.file.clone(), type_eval);
-        type_eval_visitor.visit_module();
-
-        let result = type_eval_visitor.types;
-
-        // sort result by key
-        let mut result_sorted = result.clone().into_iter().collect::<Vec<_>>();
-        result_sorted.sort_by(|a, b| a.0.cmp(&b.0));
-
-        format!("{:#?}", result_sorted)
-    }
-
-    #[test]
-    fn test_type_evaluator() {
-        glob!("test_data/inputs/", "*.py", |path| {
-            let contents = fs::read_to_string(path).unwrap();
-            let result = snapshot_type_eval(&contents);
-            let _ = env_logger::builder()
-                .filter_level(log::LevelFilter::Debug)
-                .is_test(true)
-                .try_init();
-
-            // TODO move this redaction setting to a central place
-            let mut settings = insta::Settings::clone_current();
-            settings.add_filter(r"module_name: .*.typeshed.", "module_name: [TYPESHED].");
-            settings.set_snapshot_path("./test_data/output/");
-            settings.set_description(fs::read_to_string(path).unwrap());
-            settings.bind(|| {
-                insta::assert_snapshot!(result);
-            });
-        })
-    }
-}
-
 /// visits the ast and calls get_type on each expression and saves that type in
 /// the types hashmap the key is the position of the expression in the source:
 /// (line, start, end)
@@ -1338,5 +1265,78 @@ impl TraversalVisitor for DumpTypes {
             ast::Expression::JoinedStr(j) => self.visit_joined_str(j),
             ast::Expression::FormattedValue(f) => self.visit_formatted_value(f),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::{fs, path::PathBuf};
+
+    use insta::glob;
+
+    use super::*;
+    use crate::{build::BuildManager, build_source::BuildSource, settings::Settings};
+
+    fn snapshot_type_eval(source: &str) -> String {
+        use enderpy_python_parser::Parser;
+
+        let mut parser = Parser::new(source.to_string(), "".into());
+        let ast_module = parser.parse();
+        let build_source = BuildSource {
+            path: PathBuf::from("test-file"),
+            source: source.to_string(),
+            module: "test".to_string(),
+            followed: false,
+        };
+
+        // we use the manager to also import the python typeshed into modules
+        // This can be refactored but for now it's fine
+        let mut manager = BuildManager::new(vec![build_source], Settings::test_settings());
+        manager.build();
+
+        let mut all_symbol_tables = Vec::new();
+        for module in manager.modules.values() {
+            all_symbol_tables.push(module.get_symbol_table());
+        }
+
+        let module = manager.get_state("test-file".into()).unwrap();
+        let symbol_table = module.get_symbol_table();
+
+        let type_eval = TypeEvaluator {
+            symbol_table,
+            imported_symbol_tables: all_symbol_tables,
+        };
+
+        let mut type_eval_visitor = DumpTypes::new(module.file.clone(), type_eval);
+        type_eval_visitor.visit_module();
+
+        let result = type_eval_visitor.types;
+
+        // sort result by key
+        let mut result_sorted = result.clone().into_iter().collect::<Vec<_>>();
+        result_sorted.sort_by(|a, b| a.0.cmp(&b.0));
+
+        format!("{:#?}", result_sorted)
+    }
+
+    #[test]
+    fn test_type_evaluator() {
+        glob!("test_data/inputs/", "*.py", |path| {
+            let contents = fs::read_to_string(path).unwrap();
+            let result = snapshot_type_eval(&contents);
+            let _ = env_logger::builder()
+                .filter_level(log::LevelFilter::Debug)
+                .is_test(true)
+                .try_init();
+
+            // TODO move this redaction setting to a central place
+            let mut settings = insta::Settings::clone_current();
+            settings.add_filter(r"module_name: .*.typeshed.", "module_name: [TYPESHED].");
+            settings.set_snapshot_path("./test_data/output/");
+            settings.set_description(fs::read_to_string(path).unwrap());
+            settings.bind(|| {
+                insta::assert_snapshot!(result);
+            });
+        })
     }
 }

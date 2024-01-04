@@ -48,7 +48,7 @@ impl Settings {
             follow_imports: FollowImports::All,
             import_discovery: ImportDiscovery {
                 python_executable: None,
-                typeshed_path: Some(PathBuf::from(file_dir.parent().unwrap().join("typeshed"))),
+                typeshed_path: Some(file_dir.parent().unwrap().join("typeshed")),
             },
         }
     }

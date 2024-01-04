@@ -219,7 +219,7 @@ impl BuildManager {
                                 continue;
                             }
                         };
-                        let build_source = match BuildSource::from_path(resolved_path.clone(), true)
+                        match BuildSource::from_path(resolved_path.clone(), true)
                         {
                             Ok(build_source) => {
                                 imported_sources.push(build_source.clone());
@@ -326,8 +326,8 @@ impl BuildManager {
 
     // TODO: refactor to implement From/to trait
     fn create_module(&self, build_source: BuildSource) -> State {
-        let state = State::new(EnderpyFile::from(build_source));
-        state
+        
+        State::new(EnderpyFile::from(build_source))
     }
 
     fn resolve_file_imports(
@@ -381,7 +381,7 @@ impl BuildManager {
             }
         }
 
-        return imports.clone();
+        imports.clone()
     }
 }
 
