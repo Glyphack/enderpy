@@ -194,11 +194,8 @@ impl BuildManager {
         log::debug!("import options: {:?}", execution_environment);
         let mut new_imports: Vec<BuildSource> = vec![];
         let host = &ruff_python_resolver::host::StaticHost::new(vec![]);
-        loop {
-            let enderpy_file = match files_to_resolve.pop() {
-                Some(source) => EnderpyFile::from(source),
-                None => break,
-            };
+        while let Some(source) = files_to_resolve.pop() {
+            let enderpy_file = EnderpyFile::from(source);
             let resolved_imports = self.resolve_file_imports(
                 enderpy_file,
                 execution_environment,
