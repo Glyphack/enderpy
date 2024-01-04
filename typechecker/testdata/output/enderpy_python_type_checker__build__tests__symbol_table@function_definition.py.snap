@@ -6,6 +6,103 @@ input_file: typechecker/test_data/inputs/symbol_table/function_definition.py
 ---
 -------------------
 global scope:
+all scopes:
+Symbols: in func (id: [REDACTED])
+a
+- Declarations:
+--:   Parameter {
+    declaration_path: DeclarationPath {
+        module_name: [REDACTED]",
+        node: Node {
+            start: 9,
+            end: 10,
+        },
+    },
+    parameter_node: Arg {
+        node: Node {
+            start: 9,
+            end: 10,
+        },
+        arg: "a",
+        annotation: None,
+    },
+    type_annotation: None,
+    default_value: None,
+}
+b
+- Declarations:
+--:   Parameter {
+    declaration_path: DeclarationPath {
+        module_name: [REDACTED]",
+        node: Node {
+            start: 12,
+            end: 13,
+        },
+    },
+    parameter_node: Arg {
+        node: Node {
+            start: 12,
+            end: 13,
+        },
+        arg: "b",
+        annotation: None,
+    },
+    type_annotation: None,
+    default_value: None,
+}
+c
+- Declarations:
+--:   Parameter {
+    declaration_path: DeclarationPath {
+        module_name: [REDACTED]",
+        node: Node {
+            start: 19,
+            end: 24,
+        },
+    },
+    parameter_node: Arg {
+        node: Node {
+            start: 19,
+            end: 24,
+        },
+        arg: "c",
+        annotation: None,
+    },
+    type_annotation: None,
+    default_value: Some(
+        Constant(
+            Constant {
+                node: Node {
+                    start: 23,
+                    end: 24,
+                },
+                value: 2,
+            },
+        ),
+    ),
+}
+e
+- Declarations:
+--:   Parameter {
+    declaration_path: DeclarationPath {
+        module_name: [REDACTED]",
+        node: Node {
+            start: 28,
+            end: 29,
+        },
+    },
+    parameter_node: Arg {
+        node: Node {
+            start: 28,
+            end: 29,
+        },
+        arg: "e",
+        annotation: None,
+    },
+    type_annotation: None,
+    default_value: None,
+}
+
 Symbols: in global (id: [REDACTED])
 func
 - Declarations:
@@ -99,105 +196,8 @@ func
     is_method: false,
     is_generator: false,
     return_statements: [],
-    yeild_statements: [],
+    yield_statements: [],
     raise_statements: [],
-}
-
-all scopes:
-Symbols: in func (id: [REDACTED])
-a
-- Declarations:
---:   Paramter {
-    declaration_path: DeclarationPath {
-        module_name: [REDACTED]",
-        node: Node {
-            start: 9,
-            end: 10,
-        },
-    },
-    parameter_node: Arg {
-        node: Node {
-            start: 9,
-            end: 10,
-        },
-        arg: "a",
-        annotation: None,
-    },
-    type_annotation: None,
-    default_value: None,
-}
-b
-- Declarations:
---:   Paramter {
-    declaration_path: DeclarationPath {
-        module_name: [REDACTED]",
-        node: Node {
-            start: 12,
-            end: 13,
-        },
-    },
-    parameter_node: Arg {
-        node: Node {
-            start: 12,
-            end: 13,
-        },
-        arg: "b",
-        annotation: None,
-    },
-    type_annotation: None,
-    default_value: None,
-}
-c
-- Declarations:
---:   Paramter {
-    declaration_path: DeclarationPath {
-        module_name: [REDACTED]",
-        node: Node {
-            start: 19,
-            end: 24,
-        },
-    },
-    parameter_node: Arg {
-        node: Node {
-            start: 19,
-            end: 24,
-        },
-        arg: "c",
-        annotation: None,
-    },
-    type_annotation: None,
-    default_value: Some(
-        Constant(
-            Constant {
-                node: Node {
-                    start: 23,
-                    end: 24,
-                },
-                value: 2,
-            },
-        ),
-    ),
-}
-e
-- Declarations:
---:   Paramter {
-    declaration_path: DeclarationPath {
-        module_name: [REDACTED]",
-        node: Node {
-            start: 28,
-            end: 29,
-        },
-    },
-    parameter_node: Arg {
-        node: Node {
-            start: 28,
-            end: 29,
-        },
-        arg: "e",
-        annotation: None,
-    },
-    type_annotation: None,
-    default_value: None,
 }
 
 -------------------

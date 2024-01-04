@@ -6,34 +6,6 @@ input_file: typechecker/test_data/inputs/symbol_table/class_definition.py
 ---
 -------------------
 global scope:
-Symbols: in global (id: [REDACTED])
-c
-- Declarations:
---:   Class {
-    name: "c",
-    declaration_path: DeclarationPath {
-        module_name: [REDACTED]",
-        node: Node {
-            start: 0,
-            end: 80,
-        },
-    },
-    methods: [
-        "__init__",
-    ],
-    attributes: {
-        "c": Name(
-            Name {
-                node: Node {
-                    start: 78,
-                    end: 79,
-                },
-                id: "b",
-            },
-        ),
-    },
-}
-
 all scopes:
 Symbols: in __init__ (id: [REDACTED])
 a
@@ -88,7 +60,7 @@ b
 }
 self
 - Declarations:
---:   Paramter {
+--:   Parameter {
     declaration_path: DeclarationPath {
         module_name: [REDACTED]",
         node: Node {
@@ -250,8 +222,36 @@ __init__
     is_method: true,
     is_generator: false,
     return_statements: [],
-    yeild_statements: [],
+    yield_statements: [],
     raise_statements: [],
+}
+
+Symbols: in global (id: [REDACTED])
+c
+- Declarations:
+--:   Class {
+    name: "c",
+    declaration_path: DeclarationPath {
+        module_name: [REDACTED]",
+        node: Node {
+            start: 0,
+            end: 80,
+        },
+    },
+    methods: [
+        "__init__",
+    ],
+    attributes: {
+        "c": Name(
+            Name {
+                node: Node {
+                    start: 78,
+                    end: 79,
+                },
+                id: "b",
+            },
+        ),
+    },
 }
 
 -------------------

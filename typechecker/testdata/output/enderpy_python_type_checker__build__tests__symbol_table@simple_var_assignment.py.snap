@@ -6,6 +6,7 @@ input_file: typechecker/test_data/inputs/symbol_table/simple_var_assignment.py
 ---
 -------------------
 global scope:
+all scopes:
 Symbols: in global (id: [REDACTED])
 a
 - Declarations:
@@ -146,6 +147,5 @@ f
     is_constant: false,
 }
 
-all scopes:
 -------------------
 

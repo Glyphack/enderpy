@@ -1,6 +1,6 @@
 ---
-source: parser/src/lexer/lexer.rs
-description: "if a:\n\n    f = c\n\n    # Path: test_local.py\t\n"
+source: parser/src/lexer/mod.rs
+description: "if a:\n\n    f = c\n\n    # Path: test_local.py\n"
 ---
 [
     Token {
@@ -80,23 +80,23 @@ description: "if a:\n\n    f = c\n\n    # Path: test_local.py\t\n"
     Token {
         kind: Comment,
         value: Str(
-            "# Path: test_local.py\t",
+            "# Path: test_local.py",
         ),
         start: 22,
-        end: 44,
+        end: 43,
     },
     Token {
         kind: NewLine,
         value: None,
-        start: 44,
-        end: 45,
+        start: 43,
+        end: 44,
     },
     Token {
         kind: Dedent,
         value: Indent(
             1,
         ),
-        start: 45,
-        end: 45,
+        start: 44,
+        end: 44,
     },
 ]

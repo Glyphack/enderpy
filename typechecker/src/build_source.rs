@@ -28,6 +28,15 @@ impl BuildSource {
     }
 }
 
-fn get_module_name(path: &Path) -> String {
+pub fn get_module_name(path: &Path) -> String {
     path.to_str().unwrap_or_default().replace(['/', '\\'], ".")
 }
+
+// impl Into<EnderpyFile> for BuildSource {
+//     fn into(self) -> EnderpyFile {
+//         let file_path = self.path.to_str().unwrap_or("could not get path");
+//         let mut parser = Parser::new(self.source.clone(), file_path.into());
+//         let tree = parser.parse();
+//         EnderpyFile::from(tree, Box::new(self.clone()), parser.errors)
+//     }
+// }

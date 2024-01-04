@@ -7,12 +7,24 @@ input_file: typechecker/src/type_check/test_data/inputs/union.py
 [
     (
         "(line: 10, character: 3):(line: 10, character: 24)",
-        MultiValue(
-            [
-                Str,
-                Int,
-                None,
-            ],
+        Class(
+            ClassType {
+                details: Class {
+                    name: "Union",
+                    declaration_path: DeclarationPath {
+                        module_name: [TYPESHED].stdlib.typing.pyi",
+                        node: Node {
+                            start: 4773,
+                            end: 4792,
+                        },
+                    },
+                    methods: [],
+                    attributes: {},
+                },
+                type_parameters: [
+                    Unknown,
+                ],
+            },
         ),
     ),
     (
@@ -42,11 +54,24 @@ input_file: typechecker/src/type_check/test_data/inputs/union.py
     ),
     (
         "(line: 6, character: 3):(line: 6, character: 18)",
-        MultiValue(
-            [
-                Str,
-                Int,
-            ],
+        Class(
+            ClassType {
+                details: Class {
+                    name: "Union",
+                    declaration_path: DeclarationPath {
+                        module_name: [TYPESHED].stdlib.typing.pyi",
+                        node: Node {
+                            start: 4773,
+                            end: 4792,
+                        },
+                    },
+                    methods: [],
+                    attributes: {},
+                },
+                type_parameters: [
+                    Unknown,
+                ],
+            },
         ),
     ),
     (

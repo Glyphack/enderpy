@@ -6,6 +6,7 @@ input_file: typechecker/test_data/inputs/symbol_table/imports.py
 ---
 -------------------
 global scope:
+all scopes:
 Symbols: in global (id: [REDACTED])
 *
 - Declarations:
@@ -50,10 +51,10 @@ Symbols: in global (id: [REDACTED])
         is_stub_package: false,
         import_type: Local,
         resolved_paths: [
-            "[REDACTED]/variables.py",
+            "[TYPECHECKER]/test_data/inputs/symbol_table/variables.py",
         ],
         search_path: Some(
-            "[REDACTED]",
+            "[TYPECHECKER]/test_data/inputs/symbol_table",
         ),
         is_stub_file: false,
         is_native_lib: false,
@@ -105,28 +106,69 @@ Symbols: in global (id: [REDACTED])
     ),
     import_result: ImportResult {
         is_relative: false,
-        is_import_found: false,
+        is_import_found: true,
         is_partly_resolved: false,
         is_namespace_package: false,
-        is_init_file_present: false,
+        is_init_file_present: true,
         is_stub_package: false,
-        import_type: Local,
-        resolved_paths: [],
-        search_path: None,
-        is_stub_file: false,
+        import_type: BuiltIn,
+        resolved_paths: [
+            "[TYPESHED]/stdlib/os/__init__.pyi",
+        ],
+        search_path: Some(
+            "[TYPESHED]/stdlib",
+        ),
+        is_stub_file: true,
         is_native_lib: false,
-        is_stdlib_typeshed_file: false,
+        is_stdlib_typeshed_file: true,
         is_third_party_typeshed_file: false,
         is_local_typings_file: false,
         implicit_imports: ImplicitImports(
-            {},
+            {
+                "path": ImplicitImport {
+                    is_stub_file: true,
+                    is_native_lib: false,
+                    path: "[TYPESHED]/stdlib/os/path.pyi",
+                    py_typed: None,
+                },
+            },
         ),
         filtered_implicit_imports: ImplicitImports(
             {},
         ),
-        non_stub_import_result: None,
+        non_stub_import_result: Some(
+            ImportResult {
+                is_relative: false,
+                is_import_found: false,
+                is_partly_resolved: false,
+                is_namespace_package: false,
+                is_init_file_present: false,
+                is_stub_package: false,
+                import_type: Local,
+                resolved_paths: [],
+                search_path: Some(
+                    "",
+                ),
+                is_stub_file: false,
+                is_native_lib: false,
+                is_stdlib_typeshed_file: false,
+                is_third_party_typeshed_file: false,
+                is_local_typings_file: false,
+                implicit_imports: ImplicitImports(
+                    {},
+                ),
+                filtered_implicit_imports: ImplicitImports(
+                    {},
+                ),
+                non_stub_import_result: None,
+                py_typed_info: None,
+                package_directory: None,
+            },
+        ),
         py_typed_info: None,
-        package_directory: None,
+        package_directory: Some(
+            "[TYPESHED]/stdlib/os",
+        ),
     },
 }
 a
@@ -172,10 +214,10 @@ a
         is_stub_package: false,
         import_type: Local,
         resolved_paths: [
-            "[REDACTED]/variables.py",
+            "[TYPECHECKER]/test_data/inputs/symbol_table/variables.py",
         ],
         search_path: Some(
-            "[REDACTED]",
+            "[TYPECHECKER]/test_data/inputs/symbol_table",
         ),
         is_stub_file: false,
         is_native_lib: false,
@@ -232,10 +274,10 @@ import_test
         is_stub_package: false,
         import_type: Local,
         resolved_paths: [
-            "[REDACTED]/import_test/__init__.py",
+            "[TYPECHECKER]/test_data/inputs/symbol_table/import_test/__init__.py",
         ],
         search_path: Some(
-            "[REDACTED]",
+            "[TYPECHECKER]/test_data/inputs/symbol_table",
         ),
         is_stub_file: false,
         is_native_lib: false,
@@ -251,7 +293,7 @@ import_test
         non_stub_import_result: None,
         py_typed_info: None,
         package_directory: Some(
-            "[REDACTED]/import_test",
+            "[TYPECHECKER]/test_data/inputs/symbol_table/import_test",
         ),
     },
 }
@@ -291,17 +333,22 @@ join
     ),
     import_result: ImportResult {
         is_relative: false,
-        is_import_found: false,
+        is_import_found: true,
         is_partly_resolved: false,
         is_namespace_package: false,
-        is_init_file_present: false,
+        is_init_file_present: true,
         is_stub_package: false,
-        import_type: Local,
-        resolved_paths: [],
-        search_path: None,
-        is_stub_file: false,
+        import_type: BuiltIn,
+        resolved_paths: [
+            "[TYPESHED]/stdlib/os/__init__.pyi",
+            "[TYPESHED]/stdlib/os/path.pyi",
+        ],
+        search_path: Some(
+            "[TYPESHED]/stdlib",
+        ),
+        is_stub_file: true,
         is_native_lib: false,
-        is_stdlib_typeshed_file: false,
+        is_stdlib_typeshed_file: true,
         is_third_party_typeshed_file: false,
         is_local_typings_file: false,
         implicit_imports: ImplicitImports(
@@ -310,9 +357,39 @@ join
         filtered_implicit_imports: ImplicitImports(
             {},
         ),
-        non_stub_import_result: None,
+        non_stub_import_result: Some(
+            ImportResult {
+                is_relative: false,
+                is_import_found: false,
+                is_partly_resolved: false,
+                is_namespace_package: false,
+                is_init_file_present: false,
+                is_stub_package: false,
+                import_type: Local,
+                resolved_paths: [],
+                search_path: Some(
+                    "",
+                ),
+                is_stub_file: false,
+                is_native_lib: false,
+                is_stdlib_typeshed_file: false,
+                is_third_party_typeshed_file: false,
+                is_local_typings_file: false,
+                implicit_imports: ImplicitImports(
+                    {},
+                ),
+                filtered_implicit_imports: ImplicitImports(
+                    {},
+                ),
+                non_stub_import_result: None,
+                py_typed_info: None,
+                package_directory: None,
+            },
+        ),
         py_typed_info: None,
-        package_directory: None,
+        package_directory: Some(
+            "[TYPESHED]/stdlib/os",
+        ),
     },
 }
 os.path
@@ -347,17 +424,22 @@ os.path
     symbol_name: None,
     import_result: ImportResult {
         is_relative: false,
-        is_import_found: false,
+        is_import_found: true,
         is_partly_resolved: false,
         is_namespace_package: false,
-        is_init_file_present: false,
+        is_init_file_present: true,
         is_stub_package: false,
-        import_type: Local,
-        resolved_paths: [],
-        search_path: None,
-        is_stub_file: false,
+        import_type: BuiltIn,
+        resolved_paths: [
+            "[TYPESHED]/stdlib/os/__init__.pyi",
+            "[TYPESHED]/stdlib/os/path.pyi",
+        ],
+        search_path: Some(
+            "[TYPESHED]/stdlib",
+        ),
+        is_stub_file: true,
         is_native_lib: false,
-        is_stdlib_typeshed_file: false,
+        is_stdlib_typeshed_file: true,
         is_third_party_typeshed_file: false,
         is_local_typings_file: false,
         implicit_imports: ImplicitImports(
@@ -366,9 +448,39 @@ os.path
         filtered_implicit_imports: ImplicitImports(
             {},
         ),
-        non_stub_import_result: None,
+        non_stub_import_result: Some(
+            ImportResult {
+                is_relative: false,
+                is_import_found: false,
+                is_partly_resolved: false,
+                is_namespace_package: false,
+                is_init_file_present: false,
+                is_stub_package: false,
+                import_type: Local,
+                resolved_paths: [],
+                search_path: Some(
+                    "",
+                ),
+                is_stub_file: false,
+                is_native_lib: false,
+                is_stdlib_typeshed_file: false,
+                is_third_party_typeshed_file: false,
+                is_local_typings_file: false,
+                implicit_imports: ImplicitImports(
+                    {},
+                ),
+                filtered_implicit_imports: ImplicitImports(
+                    {},
+                ),
+                non_stub_import_result: None,
+                py_typed_info: None,
+                package_directory: None,
+            },
+        ),
         py_typed_info: None,
-        package_directory: None,
+        package_directory: Some(
+            "[TYPESHED]/stdlib/os",
+        ),
     },
 }
 variables
@@ -410,10 +522,10 @@ variables
         is_stub_package: false,
         import_type: Local,
         resolved_paths: [
-            "[REDACTED]/variables.py",
+            "[TYPECHECKER]/test_data/inputs/symbol_table/variables.py",
         ],
         search_path: Some(
-            "[REDACTED]",
+            "[TYPECHECKER]/test_data/inputs/symbol_table",
         ),
         is_stub_file: false,
         is_native_lib: false,
@@ -432,6 +544,5 @@ variables
     },
 }
 
-all scopes:
 -------------------
 

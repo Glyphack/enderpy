@@ -6,6 +6,7 @@ input_file: typechecker/test_data/inputs/symbol_table/type_alias.py
 ---
 -------------------
 global scope:
+all scopes:
 Symbols: in global (id: [REDACTED])
 Alias1
 - Declarations:
@@ -120,6 +121,5 @@ AliasToAnotherAlias
     },
 }
 
-all scopes:
 -------------------
 
