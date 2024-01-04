@@ -19,10 +19,7 @@ use crate::{
     ast_visitor_generic::TraversalVisitorImmutGeneric,
     nodes::EnderpyFile,
     state::State,
-    symbol_table::{
-        self, Class, Declaration, LookupSymbolRequest, SymbolTable,
-        SymbolTableNode,
-    },
+    symbol_table::{self, Class, Declaration, LookupSymbolRequest, SymbolTable, SymbolTableNode},
     type_check::types::ClassType,
 };
 

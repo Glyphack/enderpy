@@ -219,8 +219,7 @@ impl BuildManager {
                                 continue;
                             }
                         };
-                        match BuildSource::from_path(resolved_path.clone(), true)
-                        {
+                        match BuildSource::from_path(resolved_path.clone(), true) {
                             Ok(build_source) => {
                                 imported_sources.push(build_source.clone());
                                 files_to_resolve.push(build_source);
@@ -300,7 +299,7 @@ impl BuildManager {
         // resolved_path);                     continue;
         //                 }
         //                 let build_source = match
-        // BuildSource::from_path(resolved_path, true) {                     
+        // BuildSource::from_path(resolved_path, true) {
         // Ok(build_source) => build_source,                     Err(e) => {
         //                         log::warn!("cannot read file: {}", e);
         //                         continue;
@@ -326,7 +325,6 @@ impl BuildManager {
 
     // TODO: refactor to implement From/to trait
     fn create_module(&self, build_source: BuildSource) -> State {
-        
         State::new(EnderpyFile::from(build_source))
     }
 
