@@ -10,7 +10,7 @@ all scopes:
 Symbols: in func (id: [REDACTED])
 a
 - Declarations:
---:   Paramter {
+--:   Parameter {
     declaration_path: DeclarationPath {
         module_name: [REDACTED]",
         node: Node {
@@ -31,7 +31,7 @@ a
 }
 b
 - Declarations:
---:   Paramter {
+--:   Parameter {
     declaration_path: DeclarationPath {
         module_name: [REDACTED]",
         node: Node {
@@ -52,7 +52,7 @@ b
 }
 c
 - Declarations:
---:   Paramter {
+--:   Parameter {
     declaration_path: DeclarationPath {
         module_name: [REDACTED]",
         node: Node {
@@ -83,7 +83,7 @@ c
 }
 e
 - Declarations:
---:   Paramter {
+--:   Parameter {
     declaration_path: DeclarationPath {
         module_name: [REDACTED]",
         node: Node {
@@ -196,7 +196,7 @@ func
     is_method: false,
     is_generator: false,
     return_statements: [],
-    yeild_statements: [],
+    yield_statements: [],
     raise_statements: [],
 }
 

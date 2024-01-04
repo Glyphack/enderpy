@@ -60,7 +60,7 @@ b
 }
 self
 - Declarations:
---:   Paramter {
+--:   Parameter {
     declaration_path: DeclarationPath {
         module_name: [REDACTED]",
         node: Node {
@@ -222,7 +222,7 @@ __init__
     is_method: true,
     is_generator: false,
     return_statements: [],
-    yeild_statements: [],
+    yield_statements: [],
     raise_statements: [],
 }
 
