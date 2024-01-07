@@ -2,16 +2,13 @@
 #![allow(unused_variables)]
 
 use core::panic;
-use std::{
-    collections::HashMap,
-    path::{Path, PathBuf},
-};
+use std::{collections::HashMap, path::Path};
 
 use enderpy_python_parser as parser;
 use enderpy_python_parser::ast;
 use log::debug;
 use miette::{bail, miette, Result};
-use parser::ast::{Alias, Expression, GetNode, Statement};
+use parser::ast::{Expression, GetNode, Statement};
 
 use super::{
     builtins,
@@ -22,10 +19,7 @@ use crate::{
     ast_visitor_generic::TraversalVisitorImmutGeneric,
     nodes::EnderpyFile,
     state::State,
-    symbol_table::{
-        self, Class, Declaration, DeclarationPath, LookupSymbolRequest, SymbolTable,
-        SymbolTableNode,
-    },
+    symbol_table::{self, Class, Declaration, LookupSymbolRequest, SymbolTable, SymbolTableNode},
     type_check::types::ClassType,
 };
 
@@ -752,7 +746,7 @@ impl TypeEvaluator {
                             break;
                         }
                         Declaration::Alias(a) => {
-                            declaration = match self.resolve_alias(&a) {
+                            declaration = match self.resolve_alias(a) {
                                 Some(decl) => decl.last_declaration().unwrap(),
                                 None => panic!("Alias {:?} not found", a),
                             };
@@ -795,7 +789,7 @@ impl TypeEvaluator {
                     }
                 }
 
-                return resolved_symbols.last().map(|c| c.clone());
+                return resolved_symbols.last().cloned();
             }
             // Allowed but TODO
             Expression::Attribute(_) => todo!(),
@@ -820,7 +814,7 @@ impl TypeEvaluator {
         };
 
         let symbol_table_with_alias_def =
-            self.get_symbol_table_of(&a.import_result.resolved_paths.last().unwrap());
+            self.get_symbol_table_of(a.import_result.resolved_paths.last().unwrap());
         return symbol_table_with_alias_def?.lookup_in_scope(LookupSymbolRequest {
             name: class_name.clone(),
             position: None,
