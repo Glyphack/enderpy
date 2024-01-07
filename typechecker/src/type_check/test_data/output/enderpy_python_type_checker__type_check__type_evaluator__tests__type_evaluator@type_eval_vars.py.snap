@@ -16,7 +16,7 @@ input_file: typechecker/src/type_check/test_data/inputs/type_eval_vars.py
                 details: Class {
                     name: "tuple",
                     declaration_path: DeclarationPath {
-                        module_name: "builtins",
+                        module_name: [TYPESHED].stdlib/builtins.pyi",
                         node: Node {
                             start: 0,
                             end: 0,
@@ -38,7 +38,7 @@ input_file: typechecker/src/type_check/test_data/inputs/type_eval_vars.py
                 details: Class {
                     name: "set",
                     declaration_path: DeclarationPath {
-                        module_name: "builtins",
+                        module_name: [TYPESHED].stdlib/builtins.pyi",
                         node: Node {
                             start: 0,
                             end: 0,
@@ -60,7 +60,7 @@ input_file: typechecker/src/type_check/test_data/inputs/type_eval_vars.py
                 details: Class {
                     name: "dict",
                     declaration_path: DeclarationPath {
-                        module_name: "builtins",
+                        module_name: [TYPESHED].stdlib/builtins.pyi",
                         node: Node {
                             start: 0,
                             end: 0,
@@ -123,7 +123,7 @@ input_file: typechecker/src/type_check/test_data/inputs/type_eval_vars.py
                 details: Class {
                     name: "tuple",
                     declaration_path: DeclarationPath {
-                        module_name: "builtins",
+                        module_name: [TYPESHED].stdlib/builtins.pyi",
                         node: Node {
                             start: 0,
                             end: 0,
@@ -165,7 +165,7 @@ input_file: typechecker/src/type_check/test_data/inputs/type_eval_vars.py
                 details: Class {
                     name: "list",
                     declaration_path: DeclarationPath {
-                        module_name: "builtins",
+                        module_name: [TYPESHED].stdlib/builtins.pyi",
                         node: Node {
                             start: 0,
                             end: 0,

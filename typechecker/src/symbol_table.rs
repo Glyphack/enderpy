@@ -71,7 +71,7 @@ pub struct SymbolTableNode {
 
 #[derive(Debug, Clone)]
 pub struct DeclarationPath {
-    pub module_name: String,
+    pub module_name: PathBuf,
     pub node: Node,
 }
 
@@ -108,7 +108,7 @@ impl Declaration {
 
 impl Display for DeclarationPath {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}:{:?}", self.module_name, self.node)
+        write!(f, "{:?}:{:?}", self.module_name, self.node)
     }
 }
 
@@ -227,7 +227,7 @@ impl SymbolTable {
         let list_class = Class {
             name: builtins::LIST_TYPE.to_string(),
             declaration_path: DeclarationPath {
-                module_name: String::from("builtins"),
+                module_name: PathBuf::from("typeshed/stdlib/builtins.pyi"),
                 node: Node { start: 0, end: 0 },
             },
             methods: vec![],
@@ -243,7 +243,7 @@ impl SymbolTable {
         let tuple_class = Class {
             name: builtins::TUPLE_TYPE.to_string(),
             declaration_path: DeclarationPath {
-                module_name: String::from("builtins"),
+                module_name: PathBuf::from("typeshed/stdlib/builtins.pyi"),
                 node: Node { start: 0, end: 0 },
             },
             methods: vec![],
@@ -259,7 +259,7 @@ impl SymbolTable {
         let set_class = Class {
             name: builtins::SET_TYPE.to_string(),
             declaration_path: DeclarationPath {
-                module_name: String::from("builtins"),
+                module_name: PathBuf::from("typeshed/stdlib/builtins.pyi"),
                 node: Node { start: 0, end: 0 },
             },
             methods: vec![],
@@ -275,7 +275,7 @@ impl SymbolTable {
         let dict_class = Class {
             name: builtins::DICT_TYPE.to_string(),
             declaration_path: DeclarationPath {
-                module_name: String::from("builtins"),
+                module_name: PathBuf::from("typeshed/stdlib/builtins.pyi"),
                 node: Node { start: 0, end: 0 },
             },
             methods: vec![],
@@ -419,6 +419,11 @@ impl SymbolTable {
             .filter(|scope| scope.symbol_table_type == SymbolTableType::BUILTIN)
             .last()
             .unwrap()
+    }
+
+    // TODO: this can be attribute of symbol table
+    pub fn is_pyi(&self) -> bool {
+        self.file_path.extension().unwrap() == "pyi"
     }
 }
 

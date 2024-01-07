@@ -12,7 +12,7 @@ input_file: typechecker/src/type_check/test_data/inputs/union.py
                 details: Class {
                     name: "Union",
                     declaration_path: DeclarationPath {
-                        module_name: [TYPESHED].stdlib.typing.pyi",
+                        module_name: [TYPESHED].stdlib/typing.pyi",
                         node: Node {
                             start: 4773,
                             end: 4792,
@@ -59,7 +59,7 @@ input_file: typechecker/src/type_check/test_data/inputs/union.py
                 details: Class {
                     name: "Union",
                     declaration_path: DeclarationPath {
-                        module_name: [TYPESHED].stdlib.typing.pyi",
+                        module_name: [TYPESHED].stdlib/typing.pyi",
                         node: Node {
                             start: 4773,
                             end: 4792,

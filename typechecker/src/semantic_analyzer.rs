@@ -102,7 +102,7 @@ impl SemanticAnalyzer {
         let defaults_len = args.defaults.len();
         for (pos_only, index) in args.posonlyargs.iter().zip(0..args.posonlyargs.len()) {
             let declaration_path = DeclarationPath {
-                module_name: self.file.module_name().clone(),
+                module_name: self.file.path(),
                 node: pos_only.node,
             };
             let default_value = args
@@ -123,7 +123,7 @@ impl SemanticAnalyzer {
 
         for (arg, index) in args.args.iter().zip(0..) {
             let declaration_path = DeclarationPath {
-                module_name: self.file.module_name().clone(),
+                module_name: self.file.path(),
                 node: arg.node,
             };
 
@@ -148,7 +148,7 @@ impl SemanticAnalyzer {
 
         for arg in args.kwonlyargs.iter() {
             let declaration_path = DeclarationPath {
-                module_name: self.file.module_name().clone(),
+                module_name: self.file.path(),
                 node: arg.node,
             };
             self.create_symbol(
@@ -164,7 +164,7 @@ impl SemanticAnalyzer {
 
         if let Some(ref arg) = args.vararg {
             let declaration_path = DeclarationPath {
-                module_name: self.file.module_name().clone(),
+                module_name: self.file.path(),
                 node: arg.node,
             };
             self.create_symbol(
@@ -180,7 +180,7 @@ impl SemanticAnalyzer {
 
         if let Some(ref arg) = args.kwarg {
             let declaration_path = DeclarationPath {
-                module_name: self.file.module_name().clone(),
+                module_name: self.file.path(),
                 node: arg.node,
             };
             self.create_symbol(
@@ -270,7 +270,7 @@ impl TraversalVisitor for SemanticAnalyzer {
             };
             // TODO: Report unresolved import if import_result is None
             let declaration_path = DeclarationPath {
-                module_name: self.file.module_name().clone(),
+                module_name: self.file.path(),
                 node: alias.node,
             };
 
@@ -289,7 +289,7 @@ impl TraversalVisitor for SemanticAnalyzer {
     fn visit_import_from(&mut self, _i: &parser::ast::ImportFrom) {
         for alias in &_i.names {
             let declaration_path = DeclarationPath {
-                module_name: self.file.module_name().clone(),
+                module_name: self.file.path(),
                 node: alias.node,
             };
             // TODO: Report unresolved import if import_result is None
@@ -402,7 +402,7 @@ impl TraversalVisitor for SemanticAnalyzer {
 
     fn visit_function_def(&mut self, f: &parser::ast::FunctionDef) {
         let declaration_path = DeclarationPath {
-            module_name: self.file.module_name().clone(),
+            module_name: self.file.path(),
             node: f.node,
         };
         self.globals.enter_scope(SymbolTableScope::new(
@@ -414,7 +414,7 @@ impl TraversalVisitor for SemanticAnalyzer {
         self.add_arguments_definitions(&f.args);
 
         let mut return_statements = vec![];
-        let mut yeild_statements = vec![];
+        let mut yield_statements = vec![];
         let mut raise_statements = vec![];
         for stmt in &f.body {
             self.visit_stmt(stmt);
@@ -422,7 +422,7 @@ impl TraversalVisitor for SemanticAnalyzer {
                 parser::ast::Statement::Raise(r) => raise_statements.push(r.clone()),
                 parser::ast::Statement::Return(r) => return_statements.push(r.clone()),
                 parser::ast::Statement::ExpressionStatement(parser::ast::Expression::Yield(y)) => {
-                    yeild_statements.push(*y.clone())
+                    yield_statements.push(*y.clone())
                 }
                 _ => (),
             }
@@ -430,7 +430,7 @@ impl TraversalVisitor for SemanticAnalyzer {
 
         for type_parameter in &f.type_params {
             let declaration_path = DeclarationPath {
-                module_name: self.file.module_name().clone(),
+                module_name: self.file.path(),
                 node: type_parameter.get_node(),
             };
             self.create_symbol(
@@ -447,9 +447,9 @@ impl TraversalVisitor for SemanticAnalyzer {
             declaration_path,
             function_node: f.clone(),
             is_method: self.is_inside_class(),
-            is_generator: !yeild_statements.is_empty(),
+            is_generator: !yield_statements.is_empty(),
             return_statements,
-            yield_statements: yeild_statements,
+            yield_statements,
             raise_statements,
         });
         self.create_symbol(f.name.clone(), function_declaration);
@@ -457,7 +457,7 @@ impl TraversalVisitor for SemanticAnalyzer {
 
     fn visit_type_alias(&mut self, t: &parser::ast::TypeAlias) {
         let declaration_path = DeclarationPath {
-            module_name: self.file.module_name().clone(),
+            module_name: self.file.path(),
             node: t.node,
         };
         self.create_symbol(
@@ -473,7 +473,7 @@ impl TraversalVisitor for SemanticAnalyzer {
 
     fn visit_class_def(&mut self, c: &parser::ast::ClassDef) {
         let declaration_path = DeclarationPath {
-            module_name: self.file.module_name().clone(),
+            module_name: self.file.path(),
             node: c.node,
         };
         self.globals.enter_scope(SymbolTableScope::new(
@@ -484,7 +484,7 @@ impl TraversalVisitor for SemanticAnalyzer {
 
         for type_parameter in &c.type_params {
             let declaration_path = DeclarationPath {
-                module_name: self.file.module_name().clone(),
+                module_name: self.file.path(),
                 node: type_parameter.get_node(),
             };
             self.create_symbol(
@@ -603,11 +603,11 @@ impl TraversalVisitor for SemanticAnalyzer {
     fn visit_assign(&mut self, assign: &parser::ast::Assign) {
         let value = &assign.value;
         if assign.targets.len() > 1 {
-            panic!("multiple assignment not suported");
+            panic!("multiple assignment not supported");
         }
         let target = assign.targets.last().unwrap();
         let declaration_path = DeclarationPath {
-            module_name: self.file.module_name().clone(),
+            module_name: self.file.path(),
             node: assign.node,
         };
         self.create_variable_declaration_symbol(
@@ -624,7 +624,7 @@ impl TraversalVisitor for SemanticAnalyzer {
         let value = &a.value;
         let target = &a.target;
         let declaration_path = DeclarationPath {
-            module_name: self.file.module_name().clone(),
+            module_name: self.file.path(),
             node: a.node,
         };
         self.create_variable_declaration_symbol(

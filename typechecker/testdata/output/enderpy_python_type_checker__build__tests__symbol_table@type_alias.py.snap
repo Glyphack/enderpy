@@ -12,7 +12,7 @@ Alias1
 - Declarations:
 --:   TypeAlias {
     declaration_path: DeclarationPath {
-        module_name: [REDACTED]",
+        module_name: "[TYPECHECKER]/test_data/inputs/symbol_table/type_alias.py",
         node: Node {
             start: 81,
             end: 98,
@@ -40,7 +40,7 @@ Alias2
 - Declarations:
 --:   TypeAlias {
     declaration_path: DeclarationPath {
-        module_name: [REDACTED]",
+        module_name: "[TYPECHECKER]/test_data/inputs/symbol_table/type_alias.py",
         node: Node {
             start: 99,
             end: 116,
@@ -68,7 +68,7 @@ Alias3
 - Declarations:
 --:   TypeAlias {
     declaration_path: DeclarationPath {
-        module_name: [REDACTED]",
+        module_name: "[TYPECHECKER]/test_data/inputs/symbol_table/type_alias.py",
         node: Node {
             start: 117,
             end: 136,
@@ -96,7 +96,7 @@ AliasToAnotherAlias
 - Declarations:
 --:   TypeAlias {
     declaration_path: DeclarationPath {
-        module_name: [REDACTED]",
+        module_name: "[TYPECHECKER]/test_data/inputs/symbol_table/type_alias.py",
         node: Node {
             start: 138,
             end: 171,

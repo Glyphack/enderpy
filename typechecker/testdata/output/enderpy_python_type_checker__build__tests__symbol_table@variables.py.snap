@@ -12,7 +12,7 @@ a
 - Declarations:
 --:   Variable {
     declaration_path: DeclarationPath {
-        module_name: [REDACTED]",
+        module_name: "[TYPECHECKER]/test_data/inputs/symbol_table/variables.py",
         node: Node {
             start: 0,
             end: 5,

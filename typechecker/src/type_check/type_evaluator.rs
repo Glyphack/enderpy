@@ -2,13 +2,16 @@
 #![allow(unused_variables)]
 
 use core::panic;
-use std::collections::HashMap;
+use std::{
+    collections::HashMap,
+    path::{Path, PathBuf},
+};
 
 use enderpy_python_parser as parser;
 use enderpy_python_parser::ast;
 use log::debug;
 use miette::{bail, miette, Result};
-use parser::ast::{Expression, GetNode, Statement};
+use parser::ast::{Alias, Expression, GetNode, Statement};
 
 use super::{
     builtins,
@@ -19,7 +22,10 @@ use crate::{
     ast_visitor_generic::TraversalVisitorImmutGeneric,
     nodes::EnderpyFile,
     state::State,
-    symbol_table::{self, Class, Declaration, LookupSymbolRequest, SymbolTable, SymbolTableNode},
+    symbol_table::{
+        self, Class, Declaration, DeclarationPath, LookupSymbolRequest, SymbolTable,
+        SymbolTableNode,
+    },
     type_check::types::ClassType,
 };
 
@@ -41,24 +47,6 @@ pub struct TypeEvalError {
 
 /// Struct for evaluating the type of an expression
 impl TypeEvaluator {
-    /// Get the type of a symbol node based on declarations
-    pub fn get_symbol_node_type(
-        &self,
-        symbol: &SymbolTableNode,
-        position: Option<usize>,
-    ) -> Result<PythonType> {
-        let decl = match position {
-            Some(position) => symbol.declaration_until_position(position),
-            None => symbol.last_declaration(),
-        };
-
-        log::debug!("fetch symbol declaration: {:?}", decl);
-        match decl {
-            Some(decl) => self.get_type_from_declaration(decl),
-            None => Ok(PythonType::Any),
-        }
-    }
-
     /// Entry point function to get type of an expression. The expression passed
     /// to this function must not be annotations, for example if you want to
     /// get the type of a variable declaration you should pass the value of
@@ -235,32 +223,38 @@ impl TypeEvaluator {
                 "None" => PythonType::None,
                 _ => PythonType::Unknown,
             },
-            // Illegal type annotation
             Expression::Constant(c) => {
                 if let ast::ConstantValue::None = c.value {
                     PythonType::None
+                // Illegal type annotation should report an error
                 } else {
                     PythonType::Unknown
                 }
             }
             Expression::Subscript(s) => {
                 // This is a generic type
-                let typ = self.get_class_declaration(*s.value.clone(), None);
-                let type_parameters = vec![self.get_type_from_annotation(&s.slice)];
-                PythonType::Class(ClassType {
-                    details: typ,
-                    type_parameters,
-                })
+                let typ = self.get_class_declaration(*s.value.clone(), &self.symbol_table);
+                match typ {
+                    Some(typ) => {
+                        let type_parameters = vec![self.get_type_from_annotation(&s.slice)];
+                        PythonType::Class(ClassType {
+                            details: typ,
+                            type_parameters,
+                        })
+                    }
+                    // Illegal type annotation? Trying to subscript a non class type
+                    None => PythonType::Unknown,
+                }
             }
             Expression::BinOp(b) => {
                 match b.op {
+                    // Union type
                     ast::BinaryOperator::BitOr => {
                         // flatten the bit or expression if the left and right are also bit or
-                        // TODO handle when left and right are also binary operator
-                        // Like a | b | c | d
                         let union_parameters = self.flatten_bit_or(b);
                         self.handle_union_type(union_parameters)
                     }
+                    // TODO: check if other binary operators are allowed
                     _ => todo!(),
                 }
             }
@@ -268,6 +262,24 @@ impl TypeEvaluator {
         };
 
         expr_type
+    }
+
+    /// Get the type of a symbol node based on declarations
+    fn get_symbol_node_type(
+        &self,
+        symbol: &SymbolTableNode,
+        position: Option<usize>,
+    ) -> Result<PythonType> {
+        let decl = match position {
+            Some(position) => symbol.declaration_until_position(position),
+            None => symbol.last_declaration(),
+        };
+
+        log::debug!("fetch symbol declaration: {:?}", decl);
+        match decl {
+            Some(decl) => self.get_type_from_declaration(decl),
+            None => Ok(PythonType::Any),
+        }
     }
 
     fn get_type_from_declaration(&self, declaration: &Declaration) -> Result<PythonType> {
@@ -702,102 +714,97 @@ impl TypeEvaluator {
         false
     }
 
+    /// The expression is assumed to be used in type annotation context.
+    /// So some expressions are not allowed, for example a function call
     fn get_class_declaration(
         &self,
-        value: Expression,
-        symbbol_table: Option<SymbolTable>,
-    ) -> symbol_table::Class {
-        let symbol_table = match symbbol_table {
-            Some(s) => s,
-            None => self.symbol_table.clone(),
-        };
-        match value {
-            Expression::Constant(_) => todo!(),
-            Expression::List(_) => todo!(),
-            Expression::Tuple(_) => todo!(),
-            Expression::Dict(_) => todo!(),
-            Expression::Set(_) => todo!(),
+        expression: Expression,
+        symbol_table: &SymbolTable,
+    ) -> Option<symbol_table::Class> {
+        log::debug!(
+            "following symbol table until finding class for {:?}",
+            expression
+        );
+        match expression {
             // This is a Generic type with a param: Container[type, ...]
             Expression::Name(n) => {
                 if let Some(builtin_type) = self.get_builtin_type(n.id.as_str()) {
-                    builtin_type
+                    return Some(builtin_type);
+                }
                 // if it's not a builtin we want to get the class declaration
                 // form symbol table and find where this class
-                // is defined TODO it's good to have a function
-                // that finds the initial declaration of a symbol
-                } else {
-                    let container_decl = match symbol_table.lookup_in_scope(LookupSymbolRequest {
-                        name: n.id.clone(),
-                        position: Some(n.node.start),
-                    }) {
-                        Some(decl) => decl.last_declaration(),
-                        None => panic!("Type {} has no declaration", n.id),
-                    };
-                    log::debug!("container_decl: {:?}", container_decl);
-                    match container_decl {
-                        Some(Declaration::Class(c)) => c.clone(),
-                        Some(Declaration::Alias(a)) => {
-                            if let Some((found_in_symbol_table, decl)) = self.resolve_alias(a) {
-                                match decl.last_declaration() {
-                                    Some(Declaration::Class(c)) => c.clone(),
-                                    // The container type here can be a variable, e.g. in
-                                    // typing.pyi there is Literal: _SpecialForm
-                                    // If it's a variable then try to find the class node
-                                    // of that variable
-                                    // TODO: need to clean up here to check special classes and
-                                    // creata a class with their methods on it. For example Literal
-                                    // and Union
-                                    Some(Declaration::Variable(v)) => {
-                                        if let Some(annotation) = &v.type_annotation {
-                                            let pointing_class = self.get_class_declaration(
-                                                annotation.clone(),
-                                                Some(found_in_symbol_table.clone()),
-                                            );
-                                            if pointing_class.name == "_SpecialForm" {
-                                                Class {
-                                                    name: n.id,
-                                                    declaration_path: v.declaration_path.clone(),
-                                                    methods: vec![],
-                                                    attributes: HashMap::new(),
-                                                }
-                                            } else {
-                                                pointing_class
-                                            }
-                                        } else {
-                                            panic!("not implemented")
-                                        }
+
+                let mut resolved_symbols = vec![];
+                let mut declaration = match symbol_table.lookup_in_scope(LookupSymbolRequest {
+                    name: n.id.clone(),
+                    position: Some(n.node.start),
+                }) {
+                    Some(s) => s.last_declaration().unwrap(),
+                    None => return None,
+                };
+
+                // Follow symbols until we find a class declaration
+                loop {
+                    log::debug!("container_decl: {:?}", declaration);
+                    match declaration {
+                        Declaration::Class(c) => {
+                            resolved_symbols.push(c.clone());
+                            break;
+                        }
+                        Declaration::Alias(a) => {
+                            declaration = match self.resolve_alias(&a) {
+                                Some(decl) => decl.last_declaration().unwrap(),
+                                None => panic!("Alias {:?} not found", a),
+                            };
+                            log::debug!("alias resolved to: {:?}", declaration);
+                        }
+                        // This is only valid if we are in a pyi file.
+                        // In other contexts a variable declaration cannot be pointing to a class
+                        Declaration::Variable(v) => {
+                            let found_in_symbol_table = self
+                                .get_symbol_table_of(&v.declaration_path.module_name)
+                                .expect("Variable declaration not found in symbol table");
+                            // if not in a pyi file panic
+                            if !found_in_symbol_table.is_pyi() {
+                                panic!("Variable declaration cannot be pointing to a class")
+                            }
+                            if let Some(annotation) = &v.type_annotation {
+                                let pointing_class = self
+                                    .get_class_declaration(
+                                        annotation.clone(),
+                                        found_in_symbol_table,
+                                    )
+                                    .unwrap();
+                                let c = if pointing_class.name == "_SpecialForm" {
+                                    Class {
+                                        name: n.id.clone(),
+                                        declaration_path: v.declaration_path.clone(),
+                                        methods: vec![],
+                                        attributes: HashMap::new(),
                                     }
-                                    _ => panic!("Alias {:?} is not a class", a),
-                                }
+                                } else {
+                                    pointing_class
+                                };
+                                resolved_symbols.push(c);
+                                break;
                             } else {
-                                panic!("Alias {:?} not found", a)
+                                todo!("Variable declaration without type annotation")
                             }
                         }
-                        _ => panic!("Type {} not found {:?}", n.id, container_decl),
+                        _ => return None,
                     }
                 }
+
+                return resolved_symbols.last().map(|c| c.clone());
             }
-            Expression::BoolOp(_) => todo!(),
-            Expression::UnaryOp(_) => todo!(),
-            Expression::BinOp(_) => todo!(),
-            Expression::NamedExpr(_) => todo!(),
-            Expression::Yield(_) => todo!(),
-            Expression::YieldFrom(_) => todo!(),
-            Expression::Starred(_) => todo!(),
-            Expression::Generator(_) => todo!(),
-            Expression::ListComp(_) => todo!(),
-            Expression::SetComp(_) => todo!(),
-            Expression::DictComp(_) => todo!(),
+            // Allowed but TODO
             Expression::Attribute(_) => todo!(),
             Expression::Subscript(_) => todo!(),
             Expression::Slice(_) => todo!(),
-            Expression::Call(_) => todo!(),
-            Expression::Await(_) => todo!(),
-            Expression::Compare(_) => todo!(),
-            Expression::Lambda(_) => todo!(),
-            Expression::IfExp(_) => todo!(),
-            Expression::JoinedStr(_) => todo!(),
-            Expression::FormattedValue(_) => todo!(),
+            _ => panic!(
+                "Expression {:?} is not allowed in type annotation",
+                expression
+            ),
         }
     }
 
@@ -805,37 +812,27 @@ impl TypeEvaluator {
     // It searches through imported symbol tables for the module alias imports
     // and resolves the alias to the class declaration
     // TODO: refactor all liases and not only classes
-    fn resolve_alias(
-        &self,
-        a: &symbol_table::Alias,
-    ) -> Option<(symbol_table::SymbolTable, symbol_table::SymbolTableNode)> {
+    fn resolve_alias(&self, a: &symbol_table::Alias) -> Option<&symbol_table::SymbolTableNode> {
+        log::debug!("resolving alias: {:?}", a);
         let class_name = match a.symbol_name {
             Some(ref name) => name.clone(),
             None => panic!("Alias {:?} has no symbol name", a.import_node),
         };
-        // log::debug!("symbol tables: {:#?}", self.imported_symbol_tables);
-        for symbol_table in self.imported_symbol_tables.iter() {
-            if !a
-                .import_result
-                .resolved_paths
-                .contains(&symbol_table.file_path)
-            {
-                continue;
-            }
-            log::debug!(
-                "Searching for alias {}, in symbol table for file {}",
-                class_name,
-                symbol_table.module_name
-            );
-            if let Some(decl) = symbol_table.lookup_in_scope(LookupSymbolRequest {
-                name: class_name.clone(),
-                position: None,
-            }) {
-                log::debug!("Found alias {:#?} in symbol table", decl);
-                return Some((symbol_table.clone(), decl.clone()));
-            }
-        }
-        panic!("Alias {} not found", class_name);
+
+        let symbol_table_with_alias_def =
+            self.get_symbol_table_of(&a.import_result.resolved_paths.last().unwrap());
+        return symbol_table_with_alias_def?.lookup_in_scope(LookupSymbolRequest {
+            name: class_name.clone(),
+            position: None,
+        });
+    }
+
+    fn get_symbol_table_of(&self, path: &Path) -> Option<&SymbolTable> {
+        let symbol_table = self
+            .imported_symbol_tables
+            .iter()
+            .find(|symbol_table| symbol_table.file_path == path);
+        symbol_table
     }
 }
 

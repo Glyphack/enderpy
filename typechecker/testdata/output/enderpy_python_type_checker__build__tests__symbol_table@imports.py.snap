@@ -12,7 +12,7 @@ Symbols: in global (id: [REDACTED])
 - Declarations:
 --:   Alias {
     declaration_path: DeclarationPath {
-        module_name: [REDACTED]",
+        module_name: "[TYPECHECKER]/test_data/inputs/symbol_table/imports.py",
         node: Node {
             start: 83,
             end: 82,
@@ -74,7 +74,7 @@ Symbols: in global (id: [REDACTED])
 }
 --:   Alias {
     declaration_path: DeclarationPath {
-        module_name: [REDACTED]",
+        module_name: "[TYPECHECKER]/test_data/inputs/symbol_table/imports.py",
         node: Node {
             start: 117,
             end: 116,
@@ -175,7 +175,7 @@ a
 - Declarations:
 --:   Alias {
     declaration_path: DeclarationPath {
-        module_name: [REDACTED]",
+        module_name: "[TYPECHECKER]/test_data/inputs/symbol_table/imports.py",
         node: Node {
             start: 59,
             end: 60,
@@ -239,7 +239,7 @@ import_test
 - Declarations:
 --:   Alias {
     declaration_path: DeclarationPath {
-        module_name: [REDACTED]",
+        module_name: "[TYPECHECKER]/test_data/inputs/symbol_table/imports.py",
         node: Node {
             start: 24,
             end: 35,
@@ -301,7 +301,7 @@ join
 - Declarations:
 --:   Alias {
     declaration_path: DeclarationPath {
-        module_name: [REDACTED]",
+        module_name: "[TYPECHECKER]/test_data/inputs/symbol_table/imports.py",
         node: Node {
             start: 140,
             end: 144,
@@ -396,7 +396,7 @@ os.path
 - Declarations:
 --:   Alias {
     declaration_path: DeclarationPath {
-        module_name: [REDACTED]",
+        module_name: "[TYPECHECKER]/test_data/inputs/symbol_table/imports.py",
         node: Node {
             start: 93,
             end: 100,
@@ -487,7 +487,7 @@ variables
 - Declarations:
 --:   Alias {
     declaration_path: DeclarationPath {
-        module_name: [REDACTED]",
+        module_name: "[TYPECHECKER]/test_data/inputs/symbol_table/imports.py",
         node: Node {
             start: 7,
             end: 16,

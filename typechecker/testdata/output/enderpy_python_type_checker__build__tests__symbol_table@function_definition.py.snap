@@ -12,7 +12,7 @@ a
 - Declarations:
 --:   Parameter {
     declaration_path: DeclarationPath {
-        module_name: [REDACTED]",
+        module_name: "[TYPECHECKER]/test_data/inputs/symbol_table/function_definition.py",
         node: Node {
             start: 9,
             end: 10,
@@ -33,7 +33,7 @@ b
 - Declarations:
 --:   Parameter {
     declaration_path: DeclarationPath {
-        module_name: [REDACTED]",
+        module_name: "[TYPECHECKER]/test_data/inputs/symbol_table/function_definition.py",
         node: Node {
             start: 12,
             end: 13,
@@ -54,7 +54,7 @@ c
 - Declarations:
 --:   Parameter {
     declaration_path: DeclarationPath {
-        module_name: [REDACTED]",
+        module_name: "[TYPECHECKER]/test_data/inputs/symbol_table/function_definition.py",
         node: Node {
             start: 19,
             end: 24,
@@ -85,7 +85,7 @@ e
 - Declarations:
 --:   Parameter {
     declaration_path: DeclarationPath {
-        module_name: [REDACTED]",
+        module_name: "[TYPECHECKER]/test_data/inputs/symbol_table/function_definition.py",
         node: Node {
             start: 28,
             end: 29,
@@ -108,7 +108,7 @@ func
 - Declarations:
 --:   Function {
     declaration_path: DeclarationPath {
-        module_name: [REDACTED]",
+        module_name: "[TYPECHECKER]/test_data/inputs/symbol_table/function_definition.py",
         node: Node {
             start: 0,
             end: 37,
