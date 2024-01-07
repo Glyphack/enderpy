@@ -322,7 +322,6 @@ impl SymbolTable {
     /// the scopes are sorted by start position descending
     pub fn innermost_scope(&self, pos: usize) -> Option<&SymbolTableScope> {
         log::debug!("looking for innermost scope for pos: {}", pos);
-        log::debug!("all scopes: {:#?}", self.all_scopes);
         return self
             .all_scopes
             .iter()
