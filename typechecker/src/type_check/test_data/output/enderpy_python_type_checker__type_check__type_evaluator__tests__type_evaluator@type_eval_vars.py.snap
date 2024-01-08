@@ -24,6 +24,7 @@ input_file: typechecker/src/type_check/test_data/inputs/type_eval_vars.py
                     },
                     methods: [],
                     attributes: {},
+                    special: false,
                 },
                 type_parameters: [
                     Int,
@@ -46,6 +47,7 @@ input_file: typechecker/src/type_check/test_data/inputs/type_eval_vars.py
                     },
                     methods: [],
                     attributes: {},
+                    special: false,
                 },
                 type_parameters: [
                     Int,
@@ -68,6 +70,7 @@ input_file: typechecker/src/type_check/test_data/inputs/type_eval_vars.py
                     },
                     methods: [],
                     attributes: {},
+                    special: false,
                 },
                 type_parameters: [
                     Str,
@@ -131,6 +134,7 @@ input_file: typechecker/src/type_check/test_data/inputs/type_eval_vars.py
                     },
                     methods: [],
                     attributes: {},
+                    special: false,
                 },
                 type_parameters: [
                     Unknown,
@@ -173,6 +177,7 @@ input_file: typechecker/src/type_check/test_data/inputs/type_eval_vars.py
                     },
                     methods: [],
                     attributes: {},
+                    special: false,
                 },
                 type_parameters: [
                     Int,

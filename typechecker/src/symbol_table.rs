@@ -104,6 +104,15 @@ impl Declaration {
             Declaration::TypeAlias(t) => &t.declaration_path,
         }
     }
+
+    pub fn is_in_typeshed(&self) -> bool {
+        self.declaration_path().module_name.components().any(|c| {
+            c.as_os_str()
+                .to_str()
+                .map(|s| s.starts_with("typeshed"))
+                .unwrap_or(false)
+        })
+    }
 }
 
 impl Display for DeclarationPath {
@@ -162,6 +171,10 @@ pub struct Class {
     // if the attribute is referencing another symbol we need to look up that symbol in the
     // __init__ method
     pub attributes: HashMap<String, ast::Expression>,
+
+    // Special classes are classes that are _SpecialForm in typeshed.
+    // These classes have their behavior defined in PEPs so we need to handle them differently
+    pub special: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -232,6 +245,7 @@ impl SymbolTable {
             },
             methods: vec![],
             attributes: HashMap::new(),
+            special: false,
         };
         builtin_scope.symbols.insert(
             builtins::LIST_TYPE.to_string(),
@@ -248,6 +262,7 @@ impl SymbolTable {
             },
             methods: vec![],
             attributes: HashMap::new(),
+            special: false,
         };
         builtin_scope.symbols.insert(
             builtins::TUPLE_TYPE.to_string(),
@@ -264,6 +279,7 @@ impl SymbolTable {
             },
             methods: vec![],
             attributes: HashMap::new(),
+            special: false,
         };
         builtin_scope.symbols.insert(
             builtins::SET_TYPE.to_string(),
@@ -280,6 +296,7 @@ impl SymbolTable {
             },
             methods: vec![],
             attributes: HashMap::new(),
+            special: false,
         };
         builtin_scope.symbols.insert(
             builtins::DICT_TYPE.to_string(),

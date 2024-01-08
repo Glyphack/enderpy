@@ -28,6 +28,7 @@ const LITERAL_TYPE_PARAMETER_MSG: &str = "Type arguments for 'Literal' must be N
 // allowed as parameters
 const UNION_TYPE_PARAMETER_MSG: &str = "Type arguments for 'Union' must be names or literal values";
 
+const SPECIAL_FORM: &str = "_SpecialForm";
 pub struct TypeEvaluator {
     // TODO: make this a reference to the symbol table in the checker
     pub symbol_table: SymbolTable,
@@ -227,9 +228,24 @@ impl TypeEvaluator {
             }
             Expression::Subscript(s) => {
                 // This is a generic type
-                let typ = self.get_class_declaration(*s.value.clone(), &self.symbol_table);
+                let typ = self.get_class_declaration(&s.value, &self.symbol_table);
                 match typ {
                     Some(typ) => {
+                        if typ.special {
+                            return match typ.name.as_str() {
+                                "Literal" => self.handle_literal_type(s),
+                                "Union" => {
+                                    // try to convert subscript value into tuple and send the tuple
+                                    // items as parameters to union type
+                                    let union_parameters = match *s.slice.clone() {
+                                        Expression::Tuple(t) => t.elements,
+                                        _ => todo!(),
+                                    };
+                                    self.handle_union_type(union_parameters)
+                                }
+                                _ => todo!(),
+                            };
+                        }
                         let type_parameters = vec![self.get_type_from_annotation(&s.slice)];
                         PythonType::Class(ClassType {
                             details: typ,
@@ -712,7 +728,7 @@ impl TypeEvaluator {
     /// So some expressions are not allowed, for example a function call
     fn get_class_declaration(
         &self,
-        expression: Expression,
+        expression: &Expression,
         symbol_table: &SymbolTable,
     ) -> Option<symbol_table::Class> {
         log::debug!(
@@ -728,7 +744,6 @@ impl TypeEvaluator {
                 // if it's not a builtin we want to get the class declaration
                 // form symbol table and find where this class
 
-                let mut resolved_symbols = vec![];
                 let mut declaration = match symbol_table.lookup_in_scope(LookupSymbolRequest {
                     name: n.id.clone(),
                     position: Some(n.node.start),
@@ -742,8 +757,7 @@ impl TypeEvaluator {
                     log::debug!("container_decl: {:?}", declaration);
                     match declaration {
                         Declaration::Class(c) => {
-                            resolved_symbols.push(c.clone());
-                            break;
+                            return Some(c.clone());
                         }
                         Declaration::Alias(a) => {
                             declaration = match self.resolve_alias(a) {
@@ -762,34 +776,37 @@ impl TypeEvaluator {
                             if !found_in_symbol_table.is_pyi() {
                                 panic!("Variable declaration cannot be pointing to a class")
                             }
-                            if let Some(annotation) = &v.type_annotation {
-                                let pointing_class = self
-                                    .get_class_declaration(
-                                        annotation.clone(),
-                                        found_in_symbol_table,
-                                    )
-                                    .unwrap();
-                                let c = if pointing_class.name == "_SpecialForm" {
-                                    Class {
-                                        name: n.id.clone(),
-                                        declaration_path: v.declaration_path.clone(),
-                                        methods: vec![],
-                                        attributes: HashMap::new(),
+
+                            let pointing_class = match &v.type_annotation {
+                                Some(annotation) => {
+                                    if let ast::Expression::Name(name) = annotation {
+                                        if name.id == SPECIAL_FORM {
+                                            return Some(Class {
+                                                name: n.id.clone(),
+                                                declaration_path: v.declaration_path.clone(),
+                                                methods: vec![],
+                                                attributes: HashMap::new(),
+                                                special: true,
+                                            });
+                                        }
                                     }
-                                } else {
-                                    pointing_class
-                                };
-                                resolved_symbols.push(c);
-                                break;
-                            } else {
-                                todo!("Variable declaration without type annotation")
-                            }
+                                    self.get_class_declaration(annotation, found_in_symbol_table)
+                                }
+                                None => {
+                                    todo!("Variable declaration without type annotation")
+                                }
+                            };
+
+                            let class_def = match pointing_class {
+                                None => return None,
+                                Some(ref pointing_class) => pointing_class,
+                            };
+
+                            return Some(class_def.clone());
                         }
                         _ => return None,
                     }
                 }
-
-                return resolved_symbols.last().cloned();
             }
             // Allowed but TODO
             Expression::Attribute(_) => todo!(),

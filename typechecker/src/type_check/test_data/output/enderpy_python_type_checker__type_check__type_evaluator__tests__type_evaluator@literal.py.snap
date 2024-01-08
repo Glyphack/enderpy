@@ -19,23 +19,11 @@ input_file: typechecker/src/type_check/test_data/inputs/literal.py
     ),
     (
         "(line: 3, character: 3):(line: 3, character: 17)",
-        Class(
-            ClassType {
-                details: Class {
-                    name: "Literal",
-                    declaration_path: DeclarationPath {
-                        module_name: [TYPESHED].stdlib/typing.pyi",
-                        node: Node {
-                            start: 5140,
-                            end: 5161,
-                        },
-                    },
-                    methods: [],
-                    attributes: {},
-                },
-                type_parameters: [
-                    Unknown,
-                ],
+        KnownValue(
+            KnownValue {
+                literal_value: Str(
+                    "foo",
+                ),
             },
         ),
     ),

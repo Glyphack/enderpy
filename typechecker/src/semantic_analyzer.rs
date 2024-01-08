@@ -32,6 +32,7 @@ pub struct SemanticAnalyzer {
     errors: Vec<String>,
 
     scope: SymbolScope,
+    is_pyi: bool,
 }
 
 #[allow(unused)]
@@ -39,12 +40,14 @@ impl SemanticAnalyzer {
     pub fn new(file: EnderpyFile, imports: HashMap<ImportModuleDescriptor, ImportResult>) -> Self {
         log::debug!("Creating semantic analyzer for {}", file.module_name());
         let globals = SymbolTable::global(file.clone());
+        let is_pyi = file.path().ends_with(".pyi");
         SemanticAnalyzer {
             globals,
             file,
             imports,
             errors: vec![],
             scope: SymbolScope::Global,
+            is_pyi,
         }
     }
 
@@ -528,6 +531,7 @@ impl TraversalVisitor for SemanticAnalyzer {
             declaration_path,
             attributes,
             methods,
+            special: false,
         });
         self.create_symbol(c.name.clone(), class_declaration);
     }
