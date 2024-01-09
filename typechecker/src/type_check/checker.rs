@@ -4,8 +4,8 @@ use enderpy_python_parser::ast::{self, *};
 
 use super::{type_evaluator::TypeEvaluator, types::PythonType};
 use crate::{
-    ast_visitor::TraversalVisitor, diagnostic::CharacterSpan, settings::Settings, state::State,
-    symbol_table::SymbolTable,
+    ast_visitor::TraversalVisitor, diagnostic::CharacterSpan, nodes::EnderpyFile,
+    settings::Settings, symbol_table::SymbolTable,
 };
 
 pub struct TypeChecker<'a> {
@@ -22,7 +22,11 @@ pub struct TypeCheckError {
 
 #[allow(unused)]
 impl<'a> TypeChecker<'a> {
-    pub fn new(module: &'a State, options: &'a Settings, symbol_tables: Vec<SymbolTable>) -> Self {
+    pub fn new(
+        module: &'a EnderpyFile,
+        options: &'a Settings,
+        symbol_tables: Vec<SymbolTable>,
+    ) -> Self {
         let symbol_table = module.get_symbol_table();
         TypeChecker {
             errors: vec![],

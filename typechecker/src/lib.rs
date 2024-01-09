@@ -3,7 +3,6 @@ mod ast_visitor_generic;
 mod nodes;
 mod ruff_python_import_resolver;
 mod semanal_utils;
-mod state;
 mod symbol_table;
 mod type_check;
 

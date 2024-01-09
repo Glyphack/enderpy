@@ -14,16 +14,17 @@ use crate::{
         module_descriptor::ImportModuleDescriptor, resolver,
     },
     settings::Settings,
-    state::State,
     type_check::checker::TypeChecker,
 };
 
 #[derive(Debug)]
 pub struct BuildManager {
     pub errors: Vec<Diagnostic>,
-    pub modules: HashMap<String, State>,
+    pub modules: HashMap<String, EnderpyFile>,
     build_sources: Vec<BuildSource>,
     options: Settings,
+    // Map of file name to list of diagnostics
+    pub diagnostics: HashMap<PathBuf, Vec<Diagnostic>>,
 }
 #[allow(unused)]
 impl BuildManager {
@@ -50,17 +51,18 @@ impl BuildManager {
             build_sources: sources,
             modules,
             options,
+            diagnostics: HashMap::new(),
         }
     }
 
-    pub fn get_result(&self) -> Vec<State> {
+    pub fn get_result(&self) -> Vec<EnderpyFile> {
         self.modules.values().cloned().collect()
     }
 
-    pub fn get_state(&self, path: PathBuf) -> Option<&State> {
+    pub fn get_state(&self, path: PathBuf) -> Option<&EnderpyFile> {
         for state in self.modules.values() {
-            info!("state: {:#?}", state.file.path());
-            if state.file.path() == path {
+            info!("state: {:#?}", state.path());
+            if state.path() == path {
                 return Some(state);
             }
         }
@@ -76,8 +78,8 @@ impl BuildManager {
     fn populate_modules(&mut self) {
         for build_source in self.build_sources.iter() {
             let build_source: BuildSource = build_source.clone();
-            let state = State::new(build_source.into());
-            self.modules.insert(state.file.module_name(), state);
+            let state: EnderpyFile = build_source.into();
+            self.modules.insert(state.module_name(), state);
         }
         let (new_files, imports) = match self.options.follow_imports {
             crate::settings::FollowImports::All => {
@@ -88,11 +90,11 @@ impl BuildManager {
             }
         };
         for build_source in new_files {
-            let module = self.create_module(build_source);
-            self.modules.insert(module.file.module_name(), module);
+            let file: EnderpyFile = build_source.into();
+            self.modules.insert(file.module_name(), file);
         }
         for module in self.modules.values_mut() {
-            info!("file: {:#?}", module.file.module_name());
+            info!("file: {:#?}", module.module_name());
             module.populate_symbol_table(&imports);
         }
     }
@@ -108,8 +110,8 @@ impl BuildManager {
         }
 
         for state in self.modules.iter_mut() {
-            if !state.1.file.errors.is_empty() {
-                for err in state.1.file.errors.iter() {
+            if !state.1.errors.is_empty() {
+                for err in state.1.errors.iter() {
                     match err {
                         ParsingError::InvalidSyntax {
                             msg,
@@ -121,24 +123,27 @@ impl BuildManager {
                                 body: msg.to_string(),
                                 suggestion: Some(advice.to_string()),
                                 range: crate::diagnostic::Range {
-                                    start: state.1.file.get_position(span.0),
-                                    end: state.1.file.get_position(span.1),
+                                    start: state.1.get_position(span.0),
+                                    end: state.1.get_position(span.1),
                                 },
                             });
-                            state.1.diagnostics.push(Diagnostic {
-                                body: msg.to_string(),
-                                suggestion: Some(advice.to_string()),
-                                range: crate::diagnostic::Range {
-                                    start: state.1.file.get_position(span.0),
-                                    end: state.1.file.get_position(span.1),
-                                },
-                            });
+                            self.diagnostics
+                                .entry(state.1.path())
+                                .or_default()
+                                .push(Diagnostic {
+                                    body: msg.to_string(),
+                                    suggestion: Some(advice.to_string()),
+                                    range: crate::diagnostic::Range {
+                                        start: state.1.get_position(span.0),
+                                        end: state.1.get_position(span.1),
+                                    },
+                                });
                         }
                     }
                 }
             }
             let mut checker = TypeChecker::new(state.1, &self.options, all_symbol_tables.clone());
-            for stmt in &state.1.file.body {
+            for stmt in &state.1.body {
                 checker.type_check(stmt);
             }
             for error in checker.errors {
@@ -146,18 +151,21 @@ impl BuildManager {
                     body: error.msg.to_string(),
                     suggestion: Some("".into()),
                     range: crate::diagnostic::Range {
-                        start: state.1.file.get_position(error.span.0),
-                        end: state.1.file.get_position(error.span.1),
+                        start: state.1.get_position(error.span.0),
+                        end: state.1.get_position(error.span.1),
                     },
                 });
-                state.1.diagnostics.push(Diagnostic {
-                    body: error.msg.to_string(),
-                    suggestion: Some("".into()),
-                    range: crate::diagnostic::Range {
-                        start: state.1.file.get_position(error.span.0),
-                        end: state.1.file.get_position(error.span.1),
-                    },
-                });
+                self.diagnostics
+                    .entry(state.1.path())
+                    .or_default()
+                    .push(Diagnostic {
+                        body: error.msg.to_string(),
+                        suggestion: Some("".into()),
+                        range: crate::diagnostic::Range {
+                            start: state.1.get_position(error.span.0),
+                            end: state.1.get_position(error.span.1),
+                        },
+                    });
             }
         }
     }
@@ -318,11 +326,6 @@ impl BuildManager {
         //     new_imports = next_imports;
         // }
         (imported_sources, import_results)
-    }
-
-    // TODO: refactor to implement From/to trait
-    fn create_module(&self, build_source: BuildSource) -> State {
-        State::new(EnderpyFile::from(build_source))
     }
 
     fn resolve_file_imports(

@@ -2,10 +2,7 @@ use std::{collections::HashMap, fmt::Display, path::PathBuf};
 
 use enderpy_python_parser::ast::{self, Node};
 
-use crate::{
-    nodes::EnderpyFile, ruff_python_import_resolver::import_result::ImportResult,
-    type_check::builtins,
-};
+use crate::{ruff_python_import_resolver::import_result::ImportResult, type_check::builtins};
 
 #[derive(Debug, Clone)]
 pub struct SymbolTable {
@@ -225,7 +222,7 @@ pub enum SymbolScope {
 }
 
 impl SymbolTable {
-    pub fn global(enderpy_file: EnderpyFile) -> Self {
+    pub fn global(module_name: String, file_path: PathBuf) -> Self {
         let mut builtin_scope = SymbolTableScope {
             id: get_id(),
             symbol_table_type: SymbolTableType::BUILTIN,
@@ -317,8 +314,8 @@ impl SymbolTable {
             scopes: vec![builtin_scope, global_scope],
             all_scopes: vec![],
             _locals: HashMap::new(),
-            module_name: enderpy_file.module_name(),
-            file_path: enderpy_file.path(),
+            module_name,
+            file_path,
         }
     }
 

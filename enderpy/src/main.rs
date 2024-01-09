@@ -46,7 +46,7 @@ fn symbols(path: &Path) -> Result<()> {
     manager.build();
 
     let module = manager.get_state(path.to_path_buf()).unwrap();
-    println!("{}", module.file.module_name());
+    println!("{}", module.module_name());
     println!("{}", module.get_symbol_table());
 
     Ok(())
@@ -110,14 +110,9 @@ fn check(path: &Path) -> Result<()> {
     let mut build_manager = BuildManager::new(vec![initial_source], settings);
     build_manager.type_check();
 
-    for file_result in build_manager.get_result() {
-        for err in file_result.diagnostics {
-            println!(
-                "{:#?}: line {}: {}",
-                file_result.file.path(),
-                err.range.start.line,
-                err.body
-            );
+    for (path, errors) in build_manager.diagnostics {
+        for err in errors {
+            println!("{:#?}: line {}: {}", path, err.range.start.line, err.body);
         }
     }
 

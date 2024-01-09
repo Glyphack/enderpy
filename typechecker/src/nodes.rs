@@ -5,13 +5,22 @@
 // here, so this has the minimum amount of nodes needed to
 // get the type checker working. But can be expanded.
 
-use std::path::PathBuf;
+use std::{collections::HashMap, path::PathBuf};
 
 use enderpy_python_parser as parser;
 use enderpy_python_parser::ast::{Import, ImportFrom, Statement};
 use parser::{error::ParsingError, Parser};
 
-use crate::{ast_visitor::TraversalVisitor, build_source::BuildSource, diagnostic::Position};
+use crate::{
+    ast_visitor::TraversalVisitor,
+    build_source::BuildSource,
+    diagnostic::Position,
+    ruff_python_import_resolver::{
+        import_result::ImportResult, module_descriptor::ImportModuleDescriptor,
+    },
+    semantic_analyzer::SemanticAnalyzer,
+    symbol_table::SymbolTable,
+};
 
 #[derive(Clone, Debug)]
 pub enum ImportKinds {
@@ -31,6 +40,7 @@ pub struct EnderpyFile {
     pub build_source: BuildSource,
     // Parser Errors
     pub errors: Vec<ParsingError>,
+    pub symbol_table: SymbolTable,
 }
 
 impl EnderpyFile {
@@ -63,6 +73,25 @@ impl EnderpyFile {
             character: (pos - line_start - 1) as u32,
         }
     }
+
+    /// entry point to fill up the symbol table from the global definitions
+    pub fn populate_symbol_table(
+        &mut self,
+        imports: &HashMap<ImportModuleDescriptor, ImportResult>,
+    ) {
+        let mut sem_anal = SemanticAnalyzer::new(self.clone(), imports.clone());
+        for stmt in &self.body {
+            sem_anal.visit_stmt(stmt)
+        }
+        // TODO: Hacky way to add the global scope to all scopes in symbol table after
+        // finishing
+        sem_anal.globals.exit_scope();
+        self.symbol_table = sem_anal.globals;
+    }
+
+    pub fn get_symbol_table(&self) -> SymbolTable {
+        self.symbol_table.clone()
+    }
 }
 
 impl From<BuildSource> for EnderpyFile {
@@ -72,6 +101,8 @@ impl From<BuildSource> for EnderpyFile {
             build_source.path.as_path().to_str().unwrap().to_owned(),
         );
         let tree = parser.parse();
+        let symbol_table =
+            SymbolTable::global(build_source.module.clone(), build_source.path.clone());
 
         let mut file = EnderpyFile {
             defs: vec![],
@@ -79,6 +110,7 @@ impl From<BuildSource> for EnderpyFile {
             body: vec![],
             build_source,
             errors: parser.errors,
+            symbol_table,
         };
 
         for stmt in &tree.body {
