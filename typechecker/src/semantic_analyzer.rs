@@ -39,7 +39,7 @@ pub struct SemanticAnalyzer {
 impl SemanticAnalyzer {
     pub fn new(file: EnderpyFile, imports: HashMap<ImportModuleDescriptor, ImportResult>) -> Self {
         log::debug!("Creating semantic analyzer for {}", file.module_name());
-        let globals = SymbolTable::global(file.clone());
+        let globals = SymbolTable::global(file.module_name(), file.path());
         let is_pyi = file.path().ends_with(".pyi");
         SemanticAnalyzer {
             globals,

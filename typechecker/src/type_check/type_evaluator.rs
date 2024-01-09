@@ -18,7 +18,6 @@ use crate::{
     ast_visitor::TraversalVisitor,
     ast_visitor_generic::TraversalVisitorImmutGeneric,
     nodes::EnderpyFile,
-    state::State,
     symbol_table::{self, Class, Declaration, LookupSymbolRequest, SymbolTable, SymbolTableNode},
     type_check::types::ClassType,
 };
@@ -830,8 +829,12 @@ impl TypeEvaluator {
             None => panic!("Alias {:?} has no symbol name", a.import_node),
         };
 
-        let symbol_table_with_alias_def =
-            self.get_symbol_table_of(a.import_result.resolved_paths.last().unwrap());
+        let resolved_path = match a.import_result.resolved_paths.last() {
+            Some(path) => path,
+            None => panic!("Alias {:?} has no resolved path available are", a),
+        };
+
+        let symbol_table_with_alias_def = self.get_symbol_table_of(resolved_path);
         return symbol_table_with_alias_def?.lookup_in_scope(LookupSymbolRequest {
             name: class_name.clone(),
             position: None,
@@ -1125,25 +1128,20 @@ impl TraversalVisitorImmutGeneric<PythonType> for TypeEvaluator {
 struct DumpTypes {
     pub type_eval: TypeEvaluator,
     pub types: HashMap<String, PythonType>,
-    pub state: State,
+    pub enderpy_file: EnderpyFile,
 }
 
 impl DumpTypes {
     pub fn new(enderpy_file: EnderpyFile, type_eval: TypeEvaluator) -> Self {
-        let mut state = State::new(enderpy_file);
-        // TODO: this line runs on every test and it needs to add all of stdlib to
-        // symbol table. This is not efficient and needs to be refactored
-        state.populate_symbol_table(&HashMap::new());
-        let symbol_table = state.get_symbol_table();
         Self {
             types: HashMap::new(),
             type_eval,
-            state,
+            enderpy_file,
         }
     }
 
     pub fn enderpy_file(&self) -> &EnderpyFile {
-        &self.state.file
+        &self.enderpy_file
     }
 
     /// This function is called on every expression in the ast
@@ -1304,7 +1302,7 @@ mod tests {
             all_symbol_tables.push(module.get_symbol_table());
         }
 
-        let module = manager.get_state("test-file".into()).unwrap();
+        let module = manager.get_state("test-file".into()).unwrap().clone();
         let symbol_table = module.get_symbol_table();
 
         let type_eval = TypeEvaluator {
@@ -1312,7 +1310,7 @@ mod tests {
             imported_symbol_tables: all_symbol_tables,
         };
 
-        let mut type_eval_visitor = DumpTypes::new(module.file.clone(), type_eval);
+        let mut type_eval_visitor = DumpTypes::new(module.clone(), type_eval);
         type_eval_visitor.visit_module();
 
         let result = type_eval_visitor.types;

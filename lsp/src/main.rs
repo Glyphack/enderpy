@@ -44,8 +44,8 @@ impl Backend {
         let mut diagnostics = Vec::new();
         info!("path: {path:?}");
 
-        if let Some(state) = manager.get_state(path) {
-            for err in state.diagnostics.iter() {
+        if let Some(errors) = manager.diagnostics.get(&path) {
+            for err in errors {
                 diagnostics.push(from(err.clone()));
             }
         }
