@@ -742,7 +742,7 @@ impl Parser {
         while self.eat(Kind::MatrixMul) {
             let name = self.parse_named_expression()?;
             decorators.push(name);
-            self.bump(Kind::NewLine);
+            self.consume_whitespace_and_comments();
         }
 
         if self.at(Kind::Def) || self.at(Kind::Async) {
@@ -2056,6 +2056,18 @@ impl Parser {
     fn consume_whitespace_and_newline(&mut self) -> bool {
         let mut consumed = false;
         while matches!(self.cur_kind(), Kind::WhiteSpace | Kind::NewLine) {
+            self.bump(self.cur_kind());
+            consumed = true;
+        }
+        consumed
+    }
+
+    fn consume_whitespace_and_comments(&mut self) -> bool {
+        let mut consumed = false;
+        while matches!(
+            self.cur_kind(),
+            Kind::WhiteSpace | Kind::NewLine | Kind::Comment
+        ) {
             self.bump(self.cur_kind());
             consumed = true;
         }
