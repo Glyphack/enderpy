@@ -1,4 +1,4 @@
-use std::{collections::HashMap, path::PathBuf};
+use std::{collections::HashMap, path::PathBuf, str::FromStr};
 
 use enderpy_python_parser::error::ParsingError;
 use env_logger::Builder;
@@ -71,16 +71,26 @@ impl BuildManager {
 
     // Entry point to analyze the program
     pub fn build(&mut self) {
-        self.populate_modules();
-    }
-
-    // Resolves imports in all files and then populates the symbol table
-    fn populate_modules(&mut self) {
         for build_source in self.build_sources.iter() {
             let build_source: BuildSource = build_source.clone();
             let state: EnderpyFile = build_source.into();
             self.modules.insert(state.module_name(), state);
         }
+        let builtins_file = self
+            .options
+            .import_discovery
+            .typeshed_path
+            .clone()
+            .unwrap()
+            .join("stdlib/builtins.pyi");
+        let builtins = BuildSource::from_path(builtins_file, true);
+        match builtins {
+            Ok(b) => {
+                let file: EnderpyFile = b.into();
+                self.modules.insert(file.module_name(), file)
+            }
+            Err(e) => panic!("error loading builtins file: {}", e),
+        };
         let (new_files, imports) = match self.options.follow_imports {
             crate::settings::FollowImports::All => {
                 self.gather_files(self.build_sources.clone(), true)
@@ -394,6 +404,10 @@ mod tests {
 
     #[allow(dead_code)]
     fn snapshot_symbol_table(source: &str) -> String {
+        let _ = env_logger::builder()
+            .filter_level(log::LevelFilter::Debug)
+            .is_test(true)
+            .try_init();
         let mut manager = BuildManager::new(
             vec![BuildSource {
                 path: PathBuf::from("test.py"),

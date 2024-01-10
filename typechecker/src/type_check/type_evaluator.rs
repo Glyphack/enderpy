@@ -70,7 +70,7 @@ impl TypeEvaluator {
                 match func {
                     ast::Expression::Name(n) => {
                         // check if name is one of the builtins
-                        if builtins::BUILTINS.contains(&n.id.as_str()) {
+                        if self.get_builtin_type(&n.id).is_some() {
                             return Ok(PythonType::Unknown);
                         }
                         let f_type = self.infer_type_from_symbol_table(n.id.as_str(), None)?;
@@ -410,7 +410,28 @@ impl TypeEvaluator {
 
     /// Retrieves a pythoh type that is present in the builtin scope
     fn get_builtin_type(&self, name: &str) -> Option<symbol_table::Class> {
-        let builtin_symbol = self.symbol_table.lookup_in_builtin_scope(name);
+        let bulitins_symbol_table = match self
+            .imported_symbol_tables
+            .iter()
+            .find(|symbol_table| symbol_table.file_path.ends_with("stdlib/builtins.pyi"))
+        {
+            Some(symbol_table) => symbol_table,
+            None => {
+                let all_symbol_table_names = self
+                    .imported_symbol_tables
+                    .iter()
+                    .map(|symbol_table| symbol_table.module_name.clone())
+                    .collect::<Vec<String>>();
+                panic!(
+                    "Builtin symbol table not found in {:?}",
+                    all_symbol_table_names
+                );
+            }
+        };
+        let builtin_symbol = bulitins_symbol_table.lookup_in_scope(LookupSymbolRequest {
+            name: name.to_string(),
+            position: None,
+        });
         let cls_declaration = match builtin_symbol {
             None => {
                 log::debug!("builtin type {} not found", name);
@@ -1302,7 +1323,7 @@ mod tests {
             all_symbol_tables.push(module.get_symbol_table());
         }
 
-        let module = manager.get_state("test-file".into()).unwrap().clone();
+        let module = manager.get_state("test-file".into()).unwrap();
         let symbol_table = module.get_symbol_table();
 
         let type_eval = TypeEvaluator {
