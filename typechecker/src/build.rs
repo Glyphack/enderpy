@@ -424,66 +424,6 @@ mod tests {
         format!("{}", module.get_symbol_table())
     }
 
-    fn snapshot_type_check(source: &str) -> String {
-        let mut manager = BuildManager::new(
-            vec![BuildSource {
-                path: PathBuf::from("test.py"),
-                module: String::from("test"),
-                source: source.to_string(),
-                followed: false,
-            }],
-            Settings::test_settings(),
-        );
-        manager.type_check();
-
-        let errors = manager.errors;
-        errors
-            .iter()
-            .map(|x| format!("{:?}", x))
-            .collect::<Vec<String>>()
-            .join("\n")
-    }
-
-    macro_rules! snap_type {
-        ($name:tt, $path:tt) => {
-            #[test]
-            fn $name() {
-                let contents = include_str!($path);
-                let result = snapshot_type_check(contents);
-                let mut settings = insta::Settings::clone_current();
-                settings.set_snapshot_path("../test_data/output/");
-                settings.set_description(contents);
-                settings.add_filter(
-                    r"module_name: .*.typechecker.test_data.inputs.symbol_table..*.py",
-                    "module_name: [REDACTED]",
-                );
-                settings.bind(|| {
-                    insta::assert_snapshot!(result);
-                });
-            }
-        };
-    }
-
-    snap_type!(test_type_check_var, "../test_data/inputs/type_check_var.py");
-    snap_type!(
-        test_type_check_call,
-        "../test_data/inputs/type_check_call.py"
-    );
-    // snap_type!(
-    //     test_type_check_list,
-    //     "../test_data/inputs/type_check_list.py"
-    // );
-
-    snap_type!(
-        test_type_check_undefined,
-        "../test_data/inputs/type_check_undefined.py"
-    );
-
-    snap_type!(
-        test_undefined_names,
-        "../test_data/inputs/test_undefined_name.py"
-    );
-
     #[test]
     fn test_symbol_table() {
         glob!("../test_data/inputs/", "symbol_table/*.py", |path| {

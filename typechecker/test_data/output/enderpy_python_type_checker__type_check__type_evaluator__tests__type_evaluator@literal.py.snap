@@ -1,16 +1,12 @@
 ---
 source: typechecker/src/type_check/type_evaluator.rs
-description: "from typing import Literal\n\n\na: Literal[\"foo\"] = \"foo\"\n\n\nclass Foo:\n    def __init__(self, name: Literal[\"foo\"]) -> None:\n        self.name = name\n\n\ndef func(literal_name: Literal[\"foo\"]) -> None:\n    print(literal_name)\n"
+description: "from typing import Literal\n\n\na: Literal[\"foo\"] = \"foo\"\n\n\nclass Foo:\n    def __init__(self, name: Literal[\"foo\"]) -> None:\n        self.name = name\n\n\ndef func(literal_name: Literal[\"foo\"]) -> None:\n    literal_name\n"
 expression: result
-input_file: typechecker/src/type_check/test_data/inputs/literal.py
+input_file: typechecker/test_data/inputs/literal.py
 ---
 [
     (
-        "(line: 12, character: 10):(line: 12, character: 22)",
-        Unknown,
-    ),
-    (
-        "(line: 12, character: 4):(line: 12, character: 9)",
+        "(line: 12, character: 4):(line: 12, character: 16)",
         Unknown,
     ),
     (

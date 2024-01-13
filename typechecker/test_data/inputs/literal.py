@@ -10,4 +10,4 @@ class Foo:
 
 
 def func(literal_name: Literal["foo"]) -> None:
-    print(literal_name)
+    literal_name

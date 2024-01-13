@@ -1,0 +1,16 @@
+---
+source: typechecker/src/type_check/type_evaluator.rs
+description: "a = b + 1\n\na = c()\n\n"
+expression: result
+input_file: typechecker/test_data/inputs/type_check_undefined.py
+---
+[
+    (
+        "(line: 0, character: 3):(line: 0, character: 8)",
+        Int,
+    ),
+    (
+        "(line: 2, character: 4):(line: 2, character: 7)",
+        Unknown,
+    ),
+]

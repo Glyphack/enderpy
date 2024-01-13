@@ -2,7 +2,7 @@
 source: typechecker/src/type_check/type_evaluator.rs
 description: "# define variables with various types for testing\na = 1\nb = 2\nc = True\nd = False\ne = \"hello\"\nf = \"world\"\njoined_str = f\"{e} {f}\"\n\ng = [1,2,3]\nh = (1,2,3)\ni = {1,2,3}\nj = {\"a\":1,\"b\":2,\"c\":3}\nk = None\n\nbool_op = True and False\n\nbin_op = a + b\nunary_op1 = -a\nunary_op2 = not c\nunaray_op3 = ~a\nunaray_op4 = +a\n\nnamed = (a := 1)\n\ngenerator = (x for x in g)\n\ngg = (1, \"str\")\n\n\n"
 expression: result
-input_file: typechecker/src/type_check/test_data/inputs/type_eval_vars.py
+input_file: typechecker/test_data/inputs/type_eval_vars.py
 ---
 [
     (
