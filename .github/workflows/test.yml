@@ -15,10 +15,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: Swatinem/rust-cache@v2
       - uses: actions/checkout@v4
         with:
           submodules: true
+      - uses: Swatinem/rust-cache@v2
       - name: setup toolchain
         uses: hecrj/setup-rust-action@v1
         with:
