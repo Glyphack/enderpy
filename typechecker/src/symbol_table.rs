@@ -2,7 +2,7 @@ use std::{collections::HashMap, fmt::Display, path::PathBuf};
 
 use enderpy_python_parser::ast::{self, Node};
 
-use crate::{ruff_python_import_resolver::import_result::ImportResult, type_check::builtins};
+use crate::ruff_python_import_resolver::import_result::ImportResult;
 
 #[derive(Debug, Clone)]
 pub struct SymbolTable {
@@ -223,95 +223,16 @@ pub enum SymbolScope {
 
 impl SymbolTable {
     pub fn global(module_name: String, file_path: PathBuf) -> Self {
-        let mut builtin_scope = SymbolTableScope {
-            id: get_id(),
-            symbol_table_type: SymbolTableType::BUILTIN,
-            symbols: HashMap::new(),
-            name: String::from("builtins"),
-            parent: None,
-            start_pos: 0,
-        };
-        // TODO: This will be removed once we can import the builtins from the stdlib
-        // Hacky way of putting the builtin in symbol table so I can implement some
-        // tests
-        let list_class = Class {
-            name: builtins::LIST_TYPE.to_string(),
-            declaration_path: DeclarationPath {
-                module_name: PathBuf::from("typeshed/stdlib/builtins.pyi"),
-                node: Node { start: 0, end: 0 },
-            },
-            methods: vec![],
-            attributes: HashMap::new(),
-            special: false,
-        };
-        builtin_scope.symbols.insert(
-            builtins::LIST_TYPE.to_string(),
-            SymbolTableNode {
-                name: builtins::LIST_TYPE.to_string(),
-                declarations: vec![Declaration::Class(list_class)],
-            },
-        );
-        let tuple_class = Class {
-            name: builtins::TUPLE_TYPE.to_string(),
-            declaration_path: DeclarationPath {
-                module_name: PathBuf::from("typeshed/stdlib/builtins.pyi"),
-                node: Node { start: 0, end: 0 },
-            },
-            methods: vec![],
-            attributes: HashMap::new(),
-            special: false,
-        };
-        builtin_scope.symbols.insert(
-            builtins::TUPLE_TYPE.to_string(),
-            SymbolTableNode {
-                name: builtins::TUPLE_TYPE.to_string(),
-                declarations: vec![Declaration::Class(tuple_class)],
-            },
-        );
-        let set_class = Class {
-            name: builtins::SET_TYPE.to_string(),
-            declaration_path: DeclarationPath {
-                module_name: PathBuf::from("typeshed/stdlib/builtins.pyi"),
-                node: Node { start: 0, end: 0 },
-            },
-            methods: vec![],
-            attributes: HashMap::new(),
-            special: false,
-        };
-        builtin_scope.symbols.insert(
-            builtins::SET_TYPE.to_string(),
-            SymbolTableNode {
-                name: builtins::SET_TYPE.to_string(),
-                declarations: vec![Declaration::Class(set_class)],
-            },
-        );
-        let dict_class = Class {
-            name: builtins::DICT_TYPE.to_string(),
-            declaration_path: DeclarationPath {
-                module_name: PathBuf::from("typeshed/stdlib/builtins.pyi"),
-                node: Node { start: 0, end: 0 },
-            },
-            methods: vec![],
-            attributes: HashMap::new(),
-            special: false,
-        };
-        builtin_scope.symbols.insert(
-            builtins::DICT_TYPE.to_string(),
-            SymbolTableNode {
-                name: builtins::DICT_TYPE.to_string(),
-                declarations: vec![Declaration::Class(dict_class)],
-            },
-        );
         let global_scope = SymbolTableScope {
             id: get_id(),
             symbol_table_type: SymbolTableType::Module,
             symbols: HashMap::new(),
             name: String::from("global"),
-            parent: Some(builtin_scope.id),
+            parent: None,
             start_pos: 0,
         };
         SymbolTable {
-            scopes: vec![builtin_scope, global_scope],
+            scopes: vec![global_scope],
             all_scopes: vec![],
             _locals: HashMap::new(),
             module_name,
@@ -377,15 +298,7 @@ impl SymbolTable {
                 }
             }
         }
-        if let Some(symbol) = self.current_scope().symbols.get(&lookup_request.name) {
-            return Some(symbol);
-        }
         None
-    }
-
-    pub fn lookup_in_builtin_scope(&self, name: &str) -> Option<&SymbolTableNode> {
-        let builtin_scope = self.get_builtin_scope();
-        builtin_scope.symbols.get(name)
     }
 
     pub fn enter_scope(&mut self, new_scope: SymbolTableScope) {
@@ -403,10 +316,6 @@ impl SymbolTable {
     pub fn exit_scope(&mut self) {
         let finished_scope = self.scopes.pop();
         if let Some(scope) = finished_scope {
-            // Also pop the builtin scope if we are exiting the global scope
-            // if scope.symbol_table_type == SymbolTableType::Module {
-            //     self.all_scopes.push(self.scopes.pop().unwrap());
-            // }
             self.all_scopes.push(scope);
         }
     }
@@ -423,15 +332,6 @@ impl SymbolTable {
             }
             None => panic!("no current scope, there must be a global scope"),
         };
-    }
-
-    pub(crate) fn get_builtin_scope(&self) -> &SymbolTableScope {
-        // builtin scope always exists
-        self.scopes
-            .iter()
-            .filter(|scope| scope.symbol_table_type == SymbolTableType::BUILTIN)
-            .last()
-            .unwrap()
     }
 
     // TODO: this can be attribute of symbol table
