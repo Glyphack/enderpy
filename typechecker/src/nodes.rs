@@ -59,6 +59,12 @@ impl EnderpyFile {
     pub fn get_position(&self, pos: usize) -> Position {
         let mut line_number = 0;
         let mut line_start = 0;
+        if pos == 0 {
+            return Position {
+                line: 0,
+                character: 0,
+            };
+        }
         for (i, c) in self.build_source.source.chars().enumerate() {
             if i == pos {
                 break;

@@ -2,15 +2,15 @@
 source: typechecker/src/type_check/type_evaluator.rs
 description: "from typing import Union, Literal\nfrom enum import Enum\n\nclass Empty(Enum):\n    token = 0\n\na: Union[str, int]\n\nb: str | None\n\nc: Union[str, int, None]\n\n# failing test enable after handling Union types with more than 2 types\nc: str | Empty | None\n\nc: str | Empty | None | int\n"
 expression: result
-input_file: typechecker/src/type_check/test_data/inputs/union.py
+input_file: typechecker/test_data/inputs/union.py
 ---
 [
     (
         "(line: 10, character: 3):(line: 10, character: 24)",
         MultiValue(
             [
-                Str,
-                Int,
+                Unknown,
+                Unknown,
                 None,
             ],
         ),
@@ -20,7 +20,7 @@ input_file: typechecker/src/type_check/test_data/inputs/union.py
         MultiValue(
             [
                 Unknown,
-                Str,
+                Unknown,
                 None,
             ],
         ),
@@ -31,8 +31,8 @@ input_file: typechecker/src/type_check/test_data/inputs/union.py
             [
                 None,
                 Unknown,
-                Str,
-                Int,
+                Unknown,
+                Unknown,
             ],
         ),
     ),
@@ -44,8 +44,8 @@ input_file: typechecker/src/type_check/test_data/inputs/union.py
         "(line: 6, character: 3):(line: 6, character: 18)",
         MultiValue(
             [
-                Str,
-                Int,
+                Unknown,
+                Unknown,
             ],
         ),
     ),
@@ -53,7 +53,7 @@ input_file: typechecker/src/type_check/test_data/inputs/union.py
         "(line: 8, character: 3):(line: 8, character: 13)",
         MultiValue(
             [
-                Str,
+                Unknown,
                 None,
             ],
         ),

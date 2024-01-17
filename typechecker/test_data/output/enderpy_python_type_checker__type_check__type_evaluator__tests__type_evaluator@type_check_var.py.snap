@@ -1,0 +1,32 @@
+---
+source: typechecker/src/type_check/type_evaluator.rs
+description: "a: int = 1\n\na + \"str\"\n\nb = a + 1\n\nc = b + b\n"
+expression: result
+input_file: typechecker/test_data/inputs/type_check_var.py
+---
+[
+    (
+        "(line: 0, character: 2):(line: 0, character: 5)",
+        Unknown,
+    ),
+    (
+        "(line: 0, character: 8):(line: 0, character: 9)",
+        Int,
+    ),
+    (
+        "(line: 2, character: 0):(line: 2, character: 1)",
+        Unknown,
+    ),
+    (
+        "(line: 2, character: 4):(line: 2, character: 9)",
+        Str,
+    ),
+    (
+        "(line: 4, character: 4):(line: 4, character: 9)",
+        Int,
+    ),
+    (
+        "(line: 6, character: 4):(line: 6, character: 9)",
+        Int,
+    ),
+]

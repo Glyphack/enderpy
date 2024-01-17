@@ -7,6 +7,7 @@ use serde::Deserialize;
 #[allow(unused)]
 pub struct ImportDiscovery {
     pub python_executable: Option<PathBuf>,
+    // TODO make required and give error if not found
     pub typeshed_path: Option<PathBuf>,
 }
 

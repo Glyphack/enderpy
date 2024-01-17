@@ -71,16 +71,26 @@ impl BuildManager {
 
     // Entry point to analyze the program
     pub fn build(&mut self) {
-        self.populate_modules();
-    }
-
-    // Resolves imports in all files and then populates the symbol table
-    fn populate_modules(&mut self) {
         for build_source in self.build_sources.iter() {
             let build_source: BuildSource = build_source.clone();
             let state: EnderpyFile = build_source.into();
             self.modules.insert(state.module_name(), state);
         }
+        let builtins_file = self
+            .options
+            .import_discovery
+            .typeshed_path
+            .clone()
+            .unwrap()
+            .join("stdlib/builtins.pyi");
+        let builtins = BuildSource::from_path(builtins_file, true);
+        match builtins {
+            Ok(b) => {
+                let file: EnderpyFile = b.into();
+                self.modules.insert(file.module_name(), file)
+            }
+            Err(e) => panic!("error loading builtins file: {}", e),
+        };
         let (new_files, imports) = match self.options.follow_imports {
             crate::settings::FollowImports::All => {
                 self.gather_files(self.build_sources.clone(), true)
@@ -394,6 +404,10 @@ mod tests {
 
     #[allow(dead_code)]
     fn snapshot_symbol_table(source: &str) -> String {
+        let _ = env_logger::builder()
+            .filter_level(log::LevelFilter::Debug)
+            .is_test(true)
+            .try_init();
         let mut manager = BuildManager::new(
             vec![BuildSource {
                 path: PathBuf::from("test.py"),
@@ -409,66 +423,6 @@ mod tests {
 
         format!("{}", module.get_symbol_table())
     }
-
-    fn snapshot_type_check(source: &str) -> String {
-        let mut manager = BuildManager::new(
-            vec![BuildSource {
-                path: PathBuf::from("test.py"),
-                module: String::from("test"),
-                source: source.to_string(),
-                followed: false,
-            }],
-            Settings::test_settings(),
-        );
-        manager.type_check();
-
-        let errors = manager.errors;
-        errors
-            .iter()
-            .map(|x| format!("{:?}", x))
-            .collect::<Vec<String>>()
-            .join("\n")
-    }
-
-    macro_rules! snap_type {
-        ($name:tt, $path:tt) => {
-            #[test]
-            fn $name() {
-                let contents = include_str!($path);
-                let result = snapshot_type_check(contents);
-                let mut settings = insta::Settings::clone_current();
-                settings.set_snapshot_path("../test_data/output/");
-                settings.set_description(contents);
-                settings.add_filter(
-                    r"module_name: .*.typechecker.test_data.inputs.symbol_table..*.py",
-                    "module_name: [REDACTED]",
-                );
-                settings.bind(|| {
-                    insta::assert_snapshot!(result);
-                });
-            }
-        };
-    }
-
-    snap_type!(test_type_check_var, "../test_data/inputs/type_check_var.py");
-    snap_type!(
-        test_type_check_call,
-        "../test_data/inputs/type_check_call.py"
-    );
-    // snap_type!(
-    //     test_type_check_list,
-    //     "../test_data/inputs/type_check_list.py"
-    // );
-
-    snap_type!(
-        test_type_check_undefined,
-        "../test_data/inputs/type_check_undefined.py"
-    );
-
-    snap_type!(
-        test_undefined_names,
-        "../test_data/inputs/test_undefined_name.py"
-    );
 
     #[test]
     fn test_symbol_table() {

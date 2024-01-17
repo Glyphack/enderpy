@@ -1,0 +1,28 @@
+---
+source: typechecker/src/type_check/type_evaluator.rs
+description: "# undefined name\nundef_name\n\n# undefined name in function\ndef func():\n    undef_name\n\n# undefined name in class\nclass MyClass:\n    undef_name\n\n# undefined name in class function\nclass MyClass:\n    def func(self):\n        undef_name\n\ncall_undefined_name()\n\nfor i in undef_name:\n    pass\n\n"
+expression: result
+input_file: typechecker/test_data/inputs/test_undefined_name.py
+---
+[
+    (
+        "(line: 1, character: 0):(line: 1, character: 10)",
+        Unknown,
+    ),
+    (
+        "(line: 14, character: 8):(line: 14, character: 18)",
+        Unknown,
+    ),
+    (
+        "(line: 16, character: 0):(line: 16, character: 21)",
+        Unknown,
+    ),
+    (
+        "(line: 5, character: 4):(line: 5, character: 14)",
+        Unknown,
+    ),
+    (
+        "(line: 9, character: 4):(line: 9, character: 14)",
+        Unknown,
+    ),
+]

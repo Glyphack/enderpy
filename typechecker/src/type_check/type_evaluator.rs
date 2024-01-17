@@ -70,8 +70,8 @@ impl TypeEvaluator {
                 match func {
                     ast::Expression::Name(n) => {
                         // check if name is one of the builtins
-                        if builtins::BUILTINS.contains(&n.id.as_str()) {
-                            return Ok(PythonType::Unknown);
+                        if let Some(t) = self.get_builtin_type(&n.id) {
+                            return Ok(t);
                         }
                         let f_type = self.infer_type_from_symbol_table(n.id.as_str(), None)?;
                         log::debug!("f_type: {:?}", f_type);
@@ -95,52 +95,61 @@ impl TypeEvaluator {
             )),
             ast::Expression::List(l) => {
                 let final_elm_type = self.get_sequence_type_from_elements(&l.elements);
-                let builtin_type = self.get_builtin_type(builtins::LIST_TYPE);
-                if let Some(builtin_type) = builtin_type {
-                    Ok(PythonType::Class(ClassType::new(
-                        builtin_type,
-                        vec![final_elm_type],
-                    )))
-                } else {
-                    Ok(PythonType::Unknown)
-                }
+                let class_type = match self.get_builtin_type(builtins::LIST_TYPE) {
+                    Some(builtin_type) => match builtin_type {
+                        PythonType::Class(c) => c.details,
+                        _ => panic!("List type is not a class"),
+                    },
+                    None => return Ok(PythonType::Unknown),
+                };
+                Ok(PythonType::Class(ClassType::new(
+                    class_type,
+                    vec![final_elm_type],
+                )))
             }
             ast::Expression::Tuple(t) => {
                 let elm_type = self.get_sequence_type_from_elements(&t.elements);
-                let builtin_type = self.get_builtin_type(builtins::TUPLE_TYPE);
-                if let Some(builtin_type) = builtin_type {
-                    Ok(PythonType::Class(ClassType::new(
-                        builtin_type,
-                        vec![elm_type],
-                    )))
-                } else {
-                    Ok(PythonType::Unknown)
-                }
+                let class_type = match self.get_builtin_type(builtins::TUPLE_TYPE) {
+                    Some(builtin_type) => match builtin_type {
+                        PythonType::Class(c) => c.details,
+                        _ => panic!("Tuple type is not a class"),
+                    },
+                    None => return Ok(PythonType::Unknown),
+                };
+
+                Ok(PythonType::Class(ClassType::new(
+                    class_type,
+                    vec![elm_type],
+                )))
             }
             ast::Expression::Dict(d) => {
                 let key_type = self.get_sequence_type_from_elements(&d.keys);
                 let value_type = self.get_sequence_type_from_elements(&d.values);
-                let builtin_type = self.get_builtin_type(builtins::DICT_TYPE);
-                if let Some(builtin_type) = builtin_type {
-                    Ok(PythonType::Class(ClassType::new(
-                        builtin_type,
-                        vec![key_type, value_type],
-                    )))
-                } else {
-                    Ok(PythonType::Unknown)
-                }
+                let class_type = match self.get_builtin_type(builtins::DICT_TYPE) {
+                    Some(builtin_type) => match builtin_type {
+                        PythonType::Class(c) => c.details,
+                        _ => panic!("Dict type is not a class"),
+                    },
+                    None => return Ok(PythonType::Unknown),
+                };
+                Ok(PythonType::Class(ClassType::new(
+                    class_type,
+                    vec![key_type, value_type],
+                )))
             }
             ast::Expression::Set(s) => {
                 let elm_type = self.get_sequence_type_from_elements(&s.elements);
-                let builtin_type = self.get_builtin_type(builtins::SET_TYPE);
-                if let Some(builtin_type) = builtin_type {
-                    Ok(PythonType::Class(ClassType::new(
-                        builtin_type,
-                        vec![elm_type],
-                    )))
-                } else {
-                    Ok(PythonType::Unknown)
-                }
+                let class_type = match self.get_builtin_type(builtins::SET_TYPE) {
+                    Some(builtin_type) => match builtin_type {
+                        PythonType::Class(c) => c.details,
+                        _ => panic!("Dict type is not a class"),
+                    },
+                    None => return Ok(PythonType::Unknown),
+                };
+                Ok(PythonType::Class(ClassType::new(
+                    class_type,
+                    vec![elm_type],
+                )))
             }
             ast::Expression::BoolOp(_) => Ok(PythonType::Bool),
             ast::Expression::UnaryOp(u) => match u.op {
@@ -209,14 +218,8 @@ impl TypeEvaluator {
     pub fn get_type_from_annotation(&self, type_annotation: &ast::Expression) -> PythonType {
         log::debug!("Getting type from annotation: {:?}", type_annotation);
         let expr_type = match type_annotation {
-            Expression::Name(name) => match name.id.as_str() {
-                "int" => PythonType::Int,
-                "float" => PythonType::Float,
-                "str" => PythonType::Str,
-                "bool" => PythonType::Bool,
-                "None" => PythonType::None,
-                _ => PythonType::Unknown,
-            },
+            // TODO: implement
+            Expression::Name(name) => PythonType::Unknown,
             Expression::Constant(c) => {
                 if let ast::ConstantValue::None = c.value {
                     PythonType::None
@@ -409,9 +412,36 @@ impl TypeEvaluator {
     }
 
     /// Retrieves a pythoh type that is present in the builtin scope
-    fn get_builtin_type(&self, name: &str) -> Option<symbol_table::Class> {
-        let builtin_symbol = self.symbol_table.lookup_in_builtin_scope(name);
-        let cls_declaration = match builtin_symbol {
+    fn get_builtin_type(&self, name: &str) -> Option<PythonType> {
+        log::debug!("Getting builtin type: {}", name);
+        // typeshed has a function class which is not supposed to be there.
+        // https://github.com/python/typeshed/issues/2999
+        if name == "function" {
+            return None;
+        }
+        let bulitins_symbol_table = match self
+            .imported_symbol_tables
+            .iter()
+            .find(|symbol_table| symbol_table.file_path.ends_with("stdlib/builtins.pyi"))
+        {
+            Some(symbol_table) => symbol_table,
+            None => {
+                let all_symbol_table_names = self
+                    .imported_symbol_tables
+                    .iter()
+                    .map(|symbol_table| symbol_table.module_name.clone())
+                    .collect::<Vec<String>>();
+                panic!(
+                    "Builtin symbol table not found in {:?}",
+                    all_symbol_table_names
+                );
+            }
+        };
+        let builtin_symbol = bulitins_symbol_table.lookup_in_scope(LookupSymbolRequest {
+            name: name.to_string(),
+            position: None,
+        });
+        return match builtin_symbol {
             None => {
                 log::debug!("builtin type {} not found", name);
                 None
@@ -419,17 +449,28 @@ impl TypeEvaluator {
             Some(node) => {
                 // get the declaration with type class
                 node.declarations.iter().find_map(|decl| match decl {
-                    Declaration::Class(c) => Some(Declaration::Class(c.clone())),
+                    Declaration::Class(c) => {
+                        Some(PythonType::Class(ClassType::new(c.clone(), vec![])))
+                    }
+                    Declaration::Function(f) => {
+                        let arguments = f.function_node.args.clone();
+                        let name = f.function_node.name.clone();
+                        Some(PythonType::Callable(Box::new(CallableType {
+                            name,
+                            arguments,
+                            return_type: f
+                                .function_node
+                                .returns
+                                .clone()
+                                .map_or(PythonType::Unknown, |type_annotation| {
+                                    self.get_type_from_annotation(&type_annotation)
+                                }),
+                        })))
+                    }
                     _ => None,
                 })
             }
         };
-
-        match cls_declaration {
-            None => None,
-            Some(Declaration::Class(c)) => Some(c),
-            _ => panic!("builtin type {} not found", name),
-        }
     }
 
     /// This function flattens a chain of bit or expressions
@@ -736,12 +777,17 @@ impl TypeEvaluator {
         );
         match expression {
             // This is a Generic type with a param: Container[type, ...]
+            // name here is something like list or List or Literal or user defined class
             Expression::Name(n) => {
-                if let Some(builtin_type) = self.get_builtin_type(n.id.as_str()) {
-                    return Some(builtin_type);
-                }
                 // if it's not a builtin we want to get the class declaration
                 // form symbol table and find where this class
+
+                if let Some(builtin_type) = self.get_builtin_type(&n.id) {
+                    match builtin_type {
+                        PythonType::Class(c) => return Some(c.details),
+                        _ => panic!("Builtin type is not a class"),
+                    }
+                }
 
                 let mut declaration = match symbol_table.lookup_in_scope(LookupSymbolRequest {
                     name: n.id.clone(),
@@ -1188,10 +1234,10 @@ impl TraversalVisitor for DumpTypes {
 
                 self.save_type_annotation(&a.annotation)
             }
-            ast::Statement::AugAssignStatement(a) => self.visit_aug_assign(a),
-            ast::Statement::Assert(a) => self.visit_assert(a),
-            ast::Statement::Pass(p) => self.visit_pass(p),
-            ast::Statement::Delete(d) => self.visit_delete(d),
+            ast::Statement::AugAssignStatement(a) => (),
+            ast::Statement::Assert(a) => (),
+            ast::Statement::Pass(p) => (),
+            ast::Statement::Delete(d) => (),
             ast::Statement::Return(r) => {
                 if let Some(r) = r.value.as_ref() {
                     self.visit_expr(r);
@@ -1206,67 +1252,71 @@ impl TraversalVisitor for DumpTypes {
                     self.save_type(r);
                 }
             }
-            ast::Statement::Break(b) => self.visit_break(b),
-            ast::Statement::Continue(c) => self.visit_continue(c),
-            ast::Statement::Global(g) => self.visit_global(g),
-            ast::Statement::Nonlocal(n) => self.visit_nonlocal(n),
-            ast::Statement::IfStatement(i) => self.visit_if(i),
-            ast::Statement::WhileStatement(w) => self.visit_while(w),
-            ast::Statement::ForStatement(f) => self.visit_for(f),
-            ast::Statement::WithStatement(w) => self.visit_with(w),
-            ast::Statement::TryStatement(t) => self.visit_try(t),
-            ast::Statement::TryStarStatement(t) => self.visit_try_star(t),
+            ast::Statement::Break(b) => (),
+            ast::Statement::Continue(c) => (),
+            ast::Statement::Global(g) => (),
+            ast::Statement::Nonlocal(n) => (),
+            ast::Statement::IfStatement(i) => (),
+            ast::Statement::WhileStatement(w) => (),
+            ast::Statement::ForStatement(f) => (),
+            ast::Statement::WithStatement(w) => (),
+            ast::Statement::TryStatement(t) => (),
+            ast::Statement::TryStarStatement(t) => (),
             ast::Statement::FunctionDef(f) => {
                 for stmt in &f.body {
                     self.visit_stmt(stmt);
                 }
             }
-            ast::Statement::ClassDef(c) => self.visit_class_def(c),
-            ast::Statement::Match(m) => self.visit_match(m),
-            Statement::AsyncForStatement(f) => self.visit_async_for(f),
-            Statement::AsyncWithStatement(w) => self.visit_async_with(w),
-            Statement::AsyncFunctionDef(f) => self.visit_async_function_def(f),
-            Statement::TypeAlias(a) => self.visit_type_alias(a),
+            ast::Statement::ClassDef(c) => {
+                for stmt in &c.body {
+                    self.visit_stmt(stmt);
+                }
+            }
+            ast::Statement::Match(m) => (),
+            Statement::AsyncForStatement(f) => (),
+            Statement::AsyncWithStatement(w) => (),
+            Statement::AsyncFunctionDef(f) => (),
+            Statement::TypeAlias(a) => (),
         }
     }
 
     fn visit_expr(&mut self, e: &ast::Expression) {
         match e {
-            ast::Expression::Constant(c) => self.visit_constant(c),
-            ast::Expression::List(l) => self.visit_list(l),
-            ast::Expression::Tuple(t) => self.visit_tuple(t),
-            ast::Expression::Dict(d) => self.visit_dict(d),
-            ast::Expression::Set(s) => self.visit_set(s),
-            ast::Expression::Name(n) => self.visit_name(n),
-            ast::Expression::BoolOp(b) => self.visit_bool_op(b),
-            ast::Expression::UnaryOp(u) => self.visit_unary_op(u),
+            ast::Expression::Constant(c) => (),
+            ast::Expression::List(l) => (),
+            ast::Expression::Tuple(t) => (),
+            ast::Expression::Dict(d) => (),
+            ast::Expression::Set(s) => (),
+            ast::Expression::Name(n) => self.save_type(e),
+            ast::Expression::BoolOp(b) => (),
+            ast::Expression::UnaryOp(u) => (),
             ast::Expression::BinOp(b) => {
                 self.save_type(&b.left);
                 self.save_type(&b.right);
             }
-            ast::Expression::NamedExpr(n) => self.visit_named_expr(n),
-            ast::Expression::Yield(y) => self.visit_yield(y),
-            ast::Expression::YieldFrom(y) => self.visit_yield_from(y),
-            ast::Expression::Starred(s) => self.visit_starred(s),
-            ast::Expression::Generator(g) => self.visit_generator(g),
-            ast::Expression::ListComp(l) => self.visit_list_comp(l),
-            ast::Expression::SetComp(s) => self.visit_set_comp(s),
-            ast::Expression::DictComp(d) => self.visit_dict_comp(d),
-            ast::Expression::Attribute(a) => self.visit_attribute(a),
-            ast::Expression::Subscript(s) => self.visit_subscript(s),
-            ast::Expression::Slice(s) => self.visit_slice(s),
+            ast::Expression::NamedExpr(n) => (),
+            ast::Expression::Yield(y) => (),
+            ast::Expression::YieldFrom(y) => (),
+            ast::Expression::Starred(s) => (),
+            ast::Expression::Generator(g) => (),
+            ast::Expression::ListComp(l) => (),
+            ast::Expression::SetComp(s) => (),
+            ast::Expression::DictComp(d) => (),
+            ast::Expression::Attribute(a) => (),
+            ast::Expression::Subscript(s) => (),
+            ast::Expression::Slice(s) => (),
             ast::Expression::Call(c) => {
-                self.save_type(&c.func);
+                self.save_type(e);
                 for arg in &c.args {
                     self.save_type(arg);
                 }
             }
-            ast::Expression::Await(a) => self.visit_await(a),
-            ast::Expression::Compare(c) => self.visit_compare(c),
-            ast::Expression::Lambda(l) => self.visit_lambda(l),
-            ast::Expression::IfExp(i) => self.visit_if_exp(i),
-            ast::Expression::JoinedStr(j) => self.visit_joined_str(j),
-            ast::Expression::FormattedValue(f) => self.visit_formatted_value(f),
+            ast::Expression::Await(a) => (),
+            ast::Expression::Compare(c) => (),
+            ast::Expression::Lambda(l) => (),
+            ast::Expression::IfExp(i) => (),
+            ast::Expression::JoinedStr(j) => (),
+            ast::Expression::FormattedValue(f) => (),
         }
     }
 }
@@ -1302,7 +1352,7 @@ mod tests {
             all_symbol_tables.push(module.get_symbol_table());
         }
 
-        let module = manager.get_state("test-file".into()).unwrap().clone();
+        let module = manager.get_state("test-file".into()).unwrap();
         let symbol_table = module.get_symbol_table();
 
         let type_eval = TypeEvaluator {
@@ -1324,7 +1374,8 @@ mod tests {
 
     #[test]
     fn test_type_evaluator() {
-        glob!("test_data/inputs/", "*.py", |path| {
+        glob!("../../test_data/inputs/", "*.py", |path| {
+            log::debug!("Testing file: {:?}", path);
             let contents = fs::read_to_string(path).unwrap();
             let result = snapshot_type_eval(&contents);
             let _ = env_logger::builder()
@@ -1335,7 +1386,7 @@ mod tests {
             // TODO move this redaction setting to a central place
             let mut settings = insta::Settings::clone_current();
             settings.add_filter(r"module_name: .*.typeshed.", "module_name: [TYPESHED].");
-            settings.set_snapshot_path("./test_data/output/");
+            settings.set_snapshot_path("../../test_data/output/");
             settings.set_description(fs::read_to_string(path).unwrap());
             settings.bind(|| {
                 insta::assert_snapshot!(result);

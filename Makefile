@@ -15,12 +15,12 @@ check:
 
 .PHONY: format
 format:
-	@cargo +nightly fmt --all
+	@cargo fmt --all
 
 .PHONY: format-check
 format-check:
-	cargo +nightly fmt --all -- --check
+	@cargo fmt --all -- --check
 
 .PHONY: lint
 lint:
-	@cargo +nightly clippy --all --all-features --tests -- -D warnings
+	@cargo clippy --all --all-features --tests -- -D warnings
