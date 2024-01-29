@@ -4,55 +4,7 @@ description: "from abc import abstractmethod\n\n\ndef f():\n    raise Exception(
 expression: result
 input_file: typechecker/test_data/inputs/never.py
 ---
-[
-    (
-        "(line: 11, character: 14):(line: 11, character: 53)",
-        Class(
-            ClassType {
-                details: Class {
-                    name: "Exception",
-                    declaration_path: DeclarationPath {
-                        module_name: [TYPESHED].stdlib/builtins.pyi",
-                        node: Node {
-                            start: 81462,
-                            end: 81498,
-                        },
-                    },
-                    methods: [],
-                    attributes: {},
-                    special: false,
-                },
-                type_parameters: [],
-            },
-        ),
-    ),
-    (
-        "(line: 13, character: 8):(line: 13, character: 12)",
-        Unknown,
-    ),
-    (
-        "(line: 4, character: 10):(line: 4, character: 49)",
-        Class(
-            ClassType {
-                details: Class {
-                    name: "Exception",
-                    declaration_path: DeclarationPath {
-                        module_name: [TYPESHED].stdlib/builtins.pyi",
-                        node: Node {
-                            start: 81462,
-                            end: 81498,
-                        },
-                    },
-                    methods: [],
-                    attributes: {},
-                    special: false,
-                },
-                type_parameters: [],
-            },
-        ),
-    ),
-    (
-        "(line: 6, character: 4):(line: 6, character: 7)",
-        Never,
-    ),
-]
+'Exception('This is the error message.')': Class(ClassType { details: Class { name: "Exception", declaration_path: DeclarationPath { module_name: [TYPESHED].stdlib/builtins.pyi", node: Node { start: 81462, end: 81498 } }, methods: [], attributes: {}, special: false }, type_parameters: [] })
+'f()': Never
+'Exception('This is the error message.')': Class(ClassType { details: Class { name: "Exception", declaration_path: DeclarationPath { module_name: [TYPESHED].stdlib/builtins.pyi", node: Node { start: 81462, end: 81498 } }, methods: [], attributes: {}, special: false }, type_parameters: [] })
+'f2()': Unknown

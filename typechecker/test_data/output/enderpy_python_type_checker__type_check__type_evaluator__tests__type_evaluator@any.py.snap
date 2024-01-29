@@ -4,17 +4,6 @@ description: "def func(x):\n    return x + 1\n"
 expression: result
 input_file: typechecker/test_data/inputs/any.py
 ---
-[
-    (
-        "(line: 1, character: 11):(line: 1, character: 12)",
-        Unknown,
-    ),
-    (
-        "(line: 1, character: 11):(line: 1, character: 16)",
-        Int,
-    ),
-    (
-        "(line: 1, character: 15):(line: 1, character: 16)",
-        Int,
-    ),
-]
+'x': Unknown
+'x + 1': Int
+'1': Int

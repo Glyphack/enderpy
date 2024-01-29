@@ -4,58 +4,9 @@ description: "from typing import Union, Literal\nfrom enum import Enum\n\nclass 
 expression: result
 input_file: typechecker/test_data/inputs/union.py
 ---
-[
-    (
-        "(line: 10, character: 3):(line: 10, character: 24)",
-        MultiValue(
-            [
-                Unknown,
-                Unknown,
-                None,
-            ],
-        ),
-    ),
-    (
-        "(line: 13, character: 3):(line: 13, character: 21)",
-        MultiValue(
-            [
-                Unknown,
-                Unknown,
-                None,
-            ],
-        ),
-    ),
-    (
-        "(line: 15, character: 3):(line: 15, character: 27)",
-        MultiValue(
-            [
-                None,
-                Unknown,
-                Unknown,
-                Unknown,
-            ],
-        ),
-    ),
-    (
-        "(line: 4, character: 12):(line: 4, character: 13)",
-        Int,
-    ),
-    (
-        "(line: 6, character: 3):(line: 6, character: 18)",
-        MultiValue(
-            [
-                Unknown,
-                Unknown,
-            ],
-        ),
-    ),
-    (
-        "(line: 8, character: 3):(line: 8, character: 13)",
-        MultiValue(
-            [
-                Unknown,
-                None,
-            ],
-        ),
-    ),
-]
+'0': Int
+'Union[str, int]': MultiValue([Unknown, Unknown])
+'str | None': MultiValue([Unknown, None])
+'Union[str, int, None]': MultiValue([Unknown, Unknown, None])
+'str | Empty | None': MultiValue([Unknown, Unknown, None])
+'str | Empty | None | int': MultiValue([None, Unknown, Unknown, Unknown])

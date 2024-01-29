@@ -4,27 +4,7 @@ description: "from typing import Literal\n\n\na: Literal[\"foo\"] = \"foo\"\n\n\
 expression: result
 input_file: typechecker/test_data/inputs/literal.py
 ---
-[
-    (
-        "(line: 12, character: 4):(line: 12, character: 16)",
-        Unknown,
-    ),
-    (
-        "(line: 3, character: 20):(line: 3, character: 25)",
-        Str,
-    ),
-    (
-        "(line: 3, character: 3):(line: 3, character: 17)",
-        KnownValue(
-            KnownValue {
-                literal_value: Str(
-                    "foo",
-                ),
-            },
-        ),
-    ),
-    (
-        "(line: 8, character: 20):(line: 8, character: 24)",
-        Unknown,
-    ),
-]
+'Literal["foo"]': KnownValue(KnownValue { literal_value: Str("foo") })
+'"foo"': Str
+'name': Unknown
+'literal_name': Unknown

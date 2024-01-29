@@ -1173,14 +1173,21 @@ impl TraversalVisitorImmutGeneric<PythonType> for TypeEvaluator {
 /// (line, start, end)
 struct DumpTypes {
     pub type_eval: TypeEvaluator,
-    pub types: HashMap<String, PythonType>,
+    pub types: Vec<SnapshtType>,
     pub enderpy_file: EnderpyFile,
+}
+
+#[derive(Debug, Clone)]
+struct SnapshtType {
+    pub start: usize,
+    pub text: String,
+    pub typ: PythonType,
 }
 
 impl DumpTypes {
     pub fn new(enderpy_file: EnderpyFile, type_eval: TypeEvaluator) -> Self {
         Self {
-            types: HashMap::new(),
+            types: vec![],
             type_eval,
             enderpy_file,
         }
@@ -1194,18 +1201,28 @@ impl DumpTypes {
     pub fn save_type(&mut self, expr: &ast::Expression) {
         let typ = self.type_eval.get_type(expr).unwrap_or(PythonType::Unknown);
         log::debug!("save_type: {:?} => {:?}", expr, typ);
-        let start_pos = self.enderpy_file().get_position(expr.get_node().start);
-        let end_pos = self.enderpy_file().get_position(expr.get_node().end);
-        self.types.insert(format!("{}:{}", start_pos, end_pos), typ);
+        let symbol_text =
+            self.enderpy_file().source()[expr.get_node().start..expr.get_node().end].to_string();
+        let typ = SnapshtType {
+            start: expr.get_node().start,
+            text: symbol_text,
+            typ,
+        };
+        self.types.push(typ);
     }
 
     // TODO: move type annotation tests to its own file
     pub fn save_type_annotation(&mut self, expr: &ast::Expression) {
         let typ = self.type_eval.get_type_from_annotation(expr);
         log::debug!("save_type: {:?} => {:?}", expr, typ);
-        let start_pos = self.enderpy_file().get_position(expr.get_node().start);
-        let end_pos = self.enderpy_file().get_position(expr.get_node().end);
-        self.types.insert(format!("{}:{}", start_pos, end_pos), typ);
+        let symbol_text =
+            self.enderpy_file().source()[expr.get_node().start..expr.get_node().end].to_string();
+        let typ = SnapshtType {
+            start: expr.get_node().start,
+            text: symbol_text,
+            typ,
+        };
+        self.types.push(typ);
     }
 
     fn visit_module(&mut self) {
@@ -1367,15 +1384,19 @@ mod tests {
 
         // sort result by key
         let mut result_sorted = result.clone().into_iter().collect::<Vec<_>>();
-        result_sorted.sort_by(|a, b| a.0.cmp(&b.0));
+        result_sorted.sort_by(|a, b| a.start.cmp(&b.start));
 
-        format!("{:#?}", result_sorted)
+        let str = result_sorted
+            .into_iter()
+            .map(|t| format!("'{}': {:?}", t.text, t.typ))
+            .collect::<Vec<_>>()
+            .join("\n");
+        return str;
     }
 
     #[test]
     fn test_type_evaluator() {
         glob!("../../test_data/inputs/", "*.py", |path| {
-            log::debug!("Testing file: {:?}", path);
             let contents = fs::read_to_string(path).unwrap();
             let result = snapshot_type_eval(&contents);
             let _ = env_logger::builder()

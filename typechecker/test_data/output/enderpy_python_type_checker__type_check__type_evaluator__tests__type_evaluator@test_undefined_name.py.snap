@@ -4,25 +4,8 @@ description: "# undefined name\nundef_name\n\n# undefined name in function\ndef 
 expression: result
 input_file: typechecker/test_data/inputs/test_undefined_name.py
 ---
-[
-    (
-        "(line: 1, character: 0):(line: 1, character: 10)",
-        Unknown,
-    ),
-    (
-        "(line: 14, character: 8):(line: 14, character: 18)",
-        Unknown,
-    ),
-    (
-        "(line: 16, character: 0):(line: 16, character: 21)",
-        Unknown,
-    ),
-    (
-        "(line: 5, character: 4):(line: 5, character: 14)",
-        Unknown,
-    ),
-    (
-        "(line: 9, character: 4):(line: 9, character: 14)",
-        Unknown,
-    ),
-]
+'undef_name': Unknown
+'undef_name': Unknown
+'undef_name': Unknown
+'undef_name': Unknown
+'call_undefined_name()': Unknown

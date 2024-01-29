@@ -393,7 +393,6 @@ impl BuildManager {
     }
 }
 
-// TODO: refactor type check tests to be like symbol table tests
 #[cfg(test)]
 mod tests {
     use std::fs;

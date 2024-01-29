@@ -4,51 +4,10 @@ description: "def function() -> int:\n    return 1\n\na = function()\nb = functi
 expression: result
 input_file: typechecker/test_data/inputs/type_check_call.py
 ---
-[
-    (
-        "(line: 1, character: 11):(line: 1, character: 12)",
-        Int,
-    ),
-    (
-        "(line: 3, character: 4):(line: 3, character: 14)",
-        Unknown,
-    ),
-    (
-        "(line: 4, character: 4):(line: 4, character: 20)",
-        Unknown,
-    ),
-    (
-        "(line: 5, character: 4):(line: 5, character: 9)",
-        Int,
-    ),
-    (
-        "(line: 6, character: 4):(line: 6, character: 18)",
-        Int,
-    ),
-    (
-        "(line: 8, character: 0):(line: 8, character: 8)",
-        Callable(
-            CallableType {
-                name: "function",
-                arguments: Arguments {
-                    node: Node {
-                        start: 13,
-                        end: 13,
-                    },
-                    posonlyargs: [],
-                    args: [],
-                    vararg: None,
-                    kwonlyargs: [],
-                    kw_defaults: [],
-                    kwarg: None,
-                    defaults: [],
-                },
-                return_type: Unknown,
-            },
-        ),
-    ),
-    (
-        "(line: 8, character: 11):(line: 8, character: 12)",
-        Int,
-    ),
-]
+'1': Int
+'function()': Unknown
+'function() + "1"': Unknown
+'a + 1': Int
+'function() + 1': Int
+'function': Callable(CallableType { name: "function", arguments: Arguments { node: Node { start: 13, end: 13 }, posonlyargs: [], args: [], vararg: None, kwonlyargs: [], kw_defaults: [], kwarg: None, defaults: [] }, return_type: Unknown })
+'1': Int
