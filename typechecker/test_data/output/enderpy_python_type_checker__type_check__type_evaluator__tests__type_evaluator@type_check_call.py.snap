@@ -1,13 +1,44 @@
 ---
 source: typechecker/src/type_check/type_evaluator.rs
-description: "def function() -> int:\n    return 1\n\na = function()\nb = function() + \"1\"\nc = a + 1\nd = function() + 1\n\nfunction + 1\n"
+description: "1: def function() -> int:\n2:     return 1\n3: \n4: a = function()\n5: b = function() + \"1\"\n6: c = a + 1\n7: d = function() + 1\n8: \n9: function + 1\n"
 expression: result
 input_file: typechecker/test_data/inputs/type_check_call.py
 ---
-'1': Int
-'function()': Unknown
-'function() + "1"': Unknown
-'a + 1': Int
-'function() + 1': Int
-'function': Callable(CallableType { name: "function", arguments: Arguments { node: Node { start: 13, end: 13 }, posonlyargs: [], args: [], vararg: None, kwonlyargs: [], kw_defaults: [], kwarg: None, defaults: [] }, return_type: Unknown })
-'1': Int
+Line 2:     return 1
+
+Expr types in the line --->:
+        "1" => Int
+
+---
+Line 4: a = function()
+
+Expr types in the line --->:
+        "function()" => Unknown
+
+---
+Line 5: b = function() + "1"
+
+Expr types in the line --->:
+        "function() + \"1\"" => Unknown
+
+---
+Line 6: c = a + 1
+
+Expr types in the line --->:
+        "a + 1" => Int
+
+---
+Line 7: d = function() + 1
+
+Expr types in the line --->:
+        "function() + 1" => Int
+
+---
+Line 9: function + 1
+
+Expr types in the line --->:
+        "function" => Callable(CallableType { name: "function", arguments: Arguments { node: Node { start: 13, end: 13 }, posonlyargs: [], args: [], vararg: None, kwonlyargs: [], kw_defaults: [], kwarg: None, defaults: [] }, return_type: Unknown })
+        "1" => Int
+
+---
+

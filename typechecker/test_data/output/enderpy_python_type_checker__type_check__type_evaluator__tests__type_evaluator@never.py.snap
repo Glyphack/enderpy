@@ -1,10 +1,31 @@
 ---
 source: typechecker/src/type_check/type_evaluator.rs
-description: "from abc import abstractmethod\n\n\ndef f():\n    raise Exception('This is the error message.')\n\na = f()\n\nclass A:\n    @abstractmethod\n    def f2():\n        raise Exception('This is the error message.')\n\n    b = f2()\n\n"
+description: "1: from abc import abstractmethod\n2: \n3: \n4: def f():\n5:     raise Exception('This is the error message.')\n6: \n7: a = f()\n8: \n9: class A:\n10:     @abstractmethod\n11:     def f2():\n12:         raise Exception('This is the error message.')\n13: \n14:     b = f2()\n15: \n"
 expression: result
 input_file: typechecker/test_data/inputs/never.py
 ---
-'Exception('This is the error message.')': Class(ClassType { details: Class { name: "Exception", declaration_path: DeclarationPath { module_name: [TYPESHED].stdlib/builtins.pyi", node: Node { start: 81462, end: 81498 } }, methods: [], attributes: {}, special: false }, type_parameters: [] })
-'f()': Never
-'Exception('This is the error message.')': Class(ClassType { details: Class { name: "Exception", declaration_path: DeclarationPath { module_name: [TYPESHED].stdlib/builtins.pyi", node: Node { start: 81462, end: 81498 } }, methods: [], attributes: {}, special: false }, type_parameters: [] })
-'f2()': Unknown
+Line 5:     raise Exception('This is the error message.')
+
+Expr types in the line --->:
+        "Exception('This is the error message.')" => Class(ClassType { details: Class { name: "Exception", declaration_path: DeclarationPath { module_name: [TYPESHED].stdlib/builtins.pyi", node: Node { start: 81462, end: 81498 } }, methods: [], attributes: {}, special: false }, type_parameters: [] })
+
+---
+Line 7: a = f()
+
+Expr types in the line --->:
+        "f()" => Never
+
+---
+Line 12:         raise Exception('This is the error message.')
+
+Expr types in the line --->:
+        "Exception('This is the error message.')" => Class(ClassType { details: Class { name: "Exception", declaration_path: DeclarationPath { module_name: [TYPESHED].stdlib/builtins.pyi", node: Node { start: 81462, end: 81498 } }, methods: [], attributes: {}, special: false }, type_parameters: [] })
+
+---
+Line 14:     b = f2()
+
+Expr types in the line --->:
+        "f2()" => Unknown
+
+---
+

@@ -1,12 +1,43 @@
 ---
 source: typechecker/src/type_check/type_evaluator.rs
-description: "from typing import Union, Literal\nfrom enum import Enum\n\nclass Empty(Enum):\n    token = 0\n\na: Union[str, int]\n\nb: str | None\n\nc: Union[str, int, None]\n\n# failing test enable after handling Union types with more than 2 types\nc: str | Empty | None\n\nc: str | Empty | None | int\n"
+description: "1: from typing import Union, Literal\n2: from enum import Enum\n3: \n4: class Empty(Enum):\n5:     token = 0\n6: \n7: a: Union[str, int]\n8: \n9: b: str | None\n10: \n11: c: Union[str, int, None]\n12: \n13: # failing test enable after handling Union types with more than 2 types\n14: c: str | Empty | None\n15: \n16: c: str | Empty | None | int\n"
 expression: result
 input_file: typechecker/test_data/inputs/union.py
 ---
-'0': Int
-'Union[str, int]': MultiValue([Unknown, Unknown])
-'str | None': MultiValue([Unknown, None])
-'Union[str, int, None]': MultiValue([Unknown, Unknown, None])
-'str | Empty | None': MultiValue([Unknown, Unknown, None])
-'str | Empty | None | int': MultiValue([None, Unknown, Unknown, Unknown])
+Line 5:     token = 0
+
+Expr types in the line --->:
+        "0" => Int
+
+---
+Line 7: a: Union[str, int]
+
+Expr types in the line --->:
+        "Union[str, int]" => MultiValue([Unknown, Unknown])
+
+---
+Line 9: b: str | None
+
+Expr types in the line --->:
+        "str | None" => MultiValue([Unknown, None])
+
+---
+Line 11: c: Union[str, int, None]
+
+Expr types in the line --->:
+        "Union[str, int, None]" => MultiValue([Unknown, Unknown, None])
+
+---
+Line 14: c: str | Empty | None
+
+Expr types in the line --->:
+        "str | Empty | None" => MultiValue([Unknown, Unknown, None])
+
+---
+Line 16: c: str | Empty | None | int
+
+Expr types in the line --->:
+        "str | Empty | None | int" => MultiValue([None, Unknown, Unknown, Unknown])
+
+---
+

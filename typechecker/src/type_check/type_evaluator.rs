@@ -17,6 +17,7 @@ use super::{
 use crate::{
     ast_visitor::TraversalVisitor,
     ast_visitor_generic::TraversalVisitorImmutGeneric,
+    diagnostic::Position,
     nodes::EnderpyFile,
     symbol_table::{self, Class, Declaration, LookupSymbolRequest, SymbolTable, SymbolTableNode},
     type_check::types::ClassType,
@@ -1179,8 +1180,8 @@ struct DumpTypes {
 
 #[derive(Debug, Clone)]
 struct SnapshtType {
-    pub start: usize,
-    pub text: String,
+    pub position: Position,
+    pub symbol_text: String,
     pub typ: PythonType,
 }
 
@@ -1203,9 +1204,10 @@ impl DumpTypes {
         log::debug!("save_type: {:?} => {:?}", expr, typ);
         let symbol_text =
             self.enderpy_file().source()[expr.get_node().start..expr.get_node().end].to_string();
+        let position = self.enderpy_file().get_position(expr.get_node().start);
         let typ = SnapshtType {
-            start: expr.get_node().start,
-            text: symbol_text,
+            position,
+            symbol_text,
             typ,
         };
         self.types.push(typ);
@@ -1218,8 +1220,8 @@ impl DumpTypes {
         let symbol_text =
             self.enderpy_file().source()[expr.get_node().start..expr.get_node().end].to_string();
         let typ = SnapshtType {
-            start: expr.get_node().start,
-            text: symbol_text,
+            position: self.enderpy_file().get_position(expr.get_node().start),
+            symbol_text,
             typ,
         };
         self.types.push(typ);
@@ -1340,7 +1342,7 @@ impl TraversalVisitor for DumpTypes {
 
 #[cfg(test)]
 mod tests {
-    use std::{fs, path::PathBuf};
+    use std::{fmt::format, fs, path::PathBuf};
 
     use insta::glob;
 
@@ -1384,13 +1386,26 @@ mod tests {
 
         // sort result by key
         let mut result_sorted = result.clone().into_iter().collect::<Vec<_>>();
-        result_sorted.sort_by(|a, b| a.start.cmp(&b.start));
+        result_sorted.sort_by(|a, b| a.position.line.cmp(&b.position.line));
 
-        let str = result_sorted
-            .into_iter()
-            .map(|t| format!("'{}': {:?}", t.text, t.typ))
-            .collect::<Vec<_>>()
-            .join("\n");
+        let mut str = String::new();
+        let mut last_line = 0;
+
+        for r in result_sorted {
+            let line = r.position.line;
+            if line > last_line {
+                if last_line != 0 {
+                    str.push_str("\n---\n");
+                }
+                let line_content = module.get_line_content(line);
+                str.push_str(format!("Line {}: {}\n", line, line_content).as_str());
+                str.push_str("\nExpr types in the line --->:\n");
+                last_line = line;
+            }
+            str.push_str(&format!("        {:?} => {:?}\n", r.symbol_text, r.typ));
+        }
+        str.push_str("\n---\n");
+
         return str;
     }
 
@@ -1404,11 +1419,17 @@ mod tests {
                 .is_test(true)
                 .try_init();
 
+            let mut content_with_line_numbers = String::new();
+            for (i, line) in contents.lines().enumerate() {
+                content_with_line_numbers.push_str(&format!("{}: {}\n", i + 1, line));
+            }
+
             // TODO move this redaction setting to a central place
             let mut settings = insta::Settings::clone_current();
             settings.add_filter(r"module_name: .*.typeshed.", "module_name: [TYPESHED].");
             settings.set_snapshot_path("../../test_data/output/");
-            settings.set_description(fs::read_to_string(path).unwrap());
+            settings.set_description(content_with_line_numbers);
+            // TODO CLEAN THE classes name
             settings.bind(|| {
                 insta::assert_snapshot!(result);
             });

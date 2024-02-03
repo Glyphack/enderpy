@@ -56,8 +56,36 @@ impl EnderpyFile {
         self.build_source.source.clone()
     }
 
+    /// Return source of the line number
+    pub fn get_line_content(&self, line: u32) -> String {
+        let mut line_number = 1;
+        let mut line_start = 0;
+        for (i, c) in self.build_source.source.chars().enumerate() {
+            if line_number == line {
+                line_start = i;
+                break;
+            }
+            if c == '\n' {
+                line_number += 1;
+            }
+        }
+
+        let mut line_end = line_start;
+
+        for (i, c) in self.build_source.source.chars().enumerate() {
+            if i > line_start {
+                if c == '\n' {
+                    line_end = i;
+                    break;
+                }
+            }
+        }
+
+        self.build_source.source[line_start..line_end].to_string()
+    }
+
     pub fn get_position(&self, pos: usize) -> Position {
-        let mut line_number = 0;
+        let mut line_number = 1;
         let mut line_start = 0;
         if pos == 0 {
             return Position {

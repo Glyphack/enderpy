@@ -1,8 +1,19 @@
 ---
 source: typechecker/src/type_check/type_evaluator.rs
-description: "a = b + 1\n\na = c()\n\n"
+description: "1: a = b + 1\n2: \n3: a = c()\n4: \n"
 expression: result
 input_file: typechecker/test_data/inputs/type_check_undefined.py
 ---
-'b + 1': Int
-'c()': Unknown
+Line 1: a = b + 1
+
+Expr types in the line --->:
+        "b + 1" => Int
+
+---
+Line 3: a = c()
+
+Expr types in the line --->:
+        "c()" => Unknown
+
+---
+

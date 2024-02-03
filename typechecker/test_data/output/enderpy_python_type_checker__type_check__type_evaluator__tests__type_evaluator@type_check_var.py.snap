@@ -1,12 +1,33 @@
 ---
 source: typechecker/src/type_check/type_evaluator.rs
-description: "a: int = 1\n\na + \"str\"\n\nb = a + 1\n\nc = b + b\n"
+description: "1: a: int = 1\n2: \n3: a + \"str\"\n4: \n5: b = a + 1\n6: \n7: c = b + b\n"
 expression: result
 input_file: typechecker/test_data/inputs/type_check_var.py
 ---
-'int': Unknown
-'1': Int
-'a': Unknown
-'"str"': Str
-'a + 1': Int
-'b + b': Int
+Line 1: a: int = 1
+
+Expr types in the line --->:
+        "1" => Int
+        "int" => Unknown
+
+---
+Line 3: a + "str"
+
+Expr types in the line --->:
+        "a" => Unknown
+        "\"str\"" => Str
+
+---
+Line 5: b = a + 1
+
+Expr types in the line --->:
+        "a + 1" => Int
+
+---
+Line 7: c = b + b
+
+Expr types in the line --->:
+        "b + b" => Int
+
+---
+
