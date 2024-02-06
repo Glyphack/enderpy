@@ -7,7 +7,7 @@ use std::{collections::HashMap, path::Path};
 use enderpy_python_parser as parser;
 use enderpy_python_parser::ast;
 use log::debug;
-use miette::{bail, miette, Result};
+use miette::{bail, Result};
 use parser::ast::{Expression, GetNode, Statement};
 
 use super::{
@@ -69,19 +69,44 @@ impl TypeEvaluator {
                 self.infer_type_from_symbol_table(&n.id, Some(n.node.start))
             }
             ast::Expression::Call(call) => {
-                let func = *call.func.clone();
-                match func {
+                let called_name = *call.func.clone();
+                match called_name {
                     ast::Expression::Name(n) => {
                         // check if name is one of the builtins
                         if let Some(t) = self.get_builtin_type(&n.id) {
                             return Ok(t);
                         }
-                        let f_type = self.infer_type_from_symbol_table(n.id.as_str(), None)?;
+                        let lookup_request = LookupSymbolRequest {
+                            name: n.id,
+                            position: None,
+                        };
+                        let f_type =
+                            self.symbol_table
+                                .lookup_in_scope(lookup_request)
+                                .map(|symbol| {
+                                    let decl = symbol.last_declaration();
+
+                                    if let Some(class) = decl.as_class() {
+                                        return PythonType::Class(ClassType {
+                                            details: class.clone(),
+                                            type_parameters: vec![],
+                                        });
+                                    } else if let Some(func) = decl.as_function() {
+                                        return PythonType::Callable(Box::new(CallableType {
+                                            name: func.function_node.name.clone(),
+                                            arguments: func.function_node.args.clone(),
+                                            return_type: PythonType::Unknown,
+                                        }));
+                                    } else {
+                                        // TODO: Error type is not callable
+                                        return PythonType::Unknown;
+                                    }
+                                });
+
                         log::debug!("f_type: {:?}", f_type);
                         match f_type {
-                            PythonType::Callable(callable_type) => Ok(callable_type.return_type),
-                            PythonType::Never => Ok(PythonType::Never),
-                            _ => Err(miette!("{} is not callable", n.id)),
+                            Some(t) => Ok(t),
+                            None => Ok(PythonType::Unknown),
                         }
                     }
                     ast::Expression::Attribute(_a) => Ok(PythonType::Unknown),
@@ -280,70 +305,6 @@ impl TypeEvaluator {
         expr_type
     }
 
-    /// Get the type of a symbol node based on declarations
-    fn get_symbol_node_type(
-        &self,
-        symbol: &SymbolTableNode,
-        position: Option<usize>,
-    ) -> Result<PythonType> {
-        let decl = match position {
-            Some(position) => symbol.declaration_until_position(position),
-            None => symbol.last_declaration(),
-        };
-
-        log::debug!("fetch symbol declaration: {:?}", decl);
-        match decl {
-            Some(decl) => self.get_type_from_declaration(decl),
-            None => Ok(PythonType::Any),
-        }
-    }
-
-    fn get_type_from_declaration(&self, declaration: &Declaration) -> Result<PythonType> {
-        match declaration {
-            Declaration::Variable(v) => {
-                if let Some(type_annotation) = &v.type_annotation {
-                    Ok(self.get_type_from_annotation(type_annotation))
-                } else if let Some(source) = &v.inferred_type_source {
-                    self.get_type(source)
-                } else {
-                    Ok(PythonType::Unknown)
-                }
-            }
-            Declaration::Function(f) => {
-                let annotated_return_type =
-                    if let Some(type_annotation) = f.function_node.returns.clone() {
-                        self.get_type_from_annotation(&type_annotation)
-                    } else {
-                        let inferred_return_type = self.infer_function_return_type(f);
-                        log::debug!("inferred_return_type: {:?}", inferred_return_type);
-                        inferred_return_type
-                    };
-
-                let arguments = f.function_node.args.clone();
-                let name = f.function_node.name.clone();
-
-                Ok(PythonType::Callable(Box::new(CallableType {
-                    name,
-                    arguments,
-                    return_type: annotated_return_type,
-                })))
-            }
-            Declaration::Class(_) => Ok(PythonType::Unknown),
-            Declaration::Parameter(p) => {
-                if let Some(type_annotation) = &p.type_annotation {
-                    Ok(self.get_type_from_annotation(type_annotation))
-                } else if let Some(default) = &p.default_value {
-                    self.get_type(default)
-                } else {
-                    Ok(PythonType::Any)
-                }
-            }
-            Declaration::Alias(_) => Ok(PythonType::Unknown),
-            Declaration::TypeParameter(_) => Ok(PythonType::Unknown),
-            Declaration::TypeAlias(_) => Ok(PythonType::Unknown),
-        }
-    }
-
     fn infer_type_from_symbol_table(
         &self,
         name: &str,
@@ -359,6 +320,66 @@ impl TypeEvaluator {
         };
         log::debug!("infer_type_from_symbol_table: {:?} => {:?}", name, result);
         result
+    }
+
+    /// Get the type of a symbol node based on declarations
+    fn get_symbol_node_type(
+        &self,
+        symbol: &SymbolTableNode,
+        position: Option<usize>,
+    ) -> Result<PythonType> {
+        let decl = match position {
+            Some(position) => symbol.declaration_until_position(position),
+            None => Some(symbol.last_declaration()),
+        };
+
+        log::debug!("fetch symbol declaration: {:?}", decl);
+        match decl {
+            Some(decl) => match decl {
+                Declaration::Variable(v) => {
+                    if let Some(type_annotation) = &v.type_annotation {
+                        Ok(self.get_type_from_annotation(type_annotation))
+                    } else if let Some(source) = &v.inferred_type_source {
+                        self.get_type(source)
+                    } else {
+                        Ok(PythonType::Unknown)
+                    }
+                }
+                Declaration::Function(f) => {
+                    let annotated_return_type =
+                        if let Some(type_annotation) = f.function_node.returns.clone() {
+                            self.get_type_from_annotation(&type_annotation)
+                        } else {
+                            let inferred_return_type = self.infer_function_return_type(f);
+                            log::debug!("inferred_return_type: {:?}", inferred_return_type);
+                            inferred_return_type
+                        };
+
+                    let arguments = f.function_node.args.clone();
+                    let name = f.function_node.name.clone();
+
+                    Ok(PythonType::Callable(Box::new(CallableType {
+                        name,
+                        arguments,
+                        return_type: annotated_return_type,
+                    })))
+                }
+                Declaration::Parameter(p) => {
+                    if let Some(type_annotation) = &p.type_annotation {
+                        Ok(self.get_type_from_annotation(type_annotation))
+                    } else if let Some(default) = &p.default_value {
+                        self.get_type(default)
+                    } else {
+                        Ok(PythonType::Any)
+                    }
+                }
+                Declaration::Alias(_) => Ok(PythonType::Unknown),
+                Declaration::TypeParameter(_) => Ok(PythonType::Unknown),
+                Declaration::TypeAlias(_) => Ok(PythonType::Unknown),
+                _ => todo!(),
+            },
+            None => Ok(PythonType::Any),
+        }
     }
 
     fn get_sequence_type_from_elements(&self, elements: &Vec<ast::Expression>) -> PythonType {
@@ -702,7 +723,7 @@ impl TypeEvaluator {
                     name: n.id.clone(),
                     position: Some(n.node.start),
                 }) {
-                    Some(s) => s.last_declaration().unwrap(),
+                    Some(s) => s.last_declaration(),
                     None => return None,
                 };
 
@@ -715,7 +736,7 @@ impl TypeEvaluator {
                         }
                         Declaration::Alias(a) => {
                             declaration = match self.resolve_alias(a) {
-                                Some(decl) => decl.last_declaration().unwrap(),
+                                Some(decl) => decl.last_declaration(),
                                 None => panic!("Alias {:?} not found", a),
                             };
                             log::debug!("alias resolved to: {:?}", declaration);

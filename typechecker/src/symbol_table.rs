@@ -72,7 +72,7 @@ pub struct DeclarationPath {
     pub node: Node,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, is_macro::Is)]
 pub enum Declaration {
     Variable(Variable),
     Function(Function),
@@ -345,8 +345,10 @@ impl SymbolTableNode {
         self.declarations.push(decl);
     }
 
-    pub fn last_declaration(&self) -> Option<&Declaration> {
-        self.declarations.last()
+    pub fn last_declaration(&self) -> &Declaration {
+        self.declarations
+            .last()
+            .expect("There must be at least one declaration")
     }
 
     pub fn declaration_until_position(&self, position: usize) -> Option<&Declaration> {

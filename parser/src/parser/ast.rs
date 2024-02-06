@@ -1,4 +1,4 @@
-use std::fmt;
+use std::fmt::{self, Display};
 
 use miette::{SourceOffset, SourceSpan};
 
@@ -626,6 +626,32 @@ pub struct Arguments {
     pub kw_defaults: Vec<Option<Expression>>,
     pub kwarg: Option<Arg>,
     pub defaults: Vec<Expression>,
+}
+
+impl std::fmt::Display for Arguments {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+let mut args = vec![];
+
+        for arg in &self.args {
+            args.push(arg.arg.clone());
+        }
+
+        for arg in &self.kwonlyargs {
+            args.push(arg.arg.clone());
+        }
+
+        if let Some(vararg) = &self.vararg {
+            args.push(vararg.arg.clone());
+        }
+
+        if let Some(kwarg) = &self.kwarg {
+            args.push(kwarg.arg.clone());
+        }
+
+        write!(f, "({})", args.join(", "))
+    }
+        
+
 }
 
 // https://docs.python.org/3/library/ast.html#ast.arg

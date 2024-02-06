@@ -79,7 +79,7 @@ Expr types in the line --->:
 Line 23: t = C(0)
 
 Expr types in the line --->:
-        "C(0)" => Unknown
+        "C(0)" => Class(ClassType { details: Class { name: "C", declaration_path: DeclarationPath { module_name: "test-file", node: Node { start: 102, end: 277 } }, methods: ["__init__", "add"], attributes: {"x": Name(Name { node: Node { start: 199, end: 200 }, id: "x" })}, special: false }, type_parameters: [] })
 
 ---
 Line 24: t.add(2)
