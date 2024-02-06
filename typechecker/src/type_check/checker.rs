@@ -346,20 +346,6 @@ impl<'a> TraversalVisitor for TypeChecker<'a> {
     fn visit_bin_op(&mut self, b: &BinOp) {
         let l_type = self.infer_expr_type(&b.left, true);
         let r_type = self.infer_expr_type(&b.right, true);
-
-        if !self
-            .type_evaluator
-            .type_check_bin_op(&l_type, &r_type, &b.op)
-        {
-            let msg = format!(
-                "Operator '{}' not supported for types '{}' and '{}'",
-                b.op, l_type, r_type
-            );
-            self.errors.push(TypeCheckError {
-                msg,
-                span: CharacterSpan(b.left.get_node().start, b.right.get_node().end),
-            });
-        }
     }
 
     fn visit_named_expr(&mut self, _n: &NamedExpression) {

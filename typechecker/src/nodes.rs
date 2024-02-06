@@ -89,7 +89,7 @@ impl EnderpyFile {
         let mut line_start = 0;
         if pos == 0 {
             return Position {
-                line: 0,
+                line: 1,
                 character: 0,
             };
         }
