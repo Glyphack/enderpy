@@ -1,4 +1,4 @@
-use std::fmt::{self, Display};
+use std::fmt::{self};
 
 use miette::{SourceOffset, SourceSpan};
 
@@ -630,7 +630,7 @@ pub struct Arguments {
 
 impl std::fmt::Display for Arguments {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-let mut args = vec![];
+        let mut args = vec![];
 
         for arg in &self.args {
             args.push(arg.arg.clone());
@@ -650,8 +650,6 @@ let mut args = vec![];
 
         write!(f, "({})", args.join(", "))
     }
-        
-
 }
 
 // https://docs.python.org/3/library/ast.html#ast.arg

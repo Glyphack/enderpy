@@ -4,9 +4,6 @@ description: "import variables\nimport import_test\n\nfrom variables import a\nf
 expression: result
 input_file: typechecker/test_data/inputs/symbol_table/imports.py
 ---
--------------------
-global scope:
-all scopes:
 Symbols: in global (id: [REDACTED])
 *
 - Declarations:
@@ -70,105 +67,6 @@ Symbols: in global (id: [REDACTED])
         non_stub_import_result: None,
         py_typed_info: None,
         package_directory: None,
-    },
-}
---:   Alias {
-    declaration_path: DeclarationPath {
-        module_name: "[TYPECHECKER]/test_data/inputs/symbol_table/imports.py",
-        node: Node {
-            start: 117,
-            end: 116,
-        },
-    },
-    import_from_node: Some(
-        ImportFrom {
-            node: Node {
-                start: 102,
-                end: 118,
-            },
-            module: "os",
-            names: [
-                Alias {
-                    node: Node {
-                        start: 117,
-                        end: 116,
-                    },
-                    name: "*",
-                    asname: None,
-                },
-            ],
-            level: 0,
-        },
-    ),
-    import_node: None,
-    symbol_name: Some(
-        "*",
-    ),
-    import_result: ImportResult {
-        is_relative: false,
-        is_import_found: true,
-        is_partly_resolved: false,
-        is_namespace_package: false,
-        is_init_file_present: true,
-        is_stub_package: false,
-        import_type: BuiltIn,
-        resolved_paths: [
-            "[TYPESHED]/stdlib/os/__init__.pyi",
-        ],
-        search_path: Some(
-            "[TYPESHED]/stdlib",
-        ),
-        is_stub_file: true,
-        is_native_lib: false,
-        is_stdlib_typeshed_file: true,
-        is_third_party_typeshed_file: false,
-        is_local_typings_file: false,
-        implicit_imports: ImplicitImports(
-            {
-                "path": ImplicitImport {
-                    is_stub_file: true,
-                    is_native_lib: false,
-                    path: "[TYPESHED]/stdlib/os/path.pyi",
-                    py_typed: None,
-                },
-            },
-        ),
-        filtered_implicit_imports: ImplicitImports(
-            {},
-        ),
-        non_stub_import_result: Some(
-            ImportResult {
-                is_relative: false,
-                is_import_found: false,
-                is_partly_resolved: false,
-                is_namespace_package: false,
-                is_init_file_present: false,
-                is_stub_package: false,
-                import_type: Local,
-                resolved_paths: [],
-                search_path: Some(
-                    "",
-                ),
-                is_stub_file: false,
-                is_native_lib: false,
-                is_stdlib_typeshed_file: false,
-                is_third_party_typeshed_file: false,
-                is_local_typings_file: false,
-                implicit_imports: ImplicitImports(
-                    {},
-                ),
-                filtered_implicit_imports: ImplicitImports(
-                    {},
-                ),
-                non_stub_import_result: None,
-                py_typed_info: None,
-                package_directory: None,
-            },
-        ),
-        py_typed_info: None,
-        package_directory: Some(
-            "[TYPESHED]/stdlib/os",
-        ),
     },
 }
 a
@@ -544,5 +442,4 @@ variables
     },
 }
 
--------------------
 

@@ -18,7 +18,7 @@ use crate::{
 
 #[allow(unused)]
 pub struct SemanticAnalyzer {
-    pub globals: SymbolTable,
+    pub symbol_table: SymbolTable,
     file: EnderpyFile,
     /// Map of module name to import result
     /// The imports inside the file are resolved by this map and
@@ -39,10 +39,10 @@ pub struct SemanticAnalyzer {
 impl SemanticAnalyzer {
     pub fn new(file: EnderpyFile, imports: HashMap<ImportModuleDescriptor, ImportResult>) -> Self {
         log::debug!("Creating semantic analyzer for {}", file.module_name());
-        let globals = SymbolTable::global(file.module_name(), file.path());
+        let symbols = SymbolTable::new(file.module_name(), file.path());
         let is_pyi = file.path().ends_with(".pyi");
         SemanticAnalyzer {
-            globals,
+            symbol_table: symbols,
             file,
             imports,
             errors: vec![],
@@ -56,11 +56,11 @@ impl SemanticAnalyzer {
             name,
             declarations: vec![decl],
         };
-        self.globals.add_symbol(symbol_node)
+        self.symbol_table.add_symbol(symbol_node)
     }
 
     fn current_scope(&self) -> &SymbolTableType {
-        return self.globals.current_scope_type();
+        return self.symbol_table.current_scope_type();
     }
 
     fn is_inside_class(&self) -> bool {
@@ -408,10 +408,11 @@ impl TraversalVisitor for SemanticAnalyzer {
             module_name: self.file.path(),
             node: f.node,
         };
-        self.globals.enter_scope(SymbolTableScope::new(
+        self.symbol_table.enter_scope(SymbolTableScope::new(
             crate::symbol_table::SymbolTableType::Function,
             f.name.clone(),
             0,
+            self.symbol_table.current_scope_id,
         ));
 
         self.add_arguments_definitions(&f.args);
@@ -444,7 +445,7 @@ impl TraversalVisitor for SemanticAnalyzer {
                 }),
             );
         }
-        self.globals.exit_scope();
+        self.symbol_table.exit_scope();
 
         let function_declaration = Declaration::Function(Function {
             declaration_path,
@@ -479,10 +480,11 @@ impl TraversalVisitor for SemanticAnalyzer {
             module_name: self.file.path(),
             node: c.node,
         };
-        self.globals.enter_scope(SymbolTableScope::new(
+        self.symbol_table.enter_scope(SymbolTableScope::new(
             SymbolTableType::Class,
             c.name.clone(),
             c.node.start,
+            self.symbol_table.current_scope_id,
         ));
 
         for type_parameter in &c.type_params {
@@ -524,7 +526,7 @@ impl TraversalVisitor for SemanticAnalyzer {
             self.visit_stmt(stmt);
         }
 
-        self.globals.exit_scope();
+        self.symbol_table.exit_scope();
 
         let class_declaration = Declaration::Class(Class {
             name: c.name.clone(),

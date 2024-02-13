@@ -9,12 +9,8 @@ pub struct SymbolTable {
     // Sub tables are scopes inside the current scope
     // after building symbol table is finished this only contains the most outer scope
     scopes: Vec<SymbolTableScope>,
-    // When a symbol goes out of scope we save it here to be able to look it up later
-    all_scopes: Vec<SymbolTableScope>,
 
-    /// The distance between the current scope and the scope where the symbol
-    /// was defined
-    _locals: HashMap<ast::Expression, u8>,
+    pub current_scope_id: usize,
 
     /// Name of the module that this symbol table is for
     pub module_name: String,
@@ -33,19 +29,35 @@ pub struct SymbolTableScope {
 
 fn get_id() -> usize {
     use std::sync::atomic::{AtomicUsize, Ordering};
-    static COUNTER: AtomicUsize = AtomicUsize::new(0);
+    static COUNTER: AtomicUsize = AtomicUsize::new(1);
     COUNTER.fetch_add(1, Ordering::SeqCst)
 }
 
 impl SymbolTableScope {
-    pub fn new(symbol_table_type: SymbolTableType, name: String, start_line_number: usize) -> Self {
+    pub fn new(
+        symbol_table_type: SymbolTableType,
+        name: String,
+        start_line_number: usize,
+        parent: usize,
+    ) -> Self {
         SymbolTableScope {
             id: get_id(),
             symbol_table_type,
             name,
             symbols: HashMap::new(),
-            parent: None,
+            parent: Some(parent),
             start_pos: start_line_number,
+        }
+    }
+
+    pub fn global_scope() -> Self {
+        SymbolTableScope {
+            id: 0,
+            symbol_table_type: SymbolTableType::Module,
+            name: String::from("global"),
+            symbols: HashMap::new(),
+            parent: None,
+            start_pos: 0,
         }
     }
 }
@@ -222,19 +234,10 @@ pub enum SymbolScope {
 }
 
 impl SymbolTable {
-    pub fn global(module_name: String, file_path: PathBuf) -> Self {
-        let global_scope = SymbolTableScope {
-            id: get_id(),
-            symbol_table_type: SymbolTableType::Module,
-            symbols: HashMap::new(),
-            name: String::from("global"),
-            parent: None,
-            start_pos: 0,
-        };
+    pub fn new(module_name: String, file_path: PathBuf) -> Self {
         SymbolTable {
-            scopes: vec![global_scope],
-            all_scopes: vec![],
-            _locals: HashMap::new(),
+            scopes: vec![SymbolTableScope::global_scope()],
+            current_scope_id: 0,
             module_name,
             file_path,
         }
@@ -242,11 +245,34 @@ impl SymbolTable {
 
     /// Do not use for lookup operations
     fn current_scope(&self) -> &SymbolTableScope {
-        if let Some(scope) = self.scopes.last() {
+        if let Some(scope) = self
+            .scopes
+            .iter()
+            .filter(|scope| scope.id == self.current_scope_id)
+            .last()
+        {
             scope
         } else {
-            panic!("no scopes")
+            // panic with the full string to make it easier to find the issue
+            let scopes_str = self
+                .scopes
+                .iter()
+                .map(|scope| format!("{}", scope))
+                .collect::<Vec<String>>()
+                .join("\n");
+            panic!(
+                "no current scope with id: {}. Scopes: {:?}",
+                self.current_scope_id, scopes_str
+            );
         }
+    }
+
+    pub fn current_scope_mut(&mut self) -> &mut SymbolTableScope {
+        self.scopes
+            .iter_mut()
+            .filter(|scope| scope.id == self.current_scope_id)
+            .last()
+            .expect("no current scope")
     }
 
     pub fn current_scope_type(&self) -> &SymbolTableType {
@@ -258,7 +284,7 @@ impl SymbolTable {
     pub fn innermost_scope(&self, pos: usize) -> Option<&SymbolTableScope> {
         log::debug!("looking for innermost scope for pos: {}", pos);
         return self
-            .all_scopes
+            .scopes
             .iter()
             .filter(|scope| scope.start_pos <= pos)
             .last();
@@ -274,7 +300,7 @@ impl SymbolTable {
             Some(pos) => {
                 let mut innermost_scope = self.innermost_scope(pos);
                 while let Some(scope) = innermost_scope {
-                    log::debug!("lookin in scope: {:?}", scope.name);
+                    log::debug!("looking in scope: {:?}", scope.name);
                     if let Some(symbol) = scope.symbols.get(&lookup_request.name) {
                         return Some(symbol);
                     }
@@ -283,7 +309,7 @@ impl SymbolTable {
                         break;
                     }
                     innermost_scope = if let Some(parent_id) = scope.parent {
-                        self.all_scopes
+                        self.scopes
                             .iter()
                             .filter(|scope| scope.id == parent_id)
                             .last()
@@ -293,7 +319,9 @@ impl SymbolTable {
                 }
             }
             None => {
+                log::debug!("symbols: {:#?}", self.global_scope().symbols);
                 if let Some(symbol) = self.global_scope().symbols.get(&lookup_request.name) {
+                    log::debug!("found symbol in global scope");
                     return Some(symbol);
                 }
             }
@@ -302,36 +330,34 @@ impl SymbolTable {
     }
 
     pub fn enter_scope(&mut self, new_scope: SymbolTableScope) {
+        self.current_scope_id = new_scope.id;
         self.scopes.push(new_scope);
     }
 
     pub fn global_scope(&self) -> &SymbolTableScope {
-        self.all_scopes
+        self.scopes
             .iter()
-            .filter(|scope| scope.symbol_table_type == SymbolTableType::Module)
+            .filter(|scope| scope.id == 0)
             .last()
-            .unwrap()
+            .expect("no global scope")
     }
 
     pub fn exit_scope(&mut self) {
-        let finished_scope = self.scopes.pop();
-        if let Some(scope) = finished_scope {
-            self.all_scopes.push(scope);
-        }
+        self.current_scope_id = self
+            .current_scope()
+            .parent
+            .expect("no parent scope. Exiting global scope is not allowed");
     }
 
     pub fn add_symbol(&mut self, mut symbol_node: SymbolTableNode) {
-        match self.scopes.last_mut() {
-            Some(scope) => {
-                if let Some(existing_symbol) = scope.symbols.get(&symbol_node.name) {
-                    symbol_node
-                        .declarations
-                        .extend(existing_symbol.declarations.clone());
-                }
-                scope.symbols.insert(symbol_node.name.clone(), symbol_node);
-            }
-            None => panic!("no current scope, there must be a global scope"),
-        };
+        let scope = self.current_scope_mut();
+        if let Some(existing_symbol) = scope.symbols.get(&symbol_node.name) {
+            symbol_node
+                .declarations
+                .extend(existing_symbol.declarations.clone());
+        } else {
+            scope.symbols.insert(symbol_node.name.clone(), symbol_node);
+        }
     }
 
     // TODO: this can be attribute of symbol table
@@ -373,8 +399,6 @@ impl SymbolTableNode {
 
 impl std::fmt::Display for SymbolTable {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        writeln!(f, "-------------------")?;
-        writeln!(f, "global scope:")?;
         let mut sorted_scopes = self.scopes.iter().collect::<Vec<&SymbolTableScope>>();
         sorted_scopes.sort_by(|a, b| a.name.cmp(&b.name));
 
@@ -386,20 +410,6 @@ impl std::fmt::Display for SymbolTable {
             writeln!(f, "{}", scope)?;
         }
 
-        writeln!(f, "all scopes:")?;
-
-        let mut sorted_all_scopes = self.all_scopes.iter().collect::<Vec<&SymbolTableScope>>();
-        sorted_all_scopes.sort_by(|a, b| a.name.cmp(&b.name));
-        for scope in sorted_all_scopes {
-            // Skip printing the builtin scope
-            // Maybe we can make this a flag
-            // Most of the time we don't care about the builtin scope
-            if scope.symbol_table_type == SymbolTableType::BUILTIN {
-                continue;
-            }
-            writeln!(f, "{}", scope)?;
-        }
-        writeln!(f, "-------------------")?;
         Ok(())
     }
 }
@@ -412,7 +422,11 @@ impl std::fmt::Display for SymbolTableScope {
             .collect::<Vec<(&String, &SymbolTableNode)>>();
         sorted_symbols.sort_by(|a, b| a.0.cmp(b.0));
 
-        writeln!(f, "Symbols: in {} (id: {})", self.name, self.id)?;
+        writeln!(
+            f,
+            "Symbols: in {} (id: {}, parent: {:?})",
+            self.name, self.id, self.parent
+        )?;
         for (name, symbol) in sorted_symbols {
             writeln!(f, "{}", name)?;
             // sort the declarations by line number

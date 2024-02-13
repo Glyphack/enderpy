@@ -4,9 +4,6 @@ description: "def func(a ,b , /, c = 2, **e): pass\n"
 expression: result
 input_file: typechecker/test_data/inputs/symbol_table/function_definition.py
 ---
--------------------
-global scope:
-all scopes:
 Symbols: in func (id: [REDACTED])
 a
 - Declarations:
@@ -200,5 +197,4 @@ func
     raise_statements: [],
 }
 
--------------------
 

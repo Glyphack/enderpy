@@ -73,11 +73,9 @@ impl EnderpyFile {
         let mut line_end = line_start;
 
         for (i, c) in self.build_source.source.chars().enumerate() {
-            if i > line_start {
-                if c == '\n' {
-                    line_end = i;
-                    break;
-                }
+            if i > line_start && c == '\n' {
+                line_end = i;
+                break;
             }
         }
 
@@ -117,10 +115,7 @@ impl EnderpyFile {
         for stmt in &self.body {
             sem_anal.visit_stmt(stmt)
         }
-        // TODO: Hacky way to add the global scope to all scopes in symbol table after
-        // finishing
-        sem_anal.globals.exit_scope();
-        self.symbol_table = sem_anal.globals;
+        self.symbol_table = sem_anal.symbol_table;
     }
 
     pub fn get_symbol_table(&self) -> SymbolTable {
@@ -135,8 +130,7 @@ impl From<BuildSource> for EnderpyFile {
             build_source.path.as_path().to_str().unwrap().to_owned(),
         );
         let tree = parser.parse();
-        let symbol_table =
-            SymbolTable::global(build_source.module.clone(), build_source.path.clone());
+        let symbol_table = SymbolTable::new(build_source.module.clone(), build_source.path.clone());
 
         let mut file = EnderpyFile {
             defs: vec![],

@@ -87,10 +87,10 @@ impl TypeEvaluator {
                                     let decl = symbol.last_declaration();
 
                                     if let Some(class) = decl.as_class() {
-                                        return PythonType::Class(ClassType {
+                                        PythonType::Class(ClassType {
                                             details: class.clone(),
                                             type_parameters: vec![],
-                                        });
+                                        })
                                     } else if let Some(func) = decl.as_function() {
                                         return PythonType::Callable(Box::new(CallableType {
                                             name: func.function_node.name.clone(),
@@ -671,7 +671,7 @@ impl TypeEvaluator {
         op: &ast::BinaryOperator,
     ) -> PythonType {
         // Dummy
-        return t1.clone();
+        t1.clone()
     }
 
     pub fn is_literal(&self, name: String) -> bool {
@@ -1335,7 +1335,7 @@ mod tests {
         }
         str.push_str("\n---\n");
 
-        return str;
+        str
     }
 
     #[test]
