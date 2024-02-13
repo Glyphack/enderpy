@@ -49,7 +49,7 @@ impl TypeEvaluator {
     /// expression use get_type_from_annotation
     pub fn get_type(&self, expr: &ast::Expression) -> Result<PythonType> {
         log::debug!("get_type: {:?}", expr);
-        match expr {
+        let r = match expr {
             ast::Expression::Constant(c) => {
                 let typ = match &c.value {
                     // We should consider constants are not literals unless they are explicitly
@@ -239,7 +239,11 @@ impl TypeEvaluator {
             ast::Expression::IfExp(_) => Ok(PythonType::Unknown),
             ast::Expression::JoinedStr(_) => Ok(self.get_builtin_type("str").expect("typeshed")),
             ast::Expression::FormattedValue(f) => self.get_type(&f.value),
-        }
+        };
+
+        log::debug!("get_type result: {:?}", r);
+
+        r
     }
 
     // This function tries to find the python type from an annotation expression
@@ -248,7 +252,13 @@ impl TypeEvaluator {
         log::debug!("Getting type from annotation: {:?}", type_annotation);
         let expr_type = match type_annotation {
             // TODO: implement
-            Expression::Name(name) => PythonType::Unknown,
+            Expression::Name(name) => {
+                if builtins::ALL_BUILTINS.contains(&name.id.as_str()) {
+                    return self.get_builtin_type(&name.id).expect("typeshed");
+                };
+
+                PythonType::Unknown
+            }
             Expression::Constant(c) => {
                 if let ast::ConstantValue::None = c.value {
                     PythonType::None
@@ -366,7 +376,10 @@ impl TypeEvaluator {
                 }
                 Declaration::Parameter(p) => {
                     if let Some(type_annotation) = &p.type_annotation {
-                        Ok(self.get_type_from_annotation(type_annotation))
+                        log::debug!("parameter type annotation: {:?}", type_annotation);
+                        let r = Ok(self.get_type_from_annotation(type_annotation));
+                        dbg!(&r);
+                        return r;
                     } else if let Some(default) = &p.default_value {
                         self.get_type(default)
                     } else {
@@ -376,7 +389,7 @@ impl TypeEvaluator {
                 Declaration::Alias(_) => Ok(PythonType::Unknown),
                 Declaration::TypeParameter(_) => Ok(PythonType::Unknown),
                 Declaration::TypeAlias(_) => Ok(PythonType::Unknown),
-                _ => todo!(),
+                Declaration::Class(c) => Ok(PythonType::Class(ClassType::new(c.clone(), vec![]))),
             },
             None => Ok(PythonType::Any),
         }
@@ -1211,9 +1224,14 @@ impl TraversalVisitor for DumpTypes {
             ast::Statement::TryStatement(t) => (),
             ast::Statement::TryStarStatement(t) => (),
             ast::Statement::FunctionDef(f) => {
+                // This is duplicated
+                let prev_scope = self.type_eval.symbol_table.current_scope_id;
+                self.type_eval.symbol_table.set_scope(f.node.start);
                 for stmt in &f.body {
                     self.visit_stmt(stmt);
                 }
+
+                self.type_eval.symbol_table.current_scope_id = prev_scope;
             }
             ast::Statement::ClassDef(c) => {
                 for stmt in &c.body {
@@ -1301,7 +1319,9 @@ mod tests {
         }
 
         let module = manager.get_state("test-file".into()).unwrap();
-        let symbol_table = module.get_symbol_table();
+        let mut symbol_table = module.get_symbol_table();
+        // this is duplicated
+        symbol_table.current_scope_id = 0;
 
         let type_eval = TypeEvaluator {
             symbol_table,
@@ -1345,12 +1365,12 @@ mod tests {
             if !path.to_str().unwrap().contains("base") {
                 return;
             }
-            let contents = fs::read_to_string(path).unwrap();
-            let result = snapshot_type_eval(&contents);
             let _ = env_logger::builder()
                 .filter_level(log::LevelFilter::Debug)
                 .is_test(true)
                 .try_init();
+            let contents = fs::read_to_string(path).unwrap();
+            let result = snapshot_type_eval(&contents);
 
             let mut content_with_line_numbers = String::new();
             for (i, line) in contents.lines().enumerate() {

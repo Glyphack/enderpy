@@ -4,7 +4,7 @@ description: "a = 'hello world'\nb = a + \"!\"\n\nc: int = 1\n\nf: str = \"hello
 expression: result
 input_file: typechecker/test_data/inputs/symbol_table/simple_var_assignment.py
 ---
-Symbols: in global (id: [REDACTED])
+Symbols in global (id: [REDACTED])
 a
 - Declarations:
 --:   Variable {
@@ -144,4 +144,7 @@ f
     is_constant: false,
 }
 
+Scopes:
+
+Scope global(id: 0, parent_id: None
 

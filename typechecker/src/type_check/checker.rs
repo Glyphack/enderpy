@@ -27,7 +27,8 @@ impl<'a> TypeChecker<'a> {
         options: &'a Settings,
         symbol_tables: Vec<SymbolTable>,
     ) -> Self {
-        let symbol_table = module.get_symbol_table();
+        let mut symbol_table = module.get_symbol_table();
+        symbol_table.current_scope_id = 0;
         TypeChecker {
             errors: vec![],
             options,
@@ -231,9 +232,13 @@ impl<'a> TraversalVisitor for TypeChecker<'a> {
     }
 
     fn visit_function_def(&mut self, f: &parser::ast::FunctionDef) {
+        let prev_scope = self.type_evaluator.symbol_table.current_scope_id;
+        self.type_evaluator.symbol_table.set_scope(f.node.start);
         for stmt in &f.body {
             self.visit_stmt(stmt);
         }
+
+        self.type_evaluator.symbol_table.current_scope_id = prev_scope;
     }
 
     fn visit_class_def(&mut self, c: &parser::ast::ClassDef) {

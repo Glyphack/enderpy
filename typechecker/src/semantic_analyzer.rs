@@ -411,7 +411,7 @@ impl TraversalVisitor for SemanticAnalyzer {
         self.symbol_table.enter_scope(SymbolTableScope::new(
             crate::symbol_table::SymbolTableType::Function,
             f.name.clone(),
-            0,
+            f.node.start,
             self.symbol_table.current_scope_id,
         ));
 
@@ -445,6 +445,7 @@ impl TraversalVisitor for SemanticAnalyzer {
                 }),
             );
         }
+
         self.symbol_table.exit_scope();
 
         let function_declaration = Declaration::Function(Function {

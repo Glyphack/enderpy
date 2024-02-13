@@ -4,7 +4,7 @@ description: "class c:\n    def __init__(self):\n        a = 1\n        b = a\n 
 expression: result
 input_file: typechecker/test_data/inputs/symbol_table/class_definition.py
 ---
-Symbols: in __init__ (id: [REDACTED])
+Symbols in __init__ (id: [REDACTED])
 a
 - Declarations:
 --:   Variable {
@@ -77,7 +77,7 @@ self
     default_value: None,
 }
 
-Symbols: in c (id: [REDACTED])
+Symbols in c (id: [REDACTED])
 __init__
 - Declarations:
 --:   Function {
@@ -223,7 +223,7 @@ __init__
     raise_statements: [],
 }
 
-Symbols: in global (id: [REDACTED])
+Symbols in global (id: [REDACTED])
 c
 - Declarations:
 --:   Class {
@@ -252,4 +252,9 @@ c
     special: false,
 }
 
+Scopes:
+
+Scope __init__(id: [REDACTED])
+Scope c(id: [REDACTED])
+Scope global(id: 0, parent_id: None
 
