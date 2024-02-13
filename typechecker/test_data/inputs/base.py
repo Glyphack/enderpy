@@ -20,10 +20,18 @@ class C:
 	def add(self, value: int):
 		self.cls_attribute += value
 
+	def get_attr(self) -> int:
+		return self.cls_attribute
+
+	def	get_x(self) -> int:
+		return self.x
+
 t = C(0)
 t.add(2)
 t.cls_attribute
 t.x
+t.get_x()
+t.get_attr()
 
 l = [1,2,3]
 d = {"a": 1, "b": 2}

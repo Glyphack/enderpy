@@ -1,6 +1,6 @@
 ---
 source: typechecker/src/type_check/type_evaluator.rs
-description: "1: a = 1\n2: b = \"1\"\n3: c = True\n4: d = False\n5: a + int(b)\n6: \n7: a + c\n8: \n9: def func(param1: int) -> int:\n10: \treturn param1 + a\n11: \n12: class C:\n13: \tcls_attribute = 1\n14: \n15: \tdef __init__(self, x: int):\n16: \t\tprint(self.cls_attribute)\n17: \t\tself.x = x\n18: \t\tprint(self.x)\n19: \n20: \tdef add(self, value: int):\n21: \t\tself.cls_attribute += value\n22: \n23: t = C(0)\n24: t.add(2)\n25: t.cls_attribute\n26: t.x\n27: \n28: l = [1,2,3]\n29: d = {\"a\": 1, \"b\": 2}\n30: s = {1,2,3}\n31: \n32: l.append(1)\n"
+description: "1: a = 1\n2: b = \"1\"\n3: c = True\n4: d = False\n5: a + int(b)\n6: \n7: a + c\n8: \n9: def func(param1: int) -> int:\n10: \treturn param1 + a\n11: \n12: class C:\n13: \tcls_attribute = 1\n14: \n15: \tdef __init__(self, x: int):\n16: \t\tprint(self.cls_attribute)\n17: \t\tself.x = x\n18: \t\tprint(self.x)\n19: \n20: \tdef add(self, value: int):\n21: \t\tself.cls_attribute += value\n22: \n23: \tdef get_attr(self) -> int:\n24: \t\treturn self.cls_attribute\n25: \n26: \tdef\tget_x(self) -> int:\n27: \t\treturn self.x\n28: \n29: t = C(0)\n30: t.add(2)\n31: t.cls_attribute\n32: t.x\n33: t.get_x()\n34: t.get_attr()\n35: \n36: l = [1,2,3]\n37: d = {\"a\": 1, \"b\": 2}\n38: s = {1,2,3}\n39: \n40: l.append(1)\n"
 expression: result
 input_file: typechecker/test_data/inputs/base.py
 ---
@@ -76,38 +76,62 @@ Expr types in the line --->:
         "self.x" => Unknown
 
 ---
-Line 23: t = C(0)
+Line 24: 		return self.cls_attribute
 
 Expr types in the line --->:
-        "C(0)" => Class(ClassType { details: Class { name: "C", declaration_path: DeclarationPath { module_name: "test-file", node: Node { start: 102, end: 277 } }, methods: ["__init__", "add"], attributes: {"x": Name(Name { node: Node { start: 199, end: 200 }, id: "x" })}, special: false }, type_parameters: [] })
+        "self.cls_attribute" => Unknown
 
 ---
-Line 24: t.add(2)
+Line 27: 		return self.x
+
+Expr types in the line --->:
+        "self.x" => Unknown
+
+---
+Line 29: t = C(0)
+
+Expr types in the line --->:
+        "C(0)" => Class(ClassType { details: Class { name: "C", declaration_path: DeclarationPath { module_name: "test-file", node: Node { start: 102, end: 376 } }, methods: ["__init__", "add", "get_attr", "get_x"], attributes: {"x": Name(Name { node: Node { start: 199, end: 200 }, id: "x" })}, special: false }, type_parameters: [] })
+
+---
+Line 30: t.add(2)
 
 Expr types in the line --->:
         "(2)" => Unknown
         "2" => Class(ClassType { details: Class { name: "int", declaration_path: DeclarationPath { module_name: [TYPESHED].stdlib/builtins.pyi", node: Node { start: 7960, end: 12342 } }, methods: ["__new__", "__new__", "real", "imag", "numerator", "denominator", "conjugate", "bit_length", "__add__", "__sub__", "__mul__", "__floordiv__", "__truediv__", "__mod__", "__divmod__", "__radd__", "__rsub__", "__rmul__", "__rfloordiv__", "__rtruediv__", "__rmod__", "__rdivmod__", "__pow__", "__pow__", "__pow__", "__pow__", "__pow__", "__pow__", "__rpow__", "__and__", "__or__", "__xor__", "__lshift__", "__rshift__", "__rand__", "__ror__", "__rxor__", "__rlshift__", "__rrshift__", "__neg__", "__pos__", "__invert__", "__trunc__", "__ceil__", "__floor__", "__round__", "__getnewargs__", "__eq__", "__ne__", "__lt__", "__le__", "__gt__", "__ge__", "__float__", "__int__", "__abs__", "__hash__", "__bool__", "__index__"], attributes: {}, special: false }, type_parameters: [] })
 
 ---
-Line 28: l = [1,2,3]
+Line 33: t.get_x()
+
+Expr types in the line --->:
+        "()" => Unknown
+
+---
+Line 34: t.get_attr()
+
+Expr types in the line --->:
+        "()" => Unknown
+
+---
+Line 36: l = [1,2,3]
 
 Expr types in the line --->:
         "[1,2,3]" => Class(ClassType { details: Class { name: "list", declaration_path: DeclarationPath { module_name: [TYPESHED].stdlib/builtins.pyi", node: Node { start: 7960, end: 12342 } }, methods: ["__new__", "__new__", "real", "imag", "numerator", "denominator", "conjugate", "bit_length", "__add__", "__sub__", "__mul__", "__floordiv__", "__truediv__", "__mod__", "__divmod__", "__radd__", "__rsub__", "__rmul__", "__rfloordiv__", "__rtruediv__", "__rmod__", "__rdivmod__", "__pow__", "__pow__", "__pow__", "__pow__", "__pow__", "__pow__", "__rpow__", "__and__", "__or__", "__xor__", "__lshift__", "__rshift__", "__rand__", "__ror__", "__rxor__", "__rlshift__", "__rrshift__", "__neg__", "__pos__", "__invert__", "__trunc__", "__ceil__", "__floor__", "__round__", "__getnewargs__", "__eq__", "__ne__", "__lt__", "__le__", "__gt__", "__ge__", "__float__", "__int__", "__abs__", "__hash__", "__bool__", "__index__"], attributes: {}, special: false }, type_parameters: [] })] })
 
 ---
-Line 29: d = {"a": 1, "b": 2}
+Line 37: d = {"a": 1, "b": 2}
 
 Expr types in the line --->:
         "{\"a\": 1, \"b\": 2}" => Class(ClassType { details: Class { name: "dict", declaration_path: DeclarationPath { module_name: [TYPESHED].stdlib/builtins.pyi", node: Node { start: 7960, end: 12342 } }, methods: ["__new__", "__new__", "real", "imag", "numerator", "denominator", "conjugate", "bit_length", "__add__", "__sub__", "__mul__", "__floordiv__", "__truediv__", "__mod__", "__divmod__", "__radd__", "__rsub__", "__rmul__", "__rfloordiv__", "__rtruediv__", "__rmod__", "__rdivmod__", "__pow__", "__pow__", "__pow__", "__pow__", "__pow__", "__pow__", "__rpow__", "__and__", "__or__", "__xor__", "__lshift__", "__rshift__", "__rand__", "__ror__", "__rxor__", "__rlshift__", "__rrshift__", "__neg__", "__pos__", "__invert__", "__trunc__", "__ceil__", "__floor__", "__round__", "__getnewargs__", "__eq__", "__ne__", "__lt__", "__le__", "__gt__", "__ge__", "__float__", "__int__", "__abs__", "__hash__", "__bool__", "__index__"], attributes: {}, special: false }, type_parameters: [] })] })
 
 ---
-Line 30: s = {1,2,3}
+Line 38: s = {1,2,3}
 
 Expr types in the line --->:
         "{1,2,3}" => Class(ClassType { details: Class { name: "set", declaration_path: DeclarationPath { module_name: [TYPESHED].stdlib/builtins.pyi", node: Node { start: 7960, end: 12342 } }, methods: ["__new__", "__new__", "real", "imag", "numerator", "denominator", "conjugate", "bit_length", "__add__", "__sub__", "__mul__", "__floordiv__", "__truediv__", "__mod__", "__divmod__", "__radd__", "__rsub__", "__rmul__", "__rfloordiv__", "__rtruediv__", "__rmod__", "__rdivmod__", "__pow__", "__pow__", "__pow__", "__pow__", "__pow__", "__pow__", "__rpow__", "__and__", "__or__", "__xor__", "__lshift__", "__rshift__", "__rand__", "__ror__", "__rxor__", "__rlshift__", "__rrshift__", "__neg__", "__pos__", "__invert__", "__trunc__", "__ceil__", "__floor__", "__round__", "__getnewargs__", "__eq__", "__ne__", "__lt__", "__le__", "__gt__", "__ge__", "__float__", "__int__", "__abs__", "__hash__", "__bool__", "__index__"], attributes: {}, special: false }, type_parameters: [] })] })
 
 ---
-Line 32: l.append(1)
+Line 40: l.append(1)
 
 Expr types in the line --->:
         "(1)" => Unknown
