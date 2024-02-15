@@ -1,5 +1,5 @@
 use bitflags::bitflags;
-use serde::{Deserialize, Serialize};
+
 use std::{collections::HashMap, fmt::Display, path::PathBuf};
 
 use enderpy_python_parser::ast::{self, ClassDef, FunctionDef, Node};
@@ -318,7 +318,7 @@ impl SymbolTable {
             log::debug!("scopes: {:#?}", scope);
         }
 
-        return scope;
+        scope
     }
 
     /// get innermost scope that contains that line

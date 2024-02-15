@@ -116,26 +116,6 @@ impl TypeEvaluator {
                     }
                 }
             }
-            ast::Expression::Attribute(a) => {
-                let Some(name) = a.value.as_name() else {
-                    return Ok(PythonType::Unknown);
-                };
-
-                if name.id == "self" {
-                    // Lookup the attribute in the class in symbol table
-                    let attr = self.symbol_table.lookup_attribute(a.attr.clone());
-                    return match attr {
-                        Some(attr) => self.get_symbol_node_type(&attr, None),
-                        None => Ok(PythonType::Unknown),
-                    };
-                }
-                Ok(PythonType::Unknown)
-            }
-            ast::Expression::BinOp(b) => Ok(self.bin_op_result_type(
-                &self.get_type(&b.left)?,
-                &self.get_type(&b.right)?,
-                &b.op,
-            )),
             ast::Expression::List(l) => {
                 let final_elm_type = self.get_sequence_type_from_elements(&l.elements);
                 let class_type = match self.get_builtin_type(builtins::LIST_TYPE) {
@@ -241,7 +221,27 @@ impl TypeEvaluator {
             ast::Expression::ListComp(_) => Ok(PythonType::Unknown),
             ast::Expression::SetComp(_) => Ok(PythonType::Unknown),
             ast::Expression::DictComp(_) => Ok(PythonType::Unknown),
-            ast::Expression::Attribute(a) => Ok(PythonType::Unknown),
+            ast::Expression::Attribute(a) => {
+                let Some(name) = a.value.as_name() else {
+                    return Ok(PythonType::Unknown);
+                };
+
+                // TODO: support other attributes
+                if name.id == "self" {
+                    // Lookup the attribute in the class in symbol table
+                    let attr = self.symbol_table.lookup_attribute(a.attr.clone());
+                    return match attr {
+                        Some(attr) => self.get_symbol_node_type(attr, None),
+                        None => Ok(PythonType::Unknown),
+                    };
+                }
+                Ok(PythonType::Unknown)
+            }
+            ast::Expression::BinOp(b) => Ok(self.bin_op_result_type(
+                &self.get_type(&b.left)?,
+                &self.get_type(&b.right)?,
+                &b.op,
+            )),
             ast::Expression::Subscript(s) => {
                 let value_type = &self.get_type(&s.value)?;
                 // This only handles container types and TODO
@@ -392,8 +392,8 @@ impl TypeEvaluator {
                 Declaration::Parameter(p) => {
                     if let Some(type_annotation) = &p.type_annotation {
                         log::debug!("parameter type annotation: {:?}", type_annotation);
-                        let r = Ok(self.get_type_from_annotation(type_annotation));
-                        return r;
+
+                        Ok(self.get_type_from_annotation(type_annotation))
                     } else if let Some(default) = &p.default_value {
                         self.get_type(default)
                     } else {

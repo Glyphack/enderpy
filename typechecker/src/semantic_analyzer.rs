@@ -102,6 +102,7 @@ impl SemanticAnalyzer {
                     )
                 }
             }
+            // TODO: Fix attribute
             Expression::Attribute(_) => {}
             // TODO: Add other expressions that can be assigned
             _ => {}
@@ -261,29 +262,21 @@ impl SemanticAnalyzer {
         let mut is_class_member = false;
         for decorator in decorator_list {
             if let parser::ast::Expression::Call(call) = decorator {
-                match call.func.as_name() {
-                    Some(name) => {
-                        if name.id == "classmethod" {
-                            is_class_member = true;
-                        }
+                if let Some(name) = call.func.as_name() {
+                    if name.id == "classmethod" {
+                        is_class_member = true;
                     }
-                    _ => (),
                 }
             }
         }
 
         // e.g. "MyClass.x"
-        let is_instance_member = if value_name == enclosing_class.name.as_str() {
+
+        if value_name == enclosing_class.name.as_str() || is_class_member {
             Some(false)
         } else {
-            if is_class_member {
-                Some(false)
-            } else {
-                Some(true)
-            }
-        };
-
-        is_instance_member
+            Some(true)
+        }
     }
 }
 
@@ -608,6 +601,7 @@ impl TraversalVisitor for SemanticAnalyzer {
         let mut methods = vec![];
         let mut attributes = HashMap::new();
 
+        // TODO: Move off to function visitor
         for stmt in &c.body {
             if let parser::ast::Statement::FunctionDef(f) = stmt {
                 if f.name == "__init__" {
