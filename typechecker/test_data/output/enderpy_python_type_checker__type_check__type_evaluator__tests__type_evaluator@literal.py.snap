@@ -1,30 +1,26 @@
 ---
 source: typechecker/src/type_check/type_evaluator.rs
-description: "from typing import Literal\n\n\na: Literal[\"foo\"] = \"foo\"\n\n\nclass Foo:\n    def __init__(self, name: Literal[\"foo\"]) -> None:\n        self.name = name\n\n\ndef func(literal_name: Literal[\"foo\"]) -> None:\n    literal_name\n"
+description: "1: from typing import Literal\n2: \n3: \n4: a: Literal[\"foo\"] = \"foo\"\n5: \n6: \n7: class Foo:\n8:     def __init__(self, name: Literal[\"foo\"]) -> None:\n9:         self.name = name\n10: \n11: \n12: def func(literal_name: Literal[\"foo\"]) -> None:\n13:     literal_name\n"
 expression: result
 input_file: typechecker/test_data/inputs/literal.py
 ---
-[
-    (
-        "(line: 12, character: 4):(line: 12, character: 16)",
-        Unknown,
-    ),
-    (
-        "(line: 3, character: 20):(line: 3, character: 25)",
-        Str,
-    ),
-    (
-        "(line: 3, character: 3):(line: 3, character: 17)",
-        KnownValue(
-            KnownValue {
-                literal_value: Str(
-                    "foo",
-                ),
-            },
-        ),
-    ),
-    (
-        "(line: 8, character: 20):(line: 8, character: 24)",
-        Unknown,
-    ),
-]
+Line 4: a: Literal["foo"] = "foo"
+
+Expr types in the line --->:
+        "\"foo\"" => Str
+        "Literal[\"foo\"]" => KnownValue(KnownValue { literal_value: Str("foo") })
+
+---
+Line 9:         self.name = name
+
+Expr types in the line --->:
+        "name" => Unknown
+
+---
+Line 13:     literal_name
+
+Expr types in the line --->:
+        "literal_name" => Unknown
+
+---
+

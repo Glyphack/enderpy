@@ -1,20 +1,15 @@
 ---
 source: typechecker/src/type_check/type_evaluator.rs
-description: "def func(x):\n    return x + 1\n"
+description: "1: def func(x):\n2:     return x + 1\n"
 expression: result
 input_file: typechecker/test_data/inputs/any.py
 ---
-[
-    (
-        "(line: 1, character: 11):(line: 1, character: 12)",
-        Unknown,
-    ),
-    (
-        "(line: 1, character: 11):(line: 1, character: 16)",
-        Int,
-    ),
-    (
-        "(line: 1, character: 15):(line: 1, character: 16)",
-        Int,
-    ),
-]
+Line 2:     return x + 1
+
+Expr types in the line --->:
+        "x" => Unknown
+        "1" => Int
+        "x + 1" => Int
+
+---
+

@@ -393,7 +393,6 @@ impl BuildManager {
     }
 }
 
-// TODO: refactor type check tests to be like symbol table tests
 #[cfg(test)]
 mod tests {
     use std::fs;
@@ -401,29 +400,6 @@ mod tests {
     use insta::glob;
 
     use super::*;
-
-    #[allow(dead_code)]
-    fn snapshot_symbol_table(source: &str) -> String {
-        let _ = env_logger::builder()
-            .filter_level(log::LevelFilter::Debug)
-            .is_test(true)
-            .try_init();
-        let mut manager = BuildManager::new(
-            vec![BuildSource {
-                path: PathBuf::from("test.py"),
-                module: String::from("test"),
-                source: source.to_string(),
-                followed: false,
-            }],
-            Settings::test_settings(),
-        );
-        manager.build();
-
-        let module = manager.modules.values().last().unwrap();
-
-        format!("{}", module.get_symbol_table())
-    }
-
     #[test]
     fn test_symbol_table() {
         glob!("../test_data/inputs/", "symbol_table/*.py", |path| {

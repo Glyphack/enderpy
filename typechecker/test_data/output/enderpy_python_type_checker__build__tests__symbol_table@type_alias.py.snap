@@ -4,11 +4,11 @@ description: "# Show me some examples of type aliasing in Python try to give exa
 expression: result
 input_file: typechecker/test_data/inputs/symbol_table/type_alias.py
 ---
--------------------
-global scope:
-all scopes:
-Symbols: in global (id: [REDACTED])
+Symbols in global (id: [REDACTED])
 Alias1
+SymbolFlags(
+    0x0,
+)
 - Declarations:
 --:   TypeAlias {
     declaration_path: DeclarationPath {
@@ -37,6 +37,9 @@ Alias1
     },
 }
 Alias2
+SymbolFlags(
+    0x0,
+)
 - Declarations:
 --:   TypeAlias {
     declaration_path: DeclarationPath {
@@ -65,6 +68,9 @@ Alias2
     },
 }
 Alias3
+SymbolFlags(
+    0x0,
+)
 - Declarations:
 --:   TypeAlias {
     declaration_path: DeclarationPath {
@@ -93,6 +99,9 @@ Alias3
     },
 }
 AliasToAnotherAlias
+SymbolFlags(
+    0x0,
+)
 - Declarations:
 --:   TypeAlias {
     declaration_path: DeclarationPath {
@@ -121,5 +130,7 @@ AliasToAnotherAlias
     },
 }
 
--------------------
+Scopes:
+
+Scope global(id: 0, parent_id: None
 

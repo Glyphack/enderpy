@@ -4,11 +4,11 @@ description: "def func(a ,b , /, c = 2, **e): pass\n"
 expression: result
 input_file: typechecker/test_data/inputs/symbol_table/function_definition.py
 ---
--------------------
-global scope:
-all scopes:
-Symbols: in func (id: [REDACTED])
+Symbols in func (id: [REDACTED])
 a
+SymbolFlags(
+    0x0,
+)
 - Declarations:
 --:   Parameter {
     declaration_path: DeclarationPath {
@@ -30,6 +30,9 @@ a
     default_value: None,
 }
 b
+SymbolFlags(
+    0x0,
+)
 - Declarations:
 --:   Parameter {
     declaration_path: DeclarationPath {
@@ -51,6 +54,9 @@ b
     default_value: None,
 }
 c
+SymbolFlags(
+    0x0,
+)
 - Declarations:
 --:   Parameter {
     declaration_path: DeclarationPath {
@@ -82,6 +88,9 @@ c
     ),
 }
 e
+SymbolFlags(
+    0x0,
+)
 - Declarations:
 --:   Parameter {
     declaration_path: DeclarationPath {
@@ -103,8 +112,11 @@ e
     default_value: None,
 }
 
-Symbols: in global (id: [REDACTED])
+Symbols in global (id: [REDACTED])
 func
+SymbolFlags(
+    0x0,
+)
 - Declarations:
 --:   Function {
     declaration_path: DeclarationPath {
@@ -200,5 +212,8 @@ func
     raise_statements: [],
 }
 
--------------------
+Scopes:
+
+Scope func(id: [REDACTED])
+Scope global(id: 0, parent_id: None
 

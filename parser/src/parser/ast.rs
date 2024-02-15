@@ -1,4 +1,5 @@
-use std::fmt;
+use is_macro::Is;
+use std::fmt::{self};
 
 use miette::{SourceOffset, SourceSpan};
 
@@ -244,7 +245,7 @@ pub struct Nonlocal {
     pub names: Vec<String>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Is)]
 pub enum Expression {
     Constant(Box<Constant>),
     List(Box<List>),
@@ -256,6 +257,7 @@ pub enum Expression {
     UnaryOp(Box<UnaryOperation>),
     BinOp(Box<BinOp>),
     NamedExpr(Box<NamedExpression>),
+    #[is(name = "yield_expr")]
     Yield(Box<Yield>),
     YieldFrom(Box<YieldFrom>),
     Starred(Box<Starred>),
@@ -267,6 +269,7 @@ pub enum Expression {
     Subscript(Box<Subscript>),
     Slice(Box<Slice>),
     Call(Box<Call>),
+    #[is(name = "await_expr")]
     Await(Box<Await>),
     Compare(Box<Compare>),
     Lambda(Box<Lambda>),
@@ -628,6 +631,30 @@ pub struct Arguments {
     pub defaults: Vec<Expression>,
 }
 
+impl std::fmt::Display for Arguments {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        let mut args = vec![];
+
+        for arg in &self.args {
+            args.push(arg.arg.clone());
+        }
+
+        for arg in &self.kwonlyargs {
+            args.push(arg.arg.clone());
+        }
+
+        if let Some(vararg) = &self.vararg {
+            args.push(vararg.arg.clone());
+        }
+
+        if let Some(kwarg) = &self.kwarg {
+            args.push(kwarg.arg.clone());
+        }
+
+        write!(f, "({})", args.join(", "))
+    }
+}
+
 // https://docs.python.org/3/library/ast.html#ast.arg
 #[derive(Debug, Clone)]
 pub struct Arg {
@@ -783,6 +810,21 @@ pub struct AsyncFunctionDef {
     pub returns: Option<Box<Expression>>,
     pub type_comment: Option<String>,
     pub type_params: Vec<TypeParam>,
+}
+
+impl AsyncFunctionDef {
+    pub fn to_function_def(&self) -> FunctionDef {
+        FunctionDef {
+            node: self.node,
+            name: self.name.clone(),
+            args: self.args.clone(),
+            body: self.body.clone(),
+            decorator_list: self.decorator_list.clone(),
+            returns: self.returns.clone(),
+            type_comment: self.type_comment.clone(),
+            type_params: self.type_params.clone(),
+        }
+    }
 }
 
 // https://docs.python.org/3/library/ast.html#ast.ClassDef

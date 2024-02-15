@@ -56,12 +56,38 @@ impl EnderpyFile {
         self.build_source.source.clone()
     }
 
+    /// Return source of the line number
+    pub fn get_line_content(&self, line: u32) -> String {
+        let mut line_number = 1;
+        let mut line_start = 0;
+        for (i, c) in self.build_source.source.chars().enumerate() {
+            if line_number == line {
+                line_start = i;
+                break;
+            }
+            if c == '\n' {
+                line_number += 1;
+            }
+        }
+
+        let mut line_end = line_start;
+
+        for (i, c) in self.build_source.source.chars().enumerate() {
+            if i > line_start && c == '\n' {
+                line_end = i;
+                break;
+            }
+        }
+
+        self.build_source.source[line_start..line_end].to_string()
+    }
+
     pub fn get_position(&self, pos: usize) -> Position {
-        let mut line_number = 0;
+        let mut line_number = 1;
         let mut line_start = 0;
         if pos == 0 {
             return Position {
-                line: 0,
+                line: 1,
                 character: 0,
             };
         }
@@ -89,10 +115,7 @@ impl EnderpyFile {
         for stmt in &self.body {
             sem_anal.visit_stmt(stmt)
         }
-        // TODO: Hacky way to add the global scope to all scopes in symbol table after
-        // finishing
-        sem_anal.globals.exit_scope();
-        self.symbol_table = sem_anal.globals;
+        self.symbol_table = sem_anal.symbol_table;
     }
 
     pub fn get_symbol_table(&self) -> SymbolTable {
@@ -107,8 +130,7 @@ impl From<BuildSource> for EnderpyFile {
             build_source.path.as_path().to_str().unwrap().to_owned(),
         );
         let tree = parser.parse();
-        let symbol_table =
-            SymbolTable::global(build_source.module.clone(), build_source.path.clone());
+        let symbol_table = SymbolTable::new(build_source.module.clone(), build_source.path.clone());
 
         let mut file = EnderpyFile {
             defs: vec![],

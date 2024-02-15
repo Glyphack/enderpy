@@ -4,11 +4,11 @@ description: "a = 1\n"
 expression: result
 input_file: typechecker/test_data/inputs/symbol_table/variables.py
 ---
--------------------
-global scope:
-all scopes:
-Symbols: in global (id: [REDACTED])
+Symbols in global (id: [REDACTED])
 a
+SymbolFlags(
+    0x0,
+)
 - Declarations:
 --:   Variable {
     declaration_path: DeclarationPath {
@@ -34,5 +34,7 @@ a
     is_constant: false,
 }
 
--------------------
+Scopes:
+
+Scope global(id: 0, parent_id: None
 

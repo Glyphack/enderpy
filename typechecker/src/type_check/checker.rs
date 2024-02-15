@@ -27,7 +27,8 @@ impl<'a> TypeChecker<'a> {
         options: &'a Settings,
         symbol_tables: Vec<SymbolTable>,
     ) -> Self {
-        let symbol_table = module.get_symbol_table();
+        let mut symbol_table = module.get_symbol_table();
+        symbol_table.current_scope_id = 0;
         TypeChecker {
             errors: vec![],
             options,
@@ -130,7 +131,10 @@ impl<'a> TraversalVisitor for TypeChecker<'a> {
             Expression::ListComp(l) => self.visit_list_comp(l),
             Expression::SetComp(s) => self.visit_set_comp(s),
             Expression::DictComp(d) => self.visit_dict_comp(d),
-            Expression::Attribute(a) => self.visit_attribute(a),
+            Expression::Attribute(a) => {
+                self.infer_expr_type(e, true);
+                self.visit_attribute(a)
+            }
             Expression::Subscript(s) => self.visit_subscript(s),
             Expression::Slice(s) => self.visit_slice(s),
             Expression::Call(c) => {
@@ -231,12 +235,23 @@ impl<'a> TraversalVisitor for TypeChecker<'a> {
     }
 
     fn visit_function_def(&mut self, f: &parser::ast::FunctionDef) {
+        self.type_evaluator.symbol_table.set_scope(f.node.start);
         for stmt in &f.body {
             self.visit_stmt(stmt);
         }
+        self.type_evaluator.symbol_table.revert_scope();
+    }
+
+    fn visit_async_function_def(&mut self, f: &parser::ast::AsyncFunctionDef) {
+        self.type_evaluator.symbol_table.set_scope(f.node.start);
+        for stmt in &f.body {
+            self.visit_stmt(stmt);
+        }
+        self.type_evaluator.symbol_table.revert_scope();
     }
 
     fn visit_class_def(&mut self, c: &parser::ast::ClassDef) {
+        self.type_evaluator.symbol_table.set_scope(c.node.start);
         for base in &c.bases {
             self.visit_expr(base);
         }
@@ -249,6 +264,8 @@ impl<'a> TraversalVisitor for TypeChecker<'a> {
         for keyword in &c.keywords {
             self.visit_expr(&keyword.value);
         }
+
+        self.type_evaluator.symbol_table.revert_scope();
     }
 
     fn visit_match(&mut self, m: &parser::ast::Match) {
@@ -346,20 +363,6 @@ impl<'a> TraversalVisitor for TypeChecker<'a> {
     fn visit_bin_op(&mut self, b: &BinOp) {
         let l_type = self.infer_expr_type(&b.left, true);
         let r_type = self.infer_expr_type(&b.right, true);
-
-        if !self
-            .type_evaluator
-            .type_check_bin_op(&l_type, &r_type, &b.op)
-        {
-            let msg = format!(
-                "Operator '{}' not supported for types '{}' and '{}'",
-                b.op, l_type, r_type
-            );
-            self.errors.push(TypeCheckError {
-                msg,
-                span: CharacterSpan(b.left.get_node().start, b.right.get_node().end),
-            });
-        }
     }
 
     fn visit_named_expr(&mut self, _n: &NamedExpression) {

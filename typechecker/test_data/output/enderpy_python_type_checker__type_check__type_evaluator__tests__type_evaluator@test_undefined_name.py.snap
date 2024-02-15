@@ -1,28 +1,37 @@
 ---
 source: typechecker/src/type_check/type_evaluator.rs
-description: "# undefined name\nundef_name\n\n# undefined name in function\ndef func():\n    undef_name\n\n# undefined name in class\nclass MyClass:\n    undef_name\n\n# undefined name in class function\nclass MyClass:\n    def func(self):\n        undef_name\n\ncall_undefined_name()\n\nfor i in undef_name:\n    pass\n\n"
+description: "1: # undefined name\n2: undef_name\n3: \n4: # undefined name in function\n5: def func():\n6:     undef_name\n7: \n8: # undefined name in class\n9: class MyClass:\n10:     undef_name\n11: \n12: # undefined name in class function\n13: class MyClass:\n14:     def func(self):\n15:         undef_name\n16: \n17: call_undefined_name()\n18: \n19: for i in undef_name:\n20:     pass\n21: \n"
 expression: result
 input_file: typechecker/test_data/inputs/test_undefined_name.py
 ---
-[
-    (
-        "(line: 1, character: 0):(line: 1, character: 10)",
-        Unknown,
-    ),
-    (
-        "(line: 14, character: 8):(line: 14, character: 18)",
-        Unknown,
-    ),
-    (
-        "(line: 16, character: 0):(line: 16, character: 21)",
-        Unknown,
-    ),
-    (
-        "(line: 5, character: 4):(line: 5, character: 14)",
-        Unknown,
-    ),
-    (
-        "(line: 9, character: 4):(line: 9, character: 14)",
-        Unknown,
-    ),
-]
+Line 2: undef_name
+
+Expr types in the line --->:
+        "undef_name" => Unknown
+
+---
+Line 6:     undef_name
+
+Expr types in the line --->:
+        "undef_name" => Unknown
+
+---
+Line 10:     undef_name
+
+Expr types in the line --->:
+        "undef_name" => Unknown
+
+---
+Line 15:         undef_name
+
+Expr types in the line --->:
+        "undef_name" => Unknown
+
+---
+Line 17: call_undefined_name()
+
+Expr types in the line --->:
+        "call_undefined_name()" => Unknown
+
+---
+

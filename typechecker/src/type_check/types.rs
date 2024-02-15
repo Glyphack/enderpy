@@ -7,7 +7,7 @@ use crate::symbol_table;
 #[derive(Debug, Clone, PartialEq)]
 pub enum PythonType {
     None,
-    /// Unknown and Any type are similar but we are using Uknown when we cannot
+    /// Unknown and Any type are similar but we are using Unknown when we cannot
     /// possibly know the type of a value.
     Unknown,
     /// representing that we know nothing about the value a node can contain.
@@ -24,10 +24,6 @@ pub enum PythonType {
     /// Union type
     MultiValue(Vec<PythonType>),
     Callable(Box<CallableType>),
-    Bool,
-    Int,
-    Float,
-    Str,
     Class(ClassType),
     Never,
 }
@@ -38,10 +34,6 @@ impl PythonType {
             (PythonType::None, PythonType::None) => true,
             (PythonType::Unknown, PythonType::Unknown) => true,
             (PythonType::Any, PythonType::Any) => true,
-            (PythonType::Bool, PythonType::Bool) => true,
-            (PythonType::Int, PythonType::Int) => true,
-            (PythonType::Float, PythonType::Float) => true,
-            (PythonType::Str, PythonType::Str) => true,
             (PythonType::Never, PythonType::Never) => true,
             (PythonType::KnownValue(v1), PythonType::KnownValue(v2)) => v1 == v2,
             (PythonType::MultiValue(m1), PythonType::MultiValue(m2)) => {
@@ -184,10 +176,6 @@ impl Display for PythonType {
         let type_str = match self {
             PythonType::None => "None",
             PythonType::Any => "Any",
-            PythonType::Bool => "Bool",
-            PythonType::Int => "Int",
-            PythonType::Float => "Float",
-            PythonType::Str => "Str",
             PythonType::Unknown => "Unknown",
             PythonType::Callable(callable_type) => callable_type.name.as_str(),
             PythonType::Class(class_type) => {
