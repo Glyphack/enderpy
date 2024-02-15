@@ -1225,23 +1225,30 @@ impl TraversalVisitor for DumpTypes {
             ast::Statement::TryStarStatement(t) => (),
             ast::Statement::FunctionDef(f) => {
                 // This is duplicated
-                let prev_scope = self.type_eval.symbol_table.current_scope_id;
                 self.type_eval.symbol_table.set_scope(f.node.start);
                 for stmt in &f.body {
                     self.visit_stmt(stmt);
                 }
 
-                self.type_eval.symbol_table.current_scope_id = prev_scope;
+                self.type_eval.symbol_table.revert_scope();
             }
             ast::Statement::ClassDef(c) => {
+                self.type_eval.symbol_table.set_scope(c.node.start);
                 for stmt in &c.body {
                     self.visit_stmt(stmt);
                 }
+                self.type_eval.symbol_table.revert_scope();
             }
             ast::Statement::Match(m) => (),
             Statement::AsyncForStatement(f) => (),
             Statement::AsyncWithStatement(w) => (),
-            Statement::AsyncFunctionDef(f) => (),
+            Statement::AsyncFunctionDef(f) => {
+                self.type_eval.symbol_table.set_scope(f.node.start);
+                for stmt in &f.body {
+                    self.visit_stmt(stmt);
+                }
+                self.type_eval.symbol_table.revert_scope();
+            }
             Statement::TypeAlias(a) => (),
         }
     }

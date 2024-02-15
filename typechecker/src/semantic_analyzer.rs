@@ -408,7 +408,7 @@ impl TraversalVisitor for SemanticAnalyzer {
             module_name: self.file.path(),
             node: f.node,
         };
-        self.symbol_table.enter_scope(SymbolTableScope::new(
+        self.symbol_table.push_scope(SymbolTableScope::new(
             crate::symbol_table::SymbolTableType::Function,
             f.name.clone(),
             f.node.start,
@@ -481,7 +481,7 @@ impl TraversalVisitor for SemanticAnalyzer {
             module_name: self.file.path(),
             node: c.node,
         };
-        self.symbol_table.enter_scope(SymbolTableScope::new(
+        self.symbol_table.push_scope(SymbolTableScope::new(
             SymbolTableType::Class,
             c.name.clone(),
             c.node.start,
@@ -561,7 +561,7 @@ impl TraversalVisitor for SemanticAnalyzer {
 
     fn visit_set(&mut self, _s: &parser::ast::Set) {}
 
-    fn visit_name(&mut self, _n: &parser::ast::Name) {}
+    fn visit_name(&mut self, _n: &Name) {}
 
     fn visit_bool_op(&mut self, _b: &parser::ast::BoolOperation) {}
 

@@ -232,16 +232,23 @@ impl<'a> TraversalVisitor for TypeChecker<'a> {
     }
 
     fn visit_function_def(&mut self, f: &parser::ast::FunctionDef) {
-        let prev_scope = self.type_evaluator.symbol_table.current_scope_id;
         self.type_evaluator.symbol_table.set_scope(f.node.start);
         for stmt in &f.body {
             self.visit_stmt(stmt);
         }
+        self.type_evaluator.symbol_table.revert_scope();
+    }
 
-        self.type_evaluator.symbol_table.current_scope_id = prev_scope;
+    fn visit_async_function_def(&mut self, f: &parser::ast::AsyncFunctionDef) {
+        self.type_evaluator.symbol_table.set_scope(f.node.start);
+        for stmt in &f.body {
+            self.visit_stmt(stmt);
+        }
+        self.type_evaluator.symbol_table.revert_scope();
     }
 
     fn visit_class_def(&mut self, c: &parser::ast::ClassDef) {
+        self.type_evaluator.symbol_table.set_scope(c.node.start);
         for base in &c.bases {
             self.visit_expr(base);
         }
@@ -254,6 +261,8 @@ impl<'a> TraversalVisitor for TypeChecker<'a> {
         for keyword in &c.keywords {
             self.visit_expr(&keyword.value);
         }
+
+        self.type_evaluator.symbol_table.revert_scope();
     }
 
     fn visit_match(&mut self, m: &parser::ast::Match) {

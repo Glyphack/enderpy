@@ -10,6 +10,7 @@ pub struct SymbolTable {
     // after building symbol table is finished this only contains the most outer scope
     scopes: Vec<SymbolTableScope>,
 
+    prev_scope: Option<usize>,
     pub current_scope_id: usize,
 
     /// Name of the module that this symbol table is for
@@ -238,6 +239,7 @@ impl SymbolTable {
         SymbolTable {
             scopes: vec![SymbolTableScope::global_scope()],
             current_scope_id: 0,
+            prev_scope: None,
             module_name,
             file_path,
         }
@@ -319,12 +321,15 @@ impl SymbolTable {
         None
     }
 
-    pub fn enter_scope(&mut self, new_scope: SymbolTableScope) {
+    /// Creates a new scope and sets it as the current scope
+    pub fn push_scope(&mut self, new_scope: SymbolTableScope) {
         self.current_scope_id = new_scope.id;
         self.scopes.push(new_scope);
     }
 
+    /// Sets the current scope to the scope that starts at the given position
     pub fn set_scope(&mut self, pos: usize) {
+        self.prev_scope = Some(self.current_scope_id);
         let scope = self.scopes.iter().find(|scope| scope.start_pos == pos);
         if let Some(scope) = scope {
             self.current_scope_id = scope.id;
@@ -333,11 +338,12 @@ impl SymbolTable {
         }
     }
 
-    pub fn get_scope_by_id(&self, id: usize) -> &SymbolTableScope {
-        self.scopes
-            .iter()
-            .find(|scope| scope.id == id)
-            .expect("no scope found")
+    pub fn is_current_scope_type(&self, symbol_table_type: SymbolTableType) -> bool {
+        self.current_scope().symbol_table_type == symbol_table_type
+    }
+
+    pub fn revert_scope(&mut self) {
+        self.current_scope_id = self.prev_scope.expect("no previous scope");
     }
 
     pub fn global_scope(&self) -> &SymbolTableScope {

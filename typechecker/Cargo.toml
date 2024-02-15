@@ -14,6 +14,7 @@ env_logger = "0.10.0"
 tempfile = "3.8.0"
 elsa = "1.10.0"
 is-macro = "0.3.5"
+bitflags = "2.4.2"
 
 [dev-dependencies]
 insta = { version = "1.28.0", features = ["yaml", "filters"] }
