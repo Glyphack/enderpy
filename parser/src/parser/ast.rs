@@ -1,3 +1,4 @@
+use is_macro::Is;
 use std::fmt::{self};
 
 use miette::{SourceOffset, SourceSpan};
@@ -244,7 +245,7 @@ pub struct Nonlocal {
     pub names: Vec<String>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Is)]
 pub enum Expression {
     Constant(Box<Constant>),
     List(Box<List>),
@@ -256,6 +257,7 @@ pub enum Expression {
     UnaryOp(Box<UnaryOperation>),
     BinOp(Box<BinOp>),
     NamedExpr(Box<NamedExpression>),
+    #[is(name = "yield_expr")]
     Yield(Box<Yield>),
     YieldFrom(Box<YieldFrom>),
     Starred(Box<Starred>),
@@ -267,6 +269,7 @@ pub enum Expression {
     Subscript(Box<Subscript>),
     Slice(Box<Slice>),
     Call(Box<Call>),
+    #[is(name = "await_expr")]
     Await(Box<Await>),
     Compare(Box<Compare>),
     Lambda(Box<Lambda>),

@@ -1,6 +1,8 @@
+use bitflags::bitflags;
+use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, fmt::Display, path::PathBuf};
 
-use enderpy_python_parser::ast::{self, Node};
+use enderpy_python_parser::ast::{self, ClassDef, FunctionDef, Node};
 
 use crate::ruff_python_import_resolver::import_result::ImportResult;
 
@@ -22,7 +24,7 @@ pub struct SymbolTable {
 pub struct SymbolTableScope {
     pub id: usize,
     pub start_pos: usize,
-    pub symbol_table_type: SymbolTableType,
+    pub kind: SymbolTableType,
     pub name: String,
     symbols: HashMap<String, SymbolTableNode>,
     parent: Option<usize>,
@@ -43,7 +45,7 @@ impl SymbolTableScope {
     ) -> Self {
         SymbolTableScope {
             id: get_id(),
-            symbol_table_type,
+            kind: symbol_table_type,
             name,
             symbols: HashMap::new(),
             parent: Some(parent),
@@ -54,7 +56,7 @@ impl SymbolTableScope {
     pub fn global_scope() -> Self {
         SymbolTableScope {
             id: 0,
-            symbol_table_type: SymbolTableType::Module,
+            kind: SymbolTableType::Module,
             name: String::from("global"),
             symbols: HashMap::new(),
             parent: None,
@@ -63,20 +65,33 @@ impl SymbolTableScope {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, is_macro::Is)]
 #[allow(clippy::upper_case_acronyms)]
+/// Does not include PEP 695: https://peps.python.org/pep-0695/#scoping-behavior
 pub enum SymbolTableType {
     /// BUILTIN scope is used for builtins like len, print, etc.
     BUILTIN,
     Module,
-    Class,
-    Function,
+    Class(ClassDef),
+    Function(FunctionDef),
+}
+
+bitflags! {
+    #[repr(transparent)]
+    #[derive(Copy, Clone, Debug, Eq, PartialEq)]
+    pub struct SymbolFlags: u16 {
+        const CLASS_MEMBER = 1 << 0;
+
+        const INSTANCE_MEMBER = 1 << 1;
+
+    }
 }
 
 #[derive(Debug, Clone)]
 pub struct SymbolTableNode {
     pub name: String,
     pub declarations: Vec<Declaration>,
+    pub flags: SymbolFlags,
 }
 
 #[derive(Debug, Clone)]
@@ -246,7 +261,7 @@ impl SymbolTable {
     }
 
     /// Do not use for lookup operations
-    fn current_scope(&self) -> &SymbolTableScope {
+    pub fn current_scope(&self) -> &SymbolTableScope {
         if let Some(scope) = self
             .scopes
             .iter()
@@ -269,6 +284,19 @@ impl SymbolTable {
         }
     }
 
+    pub fn parent_scope(&self) -> Option<&SymbolTableScope> {
+        if let Some(scope) = self
+            .scopes
+            .iter()
+            .filter(|scope| scope.id == self.current_scope().parent.unwrap_or(0))
+            .last()
+        {
+            Some(scope)
+        } else {
+            None
+        }
+    }
+
     pub fn current_scope_mut(&mut self) -> &mut SymbolTableScope {
         self.scopes
             .iter_mut()
@@ -278,7 +306,7 @@ impl SymbolTable {
     }
 
     pub fn current_scope_type(&self) -> &SymbolTableType {
-        return &self.current_scope().symbol_table_type;
+        return &self.current_scope().kind;
     }
 
     /// Returns scopes until the given position
@@ -336,10 +364,6 @@ impl SymbolTable {
         } else {
             panic!("no scope found for position: {}", pos);
         }
-    }
-
-    pub fn is_current_scope_type(&self, symbol_table_type: SymbolTableType) -> bool {
-        self.current_scope().symbol_table_type == symbol_table_type
     }
 
     pub fn revert_scope(&mut self) {
@@ -416,7 +440,7 @@ impl std::fmt::Display for SymbolTable {
 
         for scope in sorted_scopes.iter() {
             // Skip printing the builtin scope
-            if scope.symbol_table_type == SymbolTableType::BUILTIN {
+            if matches!(scope.kind, SymbolTableType::BUILTIN) {
                 continue;
             }
             writeln!(f, "{}", scope)?;
@@ -450,6 +474,7 @@ impl std::fmt::Display for SymbolTableScope {
         )?;
         for (name, symbol) in sorted_symbols {
             writeln!(f, "{}", name)?;
+            writeln!(f, "{:#?}", symbol.flags)?;
             // sort the declarations by line number
             let mut sorted_declarations = symbol.declarations.clone();
             sorted_declarations.sort_by(|a, b| {

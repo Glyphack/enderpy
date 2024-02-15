@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use enderpy_python_parser as parser;
 use enderpy_python_parser::ast::Expression;
-use parser::ast::{GetNode, Statement};
+use parser::ast::{FunctionDef, GetNode, Name, Statement};
 
 use crate::{
     ast_visitor::TraversalVisitor,
@@ -11,8 +11,8 @@ use crate::{
         import_result::ImportResult, module_descriptor::ImportModuleDescriptor,
     },
     symbol_table::{
-        Alias, Class, Declaration, DeclarationPath, Function, Parameter, SymbolScope, SymbolTable,
-        SymbolTableNode, SymbolTableScope, SymbolTableType, TypeAlias, Variable,
+        Alias, Class, Declaration, DeclarationPath, Function, Parameter, SymbolFlags, SymbolScope,
+        SymbolTable, SymbolTableNode, SymbolTableScope, SymbolTableType, TypeAlias, Variable,
     },
 };
 
@@ -51,10 +51,11 @@ impl SemanticAnalyzer {
         }
     }
 
-    fn create_symbol(&mut self, name: String, decl: Declaration) {
+    fn create_symbol(&mut self, name: String, decl: Declaration, symbol_flags: SymbolFlags) {
         let symbol_node = SymbolTableNode {
             name,
             declarations: vec![decl],
+            flags: symbol_flags,
         };
         self.symbol_table.add_symbol(symbol_node)
     }
@@ -64,7 +65,7 @@ impl SemanticAnalyzer {
     }
 
     fn is_inside_class(&self) -> bool {
-        matches!(self.current_scope(), SymbolTableType::Class)
+        matches!(self.current_scope(), SymbolTableType::Class(_))
     }
 
     fn create_variable_declaration_symbol(
@@ -83,7 +84,13 @@ impl SemanticAnalyzer {
                     inferred_type_source: value,
                     is_constant: false,
                 });
-                self.create_symbol(n.id.clone(), decl)
+
+                let mut symbol_flags = SymbolFlags::empty();
+                if self.symbol_table.current_scope_type().is_class() {
+                    symbol_flags |= SymbolFlags::CLASS_MEMBER;
+                }
+
+                self.create_symbol(n.id.clone(), decl, symbol_flags)
             }
             Expression::Tuple(t) => {
                 for elm in t.elements.iter() {
@@ -113,6 +120,7 @@ impl SemanticAnalyzer {
                 .get(defaults_len.wrapping_sub(index.wrapping_sub(1)))
                 .cloned();
 
+            let flags = SymbolFlags::empty();
             self.create_symbol(
                 pos_only.arg.clone(),
                 Declaration::Parameter(Parameter {
@@ -121,6 +129,7 @@ impl SemanticAnalyzer {
                     type_annotation: pos_only.annotation.clone(),
                     default_value,
                 }),
+                flags,
             );
         }
 
@@ -138,6 +147,7 @@ impl SemanticAnalyzer {
                 )
                 .cloned();
 
+            let flags = SymbolFlags::empty();
             self.create_symbol(
                 arg.arg.clone(),
                 Declaration::Parameter(Parameter {
@@ -146,6 +156,7 @@ impl SemanticAnalyzer {
                     type_annotation: arg.annotation.clone(),
                     default_value,
                 }),
+                flags,
             );
         }
 
@@ -154,6 +165,7 @@ impl SemanticAnalyzer {
                 module_name: self.file.path(),
                 node: arg.node,
             };
+            let flags = SymbolFlags::empty();
             self.create_symbol(
                 arg.arg.clone(),
                 Declaration::Parameter(Parameter {
@@ -162,6 +174,7 @@ impl SemanticAnalyzer {
                     type_annotation: arg.annotation.clone(),
                     default_value: None,
                 }),
+                flags,
             );
         }
 
@@ -170,6 +183,7 @@ impl SemanticAnalyzer {
                 module_name: self.file.path(),
                 node: arg.node,
             };
+            let flags = SymbolFlags::empty();
             self.create_symbol(
                 arg.arg.clone(),
                 Declaration::Parameter(Parameter {
@@ -178,6 +192,7 @@ impl SemanticAnalyzer {
                     type_annotation: arg.annotation.clone(),
                     default_value: None,
                 }),
+                flags,
             );
         }
 
@@ -186,6 +201,7 @@ impl SemanticAnalyzer {
                 module_name: self.file.path(),
                 node: arg.node,
             };
+            let flags = SymbolFlags::empty();
             self.create_symbol(
                 arg.arg.clone(),
                 Declaration::Parameter(Parameter {
@@ -194,8 +210,82 @@ impl SemanticAnalyzer {
                     type_annotation: arg.annotation.clone(),
                     default_value: None,
                 }),
+                flags,
             );
         }
+    }
+
+    // determines whether a member access expression is referring to a
+    // member of a class (either a class or instance member). this will
+    // typically take the form "self.x" or "cls.x".
+    // returns None if the expression is not a member access expression or
+    // or true if the member is an instance member and false if it is a class member
+    fn get_member_access_info(&self, value: &parser::ast::Expression) -> Option<bool> {
+        // TODO: Figure out how to get rid of double dereference
+        let name = value.as_name()?;
+
+        let value_name = &name.id;
+
+        let current_scope = self.symbol_table.current_scope();
+        let Some(FunctionDef {
+            node,
+            name: fname,
+            args,
+            body,
+            decorator_list,
+            returns,
+            type_comment,
+            type_params,
+        }) = current_scope.kind.as_function()
+        else {
+            return None;
+        };
+
+        dbg!(&current_scope.name, &current_scope.kind, &args);
+
+        let Some(parent_scope) = self.symbol_table.parent_scope() else {
+            return None;
+        };
+
+        let Some(enclosing_class) = parent_scope.kind.as_class() else {
+            return None;
+        };
+
+        let first_arg = args.args.first()?;
+
+        let is_value_equal_to_first_arg = value_name == first_arg.arg.as_str();
+
+        if !is_value_equal_to_first_arg {
+            return None;
+        }
+
+        // Check if one of the decorators is a classmethod or staticmethod
+        let mut is_class_member = false;
+        for decorator in decorator_list {
+            if let parser::ast::Expression::Call(call) = decorator {
+                match call.func.as_name() {
+                    Some(name) => {
+                        if name.id == "classmethod" {
+                            is_class_member = true;
+                        }
+                    }
+                    _ => (),
+                }
+            }
+        }
+
+        // e.g. "MyClass.x"
+        let is_instance_member = if value_name == enclosing_class.name.as_str() {
+            Some(false)
+        } else {
+            if is_class_member {
+                Some(false)
+            } else {
+                Some(true)
+            }
+        };
+
+        is_instance_member
     }
 }
 
@@ -285,7 +375,8 @@ impl TraversalVisitor for SemanticAnalyzer {
                 import_result,
             });
 
-            self.create_symbol(alias.name(), declaration);
+            let flags = SymbolFlags::empty();
+            self.create_symbol(alias.name(), declaration, flags);
         }
     }
 
@@ -308,7 +399,8 @@ impl TraversalVisitor for SemanticAnalyzer {
                 import_result: module_import_result,
             });
 
-            self.create_symbol(alias.name(), declaration);
+            let flags = SymbolFlags::empty();
+            self.create_symbol(alias.name(), declaration, flags);
         }
     }
 
@@ -409,7 +501,7 @@ impl TraversalVisitor for SemanticAnalyzer {
             node: f.node,
         };
         self.symbol_table.push_scope(SymbolTableScope::new(
-            crate::symbol_table::SymbolTableType::Function,
+            crate::symbol_table::SymbolTableType::Function(f.clone()),
             f.name.clone(),
             f.node.start,
             self.symbol_table.current_scope_id,
@@ -437,12 +529,14 @@ impl TraversalVisitor for SemanticAnalyzer {
                 module_name: self.file.path(),
                 node: type_parameter.get_node(),
             };
+            let flags = SymbolFlags::empty();
             self.create_symbol(
                 type_parameter.get_name(),
                 Declaration::TypeParameter(crate::symbol_table::TypeParameter {
                     declaration_path,
                     type_parameter_node: type_parameter.clone(),
                 }),
+                flags,
             );
         }
 
@@ -457,7 +551,8 @@ impl TraversalVisitor for SemanticAnalyzer {
             yield_statements,
             raise_statements,
         });
-        self.create_symbol(f.name.clone(), function_declaration);
+        let flags = SymbolFlags::empty();
+        self.create_symbol(f.name.clone(), function_declaration, flags);
     }
 
     fn visit_type_alias(&mut self, t: &parser::ast::TypeAlias) {
@@ -465,12 +560,14 @@ impl TraversalVisitor for SemanticAnalyzer {
             module_name: self.file.path(),
             node: t.node,
         };
+        let flags = SymbolFlags::empty();
         self.create_symbol(
             t.name.clone(),
             Declaration::TypeAlias(TypeAlias {
                 declaration_path,
                 type_alias_node: t.clone(),
             }),
+            flags,
         );
     }
 
@@ -482,7 +579,7 @@ impl TraversalVisitor for SemanticAnalyzer {
             node: c.node,
         };
         self.symbol_table.push_scope(SymbolTableScope::new(
-            SymbolTableType::Class,
+            SymbolTableType::Class(c.clone()),
             c.name.clone(),
             c.node.start,
             self.symbol_table.current_scope_id,
@@ -493,12 +590,14 @@ impl TraversalVisitor for SemanticAnalyzer {
                 module_name: self.file.path(),
                 node: type_parameter.get_node(),
             };
+            let flags = SymbolFlags::empty();
             self.create_symbol(
                 type_parameter.get_name(),
                 Declaration::TypeParameter(crate::symbol_table::TypeParameter {
                     declaration_path,
                     type_parameter_node: type_parameter.clone(),
                 }),
+                flags,
             );
         }
         let mut methods = vec![];
@@ -536,7 +635,8 @@ impl TraversalVisitor for SemanticAnalyzer {
             methods,
             special: false,
         });
-        self.create_symbol(c.name.clone(), class_declaration);
+        let flags = SymbolFlags::empty();
+        self.create_symbol(c.name.clone(), class_declaration, flags);
     }
 
     fn visit_match(&mut self, m: &parser::ast::Match) {
@@ -585,13 +685,56 @@ impl TraversalVisitor for SemanticAnalyzer {
 
     fn visit_dict_comp(&mut self, _d: &parser::ast::DictComp) {}
 
-    fn visit_attribute(&mut self, _a: &parser::ast::Attribute) {}
+    // Imagine it's always store
+    fn visit_attribute(&mut self, a: &parser::ast::Attribute) {
+        let member_access_info = self.get_member_access_info(&a.value);
+        let symbol_flags = if member_access_info.is_some_and(|x| x) {
+            SymbolFlags::INSTANCE_MEMBER
+        } else {
+            SymbolFlags::CLASS_MEMBER
+        };
+
+        dbg!(&a, member_access_info);
+
+        // TODO: Only create symbols in class body or init method
+        let declaration_path = DeclarationPath {
+            module_name: self.file.path(),
+            node: a.node,
+        };
+
+        let declaration = Declaration::Variable(Variable {
+            declaration_path,
+            scope: SymbolScope::Global,
+            type_annotation: None,
+            inferred_type_source: None,
+            is_constant: false,
+        });
+
+        let attribute_name_node = a.value.as_name();
+
+        let name = match attribute_name_node {
+            Some(name) => name.id.clone(),
+            None => return,
+        };
+
+        let symbol_node = SymbolTableNode {
+            name,
+            declarations: vec![declaration],
+            flags: symbol_flags,
+        };
+        self.symbol_table.add_symbol(symbol_node)
+    }
 
     fn visit_subscript(&mut self, _s: &parser::ast::Subscript) {}
 
     fn visit_slice(&mut self, _s: &parser::ast::Slice) {}
 
-    fn visit_call(&mut self, _c: &parser::ast::Call) {}
+    fn visit_call(&mut self, _c: &parser::ast::Call) {
+        // TODO: more arguments
+        for arg in &_c.args {
+            self.visit_expr(arg);
+        }
+    }
 
     fn visit_await(&mut self, _a: &parser::ast::Await) {}
 
