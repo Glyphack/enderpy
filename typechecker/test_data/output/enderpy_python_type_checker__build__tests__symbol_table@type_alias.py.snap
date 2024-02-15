@@ -6,6 +6,9 @@ input_file: typechecker/test_data/inputs/symbol_table/type_alias.py
 ---
 Symbols in global (id: [REDACTED])
 Alias1
+SymbolFlags(
+    0x0,
+)
 - Declarations:
 --:   TypeAlias {
     declaration_path: DeclarationPath {
@@ -34,6 +37,9 @@ Alias1
     },
 }
 Alias2
+SymbolFlags(
+    0x0,
+)
 - Declarations:
 --:   TypeAlias {
     declaration_path: DeclarationPath {
@@ -62,6 +68,9 @@ Alias2
     },
 }
 Alias3
+SymbolFlags(
+    0x0,
+)
 - Declarations:
 --:   TypeAlias {
     declaration_path: DeclarationPath {
@@ -90,6 +99,9 @@ Alias3
     },
 }
 AliasToAnotherAlias
+SymbolFlags(
+    0x0,
+)
 - Declarations:
 --:   TypeAlias {
     declaration_path: DeclarationPath {

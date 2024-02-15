@@ -812,6 +812,21 @@ pub struct AsyncFunctionDef {
     pub type_params: Vec<TypeParam>,
 }
 
+impl AsyncFunctionDef {
+    pub fn to_function_def(&self) -> FunctionDef {
+        FunctionDef {
+            node: self.node,
+            name: self.name.clone(),
+            args: self.args.clone(),
+            body: self.body.clone(),
+            decorator_list: self.decorator_list.clone(),
+            returns: self.returns.clone(),
+            type_comment: self.type_comment.clone(),
+            type_params: self.type_params.clone(),
+        }
+    }
+}
+
 // https://docs.python.org/3/library/ast.html#ast.ClassDef
 #[derive(Debug, Clone)]
 pub struct ClassDef {

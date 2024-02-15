@@ -131,7 +131,10 @@ impl<'a> TraversalVisitor for TypeChecker<'a> {
             Expression::ListComp(l) => self.visit_list_comp(l),
             Expression::SetComp(s) => self.visit_set_comp(s),
             Expression::DictComp(d) => self.visit_dict_comp(d),
-            Expression::Attribute(a) => self.visit_attribute(a),
+            Expression::Attribute(a) => {
+                self.infer_expr_type(e, true);
+                self.visit_attribute(a)
+            }
             Expression::Subscript(s) => self.visit_subscript(s),
             Expression::Slice(s) => self.visit_slice(s),
             Expression::Call(c) => {

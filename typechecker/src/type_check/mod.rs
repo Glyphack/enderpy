@@ -10,5 +10,7 @@ pub(crate) mod builtins {
     pub const SET_TYPE: &str = "set";
     pub const ITER_TYPE: &str = "Iterator";
 
-    pub const ALL_BUILTINS: [&str; 9] = [LIST_TYPE, TUPLE_TYPE, DICT_TYPE, SET_TYPE, ITER_TYPE, "str", "int", "float", "bool"];
+    pub const ALL_BUILTINS: [&str; 9] = [
+        LIST_TYPE, TUPLE_TYPE, DICT_TYPE, SET_TYPE, ITER_TYPE, "str", "int", "float", "bool",
+    ];
 }

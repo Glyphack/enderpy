@@ -6,6 +6,9 @@ input_file: typechecker/test_data/inputs/symbol_table/imports.py
 ---
 Symbols in global (id: [REDACTED])
 *
+SymbolFlags(
+    0x0,
+)
 - Declarations:
 --:   Alias {
     declaration_path: DeclarationPath {
@@ -70,6 +73,9 @@ Symbols in global (id: [REDACTED])
     },
 }
 a
+SymbolFlags(
+    0x0,
+)
 - Declarations:
 --:   Alias {
     declaration_path: DeclarationPath {
@@ -134,6 +140,9 @@ a
     },
 }
 import_test
+SymbolFlags(
+    0x0,
+)
 - Declarations:
 --:   Alias {
     declaration_path: DeclarationPath {
@@ -196,6 +205,9 @@ import_test
     },
 }
 join
+SymbolFlags(
+    0x0,
+)
 - Declarations:
 --:   Alias {
     declaration_path: DeclarationPath {
@@ -291,6 +303,9 @@ join
     },
 }
 os.path
+SymbolFlags(
+    0x0,
+)
 - Declarations:
 --:   Alias {
     declaration_path: DeclarationPath {
@@ -382,6 +397,9 @@ os.path
     },
 }
 variables
+SymbolFlags(
+    0x0,
+)
 - Declarations:
 --:   Alias {
     declaration_path: DeclarationPath {

@@ -6,6 +6,9 @@ input_file: typechecker/test_data/inputs/symbol_table/function_definition.py
 ---
 Symbols in func (id: [REDACTED])
 a
+SymbolFlags(
+    0x0,
+)
 - Declarations:
 --:   Parameter {
     declaration_path: DeclarationPath {
@@ -27,6 +30,9 @@ a
     default_value: None,
 }
 b
+SymbolFlags(
+    0x0,
+)
 - Declarations:
 --:   Parameter {
     declaration_path: DeclarationPath {
@@ -48,6 +54,9 @@ b
     default_value: None,
 }
 c
+SymbolFlags(
+    0x0,
+)
 - Declarations:
 --:   Parameter {
     declaration_path: DeclarationPath {
@@ -79,6 +88,9 @@ c
     ),
 }
 e
+SymbolFlags(
+    0x0,
+)
 - Declarations:
 --:   Parameter {
     declaration_path: DeclarationPath {
@@ -102,6 +114,9 @@ e
 
 Symbols in global (id: [REDACTED])
 func
+SymbolFlags(
+    0x0,
+)
 - Declarations:
 --:   Function {
     declaration_path: DeclarationPath {

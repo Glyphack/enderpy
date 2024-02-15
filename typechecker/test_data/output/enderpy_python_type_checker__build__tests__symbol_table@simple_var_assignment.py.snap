@@ -6,6 +6,9 @@ input_file: typechecker/test_data/inputs/symbol_table/simple_var_assignment.py
 ---
 Symbols in global (id: [REDACTED])
 a
+SymbolFlags(
+    0x0,
+)
 - Declarations:
 --:   Variable {
     declaration_path: DeclarationPath {
@@ -31,6 +34,9 @@ a
     is_constant: false,
 }
 b
+SymbolFlags(
+    0x0,
+)
 - Declarations:
 --:   Variable {
     declaration_path: DeclarationPath {
@@ -74,6 +80,9 @@ b
     is_constant: false,
 }
 c
+SymbolFlags(
+    0x0,
+)
 - Declarations:
 --:   Variable {
     declaration_path: DeclarationPath {
@@ -109,6 +118,9 @@ c
     is_constant: false,
 }
 f
+SymbolFlags(
+    0x0,
+)
 - Declarations:
 --:   Variable {
     declaration_path: DeclarationPath {

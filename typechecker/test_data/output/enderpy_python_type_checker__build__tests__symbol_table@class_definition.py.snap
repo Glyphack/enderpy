@@ -6,6 +6,9 @@ input_file: typechecker/test_data/inputs/symbol_table/class_definition.py
 ---
 Symbols in __init__ (id: [REDACTED])
 a
+SymbolFlags(
+    0x0,
+)
 - Declarations:
 --:   Variable {
     declaration_path: DeclarationPath {
@@ -31,6 +34,9 @@ a
     is_constant: false,
 }
 b
+SymbolFlags(
+    0x0,
+)
 - Declarations:
 --:   Variable {
     declaration_path: DeclarationPath {
@@ -56,6 +62,9 @@ b
     is_constant: false,
 }
 self
+SymbolFlags(
+    0x0,
+)
 - Declarations:
 --:   Parameter {
     declaration_path: DeclarationPath {
@@ -79,6 +88,9 @@ self
 
 Symbols in c (id: [REDACTED])
 __init__
+SymbolFlags(
+    0x0,
+)
 - Declarations:
 --:   Function {
     declaration_path: DeclarationPath {
@@ -225,6 +237,9 @@ __init__
 
 Symbols in global (id: [REDACTED])
 c
+SymbolFlags(
+    0x0,
+)
 - Declarations:
 --:   Class {
     name: "c",

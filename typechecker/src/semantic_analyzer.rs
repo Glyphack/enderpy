@@ -241,8 +241,6 @@ impl SemanticAnalyzer {
             return None;
         };
 
-        dbg!(&current_scope.name, &current_scope.kind, &args);
-
         let Some(parent_scope) = self.symbol_table.parent_scope() else {
             return None;
         };
@@ -571,7 +569,14 @@ impl TraversalVisitor for SemanticAnalyzer {
         );
     }
 
-    fn visit_async_function_def(&mut self, _f: &parser::ast::AsyncFunctionDef) {}
+    fn visit_async_function_def(&mut self, _f: &parser::ast::AsyncFunctionDef) {
+        self.symbol_table.push_scope(SymbolTableScope::new(
+            SymbolTableType::Function(_f.to_function_def()),
+            _f.name.clone(),
+            _f.node.start,
+            self.symbol_table.current_scope_id,
+        ));
+    }
 
     fn visit_class_def(&mut self, c: &parser::ast::ClassDef) {
         let declaration_path = DeclarationPath {
@@ -693,8 +698,6 @@ impl TraversalVisitor for SemanticAnalyzer {
         } else {
             SymbolFlags::CLASS_MEMBER
         };
-
-        dbg!(&a, member_access_info);
 
         // TODO: Only create symbols in class body or init method
         let declaration_path = DeclarationPath {

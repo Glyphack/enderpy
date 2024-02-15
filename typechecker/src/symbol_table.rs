@@ -400,6 +400,35 @@ impl SymbolTable {
     pub fn is_pyi(&self) -> bool {
         self.file_path.extension().unwrap() == "pyi"
     }
+
+    /// Looks up an attribute in the current scope and its parents
+    /// Attributes must have symbol flags CLASS_MEMBER or INSTANCE_MEMBER
+    pub(crate) fn lookup_attribute(&self, attr: String) -> Option<&SymbolTableNode> {
+        let mut innermost_scope = Some(self.innermost_scope(0));
+        while let Some(scope) = innermost_scope {
+            log::debug!("looking for attribute in scope: {:?}", scope.name);
+            if let Some(symbol) = scope.symbols.get(&attr) {
+                if symbol.flags.contains(SymbolFlags::CLASS_MEMBER)
+                    || symbol.flags.contains(SymbolFlags::INSTANCE_MEMBER)
+                {
+                    return Some(symbol);
+                }
+            }
+            // We reach the global scope
+            if scope.parent.is_none() {
+                break;
+            }
+            innermost_scope = if let Some(parent_id) = scope.parent {
+                self.scopes
+                    .iter()
+                    .filter(|scope| scope.id == parent_id)
+                    .last()
+            } else {
+                Some(self.global_scope())
+            }
+        }
+        None
+    }
 }
 
 impl SymbolTableNode {

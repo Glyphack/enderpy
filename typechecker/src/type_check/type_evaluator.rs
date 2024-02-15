@@ -116,6 +116,21 @@ impl TypeEvaluator {
                     }
                 }
             }
+            ast::Expression::Attribute(a) => {
+                let Some(name) = a.value.as_name() else {
+                    return Ok(PythonType::Unknown);
+                };
+
+                if name.id == "self" {
+                    // Lookup the attribute in the class in symbol table
+                    let attr = self.symbol_table.lookup_attribute(a.attr.clone());
+                    return match attr {
+                        Some(attr) => self.get_symbol_node_type(&attr, None),
+                        None => Ok(PythonType::Unknown),
+                    };
+                }
+                Ok(PythonType::Unknown)
+            }
             ast::Expression::BinOp(b) => Ok(self.bin_op_result_type(
                 &self.get_type(&b.left)?,
                 &self.get_type(&b.right)?,
@@ -378,7 +393,6 @@ impl TypeEvaluator {
                     if let Some(type_annotation) = &p.type_annotation {
                         log::debug!("parameter type annotation: {:?}", type_annotation);
                         let r = Ok(self.get_type_from_annotation(type_annotation));
-                        dbg!(&r);
                         return r;
                     } else if let Some(default) = &p.default_value {
                         self.get_type(default)
