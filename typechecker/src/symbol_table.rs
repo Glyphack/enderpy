@@ -12,7 +12,7 @@ pub struct SymbolTable {
     // after building symbol table is finished this only contains the most outer scope
     scopes: Vec<SymbolTableScope>,
 
-    prev_scope: Option<usize>,
+    prev_scope_id: Option<usize>,
     pub current_scope_id: usize,
 
     /// Name of the module that this symbol table is for
@@ -94,6 +94,12 @@ pub struct SymbolTableNode {
     pub flags: SymbolFlags,
 }
 
+impl Display for SymbolTableNode {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:#?}", self.name)
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct DeclarationPath {
     pub module_name: PathBuf,
@@ -149,7 +155,6 @@ impl Display for DeclarationPath {
 #[derive(Debug, Clone)]
 pub struct Variable {
     pub declaration_path: DeclarationPath,
-    pub scope: SymbolScope,
     pub type_annotation: Option<ast::Expression>,
     pub inferred_type_source: Option<ast::Expression>,
     pub is_constant: bool,
@@ -192,14 +197,37 @@ pub struct Class {
     // Method names, can be used to look up the function in the symbol table
     // of the class
     pub methods: Vec<String>,
-    // instance attributes that are defined in the __init__ method
-    // if the attribute is referencing another symbol we need to look up that symbol in the
-    // __init__ method
-    pub attributes: HashMap<String, ast::Expression>,
-
     // Special classes are classes that are _SpecialForm in typeshed.
     // These classes have their behavior defined in PEPs so we need to handle them differently
     pub special: bool,
+}
+
+impl Class {
+    pub fn new(class_node: ast::ClassDef, methods: Vec<String>) -> Self {
+        Class {
+            name: class_node.name.clone(),
+            declaration_path: DeclarationPath {
+                module_name: PathBuf::new(),
+                node: Node {
+                    start: class_node.node.start,
+                    end: class_node.node.end,
+                },
+            },
+            methods,
+            special: false,
+        }
+    }
+
+    /// Class node refers to SpecialForm in typeshed
+    /// TODO: needs improvements mostly set the correct values
+    pub fn new_special(name: String, special_class: Class) -> Self {
+        Class {
+            name,
+            declaration_path: special_class.declaration_path,
+            methods: special_class.methods,
+            special: true,
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -241,20 +269,12 @@ pub struct LookupSymbolRequest {
     pub position: Option<usize>,
 }
 
-#[derive(Debug, Clone, Copy)]
-pub enum SymbolScope {
-    Global,
-    Nonlocal,
-    Local,
-    Unknown,
-}
-
 impl SymbolTable {
     pub fn new(module_name: String, file_path: PathBuf) -> Self {
         SymbolTable {
             scopes: vec![SymbolTableScope::global_scope()],
             current_scope_id: 0,
-            prev_scope: None,
+            prev_scope_id: None,
             module_name,
             file_path,
         }
@@ -284,17 +304,27 @@ impl SymbolTable {
         }
     }
 
-    pub fn parent_scope(&self) -> Option<&SymbolTableScope> {
-        if let Some(scope) = self
-            .scopes
-            .iter()
-            .filter(|scope| scope.id == self.current_scope().parent.unwrap_or(0))
-            .last()
-        {
-            Some(scope)
-        } else {
-            None
-        }
+    /// Returns the parent scope of the current scope
+    pub fn parent_scope(&self, scope: &SymbolTableScope) -> Option<&SymbolTableScope> {
+        let parent_id = scope.parent?;
+        return Some(
+            self.scopes
+                .iter()
+                .filter(|scope| scope.id == parent_id)
+                .last()
+                .expect("parent scope id not found in scopes"),
+        );
+    }
+
+    pub fn parent_scope_mut(&mut self, scope: &SymbolTableScope) -> Option<&mut SymbolTableScope> {
+        let parent_id = scope.parent?;
+        return Some(
+            self.scopes
+                .iter_mut()
+                .filter(|scope| scope.id == parent_id)
+                .last()
+                .expect("parent scope id not found in scopes"),
+        );
     }
 
     pub fn current_scope_mut(&mut self) -> &mut SymbolTableScope {
@@ -305,45 +335,49 @@ impl SymbolTable {
             .expect("no current scope")
     }
 
+    pub fn get_scope_by_id(&self, id: usize) -> Option<&SymbolTableScope> {
+        self.scopes.iter().filter(|scope| scope.id == id).last()
+    }
+
+    pub fn get_scope_mut_by_id(&mut self, id: usize) -> Option<&mut SymbolTableScope> {
+        self.scopes.iter_mut().filter(|scope| scope.id == id).last()
+    }
+
+    pub fn get_enclosing_class_scope(&self) -> Option<&SymbolTableScope> {
+        let mut scope = self.current_scope();
+        loop {
+            if let SymbolTableType::Class(_) = scope.kind {
+                return Some(scope);
+            }
+            scope = if let Some(parent) = self.parent_scope(scope) {
+                parent
+            } else {
+                break;
+            }
+        }
+        None
+    }
+
     pub fn current_scope_type(&self) -> &SymbolTableType {
         return &self.current_scope().kind;
     }
 
-    /// Returns scopes until the given position
-    /// the scopes are sorted by start position descending
-    pub fn innermost_scope(&self, pos: usize) -> &SymbolTableScope {
-        log::debug!("looking for innermost scope");
-        let scope = self.current_scope();
-        if pos == 90 {
-            log::debug!("scopes: {:#?}", scope);
-        }
-
-        scope
-    }
-
-    /// get innermost scope that contains that line
     /// search for symbol in that scope
     /// if not found search in parent scope
     /// continue until found or no parent scope
     /// TODO: This function does not work on the literal test
     pub fn lookup_in_scope(&self, lookup_request: LookupSymbolRequest) -> Option<&SymbolTableNode> {
-        let mut innermost_scope = Some(self.innermost_scope(0));
-        while let Some(scope) = innermost_scope {
-            log::debug!("looking in scope: {:?}", scope.name);
+        let mut scope = self.current_scope();
+        log::debug!("All symbols in scope: {:?}", scope.symbols.keys());
+        loop {
+            // log::debug!("looking in scope: {:?}", scope.name);
             if let Some(symbol) = scope.symbols.get(&lookup_request.name) {
                 return Some(symbol);
             }
-            // We reach the global scope
-            if scope.parent.is_none() {
-                break;
-            }
-            innermost_scope = if let Some(parent_id) = scope.parent {
-                self.scopes
-                    .iter()
-                    .filter(|scope| scope.id == parent_id)
-                    .last()
+            scope = if let Some(parent) = self.parent_scope(scope) {
+                parent
             } else {
-                Some(self.global_scope())
+                break;
             }
         }
         None
@@ -357,17 +391,25 @@ impl SymbolTable {
 
     /// Sets the current scope to the scope that starts at the given position
     pub fn set_scope(&mut self, pos: usize) {
-        self.prev_scope = Some(self.current_scope_id);
+        self.prev_scope_id = Some(self.current_scope_id);
         let scope = self.scopes.iter().find(|scope| scope.start_pos == pos);
         if let Some(scope) = scope {
             self.current_scope_id = scope.id;
         } else {
             panic!("no scope found for position: {}", pos);
         }
+        log::debug!("Set scope to: {}", self.current_scope_id);
+    }
+
+    pub fn get_scope(&self, node: &Node) -> Option<&SymbolTableScope> {
+        self.scopes
+            .iter()
+            .find(|scope| scope.start_pos == node.start)
     }
 
     pub fn revert_scope(&mut self) {
-        self.current_scope_id = self.prev_scope.expect("no previous scope");
+        self.current_scope_id = self.prev_scope_id.expect("no previous scope");
+        log::debug!("Reverted scope to: {}", self.current_scope_id);
     }
 
     pub fn global_scope(&self) -> &SymbolTableScope {
@@ -386,7 +428,24 @@ impl SymbolTable {
     }
 
     pub fn add_symbol(&mut self, mut symbol_node: SymbolTableNode) {
-        let scope = self.current_scope_mut();
+        log::debug!("Adding symbol: {:?}", symbol_node.name);
+        let scope = if symbol_node.flags.contains(SymbolFlags::CLASS_MEMBER)
+            || symbol_node.flags.contains(SymbolFlags::INSTANCE_MEMBER)
+        {
+            log::debug!("Finding the class scope that symbol belongs to");
+            let mut scope = self.current_scope();
+            while !matches!(scope.kind, SymbolTableType::Class(_)) {
+                match self.parent_scope(scope) {
+                    Some(parent) => scope = parent,
+                    None => panic!("tried to assign to self outside of a class scope"),
+                }
+            }
+            self.get_scope_mut_by_id(scope.id).expect("no scope found")
+        } else {
+            self.current_scope_mut()
+        };
+
+        log::debug!("Adding symbol {} to scope: {:?}", symbol_node, scope.name);
         if let Some(existing_symbol) = scope.symbols.get(&symbol_node.name) {
             symbol_node
                 .declarations
@@ -403,30 +462,25 @@ impl SymbolTable {
 
     /// Looks up an attribute in the current scope and its parents
     /// Attributes must have symbol flags CLASS_MEMBER or INSTANCE_MEMBER
-    pub(crate) fn lookup_attribute(&self, attr: String) -> Option<&SymbolTableNode> {
-        let mut innermost_scope = Some(self.innermost_scope(0));
-        while let Some(scope) = innermost_scope {
-            log::debug!("looking for attribute in scope: {:?}", scope.name);
-            if let Some(symbol) = scope.symbols.get(&attr) {
-                if symbol.flags.contains(SymbolFlags::CLASS_MEMBER)
-                    || symbol.flags.contains(SymbolFlags::INSTANCE_MEMBER)
-                {
-                    return Some(symbol);
-                }
-            }
-            // We reach the global scope
-            if scope.parent.is_none() {
-                break;
-            }
-            innermost_scope = if let Some(parent_id) = scope.parent {
-                self.scopes
-                    .iter()
-                    .filter(|scope| scope.id == parent_id)
-                    .last()
-            } else {
-                Some(self.global_scope())
-            }
+    pub(crate) fn lookup_attribute<'a>(
+        &'a self,
+        attr: &str,
+        scope: &'a SymbolTableScope,
+    ) -> Option<&SymbolTableNode> {
+        log::debug!(
+            "looking for attribute {:#?} in scope: {}",
+            attr,
+            &scope.name
+        );
+        if let Some(symbol) = scope.symbols.get(attr) {
+            // if symbol.flags.contains(SymbolFlags::CLASS_MEMBER)
+            //     || symbol.flags.contains(SymbolFlags::INSTANCE_MEMBER)
+            // {
+            //     return Some(symbol);
+            // }
+            return Some(symbol);
         }
+        log::debug!("attribute not found");
         None
     }
 }

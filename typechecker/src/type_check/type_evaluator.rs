@@ -19,6 +19,7 @@ use crate::{
     ast_visitor_generic::TraversalVisitorImmutGeneric,
     diagnostic::Position,
     nodes::EnderpyFile,
+    semantic_analyzer::get_member_access_info,
     symbol_table::{self, Class, Declaration, LookupSymbolRequest, SymbolTable, SymbolTableNode},
     type_check::types::ClassType,
 };
@@ -48,7 +49,7 @@ impl TypeEvaluator {
     /// the declaration to this function. To get the type of an annotation
     /// expression use get_type_from_annotation
     pub fn get_type(&self, expr: &ast::Expression) -> Result<PythonType> {
-        log::debug!("get_type: {:?}", expr);
+        log::debug!("get_type: {:#?}", expr);
         let r = match expr {
             ast::Expression::Constant(c) => {
                 let typ = match &c.value {
@@ -66,55 +67,16 @@ impl TypeEvaluator {
                 Ok(typ)
             }
             ast::Expression::Name(n) => {
+                if let Some(t) = self.get_builtin_type(&n.id) {
+                    return Ok(t);
+                }
                 self.infer_type_from_symbol_table(&n.id, Some(n.node.start))
             }
             ast::Expression::Call(call) => {
                 let called_name = *call.func.clone();
-                match called_name {
-                    ast::Expression::Name(n) => {
-                        // check if name is one of the builtins
-                        if let Some(t) = self.get_builtin_type(&n.id) {
-                            return Ok(t);
-                        }
-                        let lookup_request = LookupSymbolRequest {
-                            name: n.id,
-                            position: None,
-                        };
-                        let f_type =
-                            self.symbol_table
-                                .lookup_in_scope(lookup_request)
-                                .map(|symbol| {
-                                    let decl = symbol.last_declaration();
-
-                                    if let Some(class) = decl.as_class() {
-                                        PythonType::Class(ClassType {
-                                            details: class.clone(),
-                                            type_parameters: vec![],
-                                        })
-                                    } else if let Some(func) = decl.as_function() {
-                                        return PythonType::Callable(Box::new(CallableType {
-                                            name: func.function_node.name.clone(),
-                                            arguments: func.function_node.args.clone(),
-                                            return_type: PythonType::Unknown,
-                                        }));
-                                    } else {
-                                        // TODO: Error type is not callable
-                                        return PythonType::Unknown;
-                                    }
-                                });
-
-                        log::debug!("f_type: {:?}", f_type);
-                        match f_type {
-                            Some(t) => Ok(t),
-                            None => Ok(PythonType::Unknown),
-                        }
-                    }
-                    ast::Expression::Attribute(_a) => Ok(PythonType::Unknown),
-                    _ => {
-                        debug!("infer type from call not implemented");
-                        Ok(PythonType::Unknown)
-                    }
-                }
+                let f_type = self.get_type(&called_name)?;
+                log::debug!("f_type: {:?}", f_type);
+                Ok(f_type)
             }
             ast::Expression::List(l) => {
                 let final_elm_type = self.get_sequence_type_from_elements(&l.elements);
@@ -221,21 +183,85 @@ impl TypeEvaluator {
             ast::Expression::ListComp(_) => Ok(PythonType::Unknown),
             ast::Expression::SetComp(_) => Ok(PythonType::Unknown),
             ast::Expression::DictComp(_) => Ok(PythonType::Unknown),
-            ast::Expression::Attribute(a) => {
-                let Some(name) = a.value.as_name() else {
-                    return Ok(PythonType::Unknown);
-                };
+            /*
+            When attribute is accessed there are multilple cases:
 
-                // TODO: support other attributes
-                if name.id == "self" {
-                    // Lookup the attribute in the class in symbol table
-                    let attr = self.symbol_table.lookup_attribute(a.attr.clone());
-                    return match attr {
-                        Some(attr) => self.get_symbol_node_type(attr, None),
-                        None => Ok(PythonType::Unknown),
-                    };
+            1. Accessing an attribute of a class inside the class through self
+                ```
+                class A:
+                    def __init__(self):
+                        self.a = 1
+                    def get_a(self):
+                        return self.a
+
+                    # or a class method
+                    @class_method
+                    def class_method(cls):
+                        return cls.a
+                ```
+
+            2. Accessing an attribute of a class outside the class
+                ```
+                class A:
+                    def __init__(self):
+                        self.a = 1
+                a = A()
+                print(a.a)
+                ```
+            */
+            ast::Expression::Attribute(a) => {
+                // Case 1
+                log::debug!("Attribute access {:#?}", a);
+                if get_member_access_info(&self.symbol_table, &a.value).is_some() {
+                    let enclosing_parent_class = self.symbol_table.get_enclosing_class_scope();
+                    if let Some(enclosing_parent_class) = enclosing_parent_class {
+                        let symbol_table_node = self
+                            .symbol_table
+                            .lookup_attribute(&a.attr, &enclosing_parent_class);
+                        let res = match symbol_table_node {
+                            Some(node) => self.get_symbol_node_type(&node, None),
+                            None => panic!("cannot find symbol table node for attribute access"),
+                        };
+
+                        log::debug!("attribute access result: {:?}", res);
+
+                        return res;
+                    }
                 }
-                Ok(PythonType::Unknown)
+
+                // Case 2
+                // First find the type of the attribute and then find the value in the scope of the attribute
+
+                let value_type = match self.get_type(&a.value) {
+                    Ok(t) => t,
+                    Err(e) => {
+                        log::debug!("error getting type of attribute value: {:?}", e);
+                        return Ok(PythonType::Unknown);
+                    }
+                };
+                log::debug!("checking type for expression: {:#?}", a);
+                log::debug!("looking up attribute in type: {:?}", value_type);
+                match value_type {
+                    PythonType::Class(c) => {
+                        let class_scope = self
+                            .symbol_table
+                            .get_scope(&c.details.declaration_path.node)
+                            .expect("cannot find class scope for attribute access");
+
+                        log::debug!("class scope for the attribute: {:#?}", class_scope);
+                        let symbol_table_node =
+                            self.symbol_table.lookup_attribute(&a.attr, class_scope);
+                        log::debug!("found symbol table node: {:#?}", symbol_table_node);
+                        let result = match symbol_table_node {
+                            Some(node) => self.get_symbol_node_type(&node, None),
+                            None => Ok(PythonType::Unknown),
+                        };
+
+                        log::debug!("attribute access result: {:?}", result);
+                        result
+                    }
+                    _ => Ok(PythonType::Unknown),
+                }
             }
             ast::Expression::BinOp(b) => Ok(self.bin_op_result_type(
                 &self.get_type(&b.left)?,
@@ -256,7 +282,7 @@ impl TypeEvaluator {
             ast::Expression::FormattedValue(f) => self.get_type(&f.value),
         };
 
-        log::debug!("get_type result: {:?}", r);
+        log::debug!("get_type for expression: {:#?} => {:?}", expr, r);
 
         r
     }
@@ -358,8 +384,8 @@ impl TypeEvaluator {
             None => Some(symbol.last_declaration()),
         };
 
-        log::debug!("fetch symbol declaration: {:?}", decl);
-        match decl {
+        log::debug!("found {} declaration: {:#?}", symbol, decl);
+        let result = match decl {
             Some(decl) => match decl {
                 Declaration::Variable(v) => {
                     if let Some(type_annotation) = &v.type_annotation {
@@ -406,7 +432,14 @@ impl TypeEvaluator {
                 Declaration::Class(c) => Ok(PythonType::Class(ClassType::new(c.clone(), vec![]))),
             },
             None => Ok(PythonType::Any),
-        }
+        };
+
+        log::debug!(
+            "evaluated type based on declaration: {} => {:?}",
+            symbol,
+            result
+        );
+        result
     }
 
     fn get_sequence_type_from_elements(&self, elements: &Vec<ast::Expression>) -> PythonType {
@@ -781,18 +814,12 @@ impl TypeEvaluator {
 
                             let pointing_class = match &v.type_annotation {
                                 Some(annotation) => {
-                                    if let ast::Expression::Name(name) = annotation {
-                                        if name.id == SPECIAL_FORM {
-                                            return Some(Class {
-                                                name: n.id.clone(),
-                                                declaration_path: v.declaration_path.clone(),
-                                                methods: vec![],
-                                                attributes: HashMap::new(),
-                                                special: true,
-                                            });
-                                        }
+                                    let class = self
+                                        .get_class_declaration(annotation, found_in_symbol_table)?;
+                                    if class.name == SPECIAL_FORM {
+                                        return Some(Class::new_special(n.id.clone(), class));
                                     }
-                                    self.get_class_declaration(annotation, found_in_symbol_table)
+                                    Some(class)
                                 }
                                 None => {
                                     todo!("Variable declaration without type annotation")
@@ -1157,7 +1184,7 @@ impl DumpTypes {
     /// This function is called on every expression in the ast
     pub fn save_type(&mut self, expr: &ast::Expression) {
         let typ = self.type_eval.get_type(expr).unwrap_or(PythonType::Unknown);
-        log::debug!("save_type: {:?} => {:?}", expr, typ);
+        log::debug!("save_type: {:#?} => {:#?}", expr, typ);
         let symbol_text =
             self.enderpy_file().source()[expr.get_node().start..expr.get_node().end].to_string();
         let position = self.enderpy_file().get_position(expr.get_node().start);
@@ -1289,7 +1316,7 @@ impl TraversalVisitor for DumpTypes {
             ast::Expression::ListComp(l) => (),
             ast::Expression::SetComp(s) => (),
             ast::Expression::DictComp(d) => (),
-            ast::Expression::Attribute(a) => (),
+            ast::Expression::Attribute(a) => {}
             ast::Expression::Subscript(s) => (),
             ast::Expression::Slice(s) => (),
             ast::Expression::Call(c) => {
@@ -1341,8 +1368,6 @@ mod tests {
 
         let module = manager.get_state("test-file".into()).unwrap();
         let mut symbol_table = module.get_symbol_table();
-        // this is duplicated
-        symbol_table.current_scope_id = 0;
 
         let type_eval = TypeEvaluator {
             symbol_table,

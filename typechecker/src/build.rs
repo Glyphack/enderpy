@@ -37,7 +37,10 @@ impl BuildManager {
 
         let mut builder = Builder::new();
         if options.debug {
-            builder.filter(None, log::LevelFilter::Debug).init();
+            builder
+                .filter(None, log::LevelFilter::Debug)
+                .format_timestamp(None)
+                .init();
         } else {
             builder.filter(None, log::LevelFilter::Warn);
         }
@@ -120,6 +123,10 @@ impl BuildManager {
         }
 
         for state in self.modules.iter_mut() {
+            // do not type check builtins
+            if state.1.path().ends_with("builtins.pyi") {
+                continue;
+            }
             if !state.1.errors.is_empty() {
                 for err in state.1.errors.iter() {
                     match err {

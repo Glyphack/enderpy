@@ -11,8 +11,8 @@ use crate::{
         import_result::ImportResult, module_descriptor::ImportModuleDescriptor,
     },
     symbol_table::{
-        Alias, Class, Declaration, DeclarationPath, Function, Parameter, SymbolFlags, SymbolScope,
-        SymbolTable, SymbolTableNode, SymbolTableScope, SymbolTableType, TypeAlias, Variable,
+        Alias, Class, Declaration, DeclarationPath, Function, Parameter, SymbolFlags, SymbolTable,
+        SymbolTableNode, SymbolTableScope, SymbolTableType, TypeAlias, Variable,
     },
 };
 
@@ -31,7 +31,6 @@ pub struct SemanticAnalyzer {
     // TODO: Replace errors with another type
     errors: Vec<String>,
 
-    scope: SymbolScope,
     is_pyi: bool,
 }
 
@@ -46,7 +45,6 @@ impl SemanticAnalyzer {
             file,
             imports,
             errors: vec![],
-            scope: SymbolScope::Global,
             is_pyi,
         }
     }
@@ -60,12 +58,11 @@ impl SemanticAnalyzer {
         self.symbol_table.add_symbol(symbol_node)
     }
 
-    fn current_scope(&self) -> &SymbolTableType {
-        return self.symbol_table.current_scope_type();
-    }
-
     fn is_inside_class(&self) -> bool {
-        matches!(self.current_scope(), SymbolTableType::Class(_))
+        matches!(
+            self.symbol_table.current_scope().kind,
+            SymbolTableType::Class(_)
+        )
     }
 
     fn create_variable_declaration_symbol(
@@ -79,7 +76,6 @@ impl SemanticAnalyzer {
             Expression::Name(n) => {
                 let decl = Declaration::Variable(Variable {
                     declaration_path,
-                    scope: SymbolScope::Global,
                     type_annotation,
                     inferred_type_source: value,
                     is_constant: false,
@@ -102,8 +98,35 @@ impl SemanticAnalyzer {
                     )
                 }
             }
-            // TODO: Fix attribute
-            Expression::Attribute(_) => {}
+            Expression::Attribute(a) => {
+                let member_access_info = get_member_access_info(&self.symbol_table, &a.value);
+                let symbol_flags = if member_access_info.is_some_and(|x| x) {
+                    SymbolFlags::INSTANCE_MEMBER
+                } else {
+                    SymbolFlags::CLASS_MEMBER
+                };
+
+                if self.function_assigns_attribute(&self.symbol_table) {
+                    let declaration_path = DeclarationPath {
+                        module_name: self.file.path(),
+                        node: a.node,
+                    };
+
+                    let declaration = Declaration::Variable(Variable {
+                        declaration_path,
+                        type_annotation,
+                        inferred_type_source: value,
+                        is_constant: false,
+                    });
+
+                    let symbol_node = SymbolTableNode {
+                        name: a.attr.clone(),
+                        declarations: vec![declaration],
+                        flags: symbol_flags,
+                    };
+                    self.symbol_table.add_symbol(symbol_node)
+                }
+            }
             // TODO: Add other expressions that can be assigned
             _ => {}
         }
@@ -216,19 +239,10 @@ impl SemanticAnalyzer {
         }
     }
 
-    // determines whether a member access expression is referring to a
-    // member of a class (either a class or instance member). this will
-    // typically take the form "self.x" or "cls.x".
-    // returns None if the expression is not a member access expression or
-    // or true if the member is an instance member and false if it is a class member
-    fn get_member_access_info(&self, value: &parser::ast::Expression) -> Option<bool> {
-        // TODO: Figure out how to get rid of double dereference
-        let name = value.as_name()?;
-
-        let value_name = &name.id;
-
-        let current_scope = self.symbol_table.current_scope();
-        let Some(FunctionDef {
+    /// Returns true if the current function assigns an attribute to an object
+    /// Functions like __init__ and __new__ are considered to assign attributes
+    fn function_assigns_attribute(&self, symbol_table: &SymbolTable) -> bool {
+        if let Some(FunctionDef {
             node,
             name: fname,
             args,
@@ -237,46 +251,13 @@ impl SemanticAnalyzer {
             returns,
             type_comment,
             type_params,
-        }) = current_scope.kind.as_function()
-        else {
-            return None;
-        };
-
-        let Some(parent_scope) = self.symbol_table.parent_scope() else {
-            return None;
-        };
-
-        let Some(enclosing_class) = parent_scope.kind.as_class() else {
-            return None;
-        };
-
-        let first_arg = args.args.first()?;
-
-        let is_value_equal_to_first_arg = value_name == first_arg.arg.as_str();
-
-        if !is_value_equal_to_first_arg {
-            return None;
-        }
-
-        // Check if one of the decorators is a classmethod or staticmethod
-        let mut is_class_member = false;
-        for decorator in decorator_list {
-            if let parser::ast::Expression::Call(call) = decorator {
-                if let Some(name) = call.func.as_name() {
-                    if name.id == "classmethod" {
-                        is_class_member = true;
-                    }
-                }
+        }) = symbol_table.current_scope().kind.as_function()
+        {
+            if fname == "__init__" || fname == "__new__" {
+                return true;
             }
         }
-
-        // e.g. "MyClass.x"
-
-        if value_name == enclosing_class.name.as_str() || is_class_member {
-            Some(false)
-        } else {
-            Some(true)
-        }
+        return false;
     }
 }
 
@@ -491,6 +472,26 @@ impl TraversalVisitor for SemanticAnalyzer {
             module_name: self.file.path(),
             node: f.node,
         };
+        if f.type_params.len() > 0 {
+            // TODO
+            // Push a PEP 695 scope
+            // https://www.python.org/dev/peps/pep-0695/
+            // for type_parameter in &f.type_params {
+            //     let declaration_path = DeclarationPath {
+            //         module_name: self.file.path(),
+            //         node: type_parameter.get_node(),
+            //     };
+            //     let flags = SymbolFlags::empty();
+            //     self.create_symbol(
+            //         type_parameter.get_name(),
+            //         Declaration::TypeParameter(crate::symbol_table::TypeParameter {
+            //             declaration_path,
+            //             type_parameter_node: type_parameter.clone(),
+            //         }),
+            //         flags,
+            //     );
+            // }
+        }
         self.symbol_table.push_scope(SymbolTableScope::new(
             crate::symbol_table::SymbolTableType::Function(f.clone()),
             f.name.clone(),
@@ -569,13 +570,10 @@ impl TraversalVisitor for SemanticAnalyzer {
             _f.node.start,
             self.symbol_table.current_scope_id,
         ));
+        self.symbol_table.exit_scope();
     }
 
     fn visit_class_def(&mut self, c: &parser::ast::ClassDef) {
-        let declaration_path = DeclarationPath {
-            module_name: self.file.path(),
-            node: c.node,
-        };
         self.symbol_table.push_scope(SymbolTableScope::new(
             SymbolTableType::Class(c.clone()),
             c.name.clone(),
@@ -599,27 +597,10 @@ impl TraversalVisitor for SemanticAnalyzer {
             );
         }
         let mut methods = vec![];
-        let mut attributes = HashMap::new();
 
-        // TODO: Move off to function visitor
         for stmt in &c.body {
             if let parser::ast::Statement::FunctionDef(f) = stmt {
-                if f.name == "__init__" {
-                    for stmt in &f.body {
-                        if let parser::ast::Statement::AssignStatement(assign) = stmt {
-                            for target in &assign.targets {
-                                if let parser::ast::Expression::Attribute(attr) = target {
-                                    if let parser::ast::Expression::Name(ref n) = *attr.value {
-                                        if n.id == "self" {
-                                            attributes
-                                                .insert(attr.attr.clone(), assign.value.clone());
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
+                // TODO: Maybe define these methods in the symbol table at this point?
                 methods.push(f.name.clone());
             }
             self.visit_stmt(stmt);
@@ -627,13 +608,7 @@ impl TraversalVisitor for SemanticAnalyzer {
 
         self.symbol_table.exit_scope();
 
-        let class_declaration = Declaration::Class(Class {
-            name: c.name.clone(),
-            declaration_path,
-            attributes,
-            methods,
-            special: false,
-        });
+        let class_declaration = Declaration::Class(Class::new(c.clone(), methods));
         let flags = SymbolFlags::empty();
         self.create_symbol(c.name.clone(), class_declaration, flags);
     }
@@ -685,42 +660,7 @@ impl TraversalVisitor for SemanticAnalyzer {
     fn visit_dict_comp(&mut self, _d: &parser::ast::DictComp) {}
 
     // Imagine it's always store
-    fn visit_attribute(&mut self, a: &parser::ast::Attribute) {
-        let member_access_info = self.get_member_access_info(&a.value);
-        let symbol_flags = if member_access_info.is_some_and(|x| x) {
-            SymbolFlags::INSTANCE_MEMBER
-        } else {
-            SymbolFlags::CLASS_MEMBER
-        };
-
-        // TODO: Only create symbols in class body or init method
-        let declaration_path = DeclarationPath {
-            module_name: self.file.path(),
-            node: a.node,
-        };
-
-        let declaration = Declaration::Variable(Variable {
-            declaration_path,
-            scope: SymbolScope::Global,
-            type_annotation: None,
-            inferred_type_source: None,
-            is_constant: false,
-        });
-
-        let attribute_name_node = a.value.as_name();
-
-        let name = match attribute_name_node {
-            Some(name) => name.id.clone(),
-            None => return,
-        };
-
-        let symbol_node = SymbolTableNode {
-            name,
-            declarations: vec![declaration],
-            flags: symbol_flags,
-        };
-        self.symbol_table.add_symbol(symbol_node)
-    }
+    fn visit_attribute(&mut self, a: &parser::ast::Attribute) {}
 
     fn visit_subscript(&mut self, _s: &parser::ast::Subscript) {}
 
@@ -808,4 +748,65 @@ impl TraversalVisitor for SemanticAnalyzer {
     fn visit_global(&mut self, _g: &parser::ast::Global) {}
 
     fn visit_nonlocal(&mut self, _n: &parser::ast::Nonlocal) {}
+}
+
+pub struct MemberAccessInfo {}
+
+// determines whether a member access expression is referring to a
+// member of a class (either a class or instance member). this will
+// typically take the form "self.x" or "cls.x".
+// returns None if the expression is not a member access expression or
+// or true if the member is an instance member and false if it is a class member
+pub fn get_member_access_info(
+    symbol_table: &SymbolTable,
+    value: &parser::ast::Expression,
+) -> Option<bool> {
+    let name = value.as_name()?;
+
+    let value_name = &name.id;
+
+    let current_scope = symbol_table.current_scope();
+    let Some(FunctionDef {
+        args,
+        decorator_list,
+        ..
+    }) = current_scope.kind.as_function()
+    else {
+        return None;
+    };
+
+    let Some(parent_scope) = symbol_table.parent_scope(symbol_table.current_scope()) else {
+        return None;
+    };
+
+    let Some(enclosing_class) = parent_scope.kind.as_class() else {
+        return None;
+    };
+
+    let first_arg = args.args.first()?;
+
+    let is_value_equal_to_first_arg = value_name == first_arg.arg.as_str();
+
+    if !is_value_equal_to_first_arg {
+        return None;
+    }
+
+    // Check if one of the decorators is a classmethod or staticmethod
+    let mut is_class_member = false;
+    for decorator in decorator_list {
+        if let parser::ast::Expression::Call(call) = decorator {
+            if let Some(name) = call.func.as_name() {
+                if name.id == "classmethod" {
+                    is_class_member = true;
+                }
+            }
+        }
+    }
+
+    // e.g. "MyClass.x = 1"
+    if value_name == enclosing_class.name.as_str() || is_class_member {
+        Some(false)
+    } else {
+        Some(true)
+    }
 }

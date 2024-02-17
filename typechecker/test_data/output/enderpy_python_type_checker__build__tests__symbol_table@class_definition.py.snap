@@ -18,7 +18,6 @@ SymbolFlags(
             end: 46,
         },
     },
-    scope: Global,
     type_annotation: None,
     inferred_type_source: Some(
         Constant(
@@ -46,7 +45,6 @@ SymbolFlags(
             end: 60,
         },
     },
-    scope: Global,
     type_annotation: None,
     inferred_type_source: Some(
         Name(
@@ -234,6 +232,33 @@ SymbolFlags(
     yield_statements: [],
     raise_statements: [],
 }
+c
+SymbolFlags(
+    INSTANCE_MEMBER,
+)
+- Declarations:
+--:   Variable {
+    declaration_path: DeclarationPath {
+        module_name: "[TYPECHECKER]/test_data/inputs/symbol_table/class_definition.py",
+        node: Node {
+            start: 69,
+            end: 75,
+        },
+    },
+    type_annotation: None,
+    inferred_type_source: Some(
+        Name(
+            Name {
+                node: Node {
+                    start: 78,
+                    end: 79,
+                },
+                id: "b",
+            },
+        ),
+    ),
+    is_constant: false,
+}
 
 Symbols in global (id: [REDACTED])
 c
@@ -244,7 +269,7 @@ SymbolFlags(
 --:   Class {
     name: "c",
     declaration_path: DeclarationPath {
-        module_name: "[TYPECHECKER]/test_data/inputs/symbol_table/class_definition.py",
+        module_name: "",
         node: Node {
             start: 0,
             end: 80,
@@ -253,17 +278,6 @@ SymbolFlags(
     methods: [
         "__init__",
     ],
-    attributes: {
-        "c": Name(
-            Name {
-                node: Node {
-                    start: 78,
-                    end: 79,
-                },
-                id: "b",
-            },
-        ),
-    },
     special: false,
 }
 

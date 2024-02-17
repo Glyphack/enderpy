@@ -18,7 +18,6 @@ SymbolFlags(
             end: 17,
         },
     },
-    scope: Global,
     type_annotation: None,
     inferred_type_source: Some(
         Constant(
@@ -46,7 +45,6 @@ SymbolFlags(
             end: 29,
         },
     },
-    scope: Global,
     type_annotation: None,
     inferred_type_source: Some(
         BinOp(
@@ -92,7 +90,6 @@ SymbolFlags(
             end: 41,
         },
     },
-    scope: Global,
     type_annotation: Some(
         Name(
             Name {
@@ -130,7 +127,6 @@ SymbolFlags(
             end: 59,
         },
     },
-    scope: Global,
     type_annotation: Some(
         Name(
             Name {
