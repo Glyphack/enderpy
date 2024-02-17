@@ -257,7 +257,7 @@ impl SemanticAnalyzer {
                 return true;
             }
         }
-        return false;
+        false
     }
 }
 
@@ -472,7 +472,7 @@ impl TraversalVisitor for SemanticAnalyzer {
             module_name: self.file.path(),
             node: f.node,
         };
-        if f.type_params.len() > 0 {
+        if !f.type_params.is_empty() {
             // TODO
             // Push a PEP 695 scope
             // https://www.python.org/dev/peps/pep-0695/
@@ -660,7 +660,7 @@ impl TraversalVisitor for SemanticAnalyzer {
     fn visit_dict_comp(&mut self, _d: &parser::ast::DictComp) {}
 
     // Imagine it's always store
-    fn visit_attribute(&mut self, a: &parser::ast::Attribute) {}
+    fn visit_attribute(&mut self, _a: &parser::ast::Attribute) {}
 
     fn visit_subscript(&mut self, _s: &parser::ast::Subscript) {}
 

@@ -2,11 +2,11 @@
 #![allow(unused_variables)]
 
 use core::panic;
-use std::{collections::HashMap, path::Path};
+use std::{path::Path};
 
 use enderpy_python_parser as parser;
 use enderpy_python_parser::ast;
-use log::debug;
+
 use miette::{bail, Result};
 use parser::ast::{Expression, GetNode, Statement};
 
@@ -217,9 +217,9 @@ impl TypeEvaluator {
                     if let Some(enclosing_parent_class) = enclosing_parent_class {
                         let symbol_table_node = self
                             .symbol_table
-                            .lookup_attribute(&a.attr, &enclosing_parent_class);
+                            .lookup_attribute(&a.attr, enclosing_parent_class);
                         let res = match symbol_table_node {
-                            Some(node) => self.get_symbol_node_type(&node, None),
+                            Some(node) => self.get_symbol_node_type(node, None),
                             None => panic!("cannot find symbol table node for attribute access"),
                         };
 
@@ -253,7 +253,7 @@ impl TypeEvaluator {
                             self.symbol_table.lookup_attribute(&a.attr, class_scope);
                         log::debug!("found symbol table node: {:#?}", symbol_table_node);
                         let result = match symbol_table_node {
-                            Some(node) => self.get_symbol_node_type(&node, None),
+                            Some(node) => self.get_symbol_node_type(node, None),
                             None => Ok(PythonType::Unknown),
                         };
 
@@ -1367,7 +1367,7 @@ mod tests {
         }
 
         let module = manager.get_state("test-file".into()).unwrap();
-        let mut symbol_table = module.get_symbol_table();
+        let symbol_table = module.get_symbol_table();
 
         let type_eval = TypeEvaluator {
             symbol_table,
