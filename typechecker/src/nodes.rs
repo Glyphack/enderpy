@@ -116,6 +116,7 @@ impl EnderpyFile {
             sem_anal.visit_stmt(stmt)
         }
         self.symbol_table = sem_anal.symbol_table;
+        self.symbol_table.current_scope_id = 0;
     }
 
     pub fn get_symbol_table(&self) -> SymbolTable {
