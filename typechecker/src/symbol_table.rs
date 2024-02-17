@@ -368,9 +368,7 @@ impl SymbolTable {
     /// TODO: This function does not work on the literal test
     pub fn lookup_in_scope(&self, lookup_request: LookupSymbolRequest) -> Option<&SymbolTableNode> {
         let mut scope = self.current_scope();
-        log::debug!("All symbols in scope: {:?}", scope.symbols.keys());
         loop {
-            // log::debug!("looking in scope: {:?}", scope.name);
             if let Some(symbol) = scope.symbols.get(&lookup_request.name) {
                 return Some(symbol);
             }
@@ -428,7 +426,7 @@ impl SymbolTable {
     }
 
     pub fn add_symbol(&mut self, mut symbol_node: SymbolTableNode) {
-        log::debug!("Adding symbol: {:?}", symbol_node.name);
+        log::debug!("Adding symbol: {}", symbol_node);
         let scope = if symbol_node.flags.contains(SymbolFlags::CLASS_MEMBER)
             || symbol_node.flags.contains(SymbolFlags::INSTANCE_MEMBER)
         {
@@ -445,7 +443,7 @@ impl SymbolTable {
             self.current_scope_mut()
         };
 
-        log::debug!("Adding symbol {} to scope: {:?}", symbol_node, scope.name);
+        log::debug!("Adding symbol {} to scope: {}", symbol_node, scope.name);
         if let Some(existing_symbol) = scope.symbols.get(&symbol_node.name) {
             symbol_node
                 .declarations
@@ -473,11 +471,6 @@ impl SymbolTable {
             &scope.name
         );
         if let Some(symbol) = scope.symbols.get(attr) {
-            // if symbol.flags.contains(SymbolFlags::CLASS_MEMBER)
-            //     || symbol.flags.contains(SymbolFlags::INSTANCE_MEMBER)
-            // {
-            //     return Some(symbol);
-            // }
             return Some(symbol);
         }
         log::debug!("attribute not found");
