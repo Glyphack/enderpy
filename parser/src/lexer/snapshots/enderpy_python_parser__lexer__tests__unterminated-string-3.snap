@@ -1,5 +1,5 @@
 ---
-source: parser/src/lexer/lexer.rs
+source: parser/src/lexer/mod.rs
 description: "'''hello'"
 ---
 [

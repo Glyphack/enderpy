@@ -1,5 +1,5 @@
 ---
-source: parser/src/lexer/lexer.rs
+source: parser/src/lexer/mod.rs
 description: "(x*y for x in range(10) for y in range(10) if x*y > 10)\n"
 input_file: parser/test_data/inputs/one_liners/generator_expressions.py
 ---

@@ -1,5 +1,5 @@
 ---
-source: parser/src/lexer/lexer.rs
+source: parser/src/lexer/mod.rs
 description: (ord(c) for line in file for c in line)
 input_file: parser/test_data/inputs/one_liners/generator_expressions.py
 ---

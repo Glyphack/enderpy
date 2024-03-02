@@ -1,5 +1,5 @@
 ---
-source: parser/src/lexer/lexer.rs
+source: parser/src/lexer/mod.rs
 description: "month_names = ['Januari', 'Februari', 'Maart',      # These are the\n   'April',   'Mei',      'Juni',       # Dutch names\n   'Juli',    'Augustus', 'September',  # for the months\n   'Oktober', 'November', 'December']   # of the year,"
 input_file: parser/test_data/inputs/one_liners/lists.py
 ---

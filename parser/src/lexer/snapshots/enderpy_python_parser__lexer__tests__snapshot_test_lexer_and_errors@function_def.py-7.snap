@@ -1,5 +1,5 @@
 ---
-source: parser/src/lexer/lexer.rs
+source: parser/src/lexer/mod.rs
 description: "@decor\ndef f(a: 'annotation', b=1, c=2, *d, e, f=3, **g): pass"
 input_file: parser/test_data/inputs/one_liners/function_def.py
 ---

@@ -1,5 +1,5 @@
 ---
-source: parser/src/lexer/lexer.rs
+source: parser/src/lexer/mod.rs
 description: "match a:\n    case None:\n        pass\n    case True:\n        pass\n    case False:\n        pass\n    case -1:\n        pass\n    case 1.0:\n        pass\n    case _:\n        pass"
 input_file: parser/test_data/inputs/one_liners/match.py
 ---

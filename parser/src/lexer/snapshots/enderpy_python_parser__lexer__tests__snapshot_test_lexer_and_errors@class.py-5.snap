@@ -1,5 +1,5 @@
 ---
-source: parser/src/lexer/lexer.rs
+source: parser/src/lexer/mod.rs
 description: "class a(b,\nc,\nd): pass"
 input_file: parser/test_data/inputs/one_liners/class.py
 ---

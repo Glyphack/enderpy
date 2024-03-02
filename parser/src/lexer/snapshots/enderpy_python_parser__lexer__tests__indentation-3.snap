@@ -1,5 +1,5 @@
 ---
-source: parser/src/lexer/lexer.rs
+source: parser/src/lexer/mod.rs
 description: "def f(x):\n    y = z\n\n    print(y)\n"
 ---
 [

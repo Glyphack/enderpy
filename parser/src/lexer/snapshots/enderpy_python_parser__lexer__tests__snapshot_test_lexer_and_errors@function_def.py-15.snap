@@ -1,5 +1,5 @@
 ---
-source: parser/src/lexer/lexer.rs
+source: parser/src/lexer/mod.rs
 description: "def a[T: U, V: W](): pass"
 input_file: parser/test_data/inputs/one_liners/function_def.py
 ---

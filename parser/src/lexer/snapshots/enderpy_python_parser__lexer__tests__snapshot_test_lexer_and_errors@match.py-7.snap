@@ -1,5 +1,5 @@
 ---
-source: parser/src/lexer/lexer.rs
+source: parser/src/lexer/mod.rs
 description: "match x:\n    case Point2D(0, 0):\n        pass\n    case Point3D(x=0, y=0, z=0):\n        pass"
 input_file: parser/test_data/inputs/one_liners/match.py
 ---

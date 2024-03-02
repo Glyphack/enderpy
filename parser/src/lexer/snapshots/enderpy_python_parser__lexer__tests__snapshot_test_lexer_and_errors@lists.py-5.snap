@@ -1,5 +1,5 @@
 ---
-source: parser/src/lexer/lexer.rs
+source: parser/src/lexer/mod.rs
 description: "[a,\n],"
 input_file: parser/test_data/inputs/one_liners/lists.py
 ---

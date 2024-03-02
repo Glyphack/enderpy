@@ -1,5 +1,5 @@
 ---
-source: parser/src/lexer/lexer.rs
+source: parser/src/lexer/mod.rs
 description: "with a: pass"
 input_file: parser/test_data/inputs/one_liners/with.py
 ---

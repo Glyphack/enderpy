@@ -1,5 +1,5 @@
 ---
-source: parser/src/lexer/lexer.rs
+source: parser/src/lexer/mod.rs
 description: "aggregated_key_stats[idx_stat] = {\n    **filter_value_NONE,\n    **filter_key_found,\n    **client_types,\n    **market_watch,\n    \"symbol\": symbol,\n    \"name\": name,\n}"
 input_file: parser/test_data/inputs/one_liners/dict.py
 ---

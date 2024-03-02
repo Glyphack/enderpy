@@ -1,5 +1,5 @@
 ---
-source: parser/src/lexer/lexer.rs
+source: parser/src/lexer/mod.rs
 description: "for a in range(10):\n    a = 1\nelse:\n    b = 1"
 input_file: parser/test_data/inputs/one_liners/for.py
 ---

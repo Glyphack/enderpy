@@ -1,5 +1,5 @@
 ---
-source: parser/src/lexer/lexer.rs
+source: parser/src/lexer/mod.rs
 description: "async with (\n        a as b, c as d\n):\n    a = 1\n"
 input_file: parser/test_data/inputs/one_liners/with.py
 ---

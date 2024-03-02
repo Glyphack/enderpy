@@ -1,5 +1,5 @@
 ---
-source: parser/src/lexer/lexer.rs
+source: parser/src/lexer/mod.rs
 description: "a[b, c: d, e]"
 input_file: parser/test_data/inputs/one_liners/subscript.py
 ---

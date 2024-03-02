@@ -1,5 +1,5 @@
 ---
-source: parser/src/lexer/lexer.rs
+source: parser/src/lexer/mod.rs
 description: "import a\nimport a as b\nimport a.b\nimport a.b as c\nimport a.b.c\nfrom a import b\nfrom a import b as c\nfrom a.b import c\nfrom a.b import c as d\nfrom ...a import b\nfrom ....a import b\nfrom .....a import b\nfrom ......a import b\nfrom .......a import b\nfrom ...\n"
 input_file: parser/test_data/inputs/one_liners/from_import.py
 ---

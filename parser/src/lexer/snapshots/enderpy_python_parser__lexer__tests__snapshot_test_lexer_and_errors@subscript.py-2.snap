@@ -1,5 +1,5 @@
 ---
-source: parser/src/lexer/lexer.rs
+source: parser/src/lexer/mod.rs
 description: "values = list_of_key_stats[1::2]"
 input_file: parser/test_data/inputs/one_liners/subscript.py
 ---

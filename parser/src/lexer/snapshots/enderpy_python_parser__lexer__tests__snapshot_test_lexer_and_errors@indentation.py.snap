@@ -1,5 +1,5 @@
 ---
-source: parser/src/lexer/lexer.rs
+source: parser/src/lexer/mod.rs
 description: "# Unindent does not match any outer indentation level\nif True:\n        pass\n    pass\n"
 input_file: parser/test_data/inputs/indentation.py
 ---

@@ -1,5 +1,5 @@
 ---
-source: parser/src/lexer/lexer.rs
+source: parser/src/lexer/mod.rs
 description: "async for a in b:\n    pass\n"
 input_file: parser/test_data/inputs/one_liners/for.py
 ---

@@ -1,5 +1,5 @@
 ---
-source: parser/src/lexer/lexer.rs
+source: parser/src/lexer/mod.rs
 description: "[a for a in b]"
 input_file: parser/test_data/inputs/one_liners/lists.py
 ---

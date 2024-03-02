@@ -1,5 +1,5 @@
 ---
-source: parser/src/lexer/lexer.rs
+source: parser/src/lexer/mod.rs
 description: "match x:\n    case [a, b, c]:\n        pass\n"
 input_file: parser/test_data/inputs/one_liners/match.py
 ---
