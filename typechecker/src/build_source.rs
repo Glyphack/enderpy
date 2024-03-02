@@ -29,7 +29,7 @@ impl BuildSource {
 }
 
 pub fn get_module_name(path: &Path) -> String {
-    path.to_str().unwrap_or_default().replace(['/', '\\'], ".")
+    path.to_str().unwrap().replace(['/', '\\'], ".")
 }
 
 // impl Into<EnderpyFile> for BuildSource {

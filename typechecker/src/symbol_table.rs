@@ -203,11 +203,11 @@ pub struct Class {
 }
 
 impl Class {
-    pub fn new(class_node: ast::ClassDef, methods: Vec<String>) -> Self {
+    pub fn new(class_node: ast::ClassDef, methods: Vec<String>, file_path: PathBuf) -> Self {
         Class {
             name: class_node.name.clone(),
             declaration_path: DeclarationPath {
-                module_name: PathBuf::new(),
+                module_name: file_path,
                 node: Node {
                     start: class_node.node.start,
                     end: class_node.node.end,
