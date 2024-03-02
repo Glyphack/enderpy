@@ -608,7 +608,8 @@ impl TraversalVisitor for SemanticAnalyzer {
 
         self.symbol_table.exit_scope();
 
-        let class_declaration = Declaration::Class(Class::new(c.clone(), methods));
+        let class_declaration =
+            Declaration::Class(Class::new(c.clone(), methods, self.file.path()));
         let flags = SymbolFlags::empty();
         self.create_symbol(c.name.clone(), class_declaration, flags);
     }

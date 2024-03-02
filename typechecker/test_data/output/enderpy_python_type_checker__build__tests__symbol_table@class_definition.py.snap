@@ -269,7 +269,7 @@ SymbolFlags(
 --:   Class {
     name: "c",
     declaration_path: DeclarationPath {
-        module_name: "",
+        module_name: "[TYPECHECKER]/test_data/inputs/symbol_table/class_definition.py",
         node: Node {
             start: 0,
             end: 80,
