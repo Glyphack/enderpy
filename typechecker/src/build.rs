@@ -432,6 +432,31 @@ mod tests {
             settings.bind(|| {
                 insta::assert_snapshot!(result);
             });
+        });
+
+        glob!("../test_data/inputs/", "*.py", |path| {
+            let mut manager = BuildManager::new(
+                vec![BuildSource::from_path(path.to_path_buf(), false).unwrap()],
+                Settings::test_settings(),
+            );
+            manager.build();
+
+            let module = manager.get_state(path.to_path_buf()).unwrap();
+
+            let result = format!("{}", module.get_symbol_table());
+            let mut settings = insta::Settings::clone_current();
+            settings.set_snapshot_path("../test_data/output/");
+            settings.set_description(fs::read_to_string(path).unwrap());
+            settings.add_filter(r"/.*/typechecker", "[TYPECHECKER]");
+            settings.add_filter(r"/.*/typeshed", "[TYPESHED]");
+            settings.add_filter(
+                r"module_name: .*.typechecker.test_data.inputs.symbol_table..*.py",
+                "module_name: [REDACTED]",
+            );
+            settings.add_filter(r"\(id: .*\)", "(id: [REDACTED])");
+            settings.bind(|| {
+                insta::assert_snapshot!(result);
+            });
         })
     }
 }

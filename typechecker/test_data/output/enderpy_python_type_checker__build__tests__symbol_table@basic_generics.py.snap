@@ -1,0 +1,747 @@
+---
+source: typechecker/src/build.rs
+description: "from typing import TypeVar, Generic, Sequence\nfrom logging import Logger\n\nT = TypeVar('T')\n\ndef first(l: Sequence[T]) -> T:\n    return l[0]\n\n# class LoggedVar(Generic[T]):\n#     def __init__(self, value: T, name: str, logger: Logger) -> None:\n#         self.name = name\n#         self.logger = logger\n#         self.value = value\n#\n#     def set(self, new: T) -> None:\n#         self.log('Set ' + repr(self.value))\n#         self.value = new\n#\n#     def get(self) -> T:\n#         self.log('Get ' + repr(self.value))\n#         return self.value\n#\n#     def log(self, message: str) -> None:\n#         self.logger.info('{}: {}'.format(self.name, message))\n"
+expression: result
+input_file: typechecker/test_data/inputs/basic_generics.py
+---
+Symbols in first (id: [REDACTED])
+l
+SymbolFlags(
+    0x0,
+)
+- Declarations:
+--:   Parameter {
+    declaration_path: DeclarationPath {
+        module_name: "[TYPECHECKER]/test_data/inputs/basic_generics.py",
+        node: Node {
+            start: 102,
+            end: 116,
+        },
+    },
+    parameter_node: Arg {
+        node: Node {
+            start: 102,
+            end: 116,
+        },
+        arg: "l",
+        annotation: Some(
+            Subscript(
+                Subscript {
+                    node: Node {
+                        start: 105,
+                        end: 116,
+                    },
+                    value: Name(
+                        Name {
+                            node: Node {
+                                start: 105,
+                                end: 113,
+                            },
+                            id: "Sequence",
+                        },
+                    ),
+                    slice: Name(
+                        Name {
+                            node: Node {
+                                start: 114,
+                                end: 115,
+                            },
+                            id: "T",
+                        },
+                    ),
+                },
+            ),
+        ),
+    },
+    type_annotation: Some(
+        Subscript(
+            Subscript {
+                node: Node {
+                    start: 105,
+                    end: 116,
+                },
+                value: Name(
+                    Name {
+                        node: Node {
+                            start: 105,
+                            end: 113,
+                        },
+                        id: "Sequence",
+                    },
+                ),
+                slice: Name(
+                    Name {
+                        node: Node {
+                            start: 114,
+                            end: 115,
+                        },
+                        id: "T",
+                    },
+                ),
+            },
+        ),
+    ),
+    default_value: None,
+}
+
+Symbols in global (id: [REDACTED])
+Generic
+SymbolFlags(
+    0x0,
+)
+- Declarations:
+--:   Alias {
+    declaration_path: DeclarationPath {
+        module_name: "[TYPECHECKER]/test_data/inputs/basic_generics.py",
+        node: Node {
+            start: 28,
+            end: 35,
+        },
+    },
+    import_from_node: Some(
+        ImportFrom {
+            node: Node {
+                start: 0,
+                end: 45,
+            },
+            module: "typing",
+            names: [
+                Alias {
+                    node: Node {
+                        start: 19,
+                        end: 26,
+                    },
+                    name: "TypeVar",
+                    asname: None,
+                },
+                Alias {
+                    node: Node {
+                        start: 28,
+                        end: 35,
+                    },
+                    name: "Generic",
+                    asname: None,
+                },
+                Alias {
+                    node: Node {
+                        start: 37,
+                        end: 45,
+                    },
+                    name: "Sequence",
+                    asname: None,
+                },
+            ],
+            level: 0,
+        },
+    ),
+    import_node: None,
+    symbol_name: Some(
+        "Generic",
+    ),
+    import_result: ImportResult {
+        is_relative: false,
+        is_import_found: true,
+        is_partly_resolved: false,
+        is_namespace_package: false,
+        is_init_file_present: false,
+        is_stub_package: false,
+        import_type: BuiltIn,
+        resolved_paths: [
+            "[TYPESHED]/stdlib/typing.pyi",
+        ],
+        search_path: Some(
+            "[TYPESHED]/stdlib",
+        ),
+        is_stub_file: true,
+        is_native_lib: false,
+        is_stdlib_typeshed_file: true,
+        is_third_party_typeshed_file: false,
+        is_local_typings_file: false,
+        implicit_imports: ImplicitImports(
+            {},
+        ),
+        filtered_implicit_imports: ImplicitImports(
+            {},
+        ),
+        non_stub_import_result: Some(
+            ImportResult {
+                is_relative: false,
+                is_import_found: false,
+                is_partly_resolved: false,
+                is_namespace_package: false,
+                is_init_file_present: false,
+                is_stub_package: false,
+                import_type: Local,
+                resolved_paths: [],
+                search_path: Some(
+                    "",
+                ),
+                is_stub_file: false,
+                is_native_lib: false,
+                is_stdlib_typeshed_file: false,
+                is_third_party_typeshed_file: false,
+                is_local_typings_file: false,
+                implicit_imports: ImplicitImports(
+                    {},
+                ),
+                filtered_implicit_imports: ImplicitImports(
+                    {},
+                ),
+                non_stub_import_result: None,
+                py_typed_info: None,
+                package_directory: None,
+            },
+        ),
+        py_typed_info: None,
+        package_directory: None,
+    },
+}
+Logger
+SymbolFlags(
+    0x0,
+)
+- Declarations:
+--:   Alias {
+    declaration_path: DeclarationPath {
+        module_name: "[TYPECHECKER]/test_data/inputs/basic_generics.py",
+        node: Node {
+            start: 66,
+            end: 72,
+        },
+    },
+    import_from_node: Some(
+        ImportFrom {
+            node: Node {
+                start: 46,
+                end: 72,
+            },
+            module: "logging",
+            names: [
+                Alias {
+                    node: Node {
+                        start: 66,
+                        end: 72,
+                    },
+                    name: "Logger",
+                    asname: None,
+                },
+            ],
+            level: 0,
+        },
+    ),
+    import_node: None,
+    symbol_name: Some(
+        "Logger",
+    ),
+    import_result: ImportResult {
+        is_relative: false,
+        is_import_found: true,
+        is_partly_resolved: false,
+        is_namespace_package: false,
+        is_init_file_present: true,
+        is_stub_package: false,
+        import_type: BuiltIn,
+        resolved_paths: [
+            "[TYPESHED]/stdlib/logging/__init__.pyi",
+        ],
+        search_path: Some(
+            "[TYPESHED]/stdlib",
+        ),
+        is_stub_file: true,
+        is_native_lib: false,
+        is_stdlib_typeshed_file: true,
+        is_third_party_typeshed_file: false,
+        is_local_typings_file: false,
+        implicit_imports: ImplicitImports(
+            {
+                "config": ImplicitImport {
+                    is_stub_file: true,
+                    is_native_lib: false,
+                    path: "[TYPESHED]/stdlib/logging/config.pyi",
+                    py_typed: None,
+                },
+                "handlers": ImplicitImport {
+                    is_stub_file: true,
+                    is_native_lib: false,
+                    path: "[TYPESHED]/stdlib/logging/handlers.pyi",
+                    py_typed: None,
+                },
+            },
+        ),
+        filtered_implicit_imports: ImplicitImports(
+            {},
+        ),
+        non_stub_import_result: Some(
+            ImportResult {
+                is_relative: false,
+                is_import_found: false,
+                is_partly_resolved: false,
+                is_namespace_package: false,
+                is_init_file_present: false,
+                is_stub_package: false,
+                import_type: Local,
+                resolved_paths: [],
+                search_path: Some(
+                    "",
+                ),
+                is_stub_file: false,
+                is_native_lib: false,
+                is_stdlib_typeshed_file: false,
+                is_third_party_typeshed_file: false,
+                is_local_typings_file: false,
+                implicit_imports: ImplicitImports(
+                    {},
+                ),
+                filtered_implicit_imports: ImplicitImports(
+                    {},
+                ),
+                non_stub_import_result: None,
+                py_typed_info: None,
+                package_directory: None,
+            },
+        ),
+        py_typed_info: None,
+        package_directory: Some(
+            "[TYPESHED]/stdlib/logging",
+        ),
+    },
+}
+Sequence
+SymbolFlags(
+    0x0,
+)
+- Declarations:
+--:   Alias {
+    declaration_path: DeclarationPath {
+        module_name: "[TYPECHECKER]/test_data/inputs/basic_generics.py",
+        node: Node {
+            start: 37,
+            end: 45,
+        },
+    },
+    import_from_node: Some(
+        ImportFrom {
+            node: Node {
+                start: 0,
+                end: 45,
+            },
+            module: "typing",
+            names: [
+                Alias {
+                    node: Node {
+                        start: 19,
+                        end: 26,
+                    },
+                    name: "TypeVar",
+                    asname: None,
+                },
+                Alias {
+                    node: Node {
+                        start: 28,
+                        end: 35,
+                    },
+                    name: "Generic",
+                    asname: None,
+                },
+                Alias {
+                    node: Node {
+                        start: 37,
+                        end: 45,
+                    },
+                    name: "Sequence",
+                    asname: None,
+                },
+            ],
+            level: 0,
+        },
+    ),
+    import_node: None,
+    symbol_name: Some(
+        "Sequence",
+    ),
+    import_result: ImportResult {
+        is_relative: false,
+        is_import_found: true,
+        is_partly_resolved: false,
+        is_namespace_package: false,
+        is_init_file_present: false,
+        is_stub_package: false,
+        import_type: BuiltIn,
+        resolved_paths: [
+            "[TYPESHED]/stdlib/typing.pyi",
+        ],
+        search_path: Some(
+            "[TYPESHED]/stdlib",
+        ),
+        is_stub_file: true,
+        is_native_lib: false,
+        is_stdlib_typeshed_file: true,
+        is_third_party_typeshed_file: false,
+        is_local_typings_file: false,
+        implicit_imports: ImplicitImports(
+            {},
+        ),
+        filtered_implicit_imports: ImplicitImports(
+            {},
+        ),
+        non_stub_import_result: Some(
+            ImportResult {
+                is_relative: false,
+                is_import_found: false,
+                is_partly_resolved: false,
+                is_namespace_package: false,
+                is_init_file_present: false,
+                is_stub_package: false,
+                import_type: Local,
+                resolved_paths: [],
+                search_path: Some(
+                    "",
+                ),
+                is_stub_file: false,
+                is_native_lib: false,
+                is_stdlib_typeshed_file: false,
+                is_third_party_typeshed_file: false,
+                is_local_typings_file: false,
+                implicit_imports: ImplicitImports(
+                    {},
+                ),
+                filtered_implicit_imports: ImplicitImports(
+                    {},
+                ),
+                non_stub_import_result: None,
+                py_typed_info: None,
+                package_directory: None,
+            },
+        ),
+        py_typed_info: None,
+        package_directory: None,
+    },
+}
+T
+SymbolFlags(
+    0x0,
+)
+- Declarations:
+--:   Variable {
+    declaration_path: DeclarationPath {
+        module_name: "[TYPECHECKER]/test_data/inputs/basic_generics.py",
+        node: Node {
+            start: 74,
+            end: 90,
+        },
+    },
+    type_annotation: None,
+    inferred_type_source: Some(
+        Call(
+            Call {
+                node: Node {
+                    start: 78,
+                    end: 90,
+                },
+                func: Name(
+                    Name {
+                        node: Node {
+                            start: 78,
+                            end: 85,
+                        },
+                        id: "TypeVar",
+                    },
+                ),
+                args: [
+                    Constant(
+                        Constant {
+                            node: Node {
+                                start: 86,
+                                end: 89,
+                            },
+                            value: "T",
+                        },
+                    ),
+                ],
+                keywords: [],
+                starargs: None,
+                kwargs: None,
+            },
+        ),
+    ),
+    is_constant: false,
+}
+TypeVar
+SymbolFlags(
+    0x0,
+)
+- Declarations:
+--:   Alias {
+    declaration_path: DeclarationPath {
+        module_name: "[TYPECHECKER]/test_data/inputs/basic_generics.py",
+        node: Node {
+            start: 19,
+            end: 26,
+        },
+    },
+    import_from_node: Some(
+        ImportFrom {
+            node: Node {
+                start: 0,
+                end: 45,
+            },
+            module: "typing",
+            names: [
+                Alias {
+                    node: Node {
+                        start: 19,
+                        end: 26,
+                    },
+                    name: "TypeVar",
+                    asname: None,
+                },
+                Alias {
+                    node: Node {
+                        start: 28,
+                        end: 35,
+                    },
+                    name: "Generic",
+                    asname: None,
+                },
+                Alias {
+                    node: Node {
+                        start: 37,
+                        end: 45,
+                    },
+                    name: "Sequence",
+                    asname: None,
+                },
+            ],
+            level: 0,
+        },
+    ),
+    import_node: None,
+    symbol_name: Some(
+        "TypeVar",
+    ),
+    import_result: ImportResult {
+        is_relative: false,
+        is_import_found: true,
+        is_partly_resolved: false,
+        is_namespace_package: false,
+        is_init_file_present: false,
+        is_stub_package: false,
+        import_type: BuiltIn,
+        resolved_paths: [
+            "[TYPESHED]/stdlib/typing.pyi",
+        ],
+        search_path: Some(
+            "[TYPESHED]/stdlib",
+        ),
+        is_stub_file: true,
+        is_native_lib: false,
+        is_stdlib_typeshed_file: true,
+        is_third_party_typeshed_file: false,
+        is_local_typings_file: false,
+        implicit_imports: ImplicitImports(
+            {},
+        ),
+        filtered_implicit_imports: ImplicitImports(
+            {},
+        ),
+        non_stub_import_result: Some(
+            ImportResult {
+                is_relative: false,
+                is_import_found: false,
+                is_partly_resolved: false,
+                is_namespace_package: false,
+                is_init_file_present: false,
+                is_stub_package: false,
+                import_type: Local,
+                resolved_paths: [],
+                search_path: Some(
+                    "",
+                ),
+                is_stub_file: false,
+                is_native_lib: false,
+                is_stdlib_typeshed_file: false,
+                is_third_party_typeshed_file: false,
+                is_local_typings_file: false,
+                implicit_imports: ImplicitImports(
+                    {},
+                ),
+                filtered_implicit_imports: ImplicitImports(
+                    {},
+                ),
+                non_stub_import_result: None,
+                py_typed_info: None,
+                package_directory: None,
+            },
+        ),
+        py_typed_info: None,
+        package_directory: None,
+    },
+}
+first
+SymbolFlags(
+    0x0,
+)
+- Declarations:
+--:   Function {
+    declaration_path: DeclarationPath {
+        module_name: "[TYPECHECKER]/test_data/inputs/basic_generics.py",
+        node: Node {
+            start: 92,
+            end: 242,
+        },
+    },
+    function_node: FunctionDef {
+        node: Node {
+            start: 92,
+            end: 242,
+        },
+        name: "first",
+        args: Arguments {
+            node: Node {
+                start: 102,
+                end: 116,
+            },
+            posonlyargs: [],
+            args: [
+                Arg {
+                    node: Node {
+                        start: 102,
+                        end: 116,
+                    },
+                    arg: "l",
+                    annotation: Some(
+                        Subscript(
+                            Subscript {
+                                node: Node {
+                                    start: 105,
+                                    end: 116,
+                                },
+                                value: Name(
+                                    Name {
+                                        node: Node {
+                                            start: 105,
+                                            end: 113,
+                                        },
+                                        id: "Sequence",
+                                    },
+                                ),
+                                slice: Name(
+                                    Name {
+                                        node: Node {
+                                            start: 114,
+                                            end: 115,
+                                        },
+                                        id: "T",
+                                    },
+                                ),
+                            },
+                        ),
+                    ),
+                },
+            ],
+            vararg: None,
+            kwonlyargs: [],
+            kw_defaults: [],
+            kwarg: None,
+            defaults: [],
+        },
+        body: [
+            Return(
+                Return {
+                    node: Node {
+                        start: 128,
+                        end: 139,
+                    },
+                    value: Some(
+                        Subscript(
+                            Subscript {
+                                node: Node {
+                                    start: 135,
+                                    end: 139,
+                                },
+                                value: Name(
+                                    Name {
+                                        node: Node {
+                                            start: 135,
+                                            end: 136,
+                                        },
+                                        id: "l",
+                                    },
+                                ),
+                                slice: Constant(
+                                    Constant {
+                                        node: Node {
+                                            start: 137,
+                                            end: 138,
+                                        },
+                                        value: 0,
+                                    },
+                                ),
+                            },
+                        ),
+                    ),
+                },
+            ),
+        ],
+        decorator_list: [],
+        returns: Some(
+            Name(
+                Name {
+                    node: Node {
+                        start: 121,
+                        end: 122,
+                    },
+                    id: "T",
+                },
+            ),
+        ),
+        type_comment: None,
+        type_params: [],
+    },
+    is_method: false,
+    is_generator: false,
+    return_statements: [
+        Return {
+            node: Node {
+                start: 128,
+                end: 139,
+            },
+            value: Some(
+                Subscript(
+                    Subscript {
+                        node: Node {
+                            start: 135,
+                            end: 139,
+                        },
+                        value: Name(
+                            Name {
+                                node: Node {
+                                    start: 135,
+                                    end: 136,
+                                },
+                                id: "l",
+                            },
+                        ),
+                        slice: Constant(
+                            Constant {
+                                node: Node {
+                                    start: 137,
+                                    end: 138,
+                                },
+                                value: 0,
+                            },
+                        ),
+                    },
+                ),
+            ),
+        },
+    ],
+    yield_statements: [],
+    raise_statements: [],
+}
+
+Scopes:
+
+Scope first(id: [REDACTED])
+Scope global(id: 0, parent_id: None
+

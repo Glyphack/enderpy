@@ -171,7 +171,9 @@ SymbolFlags(
             ],
         },
     ),
-    symbol_name: None,
+    symbol_name: Some(
+        "import_test",
+    ),
     import_result: ImportResult {
         is_relative: false,
         is_import_found: true,
@@ -334,7 +336,9 @@ SymbolFlags(
             ],
         },
     ),
-    symbol_name: None,
+    symbol_name: Some(
+        "os.path",
+    ),
     import_result: ImportResult {
         is_relative: false,
         is_import_found: true,
@@ -428,7 +432,9 @@ SymbolFlags(
             ],
         },
     ),
-    symbol_name: None,
+    symbol_name: Some(
+        "variables",
+    ),
     import_result: ImportResult {
         is_relative: false,
         is_import_found: true,

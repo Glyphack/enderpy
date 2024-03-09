@@ -228,6 +228,21 @@ impl Class {
             special: true,
         }
     }
+
+    pub fn get_qualname(&self) -> String {
+        log::debug!("Getting qualname for class: {}", self.name);
+        let scope = self.declaration_path.module_name.clone();
+        let mut qualname = scope
+            .file_stem()
+            .expect("no file name")
+            .to_str()
+            .expect("file name is not valid")
+            .to_string();
+        qualname.push_str(".");
+        qualname.push_str(&self.name);
+        log::debug!("Qualname: {}", qualname);
+        qualname
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -367,8 +382,10 @@ impl SymbolTable {
     /// continue until found or no parent scope
     /// TODO: This function does not work on the literal test
     pub fn lookup_in_scope(&self, lookup_request: LookupSymbolRequest) -> Option<&SymbolTableNode> {
+        log::debug!("Looking up symbol: {}", lookup_request.name);
         let mut scope = self.current_scope();
         loop {
+            log::debug!("Looking in scope: {}", scope.name);
             if let Some(symbol) = scope.symbols.get(&lookup_request.name) {
                 return Some(symbol);
             }

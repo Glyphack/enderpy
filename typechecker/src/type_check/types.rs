@@ -26,6 +26,7 @@ pub enum PythonType {
     Callable(Box<CallableType>),
     Class(ClassType),
     Never,
+    Type,
 }
 
 impl PythonType {
@@ -202,6 +203,7 @@ impl Display for PythonType {
                     .join(", ");
                 return write!(f, "Union[{}]", values);
             }
+            PythonType::Type => "Type Alias",
         };
 
         write!(f, "{}", type_str)

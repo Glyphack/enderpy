@@ -374,8 +374,16 @@ impl TypeEvaluator {
         symbol: &SymbolTableNode,
         position: Option<usize>,
     ) -> Result<PythonType> {
+        log::debug!(
+            "getting type for symbol node: {:#?} at position: {:?}",
+            symbol,
+            position
+        );
         let decl = match position {
-            Some(position) => symbol.declaration_until_position(position),
+            // TODO: The position does not work if the symbol is imported. Because I'm passing the
+            // position of the symbol in the file where it is imported. I should pass the position
+            // of the symbol in the file where it is declared
+            Some(position) => Some(symbol.last_declaration()),
             None => Some(symbol.last_declaration()),
         };
 
@@ -421,10 +429,26 @@ impl TypeEvaluator {
                         Ok(PythonType::Any)
                     }
                 }
-                Declaration::Alias(_) => Ok(PythonType::Unknown),
+                Declaration::Alias(a) => {
+                    log::debug!(
+                        "symbol node {:?} is alias declaration. Resolving it again.",
+                        a.symbol_name,
+                    );
+                    let resolved = self.resolve_alias(a);
+                    match resolved {
+                        Some(node) => self.get_symbol_node_type(node, position),
+                        None => Ok(PythonType::Unknown),
+                    }
+                }
                 Declaration::TypeParameter(_) => Ok(PythonType::Unknown),
                 Declaration::TypeAlias(_) => Ok(PythonType::Unknown),
-                Declaration::Class(c) => Ok(PythonType::Class(ClassType::new(c.clone(), vec![]))),
+                Declaration::Class(c) => {
+                    if c.get_qualname() == "typing.TypeVar" {
+                        Ok(PythonType::Type)
+                    } else {
+                        Ok(PythonType::Class(ClassType::new(c.clone(), vec![])))
+                    }
+                }
             },
             None => Ok(PythonType::Any),
         };
@@ -792,7 +816,11 @@ impl TypeEvaluator {
                         Declaration::Alias(a) => {
                             declaration = match self.resolve_alias(a) {
                                 Some(decl) => decl.last_declaration(),
-                                None => panic!("Alias {:?} not found", a),
+                                // TODO: Should we really skip if the alias is not resolved?
+                                // I'm doing it now because it is some module in typeshed and I
+                                // don't know what to do with it
+                                // Name(Name { node: Node { start: 1613, end: 1621 }, id: "Callable" })
+                                None => return None,
                             };
                             log::debug!("alias resolved to: {:?}", declaration);
                         }
@@ -860,6 +888,20 @@ impl TypeEvaluator {
         };
 
         let symbol_table_with_alias_def = self.get_symbol_table_of(resolved_path);
+        if symbol_table_with_alias_def.is_none() {
+            panic!("Symbol table not found for alias: {:?}", resolved_path);
+        }
+
+        // if the current file is typeshed/stdlib/sys/__init__.pyi then don't resolve the alias
+        // This is because sys/__init__.pyi imports sys itself and it causes an infinite loop
+        if symbol_table_with_alias_def?
+            .file_path
+            .ends_with("stdlib/sys/__init__.pyi")
+            && class_name == "sys"
+        {
+            log::debug!("alias resolution skipped for sys/__init__.pyi");
+            return None;
+        }
         return symbol_table_with_alias_def?.lookup_in_scope(LookupSymbolRequest {
             name: class_name.clone(),
             position: None,
@@ -1422,10 +1464,6 @@ mod tests {
     #[test]
     fn test_type_evaluator() {
         glob!("../../test_data/inputs/", "*.py", |path| {
-            // TODO: temporary only run the base test
-            if !path.to_str().unwrap().contains("base") {
-                return;
-            }
             let _ = env_logger::builder()
                 .filter_level(log::LevelFilter::Debug)
                 .is_test(true)

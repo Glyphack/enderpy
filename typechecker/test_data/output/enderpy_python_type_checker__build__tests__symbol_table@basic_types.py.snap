@@ -1,0 +1,1331 @@
+---
+source: typechecker/src/build.rs
+description: "a = 1\nb = \"1\"\nc = True\nd = False\na + int(b)\n\n\na + c\n\ndef func(param1: int) -> int:\n\treturn param1 + a\n\nclass C:\n\tcls_attribute = 1\n\n\tdef __init__(self, x: int):\n\t\tprint(self.cls_attribute)\n\t\tself.x = float(x)\n\t\tprint(self.x)\n\n\tdef add(self, value: int):\n\t\tself.cls_attribute += value\n\n\tdef get_attr(self) -> int:\n\t\treturn self.cls_attribute\n\n\tdef\tget_x(self) -> float:\n\t\treturn self.x\n\nt = C(0)\nt.add(2)\nt.cls_attribute\nt.x\nt.get_x()\nt.get_attr()\n\nl = [1,2,3]\nd = {\"a\": 1, \"b\": 2}\ns = {1,2,3}\n\nl.append(4)\n\n"
+expression: result
+input_file: typechecker/test_data/inputs/basic_types.py
+---
+Symbols in C (id: [REDACTED])
+__init__
+SymbolFlags(
+    0x0,
+)
+- Declarations:
+--:   Function {
+    declaration_path: DeclarationPath {
+        module_name: "[TYPECHECKER]/test_data/inputs/basic_types.py",
+        node: Node {
+            start: 133,
+            end: 227,
+        },
+    },
+    function_node: FunctionDef {
+        node: Node {
+            start: 133,
+            end: 227,
+        },
+        name: "__init__",
+        args: Arguments {
+            node: Node {
+                start: 146,
+                end: 158,
+            },
+            posonlyargs: [],
+            args: [
+                Arg {
+                    node: Node {
+                        start: 146,
+                        end: 150,
+                    },
+                    arg: "self",
+                    annotation: None,
+                },
+                Arg {
+                    node: Node {
+                        start: 152,
+                        end: 158,
+                    },
+                    arg: "x",
+                    annotation: Some(
+                        Name(
+                            Name {
+                                node: Node {
+                                    start: 155,
+                                    end: 158,
+                                },
+                                id: "int",
+                            },
+                        ),
+                    ),
+                },
+            ],
+            vararg: None,
+            kwonlyargs: [],
+            kw_defaults: [],
+            kwarg: None,
+            defaults: [],
+        },
+        body: [
+            ExpressionStatement(
+                Call(
+                    Call {
+                        node: Node {
+                            start: 163,
+                            end: 188,
+                        },
+                        func: Name(
+                            Name {
+                                node: Node {
+                                    start: 163,
+                                    end: 168,
+                                },
+                                id: "print",
+                            },
+                        ),
+                        args: [
+                            Attribute(
+                                Attribute {
+                                    node: Node {
+                                        start: 169,
+                                        end: 187,
+                                    },
+                                    value: Name(
+                                        Name {
+                                            node: Node {
+                                                start: 169,
+                                                end: 173,
+                                            },
+                                            id: "self",
+                                        },
+                                    ),
+                                    attr: "cls_attribute",
+                                },
+                            ),
+                        ],
+                        keywords: [],
+                        starargs: None,
+                        kwargs: None,
+                    },
+                ),
+            ),
+            AssignStatement(
+                Assign {
+                    node: Node {
+                        start: 191,
+                        end: 208,
+                    },
+                    targets: [
+                        Attribute(
+                            Attribute {
+                                node: Node {
+                                    start: 191,
+                                    end: 197,
+                                },
+                                value: Name(
+                                    Name {
+                                        node: Node {
+                                            start: 191,
+                                            end: 195,
+                                        },
+                                        id: "self",
+                                    },
+                                ),
+                                attr: "x",
+                            },
+                        ),
+                    ],
+                    value: Call(
+                        Call {
+                            node: Node {
+                                start: 200,
+                                end: 208,
+                            },
+                            func: Name(
+                                Name {
+                                    node: Node {
+                                        start: 200,
+                                        end: 205,
+                                    },
+                                    id: "float",
+                                },
+                            ),
+                            args: [
+                                Name(
+                                    Name {
+                                        node: Node {
+                                            start: 206,
+                                            end: 207,
+                                        },
+                                        id: "x",
+                                    },
+                                ),
+                            ],
+                            keywords: [],
+                            starargs: None,
+                            kwargs: None,
+                        },
+                    ),
+                },
+            ),
+            ExpressionStatement(
+                Call(
+                    Call {
+                        node: Node {
+                            start: 211,
+                            end: 224,
+                        },
+                        func: Name(
+                            Name {
+                                node: Node {
+                                    start: 211,
+                                    end: 216,
+                                },
+                                id: "print",
+                            },
+                        ),
+                        args: [
+                            Attribute(
+                                Attribute {
+                                    node: Node {
+                                        start: 217,
+                                        end: 223,
+                                    },
+                                    value: Name(
+                                        Name {
+                                            node: Node {
+                                                start: 217,
+                                                end: 221,
+                                            },
+                                            id: "self",
+                                        },
+                                    ),
+                                    attr: "x",
+                                },
+                            ),
+                        ],
+                        keywords: [],
+                        starargs: None,
+                        kwargs: None,
+                    },
+                ),
+            ),
+        ],
+        decorator_list: [],
+        returns: None,
+        type_comment: None,
+        type_params: [],
+    },
+    is_method: true,
+    is_generator: false,
+    return_statements: [],
+    yield_statements: [],
+    raise_statements: [],
+}
+add
+SymbolFlags(
+    0x0,
+)
+- Declarations:
+--:   Function {
+    declaration_path: DeclarationPath {
+        module_name: "[TYPECHECKER]/test_data/inputs/basic_types.py",
+        node: Node {
+            start: 227,
+            end: 286,
+        },
+    },
+    function_node: FunctionDef {
+        node: Node {
+            start: 227,
+            end: 286,
+        },
+        name: "add",
+        args: Arguments {
+            node: Node {
+                start: 235,
+                end: 251,
+            },
+            posonlyargs: [],
+            args: [
+                Arg {
+                    node: Node {
+                        start: 235,
+                        end: 239,
+                    },
+                    arg: "self",
+                    annotation: None,
+                },
+                Arg {
+                    node: Node {
+                        start: 241,
+                        end: 251,
+                    },
+                    arg: "value",
+                    annotation: Some(
+                        Name(
+                            Name {
+                                node: Node {
+                                    start: 248,
+                                    end: 251,
+                                },
+                                id: "int",
+                            },
+                        ),
+                    ),
+                },
+            ],
+            vararg: None,
+            kwonlyargs: [],
+            kw_defaults: [],
+            kwarg: None,
+            defaults: [],
+        },
+        body: [
+            AugAssignStatement(
+                AugAssign {
+                    node: Node {
+                        start: 256,
+                        end: 283,
+                    },
+                    target: Attribute(
+                        Attribute {
+                            node: Node {
+                                start: 256,
+                                end: 274,
+                            },
+                            value: Name(
+                                Name {
+                                    node: Node {
+                                        start: 256,
+                                        end: 260,
+                                    },
+                                    id: "self",
+                                },
+                            ),
+                            attr: "cls_attribute",
+                        },
+                    ),
+                    op: Add,
+                    value: Name(
+                        Name {
+                            node: Node {
+                                start: 278,
+                                end: 283,
+                            },
+                            id: "value",
+                        },
+                    ),
+                },
+            ),
+        ],
+        decorator_list: [],
+        returns: None,
+        type_comment: None,
+        type_params: [],
+    },
+    is_method: true,
+    is_generator: false,
+    return_statements: [],
+    yield_statements: [],
+    raise_statements: [],
+}
+cls_attribute
+SymbolFlags(
+    CLASS_MEMBER,
+)
+- Declarations:
+--:   Variable {
+    declaration_path: DeclarationPath {
+        module_name: "[TYPECHECKER]/test_data/inputs/basic_types.py",
+        node: Node {
+            start: 113,
+            end: 130,
+        },
+    },
+    type_annotation: None,
+    inferred_type_source: Some(
+        Constant(
+            Constant {
+                node: Node {
+                    start: 129,
+                    end: 130,
+                },
+                value: 1,
+            },
+        ),
+    ),
+    is_constant: false,
+}
+get_attr
+SymbolFlags(
+    0x0,
+)
+- Declarations:
+--:   Function {
+    declaration_path: DeclarationPath {
+        module_name: "[TYPECHECKER]/test_data/inputs/basic_types.py",
+        node: Node {
+            start: 286,
+            end: 343,
+        },
+    },
+    function_node: FunctionDef {
+        node: Node {
+            start: 286,
+            end: 343,
+        },
+        name: "get_attr",
+        args: Arguments {
+            node: Node {
+                start: 299,
+                end: 303,
+            },
+            posonlyargs: [],
+            args: [
+                Arg {
+                    node: Node {
+                        start: 299,
+                        end: 303,
+                    },
+                    arg: "self",
+                    annotation: None,
+                },
+            ],
+            vararg: None,
+            kwonlyargs: [],
+            kw_defaults: [],
+            kwarg: None,
+            defaults: [],
+        },
+        body: [
+            Return(
+                Return {
+                    node: Node {
+                        start: 315,
+                        end: 340,
+                    },
+                    value: Some(
+                        Attribute(
+                            Attribute {
+                                node: Node {
+                                    start: 322,
+                                    end: 340,
+                                },
+                                value: Name(
+                                    Name {
+                                        node: Node {
+                                            start: 322,
+                                            end: 326,
+                                        },
+                                        id: "self",
+                                    },
+                                ),
+                                attr: "cls_attribute",
+                            },
+                        ),
+                    ),
+                },
+            ),
+        ],
+        decorator_list: [],
+        returns: Some(
+            Name(
+                Name {
+                    node: Node {
+                        start: 308,
+                        end: 311,
+                    },
+                    id: "int",
+                },
+            ),
+        ),
+        type_comment: None,
+        type_params: [],
+    },
+    is_method: true,
+    is_generator: false,
+    return_statements: [
+        Return {
+            node: Node {
+                start: 315,
+                end: 340,
+            },
+            value: Some(
+                Attribute(
+                    Attribute {
+                        node: Node {
+                            start: 322,
+                            end: 340,
+                        },
+                        value: Name(
+                            Name {
+                                node: Node {
+                                    start: 322,
+                                    end: 326,
+                                },
+                                id: "self",
+                            },
+                        ),
+                        attr: "cls_attribute",
+                    },
+                ),
+            ),
+        },
+    ],
+    yield_statements: [],
+    raise_statements: [],
+}
+get_x
+SymbolFlags(
+    0x0,
+)
+- Declarations:
+--:   Function {
+    declaration_path: DeclarationPath {
+        module_name: "[TYPECHECKER]/test_data/inputs/basic_types.py",
+        node: Node {
+            start: 343,
+            end: 386,
+        },
+    },
+    function_node: FunctionDef {
+        node: Node {
+            start: 343,
+            end: 386,
+        },
+        name: "get_x",
+        args: Arguments {
+            node: Node {
+                start: 353,
+                end: 357,
+            },
+            posonlyargs: [],
+            args: [
+                Arg {
+                    node: Node {
+                        start: 353,
+                        end: 357,
+                    },
+                    arg: "self",
+                    annotation: None,
+                },
+            ],
+            vararg: None,
+            kwonlyargs: [],
+            kw_defaults: [],
+            kwarg: None,
+            defaults: [],
+        },
+        body: [
+            Return(
+                Return {
+                    node: Node {
+                        start: 371,
+                        end: 384,
+                    },
+                    value: Some(
+                        Attribute(
+                            Attribute {
+                                node: Node {
+                                    start: 378,
+                                    end: 384,
+                                },
+                                value: Name(
+                                    Name {
+                                        node: Node {
+                                            start: 378,
+                                            end: 382,
+                                        },
+                                        id: "self",
+                                    },
+                                ),
+                                attr: "x",
+                            },
+                        ),
+                    ),
+                },
+            ),
+        ],
+        decorator_list: [],
+        returns: Some(
+            Name(
+                Name {
+                    node: Node {
+                        start: 362,
+                        end: 367,
+                    },
+                    id: "float",
+                },
+            ),
+        ),
+        type_comment: None,
+        type_params: [],
+    },
+    is_method: true,
+    is_generator: false,
+    return_statements: [
+        Return {
+            node: Node {
+                start: 371,
+                end: 384,
+            },
+            value: Some(
+                Attribute(
+                    Attribute {
+                        node: Node {
+                            start: 378,
+                            end: 384,
+                        },
+                        value: Name(
+                            Name {
+                                node: Node {
+                                    start: 378,
+                                    end: 382,
+                                },
+                                id: "self",
+                            },
+                        ),
+                        attr: "x",
+                    },
+                ),
+            ),
+        },
+    ],
+    yield_statements: [],
+    raise_statements: [],
+}
+x
+SymbolFlags(
+    INSTANCE_MEMBER,
+)
+- Declarations:
+--:   Variable {
+    declaration_path: DeclarationPath {
+        module_name: "[TYPECHECKER]/test_data/inputs/basic_types.py",
+        node: Node {
+            start: 191,
+            end: 197,
+        },
+    },
+    type_annotation: None,
+    inferred_type_source: Some(
+        Call(
+            Call {
+                node: Node {
+                    start: 200,
+                    end: 208,
+                },
+                func: Name(
+                    Name {
+                        node: Node {
+                            start: 200,
+                            end: 205,
+                        },
+                        id: "float",
+                    },
+                ),
+                args: [
+                    Name(
+                        Name {
+                            node: Node {
+                                start: 206,
+                                end: 207,
+                            },
+                            id: "x",
+                        },
+                    ),
+                ],
+                keywords: [],
+                starargs: None,
+                kwargs: None,
+            },
+        ),
+    ),
+    is_constant: false,
+}
+
+Symbols in __init__ (id: [REDACTED])
+self
+SymbolFlags(
+    0x0,
+)
+- Declarations:
+--:   Parameter {
+    declaration_path: DeclarationPath {
+        module_name: "[TYPECHECKER]/test_data/inputs/basic_types.py",
+        node: Node {
+            start: 146,
+            end: 150,
+        },
+    },
+    parameter_node: Arg {
+        node: Node {
+            start: 146,
+            end: 150,
+        },
+        arg: "self",
+        annotation: None,
+    },
+    type_annotation: None,
+    default_value: None,
+}
+x
+SymbolFlags(
+    0x0,
+)
+- Declarations:
+--:   Parameter {
+    declaration_path: DeclarationPath {
+        module_name: "[TYPECHECKER]/test_data/inputs/basic_types.py",
+        node: Node {
+            start: 152,
+            end: 158,
+        },
+    },
+    parameter_node: Arg {
+        node: Node {
+            start: 152,
+            end: 158,
+        },
+        arg: "x",
+        annotation: Some(
+            Name(
+                Name {
+                    node: Node {
+                        start: 155,
+                        end: 158,
+                    },
+                    id: "int",
+                },
+            ),
+        ),
+    },
+    type_annotation: Some(
+        Name(
+            Name {
+                node: Node {
+                    start: 155,
+                    end: 158,
+                },
+                id: "int",
+            },
+        ),
+    ),
+    default_value: None,
+}
+
+Symbols in add (id: [REDACTED])
+self
+SymbolFlags(
+    0x0,
+)
+- Declarations:
+--:   Parameter {
+    declaration_path: DeclarationPath {
+        module_name: "[TYPECHECKER]/test_data/inputs/basic_types.py",
+        node: Node {
+            start: 235,
+            end: 239,
+        },
+    },
+    parameter_node: Arg {
+        node: Node {
+            start: 235,
+            end: 239,
+        },
+        arg: "self",
+        annotation: None,
+    },
+    type_annotation: None,
+    default_value: None,
+}
+value
+SymbolFlags(
+    0x0,
+)
+- Declarations:
+--:   Parameter {
+    declaration_path: DeclarationPath {
+        module_name: "[TYPECHECKER]/test_data/inputs/basic_types.py",
+        node: Node {
+            start: 241,
+            end: 251,
+        },
+    },
+    parameter_node: Arg {
+        node: Node {
+            start: 241,
+            end: 251,
+        },
+        arg: "value",
+        annotation: Some(
+            Name(
+                Name {
+                    node: Node {
+                        start: 248,
+                        end: 251,
+                    },
+                    id: "int",
+                },
+            ),
+        ),
+    },
+    type_annotation: Some(
+        Name(
+            Name {
+                node: Node {
+                    start: 248,
+                    end: 251,
+                },
+                id: "int",
+            },
+        ),
+    ),
+    default_value: None,
+}
+
+Symbols in func (id: [REDACTED])
+param1
+SymbolFlags(
+    0x0,
+)
+- Declarations:
+--:   Parameter {
+    declaration_path: DeclarationPath {
+        module_name: "[TYPECHECKER]/test_data/inputs/basic_types.py",
+        node: Node {
+            start: 62,
+            end: 73,
+        },
+    },
+    parameter_node: Arg {
+        node: Node {
+            start: 62,
+            end: 73,
+        },
+        arg: "param1",
+        annotation: Some(
+            Name(
+                Name {
+                    node: Node {
+                        start: 70,
+                        end: 73,
+                    },
+                    id: "int",
+                },
+            ),
+        ),
+    },
+    type_annotation: Some(
+        Name(
+            Name {
+                node: Node {
+                    start: 70,
+                    end: 73,
+                },
+                id: "int",
+            },
+        ),
+    ),
+    default_value: None,
+}
+
+Symbols in get_attr (id: [REDACTED])
+self
+SymbolFlags(
+    0x0,
+)
+- Declarations:
+--:   Parameter {
+    declaration_path: DeclarationPath {
+        module_name: "[TYPECHECKER]/test_data/inputs/basic_types.py",
+        node: Node {
+            start: 299,
+            end: 303,
+        },
+    },
+    parameter_node: Arg {
+        node: Node {
+            start: 299,
+            end: 303,
+        },
+        arg: "self",
+        annotation: None,
+    },
+    type_annotation: None,
+    default_value: None,
+}
+
+Symbols in get_x (id: [REDACTED])
+self
+SymbolFlags(
+    0x0,
+)
+- Declarations:
+--:   Parameter {
+    declaration_path: DeclarationPath {
+        module_name: "[TYPECHECKER]/test_data/inputs/basic_types.py",
+        node: Node {
+            start: 353,
+            end: 357,
+        },
+    },
+    parameter_node: Arg {
+        node: Node {
+            start: 353,
+            end: 357,
+        },
+        arg: "self",
+        annotation: None,
+    },
+    type_annotation: None,
+    default_value: None,
+}
+
+Symbols in global (id: [REDACTED])
+C
+SymbolFlags(
+    0x0,
+)
+- Declarations:
+--:   Class {
+    name: "C",
+    declaration_path: DeclarationPath {
+        module_name: "[TYPECHECKER]/test_data/inputs/basic_types.py",
+        node: Node {
+            start: 103,
+            end: 386,
+        },
+    },
+    methods: [
+        "__init__",
+        "add",
+        "get_attr",
+        "get_x",
+    ],
+    special: false,
+}
+a
+SymbolFlags(
+    0x0,
+)
+- Declarations:
+--:   Variable {
+    declaration_path: DeclarationPath {
+        module_name: "[TYPECHECKER]/test_data/inputs/basic_types.py",
+        node: Node {
+            start: 0,
+            end: 5,
+        },
+    },
+    type_annotation: None,
+    inferred_type_source: Some(
+        Constant(
+            Constant {
+                node: Node {
+                    start: 4,
+                    end: 5,
+                },
+                value: 1,
+            },
+        ),
+    ),
+    is_constant: false,
+}
+b
+SymbolFlags(
+    0x0,
+)
+- Declarations:
+--:   Variable {
+    declaration_path: DeclarationPath {
+        module_name: "[TYPECHECKER]/test_data/inputs/basic_types.py",
+        node: Node {
+            start: 6,
+            end: 13,
+        },
+    },
+    type_annotation: None,
+    inferred_type_source: Some(
+        Constant(
+            Constant {
+                node: Node {
+                    start: 10,
+                    end: 13,
+                },
+                value: "1",
+            },
+        ),
+    ),
+    is_constant: false,
+}
+c
+SymbolFlags(
+    0x0,
+)
+- Declarations:
+--:   Variable {
+    declaration_path: DeclarationPath {
+        module_name: "[TYPECHECKER]/test_data/inputs/basic_types.py",
+        node: Node {
+            start: 14,
+            end: 22,
+        },
+    },
+    type_annotation: None,
+    inferred_type_source: Some(
+        Constant(
+            Constant {
+                node: Node {
+                    start: 18,
+                    end: 22,
+                },
+                value: true,
+            },
+        ),
+    ),
+    is_constant: false,
+}
+d
+SymbolFlags(
+    0x0,
+)
+- Declarations:
+--:   Variable {
+    declaration_path: DeclarationPath {
+        module_name: "[TYPECHECKER]/test_data/inputs/basic_types.py",
+        node: Node {
+            start: 23,
+            end: 32,
+        },
+    },
+    type_annotation: None,
+    inferred_type_source: Some(
+        Constant(
+            Constant {
+                node: Node {
+                    start: 27,
+                    end: 32,
+                },
+                value: false,
+            },
+        ),
+    ),
+    is_constant: false,
+}
+func
+SymbolFlags(
+    0x0,
+)
+- Declarations:
+--:   Function {
+    declaration_path: DeclarationPath {
+        module_name: "[TYPECHECKER]/test_data/inputs/basic_types.py",
+        node: Node {
+            start: 53,
+            end: 103,
+        },
+    },
+    function_node: FunctionDef {
+        node: Node {
+            start: 53,
+            end: 103,
+        },
+        name: "func",
+        args: Arguments {
+            node: Node {
+                start: 62,
+                end: 73,
+            },
+            posonlyargs: [],
+            args: [
+                Arg {
+                    node: Node {
+                        start: 62,
+                        end: 73,
+                    },
+                    arg: "param1",
+                    annotation: Some(
+                        Name(
+                            Name {
+                                node: Node {
+                                    start: 70,
+                                    end: 73,
+                                },
+                                id: "int",
+                            },
+                        ),
+                    ),
+                },
+            ],
+            vararg: None,
+            kwonlyargs: [],
+            kw_defaults: [],
+            kwarg: None,
+            defaults: [],
+        },
+        body: [
+            Return(
+                Return {
+                    node: Node {
+                        start: 84,
+                        end: 101,
+                    },
+                    value: Some(
+                        BinOp(
+                            BinOp {
+                                node: Node {
+                                    start: 91,
+                                    end: 101,
+                                },
+                                op: Add,
+                                left: Name(
+                                    Name {
+                                        node: Node {
+                                            start: 91,
+                                            end: 97,
+                                        },
+                                        id: "param1",
+                                    },
+                                ),
+                                right: Name(
+                                    Name {
+                                        node: Node {
+                                            start: 100,
+                                            end: 101,
+                                        },
+                                        id: "a",
+                                    },
+                                ),
+                            },
+                        ),
+                    ),
+                },
+            ),
+        ],
+        decorator_list: [],
+        returns: Some(
+            Name(
+                Name {
+                    node: Node {
+                        start: 78,
+                        end: 81,
+                    },
+                    id: "int",
+                },
+            ),
+        ),
+        type_comment: None,
+        type_params: [],
+    },
+    is_method: false,
+    is_generator: false,
+    return_statements: [
+        Return {
+            node: Node {
+                start: 84,
+                end: 101,
+            },
+            value: Some(
+                BinOp(
+                    BinOp {
+                        node: Node {
+                            start: 91,
+                            end: 101,
+                        },
+                        op: Add,
+                        left: Name(
+                            Name {
+                                node: Node {
+                                    start: 91,
+                                    end: 97,
+                                },
+                                id: "param1",
+                            },
+                        ),
+                        right: Name(
+                            Name {
+                                node: Node {
+                                    start: 100,
+                                    end: 101,
+                                },
+                                id: "a",
+                            },
+                        ),
+                    },
+                ),
+            ),
+        },
+    ],
+    yield_statements: [],
+    raise_statements: [],
+}
+l
+SymbolFlags(
+    0x0,
+)
+- Declarations:
+--:   Variable {
+    declaration_path: DeclarationPath {
+        module_name: "[TYPECHECKER]/test_data/inputs/basic_types.py",
+        node: Node {
+            start: 448,
+            end: 459,
+        },
+    },
+    type_annotation: None,
+    inferred_type_source: Some(
+        List(
+            List {
+                node: Node {
+                    start: 452,
+                    end: 459,
+                },
+                elements: [
+                    Constant(
+                        Constant {
+                            node: Node {
+                                start: 453,
+                                end: 454,
+                            },
+                            value: 1,
+                        },
+                    ),
+                    Constant(
+                        Constant {
+                            node: Node {
+                                start: 455,
+                                end: 456,
+                            },
+                            value: 2,
+                        },
+                    ),
+                    Constant(
+                        Constant {
+                            node: Node {
+                                start: 457,
+                                end: 458,
+                            },
+                            value: 3,
+                        },
+                    ),
+                ],
+            },
+        ),
+    ),
+    is_constant: false,
+}
+s
+SymbolFlags(
+    0x0,
+)
+- Declarations:
+--:   Variable {
+    declaration_path: DeclarationPath {
+        module_name: "[TYPECHECKER]/test_data/inputs/basic_types.py",
+        node: Node {
+            start: 481,
+            end: 492,
+        },
+    },
+    type_annotation: None,
+    inferred_type_source: Some(
+        Set(
+            Set {
+                node: Node {
+                    start: 485,
+                    end: 492,
+                },
+                elements: [
+                    Constant(
+                        Constant {
+                            node: Node {
+                                start: 486,
+                                end: 487,
+                            },
+                            value: 1,
+                        },
+                    ),
+                    Constant(
+                        Constant {
+                            node: Node {
+                                start: 488,
+                                end: 489,
+                            },
+                            value: 2,
+                        },
+                    ),
+                    Constant(
+                        Constant {
+                            node: Node {
+                                start: 490,
+                                end: 491,
+                            },
+                            value: 3,
+                        },
+                    ),
+                ],
+            },
+        ),
+    ),
+    is_constant: false,
+}
+t
+SymbolFlags(
+    0x0,
+)
+- Declarations:
+--:   Variable {
+    declaration_path: DeclarationPath {
+        module_name: "[TYPECHECKER]/test_data/inputs/basic_types.py",
+        node: Node {
+            start: 386,
+            end: 394,
+        },
+    },
+    type_annotation: None,
+    inferred_type_source: Some(
+        Call(
+            Call {
+                node: Node {
+                    start: 390,
+                    end: 394,
+                },
+                func: Name(
+                    Name {
+                        node: Node {
+                            start: 390,
+                            end: 391,
+                        },
+                        id: "C",
+                    },
+                ),
+                args: [
+                    Constant(
+                        Constant {
+                            node: Node {
+                                start: 392,
+                                end: 393,
+                            },
+                            value: 0,
+                        },
+                    ),
+                ],
+                keywords: [],
+                starargs: None,
+                kwargs: None,
+            },
+        ),
+    ),
+    is_constant: false,
+}
+
+Scopes:
+
+Scope C(id: [REDACTED])
+Scope __init__(id: [REDACTED])
+Scope add(id: [REDACTED])
+Scope func(id: [REDACTED])
+Scope get_attr(id: [REDACTED])
+Scope get_x(id: [REDACTED])
+Scope global(id: 0, parent_id: None
+
