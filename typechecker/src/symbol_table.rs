@@ -238,7 +238,7 @@ impl Class {
             .to_str()
             .expect("file name is not valid")
             .to_string();
-        qualname.push_str(".");
+        qualname.push('.');
         qualname.push_str(&self.name);
         log::debug!("Qualname: {}", qualname);
         qualname

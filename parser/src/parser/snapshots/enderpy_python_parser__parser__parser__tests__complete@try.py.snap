@@ -444,7 +444,7 @@ Module {
                                     context_expr: Call(
                                         Call {
                                             node: Node {
-                                                start: 413,
+                                                start: 402,
                                                 end: 475,
                                             },
                                             func: Attribute(
@@ -583,7 +583,7 @@ Module {
                                                 Call(
                                                     Call {
                                                         node: Node {
-                                                            start: 547,
+                                                            start: 536,
                                                             end: 641,
                                                         },
                                                         func: Attribute(
@@ -686,7 +686,7 @@ Module {
                                                         value: Call(
                                                             Call {
                                                                 node: Node {
-                                                                    start: 702,
+                                                                    start: 689,
                                                                     end: 705,
                                                                 },
                                                                 func: Attribute(
@@ -732,7 +732,7 @@ Module {
                                                 Call(
                                                     Call {
                                                         node: Node {
-                                                            start: 757,
+                                                            start: 732,
                                                             end: 759,
                                                         },
                                                         func: Attribute(
@@ -786,7 +786,7 @@ Module {
                                                             value: Call(
                                                                 Call {
                                                                     node: Node {
-                                                                        start: 798,
+                                                                        start: 785,
                                                                         end: 800,
                                                                     },
                                                                     func: Attribute(
@@ -821,7 +821,7 @@ Module {
                                                 Call(
                                                     Call {
                                                         node: Node {
-                                                            start: 824,
+                                                            start: 813,
                                                             end: 916,
                                                         },
                                                         func: Attribute(
@@ -913,7 +913,7 @@ Module {
                                                                     Call(
                                                                         Call {
                                                                             node: Node {
-                                                                                start: 964,
+                                                                                start: 947,
                                                                                 end: 986,
                                                                             },
                                                                             func: Attribute(
@@ -1040,7 +1040,7 @@ Module {
                                 Call(
                                     Call {
                                         node: Node {
-                                            start: 1056,
+                                            start: 1044,
                                             end: 1103,
                                         },
                                         func: Attribute(
@@ -1143,7 +1143,7 @@ Module {
                                         value: Call(
                                             Call {
                                                 node: Node {
-                                                    start: 1148,
+                                                    start: 1135,
                                                     end: 1151,
                                                 },
                                                 func: Attribute(

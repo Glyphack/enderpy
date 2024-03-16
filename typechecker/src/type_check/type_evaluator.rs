@@ -76,12 +76,11 @@ impl TypeEvaluator {
                 let called_name = *call.func.clone();
                 let f_type = self.get_type(&called_name)?;
                 if let PythonType::Callable(c) = &f_type {
-                    let return_type = self.get_return_type_of_callable(&c, &call.args);
+                    let return_type = self.get_return_type_of_callable(c, &call.args);
                     Ok(return_type)
                 } else if let PythonType::Class(c) = &f_type {
                     Ok(f_type)
                 } else if let PythonType::TypeVar(t) = &f_type {
-                    dbg!(&call);
                     let Some(first_arg) = call.args.first() else {
                         bail!("TypeVar must be called with a name");
                     };
@@ -93,9 +92,26 @@ impl TypeEvaluator {
                         _ => panic!("TypeVar must be called with at least one arg"),
                     };
 
+                    let bounds: Vec<PythonType> = call
+                        .args
+                        .iter()
+                        .skip(1)
+                        .map(|arg| self.get_type(arg).unwrap_or(PythonType::Unknown))
+                        .collect();
+
+                    // Disallow specifying a single bound
+                    if bounds.len() == 1 {
+                        bail!("TypeVar must be called with at least two bounds");
+                    }
+
+                    // Disallow specifying a type var as a bound
+                    if bounds.iter().any(|b| matches!(b, PythonType::TypeVar(_))) {
+                        bail!("TypeVar cannot be used as a bound");
+                    }
+
                     Ok(PythonType::TypeVar(TypeVar {
                         name: type_name.to_string(),
-                        bounds: vec![],
+                        bounds,
                     }))
                 } else {
                     bail!(
@@ -980,8 +996,8 @@ impl TypeEvaluator {
         f_type: &CallableType,
         args: &[Expression],
     ) -> PythonType {
-        let return_type = f_type.return_type.clone();
-        return_type
+        
+        f_type.return_type.clone()
     }
 }
 
@@ -1266,11 +1282,11 @@ struct DumpTypes {
     pub enderpy_file: EnderpyFile,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 struct SnapshtType {
     pub position: Position,
     pub symbol_text: String,
-    pub typ: PythonType,
+    pub typ: Result<PythonType>,
 }
 
 impl DumpTypes {
@@ -1288,7 +1304,7 @@ impl DumpTypes {
 
     /// This function is called on every expression in the ast
     pub fn save_type(&mut self, expr: &ast::Expression) {
-        let typ = self.type_eval.get_type(expr).expect("Type eval error");
+        let typ = self.type_eval.get_type(expr);
         log::debug!("save_type: {:#?} => {:#?}", expr, typ);
         let symbol_text =
             self.enderpy_file().source()[expr.get_node().start..expr.get_node().end].to_string();
@@ -1310,7 +1326,7 @@ impl DumpTypes {
         let typ = SnapshtType {
             position: self.enderpy_file().get_position(expr.get_node().start),
             symbol_text,
-            typ,
+            typ: Ok(typ),
         };
         self.types.push(typ);
     }
@@ -1485,7 +1501,7 @@ mod tests {
         let result = type_eval_visitor.types;
 
         // sort result by key
-        let mut result_sorted = result.clone().into_iter().collect::<Vec<_>>();
+        let mut result_sorted = result.into_iter().collect::<Vec<_>>();
         result_sorted.sort_by(|a, b| a.position.line.cmp(&b.position.line));
 
         let mut str = String::new();
@@ -1502,7 +1518,10 @@ mod tests {
                 str.push_str("\nExpr types in the line --->:\n");
                 last_line = line;
             }
-            str.push_str(&format!("        {:?} => {:?}\n", r.symbol_text, r.typ));
+            match r.typ {
+                Ok(t) => str.push_str(&format!("        {:?} => {}\n", r.symbol_text, t)),
+                Err(e) => str.push_str(&format!("        {:?} => {:?}\n", r.symbol_text, e)),
+            }
         }
         str.push_str("\n---\n");
 

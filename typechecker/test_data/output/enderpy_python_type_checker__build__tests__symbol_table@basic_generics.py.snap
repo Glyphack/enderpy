@@ -1,9 +1,99 @@
 ---
 source: typechecker/src/build.rs
-description: "from typing import TypeVar, Generic, Sequence\nfrom logging import Logger\n\nT = TypeVar('T')\n\ndef first(l: Sequence[T]) -> T:\n    return l[0]\n\nfirst([1, 2, 3]) # return type should be int\n\n# class LoggedVar(Generic[T]):\n#     def __init__(self, value: T, name: str, logger: Logger) -> None:\n#         self.name = name\n#         self.logger = logger\n#         self.value = value\n#\n#     def set(self, new: T) -> None:\n#         self.log('Set ' + repr(self.value))\n#         self.value = new\n#\n#     def get(self) -> T:\n#         self.log('Get ' + repr(self.value))\n#         return self.value\n#\n#     def log(self, message: str) -> None:\n#         self.logger.info('{}: {}'.format(self.name, message))\n"
+description: "from typing import TypeVar, Generic, Sequence\nfrom logging import Logger\n\nT = TypeVar('T')\n\ndef first(l: Sequence[T]) -> T:\n    return l[0]\n\nfirst([1, 2, 3]) # return type type parameter\n\n\nAnyStr = TypeVar('AnyStr', str, bytes)\n\ndef concat(x: AnyStr, y: AnyStr) -> AnyStr:\n    return x + y\n\n# > Specifying a single constraint is disallowed.\n\nBadConstraint1 = TypeVar('BadConstraint1', str)  # Type error\n\n# > Note: those types cannot be parameterized by type variables\n\nBadConstraint2 = TypeVar('BadConstraint2', str, T)  # Type error\n\n\n# class LoggedVar(Generic[T]):\n#     def __init__(self, value: T, name: str, logger: Logger) -> None:\n#         self.name = name\n#         self.logger = logger\n#         self.value = value\n#\n#     def set(self, new: T) -> None:\n#         self.log('Set ' + repr(self.value))\n#         self.value = new\n#\n#     def get(self) -> T:\n#         self.log('Get ' + repr(self.value))\n#         return self.value\n#\n#     def log(self, message: str) -> None:\n#         self.logger.info('{}: {}'.format(self.name, message))\n"
 expression: result
 input_file: typechecker/test_data/inputs/basic_generics.py
 ---
+Symbols in concat (id: [REDACTED])
+x
+SymbolFlags(
+    0x0,
+)
+- Declarations:
+--:   Parameter {
+    declaration_path: DeclarationPath {
+        module_name: "[TYPECHECKER]/test_data/inputs/basic_generics.py",
+        node: Node {
+            start: 240,
+            end: 249,
+        },
+    },
+    parameter_node: Arg {
+        node: Node {
+            start: 240,
+            end: 249,
+        },
+        arg: "x",
+        annotation: Some(
+            Name(
+                Name {
+                    node: Node {
+                        start: 243,
+                        end: 249,
+                    },
+                    id: "AnyStr",
+                },
+            ),
+        ),
+    },
+    type_annotation: Some(
+        Name(
+            Name {
+                node: Node {
+                    start: 243,
+                    end: 249,
+                },
+                id: "AnyStr",
+            },
+        ),
+    ),
+    default_value: None,
+}
+y
+SymbolFlags(
+    0x0,
+)
+- Declarations:
+--:   Parameter {
+    declaration_path: DeclarationPath {
+        module_name: "[TYPECHECKER]/test_data/inputs/basic_generics.py",
+        node: Node {
+            start: 251,
+            end: 260,
+        },
+    },
+    parameter_node: Arg {
+        node: Node {
+            start: 251,
+            end: 260,
+        },
+        arg: "y",
+        annotation: Some(
+            Name(
+                Name {
+                    node: Node {
+                        start: 254,
+                        end: 260,
+                    },
+                    id: "AnyStr",
+                },
+            ),
+        ),
+    },
+    type_annotation: Some(
+        Name(
+            Name {
+                node: Node {
+                    start: 254,
+                    end: 260,
+                },
+                id: "AnyStr",
+            },
+        ),
+    ),
+    default_value: None,
+}
+
 Symbols in first (id: [REDACTED])
 l
 SymbolFlags(
@@ -85,6 +175,198 @@ SymbolFlags(
 }
 
 Symbols in global (id: [REDACTED])
+AnyStr
+SymbolFlags(
+    0x0,
+)
+- Declarations:
+--:   Variable {
+    declaration_path: DeclarationPath {
+        module_name: "[TYPECHECKER]/test_data/inputs/basic_generics.py",
+        node: Node {
+            start: 189,
+            end: 227,
+        },
+    },
+    type_annotation: None,
+    inferred_type_source: Some(
+        Call(
+            Call {
+                node: Node {
+                    start: 198,
+                    end: 227,
+                },
+                func: Name(
+                    Name {
+                        node: Node {
+                            start: 198,
+                            end: 205,
+                        },
+                        id: "TypeVar",
+                    },
+                ),
+                args: [
+                    Constant(
+                        Constant {
+                            node: Node {
+                                start: 206,
+                                end: 214,
+                            },
+                            value: "AnyStr",
+                        },
+                    ),
+                    Name(
+                        Name {
+                            node: Node {
+                                start: 216,
+                                end: 219,
+                            },
+                            id: "str",
+                        },
+                    ),
+                    Name(
+                        Name {
+                            node: Node {
+                                start: 221,
+                                end: 226,
+                            },
+                            id: "bytes",
+                        },
+                    ),
+                ],
+                keywords: [],
+                starargs: None,
+                kwargs: None,
+            },
+        ),
+    ),
+    is_constant: false,
+}
+BadConstraint1
+SymbolFlags(
+    0x0,
+)
+- Declarations:
+--:   Variable {
+    declaration_path: DeclarationPath {
+        module_name: "[TYPECHECKER]/test_data/inputs/basic_generics.py",
+        node: Node {
+            start: 342,
+            end: 403,
+        },
+    },
+    type_annotation: None,
+    inferred_type_source: Some(
+        Call(
+            Call {
+                node: Node {
+                    start: 359,
+                    end: 403,
+                },
+                func: Name(
+                    Name {
+                        node: Node {
+                            start: 359,
+                            end: 366,
+                        },
+                        id: "TypeVar",
+                    },
+                ),
+                args: [
+                    Constant(
+                        Constant {
+                            node: Node {
+                                start: 367,
+                                end: 383,
+                            },
+                            value: "BadConstraint1",
+                        },
+                    ),
+                    Name(
+                        Name {
+                            node: Node {
+                                start: 385,
+                                end: 388,
+                            },
+                            id: "str",
+                        },
+                    ),
+                ],
+                keywords: [],
+                starargs: None,
+                kwargs: None,
+            },
+        ),
+    ),
+    is_constant: false,
+}
+BadConstraint2
+SymbolFlags(
+    0x0,
+)
+- Declarations:
+--:   Variable {
+    declaration_path: DeclarationPath {
+        module_name: "[TYPECHECKER]/test_data/inputs/basic_generics.py",
+        node: Node {
+            start: 470,
+            end: 534,
+        },
+    },
+    type_annotation: None,
+    inferred_type_source: Some(
+        Call(
+            Call {
+                node: Node {
+                    start: 487,
+                    end: 534,
+                },
+                func: Name(
+                    Name {
+                        node: Node {
+                            start: 487,
+                            end: 494,
+                        },
+                        id: "TypeVar",
+                    },
+                ),
+                args: [
+                    Constant(
+                        Constant {
+                            node: Node {
+                                start: 495,
+                                end: 511,
+                            },
+                            value: "BadConstraint2",
+                        },
+                    ),
+                    Name(
+                        Name {
+                            node: Node {
+                                start: 513,
+                                end: 516,
+                            },
+                            id: "str",
+                        },
+                    ),
+                    Name(
+                        Name {
+                            node: Node {
+                                start: 518,
+                                end: 519,
+                            },
+                            id: "T",
+                        },
+                    ),
+                ],
+                keywords: [],
+                starargs: None,
+                kwargs: None,
+            },
+        ),
+    ),
+    is_constant: false,
+}
 Generic
 SymbolFlags(
     0x0,
@@ -577,6 +859,171 @@ SymbolFlags(
         package_directory: None,
     },
 }
+concat
+SymbolFlags(
+    0x0,
+)
+- Declarations:
+--:   Function {
+    declaration_path: DeclarationPath {
+        module_name: "[TYPECHECKER]/test_data/inputs/basic_generics.py",
+        node: Node {
+            start: 229,
+            end: 341,
+        },
+    },
+    function_node: FunctionDef {
+        node: Node {
+            start: 229,
+            end: 341,
+        },
+        name: "concat",
+        args: Arguments {
+            node: Node {
+                start: 240,
+                end: 260,
+            },
+            posonlyargs: [],
+            args: [
+                Arg {
+                    node: Node {
+                        start: 240,
+                        end: 249,
+                    },
+                    arg: "x",
+                    annotation: Some(
+                        Name(
+                            Name {
+                                node: Node {
+                                    start: 243,
+                                    end: 249,
+                                },
+                                id: "AnyStr",
+                            },
+                        ),
+                    ),
+                },
+                Arg {
+                    node: Node {
+                        start: 251,
+                        end: 260,
+                    },
+                    arg: "y",
+                    annotation: Some(
+                        Name(
+                            Name {
+                                node: Node {
+                                    start: 254,
+                                    end: 260,
+                                },
+                                id: "AnyStr",
+                            },
+                        ),
+                    ),
+                },
+            ],
+            vararg: None,
+            kwonlyargs: [],
+            kw_defaults: [],
+            kwarg: None,
+            defaults: [],
+        },
+        body: [
+            Return(
+                Return {
+                    node: Node {
+                        start: 277,
+                        end: 289,
+                    },
+                    value: Some(
+                        BinOp(
+                            BinOp {
+                                node: Node {
+                                    start: 284,
+                                    end: 289,
+                                },
+                                op: Add,
+                                left: Name(
+                                    Name {
+                                        node: Node {
+                                            start: 284,
+                                            end: 285,
+                                        },
+                                        id: "x",
+                                    },
+                                ),
+                                right: Name(
+                                    Name {
+                                        node: Node {
+                                            start: 288,
+                                            end: 289,
+                                        },
+                                        id: "y",
+                                    },
+                                ),
+                            },
+                        ),
+                    ),
+                },
+            ),
+        ],
+        decorator_list: [],
+        returns: Some(
+            Name(
+                Name {
+                    node: Node {
+                        start: 265,
+                        end: 271,
+                    },
+                    id: "AnyStr",
+                },
+            ),
+        ),
+        type_comment: None,
+        type_params: [],
+    },
+    is_method: false,
+    is_generator: false,
+    return_statements: [
+        Return {
+            node: Node {
+                start: 277,
+                end: 289,
+            },
+            value: Some(
+                BinOp(
+                    BinOp {
+                        node: Node {
+                            start: 284,
+                            end: 289,
+                        },
+                        op: Add,
+                        left: Name(
+                            Name {
+                                node: Node {
+                                    start: 284,
+                                    end: 285,
+                                },
+                                id: "x",
+                            },
+                        ),
+                        right: Name(
+                            Name {
+                                node: Node {
+                                    start: 288,
+                                    end: 289,
+                                },
+                                id: "y",
+                            },
+                        ),
+                    },
+                ),
+            ),
+        },
+    ],
+    yield_statements: [],
+    raise_statements: [],
+}
 first
 SymbolFlags(
     0x0,
@@ -742,6 +1189,7 @@ SymbolFlags(
 
 Scopes:
 
+Scope concat(id: [REDACTED])
 Scope first(id: [REDACTED])
 Scope global(id: 0, parent_id: None
 

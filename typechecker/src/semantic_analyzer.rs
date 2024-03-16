@@ -12,7 +12,7 @@ use crate::{
     },
     symbol_table::{
         Alias, Class, Declaration, DeclarationPath, Function, Parameter, SymbolFlags, SymbolTable,
-        SymbolTableNode, SymbolTableScope, SymbolTableType, TypeAlias, TypeParameter, Variable,
+        SymbolTableNode, SymbolTableScope, SymbolTableType, TypeAlias, Variable,
     },
 };
 

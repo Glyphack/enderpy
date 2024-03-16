@@ -199,7 +199,11 @@ impl Display for PythonType {
                     .map(|arg| arg.to_string())
                     .collect::<Vec<String>>()
                     .join(", ");
-                let fmt = format!("{}[{}]", class_type.details.name, args_str);
+                let fmt = if args_str.is_empty() {
+                    class_type.details.name.clone()
+                } else {
+                    format!("{}[{}]", class_type.details.name, args_str)
+                };
                 return write!(f, "{}", fmt);
             }
             PythonType::Never => "Never",

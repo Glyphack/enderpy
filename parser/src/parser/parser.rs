@@ -1848,7 +1848,7 @@ impl Parser {
                 }
                 Ok(Kind::Dot) => {
                     let atom = self.parse_atom()?;
-                    self.parse_atribute_ref(node, atom)?
+                    self.parse_attribute_ref(node, atom)?
                 }
                 _ => {
                     let identifier = self.cur_token().value.to_string();
@@ -2346,6 +2346,7 @@ impl Parser {
     // previous primary
     fn parse_primary(&mut self, base: Option<Expression>) -> Result<Expression, ParsingError> {
         let node = self.start_node();
+        let call_node = self.start_node();
         let mut atom_or_primary = if let Some(base) = base {
             base
         } else if is_atom(&self.cur_kind()) {
@@ -2356,7 +2357,7 @@ impl Parser {
 
         let mut primary = if self.at(Kind::Dot) {
             // TODO: does not handle cases like a.b[0].c
-            self.parse_atribute_ref(node, atom_or_primary)
+            self.parse_attribute_ref(node, atom_or_primary)
         } else if self.at(Kind::LeftBrace) {
             // https://docs.python.org/3/reference/expressions.html#slicings
             self.parse_subscript(node, atom_or_primary)
@@ -2417,7 +2418,10 @@ impl Parser {
             self.expect(Kind::RightParen)?;
 
             Ok(Expression::Call(Box::new(Call {
-                node: self.finish_node(node),
+                node: Node {
+                    start: atom_or_primary.get_node().start,
+                    end: self.finish_node(call_node).end,
+                },
                 func: Box::new(atom_or_primary),
                 args: positional_args,
                 keywords: keyword_args,
@@ -2491,7 +2495,7 @@ impl Parser {
         Ok((positional_args, keyword_args))
     }
 
-    fn parse_atribute_ref(
+    fn parse_attribute_ref(
         &mut self,
         node: Node,
         value: Expression,
