@@ -21,7 +21,7 @@ use crate::{
     nodes::EnderpyFile,
     semantic_analyzer::get_member_access_info,
     symbol_table::{self, Class, Declaration, LookupSymbolRequest, SymbolTable, SymbolTableNode},
-    type_check::types::ClassType,
+    type_check::types::{ClassType, TypeVar},
 };
 
 const LITERAL_TYPE_PARAMETER_MSG: &str = "Type arguments for 'Literal' must be None, a literal value (int, bool, str, or bytes), or an enum value";
@@ -75,8 +75,35 @@ impl TypeEvaluator {
             ast::Expression::Call(call) => {
                 let called_name = *call.func.clone();
                 let f_type = self.get_type(&called_name)?;
-                log::debug!("f_type: {:?}", f_type);
-                Ok(f_type)
+                if let PythonType::Callable(c) = &f_type {
+                    let return_type = self.get_return_type_of_callable(&c, &call.args);
+                    Ok(return_type)
+                } else if let PythonType::Class(c) = &f_type {
+                    Ok(f_type)
+                } else if let PythonType::TypeVar(t) = &f_type {
+                    dbg!(&call);
+                    let Some(first_arg) = call.args.first() else {
+                        bail!("TypeVar must be called with a name");
+                    };
+                    let type_name = match first_arg {
+                        ast::Expression::Constant(str) => match &str.value {
+                            ast::ConstantValue::Str(s) => s,
+                            _ => panic!("TypeVar first arg must be a string"),
+                        },
+                        _ => panic!("TypeVar must be called with at least one arg"),
+                    };
+
+                    Ok(PythonType::TypeVar(TypeVar {
+                        name: type_name.to_string(),
+                        bounds: vec![],
+                    }))
+                } else {
+                    bail!(
+                        "{:?} is not callable. it has type {:?}",
+                        called_name,
+                        f_type
+                    );
+                }
             }
             ast::Expression::List(l) => {
                 let final_elm_type = self.get_sequence_type_from_elements(&l.elements);
@@ -293,7 +320,14 @@ impl TypeEvaluator {
                     return self.get_builtin_type(&name.id).expect("typeshed");
                 };
 
-                PythonType::Unknown
+                let typ = self.infer_type_from_symbol_table(&name.id, Some(name.node.start));
+                match typ {
+                    Ok(t) => t,
+                    Err(e) => {
+                        log::debug!("error getting type from annotation: {:?}", e);
+                        PythonType::Unknown
+                    }
+                }
             }
             Expression::Constant(c) => {
                 if let ast::ConstantValue::None = c.value {
@@ -351,6 +385,7 @@ impl TypeEvaluator {
         expr_type
     }
 
+    /// Get the python type of a name from the symbol table
     fn infer_type_from_symbol_table(
         &self,
         name: &str,
@@ -444,7 +479,10 @@ impl TypeEvaluator {
                 Declaration::TypeAlias(_) => Ok(PythonType::Unknown),
                 Declaration::Class(c) => {
                     if c.get_qualname() == "typing.TypeVar" {
-                        Ok(PythonType::Type)
+                        Ok(PythonType::TypeVar(TypeVar {
+                            name: "".to_string(),
+                            bounds: vec![],
+                        }))
                     } else {
                         Ok(PythonType::Class(ClassType::new(c.clone(), vec![])))
                     }
@@ -935,6 +973,16 @@ impl TypeEvaluator {
             .get_scope(&c.details.declaration_path.node)
             .unwrap_or_else(|| panic!("Scope not found for: {:?}", c.details.declaration_path))
     }
+
+    // TODO: still not sure if this function should infer type of a type parameter
+    fn get_return_type_of_callable(
+        &self,
+        f_type: &CallableType,
+        args: &[Expression],
+    ) -> PythonType {
+        let return_type = f_type.return_type.clone();
+        return_type
+    }
 }
 
 impl TraversalVisitorImmutGeneric<PythonType> for TypeEvaluator {
@@ -1240,7 +1288,7 @@ impl DumpTypes {
 
     /// This function is called on every expression in the ast
     pub fn save_type(&mut self, expr: &ast::Expression) {
-        let typ = self.type_eval.get_type(expr).unwrap_or(PythonType::Unknown);
+        let typ = self.type_eval.get_type(expr).expect("Type eval error");
         log::debug!("save_type: {:#?} => {:#?}", expr, typ);
         let symbol_text =
             self.enderpy_file().source()[expr.get_node().start..expr.get_node().end].to_string();

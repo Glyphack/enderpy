@@ -26,7 +26,7 @@ pub enum PythonType {
     Callable(Box<CallableType>),
     Class(ClassType),
     Never,
-    Type,
+    TypeVar(TypeVar),
 }
 
 impl PythonType {
@@ -136,6 +136,18 @@ impl PartialEq for ClassType {
     }
 }
 
+#[derive(Debug, Clone)]
+pub struct TypeVar {
+    pub name: String,
+    pub bounds: Vec<PythonType>,
+}
+
+impl PartialEq for TypeVar {
+    fn eq(&self, other: &Self) -> bool {
+        self.name == other.name && self.bounds == other.bounds
+    }
+}
+
 /// https://peps.python.org/pep-0586/
 #[derive(Debug, Clone, PartialEq)]
 pub struct KnownValue {
@@ -203,7 +215,15 @@ impl Display for PythonType {
                     .join(", ");
                 return write!(f, "Union[{}]", values);
             }
-            PythonType::Type => "Type Alias",
+            PythonType::TypeVar(type_var) => {
+                let bounds = type_var
+                    .bounds
+                    .iter()
+                    .map(|v| v.to_string())
+                    .collect::<Vec<String>>()
+                    .join(", ");
+                return write!(f, "TypeVar[{}, {}]", type_var.name, bounds);
+            }
         };
 
         write!(f, "{}", type_str)

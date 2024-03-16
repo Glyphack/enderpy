@@ -6,6 +6,8 @@ T = TypeVar('T')
 def first(l: Sequence[T]) -> T:
     return l[0]
 
+first([1, 2, 3]) # return type type parameter
+
 # class LoggedVar(Generic[T]):
 #     def __init__(self, value: T, name: str, logger: Logger) -> None:
 #         self.name = name

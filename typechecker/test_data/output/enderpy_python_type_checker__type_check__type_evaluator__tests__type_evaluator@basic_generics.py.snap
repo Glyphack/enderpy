@@ -1,19 +1,26 @@
 ---
 source: typechecker/src/type_check/type_evaluator.rs
-description: "1: from typing import TypeVar, Generic, Sequence\n2: from logging import Logger\n3: \n4: T = TypeVar('T')\n5: \n6: def first(l: Sequence[T]) -> T:\n7:     return l[0]\n8: \n9: # class LoggedVar(Generic[T]):\n10: #     def __init__(self, value: T, name: str, logger: Logger) -> None:\n11: #         self.name = name\n12: #         self.logger = logger\n13: #         self.value = value\n14: #\n15: #     def set(self, new: T) -> None:\n16: #         self.log('Set ' + repr(self.value))\n17: #         self.value = new\n18: #\n19: #     def get(self) -> T:\n20: #         self.log('Get ' + repr(self.value))\n21: #         return self.value\n22: #\n23: #     def log(self, message: str) -> None:\n24: #         self.logger.info('{}: {}'.format(self.name, message))\n"
+description: "1: from typing import TypeVar, Generic, Sequence\n2: from logging import Logger\n3: \n4: T = TypeVar('T')\n5: \n6: def first(l: Sequence[T]) -> T:\n7:     return l[0]\n8: \n9: first([1, 2, 3]) # return type type parameter\n10: \n11: # class LoggedVar(Generic[T]):\n12: #     def __init__(self, value: T, name: str, logger: Logger) -> None:\n13: #         self.name = name\n14: #         self.logger = logger\n15: #         self.value = value\n16: #\n17: #     def set(self, new: T) -> None:\n18: #         self.log('Set ' + repr(self.value))\n19: #         self.value = new\n20: #\n21: #     def get(self) -> T:\n22: #         self.log('Get ' + repr(self.value))\n23: #         return self.value\n24: #\n25: #     def log(self, message: str) -> None:\n26: #         self.logger.info('{}: {}'.format(self.name, message))\n"
 expression: result
 input_file: typechecker/test_data/inputs/basic_generics.py
 ---
 Line 4: T = TypeVar('T')
 
 Expr types in the line --->:
-        "TypeVar('T')" => Type
+        "TypeVar('T')" => TypeVar(TypeVar { name: "T", bounds: [] })
 
 ---
 Line 7:     return l[0]
 
 Expr types in the line --->:
-        "l[0]" => Class(ClassType { details: Class { name: "Sequence", declaration_path: DeclarationPath { module_name: [TYPESHED].stdlib/typing.pyi", node: Node { start: 15280, end: 15813 } }, methods: ["__getitem__", "__getitem__", "index", "count", "__contains__", "__iter__", "__reversed__"], special: false }, type_parameters: [Unknown] })
+        "l[0]" => Class(ClassType { details: Class { name: "Sequence", declaration_path: DeclarationPath { module_name: [TYPESHED].stdlib/typing.pyi", node: Node { start: 15280, end: 15813 } }, methods: ["__getitem__", "__getitem__", "index", "count", "__contains__", "__iter__", "__reversed__"], special: false }, type_parameters: [TypeVar(TypeVar { name: "T", bounds: [] })] })
+
+---
+Line 9: first([1, 2, 3]) # return type type parameter
+
+Expr types in the line --->:
+        "first([1, 2, 3]) # return type type parameter" => TypeVar(TypeVar { name: "T", bounds: [] })
+        "[1, 2, 3]" => Class(ClassType { details: Class { name: "list", declaration_path: DeclarationPath { module_name: [TYPESHED].stdlib/builtins.pyi", node: Node { start: 7961, end: 12343 } }, methods: ["__new__", "__new__", "real", "imag", "numerator", "denominator", "conjugate", "bit_length", "__add__", "__sub__", "__mul__", "__floordiv__", "__truediv__", "__mod__", "__divmod__", "__radd__", "__rsub__", "__rmul__", "__rfloordiv__", "__rtruediv__", "__rmod__", "__rdivmod__", "__pow__", "__pow__", "__pow__", "__pow__", "__pow__", "__pow__", "__rpow__", "__and__", "__or__", "__xor__", "__lshift__", "__rshift__", "__rand__", "__ror__", "__rxor__", "__rlshift__", "__rrshift__", "__neg__", "__pos__", "__invert__", "__trunc__", "__ceil__", "__floor__", "__round__", "__getnewargs__", "__eq__", "__ne__", "__lt__", "__le__", "__gt__", "__ge__", "__float__", "__int__", "__abs__", "__hash__", "__bool__", "__index__"], special: false }, type_parameters: [] })] })
 
 ---
 

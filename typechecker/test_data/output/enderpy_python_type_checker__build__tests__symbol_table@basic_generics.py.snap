@@ -1,6 +1,6 @@
 ---
 source: typechecker/src/build.rs
-description: "from typing import TypeVar, Generic, Sequence\nfrom logging import Logger\n\nT = TypeVar('T')\n\ndef first(l: Sequence[T]) -> T:\n    return l[0]\n\n# class LoggedVar(Generic[T]):\n#     def __init__(self, value: T, name: str, logger: Logger) -> None:\n#         self.name = name\n#         self.logger = logger\n#         self.value = value\n#\n#     def set(self, new: T) -> None:\n#         self.log('Set ' + repr(self.value))\n#         self.value = new\n#\n#     def get(self) -> T:\n#         self.log('Get ' + repr(self.value))\n#         return self.value\n#\n#     def log(self, message: str) -> None:\n#         self.logger.info('{}: {}'.format(self.name, message))\n"
+description: "from typing import TypeVar, Generic, Sequence\nfrom logging import Logger\n\nT = TypeVar('T')\n\ndef first(l: Sequence[T]) -> T:\n    return l[0]\n\nfirst([1, 2, 3]) # return type should be int\n\n# class LoggedVar(Generic[T]):\n#     def __init__(self, value: T, name: str, logger: Logger) -> None:\n#         self.name = name\n#         self.logger = logger\n#         self.value = value\n#\n#     def set(self, new: T) -> None:\n#         self.log('Set ' + repr(self.value))\n#         self.value = new\n#\n#     def get(self) -> T:\n#         self.log('Get ' + repr(self.value))\n#         return self.value\n#\n#     def log(self, message: str) -> None:\n#         self.logger.info('{}: {}'.format(self.name, message))\n"
 expression: result
 input_file: typechecker/test_data/inputs/basic_generics.py
 ---
@@ -587,13 +587,13 @@ SymbolFlags(
         module_name: "[TYPECHECKER]/test_data/inputs/basic_generics.py",
         node: Node {
             start: 92,
-            end: 242,
+            end: 141,
         },
     },
     function_node: FunctionDef {
         node: Node {
             start: 92,
-            end: 242,
+            end: 141,
         },
         name: "first",
         args: Arguments {

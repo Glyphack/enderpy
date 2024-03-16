@@ -12,7 +12,7 @@ use crate::{
     },
     symbol_table::{
         Alias, Class, Declaration, DeclarationPath, Function, Parameter, SymbolFlags, SymbolTable,
-        SymbolTableNode, SymbolTableScope, SymbolTableType, TypeAlias, Variable,
+        SymbolTableNode, SymbolTableScope, SymbolTableType, TypeAlias, TypeParameter, Variable,
     },
 };
 
@@ -127,6 +127,41 @@ impl SemanticAnalyzer {
                     self.symbol_table.add_symbol(symbol_node)
                 }
             }
+            // Expression::Call(c) => {
+            //     let Some(func_name) = c.func.as_name() else {
+            //         return;
+            //     };
+            //     let Some(node) =
+            //         self.symbol_table
+            //             .lookup_in_scope(crate::symbol_table::LookupSymbolRequest {
+            //                 name: func_name.id.clone(),
+            //                 position: None,
+            //             })
+            //     else {
+            //         return;
+            //     };
+            //
+            //     if let Declaration::Class(class) = node.last_declaration() {
+            //         if class.get_qualname() == "typing.TypeVar" {
+            //             let declaration_path = DeclarationPath {
+            //                 module_name: self.file.path(),
+            //                 node: c.node,
+            //             };
+            //
+            //             let declaration = Declaration::TypeParameter(TypeParameter {
+            //                 declaration_path,
+            //                 type_parameter_node: c.clone(),
+            //             });
+            //
+            //             let symbol_node = SymbolTableNode {
+            //                 name: a.attr.clone(),
+            //                 declarations: vec![declaration],
+            //                 flags: symbol_flags,
+            //             };
+            //             self.symbol_table.add_symbol(symbol_node)
+            //         }
+            //     }
+            // }
             // TODO: Add other expressions that can be assigned
             _ => {}
         }
