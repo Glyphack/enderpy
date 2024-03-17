@@ -378,16 +378,23 @@ impl SymbolTable {
     }
 
     /// search for symbol in that scope
-    /// if not found search in parent scope
-    /// continue until found or no parent scope
-    /// TODO: This function does not work on the literal test
+    /// if not found search in parent scope continue until found or no parent scope.
+    /// returns the symbol and the scope id where it was found
     pub fn lookup_in_scope(&self, lookup_request: LookupSymbolRequest) -> Option<&SymbolTableNode> {
         log::debug!("Looking up symbol: {}", lookup_request.name);
         let mut scope = self.current_scope();
         loop {
             log::debug!("Looking in scope: {}", scope.name);
             if let Some(symbol) = scope.symbols.get(&lookup_request.name) {
-                return Some(symbol);
+                if !symbol.flags.contains(SymbolFlags::INSTANCE_MEMBER)
+                    && !symbol.flags.contains(SymbolFlags::CLASS_MEMBER)
+                {
+                    return Some(symbol);
+                } else {
+                    log::debug!(
+                        "Symbol is an instance or class member, maybe wanted to look up attribute"
+                    );
+                }
             }
             scope = if let Some(parent) = self.parent_scope(scope) {
                 parent

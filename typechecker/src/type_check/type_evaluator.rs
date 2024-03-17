@@ -43,6 +43,12 @@ pub struct TypeEvalError {
 
 /// Struct for evaluating the type of an expression
 impl TypeEvaluator {
+    pub fn new(symbol_table: SymbolTable, imported_symbol_tables: Vec<SymbolTable>) -> Self {
+        TypeEvaluator {
+            symbol_table,
+            imported_symbol_tables,
+        }
+    }
     /// Entry point function to get type of an expression. The expression passed
     /// to this function must not be annotations, for example if you want to
     /// get the type of a variable declaration you should pass the value of
@@ -1490,11 +1496,7 @@ mod tests {
         let module = manager.get_state("test-file".into()).unwrap();
         let symbol_table = module.get_symbol_table();
 
-        let type_eval = TypeEvaluator {
-            symbol_table,
-            imported_symbol_tables: all_symbol_tables,
-        };
-
+        let type_eval = TypeEvaluator::new(symbol_table, all_symbol_tables);
         let mut type_eval_visitor = DumpTypes::new(module.clone(), type_eval);
         type_eval_visitor.visit_module();
 

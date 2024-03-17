@@ -32,10 +32,7 @@ impl<'a> TypeChecker<'a> {
         TypeChecker {
             errors: vec![],
             options,
-            type_evaluator: TypeEvaluator {
-                symbol_table: symbol_table.clone(),
-                imported_symbol_tables: symbol_tables.clone(),
-            },
+            type_evaluator: TypeEvaluator::new(symbol_table.clone(), symbol_tables.clone()),
         }
     }
 
