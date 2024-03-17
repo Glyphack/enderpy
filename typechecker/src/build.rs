@@ -451,9 +451,9 @@ mod tests {
             settings.add_filter(r"/.*/typeshed", "[TYPESHED]");
             settings.add_filter(
                 r"module_name: .*.typechecker.test_data.inputs.symbol_table..*.py",
-                "module_name: [REDACTED]",
+                "module_name: [path]",
             );
-            settings.add_filter(r"\(id: .*\)", "(id: [REDACTED])");
+            settings.add_filter(r".*id: \d+", "id: [ID]");
             settings.bind(|| {
                 insta::assert_snapshot!(result);
             });

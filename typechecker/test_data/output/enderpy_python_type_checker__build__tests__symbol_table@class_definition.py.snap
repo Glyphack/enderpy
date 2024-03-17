@@ -4,286 +4,51 @@ description: "class c:\n    def __init__(self):\n        a = 1\n        b = a\n 
 expression: result
 input_file: typechecker/test_data/inputs/symbol_table/class_definition.py
 ---
-Symbols in __init__ (id: [REDACTED])
+Symbols in __init__
 a
 SymbolFlags(
     0x0,
 )
 - Declarations:
---:   Variable {
-    declaration_path: DeclarationPath {
-        module_name: "[TYPECHECKER]/test_data/inputs/symbol_table/class_definition.py",
-        node: Node {
-            start: 41,
-            end: 46,
-        },
-    },
-    type_annotation: None,
-    inferred_type_source: Some(
-        Constant(
-            Constant {
-                node: Node {
-                    start: 45,
-                    end: 46,
-                },
-                value: 1,
-            },
-        ),
-    ),
-    is_constant: false,
-}
+--:   Variable declaration at Node { start: 41, end: 46 } in scope id: 973
 b
 SymbolFlags(
     0x0,
 )
 - Declarations:
---:   Variable {
-    declaration_path: DeclarationPath {
-        module_name: "[TYPECHECKER]/test_data/inputs/symbol_table/class_definition.py",
-        node: Node {
-            start: 55,
-            end: 60,
-        },
-    },
-    type_annotation: None,
-    inferred_type_source: Some(
-        Name(
-            Name {
-                node: Node {
-                    start: 59,
-                    end: 60,
-                },
-                id: "a",
-            },
-        ),
-    ),
-    is_constant: false,
-}
+--:   Variable declaration at Node { start: 55, end: 60 } in scope id: 973
 self
 SymbolFlags(
     0x0,
 )
 - Declarations:
---:   Parameter {
-    declaration_path: DeclarationPath {
-        module_name: "[TYPECHECKER]/test_data/inputs/symbol_table/class_definition.py",
-        node: Node {
-            start: 26,
-            end: 30,
-        },
-    },
-    parameter_node: Arg {
-        node: Node {
-            start: 26,
-            end: 30,
-        },
-        arg: "self",
-        annotation: None,
-    },
-    type_annotation: None,
-    default_value: None,
-}
+--:   Parameter declaration at Node { start: 26, end: 30 } in scope id: 973
 
-Symbols in c (id: [REDACTED])
+Symbols in c
 __init__
 SymbolFlags(
     0x0,
 )
 - Declarations:
---:   Function {
-    declaration_path: DeclarationPath {
-        module_name: "[TYPECHECKER]/test_data/inputs/symbol_table/class_definition.py",
-        node: Node {
-            start: 13,
-            end: 80,
-        },
-    },
-    function_node: FunctionDef {
-        node: Node {
-            start: 13,
-            end: 80,
-        },
-        name: "__init__",
-        args: Arguments {
-            node: Node {
-                start: 26,
-                end: 30,
-            },
-            posonlyargs: [],
-            args: [
-                Arg {
-                    node: Node {
-                        start: 26,
-                        end: 30,
-                    },
-                    arg: "self",
-                    annotation: None,
-                },
-            ],
-            vararg: None,
-            kwonlyargs: [],
-            kw_defaults: [],
-            kwarg: None,
-            defaults: [],
-        },
-        body: [
-            AssignStatement(
-                Assign {
-                    node: Node {
-                        start: 41,
-                        end: 46,
-                    },
-                    targets: [
-                        Name(
-                            Name {
-                                node: Node {
-                                    start: 41,
-                                    end: 42,
-                                },
-                                id: "a",
-                            },
-                        ),
-                    ],
-                    value: Constant(
-                        Constant {
-                            node: Node {
-                                start: 45,
-                                end: 46,
-                            },
-                            value: 1,
-                        },
-                    ),
-                },
-            ),
-            AssignStatement(
-                Assign {
-                    node: Node {
-                        start: 55,
-                        end: 60,
-                    },
-                    targets: [
-                        Name(
-                            Name {
-                                node: Node {
-                                    start: 55,
-                                    end: 56,
-                                },
-                                id: "b",
-                            },
-                        ),
-                    ],
-                    value: Name(
-                        Name {
-                            node: Node {
-                                start: 59,
-                                end: 60,
-                            },
-                            id: "a",
-                        },
-                    ),
-                },
-            ),
-            AssignStatement(
-                Assign {
-                    node: Node {
-                        start: 69,
-                        end: 79,
-                    },
-                    targets: [
-                        Attribute(
-                            Attribute {
-                                node: Node {
-                                    start: 69,
-                                    end: 75,
-                                },
-                                value: Name(
-                                    Name {
-                                        node: Node {
-                                            start: 69,
-                                            end: 73,
-                                        },
-                                        id: "self",
-                                    },
-                                ),
-                                attr: "c",
-                            },
-                        ),
-                    ],
-                    value: Name(
-                        Name {
-                            node: Node {
-                                start: 78,
-                                end: 79,
-                            },
-                            id: "b",
-                        },
-                    ),
-                },
-            ),
-        ],
-        decorator_list: [],
-        returns: None,
-        type_comment: None,
-        type_params: [],
-    },
-    is_method: true,
-    is_generator: false,
-    return_statements: [],
-    yield_statements: [],
-    raise_statements: [],
-}
+--:   Function declaration at Node { start: 13, end: 80 } in scope id: 972
 c
 SymbolFlags(
     INSTANCE_MEMBER,
 )
 - Declarations:
---:   Variable {
-    declaration_path: DeclarationPath {
-        module_name: "[TYPECHECKER]/test_data/inputs/symbol_table/class_definition.py",
-        node: Node {
-            start: 69,
-            end: 75,
-        },
-    },
-    type_annotation: None,
-    inferred_type_source: Some(
-        Name(
-            Name {
-                node: Node {
-                    start: 78,
-                    end: 79,
-                },
-                id: "b",
-            },
-        ),
-    ),
-    is_constant: false,
-}
+--:   Variable declaration at Node { start: 69, end: 75 } in scope id: 973
 
-Symbols in global (id: [REDACTED])
+Symbols in global
 c
 SymbolFlags(
     0x0,
 )
 - Declarations:
---:   Class {
-    name: "c",
-    declaration_path: DeclarationPath {
-        module_name: "[TYPECHECKER]/test_data/inputs/symbol_table/class_definition.py",
-        node: Node {
-            start: 0,
-            end: 80,
-        },
-    },
-    methods: [
-        "__init__",
-    ],
-    special: false,
-}
+--:   Class declaration at Node { start: 0, end: 80 } in scope id: 0
 
 Scopes:
 
-Scope __init__(id: [REDACTED])
-Scope c(id: [REDACTED])
-Scope global(id: 0, parent_id: None
+Scope __init__
+Scope c
+Scope global
 

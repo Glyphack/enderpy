@@ -4,216 +4,42 @@ description: "def func(a ,b , /, c = 2, **e): pass\n"
 expression: result
 input_file: typechecker/test_data/inputs/symbol_table/function_definition.py
 ---
-Symbols in func (id: [REDACTED])
+Symbols in func
 a
 SymbolFlags(
     0x0,
 )
 - Declarations:
---:   Parameter {
-    declaration_path: DeclarationPath {
-        module_name: "[TYPECHECKER]/test_data/inputs/symbol_table/function_definition.py",
-        node: Node {
-            start: 9,
-            end: 10,
-        },
-    },
-    parameter_node: Arg {
-        node: Node {
-            start: 9,
-            end: 10,
-        },
-        arg: "a",
-        annotation: None,
-    },
-    type_annotation: None,
-    default_value: None,
-}
+--:   Parameter declaration at Node { start: 9, end: 10 } in scope id: 974
 b
 SymbolFlags(
     0x0,
 )
 - Declarations:
---:   Parameter {
-    declaration_path: DeclarationPath {
-        module_name: "[TYPECHECKER]/test_data/inputs/symbol_table/function_definition.py",
-        node: Node {
-            start: 12,
-            end: 13,
-        },
-    },
-    parameter_node: Arg {
-        node: Node {
-            start: 12,
-            end: 13,
-        },
-        arg: "b",
-        annotation: None,
-    },
-    type_annotation: None,
-    default_value: None,
-}
+--:   Parameter declaration at Node { start: 12, end: 13 } in scope id: 974
 c
 SymbolFlags(
     0x0,
 )
 - Declarations:
---:   Parameter {
-    declaration_path: DeclarationPath {
-        module_name: "[TYPECHECKER]/test_data/inputs/symbol_table/function_definition.py",
-        node: Node {
-            start: 19,
-            end: 24,
-        },
-    },
-    parameter_node: Arg {
-        node: Node {
-            start: 19,
-            end: 24,
-        },
-        arg: "c",
-        annotation: None,
-    },
-    type_annotation: None,
-    default_value: Some(
-        Constant(
-            Constant {
-                node: Node {
-                    start: 23,
-                    end: 24,
-                },
-                value: 2,
-            },
-        ),
-    ),
-}
+--:   Parameter declaration at Node { start: 19, end: 24 } in scope id: 974
 e
 SymbolFlags(
     0x0,
 )
 - Declarations:
---:   Parameter {
-    declaration_path: DeclarationPath {
-        module_name: "[TYPECHECKER]/test_data/inputs/symbol_table/function_definition.py",
-        node: Node {
-            start: 28,
-            end: 29,
-        },
-    },
-    parameter_node: Arg {
-        node: Node {
-            start: 28,
-            end: 29,
-        },
-        arg: "e",
-        annotation: None,
-    },
-    type_annotation: None,
-    default_value: None,
-}
+--:   Parameter declaration at Node { start: 28, end: 29 } in scope id: 974
 
-Symbols in global (id: [REDACTED])
+Symbols in global
 func
 SymbolFlags(
     0x0,
 )
 - Declarations:
---:   Function {
-    declaration_path: DeclarationPath {
-        module_name: "[TYPECHECKER]/test_data/inputs/symbol_table/function_definition.py",
-        node: Node {
-            start: 0,
-            end: 37,
-        },
-    },
-    function_node: FunctionDef {
-        node: Node {
-            start: 0,
-            end: 37,
-        },
-        name: "func",
-        args: Arguments {
-            node: Node {
-                start: 9,
-                end: 29,
-            },
-            posonlyargs: [
-                Arg {
-                    node: Node {
-                        start: 9,
-                        end: 10,
-                    },
-                    arg: "a",
-                    annotation: None,
-                },
-                Arg {
-                    node: Node {
-                        start: 12,
-                        end: 13,
-                    },
-                    arg: "b",
-                    annotation: None,
-                },
-            ],
-            args: [
-                Arg {
-                    node: Node {
-                        start: 19,
-                        end: 24,
-                    },
-                    arg: "c",
-                    annotation: None,
-                },
-            ],
-            vararg: None,
-            kwonlyargs: [],
-            kw_defaults: [],
-            kwarg: Some(
-                Arg {
-                    node: Node {
-                        start: 28,
-                        end: 29,
-                    },
-                    arg: "e",
-                    annotation: None,
-                },
-            ),
-            defaults: [
-                Constant(
-                    Constant {
-                        node: Node {
-                            start: 23,
-                            end: 24,
-                        },
-                        value: 2,
-                    },
-                ),
-            ],
-        },
-        body: [
-            Pass(
-                Pass {
-                    node: Node {
-                        start: 32,
-                        end: 36,
-                    },
-                },
-            ),
-        ],
-        decorator_list: [],
-        returns: None,
-        type_comment: None,
-        type_params: [],
-    },
-    is_method: false,
-    is_generator: false,
-    return_statements: [],
-    yield_statements: [],
-    raise_statements: [],
-}
+--:   Function declaration at Node { start: 0, end: 37 } in scope id: 0
 
 Scopes:
 
-Scope func(id: [REDACTED])
-Scope global(id: 0, parent_id: None
+Scope func
+Scope global
 

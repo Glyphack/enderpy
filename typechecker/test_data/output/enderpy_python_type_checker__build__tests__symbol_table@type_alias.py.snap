@@ -4,133 +4,33 @@ description: "# Show me some examples of type aliasing in Python try to give exa
 expression: result
 input_file: typechecker/test_data/inputs/symbol_table/type_alias.py
 ---
-Symbols in global (id: [REDACTED])
+Symbols in global
 Alias1
 SymbolFlags(
     0x0,
 )
 - Declarations:
---:   TypeAlias {
-    declaration_path: DeclarationPath {
-        module_name: "[TYPECHECKER]/test_data/inputs/symbol_table/type_alias.py",
-        node: Node {
-            start: 81,
-            end: 98,
-        },
-    },
-    type_alias_node: TypeAlias {
-        node: Node {
-            start: 81,
-            end: 98,
-        },
-        name: "Alias1",
-        type_params: [],
-        value: Name(
-            Name {
-                node: Node {
-                    start: 95,
-                    end: 98,
-                },
-                id: "int",
-            },
-        ),
-    },
-}
+--:   Type alias declaration at Node { start: 81, end: 98 } in scope id: 0
 Alias2
 SymbolFlags(
     0x0,
 )
 - Declarations:
---:   TypeAlias {
-    declaration_path: DeclarationPath {
-        module_name: "[TYPECHECKER]/test_data/inputs/symbol_table/type_alias.py",
-        node: Node {
-            start: 99,
-            end: 116,
-        },
-    },
-    type_alias_node: TypeAlias {
-        node: Node {
-            start: 99,
-            end: 116,
-        },
-        name: "Alias2",
-        type_params: [],
-        value: Name(
-            Name {
-                node: Node {
-                    start: 113,
-                    end: 116,
-                },
-                id: "str",
-            },
-        ),
-    },
-}
+--:   Type alias declaration at Node { start: 99, end: 116 } in scope id: 0
 Alias3
 SymbolFlags(
     0x0,
 )
 - Declarations:
---:   TypeAlias {
-    declaration_path: DeclarationPath {
-        module_name: "[TYPECHECKER]/test_data/inputs/symbol_table/type_alias.py",
-        node: Node {
-            start: 117,
-            end: 136,
-        },
-    },
-    type_alias_node: TypeAlias {
-        node: Node {
-            start: 117,
-            end: 136,
-        },
-        name: "Alias3",
-        type_params: [],
-        value: Name(
-            Name {
-                node: Node {
-                    start: 131,
-                    end: 136,
-                },
-                id: "float",
-            },
-        ),
-    },
-}
+--:   Type alias declaration at Node { start: 117, end: 136 } in scope id: 0
 AliasToAnotherAlias
 SymbolFlags(
     0x0,
 )
 - Declarations:
---:   TypeAlias {
-    declaration_path: DeclarationPath {
-        module_name: "[TYPECHECKER]/test_data/inputs/symbol_table/type_alias.py",
-        node: Node {
-            start: 138,
-            end: 171,
-        },
-    },
-    type_alias_node: TypeAlias {
-        node: Node {
-            start: 138,
-            end: 171,
-        },
-        name: "AliasToAnotherAlias",
-        type_params: [],
-        value: Name(
-            Name {
-                node: Node {
-                    start: 165,
-                    end: 171,
-                },
-                id: "Alias1",
-            },
-        ),
-    },
-}
+--:   Type alias declaration at Node { start: 138, end: 171 } in scope id: 0
 
 Scopes:
 
-Scope global(id: 0, parent_id: None
+Scope global
 

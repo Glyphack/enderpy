@@ -54,7 +54,11 @@ impl TypeEvaluator {
     /// get the type of a variable declaration you should pass the value of
     /// the declaration to this function. To get the type of an annotation
     /// expression use get_type_from_annotation
-    pub fn get_type(&self, expr: &ast::Expression) -> Result<PythonType> {
+    pub fn get_type(
+        &self,
+        expr: &ast::Expression,
+        symbol_table_scope: Option<usize>,
+    ) -> Result<PythonType> {
         log::debug!("get_type: {:#?}", expr);
         let r = match expr {
             ast::Expression::Constant(c) => {
@@ -76,11 +80,11 @@ impl TypeEvaluator {
                 if let Some(t) = self.get_builtin_type(&n.id) {
                     return Ok(t);
                 }
-                self.infer_type_from_symbol_table(&n.id, Some(n.node.start))
+                self.infer_type_from_symbol_table(&n.id, Some(n.node.start), symbol_table_scope)
             }
             ast::Expression::Call(call) => {
                 let called_name = *call.func.clone();
-                let f_type = self.get_type(&called_name)?;
+                let f_type = self.get_type(&called_name, None)?;
                 if let PythonType::Callable(c) = &f_type {
                     let return_type = self.get_return_type_of_callable(c, &call.args);
                     Ok(return_type)
@@ -102,7 +106,7 @@ impl TypeEvaluator {
                         .args
                         .iter()
                         .skip(1)
-                        .map(|arg| self.get_type(arg).unwrap_or(PythonType::Unknown))
+                        .map(|arg| self.get_type(arg, None).unwrap_or(PythonType::Unknown))
                         .collect();
 
                     // Disallow specifying a single bound
@@ -188,20 +192,20 @@ impl TypeEvaluator {
             ast::Expression::BoolOp(_) => Ok(self.get_builtin_type("bool").expect("typeshed")),
             ast::Expression::UnaryOp(u) => match u.op {
                 ast::UnaryOperator::Not => Ok(self.get_builtin_type("bool").expect("typeshed")),
-                ast::UnaryOperator::Invert => match self.get_type(&u.operand)? {
+                ast::UnaryOperator::Invert => match self.get_type(&u.operand, None)? {
                     // TODO: dummy
                     PythonType::Class(_) => Ok(PythonType::Unknown),
                     _ => bail!(
                         "cannot invert type {}",
-                        self.get_type(&u.operand)?.to_string()
+                        self.get_type(&u.operand, None)?.to_string()
                     ),
                 },
-                _ => self.get_type(&u.operand),
+                _ => self.get_type(&u.operand, None),
             },
-            ast::Expression::NamedExpr(e) => self.get_type(&e.value),
+            ast::Expression::NamedExpr(e) => self.get_type(&e.value, None),
             ast::Expression::Yield(a) => {
                 let yield_type = match a.value {
-                    Some(ref v) => self.get_type(v)?,
+                    Some(ref v) => self.get_type(v, None)?,
                     None => PythonType::None,
                 };
                 let builtin_type = self.get_builtin_type(builtins::ITER_TYPE);
@@ -268,7 +272,7 @@ impl TypeEvaluator {
                             .symbol_table
                             .lookup_attribute(&a.attr, enclosing_parent_class);
                         let res = match symbol_table_node {
-                            Some(node) => self.get_symbol_node_type(node, None),
+                            Some(node) => self.get_symbol_node_type(node),
                             None => panic!("cannot find symbol table node for attribute access"),
                         };
 
@@ -281,7 +285,7 @@ impl TypeEvaluator {
                 // Case 2
                 // First find the type of the attribute and then find the value in the scope of the attribute
 
-                let value_type = match self.get_type(&a.value) {
+                let value_type = match self.get_type(&a.value, None) {
                     Ok(t) => t,
                     Err(e) => {
                         log::debug!("error getting type of attribute value: {:?}", e);
@@ -297,7 +301,7 @@ impl TypeEvaluator {
                             self.symbol_table.lookup_attribute(&a.attr, class_scope);
                         log::debug!("found symbol table node: {:#?}", symbol_table_node);
                         let result = match symbol_table_node {
-                            Some(node) => self.get_symbol_node_type(node, None),
+                            Some(node) => self.get_symbol_node_type(node),
                             None => Ok(PythonType::Unknown),
                         };
 
@@ -308,12 +312,12 @@ impl TypeEvaluator {
                 }
             }
             ast::Expression::BinOp(b) => Ok(self.bin_op_result_type(
-                &self.get_type(&b.left)?,
-                &self.get_type(&b.right)?,
+                &self.get_type(&b.left, None)?,
+                &self.get_type(&b.right, None)?,
                 &b.op,
             )),
             ast::Expression::Subscript(s) => {
-                let value_type = &self.get_type(&s.value)?;
+                let value_type = &self.get_type(&s.value, None)?;
                 // This only handles container types and TODO
                 Ok(value_type.clone())
             }
@@ -323,7 +327,7 @@ impl TypeEvaluator {
             ast::Expression::Lambda(_) => Ok(PythonType::Unknown),
             ast::Expression::IfExp(_) => Ok(PythonType::Unknown),
             ast::Expression::JoinedStr(_) => Ok(self.get_builtin_type("str").expect("typeshed")),
-            ast::Expression::FormattedValue(f) => self.get_type(&f.value),
+            ast::Expression::FormattedValue(f) => self.get_type(&f.value, None),
         };
 
         log::debug!("get_type for expression: {:#?} => {:?}", expr, r);
@@ -342,7 +346,7 @@ impl TypeEvaluator {
                     return self.get_builtin_type(&name.id).expect("typeshed");
                 };
 
-                let typ = self.infer_type_from_symbol_table(&name.id, Some(name.node.start));
+                let typ = self.infer_type_from_symbol_table(&name.id, Some(name.node.start), None);
                 match typ {
                     Ok(t) => t,
                     Err(e) => {
@@ -412,105 +416,90 @@ impl TypeEvaluator {
         &self,
         name: &str,
         position: Option<usize>,
+        scope_id: Option<usize>,
     ) -> Result<PythonType> {
         let lookup_request = LookupSymbolRequest {
             name: name.to_string(),
             position,
+            scope: scope_id,
         };
         let result = match self.symbol_table.lookup_in_scope(lookup_request) {
-            Some(symbol) => self.get_symbol_node_type(symbol, position),
-            None => Ok(PythonType::Unknown),
+            Some(symbol) => self.get_symbol_node_type(symbol),
+            None => bail!("Symbol not found in symbol table: {}", name),
         };
         log::debug!("infer_type_from_symbol_table: {:?} => {:?}", name, result);
         result
     }
 
     /// Get the type of a symbol node based on declarations
-    fn get_symbol_node_type(
-        &self,
-        symbol: &SymbolTableNode,
-        position: Option<usize>,
-    ) -> Result<PythonType> {
-        log::debug!(
-            "getting type for symbol node: {:#?} at position: {:?}",
-            symbol,
-            position
-        );
-        let decl = match position {
-            // TODO: The position does not work if the symbol is imported. Because I'm passing the
-            // position of the symbol in the file where it is imported. I should pass the position
-            // of the symbol in the file where it is declared
-            Some(position) => Some(symbol.last_declaration()),
-            None => Some(symbol.last_declaration()),
-        };
-
+    fn get_symbol_node_type(&self, symbol: &SymbolTableNode) -> Result<PythonType> {
+        log::debug!("getting type for symbol node: {:#?}", symbol,);
+        let decl = symbol.last_declaration();
+        let decl_scope = decl.declaration_path().scope_id;
         log::debug!("found {} declaration: {:#?}", symbol, decl);
         let result = match decl {
-            Some(decl) => match decl {
-                Declaration::Variable(v) => {
-                    if let Some(type_annotation) = &v.type_annotation {
-                        Ok(self.get_type_from_annotation(type_annotation))
-                    } else if let Some(source) = &v.inferred_type_source {
-                        self.get_type(source)
+            Declaration::Variable(v) => {
+                if let Some(type_annotation) = &v.type_annotation {
+                    Ok(self.get_type_from_annotation(type_annotation))
+                } else if let Some(source) = &v.inferred_type_source {
+                    self.get_type(source, Some(decl_scope))
+                } else {
+                    Ok(PythonType::Unknown)
+                }
+            }
+            Declaration::Function(f) => {
+                let annotated_return_type =
+                    if let Some(type_annotation) = f.function_node.returns.clone() {
+                        self.get_type_from_annotation(&type_annotation)
                     } else {
-                        Ok(PythonType::Unknown)
-                    }
-                }
-                Declaration::Function(f) => {
-                    let annotated_return_type =
-                        if let Some(type_annotation) = f.function_node.returns.clone() {
-                            self.get_type_from_annotation(&type_annotation)
-                        } else {
-                            let inferred_return_type = self.infer_function_return_type(f);
-                            log::debug!("inferred_return_type: {:?}", inferred_return_type);
-                            inferred_return_type
-                        };
+                        let inferred_return_type = self.infer_function_return_type(f);
+                        log::debug!("inferred_return_type: {:?}", inferred_return_type);
+                        inferred_return_type
+                    };
 
-                    let arguments = f.function_node.args.clone();
-                    let name = f.function_node.name.clone();
+                let arguments = f.function_node.args.clone();
+                let name = f.function_node.name.clone();
 
-                    Ok(PythonType::Callable(Box::new(CallableType {
-                        name,
-                        arguments,
-                        return_type: annotated_return_type,
-                    })))
-                }
-                Declaration::Parameter(p) => {
-                    if let Some(type_annotation) = &p.type_annotation {
-                        log::debug!("parameter type annotation: {:?}", type_annotation);
+                Ok(PythonType::Callable(Box::new(CallableType {
+                    name,
+                    arguments,
+                    return_type: annotated_return_type,
+                })))
+            }
+            Declaration::Parameter(p) => {
+                if let Some(type_annotation) = &p.type_annotation {
+                    log::debug!("parameter type annotation: {:?}", type_annotation);
 
-                        Ok(self.get_type_from_annotation(type_annotation))
-                    } else if let Some(default) = &p.default_value {
-                        self.get_type(default)
-                    } else {
-                        Ok(PythonType::Any)
-                    }
+                    Ok(self.get_type_from_annotation(type_annotation))
+                } else if let Some(default) = &p.default_value {
+                    self.get_type(default, None)
+                } else {
+                    Ok(PythonType::Any)
                 }
-                Declaration::Alias(a) => {
-                    log::debug!(
-                        "symbol node {:?} is alias declaration. Resolving it again.",
-                        a.symbol_name,
-                    );
-                    let resolved = self.resolve_alias(a);
-                    match resolved {
-                        Some(node) => self.get_symbol_node_type(node, position),
-                        None => Ok(PythonType::Unknown),
-                    }
+            }
+            Declaration::Alias(a) => {
+                log::debug!(
+                    "symbol node {:?} is alias declaration. Resolving it again.",
+                    a.symbol_name,
+                );
+                let resolved = self.resolve_alias(a);
+                match resolved {
+                    Some(node) => self.get_symbol_node_type(node),
+                    None => Ok(PythonType::Unknown),
                 }
-                Declaration::TypeParameter(_) => Ok(PythonType::Unknown),
-                Declaration::TypeAlias(_) => Ok(PythonType::Unknown),
-                Declaration::Class(c) => {
-                    if c.get_qualname() == "typing.TypeVar" {
-                        Ok(PythonType::TypeVar(TypeVar {
-                            name: "".to_string(),
-                            bounds: vec![],
-                        }))
-                    } else {
-                        Ok(PythonType::Class(ClassType::new(c.clone(), vec![])))
-                    }
+            }
+            Declaration::TypeParameter(_) => Ok(PythonType::Unknown),
+            Declaration::TypeAlias(_) => Ok(PythonType::Unknown),
+            Declaration::Class(c) => {
+                if c.get_qualname() == "typing.TypeVar" {
+                    Ok(PythonType::TypeVar(TypeVar {
+                        name: "".to_string(),
+                        bounds: vec![],
+                    }))
+                } else {
+                    Ok(PythonType::Class(ClassType::new(c.clone(), vec![])))
                 }
-            },
-            None => Ok(PythonType::Any),
+            }
         };
 
         log::debug!(
@@ -524,7 +513,7 @@ impl TypeEvaluator {
     fn get_sequence_type_from_elements(&self, elements: &Vec<ast::Expression>) -> PythonType {
         let mut prev_elm_type = PythonType::Unknown;
         for elm in elements {
-            let elm_type = self.get_type(elm).unwrap_or(PythonType::Unknown);
+            let elm_type = self.get_type(elm, None).unwrap_or(PythonType::Unknown);
             if prev_elm_type == PythonType::Unknown {
                 prev_elm_type = elm_type;
             } else if prev_elm_type != elm_type {
@@ -543,7 +532,7 @@ impl TypeEvaluator {
             let mut yield_types = vec![];
             for yield_statement in &f.yield_statements {
                 if let Some(value) = &yield_statement.value {
-                    yield_types.push(self.get_type(value).unwrap_or(PythonType::Unknown));
+                    yield_types.push(self.get_type(value, None).unwrap_or(PythonType::Unknown));
                 }
             }
             if yield_types.len() == 1 {
@@ -563,7 +552,7 @@ impl TypeEvaluator {
             let mut return_types = vec![];
             for return_statement in &f.return_statements {
                 if let Some(value) = &return_statement.value {
-                    return_types.push(self.get_type(value).unwrap_or(PythonType::Unknown));
+                    return_types.push(self.get_type(value, None).unwrap_or(PythonType::Unknown));
                 }
             }
             if return_types.len() == 1 {
@@ -604,6 +593,7 @@ impl TypeEvaluator {
         let builtin_symbol = bulitins_symbol_table.lookup_in_scope(LookupSymbolRequest {
             name: name.to_string(),
             position: None,
+            scope: None,
         });
         return match builtin_symbol {
             None => {
@@ -861,6 +851,7 @@ impl TypeEvaluator {
                 let mut declaration = match symbol_table.lookup_in_scope(LookupSymbolRequest {
                     name: n.id.clone(),
                     position: Some(n.node.start),
+                    scope: None,
                 }) {
                     Some(s) => s.last_declaration(),
                     None => return None,
@@ -965,6 +956,7 @@ impl TypeEvaluator {
         return symbol_table_with_alias_def?.lookup_in_scope(LookupSymbolRequest {
             name: class_name.clone(),
             position: None,
+            scope: None,
         });
     }
 
@@ -1002,7 +994,6 @@ impl TypeEvaluator {
         f_type: &CallableType,
         args: &[Expression],
     ) -> PythonType {
-        
         f_type.return_type.clone()
     }
 }
@@ -1310,7 +1301,7 @@ impl DumpTypes {
 
     /// This function is called on every expression in the ast
     pub fn save_type(&mut self, expr: &ast::Expression) {
-        let typ = self.type_eval.get_type(expr);
+        let typ = self.type_eval.get_type(expr, None);
         log::debug!("save_type: {:#?} => {:#?}", expr, typ);
         let symbol_text =
             self.enderpy_file().source()[expr.get_node().start..expr.get_node().end].to_string();

@@ -4,155 +4,33 @@ description: "a = 'hello world'\nb = a + \"!\"\n\nc: int = 1\n\nf: str = \"hello
 expression: result
 input_file: typechecker/test_data/inputs/symbol_table/simple_var_assignment.py
 ---
-Symbols in global (id: [REDACTED])
+Symbols in global
 a
 SymbolFlags(
     0x0,
 )
 - Declarations:
---:   Variable {
-    declaration_path: DeclarationPath {
-        module_name: "[TYPECHECKER]/test_data/inputs/symbol_table/simple_var_assignment.py",
-        node: Node {
-            start: 0,
-            end: 17,
-        },
-    },
-    type_annotation: None,
-    inferred_type_source: Some(
-        Constant(
-            Constant {
-                node: Node {
-                    start: 4,
-                    end: 17,
-                },
-                value: "hello world",
-            },
-        ),
-    ),
-    is_constant: false,
-}
+--:   Variable declaration at Node { start: 0, end: 17 } in scope id: 0
 b
 SymbolFlags(
     0x0,
 )
 - Declarations:
---:   Variable {
-    declaration_path: DeclarationPath {
-        module_name: "[TYPECHECKER]/test_data/inputs/symbol_table/simple_var_assignment.py",
-        node: Node {
-            start: 18,
-            end: 29,
-        },
-    },
-    type_annotation: None,
-    inferred_type_source: Some(
-        BinOp(
-            BinOp {
-                node: Node {
-                    start: 22,
-                    end: 29,
-                },
-                op: Add,
-                left: Name(
-                    Name {
-                        node: Node {
-                            start: 22,
-                            end: 23,
-                        },
-                        id: "a",
-                    },
-                ),
-                right: Constant(
-                    Constant {
-                        node: Node {
-                            start: 26,
-                            end: 29,
-                        },
-                        value: "!",
-                    },
-                ),
-            },
-        ),
-    ),
-    is_constant: false,
-}
+--:   Variable declaration at Node { start: 18, end: 29 } in scope id: 0
 c
 SymbolFlags(
     0x0,
 )
 - Declarations:
---:   Variable {
-    declaration_path: DeclarationPath {
-        module_name: "[TYPECHECKER]/test_data/inputs/symbol_table/simple_var_assignment.py",
-        node: Node {
-            start: 31,
-            end: 41,
-        },
-    },
-    type_annotation: Some(
-        Name(
-            Name {
-                node: Node {
-                    start: 34,
-                    end: 37,
-                },
-                id: "int",
-            },
-        ),
-    ),
-    inferred_type_source: Some(
-        Constant(
-            Constant {
-                node: Node {
-                    start: 40,
-                    end: 41,
-                },
-                value: 1,
-            },
-        ),
-    ),
-    is_constant: false,
-}
+--:   Variable declaration at Node { start: 31, end: 41 } in scope id: 0
 f
 SymbolFlags(
     0x0,
 )
 - Declarations:
---:   Variable {
-    declaration_path: DeclarationPath {
-        module_name: "[TYPECHECKER]/test_data/inputs/symbol_table/simple_var_assignment.py",
-        node: Node {
-            start: 43,
-            end: 59,
-        },
-    },
-    type_annotation: Some(
-        Name(
-            Name {
-                node: Node {
-                    start: 46,
-                    end: 49,
-                },
-                id: "str",
-            },
-        ),
-    ),
-    inferred_type_source: Some(
-        Constant(
-            Constant {
-                node: Node {
-                    start: 52,
-                    end: 59,
-                },
-                value: "hello",
-            },
-        ),
-    ),
-    is_constant: false,
-}
+--:   Variable declaration at Node { start: 43, end: 59 } in scope id: 0
 
 Scopes:
 
-Scope global(id: 0, parent_id: None
+Scope global
 

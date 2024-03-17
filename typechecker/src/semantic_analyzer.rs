@@ -107,11 +107,11 @@ impl SemanticAnalyzer {
                 };
 
                 if self.function_assigns_attribute(&self.symbol_table) {
-                    let declaration_path = DeclarationPath {
-                        module_name: self.file.path(),
-                        node: a.node,
-                    };
-
+                    let declaration_path = DeclarationPath::new(
+                        self.file.path(),
+                        a.node,
+                        self.symbol_table.current_scope_id,
+                    );
                     let declaration = Declaration::Variable(Variable {
                         declaration_path,
                         type_annotation,
@@ -170,10 +170,11 @@ impl SemanticAnalyzer {
     fn add_arguments_definitions(&mut self, args: &parser::ast::Arguments) {
         let defaults_len = args.defaults.len();
         for (pos_only, index) in args.posonlyargs.iter().zip(0..args.posonlyargs.len()) {
-            let declaration_path = DeclarationPath {
-                module_name: self.file.path(),
-                node: pos_only.node,
-            };
+            let declaration_path = DeclarationPath::new(
+                self.file.path(),
+                pos_only.node,
+                self.symbol_table.current_scope_id,
+            );
             let default_value = args
                 .defaults
                 .get(defaults_len.wrapping_sub(index.wrapping_sub(1)))
@@ -193,10 +194,11 @@ impl SemanticAnalyzer {
         }
 
         for (arg, index) in args.args.iter().zip(0..) {
-            let declaration_path = DeclarationPath {
-                module_name: self.file.path(),
-                node: arg.node,
-            };
+            let declaration_path = DeclarationPath::new(
+                self.file.path(),
+                arg.node,
+                self.symbol_table.current_scope_id,
+            );
 
             let default_value = args
                 .defaults
@@ -220,10 +222,11 @@ impl SemanticAnalyzer {
         }
 
         for arg in args.kwonlyargs.iter() {
-            let declaration_path = DeclarationPath {
-                module_name: self.file.path(),
-                node: arg.node,
-            };
+            let declaration_path = DeclarationPath::new(
+                self.file.path(),
+                arg.node,
+                self.symbol_table.current_scope_id,
+            );
             let flags = SymbolFlags::empty();
             self.create_symbol(
                 arg.arg.clone(),
@@ -238,10 +241,11 @@ impl SemanticAnalyzer {
         }
 
         if let Some(ref arg) = args.vararg {
-            let declaration_path = DeclarationPath {
-                module_name: self.file.path(),
-                node: arg.node,
-            };
+            let declaration_path = DeclarationPath::new(
+                self.file.path(),
+                arg.node,
+                self.symbol_table.current_scope_id,
+            );
             let flags = SymbolFlags::empty();
             self.create_symbol(
                 arg.arg.clone(),
@@ -256,10 +260,11 @@ impl SemanticAnalyzer {
         }
 
         if let Some(ref arg) = args.kwarg {
-            let declaration_path = DeclarationPath {
-                module_name: self.file.path(),
-                node: arg.node,
-            };
+            let declaration_path = DeclarationPath::new(
+                self.file.path(),
+                arg.node,
+                self.symbol_table.current_scope_id,
+            );
             let flags = SymbolFlags::empty();
             self.create_symbol(
                 arg.arg.clone(),
@@ -369,10 +374,11 @@ impl TraversalVisitor for SemanticAnalyzer {
                 None => ImportResult::not_found(),
             };
             // TODO: Report unresolved import if import_result is None
-            let declaration_path = DeclarationPath {
-                module_name: self.file.path(),
-                node: alias.node,
-            };
+            let declaration_path = DeclarationPath::new(
+                self.file.path(),
+                alias.node,
+                self.symbol_table.current_scope_id,
+            );
 
             let declaration = Declaration::Alias(Alias {
                 declaration_path,
@@ -389,11 +395,11 @@ impl TraversalVisitor for SemanticAnalyzer {
 
     fn visit_import_from(&mut self, _i: &parser::ast::ImportFrom) {
         for alias in &_i.names {
-            let declaration_path = DeclarationPath {
-                module_name: self.file.path(),
-                node: alias.node,
-            };
-            // TODO: Report unresolved import if import_result is None
+            let declaration_path = DeclarationPath::new(
+                self.file.path(),
+                alias.node,
+                self.symbol_table.current_scope_id,
+            );
             let module_import_result = match self.imports.get(&ImportModuleDescriptor::from(_i)) {
                 Some(result) => result.clone(),
                 None => ImportResult::not_found(),
@@ -503,10 +509,8 @@ impl TraversalVisitor for SemanticAnalyzer {
     }
 
     fn visit_function_def(&mut self, f: &parser::ast::FunctionDef) {
-        let declaration_path = DeclarationPath {
-            module_name: self.file.path(),
-            node: f.node,
-        };
+        let declaration_path =
+            DeclarationPath::new(self.file.path(), f.node, self.symbol_table.current_scope_id);
         if !f.type_params.is_empty() {
             // TODO
             // Push a PEP 695 scope
@@ -552,10 +556,11 @@ impl TraversalVisitor for SemanticAnalyzer {
         }
 
         for type_parameter in &f.type_params {
-            let declaration_path = DeclarationPath {
-                module_name: self.file.path(),
-                node: type_parameter.get_node(),
-            };
+            let declaration_path = DeclarationPath::new(
+                self.file.path(),
+                type_parameter.get_node(),
+                self.symbol_table.current_scope_id,
+            );
             let flags = SymbolFlags::empty();
             self.create_symbol(
                 type_parameter.get_name(),
@@ -583,10 +588,8 @@ impl TraversalVisitor for SemanticAnalyzer {
     }
 
     fn visit_type_alias(&mut self, t: &parser::ast::TypeAlias) {
-        let declaration_path = DeclarationPath {
-            module_name: self.file.path(),
-            node: t.node,
-        };
+        let declaration_path =
+            DeclarationPath::new(self.file.path(), t.node, self.symbol_table.current_scope_id);
         let flags = SymbolFlags::empty();
         self.create_symbol(
             t.name.clone(),
@@ -617,10 +620,11 @@ impl TraversalVisitor for SemanticAnalyzer {
         ));
 
         for type_parameter in &c.type_params {
-            let declaration_path = DeclarationPath {
-                module_name: self.file.path(),
-                node: type_parameter.get_node(),
-            };
+            let declaration_path = DeclarationPath::new(
+                self.file.path(),
+                type_parameter.get_node(),
+                self.symbol_table.current_scope_id,
+            );
             let flags = SymbolFlags::empty();
             self.create_symbol(
                 type_parameter.get_name(),
@@ -643,8 +647,10 @@ impl TraversalVisitor for SemanticAnalyzer {
 
         self.symbol_table.exit_scope();
 
+        let class_declaration_path =
+            DeclarationPath::new(self.file.path(), c.node, self.symbol_table.current_scope_id);
         let class_declaration =
-            Declaration::Class(Class::new(c.clone(), methods, self.file.path()));
+            Declaration::Class(Class::new(c.clone(), methods, class_declaration_path));
         let flags = SymbolFlags::empty();
         self.create_symbol(c.name.clone(), class_declaration, flags);
     }
@@ -729,10 +735,11 @@ impl TraversalVisitor for SemanticAnalyzer {
             panic!("multiple assignment not supported");
         }
         let target = assign.targets.last().unwrap();
-        let declaration_path = DeclarationPath {
-            module_name: self.file.path(),
-            node: assign.node,
-        };
+        let declaration_path = DeclarationPath::new(
+            self.file.path(),
+            assign.node,
+            self.symbol_table.current_scope_id,
+        );
         self.create_variable_declaration_symbol(
             target,
             Some(value.clone()),
@@ -746,10 +753,8 @@ impl TraversalVisitor for SemanticAnalyzer {
     fn visit_ann_assign(&mut self, a: &parser::ast::AnnAssign) {
         let value = &a.value;
         let target = &a.target;
-        let declaration_path = DeclarationPath {
-            module_name: self.file.path(),
-            node: a.node,
-        };
+        let declaration_path =
+            DeclarationPath::new(self.file.path(), a.node, self.symbol_table.current_scope_id);
         self.create_variable_declaration_symbol(
             target,
             value.clone(),

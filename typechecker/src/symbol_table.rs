@@ -96,7 +96,8 @@ pub struct SymbolTableNode {
 
 impl Display for SymbolTableNode {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:#?}", self.name)
+        //Print name and flags
+        write!(f, "{}\n{:#?}", self.name, self.flags)
     }
 }
 
@@ -104,6 +105,28 @@ impl Display for SymbolTableNode {
 pub struct DeclarationPath {
     pub module_name: PathBuf,
     pub node: Node,
+    /// The scope id that this declaration is in
+    pub scope_id: usize,
+}
+
+impl DeclarationPath {
+    pub fn new(module_name: PathBuf, node: Node, scope_id: usize) -> Self {
+        DeclarationPath {
+            module_name,
+            node,
+            scope_id,
+        }
+    }
+}
+
+impl Display for DeclarationPath {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "declaration at {:?} in scope id: {}",
+            self.node, self.scope_id
+        )
+    }
 }
 
 #[derive(Debug, Clone, is_macro::Is)]
@@ -143,12 +166,6 @@ impl Declaration {
                 .map(|s| s.starts_with("typeshed"))
                 .unwrap_or(false)
         })
-    }
-}
-
-impl Display for DeclarationPath {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}:{:?}", self.module_name, self.node)
     }
 }
 
@@ -203,16 +220,14 @@ pub struct Class {
 }
 
 impl Class {
-    pub fn new(class_node: ast::ClassDef, methods: Vec<String>, file_path: PathBuf) -> Self {
+    pub fn new(
+        class_node: ast::ClassDef,
+        methods: Vec<String>,
+        declaration_path: DeclarationPath,
+    ) -> Self {
         Class {
             name: class_node.name.clone(),
-            declaration_path: DeclarationPath {
-                module_name: file_path,
-                node: Node {
-                    start: class_node.node.start,
-                    end: class_node.node.end,
-                },
-            },
+            declaration_path,
             methods,
             special: false,
         }
@@ -282,6 +297,7 @@ pub struct TypeAlias {
 pub struct LookupSymbolRequest {
     pub name: String,
     pub position: Option<usize>,
+    pub scope: Option<usize>,
 }
 
 impl SymbolTable {
@@ -382,7 +398,10 @@ impl SymbolTable {
     /// returns the symbol and the scope id where it was found
     pub fn lookup_in_scope(&self, lookup_request: LookupSymbolRequest) -> Option<&SymbolTableNode> {
         log::debug!("Looking up symbol: {}", lookup_request.name);
-        let mut scope = self.current_scope();
+        let mut scope = match lookup_request.scope {
+            Some(scope_id) => self.get_scope_by_id(scope_id).expect("no scope found"),
+            None => self.current_scope(),
+        };
         loop {
             log::debug!("Looking in scope: {}", scope.name);
             if let Some(symbol) = scope.symbols.get(&lookup_request.name) {
@@ -548,11 +567,7 @@ impl std::fmt::Display for SymbolTable {
 
         writeln!(f, "Scopes:\n")?;
         for scope in sorted_scopes.iter() {
-            writeln!(
-                f,
-                "Scope {}(id: {:?}, parent_id: {:?}",
-                scope.name, scope.id, scope.parent
-            )?;
+            writeln!(f, "Scope {}", scope.name)?;
         }
 
         Ok(())
@@ -567,14 +582,9 @@ impl std::fmt::Display for SymbolTableScope {
             .collect::<Vec<(&String, &SymbolTableNode)>>();
         sorted_symbols.sort_by(|a, b| a.0.cmp(b.0));
 
-        writeln!(
-            f,
-            "Symbols in {} (id: {}, parent: {:?})",
-            self.name, self.id, self.parent
-        )?;
-        for (name, symbol) in sorted_symbols {
-            writeln!(f, "{}", name)?;
-            writeln!(f, "{:#?}", symbol.flags)?;
+        writeln!(f, "Symbols in {}", self.name)?;
+        for (_name, symbol) in sorted_symbols {
+            writeln!(f, "{}", symbol)?;
             // sort the declarations by line number
             let mut sorted_declarations = symbol.declarations.clone();
             sorted_declarations.sort_by(|a, b| {
@@ -597,13 +607,27 @@ impl std::fmt::Display for SymbolTableScope {
 impl std::fmt::Display for Declaration {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Declaration::Variable(v) => write!(f, "{:#?}", v),
-            Declaration::Function(fun) => write!(f, "{:#?}", fun),
-            Declaration::Class(c) => write!(f, "{:#?}", c),
-            Declaration::Parameter(p) => write!(f, "{:#?}", p),
-            Declaration::Alias(a) => write!(f, "{:#?}", a),
-            Declaration::TypeParameter(t) => write!(f, "{:#?}", t),
-            Declaration::TypeAlias(t) => write!(f, "{:#?}", t),
+            Declaration::Variable(v) => {
+                write!(f, "Variable {}", v.declaration_path)
+            }
+            Declaration::Function(fun) => {
+                write!(f, "Function {}", fun.declaration_path)
+            }
+            Declaration::Class(c) => {
+                write!(f, "Class {}", c.declaration_path)
+            }
+            Declaration::Parameter(p) => {
+                write!(f, "Parameter {}", p.declaration_path)
+            }
+            Declaration::Alias(a) => {
+                write!(f, "Alias {}", a.declaration_path)
+            }
+            Declaration::TypeParameter(t) => {
+                write!(f, "Type parameter {}", t.declaration_path)
+            }
+            Declaration::TypeAlias(t) => {
+                write!(f, "Type alias {}", t.declaration_path)
+            }
         }
     }
 }

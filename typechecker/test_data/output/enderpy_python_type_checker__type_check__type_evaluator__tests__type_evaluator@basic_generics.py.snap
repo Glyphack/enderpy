@@ -1,6 +1,6 @@
 ---
 source: typechecker/src/type_check/type_evaluator.rs
-description: "1: from typing import TypeVar, Generic, Sequence\n2: from logging import Logger\n3: \n4: T = TypeVar('T')\n5: \n6: def first(l: Sequence[T]) -> T:\n7:     return l[0]\n8: \n9: first([1, 2, 3]) # return type type parameter\n10: \n11: \n12: AnyStr = TypeVar('AnyStr', str, bytes)\n13: \n14: def concat(x: AnyStr, y: AnyStr) -> AnyStr:\n15:     return x + y\n16: \n17: # > Specifying a single constraint is disallowed.\n18: \n19: BadConstraint1 = TypeVar('BadConstraint1', str)  # Type error\n20: \n21: # > Note: those types cannot be parameterized by type variables\n22: \n23: BadConstraint2 = TypeVar('BadConstraint2', str, T)  # Type error\n24: \n25: \n26: # class LoggedVar(Generic[T]):\n27: #     def __init__(self, value: T, name: str, logger: Logger) -> None:\n28: #         self.name = name\n29: #         self.logger = logger\n30: #         self.value = value\n31: #\n32: #     def set(self, new: T) -> None:\n33: #         self.log('Set ' + repr(self.value))\n34: #         self.value = new\n35: #\n36: #     def get(self) -> T:\n37: #         self.log('Get ' + repr(self.value))\n38: #         return self.value\n39: #\n40: #     def log(self, message: str) -> None:\n41: #         self.logger.info('{}: {}'.format(self.name, message))\n"
+description: "1: from typing import TypeVar, Generic, Sequence\n2: from logging import Logger\n3: \n4: T = TypeVar('T')\n5: \n6: def first(l: Sequence[T]) -> T:\n7:     return l[0]\n8: \n9: first([1, 2, 3]) # return type type parameter\n10: \n11: \n12: AnyStr = TypeVar('AnyStr', str, bytes)\n13: \n14: def concat(x: AnyStr, y: AnyStr) -> AnyStr:\n15:     return x + y\n16: \n17: # > Specifying a single constraint is disallowed.\n18: \n19: BadConstraint1 = TypeVar('BadConstraint1', str)  # Type error\n20: \n21: # > Note: those types cannot be parameterized by type variables\n22: \n23: BadConstraint2 = TypeVar('BadConstraint2', str, T)  # Type error\n24: \n25: \n26: class LoggedVar(Generic[T]):\n27:     def __init__(self, value: T, name: str, logger: Logger) -> None:\n28:         self.name = name\n29:         self.logger = logger\n30:         self.value = value\n31: \n32:     def set(self, new: T) -> None:\n33:         self.log('Set ' + repr(self.value))\n34:         self.value = new\n35: \n36:     def get(self) -> T:\n37:         self.log('Get ' + repr(self.value))\n38:         return self.value\n39: \n40:     def log(self, message: str) -> None:\n41:         self.logger.info('{}: {}'.format(self.name, message))\n"
 expression: result
 input_file: typechecker/test_data/inputs/basic_generics.py
 ---
@@ -49,6 +49,57 @@ Line 23: BadConstraint2 = TypeVar('BadConstraint2', str, T)  # Type error
 Expr types in the line --->:
         "TypeVar('BadConstraint2', str, T)  # Type error" =>   [31m×[0m TypeVar cannot be used as a bound
 
+
+---
+Line 28:         self.name = name
+
+Expr types in the line --->:
+        "name" => str
+
+---
+Line 29:         self.logger = logger
+
+Expr types in the line --->:
+        "logger" => Logger
+
+---
+Line 30:         self.value = value
+
+Expr types in the line --->:
+        "value" => TypeVar[T, ]
+
+---
+Line 33:         self.log('Set ' + repr(self.value))
+
+Expr types in the line --->:
+        "self.log('Set ' + repr(self.value))" => None
+        "'Set ' + repr(self.value)" => str
+
+---
+Line 34:         self.value = new
+
+Expr types in the line --->:
+        "new" => TypeVar[T, ]
+
+---
+Line 37:         self.log('Get ' + repr(self.value))
+
+Expr types in the line --->:
+        "self.log('Get ' + repr(self.value))" => None
+        "'Get ' + repr(self.value)" => str
+
+---
+Line 38:         return self.value
+
+Expr types in the line --->:
+        "self.value" => TypeVar[T, ]
+
+---
+Line 41:         self.logger.info('{}: {}'.format(self.name, message))
+
+Expr types in the line --->:
+        "self.logger.info('{}: {}'.format(self.name, message))" => None
+        "'{}: {}'.format(self.name, message)" => Unknown
 
 ---
 

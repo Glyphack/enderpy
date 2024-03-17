@@ -4,36 +4,15 @@ description: "a = 1\n"
 expression: result
 input_file: typechecker/test_data/inputs/symbol_table/variables.py
 ---
-Symbols in global (id: [REDACTED])
+Symbols in global
 a
 SymbolFlags(
     0x0,
 )
 - Declarations:
---:   Variable {
-    declaration_path: DeclarationPath {
-        module_name: "[TYPECHECKER]/test_data/inputs/symbol_table/variables.py",
-        node: Node {
-            start: 0,
-            end: 5,
-        },
-    },
-    type_annotation: None,
-    inferred_type_source: Some(
-        Constant(
-            Constant {
-                node: Node {
-                    start: 4,
-                    end: 5,
-                },
-                value: 1,
-            },
-        ),
-    ),
-    is_constant: false,
-}
+--:   Variable declaration at Node { start: 0, end: 5 } in scope id: 0
 
 Scopes:
 
-Scope global(id: 0, parent_id: None
+Scope global
 

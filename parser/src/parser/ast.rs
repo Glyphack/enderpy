@@ -12,6 +12,12 @@ pub struct Node {
     pub end: usize,
 }
 
+impl fmt::Display for Node {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "({}, {})", self.start, self.end)
+    }
+}
+
 impl Node {
     pub fn new(start: usize, end: usize) -> Self {
         Self { start, end }
