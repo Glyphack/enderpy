@@ -10,25 +10,25 @@ SymbolFlags(
     0x0,
 )
 - Declarations:
---:   Variable declaration at Node { start: 0, end: 17 } in scope id: 0
+--:   Variable
 b
 SymbolFlags(
     0x0,
 )
 - Declarations:
---:   Variable declaration at Node { start: 18, end: 29 } in scope id: 0
+--:   Variable
 c
 SymbolFlags(
     0x0,
 )
 - Declarations:
---:   Variable declaration at Node { start: 31, end: 41 } in scope id: 0
+--:   Variable
 f
 SymbolFlags(
     0x0,
 )
 - Declarations:
---:   Variable declaration at Node { start: 43, end: 59 } in scope id: 0
+--:   Variable
 
 Scopes:
 

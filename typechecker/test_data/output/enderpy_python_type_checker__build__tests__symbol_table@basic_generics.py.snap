@@ -1,6 +1,6 @@
 ---
 source: typechecker/src/build.rs
-description: "from typing import TypeVar, Generic, Sequence\nfrom logging import Logger\n\nT = TypeVar('T')\n\ndef first(l: Sequence[T]) -> T:\n    return l[0]\n\nfirst([1, 2, 3]) # return type type parameter\n\n\nAnyStr = TypeVar('AnyStr', str, bytes)\n\ndef concat(x: AnyStr, y: AnyStr) -> AnyStr:\n    return x + y\n\n# > Specifying a single constraint is disallowed.\n\nBadConstraint1 = TypeVar('BadConstraint1', str)  # Type error\n\n# > Note: those types cannot be parameterized by type variables\n\nBadConstraint2 = TypeVar('BadConstraint2', str, T)  # Type error\n\n\nclass LoggedVar(Generic[T]):\n    def __init__(self, value: T, name: str, logger: Logger) -> None:\n        self.name = name\n        self.logger = logger\n        self.value = value\n\n    def set(self, new: T) -> None:\n        self.log('Set ' + repr(self.value))\n        self.value = new\n\n    def get(self) -> T:\n        self.log('Get ' + repr(self.value))\n        return self.value\n\n    def log(self, message: str) -> None:\n        self.logger.info('{}: {}'.format(self.name, message))\n"
+description: "from typing import TypeVar, Generic, Sequence\nfrom logging import Logger\n\nT = TypeVar(\"T\")\n\n\ndef first(l: Sequence[T]) -> T:\n    return l[0]\n\n\nfirst([1, 2, 3])  # return type type parameter\n\n\nAnyStr = TypeVar(\"AnyStr\", str, bytes)\n\n\ndef concat(x: AnyStr, y: AnyStr) -> AnyStr:\n    return x + y\n\n\n# > Specifying a single constraint is disallowed.\n\nBadConstraint1 = TypeVar(\"BadConstraint1\", str)  # Type error\n\n# > Note: those types cannot be parameterized by type variables\n\nBadConstraint2 = TypeVar(\"BadConstraint2\", str, T)  # Type error\n\n\nclass LoggedVar(Generic[T]):\n    def __init__(self, value: T, name: str, logger: Logger) -> None:\n        self.name = name\n        self.logger = logger\n        self.value = value\n\n    def set(self, new: T) -> None:\n        self.log(\"Set \" + repr(self.value))\n        self.value = new\n\n    def get(self) -> T:\n        self.log(\"Get \" + repr(self.value))\n        return self.value\n\n    def log(self, message: str) -> None:\n        msg = \"{}: {}\".format(self.name, message)\n        self.logger.info(msg)\n"
 expression: result
 input_file: typechecker/test_data/inputs/basic_generics.py
 ---
@@ -10,43 +10,43 @@ SymbolFlags(
     0x0,
 )
 - Declarations:
-id: [ID]
+--:   Function
 get
 SymbolFlags(
     0x0,
 )
 - Declarations:
-id: [ID]
+--:   Function
 log
 SymbolFlags(
     0x0,
 )
 - Declarations:
-id: [ID]
+--:   Function
 logger
 SymbolFlags(
     INSTANCE_MEMBER,
 )
 - Declarations:
-id: [ID]
+--:   Variable
 name
 SymbolFlags(
     INSTANCE_MEMBER,
 )
 - Declarations:
-id: [ID]
+--:   Variable
 set
 SymbolFlags(
     0x0,
 )
 - Declarations:
-id: [ID]
+--:   Function
 value
 SymbolFlags(
     INSTANCE_MEMBER,
 )
 - Declarations:
-id: [ID]
+--:   Variable
 
 Symbols in __init__
 logger
@@ -54,25 +54,25 @@ SymbolFlags(
     0x0,
 )
 - Declarations:
-id: [ID]
+--:   Parameter
 name
 SymbolFlags(
     0x0,
 )
 - Declarations:
-id: [ID]
+--:   Parameter
 self
 SymbolFlags(
     0x0,
 )
 - Declarations:
-id: [ID]
+--:   Parameter
 value
 SymbolFlags(
     0x0,
 )
 - Declarations:
-id: [ID]
+--:   Parameter
 
 Symbols in concat
 x
@@ -80,13 +80,13 @@ SymbolFlags(
     0x0,
 )
 - Declarations:
-id: [ID]
+--:   Parameter
 y
 SymbolFlags(
     0x0,
 )
 - Declarations:
-id: [ID]
+--:   Parameter
 
 Symbols in first
 l
@@ -94,7 +94,7 @@ SymbolFlags(
     0x0,
 )
 - Declarations:
-id: [ID]
+--:   Parameter
 
 Symbols in get
 self
@@ -102,7 +102,7 @@ SymbolFlags(
     0x0,
 )
 - Declarations:
-id: [ID]
+--:   Parameter
 
 Symbols in global
 AnyStr
@@ -110,67 +110,67 @@ SymbolFlags(
     0x0,
 )
 - Declarations:
-id: [ID]
+--:   Variable
 BadConstraint1
 SymbolFlags(
     0x0,
 )
 - Declarations:
-id: [ID]
+--:   Variable
 BadConstraint2
 SymbolFlags(
     0x0,
 )
 - Declarations:
-id: [ID]
+--:   Variable
 Generic
 SymbolFlags(
     0x0,
 )
 - Declarations:
-id: [ID]
+--:   Alias
 LoggedVar
 SymbolFlags(
     0x0,
 )
 - Declarations:
-id: [ID]
+--:   Class
 Logger
 SymbolFlags(
     0x0,
 )
 - Declarations:
-id: [ID]
+--:   Alias
 Sequence
 SymbolFlags(
     0x0,
 )
 - Declarations:
-id: [ID]
+--:   Alias
 T
 SymbolFlags(
     0x0,
 )
 - Declarations:
-id: [ID]
+--:   Variable
 TypeVar
 SymbolFlags(
     0x0,
 )
 - Declarations:
-id: [ID]
+--:   Alias
 concat
 SymbolFlags(
     0x0,
 )
 - Declarations:
-id: [ID]
+--:   Function
 first
 SymbolFlags(
     0x0,
 )
 - Declarations:
-id: [ID]
+--:   Function
 
 Symbols in log
 message
@@ -178,13 +178,19 @@ SymbolFlags(
     0x0,
 )
 - Declarations:
-id: [ID]
+--:   Parameter
+msg
+SymbolFlags(
+    0x0,
+)
+- Declarations:
+--:   Variable
 self
 SymbolFlags(
     0x0,
 )
 - Declarations:
-id: [ID]
+--:   Parameter
 
 Symbols in set
 new
@@ -192,13 +198,13 @@ SymbolFlags(
     0x0,
 )
 - Declarations:
-id: [ID]
+--:   Parameter
 self
 SymbolFlags(
     0x0,
 )
 - Declarations:
-id: [ID]
+--:   Parameter
 
 Scopes:
 

@@ -10,7 +10,7 @@ SymbolFlags(
     0x0,
 )
 - Declarations:
---:   Variable declaration at Node { start: 0, end: 5 } in scope id: 0
+--:   Variable
 
 Scopes:
 

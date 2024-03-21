@@ -10,25 +10,25 @@ SymbolFlags(
     0x0,
 )
 - Declarations:
---:   Parameter declaration at Node { start: 9, end: 10 } in scope id: 974
+--:   Parameter
 b
 SymbolFlags(
     0x0,
 )
 - Declarations:
---:   Parameter declaration at Node { start: 12, end: 13 } in scope id: 974
+--:   Parameter
 c
 SymbolFlags(
     0x0,
 )
 - Declarations:
---:   Parameter declaration at Node { start: 19, end: 24 } in scope id: 974
+--:   Parameter
 e
 SymbolFlags(
     0x0,
 )
 - Declarations:
---:   Parameter declaration at Node { start: 28, end: 29 } in scope id: 974
+--:   Parameter
 
 Symbols in global
 func
@@ -36,7 +36,7 @@ SymbolFlags(
     0x0,
 )
 - Declarations:
---:   Function declaration at Node { start: 0, end: 37 } in scope id: 0
+--:   Function
 
 Scopes:
 

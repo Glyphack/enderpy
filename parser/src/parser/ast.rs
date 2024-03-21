@@ -546,7 +546,9 @@ pub struct Comprehension {
 #[derive(Debug, Clone)]
 pub struct Attribute {
     pub node: Node,
+    /// The x in x.y
     pub value: Box<Expression>,
+    /// The y in x.y
     pub attr: String,
 }
 

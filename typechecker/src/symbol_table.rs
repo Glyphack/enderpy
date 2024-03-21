@@ -121,11 +121,7 @@ impl DeclarationPath {
 
 impl Display for DeclarationPath {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "declaration at {:?} in scope id: {}",
-            self.node, self.scope_id
-        )
+        write!(f, "declaration at {:?}", self.node)
     }
 }
 
@@ -217,6 +213,7 @@ pub struct Class {
     // Special classes are classes that are _SpecialForm in typeshed.
     // These classes have their behavior defined in PEPs so we need to handle them differently
     pub special: bool,
+    pub class_node: ClassDef,
 }
 
 impl Class {
@@ -230,6 +227,7 @@ impl Class {
             declaration_path,
             methods,
             special: false,
+            class_node,
         }
     }
 
@@ -241,6 +239,7 @@ impl Class {
             declaration_path: special_class.declaration_path,
             methods: special_class.methods,
             special: true,
+            class_node: special_class.class_node,
         }
     }
 
@@ -608,25 +607,25 @@ impl std::fmt::Display for Declaration {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Declaration::Variable(v) => {
-                write!(f, "Variable {}", v.declaration_path)
+                write!(f, "Variable")
             }
             Declaration::Function(fun) => {
-                write!(f, "Function {}", fun.declaration_path)
+                write!(f, "Function")
             }
             Declaration::Class(c) => {
-                write!(f, "Class {}", c.declaration_path)
+                write!(f, "Class")
             }
             Declaration::Parameter(p) => {
-                write!(f, "Parameter {}", p.declaration_path)
+                write!(f, "Parameter")
             }
             Declaration::Alias(a) => {
-                write!(f, "Alias {}", a.declaration_path)
+                write!(f, "Alias")
             }
             Declaration::TypeParameter(t) => {
-                write!(f, "Type parameter {}", t.declaration_path)
+                write!(f, "Type parameter")
             }
             Declaration::TypeAlias(t) => {
-                write!(f, "Type alias {}", t.declaration_path)
+                write!(f, "Type alias")
             }
         }
     }

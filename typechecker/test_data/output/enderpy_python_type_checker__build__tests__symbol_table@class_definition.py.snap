@@ -10,19 +10,19 @@ SymbolFlags(
     0x0,
 )
 - Declarations:
---:   Variable declaration at Node { start: 41, end: 46 } in scope id: 973
+--:   Variable
 b
 SymbolFlags(
     0x0,
 )
 - Declarations:
---:   Variable declaration at Node { start: 55, end: 60 } in scope id: 973
+--:   Variable
 self
 SymbolFlags(
     0x0,
 )
 - Declarations:
---:   Parameter declaration at Node { start: 26, end: 30 } in scope id: 973
+--:   Parameter
 
 Symbols in c
 __init__
@@ -30,13 +30,13 @@ SymbolFlags(
     0x0,
 )
 - Declarations:
---:   Function declaration at Node { start: 13, end: 80 } in scope id: 972
+--:   Function
 c
 SymbolFlags(
     INSTANCE_MEMBER,
 )
 - Declarations:
---:   Variable declaration at Node { start: 69, end: 75 } in scope id: 973
+--:   Variable
 
 Symbols in global
 c
@@ -44,7 +44,7 @@ SymbolFlags(
     0x0,
 )
 - Declarations:
---:   Class declaration at Node { start: 0, end: 80 } in scope id: 0
+--:   Class
 
 Scopes:
 

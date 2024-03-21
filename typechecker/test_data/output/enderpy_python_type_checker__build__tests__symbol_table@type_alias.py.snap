@@ -10,25 +10,25 @@ SymbolFlags(
     0x0,
 )
 - Declarations:
---:   Type alias declaration at Node { start: 81, end: 98 } in scope id: 0
+--:   Type alias
 Alias2
 SymbolFlags(
     0x0,
 )
 - Declarations:
---:   Type alias declaration at Node { start: 99, end: 116 } in scope id: 0
+--:   Type alias
 Alias3
 SymbolFlags(
     0x0,
 )
 - Declarations:
---:   Type alias declaration at Node { start: 117, end: 136 } in scope id: 0
+--:   Type alias
 AliasToAnotherAlias
 SymbolFlags(
     0x0,
 )
 - Declarations:
---:   Type alias declaration at Node { start: 138, end: 171 } in scope id: 0
+--:   Type alias
 
 Scopes:
 

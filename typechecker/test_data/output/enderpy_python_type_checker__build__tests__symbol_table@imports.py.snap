@@ -10,37 +10,37 @@ SymbolFlags(
     0x0,
 )
 - Declarations:
---:   Alias declaration at Node { start: 83, end: 82 } in scope id: 0
+--:   Alias
 a
 SymbolFlags(
     0x0,
 )
 - Declarations:
---:   Alias declaration at Node { start: 59, end: 60 } in scope id: 0
+--:   Alias
 import_test
 SymbolFlags(
     0x0,
 )
 - Declarations:
---:   Alias declaration at Node { start: 24, end: 35 } in scope id: 0
+--:   Alias
 join
 SymbolFlags(
     0x0,
 )
 - Declarations:
---:   Alias declaration at Node { start: 140, end: 144 } in scope id: 0
+--:   Alias
 os.path
 SymbolFlags(
     0x0,
 )
 - Declarations:
---:   Alias declaration at Node { start: 93, end: 100 } in scope id: 0
+--:   Alias
 variables
 SymbolFlags(
     0x0,
 )
 - Declarations:
---:   Alias declaration at Node { start: 7, end: 16 } in scope id: 0
+--:   Alias
 
 Scopes:
 

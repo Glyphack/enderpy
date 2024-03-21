@@ -10,37 +10,37 @@ SymbolFlags(
     0x0,
 )
 - Declarations:
-id: [ID]
+--:   Function
 add
 SymbolFlags(
     0x0,
 )
 - Declarations:
-id: [ID]
+--:   Function
 cls_attribute
 SymbolFlags(
     CLASS_MEMBER,
 )
 - Declarations:
-id: [ID]
+--:   Variable
 get_attr
 SymbolFlags(
     0x0,
 )
 - Declarations:
-id: [ID]
+--:   Function
 get_x
 SymbolFlags(
     0x0,
 )
 - Declarations:
-id: [ID]
+--:   Function
 x
 SymbolFlags(
     INSTANCE_MEMBER,
 )
 - Declarations:
-id: [ID]
+--:   Variable
 
 Symbols in __init__
 self
@@ -48,13 +48,13 @@ SymbolFlags(
     0x0,
 )
 - Declarations:
-id: [ID]
+--:   Parameter
 x
 SymbolFlags(
     0x0,
 )
 - Declarations:
-id: [ID]
+--:   Parameter
 
 Symbols in add
 self
@@ -62,13 +62,13 @@ SymbolFlags(
     0x0,
 )
 - Declarations:
-id: [ID]
+--:   Parameter
 value
 SymbolFlags(
     0x0,
 )
 - Declarations:
-id: [ID]
+--:   Parameter
 
 Symbols in func
 param1
@@ -76,7 +76,7 @@ SymbolFlags(
     0x0,
 )
 - Declarations:
-id: [ID]
+--:   Parameter
 
 Symbols in get_attr
 self
@@ -84,7 +84,7 @@ SymbolFlags(
     0x0,
 )
 - Declarations:
-id: [ID]
+--:   Parameter
 
 Symbols in get_x
 self
@@ -92,7 +92,7 @@ SymbolFlags(
     0x0,
 )
 - Declarations:
-id: [ID]
+--:   Parameter
 
 Symbols in global
 C
@@ -100,55 +100,55 @@ SymbolFlags(
     0x0,
 )
 - Declarations:
-id: [ID]
+--:   Class
 a
 SymbolFlags(
     0x0,
 )
 - Declarations:
-id: [ID]
+--:   Variable
 b
 SymbolFlags(
     0x0,
 )
 - Declarations:
-id: [ID]
+--:   Variable
 c
 SymbolFlags(
     0x0,
 )
 - Declarations:
-id: [ID]
+--:   Variable
 d
 SymbolFlags(
     0x0,
 )
 - Declarations:
-id: [ID]
+--:   Variable
 func
 SymbolFlags(
     0x0,
 )
 - Declarations:
-id: [ID]
+--:   Function
 l
 SymbolFlags(
     0x0,
 )
 - Declarations:
-id: [ID]
+--:   Variable
 s
 SymbolFlags(
     0x0,
 )
 - Declarations:
-id: [ID]
+--:   Variable
 t
 SymbolFlags(
     0x0,
 )
 - Declarations:
-id: [ID]
+--:   Variable
 
 Scopes:
 
