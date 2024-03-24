@@ -213,7 +213,8 @@ pub struct Class {
     // Special classes are classes that are _SpecialForm in typeshed.
     // These classes have their behavior defined in PEPs so we need to handle them differently
     pub special: bool,
-    pub class_node: ClassDef,
+    /// Special classes have a generic class node. So this node is null for special classes
+    pub class_node: Option<ClassDef>,
 }
 
 impl Class {
@@ -227,19 +228,19 @@ impl Class {
             declaration_path,
             methods,
             special: false,
-            class_node,
+            class_node: Some(class_node),
         }
     }
 
     /// Class node refers to SpecialForm in typeshed
     /// TODO: needs improvements mostly set the correct values
-    pub fn new_special(name: String, special_class: Class) -> Self {
+    pub fn new_special(name: String) -> Self {
         Class {
             name,
-            declaration_path: special_class.declaration_path,
-            methods: special_class.methods,
+            declaration_path: DeclarationPath::new(PathBuf::new(), Node::new(0, 0), 0),
+            methods: vec![],
             special: true,
-            class_node: special_class.class_node,
+            class_node: None,
         }
     }
 
@@ -606,25 +607,25 @@ impl std::fmt::Display for SymbolTableScope {
 impl std::fmt::Display for Declaration {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Declaration::Variable(v) => {
+            Declaration::Variable(_v) => {
                 write!(f, "Variable")
             }
-            Declaration::Function(fun) => {
+            Declaration::Function(_fun) => {
                 write!(f, "Function")
             }
-            Declaration::Class(c) => {
+            Declaration::Class(_c) => {
                 write!(f, "Class")
             }
-            Declaration::Parameter(p) => {
+            Declaration::Parameter(_p) => {
                 write!(f, "Parameter")
             }
-            Declaration::Alias(a) => {
+            Declaration::Alias(_a) => {
                 write!(f, "Alias")
             }
-            Declaration::TypeParameter(t) => {
+            Declaration::TypeParameter(_t) => {
                 write!(f, "Type parameter")
             }
-            Declaration::TypeAlias(t) => {
+            Declaration::TypeAlias(_t) => {
                 write!(f, "Type alias")
             }
         }

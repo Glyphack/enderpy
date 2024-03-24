@@ -98,14 +98,14 @@ Expr types in the line --->:
 Line 45:         msg = "{}: {}".format(self.name, message)
 
 Expr types in the line --->:
-        "\"{}: {}\".format(self.name, message)" => _SpecialForm
+        "\"{}: {}\".format(self.name, message)" => LiteralString
 
 ---
 Line 46:         self.logger.info(msg)
 
 Expr types in the line --->:
         "self.logger.info(msg)" => None
-        "msg" => _SpecialForm
+        "msg" => LiteralString
 
 ---
 

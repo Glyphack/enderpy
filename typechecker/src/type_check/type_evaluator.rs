@@ -470,14 +470,10 @@ impl TypeEvaluator {
                         .as_name()
                         .is_some_and(|name| name.id == SPECIAL_FORM)
                     {
-                        let Some(variable_name) = &v.inferred_type_source else {
-                            todo!("no variable name for the symbol {:?}", symbol);
-                        };
-                        let class_symbol = self
-                            .get_class_declaration(&variable_name, symbol_table)
-                            .expect("class not found");
-
+                        let class_symbol = Class::new_special(symbol.name.to_string());
                         Ok(PythonType::Class(ClassType::new(class_symbol, vec![])))
+                    } else {
+                        Ok(var_type)
                     }
                 } else if let Some(source) = &v.inferred_type_source {
                     self.get_type(source, Some(decl_scope))
@@ -541,7 +537,10 @@ impl TypeEvaluator {
                         bounds: vec![],
                     }))
                 } else {
-                    let bases = &c.class_node.bases;
+                    let bases = match &c.class_node {
+                        Some(ref b) => b.bases.clone(),
+                        None => vec![],
+                    };
                     let type_parameters = vec![];
                     for base in bases {
                         let base_type = self.get_type(&base, None);
@@ -954,7 +953,7 @@ impl TypeEvaluator {
                                     let class = self
                                         .get_class_declaration(annotation, found_in_symbol_table)?;
                                     if class.name == SPECIAL_FORM {
-                                        return Some(Class::new_special(n.id.clone(), class));
+                                        return Some(Class::new_special(n.id.clone()));
                                     }
                                     Some(class)
                                 }
