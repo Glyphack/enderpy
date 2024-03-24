@@ -237,7 +237,11 @@ impl Class {
     pub fn new_special(name: String) -> Self {
         Class {
             name,
-            declaration_path: DeclarationPath::new(PathBuf::new(), Node::new(0, 0), 0),
+            declaration_path: DeclarationPath::new(
+                PathBuf::from("../../typeshed/stdlib/builtins.pyi"),
+                Node::new(0, 0),
+                0,
+            ),
             methods: vec![],
             special: true,
             class_node: None,
@@ -249,9 +253,9 @@ impl Class {
         let scope = self.declaration_path.module_name.clone();
         let mut qualname = scope
             .file_stem()
-            .expect("no file name")
+            .expect("file name should not be empty")
             .to_str()
-            .expect("file name is not valid")
+            .expect("file name is not valid utf-8")
             .to_string();
         qualname.push('.');
         qualname.push_str(&self.name);

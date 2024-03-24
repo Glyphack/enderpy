@@ -1,5 +1,5 @@
-from typing import TypeVar, Generic, Sequence
 from logging import Logger
+from typing import Generic, Sequence, TypeVar, Iterable
 
 T = TypeVar("T")
 
@@ -44,3 +44,6 @@ class LoggedVar(Generic[T]):
     def log(self, message: str) -> None:
         msg = "{}: {}".format(self.name, message)
         self.logger.info(msg)
+
+
+log_var = LoggedVar(1, "var1", Logger("test"))

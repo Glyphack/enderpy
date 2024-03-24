@@ -1,6 +1,6 @@
 ---
 source: typechecker/src/type_check/type_evaluator.rs
-description: "1: from typing import TypeVar, Generic, Sequence\n2: from logging import Logger\n3: \n4: T = TypeVar(\"T\")\n5: \n6: \n7: def first(l: Sequence[T]) -> T:\n8:     return l[0]\n9: \n10: \n11: first([1, 2, 3])  # return type type parameter\n12: \n13: \n14: AnyStr = TypeVar(\"AnyStr\", str, bytes)\n15: \n16: \n17: def concat(x: AnyStr, y: AnyStr) -> AnyStr:\n18:     return x + y\n19: \n20: \n21: # > Specifying a single constraint is disallowed.\n22: \n23: BadConstraint1 = TypeVar(\"BadConstraint1\", str)  # Type error\n24: \n25: # > Note: those types cannot be parameterized by type variables\n26: \n27: BadConstraint2 = TypeVar(\"BadConstraint2\", str, T)  # Type error\n28: \n29: \n30: class LoggedVar(Generic[T]):\n31:     def __init__(self, value: T, name: str, logger: Logger) -> None:\n32:         self.name = name\n33:         self.logger = logger\n34:         self.value = value\n35: \n36:     def set(self, new: T) -> None:\n37:         self.log(\"Set \" + repr(self.value))\n38:         self.value = new\n39: \n40:     def get(self) -> T:\n41:         self.log(\"Get \" + repr(self.value))\n42:         return self.value\n43: \n44:     def log(self, message: str) -> None:\n45:         msg = \"{}: {}\".format(self.name, message)\n46:         self.logger.info(msg)\n"
+description: "1: from logging import Logger\n2: from typing import Generic, Sequence, TypeVar, Iterable\n3: \n4: T = TypeVar(\"T\")\n5: \n6: \n7: def first(l: Sequence[T]) -> T:\n8:     return l[0]\n9: \n10: \n11: first([1, 2, 3])  # return type type parameter\n12: \n13: \n14: AnyStr = TypeVar(\"AnyStr\", str, bytes)\n15: \n16: \n17: def concat(x: AnyStr, y: AnyStr) -> AnyStr:\n18:     return x + y\n19: \n20: \n21: # > Specifying a single constraint is disallowed.\n22: \n23: BadConstraint1 = TypeVar(\"BadConstraint1\", str)  # Type error\n24: \n25: # > Note: those types cannot be parameterized by type variables\n26: \n27: BadConstraint2 = TypeVar(\"BadConstraint2\", str, T)  # Type error\n28: \n29: \n30: class LoggedVar(Generic[T]):\n31:     def __init__(self, value: T, name: str, logger: Logger) -> None:\n32:         self.name = name\n33:         self.logger = logger\n34:         self.value = value\n35: \n36:     def set(self, new: T) -> None:\n37:         self.log(\"Set \" + repr(self.value))\n38:         self.value = new\n39: \n40:     def get(self) -> T:\n41:         self.log(\"Get \" + repr(self.value))\n42:         return self.value\n43: \n44:     def log(self, message: str) -> None:\n45:         msg = \"{}: {}\".format(self.name, message)\n46:         self.logger.info(msg)\n47: \n48: \n49: log_var = LoggedVar(1, \"var1\", Logger(\"test\"))\n"
 expression: result
 input_file: typechecker/test_data/inputs/basic_generics.py
 ---
@@ -106,6 +106,12 @@ Line 46:         self.logger.info(msg)
 Expr types in the line --->:
         "self.logger.info(msg)" => None
         "msg" => LiteralString
+
+---
+Line 49: log_var = LoggedVar(1, "var1", Logger("test"))
+
+Expr types in the line --->:
+        "LoggedVar(1, \"var1\", Logger(\"test\"))" => LoggedVar[TypeVar[T, ]]
 
 ---
 

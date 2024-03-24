@@ -7,7 +7,7 @@ use std::path::Path;
 use enderpy_python_parser as parser;
 use enderpy_python_parser::ast;
 
-use miette::{bail, Result};
+use miette::{bail, Context, Result};
 use parser::ast::{Expression, GetNode, Statement};
 
 use super::{
@@ -541,15 +541,32 @@ impl TypeEvaluator {
                         Some(ref b) => b.bases.clone(),
                         None => vec![],
                     };
-                    let type_parameters = vec![];
+                    let mut type_parameters = vec![];
                     for base in bases {
                         let base_type = self.get_type(&base, None);
                         log::debug!("base is {:?} base type: {:?}", base, base_type);
                         if let Ok(PythonType::Class(c)) = base_type {
                             log::debug!("qualname: {}", c.details.get_qualname());
-                            if c.details.get_qualname() == "typing.Generic" {
-                                let type_parameters = c.type_parameters;
+                            if c.details.get_qualname() == "builtins.Generic" {
+                                let Some(type_parameter) = base.as_subscript() else {
+                                    bail!("Generic class must have subscript");
+                                };
+                                let Some(type_parameter_name) = type_parameter.slice.as_name()
+                                else {
+                                    bail!("Type parameter must be a name");
+                                };
                                 log::debug!("base class is generic: {:?}", type_parameters);
+                                let type_parameter_type = self
+                                    .infer_type_from_symbol_table(
+                                        &type_parameter_name.id,
+                                        Some(type_parameter_name.node.start),
+                                        symbol_table,
+                                        Some(decl_scope),
+                                    )
+                                    .context(
+                                        "Getting type of the type parameter {type_parameter_name}",
+                                    )?;
+                                type_parameters.push(type_parameter_type);
                             }
                         }
                     }

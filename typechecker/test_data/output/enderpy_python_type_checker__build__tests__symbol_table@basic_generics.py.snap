@@ -1,6 +1,6 @@
 ---
 source: typechecker/src/build.rs
-description: "from typing import TypeVar, Generic, Sequence\nfrom logging import Logger\n\nT = TypeVar(\"T\")\n\n\ndef first(l: Sequence[T]) -> T:\n    return l[0]\n\n\nfirst([1, 2, 3])  # return type type parameter\n\n\nAnyStr = TypeVar(\"AnyStr\", str, bytes)\n\n\ndef concat(x: AnyStr, y: AnyStr) -> AnyStr:\n    return x + y\n\n\n# > Specifying a single constraint is disallowed.\n\nBadConstraint1 = TypeVar(\"BadConstraint1\", str)  # Type error\n\n# > Note: those types cannot be parameterized by type variables\n\nBadConstraint2 = TypeVar(\"BadConstraint2\", str, T)  # Type error\n\n\nclass LoggedVar(Generic[T]):\n    def __init__(self, value: T, name: str, logger: Logger) -> None:\n        self.name = name\n        self.logger = logger\n        self.value = value\n\n    def set(self, new: T) -> None:\n        self.log(\"Set \" + repr(self.value))\n        self.value = new\n\n    def get(self) -> T:\n        self.log(\"Get \" + repr(self.value))\n        return self.value\n\n    def log(self, message: str) -> None:\n        msg = \"{}: {}\".format(self.name, message)\n        self.logger.info(msg)\n"
+description: "from logging import Logger\nfrom typing import Generic, Sequence, TypeVar, Iterable\n\nT = TypeVar(\"T\")\n\n\ndef first(l: Sequence[T]) -> T:\n    return l[0]\n\n\nfirst([1, 2, 3])  # return type type parameter\n\n\nAnyStr = TypeVar(\"AnyStr\", str, bytes)\n\n\ndef concat(x: AnyStr, y: AnyStr) -> AnyStr:\n    return x + y\n\n\n# > Specifying a single constraint is disallowed.\n\nBadConstraint1 = TypeVar(\"BadConstraint1\", str)  # Type error\n\n# > Note: those types cannot be parameterized by type variables\n\nBadConstraint2 = TypeVar(\"BadConstraint2\", str, T)  # Type error\n\n\nclass LoggedVar(Generic[T]):\n    def __init__(self, value: T, name: str, logger: Logger) -> None:\n        self.name = name\n        self.logger = logger\n        self.value = value\n\n    def set(self, new: T) -> None:\n        self.log(\"Set \" + repr(self.value))\n        self.value = new\n\n    def get(self) -> T:\n        self.log(\"Get \" + repr(self.value))\n        return self.value\n\n    def log(self, message: str) -> None:\n        msg = \"{}: {}\".format(self.name, message)\n        self.logger.info(msg)\n\n\nlog_var = LoggedVar(1, \"var1\", Logger(\"test\"))  # type: LoggedVar[int]\n"
 expression: result
 input_file: typechecker/test_data/inputs/basic_generics.py
 ---
@@ -129,6 +129,12 @@ SymbolFlags(
 )
 - Declarations:
 --:   Alias
+Iterable
+SymbolFlags(
+    0x0,
+)
+- Declarations:
+--:   Alias
 LoggedVar
 SymbolFlags(
     0x0,
@@ -171,6 +177,12 @@ SymbolFlags(
 )
 - Declarations:
 --:   Function
+log_var
+SymbolFlags(
+    0x0,
+)
+- Declarations:
+--:   Variable
 
 Symbols in log
 message
