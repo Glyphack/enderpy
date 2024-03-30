@@ -41,7 +41,7 @@ impl<'a> TypeChecker<'a> {
     }
 
     fn infer_expr_type(&mut self, expr: &Expression, emit_error: bool) -> PythonType {
-        match self.type_evaluator.get_type(expr, None) {
+        match self.type_evaluator.get_type(expr, None, None) {
             Ok(t) => t,
             Err(e) => {
                 if emit_error {

@@ -57,38 +57,49 @@ impl TypeEvaluator {
     pub fn get_type(
         &self,
         expr: &ast::Expression,
+        symbol_table: Option<&SymbolTable>,
         symbol_table_scope: Option<usize>,
     ) -> Result<PythonType> {
+        log::debug!(
+            "Getting type for expression: {:?} in symbol table: {:?}",
+            expr,
+            symbol_table.map(|s| s.file_path.clone())
+        );
+        let symbol_table = match symbol_table {
+            Some(s) => s,
+            None => &self.symbol_table,
+        };
         let r = match expr {
             ast::Expression::Constant(c) => {
                 let typ = match &c.value {
                     // We should consider constants are not literals unless they are explicitly
                     // declared as such https://peps.python.org/pep-0586/#type-inference
-                    ast::ConstantValue::Int(_) => self.get_builtin_type("int").expect("typeshed"),
-                    ast::ConstantValue::Float(_) => {
-                        self.get_builtin_type("float").expect("typeshed")
-                    }
-                    ast::ConstantValue::Str(_) => self.get_builtin_type("str").expect("typeshed"),
-                    ast::ConstantValue::Bool(_) => self.get_builtin_type("bool").expect("typeshed"),
-                    ast::ConstantValue::None => PythonType::None,
-                    _ => PythonType::Unknown,
+                    ast::ConstantValue::Int(_) => self.get_builtin_type("int"),
+                    ast::ConstantValue::Float(_) => self.get_builtin_type("float"),
+                    ast::ConstantValue::Str(_) => self.get_builtin_type("str"),
+                    ast::ConstantValue::Bool(_) => self.get_builtin_type("bool"),
+                    ast::ConstantValue::None => Ok(Some(PythonType::None)),
+                    _ => Ok(Some(PythonType::Unknown)),
                 };
-                Ok(typ)
+                match typ.transpose() {
+                    Some(t) => t,
+                    None => bail!("Unknown constant type"),
+                }
             }
             ast::Expression::Name(n) => {
-                if let Some(t) = self.get_builtin_type(&n.id) {
+                if let Ok(Some(t)) = self.get_builtin_type(&n.id) {
                     return Ok(t);
                 }
                 self.infer_type_from_symbol_table(
                     &n.id,
                     Some(n.node.start),
-                    &self.symbol_table,
+                    &symbol_table,
                     symbol_table_scope,
                 )
             }
             ast::Expression::Call(call) => {
                 let called_name = *call.func.clone();
-                let f_type = self.get_type(&called_name, None)?;
+                let f_type = self.get_type(&called_name, Some(symbol_table), None)?;
                 if let PythonType::Callable(c) = &f_type {
                     let return_type = self.get_return_type_of_callable(c, &call.args);
                     Ok(return_type)
@@ -110,7 +121,10 @@ impl TypeEvaluator {
                         .args
                         .iter()
                         .skip(1)
-                        .map(|arg| self.get_type(arg, None).unwrap_or(PythonType::Unknown))
+                        .map(|arg| {
+                            self.get_type(arg, None, None)
+                                .unwrap_or(PythonType::Unknown)
+                        })
                         .collect();
 
                     // Disallow specifying a single bound
@@ -138,11 +152,11 @@ impl TypeEvaluator {
             ast::Expression::List(l) => {
                 let final_elm_type = self.get_sequence_type_from_elements(&l.elements);
                 let class_type = match self.get_builtin_type(builtins::LIST_TYPE) {
-                    Some(builtin_type) => match builtin_type {
+                    Ok(Some(builtin_type)) => match builtin_type {
                         PythonType::Class(c) => c.details,
-                        _ => panic!("List type is not a class"),
+                        _ => bail!("List type is not a class"),
                     },
-                    None => return Ok(PythonType::Unknown),
+                    _ => return Ok(PythonType::Unknown),
                 };
                 Ok(PythonType::Class(ClassType::new(
                     class_type,
@@ -152,11 +166,11 @@ impl TypeEvaluator {
             ast::Expression::Tuple(t) => {
                 let elm_type = self.get_sequence_type_from_elements(&t.elements);
                 let class_type = match self.get_builtin_type(builtins::TUPLE_TYPE) {
-                    Some(builtin_type) => match builtin_type {
+                    Ok(Some(builtin_type)) => match builtin_type {
                         PythonType::Class(c) => c.details,
                         _ => panic!("Tuple type is not a class"),
                     },
-                    None => return Ok(PythonType::Unknown),
+                    _ => return Ok(PythonType::Unknown),
                 };
 
                 Ok(PythonType::Class(ClassType::new(
@@ -168,11 +182,11 @@ impl TypeEvaluator {
                 let key_type = self.get_sequence_type_from_elements(&d.keys);
                 let value_type = self.get_sequence_type_from_elements(&d.values);
                 let class_type = match self.get_builtin_type(builtins::DICT_TYPE) {
-                    Some(builtin_type) => match builtin_type {
+                    Ok(Some(builtin_type)) => match builtin_type {
                         PythonType::Class(c) => c.details,
                         _ => panic!("Dict type is not a class"),
                     },
-                    None => return Ok(PythonType::Unknown),
+                    _ => return Ok(PythonType::Unknown),
                 };
                 Ok(PythonType::Class(ClassType::new(
                     class_type,
@@ -182,34 +196,38 @@ impl TypeEvaluator {
             ast::Expression::Set(s) => {
                 let elm_type = self.get_sequence_type_from_elements(&s.elements);
                 let class_type = match self.get_builtin_type(builtins::SET_TYPE) {
-                    Some(builtin_type) => match builtin_type {
+                    Ok(Some(builtin_type)) => match builtin_type {
                         PythonType::Class(c) => c.details,
                         _ => panic!("Dict type is not a class"),
                     },
-                    None => return Ok(PythonType::Unknown),
+                    _ => return Ok(PythonType::Unknown),
                 };
                 Ok(PythonType::Class(ClassType::new(
                     class_type,
                     vec![elm_type],
                 )))
             }
-            ast::Expression::BoolOp(_) => Ok(self.get_builtin_type("bool").expect("typeshed")),
+            ast::Expression::BoolOp(_) => {
+                self.get_builtin_type("bool").transpose().expect("typeshed")
+            }
             ast::Expression::UnaryOp(u) => match u.op {
-                ast::UnaryOperator::Not => Ok(self.get_builtin_type("bool").expect("typeshed")),
-                ast::UnaryOperator::Invert => match self.get_type(&u.operand, None)? {
+                ast::UnaryOperator::Not => {
+                    self.get_builtin_type("bool").transpose().expect("typeshed")
+                }
+                ast::UnaryOperator::Invert => match self.get_type(&u.operand, None, None)? {
                     // TODO: dummy
                     PythonType::Class(_) => Ok(PythonType::Unknown),
                     _ => bail!(
                         "cannot invert type {}",
-                        self.get_type(&u.operand, None)?.to_string()
+                        self.get_type(&u.operand, None, None)?.to_string()
                     ),
                 },
-                _ => self.get_type(&u.operand, None),
+                _ => self.get_type(&u.operand, None, None),
             },
-            ast::Expression::NamedExpr(e) => self.get_type(&e.value, None),
+            ast::Expression::NamedExpr(e) => self.get_type(&e.value, None, None),
             ast::Expression::Yield(a) => {
                 let yield_type = match a.value {
-                    Some(ref v) => self.get_type(v, None)?,
+                    Some(ref v) => self.get_type(v, None, None)?,
                     None => PythonType::None,
                 };
                 let builtin_type = self.get_builtin_type(builtins::ITER_TYPE);
@@ -273,12 +291,11 @@ impl TypeEvaluator {
                 }
                 // Case 1
                 log::debug!("Attribute access {:?}", a);
-                if get_member_access_info(&self.symbol_table, &a.value).is_some() {
-                    let enclosing_parent_class = self.symbol_table.get_enclosing_class_scope();
+                if get_member_access_info(&symbol_table, &a.value).is_some() {
+                    let enclosing_parent_class = symbol_table.get_enclosing_class_scope();
                     if let Some(enclosing_parent_class) = enclosing_parent_class {
-                        let symbol_table_node = self
-                            .symbol_table
-                            .lookup_attribute(&a.attr, enclosing_parent_class);
+                        let symbol_table_node =
+                            symbol_table.lookup_attribute(&a.attr, enclosing_parent_class);
                         let res = match symbol_table_node {
                             Some(node) => self.get_symbol_node_type(node),
                             None => panic!("cannot find symbol table node for attribute access"),
@@ -293,7 +310,7 @@ impl TypeEvaluator {
                 // Case 2
                 // First find the type of the attribute and then find the value in the scope of the attribute
 
-                let value_type = match self.get_type(&a.value, None) {
+                let value_type = match self.get_type(&a.value, None, None) {
                     Ok(t) => t,
                     Err(e) => {
                         log::debug!("error getting type of attribute value: {:?}", e);
@@ -304,8 +321,7 @@ impl TypeEvaluator {
                 match value_type {
                     PythonType::Class(c) => {
                         let class_scope = self.get_scope_of(&c);
-                        let symbol_table_node =
-                            self.symbol_table.lookup_attribute(&a.attr, class_scope);
+                        let symbol_table_node = symbol_table.lookup_attribute(&a.attr, class_scope);
                         log::debug!("found symbol table node: {:?}", symbol_table_node);
                         let result = match symbol_table_node {
                             Some(node) => self.get_symbol_node_type(node),
@@ -319,22 +335,26 @@ impl TypeEvaluator {
                 }
             }
             ast::Expression::BinOp(b) => Ok(self.bin_op_result_type(
-                &self.get_type(&b.left, None)?,
-                &self.get_type(&b.right, None)?,
+                &self.get_type(&b.left, None, None)?,
+                &self.get_type(&b.right, None, None)?,
                 &b.op,
             )),
             ast::Expression::Subscript(s) => {
-                let value_type = &self.get_type(&s.value, None)?;
+                let value_type = &self.get_type(&s.value, Some(symbol_table), None)?;
                 // This only handles container types and TODO
                 Ok(value_type.clone())
             }
             ast::Expression::Slice(_) => Ok(PythonType::Unknown),
             ast::Expression::Await(_) => Ok(PythonType::Unknown),
-            ast::Expression::Compare(_) => Ok(self.get_builtin_type("str").expect("typeshed")),
+            ast::Expression::Compare(_) => {
+                self.get_builtin_type("str").transpose().expect("typeshed")
+            }
             ast::Expression::Lambda(_) => Ok(PythonType::Unknown),
             ast::Expression::IfExp(_) => Ok(PythonType::Unknown),
-            ast::Expression::JoinedStr(_) => Ok(self.get_builtin_type("str").expect("typeshed")),
-            ast::Expression::FormattedValue(f) => self.get_type(&f.value, None),
+            ast::Expression::JoinedStr(_) => {
+                self.get_builtin_type("str").transpose().expect("typeshed")
+            }
+            ast::Expression::FormattedValue(f) => self.get_type(&f.value, None, None),
         };
 
         log::debug!("get_type for expression: {:?} => {:?}", expr, r);
@@ -353,7 +373,10 @@ impl TypeEvaluator {
         let expr_type = match type_annotation {
             Expression::Name(name) => {
                 if builtins::ALL_BUILTINS.contains(&name.id.as_str()) {
-                    return self.get_builtin_type(&name.id).expect("typeshed");
+                    return self
+                        .get_builtin_type(&name.id)
+                        .expect("typeshed")
+                        .expect("typeshed");
                 };
                 let typ = self.infer_type_from_symbol_table(
                     &name.id,
@@ -439,11 +462,15 @@ impl TypeEvaluator {
             position,
             scope: scope_id,
         };
+        log::debug!(
+            "infer_type_from_symbol_table: symbol: {:?} symbol_table: {:?}",
+            name,
+            symbol_table.file_path,
+        );
         let result = match symbol_table.lookup_in_scope(lookup_request) {
             Some(symbol) => self.get_symbol_node_type(symbol),
             None => bail!("Symbol not found in symbol table: {}", name),
         };
-        log::debug!("infer_type_from_symbol_table: {:?} => {:?}", name, result);
         result
     }
 
@@ -476,7 +503,7 @@ impl TypeEvaluator {
                         Ok(var_type)
                     }
                 } else if let Some(source) = &v.inferred_type_source {
-                    self.get_type(source, Some(decl_scope))
+                    self.get_type(source, None, Some(decl_scope))
                 } else {
                     Ok(PythonType::Unknown)
                 }
@@ -510,8 +537,6 @@ impl TypeEvaluator {
                         symbol_table,
                         Some(decl_scope),
                     ))
-                } else if let Some(default) = &p.default_value {
-                    self.get_type(default, None)
                 } else {
                     // TODO: Implement self and cls parameter types
                     Ok(PythonType::Unknown)
@@ -530,52 +555,7 @@ impl TypeEvaluator {
             }
             Declaration::TypeParameter(_) => Ok(PythonType::Unknown),
             Declaration::TypeAlias(_) => Ok(PythonType::Unknown),
-            Declaration::Class(c) => {
-                if c.get_qualname() == "typing.TypeVar" {
-                    Ok(PythonType::TypeVar(TypeVar {
-                        name: "".to_string(),
-                        bounds: vec![],
-                    }))
-                } else {
-                    let bases = match &c.class_node {
-                        Some(ref b) => b.bases.clone(),
-                        None => vec![],
-                    };
-                    let mut type_parameters = vec![];
-                    for base in bases {
-                        let base_type = self.get_type(&base, None);
-                        log::debug!("base is {:?} base type: {:?}", base, base_type);
-                        if let Ok(PythonType::Class(c)) = base_type {
-                            log::debug!("qualname: {}", c.details.get_qualname());
-                            if c.details.get_qualname() == "builtins.Generic" {
-                                let Some(type_parameter) = base.as_subscript() else {
-                                    bail!("Generic class must have subscript");
-                                };
-                                let Some(type_parameter_name) = type_parameter.slice.as_name()
-                                else {
-                                    bail!("Type parameter must be a name");
-                                };
-                                log::debug!("base class is generic: {:?}", type_parameters);
-                                let type_parameter_type = self
-                                    .infer_type_from_symbol_table(
-                                        &type_parameter_name.id,
-                                        Some(type_parameter_name.node.start),
-                                        symbol_table,
-                                        Some(decl_scope),
-                                    )
-                                    .context(
-                                        "Getting type of the type parameter {type_parameter_name}",
-                                    )?;
-                                type_parameters.push(type_parameter_type);
-                            }
-                        }
-                    }
-                    Ok(PythonType::Class(ClassType::new(
-                        c.clone(),
-                        type_parameters,
-                    )))
-                }
-            }
+            Declaration::Class(c) => self.get_class_declaration_type(c, symbol_table, decl_scope),
         };
 
         log::debug!(
@@ -586,10 +566,82 @@ impl TypeEvaluator {
         result
     }
 
+    fn get_class_declaration_type(
+        &self,
+        c: &Class,
+        symbol_table: &SymbolTable,
+        decl_scope: usize,
+    ) -> Result<PythonType> {
+        if c.get_qualname() == "typing.TypeVar" {
+            Ok(PythonType::TypeVar(TypeVar {
+                name: "".to_string(),
+                bounds: vec![],
+            }))
+        } else {
+            let bases = match &c.class_node {
+                Some(ref b) => b.bases.clone(),
+                None => vec![],
+            };
+            let mut class_def_type_parameters = vec![];
+            for base in bases {
+                let base_type = self.get_type(&base, Some(symbol_table), None);
+                log::debug!("base is {:?} base type: {:?}", base, base_type);
+                if let Ok(PythonType::Class(c)) = base_type {
+                    log::debug!("qualname: {}", c.details.get_qualname());
+                    if c.details.get_qualname() == "builtins.Generic"
+                        || c.details.get_qualname() == "typing.Protocol"
+                    {
+                        let Some(type_parameter) = base.as_subscript() else {
+                            bail!("Generic class must have subscript");
+                        };
+                        log::debug!("base class is generic: {:?}", class_def_type_parameters);
+                        match *type_parameter.slice {
+                            ast::Expression::Name(ref type_parameter_name) => {
+                                let type_parameter_type = self
+                                    .infer_type_from_symbol_table(
+                                        &type_parameter_name.id,
+                                        Some(type_parameter_name.node.start),
+                                        symbol_table,
+                                        Some(decl_scope),
+                                    )
+                                    .context(
+                                        "Getting type of the type parameter {type_parameter_name}",
+                                    )?;
+                                class_def_type_parameters.push(type_parameter_type);
+                            }
+                            ast::Expression::Tuple(ref type_parameters) => {
+                                for type_parameter in type_parameters.elements.iter() {
+                                    let type_parameter_type = self
+                                        .get_type(type_parameter, None, Some(decl_scope))
+                                        .context("Getting type of the type parameter")?;
+                                    if class_def_type_parameters.contains(&type_parameter_type) {
+                                        bail!("Duplicate type parameter");
+                                    }
+                                    class_def_type_parameters.push(type_parameter_type);
+                                }
+                            }
+                            _ => bail!("Type parameter must be a name"),
+                        };
+                    }
+
+                    c.type_parameters.iter().for_each(|t| {
+                        class_def_type_parameters.push(t.clone());
+                    });
+                }
+            }
+            Ok(PythonType::Class(ClassType::new(
+                c.clone(),
+                class_def_type_parameters,
+            )))
+        }
+    }
+
     fn get_sequence_type_from_elements(&self, elements: &Vec<ast::Expression>) -> PythonType {
         let mut prev_elm_type = PythonType::Unknown;
         for elm in elements {
-            let elm_type = self.get_type(elm, None).unwrap_or(PythonType::Unknown);
+            let elm_type = self
+                .get_type(elm, None, None)
+                .unwrap_or(PythonType::Unknown);
             if prev_elm_type == PythonType::Unknown {
                 prev_elm_type = elm_type;
             } else if prev_elm_type != elm_type {
@@ -608,7 +660,10 @@ impl TypeEvaluator {
             let mut yield_types = vec![];
             for yield_statement in &f.yield_statements {
                 if let Some(value) = &yield_statement.value {
-                    yield_types.push(self.get_type(value, None).unwrap_or(PythonType::Unknown));
+                    yield_types.push(
+                        self.get_type(value, None, None)
+                            .unwrap_or(PythonType::Unknown),
+                    );
                 }
             }
             if yield_types.len() == 1 {
@@ -628,7 +683,10 @@ impl TypeEvaluator {
             let mut return_types = vec![];
             for return_statement in &f.return_statements {
                 if let Some(value) = &return_statement.value {
-                    return_types.push(self.get_type(value, None).unwrap_or(PythonType::Unknown));
+                    return_types.push(
+                        self.get_type(value, None, None)
+                            .unwrap_or(PythonType::Unknown),
+                    );
                 }
             }
             if return_types.len() == 1 {
@@ -641,12 +699,13 @@ impl TypeEvaluator {
     }
 
     /// Retrieves a pythoh type that is present in the builtin scope
-    fn get_builtin_type(&self, name: &str) -> Option<PythonType> {
+    fn get_builtin_type(&self, name: &str) -> Result<Option<PythonType>> {
         log::debug!("Getting builtin type: {}", name);
         // typeshed has a function class which is not supposed to be there.
         // https://github.com/python/typeshed/issues/2999
+        // TODO: do something
         if name == "function" {
-            return None;
+            return Ok(None);
         }
         let bulitins_symbol_table = match self
             .imported_symbol_tables
@@ -674,18 +733,20 @@ impl TypeEvaluator {
         return match builtin_symbol {
             None => {
                 log::debug!("builtin type {} not found", name);
-                None
+                Ok(None)
             }
             Some(node) => {
                 // get the declaration with type class
-                node.declarations.iter().find_map(|decl| match decl {
+                let decl = node.last_declaration();
+                let found_declaration = match decl {
                     Declaration::Class(c) => {
-                        Some(PythonType::Class(ClassType::new(c.clone(), vec![])))
+                        let decl_scope = decl.declaration_path().scope_id;
+                        self.get_class_declaration_type(c, bulitins_symbol_table, decl_scope)
                     }
                     Declaration::Function(f) => {
                         let arguments = f.function_node.args.clone();
                         let name = f.function_node.name.clone();
-                        Some(PythonType::Callable(Box::new(CallableType {
+                        Ok(PythonType::Callable(Box::new(CallableType {
                             name,
                             arguments,
                             return_type: f.function_node.returns.clone().map_or(
@@ -700,8 +761,10 @@ impl TypeEvaluator {
                             ),
                         })))
                     }
-                    _ => None,
-                })
+                    _ => bail!("builtin type {} is not a class or function", name),
+                };
+
+                found_declaration.map(Some)
             }
         };
     }
@@ -920,7 +983,7 @@ impl TypeEvaluator {
                 // if it's not a builtin we want to get the class declaration
                 // form symbol table and find where this class
 
-                if let Some(builtin_type) = self.get_builtin_type(&n.id) {
+                if let Ok(Some(builtin_type)) = self.get_builtin_type(&n.id) {
                     match builtin_type {
                         PythonType::Class(c) => return Some(c.details),
                         _ => panic!("Builtin type is not a class"),
@@ -991,9 +1054,9 @@ impl TypeEvaluator {
                 }
             }
             // Allowed but TODO
-            Expression::Attribute(_) => todo!(),
-            Expression::Subscript(_) => todo!(),
-            Expression::Slice(_) => todo!(),
+            Expression::Attribute(_) => None,
+            Expression::Subscript(_) => None,
+            Expression::Slice(_) => None,
             _ => panic!(
                 "Expression {:?} is not allowed in type annotation",
                 expression
@@ -1004,7 +1067,7 @@ impl TypeEvaluator {
     // Follows Alias declaration and resolves it to a class declaration
     // It searches through imported symbol tables for the module alias imports
     // and resolves the alias to the class declaration
-    // TODO: refactor all liases and not only classes
+    // TODO: refactor all aliases and not only classes
     fn resolve_alias(&self, a: &symbol_table::Alias) -> Option<&symbol_table::SymbolTableNode> {
         log::debug!("resolving alias: {:?}", a);
         let class_name = match a.symbol_name {
@@ -1014,10 +1077,18 @@ impl TypeEvaluator {
 
         let resolved_path = match a.import_result.resolved_paths.last() {
             Some(path) => path,
-            None => panic!("Alias {:?} has no resolved path available are", a),
+            None => panic!("Alias {:?} has no resolved path", a.import_node),
         };
 
-        let symbol_table_with_alias_def = self.get_symbol_table_of(resolved_path);
+        // TODO: This is a hack to resolve Iterator alias in sys/__init__.pyi
+        let symbol_table_with_alias_def = if class_name == "Iterator" {
+            self.imported_symbol_tables
+                .iter()
+                .find(|symbol_table| symbol_table.file_path.ends_with("stdlib/typing.pyi"))
+        } else {
+            self.get_symbol_table_of(resolved_path)
+        };
+
         if symbol_table_with_alias_def.is_none() {
             panic!("Symbol table not found for alias: {:?}", resolved_path);
         }
@@ -1380,7 +1451,7 @@ impl DumpTypes {
 
     /// This function is called on every expression in the ast
     pub fn save_type(&mut self, expr: &ast::Expression) {
-        let typ = self.type_eval.get_type(expr, None);
+        let typ = self.type_eval.get_type(expr, None, None);
         log::debug!("save_type: {:?} => {:#?}", expr, typ);
         let symbol_text =
             self.enderpy_file().source()[expr.get_node().start..expr.get_node().end].to_string();

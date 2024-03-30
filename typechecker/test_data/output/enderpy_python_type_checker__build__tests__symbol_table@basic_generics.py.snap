@@ -1,6 +1,6 @@
 ---
 source: typechecker/src/build.rs
-description: "from logging import Logger\nfrom typing import Generic, Sequence, TypeVar, Iterable\n\nT = TypeVar(\"T\")\n\n\ndef first(l: Sequence[T]) -> T:\n    return l[0]\n\n\nfirst([1, 2, 3])  # return type type parameter\n\n\nAnyStr = TypeVar(\"AnyStr\", str, bytes)\n\n\ndef concat(x: AnyStr, y: AnyStr) -> AnyStr:\n    return x + y\n\n\n# > Specifying a single constraint is disallowed.\n\nBadConstraint1 = TypeVar(\"BadConstraint1\", str)  # Type error\n\n# > Note: those types cannot be parameterized by type variables\n\nBadConstraint2 = TypeVar(\"BadConstraint2\", str, T)  # Type error\n\n\nclass LoggedVar(Generic[T]):\n    def __init__(self, value: T, name: str, logger: Logger) -> None:\n        self.name = name\n        self.logger = logger\n        self.value = value\n\n    def set(self, new: T) -> None:\n        self.log(\"Set \" + repr(self.value))\n        self.value = new\n\n    def get(self) -> T:\n        self.log(\"Get \" + repr(self.value))\n        return self.value\n\n    def log(self, message: str) -> None:\n        msg = \"{}: {}\".format(self.name, message)\n        self.logger.info(msg)\n\n\nlog_var = LoggedVar(1, \"var1\", Logger(\"test\"))  # type: LoggedVar[int]\n"
+description: "from logging import Logger\nfrom typing import Generic, Sequence, TypeVar, Iterable\n\nT = TypeVar(\"T\")\n\n\ndef first(l: Sequence[T]) -> T:\n    return l[0]\n\n\nfirst([1, 2, 3])  # return type type parameter\n\n\nAnyStr = TypeVar(\"AnyStr\", str, bytes)\n\n\ndef concat(x: AnyStr, y: AnyStr) -> AnyStr:\n    return x + y\n\n\n# > Specifying a single constraint is disallowed.\n\nBadConstraint1 = TypeVar(\"BadConstraint1\", str)  # Type error\n\n# > Note: those types cannot be parameterized by type variables\n\nBadConstraint2 = TypeVar(\"BadConstraint2\", str, T)  # Type error\n\n\nclass LoggedVar(Generic[T]):\n    def __init__(self, value: T, name: str, logger: Logger) -> None:\n        self.name = name\n        self.logger = logger\n        self.value = value\n\n    def set(self, new: T) -> None:\n        self.log(\"Set \" + repr(self.value))\n        self.value = new\n\n    def get(self) -> T:\n        self.log(\"Get \" + repr(self.value))\n        return self.value\n\n    def log(self, message: str) -> None:\n        msg = \"{}: {}\".format(self.name, message)\n        self.logger.info(msg)\n\n\nlog_var = LoggedVar(1, \"var1\", Logger(\"test\"))\n\n\ndef zero_all_vars(vars: Iterable[LoggedVar[int]]) -> None:\n    for var in vars:\n        var.set(0)\n\n\nzero_all_vars([log_var])  # OK\n\n\n# > A generic type can have any number of type variables, and type variables\n# > may be constrained.\n\nS = TypeVar(\"S\")\n\n\nclass Pair1(Generic[T, S]): ...\n\n\npair1 = Pair1()\n\n# > Each type variable argument to ``Generic`` must be distinct.\n\n\nclass Pair2(Generic[T, T]):  # Type error\n    ...\n\n\npair2 = Pair2()\n\n# > The ``Generic[T]`` base class is redundant in simple cases where you\n# > subclass some other generic class and specify type variables for its\n# > parameters.\n\nfrom collections.abc import Iterator, Mapping\n\n\nclass MyIter1(Iterator[T]): ...\n\n\nclass MyIter2(Iterator[T], Generic[T]): ...\n\n\niter1 = MyIter1()\niter2 = MyIter2()\n"
 expression: result
 input_file: typechecker/test_data/inputs/basic_generics.py
 ---
@@ -47,6 +47,14 @@ SymbolFlags(
 )
 - Declarations:
 --:   Variable
+
+Symbols in MyIter1
+
+Symbols in MyIter2
+
+Symbols in Pair1
+
+Symbols in Pair2
 
 Symbols in __init__
 logger
@@ -135,6 +143,12 @@ SymbolFlags(
 )
 - Declarations:
 --:   Alias
+Iterator
+SymbolFlags(
+    0x0,
+)
+- Declarations:
+--:   Alias
 LoggedVar
 SymbolFlags(
     0x0,
@@ -147,6 +161,42 @@ SymbolFlags(
 )
 - Declarations:
 --:   Alias
+Mapping
+SymbolFlags(
+    0x0,
+)
+- Declarations:
+--:   Alias
+MyIter1
+SymbolFlags(
+    0x0,
+)
+- Declarations:
+--:   Class
+MyIter2
+SymbolFlags(
+    0x0,
+)
+- Declarations:
+--:   Class
+Pair1
+SymbolFlags(
+    0x0,
+)
+- Declarations:
+--:   Class
+Pair2
+SymbolFlags(
+    0x0,
+)
+- Declarations:
+--:   Class
+S
+SymbolFlags(
+    0x0,
+)
+- Declarations:
+--:   Variable
 Sequence
 SymbolFlags(
     0x0,
@@ -177,12 +227,42 @@ SymbolFlags(
 )
 - Declarations:
 --:   Function
+iter1
+SymbolFlags(
+    0x0,
+)
+- Declarations:
+--:   Variable
+iter2
+SymbolFlags(
+    0x0,
+)
+- Declarations:
+--:   Variable
 log_var
 SymbolFlags(
     0x0,
 )
 - Declarations:
 --:   Variable
+pair1
+SymbolFlags(
+    0x0,
+)
+- Declarations:
+--:   Variable
+pair2
+SymbolFlags(
+    0x0,
+)
+- Declarations:
+--:   Variable
+zero_all_vars
+SymbolFlags(
+    0x0,
+)
+- Declarations:
+--:   Function
 
 Symbols in log
 message
@@ -218,9 +298,21 @@ SymbolFlags(
 - Declarations:
 --:   Parameter
 
+Symbols in zero_all_vars
+vars
+SymbolFlags(
+    0x0,
+)
+- Declarations:
+--:   Parameter
+
 Scopes:
 
 Scope LoggedVar
+Scope MyIter1
+Scope MyIter2
+Scope Pair1
+Scope Pair2
 Scope __init__
 Scope concat
 Scope first
@@ -228,4 +320,5 @@ Scope get
 Scope global
 Scope log
 Scope set
+Scope zero_all_vars
 
