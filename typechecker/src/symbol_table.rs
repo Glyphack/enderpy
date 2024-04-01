@@ -234,14 +234,10 @@ impl Class {
 
     /// Class node refers to SpecialForm in typeshed
     /// TODO: needs improvements mostly set the correct values
-    pub fn new_special(name: String) -> Self {
+    pub fn new_special(name: String, declaration_path: DeclarationPath) -> Self {
         Class {
             name,
-            declaration_path: DeclarationPath::new(
-                PathBuf::from("../../typeshed/stdlib/builtins.pyi"),
-                Node::new(0, 0),
-                0,
-            ),
+            declaration_path,
             methods: vec![],
             special: true,
             class_node: None,
@@ -249,7 +245,6 @@ impl Class {
     }
 
     pub fn get_qualname(&self) -> String {
-        log::debug!("Getting qualname for class: {}", self.name);
         let scope = self.declaration_path.module_name.clone();
         let mut qualname = scope
             .file_stem()
@@ -259,7 +254,6 @@ impl Class {
             .to_string();
         qualname.push('.');
         qualname.push_str(&self.name);
-        log::debug!("Qualname: {}", qualname);
         qualname
     }
 }
@@ -473,7 +467,7 @@ impl SymbolTable {
     }
 
     pub fn add_symbol(&mut self, mut symbol_node: SymbolTableNode) {
-        log::debug!("Adding symbol: {}", symbol_node);
+        let file = self.file_path.clone();
         let scope = if symbol_node.flags.contains(SymbolFlags::CLASS_MEMBER)
             || symbol_node.flags.contains(SymbolFlags::INSTANCE_MEMBER)
         {
@@ -490,7 +484,12 @@ impl SymbolTable {
             self.current_scope_mut()
         };
 
-        log::debug!("Adding symbol {} to scope: {}", symbol_node, scope.name);
+        log::debug!(
+            "Adding symbol {:?} to scope: {} in file {:?}",
+            symbol_node,
+            scope.name,
+            file
+        );
         if let Some(existing_symbol) = scope.symbols.get(&symbol_node.name) {
             symbol_node
                 .declarations

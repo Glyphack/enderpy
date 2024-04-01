@@ -26,10 +26,8 @@ impl From<&Alias> for ImportModuleDescriptor {
             leading_dots: 0,
             name_parts: alias
                 .name
-                .chars()
-                .skip_while(|c| *c == '.')
-                .collect::<String>()
                 .split('.')
+                .map(|s| s.trim())
                 .map(std::string::ToString::to_string)
                 .collect(),
             imported_symbols: vec![],
@@ -44,10 +42,8 @@ impl From<&ImportFrom> for ImportModuleDescriptor {
             leading_dots: import_from.level,
             name_parts: import_from
                 .module
-                .chars()
-                .skip_while(|c| *c == '.')
-                .collect::<String>()
                 .split('.')
+                .map(|s| s.trim())
                 .map(std::string::ToString::to_string)
                 .collect(),
             imported_symbols: import_from.names.iter().map(|x| x.name.clone()).collect(),

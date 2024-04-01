@@ -48,10 +48,19 @@ impl BuildManager {
         log::debug!("Initialized build manager");
         log::debug!("build sources: {:?}", sources);
         log::debug!("options: {:?}", options);
+        let builtins_file = options
+            .import_discovery
+            .typeshed_path
+            .clone()
+            .unwrap()
+            .join("stdlib/builtins.pyi");
+        let builtins = BuildSource::from_path(builtins_file, true).expect("cannot read builtins");
+        let mut sources_with_builtins = vec![builtins.clone()];
+        sources_with_builtins.extend(sources.clone());
 
         BuildManager {
             errors: vec![],
-            build_sources: sources,
+            build_sources: sources_with_builtins,
             modules,
             options,
             diagnostics: HashMap::new(),
@@ -79,21 +88,6 @@ impl BuildManager {
             let state: EnderpyFile = build_source.into();
             self.modules.insert(state.module_name(), state);
         }
-        let builtins_file = self
-            .options
-            .import_discovery
-            .typeshed_path
-            .clone()
-            .unwrap()
-            .join("stdlib/builtins.pyi");
-        let builtins = BuildSource::from_path(builtins_file, true);
-        match builtins {
-            Ok(b) => {
-                let file: EnderpyFile = b.into();
-                self.modules.insert(file.module_name(), file)
-            }
-            Err(e) => panic!("error loading builtins file: {}", e),
-        };
         let (new_files, imports) = match self.options.follow_imports {
             crate::settings::FollowImports::All => {
                 self.gather_files(self.build_sources.clone(), true)
@@ -108,7 +102,7 @@ impl BuildManager {
         }
         for module in self.modules.values_mut() {
             info!("file: {:#?}", module.module_name());
-            module.populate_symbol_table(&imports);
+            module.populate_symbol_table(imports.clone());
         }
     }
 
@@ -388,15 +382,15 @@ impl BuildManager {
                     continue;
                 }
                 log::debug!(
-                    "resolved import: {} -> {:?}",
+                    "{:?} resolved import: {} -> {:?}",
+                    file.path(),
                     import_desc.name(),
                     resolved.resolved_paths
                 );
                 imports.insert(import_desc, resolved.clone());
             }
         }
-
-        imports.clone()
+        imports
     }
 }
 

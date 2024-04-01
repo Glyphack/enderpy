@@ -497,7 +497,8 @@ impl TypeEvaluator {
                         .as_name()
                         .is_some_and(|name| name.id == SPECIAL_FORM)
                     {
-                        let class_symbol = Class::new_special(symbol.name.to_string());
+                        let class_symbol =
+                            Class::new_special(symbol.name.to_string(), v.declaration_path.clone());
                         Ok(PythonType::Class(ClassType::new(class_symbol, vec![])))
                     } else {
                         Ok(var_type)
@@ -585,49 +586,49 @@ impl TypeEvaluator {
             let mut class_def_type_parameters = vec![];
             for base in bases {
                 let base_type = self.get_type(&base, Some(symbol_table), None);
+                // TODO: stack overflow here
                 log::debug!("base is {:?} base type: {:?}", base, base_type);
-                if let Ok(PythonType::Class(c)) = base_type {
-                    log::debug!("qualname: {}", c.details.get_qualname());
-                    if c.details.get_qualname() == "builtins.Generic"
-                        || c.details.get_qualname() == "typing.Protocol"
-                    {
-                        let Some(type_parameter) = base.as_subscript() else {
-                            bail!("Generic class must have subscript");
-                        };
-                        log::debug!("base class is generic: {:?}", class_def_type_parameters);
-                        match *type_parameter.slice {
-                            ast::Expression::Name(ref type_parameter_name) => {
-                                let type_parameter_type = self
-                                    .infer_type_from_symbol_table(
-                                        &type_parameter_name.id,
-                                        Some(type_parameter_name.node.start),
-                                        symbol_table,
-                                        Some(decl_scope),
-                                    )
-                                    .context(
-                                        "Getting type of the type parameter {type_parameter_name}",
-                                    )?;
-                                class_def_type_parameters.push(type_parameter_type);
-                            }
-                            ast::Expression::Tuple(ref type_parameters) => {
-                                for type_parameter in type_parameters.elements.iter() {
-                                    let type_parameter_type = self
-                                        .get_type(type_parameter, None, Some(decl_scope))
-                                        .context("Getting type of the type parameter")?;
-                                    if class_def_type_parameters.contains(&type_parameter_type) {
-                                        bail!("Duplicate type parameter");
-                                    }
-                                    class_def_type_parameters.push(type_parameter_type);
-                                }
-                            }
-                            _ => bail!("Type parameter must be a name"),
-                        };
-                    }
-
-                    c.type_parameters.iter().for_each(|t| {
-                        class_def_type_parameters.push(t.clone());
-                    });
-                }
+                // if let Ok(PythonType::Class(c)) = base_type {
+                //     let Some(type_parameter) = base.as_subscript() else {
+                //         continue;
+                //     };
+                //     log::debug!("base class is generic: {:?}", class_def_type_parameters);
+                //     match type_parameter.slice.as_ref() {
+                //         ast::Expression::Name(ref type_parameter_name) => {
+                //             let type_parameter_type = self
+                //                 .infer_type_from_symbol_table(
+                //                     &type_parameter_name.id,
+                //                     Some(type_parameter_name.node.start),
+                //                     symbol_table,
+                //                     Some(decl_scope),
+                //                 )
+                //                 .context(
+                //                     "Getting type of the type parameter {type_parameter_name}",
+                //                 )?;
+                //             if !class_def_type_parameters.contains(&type_parameter_type) {
+                //                 class_def_type_parameters.push(type_parameter_type);
+                //             }
+                //         }
+                //         ast::Expression::Tuple(ref type_parameters) => {
+                //             let mut tuple_type_parameters = vec![];
+                //             for type_parameter in type_parameters.elements.iter() {
+                //                 let type_parameter_type = self
+                //                     .get_type(type_parameter, None, Some(decl_scope))
+                //                     .context("Getting type of the type parameter")?;
+                //                 if tuple_type_parameters.contains(&type_parameter_type) {
+                //                     bail!("Duplicate type parameter");
+                //                 }
+                //                 tuple_type_parameters.push(type_parameter_type);
+                //             }
+                //             for type_parameter in tuple_type_parameters {
+                //                 if !class_def_type_parameters.contains(&type_parameter) {
+                //                     class_def_type_parameters.push(type_parameter);
+                //                 }
+                //             }
+                //         }
+                //         _ => bail!("Type parameter must be a name"),
+                // };
+                // }
             }
             Ok(PythonType::Class(ClassType::new(
                 c.clone(),
@@ -911,7 +912,7 @@ impl TypeEvaluator {
                 LiteralValue::Str(value)
             }
             Expression::Subscript(s) => {
-                match *s.value.clone() {
+                match s.value.as_ref() {
                     Expression::Name(n) => {
                         if !self.is_literal(n.id.clone()) {
                             panic!("{}", LITERAL_TYPE_PARAMETER_MSG)
@@ -1033,7 +1034,10 @@ impl TypeEvaluator {
                                     let class = self
                                         .get_class_declaration(annotation, found_in_symbol_table)?;
                                     if class.name == SPECIAL_FORM {
-                                        return Some(Class::new_special(n.id.clone()));
+                                        return Some(Class::new_special(
+                                            n.id.clone(),
+                                            v.declaration_path.clone(),
+                                        ));
                                     }
                                     Some(class)
                                 }
@@ -1077,7 +1081,7 @@ impl TypeEvaluator {
 
         let resolved_path = match a.import_result.resolved_paths.last() {
             Some(path) => path,
-            None => panic!("Alias {:?} has no resolved path", a.import_node),
+            None => panic!("Alias {:?} has no resolved path", a),
         };
 
         // TODO: This is a hack to resolve Iterator alias in sys/__init__.pyi

@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use enderpy_python_parser as parser;
 use enderpy_python_parser::ast::Expression;
+use log::info;
 use parser::ast::{FunctionDef, GetNode, Name, Statement};
 
 use crate::{
@@ -37,7 +38,11 @@ pub struct SemanticAnalyzer {
 #[allow(unused)]
 impl SemanticAnalyzer {
     pub fn new(file: EnderpyFile, imports: HashMap<ImportModuleDescriptor, ImportResult>) -> Self {
-        log::debug!("Creating semantic analyzer for {}", file.module_name());
+        log::debug!(
+            "Creating semantic analyzer for {} with import count {}",
+            file.module_name(),
+            imports.len()
+        );
         let symbols = SymbolTable::new(file.module_name(), file.path());
         let is_pyi = file.path().ends_with(".pyi");
         SemanticAnalyzer {
@@ -394,22 +399,22 @@ impl TraversalVisitor for SemanticAnalyzer {
     }
 
     fn visit_import_from(&mut self, _i: &parser::ast::ImportFrom) {
+        let module_import_result = match self.imports.get(&ImportModuleDescriptor::from(_i)) {
+            Some(result) => result.clone(),
+            None => ImportResult::not_found(),
+        };
         for alias in &_i.names {
             let declaration_path = DeclarationPath::new(
                 self.file.path(),
                 alias.node,
                 self.symbol_table.current_scope_id,
             );
-            let module_import_result = match self.imports.get(&ImportModuleDescriptor::from(_i)) {
-                Some(result) => result.clone(),
-                None => ImportResult::not_found(),
-            };
             let declaration = Declaration::Alias(Alias {
                 declaration_path,
                 import_from_node: Some(_i.clone()),
                 import_node: None,
                 symbol_name: Some(alias.name()),
-                import_result: module_import_result,
+                import_result: module_import_result.clone(),
             });
 
             let flags = SymbolFlags::empty();
