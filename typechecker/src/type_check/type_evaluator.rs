@@ -7,7 +7,7 @@ use std::path::Path;
 use enderpy_python_parser as parser;
 use enderpy_python_parser::ast;
 
-use miette::{bail, Context, Result};
+use miette::{bail, Result};
 use parser::ast::{Expression, GetNode, Statement};
 
 use super::{
@@ -93,7 +93,7 @@ impl TypeEvaluator {
                 self.infer_type_from_symbol_table(
                     &n.id,
                     Some(n.node.start),
-                    &symbol_table,
+                    symbol_table,
                     symbol_table_scope,
                 )
             }
@@ -291,7 +291,7 @@ impl TypeEvaluator {
                 }
                 // Case 1
                 log::debug!("Attribute access {:?}", a);
-                if get_member_access_info(&symbol_table, &a.value).is_some() {
+                if get_member_access_info(symbol_table, &a.value).is_some() {
                     let enclosing_parent_class = symbol_table.get_enclosing_class_scope();
                     if let Some(enclosing_parent_class) = enclosing_parent_class {
                         let symbol_table_node =
@@ -583,7 +583,7 @@ impl TypeEvaluator {
                 Some(ref b) => b.bases.clone(),
                 None => vec![],
             };
-            let mut class_def_type_parameters = vec![];
+            let class_def_type_parameters = vec![];
             for base in bases {
                 let base_type = self.get_type(&base, Some(symbol_table), None);
                 // TODO: stack overflow here

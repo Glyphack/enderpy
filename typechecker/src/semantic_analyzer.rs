@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use enderpy_python_parser as parser;
 use enderpy_python_parser::ast::Expression;
-use log::info;
+
 use parser::ast::{FunctionDef, GetNode, Name, Statement};
 
 use crate::{
