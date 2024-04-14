@@ -1,18 +1,14 @@
-import {
-  ExtensionContext,
-  window,
-} from "vscode";
+import { ExtensionContext, window, commands } from "vscode";
 
-import {
-  Executable,
-  LanguageClient,
-  LanguageClientOptions,
-  ServerOptions,
-} from "vscode-languageclient/node";
+import { Executable, LanguageClient, LanguageClientOptions, ServerOptions } from "vscode-languageclient/node";
 
 let client: LanguageClient;
 
-export async function activate(_context: ExtensionContext) {
+export async function activate(context: ExtensionContext) {
+  const disposable = commands.registerCommand("helloworld.helloWorld", () => {
+    window.showInformationMessage("Hello World!");
+  });
+  context.subscriptions.push(disposable);
   const traceOutputChannel = window.createOutputChannel("Enderpy Language Server trace");
   const command = process.env.SERVER_PATH || "enderpy-lsp";
   const run: Executable = {
@@ -34,7 +30,7 @@ export async function activate(_context: ExtensionContext) {
   };
 
   client = new LanguageClient("enderpy-language-server", "enderpy language server", serverOptions, clientOptions);
-  console.log("server started 2")
+  console.log("server started 2");
 
   client.start();
 }
@@ -45,4 +41,3 @@ export function deactivate(): Thenable<void> | undefined {
   }
   return client.stop();
 }
-
