@@ -72,6 +72,7 @@ impl LanguageServer for Backend {
                         work_done_progress_options: Default::default(),
                     },
                 )),
+                hover_provider: Some(HoverProviderCapability::Simple(true)),
                 ..ServerCapabilities::default()
             },
         })
@@ -160,6 +161,54 @@ impl LanguageServer for Backend {
                 }),
             )),
         }
+    }
+
+    async fn hover(&self, params: HoverParams) -> Result<Option<Hover>> {
+        self.client.log_message(MessageType::INFO, "hover!").await;
+        let uri = params.text_document_position_params.text_document.uri;
+        let path = uri.to_file_path();
+        if let Ok(path) = path {
+            let diagnostics = self.check_file(path.clone()).await;
+            self.client
+                .publish_diagnostics(uri.clone(), diagnostics, None)
+                .await;
+
+            let position = params.text_document_position_params.position;
+
+            self.client
+                .log_message(
+                    MessageType::INFO,
+                    format!(
+                        "Hover position: line={}, character={}",
+                        position.line, position.character
+                    ),
+                )
+                .await;
+
+            // TODO: Implement real logic to find the symbol at the hover position
+            // For now, let's provide a sample hover message with placeholder values
+            let hover_message = "Here are some details about the hovered element:";
+
+            let markup_content = MarkupContent {
+                kind: MarkupKind::Markdown,
+                value: format!("**Hover Information**\n\n{}\n\n- Type: `<type>`\n- Documentation: `<documentation>`", hover_message),
+            };
+            let hover = Hover {
+                contents: HoverContents::Markup(markup_content),
+                range: None,
+            };
+
+            // Log the hover content for debugging
+            self.client
+                .log_message(
+                    MessageType::INFO,
+                    format!("Hover content:\n{:?}", hover.contents),
+                )
+                .await;
+
+            return Ok(Some(hover));
+        }
+        Ok(None)
     }
 
     async fn shutdown(&self) -> Result<()> {
