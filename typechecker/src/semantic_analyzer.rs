@@ -38,11 +38,6 @@ pub struct SemanticAnalyzer {
 #[allow(unused)]
 impl SemanticAnalyzer {
     pub fn new(file: EnderpyFile, imports: HashMap<ImportModuleDescriptor, ImportResult>) -> Self {
-        log::debug!(
-            "Creating semantic analyzer for {} with import count {}",
-            file.module_name(),
-            imports.len()
-        );
         let symbols = SymbolTable::new(file.module_name(), file.path());
         let is_pyi = file.path().ends_with(".pyi");
         SemanticAnalyzer {

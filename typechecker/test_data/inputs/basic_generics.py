@@ -93,45 +93,68 @@ class MyIter2(Iterator[T], Generic[T]): ...
 iter1 = MyIter1()
 iter2 = MyIter2()
 
-# K = TypeVar("K")
-# V = TypeVar("V")
-#
-# class MyMap1(Mapping[K, V], Generic[K, V]):
-#     ...
-#
-# class MyMap2(Mapping[K, V], Generic[V, K]):
-#     ...
-#
-# def test_my_map(m1: MyMap1[str, int], m2: MyMap2[int, str]):
-#     assert_type(m1["key"], int)
-#     assert_type(m2["key"], int)
-#
-#     m1[0]  # Type error
-#     m2[0]  # Type error
-#
-# # > You can use multiple inheritance with ``Generic``
-#
-# from collections.abc import Sized, Container
-#
-# class LinkedList(Sized, Generic[T]):
-#     ...
-#
-# class MyMapping(Iterable[tuple[K, V]], Container[tuple[K, V]], Generic[K, V]):
-#     ...
-#
-# # > Subclassing a generic class without specifying type parameters assumes
-# # > ``Any`` for each position.  In the following example, ``MyIterable``
-# # > is not generic but implicitly inherits from ``Iterable[Any]``::
-#
-# class MyIterableAny(Iterable):  # Same as Iterable[Any]
-#     ...
-#
-# def test_my_iterable_any(m: MyIterableAny):
-#     assert_type(iter(m), Iterator[Any])
-#
-# # > Generic metaclasses are not supported
-#
-# class GenericMeta(type, Generic[T]): ...
-#
-# class GenericMetaInstance(metaclass=GenericMeta[T]):  # Type error
-#     ...
+K = TypeVar("K")
+V = TypeVar("V")
+
+
+class MyMap1(Mapping[K, V], Generic[K, V]): ...
+
+
+my_map1 = MyMap1()
+
+
+class MyMap2(Mapping[K, V], Generic[V, K]): ...
+
+
+my_map2 = MyMap2()
+
+
+def test_my_map(m1: MyMap1[str, int], m2: MyMap2[int, str]):
+    a = m1["key"]  # int
+    b = m2["key"]  # int
+
+    m1[0]  # Type error
+    m2[0]  # Type error
+
+
+# > You can use multiple inheritance with ``Generic``
+
+from collections.abc import Sized, Container
+
+
+class LinkedList(Sized, Generic[T]): ...
+
+
+class MyMapping(Iterable[tuple[K, V]], Container[tuple[K, V]], Generic[K, V]): ...
+
+
+my_mapping = MyMapping()
+
+
+# > Subclassing a generic class without specifying type parameters assumes
+# > ``Any`` for each position.  In the following example, ``MyIterable``
+# > is not generic but implicitly inherits from ``Iterable[Any]``::
+
+
+class MyIterableAny(Iterable):  # Same as Iterable[Any]
+    ...
+
+
+def test_my_iterable_any(m: MyIterableAny):
+    iter(m)  # Iterator[Any]
+
+
+# > Generic metaclasses are not supported
+
+
+class GenericMeta(type, Generic[T]): ...
+
+
+generic_meta = GenericMeta()
+
+
+class GenericMetaInstance(metaclass=GenericMeta[T]):  # Type error
+    ...
+
+
+generic_meta_instance = GenericMetaInstance()
