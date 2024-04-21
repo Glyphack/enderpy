@@ -2,7 +2,6 @@ use std::{collections::HashMap, path::PathBuf};
 
 use enderpy_python_parser::error::ParsingError;
 use env_logger::Builder;
-use log::info;
 
 use crate::{
     build_source::BuildSource,
@@ -45,14 +44,11 @@ impl BuildManager {
             builder.filter(None, log::LevelFilter::Warn);
         }
 
-        log::debug!("Initialized build manager");
-        log::debug!("build sources: {:?}", sources);
-        log::debug!("options: {:?}", options);
         let builtins_file = options
             .import_discovery
             .typeshed_path
             .clone()
-            .unwrap()
+            .expect("typeshed path not set")
             .join("stdlib/builtins.pyi");
         let builtins = BuildSource::from_path(builtins_file, true).expect("cannot read builtins");
         let mut sources_with_builtins = vec![builtins.clone()];
@@ -72,13 +68,7 @@ impl BuildManager {
     }
 
     pub fn get_state(&self, path: PathBuf) -> Option<&EnderpyFile> {
-        for state in self.modules.values() {
-            info!("state: {:#?}", state.path());
-            if state.path() == path {
-                return Some(state);
-            }
-        }
-        None
+        self.modules.values().find(|&state| state.path() == path)
     }
 
     // Entry point to analyze the program
@@ -96,14 +86,15 @@ impl BuildManager {
                 self.gather_files(self.build_sources.clone(), false)
             }
         };
+        log::debug!("Imports resolved");
         for build_source in new_files {
             let file: EnderpyFile = build_source.into();
             self.modules.insert(file.module_name(), file);
         }
         for module in self.modules.values_mut() {
-            info!("file: {:#?}", module.module_name());
             module.populate_symbol_table(imports.clone());
         }
+        log::debug!("Symbol tables populated");
     }
 
     // Performs type checking passes over the code
@@ -119,6 +110,9 @@ impl BuildManager {
         for state in self.modules.iter_mut() {
             // do not type check builtins
             if state.1.path().ends_with("builtins.pyi") {
+                continue;
+            }
+            if state.1.build_source.followed {
                 continue;
             }
             if !state.1.errors.is_empty() {
@@ -210,7 +204,6 @@ impl BuildManager {
         let mut import_results = HashMap::new();
         let mut imported_sources = Vec::new();
 
-        log::debug!("import options: {:?}", execution_environment);
         let mut new_imports: Vec<BuildSource> = vec![];
         let host = &ruff_python_resolver::host::StaticHost::new(vec![]);
         while let Some(source) = files_to_resolve.pop() {
@@ -347,7 +340,6 @@ impl BuildManager {
         host: &ruff_python_resolver::host::StaticHost,
         cached_imports: &HashMap<ImportModuleDescriptor, ImportResult>,
     ) -> HashMap<ImportModuleDescriptor, ImportResult> {
-        log::debug!("resolving imports for file: {}", file.module_name());
         let mut imports = HashMap::new();
         for import in file.imports.iter() {
             let import_descriptions = match import {
@@ -362,7 +354,6 @@ impl BuildManager {
                     vec![ruff_python_resolver::module_descriptor::ImportModuleDescriptor::from(i)]
                 }
             };
-            log::debug!("import descriptions: {:?}", import_descriptions);
 
             for import_desc in import_descriptions {
                 let resolved = match cached_imports.contains_key(&import_desc) {
@@ -381,12 +372,6 @@ impl BuildManager {
                     log::warn!("{}", error);
                     continue;
                 }
-                log::debug!(
-                    "{:?} resolved import: {} -> {:?}",
-                    file.path(),
-                    import_desc.name(),
-                    resolved.resolved_paths
-                );
                 imports.insert(import_desc, resolved.clone());
             }
         }

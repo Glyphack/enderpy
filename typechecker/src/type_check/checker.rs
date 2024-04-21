@@ -27,7 +27,6 @@ impl<'a> TypeChecker<'a> {
         options: &'a Settings,
         symbol_tables: Vec<SymbolTable>,
     ) -> Self {
-        log::debug!("Type checking module: {}", module.module_name());
         let mut symbol_table = module.get_symbol_table();
         TypeChecker {
             errors: vec![],

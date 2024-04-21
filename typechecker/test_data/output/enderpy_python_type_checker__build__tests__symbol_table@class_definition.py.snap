@@ -5,44 +5,26 @@ expression: result
 input_file: typechecker/test_data/inputs/symbol_table/class_definition.py
 ---
 Symbols in __init__
-a
-SymbolFlags(
-    0x0,
-)
+a SymbolFlags(0x0)
 - Declarations:
 --:   Variable
-b
-SymbolFlags(
-    0x0,
-)
+b SymbolFlags(0x0)
 - Declarations:
 --:   Variable
-self
-SymbolFlags(
-    0x0,
-)
+self SymbolFlags(0x0)
 - Declarations:
 --:   Parameter
 
 Symbols in c
-__init__
-SymbolFlags(
-    0x0,
-)
+__init__ SymbolFlags(0x0)
 - Declarations:
 --:   Function
-c
-SymbolFlags(
-    INSTANCE_MEMBER,
-)
+c SymbolFlags(INSTANCE_MEMBER)
 - Declarations:
 --:   Variable
 
 Symbols in global
-c
-SymbolFlags(
-    0x0,
-)
+c SymbolFlags(0x0)
 - Declarations:
 --:   Class
 
@@ -51,4 +33,3 @@ Scopes:
 Scope __init__
 Scope c
 Scope global
-

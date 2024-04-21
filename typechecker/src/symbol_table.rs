@@ -97,7 +97,7 @@ pub struct SymbolTableNode {
 impl Display for SymbolTableNode {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         //Print name and flags
-        write!(f, "{}\n{:#?}", self.name, self.flags)
+        write!(f, "{} {:?}", self.name, self.flags)
     }
 }
 
@@ -294,7 +294,6 @@ pub struct TypeAlias {
 
 pub struct LookupSymbolRequest {
     pub name: String,
-    pub position: Option<usize>,
     pub scope: Option<usize>,
 }
 
@@ -395,22 +394,16 @@ impl SymbolTable {
     /// if not found search in parent scope continue until found or no parent scope.
     /// returns the symbol and the scope id where it was found
     pub fn lookup_in_scope(&self, lookup_request: LookupSymbolRequest) -> Option<&SymbolTableNode> {
-        log::debug!("Looking up symbol: {}", lookup_request.name);
         let mut scope = match lookup_request.scope {
             Some(scope_id) => self.get_scope_by_id(scope_id).expect("no scope found"),
             None => self.current_scope(),
         };
         loop {
-            log::debug!("Looking in scope: {}", scope.name);
             if let Some(symbol) = scope.symbols.get(&lookup_request.name) {
                 if !symbol.flags.contains(SymbolFlags::INSTANCE_MEMBER)
                     && !symbol.flags.contains(SymbolFlags::CLASS_MEMBER)
                 {
                     return Some(symbol);
-                } else {
-                    log::debug!(
-                        "Symbol is an instance or class member, maybe wanted to look up attribute"
-                    );
                 }
             }
             scope = if let Some(parent) = self.parent_scope(scope) {
@@ -437,7 +430,6 @@ impl SymbolTable {
         } else {
             panic!("no scope found for position: {}", pos);
         }
-        log::debug!("Set scope to: {}", self.current_scope_id);
     }
 
     pub fn get_scope(&self, node: &Node) -> Option<&SymbolTableScope> {
@@ -448,7 +440,6 @@ impl SymbolTable {
 
     pub fn revert_scope(&mut self) {
         self.current_scope_id = self.prev_scope_id.expect("no previous scope");
-        log::debug!("Reverted scope to: {}", self.current_scope_id);
     }
 
     pub fn global_scope(&self) -> &SymbolTableScope {
@@ -467,11 +458,10 @@ impl SymbolTable {
     }
 
     pub fn add_symbol(&mut self, mut symbol_node: SymbolTableNode) {
-        let file = self.file_path.clone();
+        let _file = self.file_path.clone();
         let scope = if symbol_node.flags.contains(SymbolFlags::CLASS_MEMBER)
             || symbol_node.flags.contains(SymbolFlags::INSTANCE_MEMBER)
         {
-            log::debug!("Finding the class scope that symbol belongs to");
             let mut scope = self.current_scope();
             while !matches!(scope.kind, SymbolTableType::Class(_)) {
                 match self.parent_scope(scope) {
@@ -484,12 +474,6 @@ impl SymbolTable {
             self.current_scope_mut()
         };
 
-        log::debug!(
-            "Adding symbol {:?} to scope: {} in file {:?}",
-            symbol_node,
-            scope.name,
-            file
-        );
         if let Some(existing_symbol) = scope.symbols.get(&symbol_node.name) {
             symbol_node
                 .declarations
@@ -511,15 +495,9 @@ impl SymbolTable {
         attr: &str,
         scope: &'a SymbolTableScope,
     ) -> Option<&SymbolTableNode> {
-        log::debug!(
-            "looking for attribute {:#?} in scope: {}",
-            attr,
-            &scope.name
-        );
         if let Some(symbol) = scope.symbols.get(attr) {
             return Some(symbol);
         }
-        log::debug!("attribute not found");
         None
     }
 }

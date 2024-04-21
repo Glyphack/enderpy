@@ -5,36 +5,21 @@ expression: result
 input_file: typechecker/test_data/inputs/symbol_table/function_definition.py
 ---
 Symbols in func
-a
-SymbolFlags(
-    0x0,
-)
+a SymbolFlags(0x0)
 - Declarations:
 --:   Parameter
-b
-SymbolFlags(
-    0x0,
-)
+b SymbolFlags(0x0)
 - Declarations:
 --:   Parameter
-c
-SymbolFlags(
-    0x0,
-)
+c SymbolFlags(0x0)
 - Declarations:
 --:   Parameter
-e
-SymbolFlags(
-    0x0,
-)
+e SymbolFlags(0x0)
 - Declarations:
 --:   Parameter
 
 Symbols in global
-func
-SymbolFlags(
-    0x0,
-)
+func SymbolFlags(0x0)
 - Declarations:
 --:   Function
 
@@ -42,4 +27,3 @@ Scopes:
 
 Scope func
 Scope global
-

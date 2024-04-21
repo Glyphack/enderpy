@@ -556,8 +556,8 @@ pub struct Attribute {
 #[derive(Debug, Clone)]
 pub struct Subscript {
     pub node: Node,
-    pub value: Box<Expression>,
-    pub slice: Box<Expression>,
+    pub value: Expression,
+    pub slice: Expression,
 }
 
 // https://docs.python.org/3/library/ast.html#ast.Slice
@@ -585,7 +585,7 @@ pub struct Call {
 pub struct Keyword {
     pub node: Node,
     pub arg: Option<String>,
-    pub value: Box<Expression>,
+    pub value: Expression,
 }
 
 // https://docs.python.org/3/library/ast.html#ast.Await

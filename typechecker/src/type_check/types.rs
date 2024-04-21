@@ -202,7 +202,7 @@ impl Display for PythonType {
                 let fmt = if args_str.is_empty() {
                     class_type.details.name.clone()
                 } else {
-                    format!("{}[{}]", class_type.details.name, args_str)
+                    format!("{}[{}]", class_type.details.get_qualname(), args_str)
                 };
                 return write!(f, "{}", fmt);
             }
