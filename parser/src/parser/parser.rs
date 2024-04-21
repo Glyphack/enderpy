@@ -2392,7 +2392,7 @@ impl Parser {
                     let kwarg = Keyword {
                         node: self.finish_node(kwarg_node),
                         arg: None,
-                        value: Box::new(self.parse_expression_2()?),
+                        value: self.parse_expression_2()?,
                     };
                     keyword_args.push(kwarg);
                 } else {
@@ -2472,7 +2472,7 @@ impl Parser {
                 let kwarg = Keyword {
                     node: self.finish_node(kwarg_node),
                     arg: None,
-                    value: Box::new(self.parse_expression_2()?),
+                    value: self.parse_expression_2()?,
                 };
                 keyword_args.push(kwarg);
             } else {
@@ -2523,8 +2523,8 @@ impl Parser {
             let slice = self.parse_slice_list()?;
             expr = Ok(Expression::Subscript(Box::new(Subscript {
                 node: self.finish_node(node),
-                value: Box::new(expr?),
-                slice: Box::new(slice),
+                value: expr?,
+                slice,
             })));
         }
         expr
@@ -2918,7 +2918,7 @@ impl Parser {
         let arg = self.cur_token().value.to_string();
         self.expect(Kind::Identifier);
         self.expect(Kind::Assign);
-        let value = Box::new(self.parse_expression_2()?);
+        let value = self.parse_expression_2()?;
         Ok(Keyword {
             node: self.finish_node(node),
             arg: Some(arg),
