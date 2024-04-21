@@ -5,32 +5,19 @@ expression: result
 input_file: typechecker/test_data/inputs/symbol_table/type_alias.py
 ---
 Symbols in global
-Alias1
-SymbolFlags(
-    0x0,
-)
+Alias1 SymbolFlags(0x0)
 - Declarations:
 --:   Type alias
-Alias2
-SymbolFlags(
-    0x0,
-)
+Alias2 SymbolFlags(0x0)
 - Declarations:
 --:   Type alias
-Alias3
-SymbolFlags(
-    0x0,
-)
+Alias3 SymbolFlags(0x0)
 - Declarations:
 --:   Type alias
-AliasToAnotherAlias
-SymbolFlags(
-    0x0,
-)
+AliasToAnotherAlias SymbolFlags(0x0)
 - Declarations:
 --:   Type alias
 
 Scopes:
 
 Scope global
-

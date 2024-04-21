@@ -5,148 +5,82 @@ expression: result
 input_file: typechecker/test_data/inputs/basic_types.py
 ---
 Symbols in C
-__init__
-SymbolFlags(
-    0x0,
-)
+__init__ SymbolFlags(0x0)
 - Declarations:
 --:   Function
-add
-SymbolFlags(
-    0x0,
-)
+add SymbolFlags(0x0)
 - Declarations:
 --:   Function
-cls_attribute
-SymbolFlags(
-    CLASS_MEMBER,
-)
+cls_attribute SymbolFlags(CLASS_MEMBER)
 - Declarations:
 --:   Variable
-get_attr
-SymbolFlags(
-    0x0,
-)
+get_attr SymbolFlags(0x0)
 - Declarations:
 --:   Function
-get_x
-SymbolFlags(
-    0x0,
-)
+get_x SymbolFlags(0x0)
 - Declarations:
 --:   Function
-x
-SymbolFlags(
-    INSTANCE_MEMBER,
-)
+x SymbolFlags(INSTANCE_MEMBER)
 - Declarations:
 --:   Variable
 
 Symbols in __init__
-self
-SymbolFlags(
-    0x0,
-)
+self SymbolFlags(0x0)
 - Declarations:
 --:   Parameter
-x
-SymbolFlags(
-    0x0,
-)
+x SymbolFlags(0x0)
 - Declarations:
 --:   Parameter
 
 Symbols in add
-self
-SymbolFlags(
-    0x0,
-)
+self SymbolFlags(0x0)
 - Declarations:
 --:   Parameter
-value
-SymbolFlags(
-    0x0,
-)
+value SymbolFlags(0x0)
 - Declarations:
 --:   Parameter
 
 Symbols in func
-param1
-SymbolFlags(
-    0x0,
-)
+param1 SymbolFlags(0x0)
 - Declarations:
 --:   Parameter
 
 Symbols in get_attr
-self
-SymbolFlags(
-    0x0,
-)
+self SymbolFlags(0x0)
 - Declarations:
 --:   Parameter
 
 Symbols in get_x
-self
-SymbolFlags(
-    0x0,
-)
+self SymbolFlags(0x0)
 - Declarations:
 --:   Parameter
 
 Symbols in global
-C
-SymbolFlags(
-    0x0,
-)
+C SymbolFlags(0x0)
 - Declarations:
 --:   Class
-a
-SymbolFlags(
-    0x0,
-)
+a SymbolFlags(0x0)
 - Declarations:
 --:   Variable
-b
-SymbolFlags(
-    0x0,
-)
+b SymbolFlags(0x0)
 - Declarations:
 --:   Variable
-c
-SymbolFlags(
-    0x0,
-)
+c SymbolFlags(0x0)
 - Declarations:
 --:   Variable
-d
-SymbolFlags(
-    0x0,
-)
+d SymbolFlags(0x0)
 - Declarations:
 --:   Variable
-func
-SymbolFlags(
-    0x0,
-)
+func SymbolFlags(0x0)
 - Declarations:
 --:   Function
-l
-SymbolFlags(
-    0x0,
-)
+l SymbolFlags(0x0)
 - Declarations:
 --:   Variable
-s
-SymbolFlags(
-    0x0,
-)
+s SymbolFlags(0x0)
 - Declarations:
 --:   Variable
-t
-SymbolFlags(
-    0x0,
-)
+t SymbolFlags(0x0)
 - Declarations:
 --:   Variable
 
@@ -159,4 +93,3 @@ Scope func
 Scope get_attr
 Scope get_x
 Scope global
-

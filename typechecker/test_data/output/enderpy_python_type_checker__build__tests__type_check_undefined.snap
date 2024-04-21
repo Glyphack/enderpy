@@ -1,6 +1,0 @@
----
-source: typechecker/src/build.rs
-description: "a = b + 1\n\na = c()\n\n"
-expression: result
----
-Diagnostic { body: "c is not callable", suggestion: Some(""), range: Range { start: Position { line: 2, character: 4 }, end: Position { line: 2, character: 7 } } }

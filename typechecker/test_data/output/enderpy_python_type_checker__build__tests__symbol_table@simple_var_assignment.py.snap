@@ -5,32 +5,19 @@ expression: result
 input_file: typechecker/test_data/inputs/symbol_table/simple_var_assignment.py
 ---
 Symbols in global
-a
-SymbolFlags(
-    0x0,
-)
+a SymbolFlags(0x0)
 - Declarations:
 --:   Variable
-b
-SymbolFlags(
-    0x0,
-)
+b SymbolFlags(0x0)
 - Declarations:
 --:   Variable
-c
-SymbolFlags(
-    0x0,
-)
+c SymbolFlags(0x0)
 - Declarations:
 --:   Variable
-f
-SymbolFlags(
-    0x0,
-)
+f SymbolFlags(0x0)
 - Declarations:
 --:   Variable
 
 Scopes:
 
 Scope global
-

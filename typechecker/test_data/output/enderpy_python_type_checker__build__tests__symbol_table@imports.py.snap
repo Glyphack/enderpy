@@ -5,44 +5,25 @@ expression: result
 input_file: typechecker/test_data/inputs/symbol_table/imports.py
 ---
 Symbols in global
-*
-SymbolFlags(
-    0x0,
-)
+* SymbolFlags(0x0)
 - Declarations:
 --:   Alias
-a
-SymbolFlags(
-    0x0,
-)
+a SymbolFlags(0x0)
 - Declarations:
 --:   Alias
-import_test
-SymbolFlags(
-    0x0,
-)
+import_test SymbolFlags(0x0)
 - Declarations:
 --:   Alias
-join
-SymbolFlags(
-    0x0,
-)
+join SymbolFlags(0x0)
 - Declarations:
 --:   Alias
-os.path
-SymbolFlags(
-    0x0,
-)
+os.path SymbolFlags(0x0)
 - Declarations:
 --:   Alias
-variables
-SymbolFlags(
-    0x0,
-)
+variables SymbolFlags(0x0)
 - Declarations:
 --:   Alias
 
 Scopes:
 
 Scope global
-

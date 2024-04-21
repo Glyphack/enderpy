@@ -5,14 +5,10 @@ expression: result
 input_file: typechecker/test_data/inputs/symbol_table/variables.py
 ---
 Symbols in global
-a
-SymbolFlags(
-    0x0,
-)
+a SymbolFlags(0x0)
 - Declarations:
 --:   Variable
 
 Scopes:
 
 Scope global
-
