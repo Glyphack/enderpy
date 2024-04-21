@@ -39,14 +39,14 @@ Expr types in the line --->:
 Line 23: BadConstraint1 = TypeVar("BadConstraint1", str)  # Type error
 
 Expr types in the line --->:
-        "TypeVar(\"BadConstraint1\", str)  # Type error" =>   [31m×[0m TypeVar must be called with at least two bounds
+        "TypeVar(\"BadConstraint1\", str)  # Type error" =>   × TypeVar must be called with at least two bounds
 
 
 ---
 Line 27: BadConstraint2 = TypeVar("BadConstraint2", str, T)  # Type error
 
 Expr types in the line --->:
-        "TypeVar(\"BadConstraint2\", str, T)  # Type error" =>   [31m×[0m TypeVar cannot be used as a bound
+        "TypeVar(\"BadConstraint2\", str, T)  # Type error" =>   × TypeVar cannot be used as a bound
 
 
 ---
@@ -135,7 +135,7 @@ Expr types in the line --->:
 Line 78: pair2 = Pair2()
 
 Expr types in the line --->:
-        "Pair2()" =>   [31m×[0m Type parameters must be uniques
+        "Pair2()" =>   × Type parameters must be uniques
 
 
 ---

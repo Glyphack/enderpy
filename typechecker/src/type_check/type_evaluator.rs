@@ -318,7 +318,6 @@ impl TypeEvaluator {
                     PythonType::Class(c) => {
                         let class_scope = self.get_scope_of(&c);
                         let symbol_table_node = symbol_table.lookup_attribute(&a.attr, class_scope);
-                        
 
                         match symbol_table_node {
                             Some(node) => self.get_symbol_node_type(node),
@@ -505,7 +504,6 @@ impl TypeEvaluator {
                 {
                     self.get_type_from_annotation(type_annotation, symbol_table, Some(decl_scope))
                 } else {
-                    
                     self.infer_function_return_type(f)
                 };
 
