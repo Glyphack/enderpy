@@ -807,22 +807,15 @@ pub fn get_member_access_info(
     let value_name = &name.id;
 
     let current_scope = symbol_table.current_scope();
-    let Some(FunctionDef {
+    let FunctionDef {
         args,
         decorator_list,
         ..
-    }) = current_scope.kind.as_function()
-    else {
-        return None;
-    };
+    } = current_scope.kind.as_function()?;
 
-    let Some(parent_scope) = symbol_table.parent_scope(symbol_table.current_scope()) else {
-        return None;
-    };
+    let parent_scope = symbol_table.parent_scope(symbol_table.current_scope())?;
 
-    let Some(enclosing_class) = parent_scope.kind.as_class() else {
-        return None;
-    };
+    let enclosing_class = parent_scope.kind.as_class()?;
 
     let first_arg = args.args.first()?;
 
