@@ -7,7 +7,7 @@ edition = "2021"
 enderpy_python_parser = { path = "../parser", version = "0.1.0" }
 config = "0.13.3"
 serde = { version = "1.0.164", features = ["derive"] }
-miette = "5.10.0"
+miette.workspace = true
 thiserror = "1.0.48"
 log.workspace = true
 env_logger = "0.10.0"
@@ -15,7 +15,6 @@ tempfile = "3.8.0"
 elsa = "1.10.0"
 is-macro = "0.3.5"
 bitflags = "2.4.2"
-insta = { version = "1.0.0", features = ["filters"] }
 
 [dev-dependencies]
-insta = { version = "1.38.0", feature = ["filters", "glob"] }
+insta.workspace = true
