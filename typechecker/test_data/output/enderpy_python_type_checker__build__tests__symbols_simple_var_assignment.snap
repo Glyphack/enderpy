@@ -2,7 +2,6 @@
 source: typechecker/src/build.rs
 description: "a = 'hello world'\nb = a + \"!\"\n\nc: int = 1\n\nf: str = \"hello\"\n"
 expression: result
-input_file: typechecker/test_data/inputs/symbol_table/simple_var_assignment.py
 ---
 Symbols in global
 a SymbolFlags(0x0)

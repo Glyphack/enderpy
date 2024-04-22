@@ -5,6 +5,7 @@ use env_logger::Builder;
 
 use crate::{
     build_source::BuildSource,
+    checker::TypeChecker,
     diagnostic::Diagnostic,
     nodes::{EnderpyFile, ImportKinds},
     ruff_python_import_resolver as ruff_python_resolver,
@@ -13,7 +14,6 @@ use crate::{
         module_descriptor::ImportModuleDescriptor, resolver,
     },
     settings::Settings,
-    type_check::checker::TypeChecker,
 };
 
 #[derive(Debug)]
@@ -239,96 +239,9 @@ impl BuildManager {
                             }
                         };
                     }
-
-                    // TODO: not sure if this part is needed. Need to check when
-                    // we have more tests on builder. This
-                    // is supposed to add implicit imports to the build sources
-                    // implicit import example: import foo.bar
-                    // foo/bar/__init__.py
-                    // In this case, we need to add foo/bar/__init__.py to the
-                    // build sources for (name,
-                    // implicit_import) in resolved.implicit_imports.iter() {
-                    //     if self
-                    //         .modules
-                    //         .contains_key(&get_module_name(&implicit_import.
-                    // path))     {
-                    //         log::debug!(
-                    //             "implicit import already exists: {}",
-                    //             get_module_name(&implicit_import.path)
-                    //         );
-                    //         continue;
-                    //     }
-                    //     let source =
-                    // std::fs::read_to_string(implicit_import.path.clone()).
-                    // unwrap();     let build_source =
-                    //         BuildSource::from_path(implicit_import.path.
-                    // clone(), true).unwrap();
-                    // self.build_sources.push(build_source);
-                    // self.add_to_modules(&build_source);
-                    // match self.modules.get(&build_source.module) {
-                    //     Some(discovered_module) => {
-                    //         if
-                    // !self.modules.contains_key(&build_source.module) {
-                    //             new_imports.push(discovered_module);
-                    //         }
-                    //     }
-                    //     None => {
-                    //         panic!("cannot find module: {}",
-                    // build_source.module);     }
-                    // }
-                    // }
                 }
             }
         }
-
-        // if !add_indirect_imports {
-        //     return;
-        // }
-        //
-        // // Follow the import files and add them to the modules as well
-        // while !new_imports.is_empty() {
-        //     let mut next_imports = vec![];
-        //     for state in new_imports {
-        //         let resolved_imports = state.resolve_file_imports(
-        //             execution_environment,
-        //             import_config,
-        //             host,
-        //             &cached_imports,
-        //         );
-        //         // check if the resolved_imports are not in the current files and add
-        // them to         // the new imports
-        //         for (_, resolved_import) in resolved_imports {
-        //             if !resolved_import.is_import_found {
-        //                 continue;
-        //             }
-        //             for resolved_path in resolved_import.resolved_paths {
-        //                 if
-        // self.modules.contains_key(&get_module_name(&resolved_path)) {
-        //                     log::debug!("imported file already in modules: {:?}",
-        // resolved_path);                     continue;
-        //                 }
-        //                 let build_source = match
-        // BuildSource::from_path(resolved_path, true) {
-        // Ok(build_source) => build_source,                     Err(e) => {
-        //                         log::warn!("cannot read file: {}", e);
-        //                         continue;
-        //                     }
-        //                 };
-        //                 match self.modules.get(&build_source.module) {
-        //                     Some(state) => {
-        //                         if !self.modules.contains_key(&build_source.module) {
-        //                             next_imports.push(state);
-        //                         }
-        //                     }
-        //                     None => {
-        //                         panic!("cannot find module: {}",
-        // build_source.module);                     }
-        //                 }
-        //             }
-        //         }
-        //     }
-        //     new_imports = next_imports;
-        // }
         (imported_sources, import_results)
     }
 
@@ -381,61 +294,62 @@ impl BuildManager {
 
 #[cfg(test)]
 mod tests {
-    use std::fs;
-
-    use insta::glob;
-
     use super::*;
-    #[test]
-    fn test_symbol_table() {
-        glob!("../test_data/inputs/", "symbol_table/*.py", |path| {
-            let mut manager = BuildManager::new(
-                vec![BuildSource::from_path(path.to_path_buf(), false).unwrap()],
-                Settings::test_settings(),
-            );
-            manager.build();
+    use std::fs;
+    macro_rules! symbol_table_test {
+        ($test_name:ident, $test_file:expr) => {
+            #[test]
+            fn $test_name() {
+                let path = PathBuf::from($test_file);
+                let mut manager = BuildManager::new(
+                    vec![BuildSource::from_path(path.to_path_buf(), false).unwrap()],
+                    Settings::test_settings(),
+                );
+                manager.build();
 
-            let module = manager.get_state(path.to_path_buf()).unwrap();
+                let module = manager.get_state(path.to_path_buf()).unwrap();
 
-            let result = format!("{}", module.get_symbol_table());
-            let mut settings = insta::Settings::clone_current();
-            settings.set_snapshot_path("../test_data/output/");
-            settings.set_description(fs::read_to_string(path).unwrap());
-            settings.add_filter(r"/.*/typechecker", "[TYPECHECKER]");
-            settings.add_filter(r"/.*/typeshed", "[TYPESHED]");
-            settings.add_filter(
-                r"module_name: .*.typechecker.test_data.inputs.symbol_table..*.py",
-                "module_name: [REDACTED]",
-            );
-            settings.add_filter(r"\(id: .*\)", "(id: [REDACTED])");
-            settings.bind(|| {
-                insta::assert_snapshot!(result);
-            });
-        });
-
-        glob!("../test_data/inputs/", "*.py", |path| {
-            let mut manager = BuildManager::new(
-                vec![BuildSource::from_path(path.to_path_buf(), false).unwrap()],
-                Settings::test_settings(),
-            );
-            manager.build();
-
-            let module = manager.get_state(path.to_path_buf()).unwrap();
-
-            let result = format!("{}", module.get_symbol_table());
-            let mut settings = insta::Settings::clone_current();
-            settings.set_snapshot_path("../test_data/output/");
-            settings.set_description(fs::read_to_string(path).unwrap());
-            settings.add_filter(r"/.*/typechecker", "[TYPECHECKER]");
-            settings.add_filter(r"/.*/typeshed", "[TYPESHED]");
-            settings.add_filter(
-                r"module_name: .*.typechecker.test_data.inputs.symbol_table..*.py",
-                "module_name: [path]",
-            );
-            settings.add_filter(r".*id: \d+", "id: [ID]");
-            settings.bind(|| {
-                insta::assert_snapshot!(result);
-            });
-        })
+                let result = format!("{}", module.get_symbol_table());
+                let mut settings = insta::Settings::clone_current();
+                settings.set_snapshot_path("../test_data/output/");
+                settings.set_description(fs::read_to_string(path).unwrap());
+                settings.add_filter(r"/.*/typechecker", "[TYPECHECKER]");
+                settings.add_filter(r"/.*/typeshed", "[TYPESHED]");
+                settings.add_filter(
+                    r"module_name: .*.typechecker.test_data.inputs.symbol_table..*.py",
+                    "module_name: [REDACTED]",
+                );
+                settings.add_filter(r"\(id: .*\)", "(id: [REDACTED])");
+                settings.bind(|| {
+                    insta::assert_snapshot!(result);
+                });
+            }
+        };
     }
+
+    symbol_table_test!(
+        test_symbols_class_definition,
+        "test_data/inputs/symbol_table/class_definition.py"
+    );
+
+    symbol_table_test!(
+        test_symbols_function_definition,
+        "test_data/inputs/symbol_table/function_definition.py"
+    );
+    symbol_table_test!(
+        test_symbols_imports,
+        "test_data/inputs/symbol_table/imports.py"
+    );
+    symbol_table_test!(
+        test_symbols_simple_var_assignment,
+        "test_data/inputs/symbol_table/simple_var_assignment.py"
+    );
+    symbol_table_test!(
+        test_symbols_type_alias,
+        "test_data/inputs/symbol_table/type_alias.py"
+    );
+    symbol_table_test!(
+        test_symbols_variables,
+        "test_data/inputs/symbol_table/variables.py"
+    );
 }

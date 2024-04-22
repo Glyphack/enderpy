@@ -1,5 +1,6 @@
 ---
-source: typechecker/src/type_check/type_evaluator.rs
+source: typechecker/src/type_evaluator.rs
+assertion_line: 1693
 description: "1: a = 1\n2: b = \"1\"\n3: c = True\n4: d = False\n5: a + int(b)\n6: \n7: \n8: a + c\n9: \n10: def func(param1: int) -> int:\n11: \treturn param1 + a\n12: \n13: class C:\n14: \tcls_attribute = 1\n15: \n16: \tdef __init__(self, x: int):\n17: \t\tprint(self.cls_attribute)\n18: \t\tself.x = float(x)\n19: \t\tprint(self.x)\n20: \n21: \tdef add(self, value: int):\n22: \t\tself.cls_attribute += value\n23: \n24: \tdef get_attr(self) -> int:\n25: \t\treturn self.cls_attribute\n26: \n27: \tdef\tget_x(self) -> float:\n28: \t\treturn self.x\n29: \n30: t = C(0)\n31: t.add(2)\n32: t.cls_attribute\n33: t.x\n34: t.get_x()\n35: t.get_attr()\n36: \n37: l = [1,2,3]\n38: d = {\"a\": 1, \"b\": 2}\n39: s = {1,2,3}\n40: \n41: l.append(4)\n42: \n"
 expression: result
 ---
@@ -121,7 +122,7 @@ Expr types in the line --->:
 Line 38: d = {"a": 1, "b": 2}
 
 Expr types in the line --->:
-        "{\"a\": 1, \"b\": 2}" => Unknown
+        "{\"a\": 1, \"b\": 2}" => builtins.dict[str, int]
 
 ---
 Line 39: s = {1,2,3}

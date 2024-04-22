@@ -2,7 +2,6 @@
 source: typechecker/src/build.rs
 description: "a = 1\n"
 expression: result
-input_file: typechecker/test_data/inputs/symbol_table/variables.py
 ---
 Symbols in global
 a SymbolFlags(0x0)

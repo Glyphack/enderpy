@@ -1,10 +1,11 @@
+use is_macro::Is;
 use std::fmt::Display;
 
 use enderpy_python_parser::ast;
 
 use crate::symbol_table;
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Is)]
 pub enum PythonType {
     None,
     /// Unknown and Any type are similar but we are using Unknown when we cannot
@@ -12,7 +13,7 @@ pub enum PythonType {
     Unknown,
     /// representing that we know nothing about the value a node can contain.
     /// For example, if a file contains only the function def f(x): return x,
-    /// the name x will have an Anyas its value within the function
+    /// the name x will have an Any as its value within the function
     /// because there is no information to determine what value it can contain
     Any,
     /// representing a value with concrete type.
@@ -27,6 +28,9 @@ pub enum PythonType {
     Class(ClassType),
     Never,
     TypeVar(TypeVar),
+
+    /// Represents a type error that occurred during type evaluation.
+    Error(TypeEvalError),
 }
 
 impl PythonType {
@@ -184,6 +188,11 @@ impl Display for LiteralValue {
     }
 }
 
+#[derive(Debug, Clone, PartialEq)]
+pub struct TypeEvalError {
+    pub message: String,
+}
+
 impl Display for PythonType {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         let type_str = match self {
@@ -228,6 +237,7 @@ impl Display for PythonType {
                     .join(", ");
                 return write!(f, "TypeVar[{}, {}]", type_var.name, bounds);
             }
+            PythonType::Error(error) => return write!(f, "Error[{}]", error.message),
         };
 
         write!(f, "{}", type_str)
