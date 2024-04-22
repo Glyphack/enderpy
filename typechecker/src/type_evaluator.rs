@@ -728,21 +728,18 @@ impl TypeEvaluator {
                 );
             }
         };
-        let Some(builtin_symbol) = bulitins_symbol_table.lookup_in_scope(LookupSymbolRequest {
+        let builtin_symbol = bulitins_symbol_table.lookup_in_scope(LookupSymbolRequest {
             name: name.to_string(),
             scope: None,
-        }) else {
-            return None;
-        };
+        })?;
         let decl = builtin_symbol.last_declaration();
         let found_declaration = match decl {
             Declaration::Class(c) => {
                 let decl_scope = decl.declaration_path().scope_id;
                 self.get_class_declaration_type(c, bulitins_symbol_table, decl_scope)
-                    .expect(&format!(
-                        "Error getting type for builtin class: {:?}",
-                        c.class_node
-                    ))
+                    .unwrap_or_else(|_| {
+                        panic!("Error getting type for builtin class: {:?}", c.class_node)
+                    })
             }
             Declaration::Function(f) => {
                 let arguments = f.function_node.args.clone();

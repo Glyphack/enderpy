@@ -443,51 +443,51 @@ pub trait TraversalVisitorGeneric<T> {
         todo!();
     }
 
-    fn visit_if(&self, i: &parser::ast::If) -> T {
+    fn visit_if(&self, _i: &parser::ast::If) -> T {
         todo!();
     }
 
-    fn visit_while(&self, w: &parser::ast::While) -> T {
+    fn visit_while(&self, _w: &parser::ast::While) -> T {
         todo!();
     }
 
-    fn visit_for(&self, f: &parser::ast::For) -> T {
+    fn visit_for(&self, _f: &parser::ast::For) -> T {
         todo!();
     }
 
-    fn visit_async_for(&self, f: &parser::ast::AsyncFor) -> T {
+    fn visit_async_for(&self, _f: &parser::ast::AsyncFor) -> T {
         todo!();
     }
 
-    fn visit_with(&self, w: &parser::ast::With) -> T {
+    fn visit_with(&self, _w: &parser::ast::With) -> T {
         todo!();
     }
 
-    fn visit_async_with(&self, w: &parser::ast::AsyncWith) -> T {
+    fn visit_async_with(&self, _w: &parser::ast::AsyncWith) -> T {
         todo!();
     }
 
-    fn visit_try(&self, t: &parser::ast::Try) -> T {
+    fn visit_try(&self, _t: &parser::ast::Try) -> T {
         todo!();
     }
 
-    fn visit_try_star(&self, t: &parser::ast::TryStar) -> T {
+    fn visit_try_star(&self, _t: &parser::ast::TryStar) -> T {
         todo!();
     }
 
-    fn visit_function_def(&self, f: &parser::ast::FunctionDef) -> T {
+    fn visit_function_def(&self, _f: &parser::ast::FunctionDef) -> T {
         todo!();
     }
 
-    fn visit_async_function_def(&self, f: &parser::ast::AsyncFunctionDef) -> T {
+    fn visit_async_function_def(&self, _f: &parser::ast::AsyncFunctionDef) -> T {
         todo!();
     }
 
-    fn visit_class_def(&self, c: &parser::ast::ClassDef) -> T {
+    fn visit_class_def(&self, _c: &parser::ast::ClassDef) -> T {
         todo!();
     }
 
-    fn visit_match(&self, m: &parser::ast::Match) -> T {
+    fn visit_match(&self, _m: &parser::ast::Match) -> T {
         todo!();
     }
 
