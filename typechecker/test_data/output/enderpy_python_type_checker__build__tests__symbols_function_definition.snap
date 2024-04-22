@@ -2,7 +2,6 @@
 source: typechecker/src/build.rs
 description: "def func(a ,b , /, c = 2, **e): pass\n"
 expression: result
-input_file: typechecker/test_data/inputs/symbol_table/function_definition.py
 ---
 Symbols in func
 a SymbolFlags(0x0)

@@ -21,4 +21,4 @@ thiserror = "1.0.40"
 is-macro = "0.3.5"
 
 [dev-dependencies]
-insta = { version = "1.28.0", features = ["yaml", "glob"] }
+insta.workspace = true

@@ -2,7 +2,6 @@
 source: typechecker/src/build.rs
 description: "import variables\nimport import_test\n\nfrom variables import a\nfrom variables import *\n\nimport os.path\n\nfrom os import *\n\nfrom os.path import join\n"
 expression: result
-input_file: typechecker/test_data/inputs/symbol_table/imports.py
 ---
 Symbols in global
 * SymbolFlags(0x0)

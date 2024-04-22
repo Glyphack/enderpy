@@ -1,0 +1,211 @@
+---
+source: typechecker/src/type_evaluator.rs
+description: "1: from logging import Logger\n2: from typing import Generic, Sequence, TypeVar, Iterable\n3: \n4: T = TypeVar(\"T\")\n5: \n6: \n7: def first(l: Sequence[T]) -> T:\n8:     return l[0]\n9: \n10: \n11: first([1, 2, 3])  # return type type parameter\n12: \n13: \n14: AnyStr = TypeVar(\"AnyStr\", str, bytes)\n15: \n16: \n17: def concat(x: AnyStr, y: AnyStr) -> AnyStr:\n18:     return x + y\n19: \n20: \n21: # > Specifying a single constraint is disallowed.\n22: \n23: BadConstraint1 = TypeVar(\"BadConstraint1\", str)  # Type error\n24: \n25: # > Note: those types cannot be parameterized by type variables\n26: \n27: BadConstraint2 = TypeVar(\"BadConstraint2\", str, T)  # Type error\n28: \n29: \n30: class LoggedVar(Generic[T]):\n31:     def __init__(self, value: T, name: str, logger: Logger) -> None:\n32:         self.name = name\n33:         self.logger = logger\n34:         self.value = value\n35: \n36:     def set(self, new: T) -> None:\n37:         self.log(\"Set \" + repr(self.value))\n38:         self.value = new\n39: \n40:     def get(self) -> T:\n41:         self.log(\"Get \" + repr(self.value))\n42:         return self.value\n43: \n44:     def log(self, message: str) -> None:\n45:         msg = \"{}: {}\".format(self.name, message)\n46:         self.logger.info(msg)\n47: \n48: \n49: log_var = LoggedVar(1, \"var1\", Logger(\"test\"))\n50: \n51: \n52: def zero_all_vars(vars: Iterable[LoggedVar[int]]) -> None:\n53:     for var in vars:\n54:         var.set(0)\n55: \n56: \n57: zero_all_vars([log_var])  # OK\n58: \n59: \n60: # > A generic type can have any number of type variables, and type variables\n61: # > may be constrained.\n62: \n63: S = TypeVar(\"S\")\n64: \n65: \n66: class Pair1(Generic[T, S]): ...\n67: \n68: \n69: pair1 = Pair1()\n70: \n71: # > Each type variable argument to ``Generic`` must be distinct.\n72: \n73: \n74: class Pair2(Generic[T, T]):  # Type error\n75:     ...\n76: \n77: \n78: pair2 = Pair2()\n79: \n80: # > The ``Generic[T]`` base class is redundant in simple cases where you\n81: # > subclass some other generic class and specify type variables for its\n82: # > parameters.\n83: \n84: from collections.abc import Iterator, Mapping\n85: \n86: \n87: class MyIter1(Iterator[T]): ...\n88: \n89: \n90: class MyIter2(Iterator[T], Generic[T]): ...\n91: \n92: \n93: iter1 = MyIter1()\n94: iter2 = MyIter2()\n95: \n96: K = TypeVar(\"K\")\n97: V = TypeVar(\"V\")\n98: \n99: \n100: class MyMap1(Mapping[K, V], Generic[K, V]): ...\n101: \n102: \n103: my_map1 = MyMap1()\n104: \n105: \n106: class MyMap2(Mapping[K, V], Generic[V, K]): ...\n107: \n108: \n109: my_map2 = MyMap2()\n110: \n111: \n112: def test_my_map(m1: MyMap1[str, int], m2: MyMap2[int, str]):\n113:     a = m1[\"key\"]  # int\n114:     b = m2[\"key\"]  # int\n115: \n116:     m1[0]  # Type error\n117:     m2[0]  # Type error\n118: \n119: \n120: # > You can use multiple inheritance with ``Generic``\n121: \n122: from collections.abc import Sized, Container\n123: \n124: \n125: class LinkedList(Sized, Generic[T]): ...\n126: \n127: \n128: class MyMapping(Iterable[tuple[K, V]], Container[tuple[K, V]], Generic[K, V]): ...\n129: \n130: \n131: my_mapping = MyMapping()\n132: \n133: \n134: # > Subclassing a generic class without specifying type parameters assumes\n135: # > ``Any`` for each position.  In the following example, ``MyIterable``\n136: # > is not generic but implicitly inherits from ``Iterable[Any]``::\n137: \n138: \n139: class MyIterableAny(Iterable):  # Same as Iterable[Any]\n140:     ...\n141: \n142: \n143: def test_my_iterable_any(m: MyIterableAny):\n144:     iter(m)  # Iterator[Any]\n145: \n146: \n147: # > Generic metaclasses are not supported\n148: \n149: \n150: class GenericMeta(type, Generic[T]): ...\n151: \n152: \n153: generic_meta = GenericMeta()\n154: \n155: \n156: class GenericMetaInstance(metaclass=GenericMeta[T]):  # Type error\n157:     ...\n158: \n159: \n160: generic_meta_instance = GenericMetaInstance()\n"
+expression: result
+---
+Line 4: T = TypeVar("T")
+
+Expr types in the line --->:
+        "TypeVar(\"T\")" => TypeVar[T, ]
+
+---
+Line 8:     return l[0]
+
+Expr types in the line --->:
+        "l[0]" => typing.Sequence[TypeVar[T, ]]
+
+---
+Line 11: first([1, 2, 3])  # return type type parameter
+
+Expr types in the line --->:
+        "first([1, 2, 3])  # return type type parameter" => TypeVar[T, ]
+        "[1, 2, 3]" => builtins.list[int]
+
+---
+Line 14: AnyStr = TypeVar("AnyStr", str, bytes)
+
+Expr types in the line --->:
+        "TypeVar(\"AnyStr\", str, bytes)" => TypeVar[AnyStr, str, builtins.bytes[int]]
+
+---
+Line 18:     return x + y
+
+Expr types in the line --->:
+        "x" => TypeVar[AnyStr, str, builtins.bytes[int]]
+        "y" => TypeVar[AnyStr, str, builtins.bytes[int]]
+        "x + y" => TypeVar[AnyStr, str, builtins.bytes[int]]
+
+---
+Line 23: BadConstraint1 = TypeVar("BadConstraint1", str)  # Type error
+
+Expr types in the line --->:
+        "TypeVar(\"BadConstraint1\", str)  # Type error" => Error[TypeVar must be called with at least two bounds]
+
+---
+Line 27: BadConstraint2 = TypeVar("BadConstraint2", str, T)  # Type error
+
+Expr types in the line --->:
+        "TypeVar(\"BadConstraint2\", str, T)  # Type error" => Error[TypeVar cannot be used as a bound]
+
+---
+Line 32:         self.name = name
+
+Expr types in the line --->:
+        "name" => str
+
+---
+Line 33:         self.logger = logger
+
+Expr types in the line --->:
+        "logger" => Logger
+
+---
+Line 34:         self.value = value
+
+Expr types in the line --->:
+        "value" => TypeVar[T, ]
+
+---
+Line 37:         self.log("Set " + repr(self.value))
+
+Expr types in the line --->:
+        "self.log(\"Set \" + repr(self.value))" => None
+        "\"Set \" + repr(self.value)" => str
+
+---
+Line 38:         self.value = new
+
+Expr types in the line --->:
+        "new" => TypeVar[T, ]
+
+---
+Line 41:         self.log("Get " + repr(self.value))
+
+Expr types in the line --->:
+        "self.log(\"Get \" + repr(self.value))" => None
+        "\"Get \" + repr(self.value)" => str
+
+---
+Line 42:         return self.value
+
+Expr types in the line --->:
+        "self.value" => TypeVar[T, ]
+
+---
+Line 45:         msg = "{}: {}".format(self.name, message)
+
+Expr types in the line --->:
+        "\"{}: {}\".format(self.name, message)" => LiteralString
+
+---
+Line 46:         self.logger.info(msg)
+
+Expr types in the line --->:
+        "self.logger.info(msg)" => None
+        "msg" => LiteralString
+
+---
+Line 49: log_var = LoggedVar(1, "var1", Logger("test"))
+
+Expr types in the line --->:
+        "LoggedVar(1, \"var1\", Logger(\"test\"))" => test-file.LoggedVar[TypeVar[T, ]]
+
+---
+Line 57: zero_all_vars([log_var])  # OK
+
+Expr types in the line --->:
+        "zero_all_vars([log_var])  # OK" => None
+        "[log_var]" => builtins.list[test-file.LoggedVar[TypeVar[T, ]]]
+
+---
+Line 63: S = TypeVar("S")
+
+Expr types in the line --->:
+        "TypeVar(\"S\")" => TypeVar[S, ]
+
+---
+Line 69: pair1 = Pair1()
+
+Expr types in the line --->:
+        "Pair1()" => test-file.Pair1[TypeVar[T, ], TypeVar[S, ]]
+
+---
+Line 78: pair2 = Pair2()
+
+Expr types in the line --->:
+        "Pair2()" => test-file.Pair2[Unknown]
+
+---
+Line 93: iter1 = MyIter1()
+
+Expr types in the line --->:
+        "MyIter1()" => test-file.MyIter1[TypeVar[T, ]]
+
+---
+Line 94: iter2 = MyIter2()
+
+Expr types in the line --->:
+        "MyIter2()" => test-file.MyIter2[Unknown]
+
+---
+Line 96: K = TypeVar("K")
+
+Expr types in the line --->:
+        "TypeVar(\"K\")" => TypeVar[K, ]
+
+---
+Line 97: V = TypeVar("V")
+
+Expr types in the line --->:
+        "TypeVar(\"V\")" => TypeVar[V, ]
+
+---
+Line 103: my_map1 = MyMap1()
+
+Expr types in the line --->:
+        "MyMap1()" => test-file.MyMap1[TypeVar[K, ], TypeVar[V, ]]
+
+---
+Line 109: my_map2 = MyMap2()
+
+Expr types in the line --->:
+        "MyMap2()" => test-file.MyMap2[TypeVar[V, ], TypeVar[K, ]]
+
+---
+Line 113:     a = m1["key"]  # int
+
+Expr types in the line --->:
+        "m1[\"key\"]  # int" => test-file.MyMap1[Unknown]
+
+---
+Line 114:     b = m2["key"]  # int
+
+Expr types in the line --->:
+        "m2[\"key\"]  # int" => test-file.MyMap2[Unknown]
+
+---
+Line 131: my_mapping = MyMapping()
+
+Expr types in the line --->:
+        "MyMapping()" => test-file.MyMapping[TypeVar[K, ], TypeVar[V, ]]
+
+---
+Line 144:     iter(m)  # Iterator[Any]
+
+Expr types in the line --->:
+        "iter(m)  # Iterator[Any]" => TypeVar[_SupportsNextT, ]
+        "m" => test-file.MyIterableAny[TypeVar[_T_co, ]]
+
+---
+Line 153: generic_meta = GenericMeta()
+
+Expr types in the line --->:
+        "GenericMeta()" => test-file.GenericMeta[TypeVar[T, ]]
+
+---
+Line 160: generic_meta_instance = GenericMetaInstance()
+
+Expr types in the line --->:
+        "GenericMetaInstance()" => test-file.GenericMetaInstance[TypeVar[T, ]]
+
+---

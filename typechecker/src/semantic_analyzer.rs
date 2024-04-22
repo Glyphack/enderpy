@@ -734,7 +734,10 @@ impl TraversalVisitor for SemanticAnalyzer {
         if assign.targets.len() > 1 {
             panic!("multiple assignment not supported");
         }
-        let target = assign.targets.last().unwrap();
+        let target = assign
+            .targets
+            .last()
+            .expect("Assignment has at least one target");
         let declaration_path = DeclarationPath::new(
             self.file.path(),
             assign.node,
