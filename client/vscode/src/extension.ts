@@ -11,6 +11,7 @@ export async function activate(context: ExtensionContext) {
   context.subscriptions.push(disposable);
   const traceOutputChannel = window.createOutputChannel("Enderpy Language Server trace");
   const command = process.env.SERVER_PATH || "enderpy-lsp";
+  console.log(`Running Lsp ${command}`);
   const run: Executable = {
     command,
     options: {
@@ -30,7 +31,6 @@ export async function activate(context: ExtensionContext) {
   };
 
   client = new LanguageClient("enderpy-language-server", "enderpy language server", serverOptions, clientOptions);
-  console.log("server started 2");
 
   client.start();
 }

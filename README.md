@@ -68,6 +68,16 @@ to learn about each component.
 The following will be a brief introduction into the project and how it works.
 But it's always better to consult the code to see what exactly is going on.
 
+
+### Developing Extension
+
+1. Open vscode
+2. Navigate to Run and Debug tab
+3. Select "Launch Client" and run the app
+
+By default the extension uses `enderpy-lsp` command to run the language server.
+To change it set the `SERVER_PATH` env variable to custom executable.
+
 ### Core Concepts
 
 The project consist of multiple crates each are separately published to crates.io:

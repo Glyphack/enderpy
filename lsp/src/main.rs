@@ -19,8 +19,10 @@ impl Backend {
     async fn check_file(&self, path: PathBuf) -> Vec<Diagnostic> {
         let root = PathBuf::from(find_project_root(path.as_path()));
         let python_executable = None;
-        let path = std::env::current_dir().unwrap();
-        let typeshed_path = Some(path.join("typeshed"));
+        // TODO: This is a hack to get the typeshed path
+        // If it's not found we want to clone it from the typeshed repo
+        let exe_path = std::env::current_exe().unwrap();
+        let typeshed_path = Some(exe_path.parent().unwrap().parent().unwrap().parent().unwrap().join("typeshed"));
         let settings = Settings {
             debug: false,
             root,
