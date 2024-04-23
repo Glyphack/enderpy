@@ -2,7 +2,7 @@ use std::fmt::Display;
 
 use enderpy_python_parser::error::ParsingError;
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, Hash)]
 pub struct Diagnostic {
     /// The message body to display to the user, to explain the diagnostic.
     pub body: String,
@@ -11,13 +11,13 @@ pub struct Diagnostic {
     pub range: Range,
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, Hash)]
 pub struct Range {
     pub start: Position,
     pub end: Position,
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, Hash)]
 pub struct Position {
     pub line: u32,
     pub character: u32,

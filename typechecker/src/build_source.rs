@@ -7,6 +7,7 @@ use std::path::{Path, PathBuf};
 /// semantic information about the file. Like the AST, for example.
 /// This struct is only used in the builder to keep track of the sources
 /// And to add more sources to the builder.
+#[derive(Eq, PartialEq, Hash)]
 pub struct BuildSource {
     pub path: PathBuf,
     pub source: String,

@@ -1611,15 +1611,16 @@ mod tests {
 
         // we use the manager to also import the python typeshed into modules
         // This can be refactored but for now it's fine
-        let mut manager = BuildManager::new(vec![build_source], Settings::test_settings());
-        manager.build();
+        let settings = Settings::test_settings();
+        let manager = BuildManager::new(vec![build_source], settings);
+        manager.build(&PathBuf::from(""));
 
         let mut all_symbol_tables = Vec::new();
-        for module in manager.modules.values() {
+        for module in manager.modules.iter() {
             all_symbol_tables.push(module.get_symbol_table());
         }
 
-        let module = manager.get_state("test-file".into()).unwrap();
+        let module = manager.get_state("test-file").unwrap();
         let symbol_table = module.get_symbol_table();
 
         let type_eval = TypeEvaluator::new(symbol_table, all_symbol_tables);

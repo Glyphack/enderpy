@@ -49,7 +49,11 @@ impl EnderpyFile {
     }
 
     pub fn path(&self) -> PathBuf {
-        self.build_source.path.clone()
+        self.build_source.path.to_path_buf()
+    }
+
+    pub fn path_str(&self) -> String {
+        self.build_source.path.to_str().unwrap().to_string()
     }
 
     pub fn source(&self) -> String {
@@ -128,10 +132,11 @@ impl From<BuildSource> for EnderpyFile {
     fn from(build_source: BuildSource) -> Self {
         let mut parser = Parser::new(
             build_source.source.clone(),
-            build_source.path.as_path().to_str().unwrap().to_owned(),
+            build_source.path.to_str().unwrap().to_string(),
         );
         let tree = parser.parse();
-        let symbol_table = SymbolTable::new(build_source.module.clone(), build_source.path.clone());
+        let symbol_table =
+            SymbolTable::new(build_source.module.clone(), build_source.path.to_path_buf());
 
         let mut file = EnderpyFile {
             defs: vec![],

@@ -7,10 +7,7 @@ use clap::Parser as ClapParser;
 use cli::{Cli, Commands};
 use enderpy_python_parser::{Lexer, Parser};
 use enderpy_python_type_checker::{
-    build::BuildManager,
-    build_source::BuildSource,
-    project::find_project_root,
-    settings::{ImportDiscovery, Settings},
+    build::BuildManager, build_source::BuildSource, project::find_project_root, settings::Settings,
 };
 use miette::{bail, IntoDiagnostic, Result};
 
@@ -30,22 +27,13 @@ fn main() -> Result<()> {
 fn symbols(path: &Path) -> Result<()> {
     let initial_source = BuildSource::from_path(path.to_path_buf(), false).unwrap();
     let dir_of_path = path.parent().unwrap();
-    let python_executable = Some(get_python_executable()?);
-    let typeshed_path = Some(get_typeshed_path()?);
-    let settings = Settings {
-        debug: true,
-        root: dir_of_path.to_path_buf(),
-        import_discovery: ImportDiscovery {
-            python_executable,
-            typeshed_path,
-        },
-        follow_imports: enderpy_python_type_checker::settings::FollowImports::All,
-    };
+    let typeshed_path = get_typeshed_path()?;
+    let settings = Settings { typeshed_path };
+    let manager = BuildManager::new(vec![initial_source], settings);
+    let root = find_project_root(dir_of_path);
+    manager.build(root);
 
-    let mut manager = BuildManager::new(vec![initial_source], settings);
-    manager.build();
-
-    let module = manager.get_state(path.to_path_buf()).unwrap();
+    let module = manager.get_state(path.to_str().expect("")).unwrap();
     println!("{}", module.module_name());
     println!("{}", module.get_symbol_table());
 
@@ -96,18 +84,11 @@ fn check(path: &Path) -> Result<()> {
     }
     let initial_source = BuildSource::from_path(path.to_path_buf(), false).unwrap();
     let root = find_project_root(path);
-    let python_executable = Some(get_python_executable()?);
-    let typeshed_path = Some(get_typeshed_path()?);
-    let settings = Settings {
-        debug: true,
-        root: PathBuf::from(root),
-        import_discovery: ImportDiscovery {
-            python_executable,
-            typeshed_path,
-        },
-        follow_imports: enderpy_python_type_checker::settings::FollowImports::Skip,
-    };
-    let mut build_manager = BuildManager::new(vec![initial_source], settings);
+    let _python_executable = Some(get_python_executable()?);
+    let typeshed_path = get_typeshed_path()?;
+    let settings = Settings { typeshed_path };
+    let build_manager = BuildManager::new(vec![initial_source], settings);
+    build_manager.build(root);
     build_manager.type_check();
 
     for (path, errors) in build_manager.diagnostics {

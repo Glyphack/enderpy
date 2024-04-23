@@ -5,29 +5,8 @@ use serde::Deserialize;
 
 #[derive(Debug, Deserialize)]
 #[allow(unused)]
-pub struct ImportDiscovery {
-    pub python_executable: Option<PathBuf>,
-    // TODO make required and give error if not found
-    pub typeshed_path: Option<PathBuf>,
-}
-
-#[derive(Debug, Deserialize)]
-#[allow(unused)]
 pub struct Settings {
-    pub debug: bool,
-    pub root: PathBuf,
-    pub import_discovery: ImportDiscovery,
-    // Indicates whether to check imports
-    pub follow_imports: FollowImports,
-}
-
-#[derive(Debug, Deserialize)]
-#[allow(unused)]
-pub enum FollowImports {
-    #[serde(rename = "all")]
-    All,
-    #[serde(rename = "skip")]
-    Skip,
+    pub typeshed_path: PathBuf,
 }
 
 impl Settings {
@@ -44,13 +23,7 @@ impl Settings {
     pub fn test_settings() -> Self {
         let file_dir = env::current_dir().unwrap();
         Settings {
-            debug: false,
-            root: PathBuf::from(""),
-            follow_imports: FollowImports::All,
-            import_discovery: ImportDiscovery {
-                python_executable: None,
-                typeshed_path: Some(file_dir.parent().unwrap().join("typeshed")),
-            },
+            typeshed_path: file_dir.parent().unwrap().join("typeshed"),
         }
     }
 }
