@@ -3,17 +3,15 @@ use std::{panic, vec};
 use miette::Result;
 
 use super::{
-    expression::{is_atom, is_iterable},
-    operator::{is_bin_arithmetic_op, is_comparison_operator, is_unary_op, map_unary_operator},
-    statement::is_at_compound_statement,
-    string::concat_string_exprs,
+    concat_string_exprs, is_at_compound_statement, {is_atom, is_iterable},
+    {is_bin_arithmetic_op, is_comparison_operator, is_unary_op, map_unary_operator},
 };
 use crate::{
     error::ParsingError,
     lexer::Lexer,
     parser::{
         ast::*,
-        string::{extract_string_inside, is_string},
+        {extract_string_inside, is_string},
     },
     token::{Kind, Token, TokenValue},
 };

@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use enderpy_python_type_checker::{
-    build::BuildManager, build_source::BuildSource, project::find_project_root, settings::Settings,
+    build::BuildManager, build_source::BuildSource, find_project_root, settings::Settings,
 };
 use env_logger::Builder;
 use log::{info, LevelFilter};
@@ -151,49 +151,47 @@ impl LanguageServer for Backend {
     async fn hover(&self, params: HoverParams) -> Result<Option<Hover>> {
         self.client.log_message(MessageType::INFO, "hover!").await;
         let uri = params.text_document_position_params.text_document.uri;
-        let path = uri.to_file_path();
-        if let Ok(path) = path {
-            let diagnostics = self.on_change(path.clone()).await;
-            self.client
-                .publish_diagnostics(uri.clone(), diagnostics, None)
-                .await;
+        let Ok(path) = uri.to_file_path() else {
+            return Ok(None);
+        };
 
-            let position = params.text_document_position_params.position;
+        let position = params.text_document_position_params.position;
 
-            self.client
-                .log_message(
-                    MessageType::INFO,
-                    format!(
-                        "Hover position: line={}, character={}",
-                        position.line, position.character
-                    ),
-                )
-                .await;
+        self.client
+            .log_message(
+                MessageType::INFO,
+                format!(
+                    "Hover position: line={}, character={}",
+                    position.line, position.character
+                ),
+            )
+            .await;
 
-            // TODO: Implement real logic to find the symbol at the hover position
-            // For now, let's provide a sample hover message with placeholder values
-            let hover_message = "Here are some details about the hovered element:";
+        // TODO: Implement real logic to find the symbol at the hover position
+        // For now, let's provide a sample hover message with placeholder values
+        let hover_message = self.manager.get_type_information(&path,
+            position.line,
+            position.character
+        );
 
-            let markup_content = MarkupContent {
-                kind: MarkupKind::Markdown,
-                value: format!("**Hover Information**\n\n{}\n\n- Type: `<type>`\n- Documentation: `<documentation>`", hover_message),
-            };
-            let hover = Hover {
-                contents: HoverContents::Markup(markup_content),
-                range: None,
-            };
+        let markup_content = MarkupContent {
+            kind: MarkupKind::Markdown,
+            value: format!("**Hover Information**\n\n{}\n\n- Type: `<type>`\n- Documentation: `<documentation>`", hover_message),
+        };
+        let hover = Hover {
+            contents: HoverContents::Markup(markup_content),
+            range: None,
+        };
 
-            // Log the hover content for debugging
-            self.client
-                .log_message(
-                    MessageType::INFO,
-                    format!("Hover content:\n{:?}", hover.contents),
-                )
-                .await;
+        // Log the hover content for debugging
+        self.client
+            .log_message(
+                MessageType::INFO,
+                format!("Hover content:\n{:?}", hover.contents),
+            )
+            .await;
 
-            return Ok(Some(hover));
-        }
-        Ok(None)
+        return Ok(Some(hover));
     }
 
     async fn shutdown(&self) -> Result<()> {

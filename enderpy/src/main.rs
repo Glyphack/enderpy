@@ -7,7 +7,7 @@ use clap::Parser as ClapParser;
 use cli::{Cli, Commands};
 use enderpy_python_parser::{Lexer, Parser};
 use enderpy_python_type_checker::{
-    build::BuildManager, build_source::BuildSource, project::find_project_root, settings::Settings,
+    build::BuildManager, build_source::BuildSource, find_project_root, settings::Settings,
 };
 use miette::{bail, IntoDiagnostic, Result};
 
