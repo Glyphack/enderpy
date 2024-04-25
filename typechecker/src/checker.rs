@@ -49,10 +49,10 @@ impl TypeChecker {
         }
     }
 
-    fn make_error(&mut self, msg: &str, start: usize, end: usize) {
+    fn make_error(&mut self, msg: &str, start: u32, end: u32) {
         let error = TypeCheckError {
             msg: msg.to_string(),
-            span: CharacterSpan(start, end),
+            span: CharacterSpan(start as usize, end as usize),
         };
         // check error doesn't already exist
         for e in &self.errors {

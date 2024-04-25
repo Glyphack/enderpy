@@ -5,12 +5,12 @@ use crate::{
     token::{Kind, Token, TokenValue},
 };
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Lexer {
     /// The source code
     source: String,
     /// The current position in the source code
-    current: usize,
+    current: u32,
     current_line: u16,
     /// Keeps track of whether the lexer is at the start of a line
     start_of_line: bool,
@@ -537,14 +537,14 @@ impl Lexer {
         Ok(None)
     }
 
-    fn extract_raw_token_value(&mut self, start: usize) -> String {
-        self.source[start..self.current].to_string()
+    fn extract_raw_token_value(&mut self, start: u32) -> String {
+        self.source[start as usize..self.current as usize].to_string()
     }
 
     fn next(&mut self) -> Option<char> {
         let c = self.peek();
         if let Some(c) = c {
-            self.current += c.len_utf8();
+            self.current += c.len_utf8() as u32;
         }
         c
     }
@@ -555,15 +555,15 @@ impl Lexer {
     }
 
     fn peek(&self) -> Option<char> {
-        self.source[self.current..].chars().next()
+        self.source[self.current as usize..].chars().next()
     }
 
     fn double_peek(&self) -> Option<char> {
-        self.source[self.current..].chars().nth(1)
+        self.source[self.current as usize..].chars().nth(1)
     }
 
     fn triple_peek(&self) -> Option<char> {
-        self.source[self.current..].chars().nth(2)
+        self.source[self.current as usize..].chars().nth(2)
     }
 
     fn match_keyword(&self, ident: &str) -> Kind {

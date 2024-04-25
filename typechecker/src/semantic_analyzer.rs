@@ -50,6 +50,9 @@ impl SemanticAnalyzer {
     }
 
     fn create_symbol(&mut self, name: String, decl: Declaration, symbol_flags: SymbolFlags) {
+        self.symbol_table
+            .symbol_starts
+            .insert(decl.declaration_path().node.start, name.clone());
         let symbol_node = SymbolTableNode {
             name,
             declarations: vec![decl],
@@ -119,12 +122,7 @@ impl SemanticAnalyzer {
                         is_constant: false,
                     });
 
-                    let symbol_node = SymbolTableNode {
-                        name: a.attr.clone(),
-                        declarations: vec![declaration],
-                        flags: symbol_flags,
-                    };
-                    self.symbol_table.add_symbol(symbol_node)
+                    self.create_symbol(a.attr.clone(), declaration, symbol_flags);
                 }
             }
             // Expression::Call(c) => {

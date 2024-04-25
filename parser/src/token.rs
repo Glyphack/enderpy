@@ -5,8 +5,8 @@ pub struct Token {
     pub kind: Kind,
     // Value might be deleted in the future
     pub value: TokenValue,
-    pub start: usize,
-    pub end: usize,
+    pub start: u32,
+    pub end: u32,
 }
 
 impl Display for Token {

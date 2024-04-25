@@ -41,6 +41,7 @@ pub struct EnderpyFile {
     // Parser Errors
     pub errors: Vec<ParsingError>,
     pub symbol_table: SymbolTable,
+    pub parser: Parser,
 }
 
 impl EnderpyFile {
@@ -86,9 +87,9 @@ impl EnderpyFile {
         self.build_source.source[line_start..line_end].to_string()
     }
 
-    pub fn get_position(&self, pos: usize) -> Position {
-        let mut line_number = 1;
-        let mut line_start = 0;
+    pub fn get_position(&self, pos: u32) -> Position {
+        let mut line_number = 1 as u32;
+        let mut line_start = 0 as u32;
         if pos == 0 {
             return Position {
                 line: 1,
@@ -96,12 +97,12 @@ impl EnderpyFile {
             };
         }
         for (i, c) in self.build_source.source.chars().enumerate() {
-            if i == pos {
+            if i as u32 == pos {
                 break;
             }
             if c == '\n' {
                 line_number += 1;
-                line_start = i;
+                line_start = i as u32;
             }
         }
         Position {
@@ -143,8 +144,9 @@ impl From<BuildSource> for EnderpyFile {
             imports: vec![],
             body: vec![],
             build_source,
-            errors: parser.errors,
+            errors: parser.errors.clone(),
             symbol_table,
+            parser,
         };
 
         for stmt in &tree.body {

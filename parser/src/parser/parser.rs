@@ -17,12 +17,12 @@ use crate::{
 };
 
 #[allow(unused)]
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Parser {
     source: String,
     lexer: Lexer,
     cur_token: Token,
-    prev_token_end: usize,
+    prev_token_end: u32,
     // This var keeps track of how many levels deep we are in a list, tuple or set
     // expression. This is used to determine if we should parse comma separated
     // expressions as tuple or not.
@@ -31,9 +31,10 @@ pub struct Parser {
     nested_expression_list: usize,
     pub errors: Vec<ParsingError>,
     curr_line_string: String,
-    curr_line_number: u32,
-    curr_line_offset: usize,
+    curr_line_number: u16,
     path: String,
+    /// Array of all line starts offsets
+    pub line_starts: Vec<u32>,
 }
 
 #[allow(unused)]
@@ -53,7 +54,7 @@ impl Parser {
             curr_line_string: String::new(),
             path,
             curr_line_number: 1,
-            curr_line_offset: 0,
+            line_starts: vec![0],
         }
     }
 
@@ -71,7 +72,7 @@ impl Parser {
                 continue;
             }
             let stmt = if is_at_compound_statement(self.cur_token()) {
-                self.parse_compount_statement()
+                self.parse_compound_statement()
             } else {
                 self.parse_simple_statement()
             };
@@ -118,7 +119,7 @@ impl Parser {
         let token = self.lexer.peek_token();
         if matches!(token.kind, Kind::Error) {
             let pos = self.cur_token.end;
-            let line_number = self.get_line_number_of_character_position(pos);
+            let line_number = self.get_offset_line_number(pos);
             let err = ParsingError::InvalidSyntax {
                 msg: format!("Syntax error: {:?}", token.value),
                 input: self.curr_line_string.clone(),
@@ -164,20 +165,24 @@ impl Parser {
     /// Move to the next token
     fn advance(&mut self) {
         let token = self.lexer.next_token();
+        if self.cur_kind() == Kind::NewLine
+            && token.kind != Kind::Eof
+            && !(token.kind == Kind::Dedent && self.peek_kind().is_ok_and(|k| k == Kind::Eof))
+        {
+            self.line_starts.push(token.start);
+        }
         if self.at(Kind::NewLine) {
             self.curr_line_string.clear();
             self.curr_line_number += 1;
         } else {
             self.curr_line_string
-                .push_str(&self.source[self.prev_token_end..self.cur_token.end]);
+                .push_str(&self.source[self.prev_token_end as usize..self.cur_token.end as usize]);
         }
-        self.curr_line_offset = self.cur_token.end;
-        {
-            self.prev_token_end = self.cur_token.end;
-            self.cur_token = token;
-            if self.cur_kind() == Kind::Comment {
-                self.bump(Kind::Comment);
-            }
+
+        self.prev_token_end = self.cur_token.end;
+        self.cur_token = token;
+        if self.cur_kind() == Kind::Comment {
+            self.bump(Kind::Comment);
         }
     }
 
@@ -248,7 +253,7 @@ impl Parser {
         }
         self.bump_any();
         let range = self.finish_node(node);
-        let line_number = self.get_line_number_of_character_position(range.start);
+        let line_number = self.get_offset_line_number(range.start);
         let err = ParsingError::InvalidSyntax {
             msg: format!("Unexpected token {:?}", kind),
             input: self.curr_line_string.clone(),
@@ -285,17 +290,11 @@ impl Parser {
         }
     }
 
-    fn get_line_number_of_character_position(&self, pos: usize) -> u32 {
-        let mut line_number = 1;
-        for (i, c) in self.source.chars().enumerate() {
-            if i == pos {
-                break;
-            }
-            if c == '\n' {
-                line_number += 1;
-            }
+    fn get_offset_line_number(&self, pos: u32) -> u32 {
+        match self.line_starts.binary_search(&pos) {
+            Ok(line) => line as u32 + 1,
+            Err(line) => line as u32,
         }
-        line_number
     }
 
     fn parse_simple_statement(&mut self) -> Result<Statement, ParsingError> {
@@ -352,7 +351,7 @@ impl Parser {
         Ok(stmt)
     }
 
-    fn parse_compount_statement(&mut self) -> Result<Statement, ParsingError> {
+    fn parse_compound_statement(&mut self) -> Result<Statement, ParsingError> {
         let stmt = match self.cur_kind() {
             Kind::If => self.parse_if_statement(),
             Kind::While => self.parse_while_statement(),
@@ -408,7 +407,7 @@ impl Parser {
             let err = ParsingError::InvalidSyntax {
                 msg: "Statement does not end in new line or semicolon".to_owned(),
                 input: self.curr_line_string.clone(),
-                advice: "Split the statements into two seperate lines or add a semicolon"
+                advice: "Split the statements into two separate lines or add a semicolon"
                     .to_string(),
                 span: self.get_span_on_line(node.start, node.end),
             };
@@ -813,7 +812,7 @@ impl Parser {
         self.parse_star_named_expressions()
     }
 
-    // star named expresison is similar to starred expression
+    // star named expressions is similar to starred expression
     // but it does not accept expression as a value
     // https://docs.python.org/3/reference/grammar.html
     fn parse_star_named_expression(&mut self) -> Result<Expression, ParsingError> {
@@ -1011,7 +1010,7 @@ impl Parser {
         let capture_value = self.cur_token().value.to_string().clone();
         let node = self.start_node();
         self.expect(Kind::Identifier)?;
-        // TODO: should also accpet as?
+        // TODO: should also accept as?
 
         if capture_value == "_" {
             Ok(MatchPattern::MatchAs(MatchAs {
@@ -1190,12 +1189,12 @@ impl Parser {
 
     fn parse_open_sequence_pattern(&mut self) -> Result<Vec<MatchPattern>, ParsingError> {
         let mut patterns = vec![];
-        patterns.push(self.parse_maybe_star_patern()?);
+        patterns.push(self.parse_maybe_star_pattern()?);
         loop {
             if !self.eat(Kind::Comma) {
                 break;
             }
-            patterns.push(self.parse_maybe_star_patern()?);
+            patterns.push(self.parse_maybe_star_pattern()?);
         }
         Ok(patterns)
     }
@@ -1206,14 +1205,14 @@ impl Parser {
             if self.at(Kind::RightBrace) {
                 break;
             }
-            patterns.push(self.parse_maybe_star_patern()?);
+            patterns.push(self.parse_maybe_star_pattern()?);
             if !self.at(Kind::RightBrace) {
                 self.expect(Kind::Comma)?;
             }
         }
         Ok(patterns)
     }
-    fn parse_maybe_star_patern(&mut self) -> Result<MatchPattern, ParsingError> {
+    fn parse_maybe_star_pattern(&mut self) -> Result<MatchPattern, ParsingError> {
         if self.eat(Kind::Mul) {
             self.parse_capture_or_wildcard_pattern()
         } else {
@@ -1261,7 +1260,7 @@ impl Parser {
     // https://docs.python.org/3/reference/compound_stmts.html#grammar-token-python-grammar-statement
     fn parse_statement(&mut self) -> Result<Vec<Statement>, ParsingError> {
         if is_at_compound_statement(self.cur_token()) {
-            let comp_stmt = self.parse_compount_statement()?;
+            let comp_stmt = self.parse_compound_statement()?;
             Ok(vec![comp_stmt])
         } else {
             self.parse_statement_list()
@@ -1565,7 +1564,7 @@ impl Parser {
             return Err(self.unexpected_token_new(
                import_node,
                vec![Kind::Identifier, Kind::Mul, Kind::LeftParen],
-               "Use * for importing everthing or use () to specify names to import or specify the name you want to import"
+               "Use * for importing everything or use () to specify names to import or specify the name you want to import"
            ));
         }
         Ok(Statement::ImportFrom(ImportFrom {
@@ -2283,10 +2282,10 @@ impl Parser {
     // https://docs.python.org/3/reference/expressions.html#binary-arithmetic-operations
     fn parse_binary_arithmetic_operation(&mut self) -> Result<Expression, ParsingError> {
         let node = self.start_node();
-        let mut lhs = self.parse_unary_arithmetric_operation()?;
+        let mut lhs = self.parse_unary_arithmetic_operation()?;
         while is_bin_arithmetic_op(&self.cur_kind()) {
             let op = self.parse_bin_arithmetic_op()?;
-            let rhs = self.parse_unary_arithmetric_operation()?;
+            let rhs = self.parse_unary_arithmetic_operation()?;
             lhs = Expression::BinOp(Box::new(BinOp {
                 node: self.finish_node(node),
                 op,
@@ -2298,12 +2297,12 @@ impl Parser {
     }
 
     // https://docs.python.org/3/reference/expressions.html#unary-arithmetic-and-bitwise-operations
-    fn parse_unary_arithmetric_operation(&mut self) -> Result<Expression, ParsingError> {
+    fn parse_unary_arithmetic_operation(&mut self) -> Result<Expression, ParsingError> {
         let node = self.start_node();
         if is_unary_op(&self.cur_kind()) {
             let op = map_unary_operator(&self.cur_kind());
             self.bump_any();
-            let operand = self.parse_unary_arithmetric_operation()?;
+            let operand = self.parse_unary_arithmetic_operation()?;
             return Ok(Expression::UnaryOp(Box::new(UnaryOperation {
                 node: self.finish_node(node),
                 op,
@@ -2327,7 +2326,7 @@ impl Parser {
             self.parse_primary(None)
         };
         if self.eat(Kind::Pow) {
-            let exponent = self.parse_unary_arithmetric_operation()?;
+            let exponent = self.parse_unary_arithmetic_operation()?;
             return Ok(Expression::BinOp(Box::new(BinOp {
                 node: self.finish_node(node),
                 op: BinaryOperator::Pow,
@@ -3096,8 +3095,8 @@ impl Parser {
 
     // This function is just here to make it easier to refactor the spans.
     // I don't know how the spans and line number should be handled here
-    pub(crate) fn get_span_on_line(&self, start: usize, end: usize) -> (usize, usize) {
-        (start, end)
+    pub(crate) fn get_span_on_line(&self, start: u32, end: u32) -> (usize, usize) {
+        (start as usize, end as usize)
     }
 
     // https://docs.python.org/3/reference/compound_stmts.html#type-parameter-lists

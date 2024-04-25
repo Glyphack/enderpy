@@ -12,36 +12,38 @@ pub struct SymbolTable {
     // after building symbol table is finished this only contains the most outer scope
     scopes: Vec<SymbolTableScope>,
 
-    prev_scope_id: Option<usize>,
-    pub current_scope_id: usize,
+    prev_scope_id: Option<u32>,
+    pub current_scope_id: u32,
 
     /// Name of the module that this symbol table is for
     pub module_name: String,
     pub file_path: PathBuf,
+    /// Map of the start position of a symbol to the symbol name
+    pub symbol_starts: HashMap<u32, String>,
 }
 
 #[derive(Debug, Clone)]
 pub struct SymbolTableScope {
-    pub id: usize,
-    pub start_pos: usize,
+    pub id: u32,
+    pub start_pos: u32,
     pub kind: SymbolTableType,
     pub name: String,
     symbols: HashMap<String, SymbolTableNode>,
-    parent: Option<usize>,
+    parent: Option<u32>,
 }
 
-fn get_id() -> usize {
+fn get_id() -> u32 {
     use std::sync::atomic::{AtomicUsize, Ordering};
     static COUNTER: AtomicUsize = AtomicUsize::new(1);
-    COUNTER.fetch_add(1, Ordering::SeqCst)
+    COUNTER.fetch_add(1, Ordering::SeqCst) as u32
 }
 
 impl SymbolTableScope {
     pub fn new(
         symbol_table_type: SymbolTableType,
         name: String,
-        start_line_number: usize,
-        parent: usize,
+        start_line_number: u32,
+        parent: u32,
     ) -> Self {
         SymbolTableScope {
             id: get_id(),
@@ -96,8 +98,13 @@ pub struct SymbolTableNode {
 
 impl Display for SymbolTableNode {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        //Print name and flags
-        write!(f, "{} {:?}", self.name, self.flags)
+        //Print name and flags and last declaration
+        write!(
+            f,
+            "{}\n declaration: {}",
+            self.name,
+            self.last_declaration()
+        )
     }
 }
 
@@ -106,11 +113,11 @@ pub struct DeclarationPath {
     pub module_name: PathBuf,
     pub node: Node,
     /// The scope id that this declaration is in
-    pub scope_id: usize,
+    pub scope_id: u32,
 }
 
 impl DeclarationPath {
-    pub fn new(module_name: PathBuf, node: Node, scope_id: usize) -> Self {
+    pub fn new(module_name: PathBuf, node: Node, scope_id: u32) -> Self {
         DeclarationPath {
             module_name,
             node,
@@ -294,13 +301,14 @@ pub struct TypeAlias {
 
 pub struct LookupSymbolRequest {
     pub name: String,
-    pub scope: Option<usize>,
+    pub scope: Option<u32>,
 }
 
 impl SymbolTable {
     pub fn new(module_name: String, file_path: PathBuf) -> Self {
         SymbolTable {
             scopes: vec![SymbolTableScope::global_scope()],
+            symbol_starts: HashMap::new(),
             current_scope_id: 0,
             prev_scope_id: None,
             module_name,
@@ -363,11 +371,11 @@ impl SymbolTable {
             .expect("no current scope")
     }
 
-    pub fn get_scope_by_id(&self, id: usize) -> Option<&SymbolTableScope> {
+    pub fn get_scope_by_id(&self, id: u32) -> Option<&SymbolTableScope> {
         self.scopes.iter().filter(|scope| scope.id == id).last()
     }
 
-    pub fn get_scope_mut_by_id(&mut self, id: usize) -> Option<&mut SymbolTableScope> {
+    pub fn get_scope_mut_by_id(&mut self, id: u32) -> Option<&mut SymbolTableScope> {
         self.scopes.iter_mut().filter(|scope| scope.id == id).last()
     }
 
@@ -422,7 +430,7 @@ impl SymbolTable {
     }
 
     /// Sets the current scope to the scope that starts at the given position
-    pub fn set_scope(&mut self, pos: usize) {
+    pub fn set_scope(&mut self, pos: u32) {
         self.prev_scope_id = Some(self.current_scope_id);
         let scope = self.scopes.iter().find(|scope| scope.start_pos == pos);
         if let Some(scope) = scope {
@@ -500,6 +508,26 @@ impl SymbolTable {
         }
         None
     }
+
+    pub(crate) fn get_symbol_declaration(&self, start: u32) -> Option<&SymbolTableNode> {
+        let all_symbols = self.all_symbols();
+        let symbol = all_symbols.iter().find(|symbol| {
+            symbol
+                .declarations
+                .iter()
+                .any(|decl| decl.declaration_path().node.start == start)
+        });
+        symbol.copied()
+    }
+
+    pub(crate) fn all_symbols(&self) -> Vec<&SymbolTableNode> {
+        let all_symbols: Vec<&SymbolTableNode> = self
+            .scopes
+            .iter()
+            .flat_map(|scope| scope.symbols.values())
+            .collect();
+        all_symbols
+    }
 }
 
 impl SymbolTableNode {
@@ -513,7 +541,7 @@ impl SymbolTableNode {
             .expect("There must be at least one declaration")
     }
 
-    pub fn declaration_until_position(&self, position: usize) -> Option<&Declaration> {
+    pub fn declaration_until_position(&self, position: u32) -> Option<&Declaration> {
         let mut filtered_declarations = self
             .declarations
             .iter()

@@ -48,8 +48,8 @@ impl BuildManager {
         let builtins = BuildSource::from_path(builtins_file, true)
             .expect("builtins does not exist in typeshed");
         let mut sources_with_builtins = DashSet::new();
-        sources_with_builtins.insert(builtins.clone());
-        sources_with_builtins.extend(sources.clone());
+        sources_with_builtins.insert(builtins);
+        sources_with_builtins.extend(sources);
 
         BuildManager {
             errors: DashSet::new(),
@@ -61,20 +61,11 @@ impl BuildManager {
         }
     }
 
-    // pub fn get_result(&self) -> Vec<EnderpyFile> {
-    //     self.modules.values().cloned().collect()
-    // }
-
-    pub fn get_state(&self, path: &str) -> Option<EnderpyFile> {
+    pub fn get_state(&self, path: &str) -> EnderpyFile {
         let result = self.modules.get(path);
-        let module_keys = self
-            .modules
-            .iter()
-            .map(|x| x.key().clone())
-            .collect::<Vec<String>>();
         match result {
-            None => panic!("module not found, available modules: {:?}", module_keys),
-            Some(x) => Some(x.value().clone()),
+            None => panic!("module not found"),
+            Some(x) => x.value().clone(),
         }
     }
 
@@ -100,6 +91,7 @@ impl BuildManager {
     // Performs type checking passes over the code
     // This step happens after the binding phase
     pub fn type_check(&self) {
+        self.diagnostics.clear();
         // TODO: This is a hack to get all the symbol tables so we can resolve imports
         let mut all_symbol_tables = Vec::new();
         for module in self.modules.iter() {
@@ -127,8 +119,8 @@ impl BuildManager {
                                 body: msg.to_string(),
                                 suggestion: Some(advice.to_string()),
                                 range: crate::diagnostic::Range {
-                                    start: state.value().get_position(span.0),
-                                    end: state.value().get_position(span.1),
+                                    start: state.value().get_position(span.0 as u32),
+                                    end: state.value().get_position(span.1 as u32),
                                 },
                             });
                             self.diagnostics
@@ -138,8 +130,8 @@ impl BuildManager {
                                     body: msg.to_string(),
                                     suggestion: Some(advice.to_string()),
                                     range: crate::diagnostic::Range {
-                                        start: state.value().get_position(span.0),
-                                        end: state.value().get_position(span.1),
+                                        start: state.value().get_position(span.0 as u32),
+                                        end: state.value().get_position(span.1 as u32),
                                     },
                                 });
                         }
@@ -155,8 +147,8 @@ impl BuildManager {
                     body: error.msg.to_string(),
                     suggestion: Some("".into()),
                     range: crate::diagnostic::Range {
-                        start: state.value().get_position(error.span.0),
-                        end: state.value().get_position(error.span.1),
+                        start: state.value().get_position(error.span.0 as u32),
+                        end: state.value().get_position(error.span.1 as u32),
                     },
                 });
                 self.diagnostics
@@ -166,12 +158,38 @@ impl BuildManager {
                         body: error.msg.to_string(),
                         suggestion: Some("".into()),
                         range: crate::diagnostic::Range {
-                            start: state.value().get_position(error.span.0),
-                            end: state.value().get_position(error.span.1),
+                            start: state.value().get_position(error.span.0 as u32),
+                            end: state.value().get_position(error.span.1 as u32),
                         },
                     });
             }
         }
+    }
+
+    pub fn get_type_information(&self, path: &Path, line: u32, column: u32) -> String {
+        let module = self
+            .modules
+            .get(path.to_str().expect("file"))
+            .expect("module not found");
+        let symbol_table = module.get_symbol_table();
+        let start_offset = module.parser.line_starts[line as usize] + column;
+        let all_symbols = symbol_table.all_symbols();
+        let symbol = match symbol_table.symbol_starts.get(&start_offset) {
+            Some(symbol_name) => {
+                let symbol = all_symbols.iter().find(|x| x.name == *symbol_name);
+                match symbol {
+                    Some(symbol) => symbol,
+                    None => {
+                        return "symbol not found".to_string();
+                    }
+                }
+            }
+            None => {
+                return "symbol not found using offset".to_string();
+            }
+        };
+
+        return format!("{}", symbol);
     }
 
     // Given a list of files, this function will resolve the imports in the files
@@ -309,9 +327,8 @@ mod tests {
                 );
                 manager.build(&Path::new(""));
 
-                let module = manager
-                    .get_state(PathBuf::from($test_file).as_path().to_str().unwrap())
-                    .expect("module not found");
+                let module =
+                    manager.get_state(PathBuf::from($test_file).as_path().to_str().unwrap());
 
                 let result = format!("{}", module.get_symbol_table());
                 let mut settings = insta::Settings::clone_current();

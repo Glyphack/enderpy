@@ -33,7 +33,7 @@ fn symbols(path: &Path) -> Result<()> {
     let root = find_project_root(dir_of_path);
     manager.build(root);
 
-    let module = manager.get_state(path.to_str().expect("")).unwrap();
+    let module = manager.get_state(path.to_str().expect(""));
     println!("{}", module.module_name());
     println!("{}", module.get_symbol_table());
 

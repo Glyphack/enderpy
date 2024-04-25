@@ -6,10 +6,10 @@ use miette::{SourceOffset, SourceSpan};
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)] // #[serde(tag = "type")]
 pub struct Node {
     /// Start offset in source
-    pub start: usize,
+    pub start: u32,
 
     /// End offset in source
-    pub end: usize,
+    pub end: u32,
 }
 
 impl fmt::Display for Node {
@@ -19,11 +19,11 @@ impl fmt::Display for Node {
 }
 
 impl Node {
-    pub fn new(start: usize, end: usize) -> Self {
+    pub fn new(start: u32, end: u32) -> Self {
         Self { start, end }
     }
 
-    pub fn len(&self) -> usize {
+    pub fn len(&self) -> u32 {
         self.end - self.start
     }
 
@@ -38,7 +38,10 @@ pub trait GetNode {
 
 impl From<Node> for SourceSpan {
     fn from(val: Node) -> Self {
-        Self::new(SourceOffset::from(val.start), SourceOffset::from(val.len()))
+        Self::new(
+            SourceOffset::from(val.start as usize),
+            SourceOffset::from(val.len() as usize),
+        )
     }
 }
 
