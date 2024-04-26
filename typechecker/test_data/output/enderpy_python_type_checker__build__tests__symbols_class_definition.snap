@@ -4,26 +4,38 @@ description: "class c:\n    def __init__(self):\n        a = 1\n        b = a\n 
 expression: result
 ---
 Symbols in __init__
-a SymbolFlags(0x0)
+a
+ declaration: Variable
+ flags: SymbolFlags(0x0)
 - Declarations:
 --:   Variable
-b SymbolFlags(0x0)
+b
+ declaration: Variable
+ flags: SymbolFlags(0x0)
 - Declarations:
 --:   Variable
-self SymbolFlags(0x0)
+self
+ declaration: Parameter
+ flags: SymbolFlags(0x0)
 - Declarations:
 --:   Parameter
 
 Symbols in c
-__init__ SymbolFlags(0x0)
+__init__
+ declaration: Function
+ flags: SymbolFlags(0x0)
 - Declarations:
 --:   Function
-c SymbolFlags(INSTANCE_MEMBER)
+c
+ declaration: Variable
+ flags: SymbolFlags(INSTANCE_MEMBER)
 - Declarations:
 --:   Variable
 
 Symbols in global
-c SymbolFlags(0x0)
+c
+ declaration: Class
+ flags: SymbolFlags(0x0)
 - Declarations:
 --:   Class
 

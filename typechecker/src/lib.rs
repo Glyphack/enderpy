@@ -1,5 +1,6 @@
+use std::path::Path;
+
 mod ast_visitor;
-mod error;
 mod nodes;
 mod ruff_python_import_resolver;
 mod symbol_table;
@@ -8,8 +9,6 @@ pub mod build;
 pub mod build_source;
 pub mod checker;
 pub mod diagnostic;
-pub mod project;
-mod rules;
 pub mod semantic_analyzer;
 pub mod settings;
 pub mod type_evaluator;
@@ -25,4 +24,22 @@ pub(crate) mod builtins {
     pub const ALL_BUILTINS: [&str; 9] = [
         LIST_TYPE, TUPLE_TYPE, DICT_TYPE, SET_TYPE, ITER_TYPE, "str", "int", "float", "bool",
     ];
+}
+
+const PROJECT_ROOT_MARKERS: [&str; 1] = ["pyproject.toml"];
+
+pub fn find_project_root(path: &Path) -> &Path {
+    let root = path
+        .ancestors()
+        .find(|p| PROJECT_ROOT_MARKERS.iter().any(|m| p.join(m).exists()));
+    match root {
+        Some(root) => root,
+        None => {
+            if path.is_dir() {
+                path
+            } else {
+                path.parent().unwrap_or(path)
+            }
+        }
+    }
 }

@@ -4,7 +4,9 @@ description: "a = 1\n"
 expression: result
 ---
 Symbols in global
-a SymbolFlags(0x0)
+a
+ declaration: Variable
+ flags: SymbolFlags(0x0)
 - Declarations:
 --:   Variable
 

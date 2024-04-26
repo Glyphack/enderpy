@@ -4,22 +4,34 @@ description: "import variables\nimport import_test\n\nfrom variables import a\nf
 expression: result
 ---
 Symbols in global
-* SymbolFlags(0x0)
+*
+ declaration: Alias
+ flags: SymbolFlags(0x0)
 - Declarations:
 --:   Alias
-a SymbolFlags(0x0)
+a
+ declaration: Alias
+ flags: SymbolFlags(0x0)
 - Declarations:
 --:   Alias
-import_test SymbolFlags(0x0)
+import_test
+ declaration: Alias
+ flags: SymbolFlags(0x0)
 - Declarations:
 --:   Alias
-join SymbolFlags(0x0)
+join
+ declaration: Alias
+ flags: SymbolFlags(0x0)
 - Declarations:
 --:   Alias
-os.path SymbolFlags(0x0)
+os.path
+ declaration: Alias
+ flags: SymbolFlags(0x0)
 - Declarations:
 --:   Alias
-variables SymbolFlags(0x0)
+variables
+ declaration: Alias
+ flags: SymbolFlags(0x0)
 - Declarations:
 --:   Alias
 

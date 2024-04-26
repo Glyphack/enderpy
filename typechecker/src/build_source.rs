@@ -7,6 +7,7 @@ use std::path::{Path, PathBuf};
 /// semantic information about the file. Like the AST, for example.
 /// This struct is only used in the builder to keep track of the sources
 /// And to add more sources to the builder.
+#[derive(Eq, PartialEq, Hash)]
 pub struct BuildSource {
     pub path: PathBuf,
     pub source: String,
@@ -31,12 +32,3 @@ impl BuildSource {
 pub fn get_module_name(path: &Path) -> String {
     path.to_str().unwrap().replace(['/', '\\'], ".")
 }
-
-// impl Into<EnderpyFile> for BuildSource {
-//     fn into(self) -> EnderpyFile {
-//         let file_path = self.path.to_str().unwrap_or("could not get path");
-//         let mut parser = Parser::new(self.source.clone(), file_path.into());
-//         let tree = parser.parse();
-//         EnderpyFile::from(tree, Box::new(self.clone()), parser.errors)
-//     }
-// }

@@ -41,6 +41,7 @@ pub struct EnderpyFile {
     // Parser Errors
     pub errors: Vec<ParsingError>,
     pub symbol_table: SymbolTable,
+    pub parser: Parser,
 }
 
 impl EnderpyFile {
@@ -49,7 +50,11 @@ impl EnderpyFile {
     }
 
     pub fn path(&self) -> PathBuf {
-        self.build_source.path.clone()
+        self.build_source.path.to_path_buf()
+    }
+
+    pub fn path_str(&self) -> String {
+        self.build_source.path.to_str().unwrap().to_string()
     }
 
     pub fn source(&self) -> String {
@@ -82,9 +87,9 @@ impl EnderpyFile {
         self.build_source.source[line_start..line_end].to_string()
     }
 
-    pub fn get_position(&self, pos: usize) -> Position {
-        let mut line_number = 1;
-        let mut line_start = 0;
+    pub fn get_position(&self, pos: u32) -> Position {
+        let mut line_number = 1_u32;
+        let mut line_start = 0_u32;
         if pos == 0 {
             return Position {
                 line: 1,
@@ -92,17 +97,17 @@ impl EnderpyFile {
             };
         }
         for (i, c) in self.build_source.source.chars().enumerate() {
-            if i == pos {
+            if i as u32 == pos {
                 break;
             }
             if c == '\n' {
                 line_number += 1;
-                line_start = i;
+                line_start = i as u32;
             }
         }
         Position {
             line: line_number,
-            character: (pos - line_start - 1) as u32,
+            character: (pos - line_start - 1),
         }
     }
 
@@ -128,18 +133,20 @@ impl From<BuildSource> for EnderpyFile {
     fn from(build_source: BuildSource) -> Self {
         let mut parser = Parser::new(
             build_source.source.clone(),
-            build_source.path.as_path().to_str().unwrap().to_owned(),
+            build_source.path.to_str().unwrap().to_string(),
         );
         let tree = parser.parse();
-        let symbol_table = SymbolTable::new(build_source.module.clone(), build_source.path.clone());
+        let symbol_table =
+            SymbolTable::new(build_source.module.clone(), build_source.path.to_path_buf());
 
         let mut file = EnderpyFile {
             defs: vec![],
             imports: vec![],
             body: vec![],
             build_source,
-            errors: parser.errors,
+            errors: parser.errors.clone(),
             symbol_table,
+            parser,
         };
 
         for stmt in &tree.body {

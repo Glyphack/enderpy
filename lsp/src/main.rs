@@ -1,51 +1,36 @@
 use std::path::PathBuf;
 
 use enderpy_python_type_checker::{
-    build::BuildManager,
-    build_source::BuildSource,
-    project::find_project_root,
-    settings::{ImportDiscovery, Settings},
+    build::BuildManager, build_source::BuildSource, find_project_root, settings::Settings,
 };
 use env_logger::Builder;
-use log::{error, info, LevelFilter};
+use log::{info, LevelFilter};
 use tower_lsp::{jsonrpc::Result, lsp_types::*, Client, LanguageServer, LspService, Server};
 
 #[derive(Debug)]
 struct Backend {
     client: Client,
+    manager: BuildManager,
 }
 
 impl Backend {
-    async fn check_file(&self, path: PathBuf) -> Vec<Diagnostic> {
-        let root = PathBuf::from(find_project_root(path.as_path()));
-        let python_executable = None;
-        let path = std::env::current_dir().unwrap();
-        let typeshed_path = Some(path.join("typeshed"));
-        let settings = Settings {
-            debug: false,
-            root,
-            import_discovery: ImportDiscovery {
-                typeshed_path,
-                python_executable,
-            },
-            follow_imports: enderpy_python_type_checker::settings::FollowImports::Skip,
-        };
-
-        let source = match BuildSource::from_path(path.clone(), false) {
+    async fn on_change(&self, path: PathBuf) -> Vec<Diagnostic> {
+        let source = match BuildSource::from_path(path.to_path_buf(), false) {
             Ok(source) => source,
             Err(err) => {
-                error!("error: {:?}", err);
-                return Vec::new();
+                panic!("cannot read the file: {:?}", err);
             }
         };
 
-        let mut manager = BuildManager::new(vec![source], settings);
-        manager.type_check();
-        let mut diagnostics = Vec::new();
-        info!("path: {path:?}");
+        let root = PathBuf::from(find_project_root(&path));
 
-        if let Some(errors) = manager.diagnostics.get(&path) {
-            for err in errors {
+        self.manager.add_source(source);
+        self.manager.build(&root);
+        self.manager.type_check();
+        let mut diagnostics = Vec::new();
+
+        if let Some(errors) = self.manager.diagnostics.get(&path) {
+            for err in errors.iter() {
                 diagnostics.push(from(err.clone()));
             }
         }
@@ -92,7 +77,7 @@ impl LanguageServer for Backend {
         let uri = params.text_document.uri;
         let path = uri.to_file_path();
         if let Ok(path) = path {
-            let diagnostics = self.check_file(path).await;
+            let diagnostics = self.on_change(path).await;
             self.client
                 .publish_diagnostics(uri, diagnostics, None)
                 .await;
@@ -106,7 +91,7 @@ impl LanguageServer for Backend {
         let uri = params.text_document.uri;
         let path = uri.to_file_path();
         if let Ok(path) = path {
-            let diagnostics = self.check_file(path).await;
+            let diagnostics = self.on_change(path).await;
             self.client
                 .publish_diagnostics(uri, diagnostics, None)
                 .await;
@@ -120,7 +105,7 @@ impl LanguageServer for Backend {
         let uri = params.text_document.uri;
         let path = uri.to_file_path();
         if let Ok(path) = path {
-            let diagnostics = self.check_file(path).await;
+            let diagnostics = self.on_change(path).await;
             self.client
                 .publish_diagnostics(uri, diagnostics, None)
                 .await;
@@ -140,7 +125,7 @@ impl LanguageServer for Backend {
         info!("diagnostic: {:?}", path);
         match path {
             Ok(path) => {
-                let diagnostics = self.check_file(path).await;
+                let diagnostics = self.on_change(path).await;
                 info!("diagnostics: {:?}", diagnostics);
                 Ok(DocumentDiagnosticReportResult::Report(
                     DocumentDiagnosticReport::Full(RelatedFullDocumentDiagnosticReport {
@@ -166,49 +151,46 @@ impl LanguageServer for Backend {
     async fn hover(&self, params: HoverParams) -> Result<Option<Hover>> {
         self.client.log_message(MessageType::INFO, "hover!").await;
         let uri = params.text_document_position_params.text_document.uri;
-        let path = uri.to_file_path();
-        if let Ok(path) = path {
-            let diagnostics = self.check_file(path.clone()).await;
-            self.client
-                .publish_diagnostics(uri.clone(), diagnostics, None)
-                .await;
+        let Ok(path) = uri.to_file_path() else {
+            return Ok(None);
+        };
 
-            let position = params.text_document_position_params.position;
+        let position = params.text_document_position_params.position;
 
-            self.client
-                .log_message(
-                    MessageType::INFO,
-                    format!(
-                        "Hover position: line={}, character={}",
-                        position.line, position.character
-                    ),
-                )
-                .await;
+        self.client
+            .log_message(
+                MessageType::INFO,
+                format!(
+                    "Hover position: line={}, character={}",
+                    position.line, position.character
+                ),
+            )
+            .await;
 
-            // TODO: Implement real logic to find the symbol at the hover position
-            // For now, let's provide a sample hover message with placeholder values
-            let hover_message = "Here are some details about the hovered element:";
+        // TODO: Implement real logic to find the symbol at the hover position
+        // For now, let's provide a sample hover message with placeholder values
+        let hover_message =
+            self.manager
+                .get_type_information(&path, position.line, position.character);
 
-            let markup_content = MarkupContent {
-                kind: MarkupKind::Markdown,
-                value: format!("**Hover Information**\n\n{}\n\n- Type: `<type>`\n- Documentation: `<documentation>`", hover_message),
-            };
-            let hover = Hover {
-                contents: HoverContents::Markup(markup_content),
-                range: None,
-            };
+        let markup_content = MarkupContent {
+            kind: MarkupKind::Markdown,
+            value: format!("**Hover Information**\n\n{}\n\n- Type: `<type>`\n- Documentation: `<documentation>`", hover_message),
+        };
+        let hover = Hover {
+            contents: HoverContents::Markup(markup_content),
+            range: None,
+        };
 
-            // Log the hover content for debugging
-            self.client
-                .log_message(
-                    MessageType::INFO,
-                    format!("Hover content:\n{:?}", hover.contents),
-                )
-                .await;
+        // Log the hover content for debugging
+        self.client
+            .log_message(
+                MessageType::INFO,
+                format!("Hover content:\n{:?}", hover.contents),
+            )
+            .await;
 
-            return Ok(Some(hover));
-        }
-        Ok(None)
+        return Ok(Some(hover));
     }
 
     async fn shutdown(&self) -> Result<()> {
@@ -249,6 +231,20 @@ async fn main() {
 
     let stdin = tokio::io::stdin();
     let stdout = tokio::io::stdout();
-    let (service, socket) = LspService::new(|client| Backend { client });
+
+    // TODO: This is a hack to get the typeshed path
+    // If it's not found we want to clone it from the typeshed repo
+    let exe_path = std::env::current_exe().unwrap();
+    let typeshed_path = exe_path
+        .parent()
+        .unwrap()
+        .parent()
+        .unwrap()
+        .parent()
+        .unwrap()
+        .join("typeshed");
+    let settings = Settings { typeshed_path };
+    let manager = BuildManager::new(vec![], settings);
+    let (service, socket) = LspService::new(|client| Backend { client, manager });
     Server::new(stdin, stdout, socket).serve(service).await;
 }

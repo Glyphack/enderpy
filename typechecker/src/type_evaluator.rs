@@ -53,7 +53,7 @@ impl TypeEvaluator {
         &self,
         expr: &ast::Expression,
         symbol_table: Option<&SymbolTable>,
-        symbol_table_scope: Option<usize>,
+        symbol_table_scope: Option<u32>,
     ) -> Result<PythonType> {
         log::debug!(
             "Getting type for expression: {:?} in symbol table: {:?}",
@@ -356,7 +356,7 @@ impl TypeEvaluator {
         &self,
         type_annotation: &ast::Expression,
         symbol_table: &SymbolTable,
-        scope_id: Option<usize>,
+        scope_id: Option<u32>,
     ) -> PythonType {
         log::debug!("Getting type from annotation: {:?}", type_annotation);
         let expr_type = match type_annotation {
@@ -439,9 +439,9 @@ impl TypeEvaluator {
     fn infer_type_from_symbol_table(
         &self,
         name: &str,
-        position: Option<usize>,
+        position: Option<u32>,
         symbol_table: &SymbolTable,
-        scope_id: Option<usize>,
+        scope_id: Option<u32>,
     ) -> Result<PythonType> {
         let lookup_request = LookupSymbolRequest {
             name: name.to_string(),
@@ -551,7 +551,7 @@ impl TypeEvaluator {
         &self,
         class_symbol: &Class,
         symbol_table: &SymbolTable,
-        decl_scope: usize,
+        decl_scope: u32,
     ) -> Result<PythonType> {
         if class_symbol.get_qualname() == "typing.TypeVar" {
             Ok(PythonType::TypeVar(TypeVar {
@@ -959,6 +959,7 @@ impl TypeEvaluator {
 
     /// The expression is assumed to be used in type annotation context.
     /// So some expressions are not allowed, for example a function call
+    /// TODO: This function is garbage.
     fn get_class_declaration(
         &self,
         expression: &Expression,
@@ -1002,8 +1003,8 @@ impl TypeEvaluator {
                                 None => return None,
                             };
                         }
-                        // This is only valid if we are in a pyi file.
-                        // In other contexts a variable declaration cannot be pointing to a class
+                        // There are cases where a class is just a variable pointing to a class
+                        // Like Literal: _SpecialForm in stdlib/typing.pyi
                         Declaration::Variable(v) => {
                             let found_in_symbol_table = self
                                 .get_symbol_table_of(&v.declaration_path.module_name)
@@ -1439,8 +1440,9 @@ impl DumpTypes {
     /// This function is called on every expression in the ast
     pub fn save_type(&mut self, expr: &ast::Expression) {
         let typ = self.type_eval.get_type(expr, None, None);
-        let symbol_text =
-            self.enderpy_file().source()[expr.get_node().start..expr.get_node().end].to_string();
+        let symbol_text = self.enderpy_file().source()
+            [expr.get_node().start as usize..expr.get_node().end as usize]
+            .to_string();
         let position = self.enderpy_file().get_position(expr.get_node().start);
         let typ = SnapshtType {
             position,
@@ -1455,8 +1457,9 @@ impl DumpTypes {
         let typ = self
             .type_eval
             .get_type_from_annotation(expr, &self.type_eval.symbol_table, None);
-        let symbol_text =
-            self.enderpy_file().source()[expr.get_node().start..expr.get_node().end].to_string();
+        let symbol_text = self.enderpy_file().source()
+            [expr.get_node().start as usize..expr.get_node().end as usize]
+            .to_string();
         let typ = SnapshtType {
             position: self.enderpy_file().get_position(expr.get_node().start),
             symbol_text,
@@ -1611,15 +1614,16 @@ mod tests {
 
         // we use the manager to also import the python typeshed into modules
         // This can be refactored but for now it's fine
-        let mut manager = BuildManager::new(vec![build_source], Settings::test_settings());
-        manager.build();
+        let settings = Settings::test_settings();
+        let manager = BuildManager::new(vec![build_source], settings);
+        manager.build(&PathBuf::from(""));
 
         let mut all_symbol_tables = Vec::new();
-        for module in manager.modules.values() {
+        for module in manager.modules.iter() {
             all_symbol_tables.push(module.get_symbol_table());
         }
 
-        let module = manager.get_state("test-file".into()).unwrap();
+        let module = manager.get_state("test-file");
         let symbol_table = module.get_symbol_table();
 
         let type_eval = TypeEvaluator::new(symbol_table, all_symbol_tables);

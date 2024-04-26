@@ -1,5 +1,9 @@
-use std::{collections::HashMap, path::PathBuf};
+use std::{
+    collections::HashMap,
+    path::{Path, PathBuf},
+};
 
+use dashmap::{DashMap, DashSet};
 use enderpy_python_parser::error::ParsingError;
 use env_logger::Builder;
 
@@ -18,80 +22,67 @@ use crate::{
 
 #[derive(Debug)]
 pub struct BuildManager {
-    pub errors: Vec<Diagnostic>,
-    pub modules: HashMap<String, EnderpyFile>,
-    build_sources: Vec<BuildSource>,
-    options: Settings,
+    pub errors: DashSet<Diagnostic>,
+    pub modules: DashMap<String, EnderpyFile>,
+    build_sources: DashSet<BuildSource>,
+    // options: Settings,
     // Map of file name to list of diagnostics
-    pub diagnostics: HashMap<PathBuf, Vec<Diagnostic>>,
+    pub diagnostics: DashMap<PathBuf, Vec<Diagnostic>>,
+    pub settings: Settings,
 }
 #[allow(unused)]
 impl BuildManager {
-    pub fn new(sources: Vec<BuildSource>, options: Settings) -> Self {
+    pub fn new(sources: Vec<BuildSource>, settings: Settings) -> Self {
         if sources.len() > 1 {
             panic!("analyzing more than 1 input is not supported");
         }
 
-        let mut modules = HashMap::new();
-
+        let mut modules = DashMap::new();
         let mut builder = Builder::new();
-        if options.debug {
-            builder
-                .filter(None, log::LevelFilter::Debug)
-                .format_timestamp(None)
-                .init();
-        } else {
-            builder.filter(None, log::LevelFilter::Warn);
-        }
+        builder
+            .filter(None, log::LevelFilter::Debug)
+            .format_timestamp(None)
+            .try_init();
 
-        let builtins_file = options
-            .import_discovery
-            .typeshed_path
-            .clone()
-            .expect("typeshed path not set")
-            .join("stdlib/builtins.pyi");
-        let builtins = BuildSource::from_path(builtins_file, true).expect("cannot read builtins");
-        let mut sources_with_builtins = vec![builtins.clone()];
-        sources_with_builtins.extend(sources.clone());
+        let builtins_file = settings.typeshed_path.join("stdlib/builtins.pyi");
+        let builtins = BuildSource::from_path(builtins_file, true)
+            .expect("builtins does not exist in typeshed");
+        let mut sources_with_builtins = DashSet::new();
+        sources_with_builtins.insert(builtins);
+        sources_with_builtins.extend(sources);
 
         BuildManager {
-            errors: vec![],
+            errors: DashSet::new(),
             build_sources: sources_with_builtins,
             modules,
-            options,
-            diagnostics: HashMap::new(),
+            settings,
+            // options,
+            diagnostics: DashMap::new(),
         }
     }
 
-    pub fn get_result(&self) -> Vec<EnderpyFile> {
-        self.modules.values().cloned().collect()
-    }
-
-    pub fn get_state(&self, path: PathBuf) -> Option<&EnderpyFile> {
-        self.modules.values().find(|&state| state.path() == path)
+    pub fn get_state(&self, path: &str) -> EnderpyFile {
+        let result = self.modules.get(path);
+        match result {
+            None => panic!("module not found"),
+            Some(x) => x.value().clone(),
+        }
     }
 
     // Entry point to analyze the program
-    pub fn build(&mut self) {
+    pub fn build(&self, root: &Path) {
         for build_source in self.build_sources.iter() {
             let build_source: BuildSource = build_source.clone();
             let state: EnderpyFile = build_source.into();
-            self.modules.insert(state.module_name(), state);
+            self.modules.insert(state.path_str(), state);
         }
-        let (new_files, imports) = match self.options.follow_imports {
-            crate::settings::FollowImports::All => {
-                self.gather_files(self.build_sources.clone(), true)
-            }
-            crate::settings::FollowImports::Skip => {
-                self.gather_files(self.build_sources.clone(), false)
-            }
-        };
+        let (new_files, imports) = self.gather_files(self.build_sources.clone(), root);
         log::debug!("Imports resolved");
         for build_source in new_files {
             let file: EnderpyFile = build_source.into();
-            self.modules.insert(file.module_name(), file);
+            self.modules.insert(file.path_str(), file);
         }
-        for module in self.modules.values_mut() {
+        for mut module in self.modules.iter_mut() {
             module.populate_symbol_table(imports.clone());
         }
         log::debug!("Symbol tables populated");
@@ -99,24 +90,24 @@ impl BuildManager {
 
     // Performs type checking passes over the code
     // This step happens after the binding phase
-    pub fn type_check(&mut self) {
-        self.build();
+    pub fn type_check(&self) {
+        self.diagnostics.clear();
         // TODO: This is a hack to get all the symbol tables so we can resolve imports
         let mut all_symbol_tables = Vec::new();
-        for module in self.modules.values() {
-            all_symbol_tables.push(module.get_symbol_table());
+        for module in self.modules.iter() {
+            all_symbol_tables.push(module.value().get_symbol_table());
         }
 
-        for state in self.modules.iter_mut() {
+        for state in self.modules.iter() {
             // do not type check builtins
-            if state.1.path().ends_with("builtins.pyi") {
+            if state.value().path().ends_with("builtins.pyi") {
                 continue;
             }
-            if state.1.build_source.followed {
+            if state.value().build_source.followed {
                 continue;
             }
-            if !state.1.errors.is_empty() {
-                for err in state.1.errors.iter() {
+            if !state.value().errors.is_empty() {
+                for err in state.value().errors.iter() {
                     match err {
                         ParsingError::InvalidSyntax {
                             msg,
@@ -124,88 +115,112 @@ impl BuildManager {
                             advice,
                             span,
                         } => {
-                            self.errors.push(Diagnostic {
+                            self.errors.insert(Diagnostic {
                                 body: msg.to_string(),
                                 suggestion: Some(advice.to_string()),
                                 range: crate::diagnostic::Range {
-                                    start: state.1.get_position(span.0),
-                                    end: state.1.get_position(span.1),
+                                    start: state.value().get_position(span.0 as u32),
+                                    end: state.value().get_position(span.1 as u32),
                                 },
                             });
                             self.diagnostics
-                                .entry(state.1.path())
+                                .entry(state.value().path())
                                 .or_default()
                                 .push(Diagnostic {
                                     body: msg.to_string(),
                                     suggestion: Some(advice.to_string()),
                                     range: crate::diagnostic::Range {
-                                        start: state.1.get_position(span.0),
-                                        end: state.1.get_position(span.1),
+                                        start: state.value().get_position(span.0 as u32),
+                                        end: state.value().get_position(span.1 as u32),
                                     },
                                 });
                         }
                     }
                 }
             }
-            let mut checker = TypeChecker::new(state.1, &self.options, all_symbol_tables.clone());
-            for stmt in &state.1.body {
+            let mut checker = TypeChecker::new(state.value().clone(), all_symbol_tables.clone());
+            for stmt in &state.value().body {
                 checker.type_check(stmt);
             }
             for error in checker.errors {
-                self.errors.push(Diagnostic {
+                self.errors.insert(Diagnostic {
                     body: error.msg.to_string(),
                     suggestion: Some("".into()),
                     range: crate::diagnostic::Range {
-                        start: state.1.get_position(error.span.0),
-                        end: state.1.get_position(error.span.1),
+                        start: state.value().get_position(error.span.0 as u32),
+                        end: state.value().get_position(error.span.1 as u32),
                     },
                 });
                 self.diagnostics
-                    .entry(state.1.path())
+                    .entry(state.value().path())
                     .or_default()
                     .push(Diagnostic {
                         body: error.msg.to_string(),
                         suggestion: Some("".into()),
                         range: crate::diagnostic::Range {
-                            start: state.1.get_position(error.span.0),
-                            end: state.1.get_position(error.span.1),
+                            start: state.value().get_position(error.span.0 as u32),
+                            end: state.value().get_position(error.span.1 as u32),
                         },
                     });
             }
         }
     }
 
+    pub fn get_type_information(&self, path: &Path, line: u32, column: u32) -> String {
+        let module = self
+            .modules
+            .get(path.to_str().expect("file"))
+            .expect("module not found");
+        let symbol_table = module.get_symbol_table();
+        let start_offset = module.parser.line_starts[line as usize] + column;
+        let all_symbols = symbol_table.all_symbols();
+        let symbol = match symbol_table.symbol_starts.get(&start_offset) {
+            Some(symbol_name) => {
+                let symbol = all_symbols.iter().find(|x| x.name == *symbol_name);
+                match symbol {
+                    Some(symbol) => symbol,
+                    None => {
+                        return "symbol not found".to_string();
+                    }
+                }
+            }
+            None => {
+                return "symbol not found using offset".to_string();
+            }
+        };
+
+        format!("{}", symbol)
+    }
+
     // Given a list of files, this function will resolve the imports in the files
     // and add them to the modules.
     fn gather_files(
         &self,
-        initial_files: Vec<BuildSource>,
-        add_indirect_imports: bool,
+        initial_files: DashSet<BuildSource>,
+        root: &Path,
     ) -> (
         Vec<BuildSource>,
         HashMap<ImportModuleDescriptor, ImportResult>,
     ) {
         let execution_environment = &execution_environment::ExecutionEnvironment {
-            root: self.options.root.clone(),
+            root: root.to_path_buf(),
             python_version: ruff_python_resolver::python_version::PythonVersion::Py312,
             python_platform: ruff_python_resolver::python_platform::PythonPlatform::Darwin,
-            // Adding a blank path to the extra paths is a hack to make the resolver work
-            extra_paths: vec![PathBuf::from("")],
+            extra_paths: vec![],
         };
         let import_config = &Config {
-            typeshed_path: self.options.import_discovery.typeshed_path.clone(),
+            typeshed_path: Some(self.settings.typeshed_path.clone()),
             stub_path: None,
-            venv_path: Some(self.options.root.clone()),
+            venv_path: None,
             venv: None,
         };
+        let host = &ruff_python_resolver::host::StaticHost::new(vec![]);
 
         let mut files_to_resolve: Vec<BuildSource> = vec![];
         files_to_resolve.extend(initial_files);
         let mut import_results = HashMap::new();
         let mut imported_sources = Vec::new();
-
         let mut new_imports: Vec<BuildSource> = vec![];
-        let host = &ruff_python_resolver::host::StaticHost::new(vec![]);
         while let Some(source) = files_to_resolve.pop() {
             let enderpy_file = EnderpyFile::from(source);
             let resolved_imports = self.resolve_file_imports(
@@ -228,7 +243,7 @@ impl BuildManager {
                                 continue;
                             }
                         };
-                        match BuildSource::from_path(resolved_path.clone(), true) {
+                        match BuildSource::from_path(resolved_path.to_path_buf(), true) {
                             Ok(build_source) => {
                                 imported_sources.push(build_source.clone());
                                 files_to_resolve.push(build_source);
@@ -290,6 +305,10 @@ impl BuildManager {
         }
         imports
     }
+
+    pub fn add_source(&self, source: BuildSource) {
+        self.build_sources.insert(source);
+    }
 }
 
 #[cfg(test)]
@@ -301,18 +320,20 @@ mod tests {
             #[test]
             fn $test_name() {
                 let path = PathBuf::from($test_file);
-                let mut manager = BuildManager::new(
-                    vec![BuildSource::from_path(path.to_path_buf(), false).unwrap()],
+                let content = fs::read_to_string(path.clone()).unwrap();
+                let manager = BuildManager::new(
+                    vec![BuildSource::from_path(path, false).unwrap()],
                     Settings::test_settings(),
                 );
-                manager.build();
+                manager.build(&Path::new(""));
 
-                let module = manager.get_state(path.to_path_buf()).unwrap();
+                let module =
+                    manager.get_state(PathBuf::from($test_file).as_path().to_str().unwrap());
 
                 let result = format!("{}", module.get_symbol_table());
                 let mut settings = insta::Settings::clone_current();
                 settings.set_snapshot_path("../test_data/output/");
-                settings.set_description(fs::read_to_string(path).unwrap());
+                settings.set_description(content);
                 settings.add_filter(r"/.*/typechecker", "[TYPECHECKER]");
                 settings.add_filter(r"/.*/typeshed", "[TYPESHED]");
                 settings.add_filter(

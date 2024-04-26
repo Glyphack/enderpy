@@ -5,12 +5,11 @@ use enderpy_python_parser::ast::{self, *};
 use super::{type_evaluator::TypeEvaluator, types::PythonType};
 use crate::{
     ast_visitor::TraversalVisitor, diagnostic::CharacterSpan, nodes::EnderpyFile,
-    settings::Settings, symbol_table::SymbolTable,
+    symbol_table::SymbolTable,
 };
 
-pub struct TypeChecker<'a> {
+pub struct TypeChecker {
     pub errors: Vec<TypeCheckError>,
-    pub options: &'a Settings,
     type_evaluator: TypeEvaluator,
 }
 
@@ -21,16 +20,11 @@ pub struct TypeCheckError {
 }
 
 #[allow(unused)]
-impl<'a> TypeChecker<'a> {
-    pub fn new(
-        module: &'a EnderpyFile,
-        options: &'a Settings,
-        symbol_tables: Vec<SymbolTable>,
-    ) -> Self {
+impl TypeChecker {
+    pub fn new(module: EnderpyFile, symbol_tables: Vec<SymbolTable>) -> Self {
         let mut symbol_table = module.get_symbol_table();
         TypeChecker {
             errors: vec![],
-            options,
             type_evaluator: TypeEvaluator::new(symbol_table.clone(), symbol_tables.clone()),
         }
     }
@@ -55,10 +49,10 @@ impl<'a> TypeChecker<'a> {
         }
     }
 
-    fn make_error(&mut self, msg: &str, start: usize, end: usize) {
+    fn make_error(&mut self, msg: &str, start: u32, end: u32) {
         let error = TypeCheckError {
             msg: msg.to_string(),
-            span: CharacterSpan(start, end),
+            span: CharacterSpan(start as usize, end as usize),
         };
         // check error doesn't already exist
         for e in &self.errors {
@@ -70,7 +64,7 @@ impl<'a> TypeChecker<'a> {
     }
 }
 #[allow(unused)]
-impl<'a> TraversalVisitor for TypeChecker<'a> {
+impl TraversalVisitor for TypeChecker {
     fn visit_stmt(&mut self, s: &Statement) {
         // map all statements and call visit
         match s {
