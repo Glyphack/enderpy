@@ -4,16 +4,24 @@ description: "# Show me some examples of type aliasing in Python try to give exa
 expression: result
 ---
 Symbols in global
-Alias1 SymbolFlags(0x0)
+Alias1
+ declaration: Type alias
+ flags: SymbolFlags(0x0)
 - Declarations:
 --:   Type alias
-Alias2 SymbolFlags(0x0)
+Alias2
+ declaration: Type alias
+ flags: SymbolFlags(0x0)
 - Declarations:
 --:   Type alias
-Alias3 SymbolFlags(0x0)
+Alias3
+ declaration: Type alias
+ flags: SymbolFlags(0x0)
 - Declarations:
 --:   Type alias
-AliasToAnotherAlias SymbolFlags(0x0)
+AliasToAnotherAlias
+ declaration: Type alias
+ flags: SymbolFlags(0x0)
 - Declarations:
 --:   Type alias
 

@@ -1,28 +1,61 @@
 ---
 source: typechecker/src/build.rs
-description: "def func(a ,b , /, c = 2, **e): pass\n"
+description: "def func(a, b, /, c=2, **e):\n    pass\n\n\n# Path: function_definition.py\n\n\ndef func(a, b, /, c=2, **e):\n    pass\n"
 expression: result
 ---
 Symbols in func
-a SymbolFlags(0x0)
+a
+ declaration: Parameter
+ flags: SymbolFlags(0x0)
 - Declarations:
 --:   Parameter
-b SymbolFlags(0x0)
+b
+ declaration: Parameter
+ flags: SymbolFlags(0x0)
 - Declarations:
 --:   Parameter
-c SymbolFlags(0x0)
+c
+ declaration: Parameter
+ flags: SymbolFlags(0x0)
 - Declarations:
 --:   Parameter
-e SymbolFlags(0x0)
+e
+ declaration: Parameter
+ flags: SymbolFlags(0x0)
+- Declarations:
+--:   Parameter
+
+Symbols in func
+a
+ declaration: Parameter
+ flags: SymbolFlags(0x0)
+- Declarations:
+--:   Parameter
+b
+ declaration: Parameter
+ flags: SymbolFlags(0x0)
+- Declarations:
+--:   Parameter
+c
+ declaration: Parameter
+ flags: SymbolFlags(0x0)
+- Declarations:
+--:   Parameter
+e
+ declaration: Parameter
+ flags: SymbolFlags(0x0)
 - Declarations:
 --:   Parameter
 
 Symbols in global
-func SymbolFlags(0x0)
+func
+ declaration: Function
+ flags: SymbolFlags(0x0)
 - Declarations:
 --:   Function
 
 Scopes:
 
+Scope func
 Scope func
 Scope global

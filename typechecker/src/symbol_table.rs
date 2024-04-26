@@ -98,12 +98,12 @@ pub struct SymbolTableNode {
 
 impl Display for SymbolTableNode {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        //Print name and flags and last declaration
         write!(
             f,
-            "{}\n declaration: {}",
+            "{}\n declaration: {}\n flags: {:?}",
             self.name,
-            self.last_declaration()
+            self.last_declaration(),
+            self.flags
         )
     }
 }
@@ -561,7 +561,7 @@ impl SymbolTableNode {
 
 // implement display for symbol table and sort the symbols by key
 
-impl std::fmt::Display for SymbolTable {
+impl Display for SymbolTable {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut sorted_scopes = self.scopes.iter().collect::<Vec<&SymbolTableScope>>();
         sorted_scopes.sort_by(|a, b| a.name.cmp(&b.name));
@@ -583,7 +583,7 @@ impl std::fmt::Display for SymbolTable {
     }
 }
 
-impl std::fmt::Display for SymbolTableScope {
+impl Display for SymbolTableScope {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut sorted_symbols = self
             .symbols
@@ -613,7 +613,7 @@ impl std::fmt::Display for SymbolTableScope {
     }
 }
 
-impl std::fmt::Display for Declaration {
+impl Display for Declaration {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Declaration::Variable(_v) => {

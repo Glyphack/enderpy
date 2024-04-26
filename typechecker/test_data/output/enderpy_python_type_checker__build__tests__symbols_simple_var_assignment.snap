@@ -4,16 +4,24 @@ description: "a = 'hello world'\nb = a + \"!\"\n\nc: int = 1\n\nf: str = \"hello
 expression: result
 ---
 Symbols in global
-a SymbolFlags(0x0)
+a
+ declaration: Variable
+ flags: SymbolFlags(0x0)
 - Declarations:
 --:   Variable
-b SymbolFlags(0x0)
+b
+ declaration: Variable
+ flags: SymbolFlags(0x0)
 - Declarations:
 --:   Variable
-c SymbolFlags(0x0)
+c
+ declaration: Variable
+ flags: SymbolFlags(0x0)
 - Declarations:
 --:   Variable
-f SymbolFlags(0x0)
+f
+ declaration: Variable
+ flags: SymbolFlags(0x0)
 - Declarations:
 --:   Variable
 
