@@ -189,7 +189,7 @@ impl BuildManager {
             }
         };
 
-        return format!("{}", symbol);
+        format!("{}", symbol)
     }
 
     // Given a list of files, this function will resolve the imports in the files

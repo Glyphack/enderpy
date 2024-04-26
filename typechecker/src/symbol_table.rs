@@ -509,17 +509,6 @@ impl SymbolTable {
         None
     }
 
-    pub(crate) fn get_symbol_declaration(&self, start: u32) -> Option<&SymbolTableNode> {
-        let all_symbols = self.all_symbols();
-        let symbol = all_symbols.iter().find(|symbol| {
-            symbol
-                .declarations
-                .iter()
-                .any(|decl| decl.declaration_path().node.start == start)
-        });
-        symbol.copied()
-    }
-
     pub(crate) fn all_symbols(&self) -> Vec<&SymbolTableNode> {
         let all_symbols: Vec<&SymbolTableNode> = self
             .scopes

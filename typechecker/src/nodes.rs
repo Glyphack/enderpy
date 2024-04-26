@@ -88,8 +88,8 @@ impl EnderpyFile {
     }
 
     pub fn get_position(&self, pos: u32) -> Position {
-        let mut line_number = 1 as u32;
-        let mut line_start = 0 as u32;
+        let mut line_number = 1_u32;
+        let mut line_start = 0_u32;
         if pos == 0 {
             return Position {
                 line: 1,
@@ -107,7 +107,7 @@ impl EnderpyFile {
         }
         Position {
             line: line_number,
-            character: (pos - line_start - 1) as u32,
+            character: (pos - line_start - 1),
         }
     }
 
