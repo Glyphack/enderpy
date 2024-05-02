@@ -136,8 +136,7 @@ impl From<BuildSource> for EnderpyFile {
             build_source.path.to_str().unwrap().to_string(),
         );
         let tree = parser.parse();
-        let symbol_table =
-            SymbolTable::new(build_source.module.clone(), build_source.path.to_path_buf());
+        let symbol_table = SymbolTable::new(&build_source);
 
         let mut file = EnderpyFile {
             defs: vec![],

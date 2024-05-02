@@ -149,7 +149,6 @@ impl LanguageServer for Backend {
     }
 
     async fn hover(&self, params: HoverParams) -> Result<Option<Hover>> {
-        self.client.log_message(MessageType::INFO, "hover!").await;
         let uri = params.text_document_position_params.text_document.uri;
         let Ok(path) = uri.to_file_path() else {
             return Ok(None);
@@ -175,20 +174,12 @@ impl LanguageServer for Backend {
 
         let markup_content = MarkupContent {
             kind: MarkupKind::Markdown,
-            value: format!("**Hover Information**\n\n{}\n\n- Type: `<type>`\n- Documentation: `<documentation>`", hover_message),
+            value: format!("**Hover Information**\n\n- Definition: `{}`\n\n- Type: `<type>`\n", hover_message),
         };
         let hover = Hover {
             contents: HoverContents::Markup(markup_content),
             range: None,
         };
-
-        // Log the hover content for debugging
-        self.client
-            .log_message(
-                MessageType::INFO,
-                format!("Hover content:\n{:?}", hover.contents),
-            )
-            .await;
 
         return Ok(Some(hover));
     }

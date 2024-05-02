@@ -1,9 +1,12 @@
 use bitflags::bitflags;
+use rust_lapper::{Interval, Lapper};
 
 use std::{collections::HashMap, fmt::Display, path::PathBuf};
 
 use enderpy_python_parser::ast::{self, ClassDef, FunctionDef, Node};
 
+use crate::build_source::BuildSource;
+use crate::nodes::EnderpyFile;
 use crate::ruff_python_import_resolver::import_result::ImportResult;
 
 #[derive(Debug, Clone)]
@@ -18,8 +21,7 @@ pub struct SymbolTable {
     /// Name of the module that this symbol table is for
     pub module_name: String,
     pub file_path: PathBuf,
-    /// Map of the start position of a symbol to the symbol name
-    pub symbol_starts: HashMap<u32, String>,
+    pub scope_starts: Lapper<u32, u32>,
 }
 
 #[derive(Debug, Clone)]
@@ -100,7 +102,7 @@ impl Display for SymbolTableNode {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "{}\n declaration: {}\n flags: {:?}",
+            "{} - declaration: {} - properties: {:?}",
             self.name,
             self.last_declaration(),
             self.flags
@@ -299,20 +301,26 @@ pub struct TypeAlias {
     pub type_alias_node: ast::TypeAlias,
 }
 
-pub struct LookupSymbolRequest {
-    pub name: String,
+pub struct LookupSymbolRequest<'a> {
+    pub name: &'a str,
     pub scope: Option<u32>,
 }
 
 impl SymbolTable {
-    pub fn new(module_name: String, file_path: PathBuf) -> Self {
+    pub fn new(enderpy_file: &BuildSource) -> Self {
+        let file_len = enderpy_file.source.len() as u32;
+        let global_scope_interval = Interval {
+            start: 0,
+            stop: file_len,
+            val: 0,
+        };
         SymbolTable {
             scopes: vec![SymbolTableScope::global_scope()],
-            symbol_starts: HashMap::new(),
             current_scope_id: 0,
             prev_scope_id: None,
-            module_name,
-            file_path,
+            module_name: enderpy_file.module.clone(),
+            file_path: enderpy_file.path.clone(),
+            scope_starts: Lapper::new(vec![global_scope_interval]),
         }
     }
 
@@ -407,7 +415,7 @@ impl SymbolTable {
             None => self.current_scope(),
         };
         loop {
-            if let Some(symbol) = scope.symbols.get(&lookup_request.name) {
+            if let Some(symbol) = scope.symbols.get(lookup_request.name) {
                 if !symbol.flags.contains(SymbolFlags::INSTANCE_MEMBER)
                     && !symbol.flags.contains(SymbolFlags::CLASS_MEMBER)
                 {
@@ -459,6 +467,12 @@ impl SymbolTable {
     }
 
     pub fn exit_scope(&mut self) {
+        let current_scope = self.current_scope();
+        self.scope_starts.insert(Interval {
+            start: current_scope.start_pos,
+            stop: 0,
+            val: current_scope.id,
+        });
         self.current_scope_id = self
             .current_scope()
             .parent
@@ -507,15 +521,6 @@ impl SymbolTable {
             return Some(symbol);
         }
         None
-    }
-
-    pub(crate) fn all_symbols(&self) -> Vec<&SymbolTableNode> {
-        let all_symbols: Vec<&SymbolTableNode> = self
-            .scopes
-            .iter()
-            .flat_map(|scope| scope.symbols.values())
-            .collect();
-        all_symbols
     }
 }
 

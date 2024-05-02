@@ -444,7 +444,7 @@ impl TypeEvaluator {
         scope_id: Option<u32>,
     ) -> Result<PythonType> {
         let lookup_request = LookupSymbolRequest {
-            name: name.to_string(),
+            name: name,
             scope: scope_id,
         };
         log::debug!(
@@ -729,7 +729,7 @@ impl TypeEvaluator {
             }
         };
         let builtin_symbol = bulitins_symbol_table.lookup_in_scope(LookupSymbolRequest {
-            name: name.to_string(),
+            name: name,
             scope: None,
         })?;
         let decl = builtin_symbol.last_declaration();
@@ -980,7 +980,7 @@ impl TypeEvaluator {
                 }
 
                 let mut declaration = match symbol_table.lookup_in_scope(LookupSymbolRequest {
-                    name: n.id.clone(),
+                    name: &n.id,
                     scope: None,
                 }) {
                     Some(s) => s.last_declaration(),
@@ -1093,7 +1093,7 @@ impl TypeEvaluator {
             return None;
         }
         return symbol_table_with_alias_def?.lookup_in_scope(LookupSymbolRequest {
-            name: class_name.clone(),
+            name: &class_name,
             scope: None,
         });
     }

@@ -38,7 +38,7 @@ pub struct SemanticAnalyzer {
 #[allow(unused)]
 impl SemanticAnalyzer {
     pub fn new(file: EnderpyFile, imports: HashMap<ImportModuleDescriptor, ImportResult>) -> Self {
-        let symbols = SymbolTable::new(file.module_name(), file.path());
+        let symbols = SymbolTable::new(&file.build_source);
         let is_pyi = file.path().ends_with(".pyi");
         SemanticAnalyzer {
             symbol_table: symbols,
@@ -50,9 +50,6 @@ impl SemanticAnalyzer {
     }
 
     fn create_symbol(&mut self, name: String, decl: Declaration, symbol_flags: SymbolFlags) {
-        self.symbol_table
-            .symbol_starts
-            .insert(decl.declaration_path().node.start, name.clone());
         let symbol_node = SymbolTableNode {
             name,
             declarations: vec![decl],
