@@ -781,7 +781,7 @@ impl TypeEvaluator {
 
         union_parameters.push(*current_expr.clone());
 
-        current_expr = b.right.clone();
+        current_expr.clone_from(&b.right);
 
         while let Expression::BinOp(inner_binop) = *current_expr.clone() {
             if let ast::BinaryOperator::BitOr = inner_binop.op {

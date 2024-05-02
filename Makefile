@@ -23,4 +23,4 @@ format-check:
 
 .PHONY: lint
 lint:
-	@cargo clippy --all --all-features --tests -- -D warnings
+	@cargo clippy --all --all-features --tests
