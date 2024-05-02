@@ -6,6 +6,7 @@ use std::{
 use dashmap::{DashMap, DashSet};
 use enderpy_python_parser::error::ParsingError;
 use env_logger::Builder;
+use log::{debug, info};
 
 use crate::{
     build_source::BuildSource,
@@ -166,30 +167,62 @@ impl BuildManager {
         }
     }
 
-    pub fn get_type_information(&self, path: &Path, line: u32, column: u32) -> String {
+    pub fn get_hover_information(&self, path: &Path, line: u32, column: u32) -> String {
         let module = self
             .modules
             .get(path.to_str().expect("file"))
             .expect("module not found");
         let symbol_table = module.get_symbol_table();
-        let start_offset = module.parser.line_starts[line as usize] + column;
-        let all_symbols = symbol_table.all_symbols();
-        let symbol = match symbol_table.symbol_starts.get(&start_offset) {
-            Some(symbol_name) => {
-                let symbol = all_symbols.iter().find(|x| x.name == *symbol_name);
-                match symbol {
-                    Some(symbol) => symbol,
-                    None => {
-                        return "symbol not found".to_string();
-                    }
+        let hovered_offset = module.parser.line_starts()[line as usize] + column;
+        let line_number = match module.parser.line_starts().binary_search(&hovered_offset) {
+            Ok(index) => index,
+            Err(index) => index - 1,
+        };
+        let hovered =
+            &module.build_source.source[hovered_offset as usize..hovered_offset as usize + 1];
+
+        let symbol_name = match module
+            .parser
+            .identifiers_start_offset
+            .binary_search_by_key(&hovered_offset, |x| x.0)
+        {
+            Ok(index) => &module.parser.identifiers_start_offset[index].2,
+            Err(index) => {
+                if index < 1 {
+                    return "No identifiers".to_string();
                 }
-            }
-            None => {
-                return "symbol not found using offset".to_string();
+                let found_identifier = &module.parser.identifiers_start_offset[index - 1].2;
+                let start = module.parser.identifiers_start_offset[index - 1].0;
+                let end = module.parser.identifiers_start_offset[index - 1].1;
+                info!(
+                    "start: {}, end: {}, hovered offset: {} found_identifier: {}",
+                    start, end, hovered_offset, found_identifier
+                );
+                if start <= hovered_offset && end > hovered_offset {
+                    found_identifier
+                } else {
+                    return "There are no identifiers at this location, skip.".to_string();
+                }
             }
         };
 
-        format!("{}", symbol)
+        debug!("line: {line}, column: {column} offset: {hovered_offset} source: `{hovered}` symbol: {symbol_name}");
+        let scope_id = symbol_table
+            .scope_starts
+            .find(hovered_offset, hovered_offset + symbol_name.len() as u32)
+            .last()
+            .expect("scope id not found")
+            .val;
+
+        let symbol = match symbol_table.lookup_in_scope(crate::symbol_table::LookupSymbolRequest {
+            name: symbol_name,
+            scope: Some(scope_id),
+        }) {
+            Some(symbol) => symbol,
+            None => return "symbol not found".into(),
+        };
+
+        format!("Symbol Information {}", symbol)
     }
 
     // Given a list of files, this function will resolve the imports in the files

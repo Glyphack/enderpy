@@ -19,6 +19,8 @@ use crate::{
 #[allow(unused)]
 #[derive(Debug, Clone)]
 pub struct Parser {
+    pub identifiers_start_offset: Vec<(u32, u32, String)>,
+    pub errors: Vec<ParsingError>,
     source: String,
     lexer: Lexer,
     cur_token: Token,
@@ -29,19 +31,24 @@ pub struct Parser {
     // This is incremented when we see an opening bracket and decremented when we
     // see a closing bracket.
     nested_expression_list: usize,
-    pub errors: Vec<ParsingError>,
     curr_line_string: String,
     curr_line_number: u16,
     path: String,
-    /// Array of all line starts offsets
-    pub line_starts: Vec<u32>,
 }
 
 #[allow(unused)]
 impl Parser {
+    pub fn line_starts(&self) -> Vec<u32> {
+        self.lexer.line_starts.clone()
+    }
     pub fn new(source: String, path: String) -> Self {
         let mut lexer = Lexer::new(&source);
         let cur_token = lexer.next_token();
+        let identifiers_offset = if cur_token.kind == Kind::Identifier {
+            vec![(cur_token.start, cur_token.end, cur_token.value.to_string())]
+        } else {
+            vec![]
+        };
         let prev_token_end = 0;
 
         Self {
@@ -54,7 +61,7 @@ impl Parser {
             curr_line_string: String::new(),
             path,
             curr_line_number: 1,
-            line_starts: vec![0],
+            identifiers_start_offset: identifiers_offset,
         }
     }
 
@@ -122,7 +129,7 @@ impl Parser {
             let line_number = self.get_offset_line_number(pos);
             let err = ParsingError::InvalidSyntax {
                 msg: format!("Syntax error: {:?}", token.value),
-                input: self.curr_line_string.clone(),
+                input: self.curr_line_string(),
                 advice: "".to_string(),
                 span: self.get_span_on_line(pos, pos),
             };
@@ -165,11 +172,9 @@ impl Parser {
     /// Move to the next token
     fn advance(&mut self) {
         let token = self.lexer.next_token();
-        if self.cur_kind() == Kind::NewLine
-            && token.kind != Kind::Eof
-            && !(token.kind == Kind::Dedent && self.peek_kind().is_ok_and(|k| k == Kind::Eof))
-        {
-            self.line_starts.push(token.start);
+        if token.kind == Kind::Identifier {
+            self.identifiers_start_offset
+                .push((token.start, token.end, token.value.to_string()));
         }
         if self.at(Kind::NewLine) {
             self.curr_line_string.clear();
@@ -205,7 +210,7 @@ impl Parser {
             let range = self.finish_node(node);
             let err = ParsingError::InvalidSyntax {
                 msg: format!("Expected {:?} but found {:?}", kind, found),
-                input: self.curr_line_string.clone(),
+                input: self.curr_line_string(),
                 advice: "maybe you forgot to put this character".to_string(),
                 span: self.get_span_on_line(range.start, range.end),
             };
@@ -233,7 +238,7 @@ impl Parser {
             }
             let err = ParsingError::InvalidSyntax {
                 msg: format!("Expected one of {:?} but found {:?}", expected, found),
-                input: self.curr_line_string.clone(),
+                input: self.curr_line_string(),
                 advice: "maybe you forgot to put this character".to_string(),
                 span: self.get_span_on_line(range.start, range.end),
             };
@@ -256,7 +261,7 @@ impl Parser {
         let line_number = self.get_offset_line_number(range.start);
         let err = ParsingError::InvalidSyntax {
             msg: format!("Unexpected token {:?}", kind),
-            input: self.curr_line_string.clone(),
+            input: self.curr_line_string(),
             advice: String::new(),
             span: self.get_span_on_line(range.start, range.end),
         };
@@ -284,14 +289,14 @@ impl Parser {
                 expected,
                 self.cur_kind()
             ),
-            input: self.curr_line_string.clone(),
+            input: self.curr_line_string(),
             advice: advice.to_string(),
             span: self.get_span_on_line(range.start, range.end),
         }
     }
 
     fn get_offset_line_number(&self, pos: u32) -> u32 {
-        match self.line_starts.binary_search(&pos) {
+        match self.lexer.line_starts.binary_search(&pos) {
             Ok(line) => line as u32 + 1,
             Err(line) => line as u32,
         }
@@ -384,7 +389,7 @@ impl Parser {
                 let range = self.finish_node(self.start_node());
                 Err(ParsingError::InvalidSyntax {
                     msg: "Expected compound statement".to_owned(),
-                    input: self.curr_line_string.clone(),
+                    input: self.curr_line_string(),
                     advice: "maybe you forgot to put this character".to_string(),
                     span: self.get_span_on_line(range.start, range.end),
                 })
@@ -406,7 +411,7 @@ impl Parser {
             let kind = self.cur_kind();
             let err = ParsingError::InvalidSyntax {
                 msg: "Statement does not end in new line or semicolon".to_owned(),
-                input: self.curr_line_string.clone(),
+                input: self.curr_line_string(),
                 advice: "Split the statements into two separate lines or add a semicolon"
                     .to_string(),
                 span: self.get_span_on_line(node.start, node.end),
@@ -1148,7 +1153,7 @@ impl Parser {
                 if seen_keyword_pattern {
                     return Err(ParsingError::InvalidSyntax {
                         msg: "Positional arguments cannot come after keyword arguments.".to_owned(),
-                        input: self.curr_line_string.clone(),
+                        input: self.curr_line_string(),
                         advice: "you can only use arguments in form a=b here.".to_string(),
                         span: self.get_span_on_line(node.start, node.end),
                     });
@@ -1988,7 +1993,7 @@ impl Parser {
             let Some(key) = first_key else {
                 return Err(ParsingError::InvalidSyntax {
                     msg: "cannot use ** in dict comprehension".to_owned(),
-                    input: self.curr_line_string.clone(),
+                    input: self.curr_line_string(),
                     advice: String::default(),
                     span: self.get_span_on_line(node.start, node.end),
                 });
@@ -2398,7 +2403,7 @@ impl Parser {
                         return Err(ParsingError::InvalidSyntax {
                             msg: "Positional arguments cannot come after keyword arguments."
                                 .to_owned(),
-                            input: self.curr_line_string.clone(),
+                            input: self.curr_line_string(),
                             advice: "you can only use arguments in form a=b here.".to_string(),
                             span: self.get_span_on_line(node_end.start, node_end.end),
                         });
@@ -2477,7 +2482,7 @@ impl Parser {
                     let node_end = self.finish_node(node);
                     return Err(ParsingError::InvalidSyntax {
                         msg: "Positional arguments cannot come after keyword arguments.".to_owned(),
-                        input: self.curr_line_string.clone(),
+                        input: self.curr_line_string(),
                         advice: "you can only use arguments in form a=b here.".to_string(),
                         span: self.get_span_on_line(node_end.start, node_end.end),
                     });
@@ -2945,7 +2950,7 @@ impl Parser {
                 } else if seen_kwarg {
                     return Err(ParsingError::InvalidSyntax {
                         msg: "positional argument follows keyword argument".to_owned(),
-                        input: self.curr_line_string.clone(),
+                        input: self.curr_line_string(),
                         advice: "you can only use arguments in form a=b here.".to_string(),
                         span: self.get_span_on_line(self.cur_token().start, self.cur_token().end),
                     });
@@ -2962,7 +2967,7 @@ impl Parser {
                 } else if must_have_default {
                     return Err(ParsingError::InvalidSyntax {
                         msg: "non-default argument follows default argument".to_owned(),
-                        input: self.curr_line_string.clone(),
+                        input: self.curr_line_string(),
                         advice: "you can only use arguments with default value here.".to_string(),
                         span: self.get_span_on_line(self.cur_token().start, self.cur_token().end),
                     });
@@ -2985,7 +2990,7 @@ impl Parser {
                 if default.is_some() {
                     return Err(ParsingError::InvalidSyntax {
                         msg: "var-positional argument cannot have default value".to_owned(),
-                        input: self.curr_line_string.clone(),
+                        input: self.curr_line_string(),
                         advice: "remove the default value of this argument".to_string(),
                         span: self.get_span_on_line(self.cur_token().start, self.cur_token().end),
                     });
@@ -2998,7 +3003,7 @@ impl Parser {
                 if default.is_some() {
                     return Err(ParsingError::InvalidSyntax {
                         msg: "var-keyword argument cannot have default value".to_owned(),
-                        input: self.curr_line_string.clone(),
+                        input: self.curr_line_string(),
                         advice: "remove the default value of this argument".to_string(),
                         span: self.get_span_on_line(self.cur_token().start, self.cur_token().end),
                     });

@@ -444,7 +444,7 @@ impl TypeEvaluator {
         scope_id: Option<u32>,
     ) -> Result<PythonType> {
         let lookup_request = LookupSymbolRequest {
-            name: name.to_string(),
+            name,
             scope: scope_id,
         };
         log::debug!(
@@ -728,10 +728,8 @@ impl TypeEvaluator {
                 );
             }
         };
-        let builtin_symbol = bulitins_symbol_table.lookup_in_scope(LookupSymbolRequest {
-            name: name.to_string(),
-            scope: None,
-        })?;
+        let builtin_symbol =
+            bulitins_symbol_table.lookup_in_scope(LookupSymbolRequest { name, scope: None })?;
         let decl = builtin_symbol.last_declaration();
         let found_declaration = match decl {
             Declaration::Class(c) => {
@@ -783,7 +781,7 @@ impl TypeEvaluator {
 
         union_parameters.push(*current_expr.clone());
 
-        current_expr = b.right.clone();
+        current_expr.clone_from(&b.right);
 
         while let Expression::BinOp(inner_binop) = *current_expr.clone() {
             if let ast::BinaryOperator::BitOr = inner_binop.op {
@@ -980,7 +978,7 @@ impl TypeEvaluator {
                 }
 
                 let mut declaration = match symbol_table.lookup_in_scope(LookupSymbolRequest {
-                    name: n.id.clone(),
+                    name: &n.id,
                     scope: None,
                 }) {
                     Some(s) => s.last_declaration(),
@@ -1093,7 +1091,7 @@ impl TypeEvaluator {
             return None;
         }
         return symbol_table_with_alias_def?.lookup_in_scope(LookupSymbolRequest {
-            name: class_name.clone(),
+            name: &class_name,
             scope: None,
         });
     }
