@@ -294,10 +294,10 @@ impl Display for Kind {
     }
 }
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone, is_macro::Is)]
 pub enum TokenValue {
     None,
-    Number(String), // TODO: String because we don't need the value yet
+    Number(String),
     Str(String),
     Indent(usize),
 }

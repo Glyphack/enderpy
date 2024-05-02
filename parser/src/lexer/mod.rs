@@ -31,6 +31,8 @@ pub struct Lexer {
 
     // TODO: Hacky way to handle emitting multiple de indents
     next_token_is_dedent: u8,
+    /// Array of all line starts offsets
+    pub line_starts: Vec<u32>,
 }
 
 impl Lexer {
@@ -45,6 +47,7 @@ impl Lexer {
             fstring_stack: vec![],
             inside_fstring_bracket: 0,
             next_token_is_dedent: 0,
+            line_starts: vec![],
         }
     }
 
@@ -191,6 +194,7 @@ impl Lexer {
 
     fn next_kind(&mut self) -> Result<Kind, LexError> {
         if self.start_of_line {
+            self.line_starts.push(self.current);
             if let Some(indent_kind) = self.match_indentation()? {
                 self.start_of_line = false; // WHY!?
                 return Ok(indent_kind);

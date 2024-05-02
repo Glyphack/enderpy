@@ -36,6 +36,7 @@ fn symbols(path: &Path) -> Result<()> {
     let module = manager.get_state(path.to_str().expect(""));
     println!("{}", module.module_name());
     println!("{}", module.get_symbol_table());
+    println!("{:#?}", module.get_symbol_table().scope_starts);
 
     Ok(())
 }
@@ -61,7 +62,28 @@ fn tokenize(file: &PathBuf) -> Result<()> {
     let mut lexer = Lexer::new(&source);
     let tokens = enderpy_python_parser::utils::lex(&mut lexer);
     for token in tokens {
-        println!("{}", token);
+        let (start_line_num, start_line_offset) =
+            match lexer.line_starts.binary_search(&token.start) {
+                Ok(idx) => (idx, lexer.line_starts[idx]),
+                Err(idx) => (idx - 1, lexer.line_starts[idx - 1]),
+            };
+        let start_line_column = token.start - start_line_offset;
+        let (end_line_num, end_line_offset) = match lexer.line_starts.binary_search(&token.end) {
+            Ok(idx) => (idx, lexer.line_starts[idx]),
+            Err(idx) => (idx - 1, lexer.line_starts[idx - 1]),
+        };
+        let end_line_column = token.end - end_line_offset;
+        println!(
+            "{}-{}, {}-{}:   {} {} {} {}",
+            start_line_num,
+            start_line_column,
+            end_line_num,
+            end_line_column,
+            token.kind,
+            token.value,
+            token.start,
+            token.end,
+        );
     }
     Ok(())
 }
