@@ -167,7 +167,7 @@ impl BuildManager {
         }
     }
 
-    pub fn get_type_information(&self, path: &Path, line: u32, column: u32) -> String {
+    pub fn get_hover_information(&self, path: &Path, line: u32, column: u32) -> String {
         let module = self
             .modules
             .get(path.to_str().expect("file"))
