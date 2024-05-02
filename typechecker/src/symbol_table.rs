@@ -6,7 +6,7 @@ use std::{collections::HashMap, fmt::Display, path::PathBuf};
 use enderpy_python_parser::ast::{self, ClassDef, FunctionDef, Node};
 
 use crate::build_source::BuildSource;
-use crate::nodes::EnderpyFile;
+
 use crate::ruff_python_import_resolver::import_result::ImportResult;
 
 #[derive(Debug, Clone)]

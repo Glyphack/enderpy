@@ -444,7 +444,7 @@ impl TypeEvaluator {
         scope_id: Option<u32>,
     ) -> Result<PythonType> {
         let lookup_request = LookupSymbolRequest {
-            name: name,
+            name,
             scope: scope_id,
         };
         log::debug!(
@@ -728,10 +728,8 @@ impl TypeEvaluator {
                 );
             }
         };
-        let builtin_symbol = bulitins_symbol_table.lookup_in_scope(LookupSymbolRequest {
-            name: name,
-            scope: None,
-        })?;
+        let builtin_symbol =
+            bulitins_symbol_table.lookup_in_scope(LookupSymbolRequest { name, scope: None })?;
         let decl = builtin_symbol.last_declaration();
         let found_declaration = match decl {
             Declaration::Class(c) => {

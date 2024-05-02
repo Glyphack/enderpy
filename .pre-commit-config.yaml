@@ -41,3 +41,12 @@ repos:
         language: system
         types: [rust]
         pass_filenames: false # This makes it a lot faster
+
+  - repo: local
+    hooks:
+      - id: cargo-fmt
+        name: cargo clippy
+        entry: make lint
+        language: system
+        types: [rust]
+        pass_filenames: false # This makes it a lot faster
