@@ -174,7 +174,10 @@ impl LanguageServer for Backend {
 
         let markup_content = MarkupContent {
             kind: MarkupKind::Markdown,
-            value: format!("**Hover Information**\n\n- Definition: `{}`\n\n- Type: `<type>`\n", hover_message),
+            value: format!(
+                "**Hover Information**\n\n- Definition: `{}`\n\n- Type: `<type>`\n",
+                hover_message
+            ),
         };
         let hover = Hover {
             contents: HoverContents::Markup(markup_content),
