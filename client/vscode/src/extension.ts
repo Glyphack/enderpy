@@ -5,10 +5,6 @@ import { Executable, LanguageClient, LanguageClientOptions, ServerOptions } from
 let client: LanguageClient;
 
 export async function activate(context: ExtensionContext) {
-  const disposable = commands.registerCommand("helloworld.helloWorld", () => {
-    window.showInformationMessage("Hello World!");
-  });
-  context.subscriptions.push(disposable);
   const traceOutputChannel = window.createOutputChannel("Enderpy Language Server trace");
   const command = process.env.SERVER_PATH || "enderpy-lsp";
   console.log(`Running Lsp ${command}`);
@@ -31,6 +27,15 @@ export async function activate(context: ExtensionContext) {
   };
 
   client = new LanguageClient("enderpy-language-server", "enderpy language server", serverOptions, clientOptions);
+  const restartCommand = commands.registerCommand("enderpy.restart", () => {
+    if (client) {
+      console.log("Restarting language server");
+      client.stop().then(() => {
+        client.start();
+      });
+    }
+  });
+  context.subscriptions.push(restartCommand);
 
   client.start();
 }
