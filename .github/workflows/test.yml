@@ -33,4 +33,4 @@ jobs:
       - name: rustfmt
         run: make format-check
       - name: clippy
-        run: cargo clippy --all --all-features --tests -- -D warnings
+        run: make lint
