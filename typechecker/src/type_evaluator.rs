@@ -720,8 +720,8 @@ impl TypeEvaluator {
                 let all_symbol_table_names = self
                     .imported_symbol_tables
                     .iter()
-                    .map(|symbol_table| symbol_table.module_name.clone())
-                    .collect::<Vec<String>>();
+                    .map(|symbol_table| symbol_table.file_path.clone())
+                    .collect::<Vec<_>>();
                 panic!(
                     "Builtin symbol table not found in {:?}",
                     all_symbol_table_names
@@ -1596,24 +1596,13 @@ mod tests {
     use std::{fs, path::PathBuf};
 
     use super::*;
-    use crate::{build::BuildManager, build_source::BuildSource, settings::Settings};
+    use crate::{build::BuildManager, settings::Settings};
 
-    fn snapshot_type_eval(source: &str) -> String {
-        use enderpy_python_parser::Parser;
-
-        let mut parser = Parser::new(source.to_string(), "".into());
-        let ast_module = parser.parse();
-        let build_source = BuildSource {
-            path: PathBuf::from("test-file"),
-            source: source.to_string(),
-            module: "test".to_string(),
-            followed: false,
-        };
-
+    fn snapshot_type_eval(path: PathBuf) -> String {
         // we use the manager to also import the python typeshed into modules
         // This can be refactored but for now it's fine
         let settings = Settings::test_settings();
-        let manager = BuildManager::new(vec![build_source], settings);
+        let manager = BuildManager::new(vec![path.clone()], settings);
         manager.build(&PathBuf::from(""));
 
         let mut all_symbol_tables = Vec::new();
@@ -1621,7 +1610,7 @@ mod tests {
             all_symbol_tables.push(module.get_symbol_table());
         }
 
-        let module = manager.get_state("test-file");
+        let module = manager.get_state(path.as_path());
         let symbol_table = module.get_symbol_table();
 
         let type_eval = TypeEvaluator::new(symbol_table, all_symbol_tables);
@@ -1664,7 +1653,7 @@ mod tests {
             fn $test_name() {
                 let path = PathBuf::from($test_file);
                 let contents = fs::read_to_string(&path).unwrap();
-                let result = snapshot_type_eval(&contents);
+                let result = snapshot_type_eval(path);
 
                 let mut content_with_line_numbers = String::new();
                 for (i, line) in contents.lines().enumerate() {

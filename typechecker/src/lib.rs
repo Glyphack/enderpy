@@ -6,7 +6,6 @@ mod ruff_python_import_resolver;
 mod symbol_table;
 
 pub mod build;
-pub mod build_source;
 pub mod checker;
 pub mod diagnostic;
 pub mod semantic_analyzer;
@@ -42,4 +41,8 @@ pub fn find_project_root(path: &Path) -> &Path {
             }
         }
     }
+}
+
+pub fn get_module_name(path: &Path) -> String {
+    path.to_str().unwrap().replace(['/', '\\'], ".")
 }

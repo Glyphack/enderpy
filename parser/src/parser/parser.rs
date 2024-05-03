@@ -2686,7 +2686,7 @@ impl Parser {
     }
 
     // https://docs.python.org/3/reference/expressions.html#slicings
-    // Clsoing will be consumed by this function
+    // Closing will be consumed by this function
     fn parse_slice_list(&mut self) -> Result<Expression, ParsingError> {
         let node = self.start_node();
         let mut elements = vec![];

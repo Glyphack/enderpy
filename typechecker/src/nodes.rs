@@ -5,15 +5,17 @@
 // here, so this has the minimum amount of nodes needed to
 // get the type checker working. But can be expanded.
 
+use core::panic;
+use std::path::Path;
 use std::{collections::HashMap, path::PathBuf};
 
 use enderpy_python_parser as parser;
 use enderpy_python_parser::ast::{Import, ImportFrom, Statement};
-use parser::{error::ParsingError, Parser};
+use parser::Parser;
 
+use crate::get_module_name;
 use crate::{
     ast_visitor::TraversalVisitor,
-    build_source::BuildSource,
     diagnostic::Position,
     ruff_python_import_resolver::{
         import_result::ImportResult, module_descriptor::ImportModuleDescriptor,
@@ -30,42 +32,67 @@ pub enum ImportKinds {
 
 #[derive(Clone, Debug)]
 pub struct EnderpyFile {
+    pub source: String,
+    pub module: String,
+    // if this source is found by following an import
+    pub followed: bool,
+    pub path: PathBuf,
     // all the imports inside the file
     pub imports: Vec<ImportKinds>,
-    // high level definitions inside the file
-    pub defs: Vec<Statement>,
-
     // All high level statements inside the file
     pub body: Vec<Statement>,
-    pub build_source: BuildSource,
-    // Parser Errors
-    pub errors: Vec<ParsingError>,
-    pub symbol_table: SymbolTable,
     pub parser: Parser,
+    // Available after populating
+    pub symbol_table: Option<SymbolTable>,
 }
 
 impl EnderpyFile {
+    pub fn new(path: &Path, followed: bool) -> Self {
+        let source =
+            std::fs::read_to_string(path).unwrap_or_else(|_| panic!("cannot read file {path:?}"));
+        let module = get_module_name(path);
+        let mut parser = Parser::new(source.clone(), path.to_str().unwrap().to_string());
+        let tree = parser.parse();
+
+        let mut file = Self {
+            imports: vec![],
+            body: vec![],
+            symbol_table: None,
+            parser,
+            followed,
+            module,
+            path: path.to_path_buf(),
+            source,
+        };
+
+        for stmt in &tree.body {
+            file.visit_stmt(stmt);
+            file.body.push(stmt.clone());
+        }
+
+        file
+    }
     pub fn module_name(&self) -> String {
-        self.build_source.module.clone()
+        self.module.clone()
     }
 
     pub fn path(&self) -> PathBuf {
-        self.build_source.path.to_path_buf()
+        self.path.to_path_buf()
     }
 
     pub fn path_str(&self) -> String {
-        self.build_source.path.to_str().unwrap().to_string()
+        self.path.to_str().unwrap().to_string()
     }
 
     pub fn source(&self) -> String {
-        self.build_source.source.clone()
+        self.source.clone()
     }
 
     /// Return source of the line number
     pub fn get_line_content(&self, line: u32) -> String {
         let mut line_number = 1;
         let mut line_start = 0;
-        for (i, c) in self.build_source.source.chars().enumerate() {
+        for (i, c) in self.source.chars().enumerate() {
             if line_number == line {
                 line_start = i;
                 break;
@@ -77,14 +104,14 @@ impl EnderpyFile {
 
         let mut line_end = line_start;
 
-        for (i, c) in self.build_source.source.chars().enumerate() {
+        for (i, c) in self.source.chars().enumerate() {
             if i > line_start && c == '\n' {
                 line_end = i;
                 break;
             }
         }
 
-        self.build_source.source[line_start..line_end].to_string()
+        self.source[line_start..line_end].to_string()
     }
 
     pub fn get_position(&self, pos: u32) -> Position {
@@ -96,7 +123,7 @@ impl EnderpyFile {
                 character: 0,
             };
         }
-        for (i, c) in self.build_source.source.chars().enumerate() {
+        for (i, c) in self.source.chars().enumerate() {
             if i as u32 == pos {
                 break;
             }
@@ -120,40 +147,15 @@ impl EnderpyFile {
         for stmt in &self.body {
             sem_anal.visit_stmt(stmt)
         }
-        self.symbol_table = sem_anal.symbol_table;
-        self.symbol_table.current_scope_id = 0;
+        let mut sym_table = sem_anal.symbol_table;
+        sym_table.current_scope_id = 0;
+        self.symbol_table = Some(sym_table);
     }
 
     pub fn get_symbol_table(&self) -> SymbolTable {
-        self.symbol_table.clone()
-    }
-}
-
-impl From<BuildSource> for EnderpyFile {
-    fn from(build_source: BuildSource) -> Self {
-        let mut parser = Parser::new(
-            build_source.source.clone(),
-            build_source.path.to_str().unwrap().to_string(),
-        );
-        let tree = parser.parse();
-        let symbol_table = SymbolTable::new(&build_source);
-
-        let mut file = EnderpyFile {
-            defs: vec![],
-            imports: vec![],
-            body: vec![],
-            build_source,
-            errors: parser.errors.clone(),
-            symbol_table,
-            parser,
-        };
-
-        for stmt in &tree.body {
-            file.visit_stmt(stmt);
-            file.body.push(stmt.clone());
-        }
-
-        file
+        self.symbol_table
+            .clone()
+            .expect("Accessing symbol table before initialize")
     }
 }
 
@@ -306,15 +308,9 @@ impl TraversalVisitor for EnderpyFile {
         }
     }
 
-    fn visit_function_def(&mut self, f: &parser::ast::FunctionDef) {
-        let func = f.clone();
-        self.defs.push(Statement::FunctionDef(func));
-    }
+    fn visit_function_def(&mut self, _f: &parser::ast::FunctionDef) {}
 
-    fn visit_class_def(&mut self, c: &parser::ast::ClassDef) {
-        let class = c.clone();
-        self.defs.push(Statement::ClassDef(class));
-    }
+    fn visit_class_def(&mut self, _c: &parser::ast::ClassDef) {}
 
     fn visit_match(&mut self, m: &parser::ast::Match) {
         for case in &m.cases {
@@ -380,15 +376,9 @@ impl TraversalVisitor for EnderpyFile {
 
     fn visit_alias(&mut self, _a: &parser::ast::Alias) {}
 
-    fn visit_assign(&mut self, a: &parser::ast::Assign) {
-        let stmt = a.clone();
-        self.defs.push(Statement::AssignStatement(stmt));
-    }
+    fn visit_assign(&mut self, _a: &parser::ast::Assign) {}
 
-    fn visit_ann_assign(&mut self, a: &parser::ast::AnnAssign) {
-        let stmt = a.clone();
-        self.defs.push(Statement::AnnAssignStatement(stmt));
-    }
+    fn visit_ann_assign(&mut self, _a: &parser::ast::AnnAssign) {}
 
     fn visit_aug_assign(&mut self, _a: &parser::ast::AugAssign) {}
 

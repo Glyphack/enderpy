@@ -1,3 +1,4 @@
+use core::panic;
 use std::{
     collections::HashMap,
     path::{Path, PathBuf},
@@ -9,7 +10,6 @@ use env_logger::Builder;
 use log::{debug, info};
 
 use crate::{
-    build_source::BuildSource,
     checker::TypeChecker,
     diagnostic::Diagnostic,
     nodes::{EnderpyFile, ImportKinds},
@@ -24,21 +24,17 @@ use crate::{
 #[derive(Debug)]
 pub struct BuildManager {
     pub errors: DashSet<Diagnostic>,
-    pub modules: DashMap<String, EnderpyFile>,
-    build_sources: DashSet<BuildSource>,
-    // options: Settings,
-    // Map of file name to list of diagnostics
+    pub modules: DashMap<PathBuf, EnderpyFile>,
     pub diagnostics: DashMap<PathBuf, Vec<Diagnostic>>,
     pub settings: Settings,
 }
 #[allow(unused)]
 impl BuildManager {
-    pub fn new(sources: Vec<BuildSource>, settings: Settings) -> Self {
+    pub fn new(sources: Vec<PathBuf>, settings: Settings) -> Self {
         if sources.len() > 1 {
             panic!("analyzing more than 1 input is not supported");
         }
 
-        let mut modules = DashMap::new();
         let mut builder = Builder::new();
         builder
             .filter(None, log::LevelFilter::Debug)
@@ -46,47 +42,75 @@ impl BuildManager {
             .try_init();
 
         let builtins_file = settings.typeshed_path.join("stdlib/builtins.pyi");
-        let builtins = BuildSource::from_path(builtins_file, true)
-            .expect("builtins does not exist in typeshed");
-        let mut sources_with_builtins = DashSet::new();
-        sources_with_builtins.insert(builtins);
-        sources_with_builtins.extend(sources);
+        let builtins = EnderpyFile::new(&builtins_file, true);
+        let mut modules = DashMap::new();
+        modules.insert(builtins.path(), builtins);
+        for src in sources.iter() {
+            let module = EnderpyFile::new(src, false);
+            modules.insert(module.path(), module);
+        }
 
         BuildManager {
             errors: DashSet::new(),
-            build_sources: sources_with_builtins,
             modules,
             settings,
-            // options,
             diagnostics: DashMap::new(),
         }
     }
 
-    pub fn get_state(&self, path: &str) -> EnderpyFile {
+    pub fn get_state(&self, path: &Path) -> EnderpyFile {
         let result = self.modules.get(path);
         match result {
-            None => panic!("module not found"),
+            None => {
+                let available: Vec<PathBuf> = self
+                    .modules
+                    .clone()
+                    .into_iter()
+                    .map(|f| f.0.clone())
+                    .collect();
+                panic!("Not found, available {available:?}")
+            }
             Some(x) => x.value().clone(),
         }
     }
 
     // Entry point to analyze the program
     pub fn build(&self, root: &Path) {
-        for build_source in self.build_sources.iter() {
-            let build_source: BuildSource = build_source.clone();
-            let state: EnderpyFile = build_source.into();
-            self.modules.insert(state.path_str(), state);
+        let imports = self.gather_files(
+            self.modules.iter().map(|f| f.value().clone()).collect(),
+            root,
+        );
+        for imported_module in imports.iter() {
+            for path in imported_module.1.resolved_paths.iter() {
+                let module = EnderpyFile::new(path, true);
+                self.modules.insert(module.path(), module);
+            }
         }
-        let (new_files, imports) = self.gather_files(self.build_sources.clone(), root);
         log::debug!("Imports resolved");
-        for build_source in new_files {
-            let file: EnderpyFile = build_source.into();
-            self.modules.insert(file.path_str(), file);
-        }
         for mut module in self.modules.iter_mut() {
             module.populate_symbol_table(imports.clone());
         }
-        log::debug!("Symbol tables populated");
+        log::info!("Symbol tables populated");
+    }
+
+    // Add a single file to build and analyze
+    pub fn build_one(&self, root: &Path, file: &Path) {
+        let enderpy_file = EnderpyFile::new(file, false);
+        self.modules
+            .insert(enderpy_file.path(), enderpy_file.clone());
+        let imports = self.gather_files(vec![enderpy_file], root);
+        for imported_module in imports.iter() {
+            for path in imported_module.1.resolved_paths.iter() {
+                let module = EnderpyFile::new(path, true);
+                self.modules.insert(module.path(), module);
+            }
+        }
+        for mut module in self.modules.iter_mut() {
+            if module.symbol_table.is_none() {
+                module.populate_symbol_table(imports.clone());
+            }
+        }
+        log::info!("Symbol tables populated");
     }
 
     // Performs type checking passes over the code
@@ -104,11 +128,11 @@ impl BuildManager {
             if state.value().path().ends_with("builtins.pyi") {
                 continue;
             }
-            if state.value().build_source.followed {
+            if state.value().followed {
                 continue;
             }
-            if !state.value().errors.is_empty() {
-                for err in state.value().errors.iter() {
+            if !state.value().parser.errors.is_empty() {
+                for err in state.value().parser.errors.iter() {
                     match err {
                         ParsingError::InvalidSyntax {
                             msg,
@@ -168,18 +192,13 @@ impl BuildManager {
     }
 
     pub fn get_hover_information(&self, path: &Path, line: u32, column: u32) -> String {
-        let module = self
-            .modules
-            .get(path.to_str().expect("file"))
-            .expect("module not found");
+        let module = self.get_state(path);
         let symbol_table = module.get_symbol_table();
         let hovered_offset = module.parser.line_starts()[line as usize] + column;
         let line_number = match module.parser.line_starts().binary_search(&hovered_offset) {
             Ok(index) => index,
             Err(index) => index - 1,
         };
-        let hovered =
-            &module.build_source.source[hovered_offset as usize..hovered_offset as usize + 1];
 
         let symbol_name = match module
             .parser
@@ -206,7 +225,7 @@ impl BuildManager {
             }
         };
 
-        debug!("line: {line}, column: {column} offset: {hovered_offset} source: `{hovered}` symbol: {symbol_name}");
+        debug!("line: {line}, column: {column} offset: {hovered_offset} symbol: {symbol_name}");
         let scope_id = symbol_table
             .scope_starts
             .find(hovered_offset, hovered_offset + symbol_name.len() as u32)
@@ -229,12 +248,9 @@ impl BuildManager {
     // and add them to the modules.
     fn gather_files(
         &self,
-        initial_files: DashSet<BuildSource>,
+        initial_files: Vec<EnderpyFile>,
         root: &Path,
-    ) -> (
-        Vec<BuildSource>,
-        HashMap<ImportModuleDescriptor, ImportResult>,
-    ) {
+    ) -> HashMap<ImportModuleDescriptor, ImportResult> {
         let execution_environment = &execution_environment::ExecutionEnvironment {
             root: root.to_path_buf(),
             python_version: ruff_python_resolver::python_version::PythonVersion::Py312,
@@ -249,15 +265,12 @@ impl BuildManager {
         };
         let host = &ruff_python_resolver::host::StaticHost::new(vec![]);
 
-        let mut files_to_resolve: Vec<BuildSource> = vec![];
+        let mut files_to_resolve: Vec<EnderpyFile> = vec![];
         files_to_resolve.extend(initial_files);
         let mut import_results = HashMap::new();
-        let mut imported_sources = Vec::new();
-        let mut new_imports: Vec<BuildSource> = vec![];
         while let Some(source) = files_to_resolve.pop() {
-            let enderpy_file = EnderpyFile::from(source);
             let resolved_imports = self.resolve_file_imports(
-                enderpy_file,
+                source.clone(),
                 execution_environment,
                 import_config,
                 host,
@@ -276,21 +289,13 @@ impl BuildManager {
                                 continue;
                             }
                         };
-                        match BuildSource::from_path(resolved_path.to_path_buf(), true) {
-                            Ok(build_source) => {
-                                imported_sources.push(build_source.clone());
-                                files_to_resolve.push(build_source);
-                            }
-                            Err(e) => {
-                                log::warn!("cannot read file: {}", e);
-                                continue;
-                            }
-                        };
+                        let e = EnderpyFile::new(resolved_path, true);
+                        files_to_resolve.push(e);
                     }
                 }
             }
         }
-        (imported_sources, import_results)
+        import_results
     }
 
     fn resolve_file_imports(
@@ -338,10 +343,6 @@ impl BuildManager {
         }
         imports
     }
-
-    pub fn add_source(&self, source: BuildSource) {
-        self.build_sources.insert(source);
-    }
 }
 
 #[cfg(test)]
@@ -354,14 +355,10 @@ mod tests {
             fn $test_name() {
                 let path = PathBuf::from($test_file);
                 let content = fs::read_to_string(path.clone()).unwrap();
-                let manager = BuildManager::new(
-                    vec![BuildSource::from_path(path, false).unwrap()],
-                    Settings::test_settings(),
-                );
+                let manager = BuildManager::new(vec![path], Settings::test_settings());
                 manager.build(&Path::new(""));
 
-                let module =
-                    manager.get_state(PathBuf::from($test_file).as_path().to_str().unwrap());
+                let module = manager.get_state(PathBuf::from($test_file).as_path());
 
                 let result = format!("{}", module.get_symbol_table());
                 let mut settings = insta::Settings::clone_current();

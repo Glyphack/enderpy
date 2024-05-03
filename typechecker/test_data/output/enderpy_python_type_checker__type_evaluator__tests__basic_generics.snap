@@ -108,14 +108,14 @@ Expr types in the line --->:
 Line 49: log_var = LoggedVar(1, "var1", Logger("test"))
 
 Expr types in the line --->:
-        "LoggedVar(1, \"var1\", Logger(\"test\"))" => test-file.LoggedVar[TypeVar[T, ]]
+        "LoggedVar(1, \"var1\", Logger(\"test\"))" => basic_generics.LoggedVar[TypeVar[T, ]]
 
 ---
 Line 57: zero_all_vars([log_var])  # OK
 
 Expr types in the line --->:
         "zero_all_vars([log_var])  # OK" => None
-        "[log_var]" => builtins.list[test-file.LoggedVar[TypeVar[T, ]]]
+        "[log_var]" => builtins.list[basic_generics.LoggedVar[TypeVar[T, ]]]
 
 ---
 Line 63: S = TypeVar("S")
@@ -127,25 +127,25 @@ Expr types in the line --->:
 Line 69: pair1 = Pair1()
 
 Expr types in the line --->:
-        "Pair1()" => test-file.Pair1[TypeVar[T, ], TypeVar[S, ]]
+        "Pair1()" => basic_generics.Pair1[TypeVar[T, ], TypeVar[S, ]]
 
 ---
 Line 78: pair2 = Pair2()
 
 Expr types in the line --->:
-        "Pair2()" => test-file.Pair2[Unknown]
+        "Pair2()" => basic_generics.Pair2[Unknown]
 
 ---
 Line 93: iter1 = MyIter1()
 
 Expr types in the line --->:
-        "MyIter1()" => test-file.MyIter1[TypeVar[T, ]]
+        "MyIter1()" => basic_generics.MyIter1[TypeVar[T, ]]
 
 ---
 Line 94: iter2 = MyIter2()
 
 Expr types in the line --->:
-        "MyIter2()" => test-file.MyIter2[Unknown]
+        "MyIter2()" => basic_generics.MyIter2[Unknown]
 
 ---
 Line 96: K = TypeVar("K")
@@ -163,49 +163,49 @@ Expr types in the line --->:
 Line 103: my_map1 = MyMap1()
 
 Expr types in the line --->:
-        "MyMap1()" => test-file.MyMap1[TypeVar[K, ], TypeVar[V, ]]
+        "MyMap1()" => basic_generics.MyMap1[TypeVar[K, ], TypeVar[V, ]]
 
 ---
 Line 109: my_map2 = MyMap2()
 
 Expr types in the line --->:
-        "MyMap2()" => test-file.MyMap2[TypeVar[V, ], TypeVar[K, ]]
+        "MyMap2()" => basic_generics.MyMap2[TypeVar[V, ], TypeVar[K, ]]
 
 ---
 Line 113:     a = m1["key"]  # int
 
 Expr types in the line --->:
-        "m1[\"key\"]  # int" => test-file.MyMap1[Unknown]
+        "m1[\"key\"]  # int" => basic_generics.MyMap1[Unknown]
 
 ---
 Line 114:     b = m2["key"]  # int
 
 Expr types in the line --->:
-        "m2[\"key\"]  # int" => test-file.MyMap2[Unknown]
+        "m2[\"key\"]  # int" => basic_generics.MyMap2[Unknown]
 
 ---
 Line 131: my_mapping = MyMapping()
 
 Expr types in the line --->:
-        "MyMapping()" => test-file.MyMapping[TypeVar[K, ], TypeVar[V, ]]
+        "MyMapping()" => basic_generics.MyMapping[TypeVar[K, ], TypeVar[V, ]]
 
 ---
 Line 144:     iter(m)  # Iterator[Any]
 
 Expr types in the line --->:
         "iter(m)  # Iterator[Any]" => TypeVar[_SupportsNextT, ]
-        "m" => test-file.MyIterableAny[TypeVar[_T_co, ]]
+        "m" => basic_generics.MyIterableAny[TypeVar[_T_co, ]]
 
 ---
 Line 153: generic_meta = GenericMeta()
 
 Expr types in the line --->:
-        "GenericMeta()" => test-file.GenericMeta[TypeVar[T, ]]
+        "GenericMeta()" => basic_generics.GenericMeta[TypeVar[T, ]]
 
 ---
 Line 160: generic_meta_instance = GenericMetaInstance()
 
 Expr types in the line --->:
-        "GenericMetaInstance()" => test-file.GenericMetaInstance[TypeVar[T, ]]
+        "GenericMetaInstance()" => basic_generics.GenericMetaInstance[TypeVar[T, ]]
 
 ---

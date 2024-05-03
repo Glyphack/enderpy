@@ -1,8 +1,6 @@
 use std::path::PathBuf;
 
-use enderpy_python_type_checker::{
-    build::BuildManager, build_source::BuildSource, find_project_root, settings::Settings,
-};
+use enderpy_python_type_checker::{build::BuildManager, find_project_root, settings::Settings};
 use env_logger::Builder;
 use log::{info, LevelFilter};
 use tower_lsp::{jsonrpc::Result, lsp_types::*, Client, LanguageServer, LspService, Server};
@@ -15,20 +13,10 @@ struct Backend {
 
 impl Backend {
     async fn on_change(&self, path: PathBuf) -> Vec<Diagnostic> {
-        let source = match BuildSource::from_path(path.to_path_buf(), false) {
-            Ok(source) => source,
-            Err(err) => {
-                panic!("cannot read the file: {:?}", err);
-            }
-        };
-
-        let root = PathBuf::from(find_project_root(&path));
-
-        self.manager.add_source(source);
-        self.manager.build(&root);
+        let root = find_project_root(&path);
+        self.manager.build_one(root, &path);
         self.manager.type_check();
         let mut diagnostics = Vec::new();
-
         if let Some(errors) = self.manager.diagnostics.get(&path) {
             for err in errors.iter() {
                 diagnostics.push(from(err.clone()));
@@ -41,7 +29,12 @@ impl Backend {
 
 #[tower_lsp::async_trait]
 impl LanguageServer for Backend {
-    async fn initialize(&self, _: InitializeParams) -> Result<InitializeResult> {
+    async fn initialize(&self, i: InitializeParams) -> Result<InitializeResult> {
+        let root = match i.root_uri {
+            Some(v) => v.to_file_path().unwrap_or(PathBuf::from("")),
+            None => PathBuf::from(""),
+        };
+        self.manager.build(&root);
         Ok(InitializeResult {
             server_info: None,
             offset_encoding: None,
