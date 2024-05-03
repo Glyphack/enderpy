@@ -18,10 +18,6 @@
 			},
 			"cwd": "${workspaceFolder}/client/vscode",
 			"autoAttachChildProcesses": true,
-			"preLaunchTask": {
-				"type": "npm",
-				"script": "watch"
-			}
 		},
 		{
 			"name": "Language Server E2E Test",
