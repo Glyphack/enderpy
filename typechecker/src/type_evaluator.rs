@@ -30,6 +30,7 @@ const LITERAL_TYPE_PARAMETER_MSG: &str = "Type arguments for 'Literal' must be N
 const UNION_TYPE_PARAMETER_MSG: &str = "Type arguments for 'Union' must be names or literal values";
 
 const SPECIAL_FORM: &str = "_SpecialForm";
+#[derive(Clone, Debug)]
 pub struct TypeEvaluator {
     // TODO: make this a reference to the symbol table in the checker
     pub symbol_table: SymbolTable,
@@ -1624,18 +1625,26 @@ mod tests {
         result_sorted.sort_by(|a, b| a.position.line.cmp(&b.position.line));
 
         let mut str = String::new();
-        let mut last_line = 0;
+        let mut last_line = None;
 
         for r in result_sorted {
-            let line = r.position.line;
-            if line > last_line {
-                if last_line != 0 {
-                    str.push_str("\n---\n");
-                }
-                let line_content = module.get_line_content(line);
-                str.push_str(format!("Line {}: {}\n", line, line_content).as_str());
+            let cur_line = r.position.line;
+
+            if last_line.is_none() {
+                let line_content = module.get_line_content(cur_line as usize);
+                str.push_str(format!("Line {}: {}", cur_line + 1, line_content).as_str());
                 str.push_str("\nExpr types in the line --->:\n");
-                last_line = line;
+                last_line = Some(cur_line);
+            }
+            // So we also print the first line
+            if let Some(last_line_num) = last_line {
+                if last_line_num < cur_line {
+                    str.push_str("\n---\n");
+                    let line_content = module.get_line_content(cur_line as usize);
+                    str.push_str(format!("Line {}: {}", cur_line + 1, line_content).as_str());
+                    str.push_str("\nExpr types in the line --->:\n");
+                    last_line = Some(cur_line);
+                }
             }
             match r.typ {
                 Ok(t) => str.push_str(&format!("        {:?} => {}\n", r.symbol_text, t)),

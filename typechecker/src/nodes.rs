@@ -13,6 +13,7 @@ use enderpy_python_parser as parser;
 use enderpy_python_parser::ast::{Import, ImportFrom, Statement};
 use parser::Parser;
 
+use crate::checker::TypeChecker;
 use crate::get_module_name;
 use crate::{
     ast_visitor::TraversalVisitor,
@@ -44,6 +45,7 @@ pub struct EnderpyFile {
     pub parser: Parser,
     // Available after populating
     pub symbol_table: Option<SymbolTable>,
+    pub type_checker: Option<TypeChecker>,
 }
 
 impl EnderpyFile {
@@ -58,6 +60,7 @@ impl EnderpyFile {
             imports: vec![],
             body: vec![],
             symbol_table: None,
+            type_checker: None,
             parser,
             followed,
             module,
@@ -89,52 +92,33 @@ impl EnderpyFile {
     }
 
     /// Return source of the line number
-    pub fn get_line_content(&self, line: u32) -> String {
-        let mut line_number = 1;
-        let mut line_start = 0;
-        for (i, c) in self.source.chars().enumerate() {
-            if line_number == line {
-                line_start = i;
-                break;
-            }
-            if c == '\n' {
-                line_number += 1;
-            }
-        }
-
-        let mut line_end = line_start;
-
-        for (i, c) in self.source.chars().enumerate() {
-            if i > line_start && c == '\n' {
-                line_end = i;
-                break;
-            }
-        }
-
-        self.source[line_start..line_end].to_string()
+    pub fn get_line_content(&self, line: usize) -> String {
+        let line_starts = self.parser.line_starts();
+        let line_start_offset = line_starts[line] as usize;
+        let line_end_offset = if line == line_starts.len() {
+            self.source.len()
+        } else {
+            line_starts[line + 1] as usize
+        };
+        self.source[line_start_offset..line_end_offset].to_string()
     }
 
     pub fn get_position(&self, pos: u32) -> Position {
-        let mut line_number = 1_u32;
-        let mut line_start = 0_u32;
-        if pos == 0 {
-            return Position {
-                line: 1,
-                character: 0,
-            };
-        }
-        for (i, c) in self.source.chars().enumerate() {
-            if i as u32 == pos {
-                break;
+        let line_starts = self.parser.line_starts();
+        let line_number = match line_starts.binary_search(&pos) {
+            Ok(index) => index,
+            Err(index) => {
+                if index == 0 {
+                    index
+                } else {
+                    index - 1
+                }
             }
-            if c == '\n' {
-                line_number += 1;
-                line_start = i as u32;
-            }
-        }
+        };
+        let line_start = line_starts[line_number];
         Position {
-            line: line_number,
-            character: (pos - line_start - 1),
+            line: line_number as u32,
+            character: (pos - line_start),
         }
     }
 
@@ -152,6 +136,20 @@ impl EnderpyFile {
         self.symbol_table = Some(sym_table);
     }
 
+    pub fn type_check(&mut self, symbol_tables: Vec<SymbolTable>) {
+        let mut checker = TypeChecker::new(self.clone(), symbol_tables);
+        for stmt in &self.body {
+            checker.type_check(stmt);
+        }
+        self.type_checker = Some(checker);
+    }
+
+    pub fn get_checker(&self) -> TypeChecker {
+        self.type_checker
+            .clone()
+            .expect("Accessing type checker before type check")
+    }
+
     pub fn get_symbol_table(&self) -> SymbolTable {
         self.symbol_table
             .clone()
@@ -161,7 +159,6 @@ impl EnderpyFile {
 
 impl TraversalVisitor for EnderpyFile {
     fn visit_stmt(&mut self, s: &Statement) {
-        // map all statements and call visit
         match s {
             Statement::ExpressionStatement(e) => self.visit_expr(e),
             Statement::Import(i) => self.visit_import(i),

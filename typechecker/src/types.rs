@@ -5,7 +5,7 @@ use enderpy_python_parser::ast;
 
 use crate::symbol_table;
 
-#[derive(Debug, Clone, PartialEq, Is)]
+#[derive(Debug, Clone, PartialEq, Eq, Is)]
 pub enum PythonType {
     None,
     /// Unknown and Any type are similar but we are using Unknown when we cannot
@@ -91,6 +91,8 @@ pub struct CallableType {
     pub return_type: PythonType,
 }
 
+impl Eq for CallableType {}
+
 impl CallableType {
     pub fn type_equal(&self, other: &Self) -> bool {
         // TODO: add check for args too. We need to check what should be the rule for
@@ -140,7 +142,9 @@ impl PartialEq for ClassType {
     }
 }
 
-#[derive(Debug, Clone)]
+impl Eq for ClassType {}
+
+#[derive(Debug, Eq, Clone)]
 pub struct TypeVar {
     pub name: String,
     pub bounds: Vec<PythonType>,
@@ -153,12 +157,12 @@ impl PartialEq for TypeVar {
 }
 
 /// https://peps.python.org/pep-0586/
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub struct KnownValue {
     pub literal_value: LiteralValue,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub enum LiteralValue {
     Bool(bool),
     Int(String),
@@ -188,7 +192,7 @@ impl Display for LiteralValue {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub struct TypeEvalError {
     pub message: String,
 }

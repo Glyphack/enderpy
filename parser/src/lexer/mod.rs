@@ -31,7 +31,7 @@ pub struct Lexer {
 
     // TODO: Hacky way to handle emitting multiple de indents
     next_token_is_dedent: u8,
-    /// Array of all line starts offsets
+    /// Array of all line starts offsets. Starts from line 0
     pub line_starts: Vec<u32>,
 }
 

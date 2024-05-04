@@ -31,29 +31,3 @@ impl Display for Position {
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct CharacterSpan(pub usize, pub usize);
-
-impl From<ParsingError> for Diagnostic {
-    fn from(error: ParsingError) -> Self {
-        match error {
-            ParsingError::InvalidSyntax {
-                msg,
-                input: _,
-                advice,
-                span,
-            } => Diagnostic {
-                body: msg.to_string(),
-                suggestion: Some(advice),
-                range: Range {
-                    start: Position {
-                        line: 0,
-                        character: span.0 as u32,
-                    },
-                    end: Position {
-                        line: 0,
-                        character: span.1 as u32,
-                    },
-                },
-            },
-        }
-    }
-}

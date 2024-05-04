@@ -161,15 +161,14 @@ impl LanguageServer for Backend {
 
         // TODO: Implement real logic to find the symbol at the hover position
         // For now, let's provide a sample hover message with placeholder values
-        let hover_message =
+        let (def, type_info) =
             self.manager
                 .get_hover_information(&path, position.line, position.character);
 
         let markup_content = MarkupContent {
             kind: MarkupKind::Markdown,
             value: format!(
-                "**Hover Information**\n\n- Definition: `{}`\n\n- Type: `<type>`\n",
-                hover_message
+                "**Hover Information**\n\n- Definition: `{def}`\n\n- Type: `{type_info}`\n",
             ),
         };
         let hover = Hover {

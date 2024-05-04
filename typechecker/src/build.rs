@@ -2,6 +2,7 @@ use core::panic;
 use std::{
     collections::HashMap,
     path::{Path, PathBuf},
+    usize,
 };
 
 use dashmap::{DashMap, DashSet};
@@ -10,15 +11,14 @@ use env_logger::Builder;
 use log::{debug, info};
 
 use crate::{
-    checker::TypeChecker,
     diagnostic::Diagnostic,
     nodes::{EnderpyFile, ImportKinds},
-    ruff_python_import_resolver as ruff_python_resolver,
     ruff_python_import_resolver::{
-        config::Config, execution_environment, import_result::ImportResult,
-        module_descriptor::ImportModuleDescriptor, resolver,
+        self as ruff_python_resolver, config::Config, execution_environment,
+        import_result::ImportResult, module_descriptor::ImportModuleDescriptor, resolver,
     },
     settings::Settings,
+    types::PythonType,
 };
 
 #[derive(Debug)]
@@ -37,7 +37,7 @@ impl BuildManager {
 
         let mut builder = Builder::new();
         builder
-            .filter(None, log::LevelFilter::Debug)
+            .filter(None, log::LevelFilter::Info)
             .format_timestamp(None)
             .try_init();
 
@@ -93,7 +93,7 @@ impl BuildManager {
         log::info!("Symbol tables populated");
     }
 
-    // Add a single file to build and analyze
+    // Resolves imports and adds file and its imports to modules
     pub fn build_one(&self, root: &Path, file: &Path) {
         let enderpy_file = EnderpyFile::new(file, false);
         self.modules
@@ -123,7 +123,9 @@ impl BuildManager {
             all_symbol_tables.push(module.value().get_symbol_table());
         }
 
-        for state in self.modules.iter() {
+        let mut checker_count = 0;
+
+        for mut state in self.modules.iter_mut() {
             // do not type check builtins
             if state.value().path().ends_with("builtins.pyi") {
                 continue;
@@ -131,6 +133,8 @@ impl BuildManager {
             if state.value().followed {
                 continue;
             }
+            let path = &state.value().path;
+            checker_count += 1;
             if !state.value().parser.errors.is_empty() {
                 for err in state.value().parser.errors.iter() {
                     match err {
@@ -163,10 +167,8 @@ impl BuildManager {
                     }
                 }
             }
-            let mut checker = TypeChecker::new(state.value().clone(), all_symbol_tables.clone());
-            for stmt in &state.value().body {
-                checker.type_check(stmt);
-            }
+            state.type_check(all_symbol_tables.clone());
+            let checker = state.get_checker();
             for error in checker.errors {
                 self.errors.insert(Diagnostic {
                     body: error.msg.to_string(),
@@ -189,9 +191,10 @@ impl BuildManager {
                     });
             }
         }
+        info!("checked {checker_count:} modules");
     }
 
-    pub fn get_hover_information(&self, path: &Path, line: u32, column: u32) -> String {
+    pub fn get_hover_information(&self, path: &Path, line: u32, column: u32) -> (String, String) {
         let module = self.get_state(path);
         let symbol_table = module.get_symbol_table();
         let hovered_offset = module.parser.line_starts()[line as usize] + column;
@@ -199,49 +202,71 @@ impl BuildManager {
             Ok(index) => index,
             Err(index) => index - 1,
         };
-
         let symbol_name = match module
             .parser
             .identifiers_start_offset
             .binary_search_by_key(&hovered_offset, |x| x.0)
         {
-            Ok(index) => &module.parser.identifiers_start_offset[index].2,
+            Ok(index) => Some(&module.parser.identifiers_start_offset[index].2),
             Err(index) => {
                 if index < 1 {
-                    return "No identifiers".to_string();
-                }
-                let found_identifier = &module.parser.identifiers_start_offset[index - 1].2;
-                let start = module.parser.identifiers_start_offset[index - 1].0;
-                let end = module.parser.identifiers_start_offset[index - 1].1;
-                info!(
-                    "start: {}, end: {}, hovered offset: {} found_identifier: {}",
-                    start, end, hovered_offset, found_identifier
-                );
-                if start <= hovered_offset && end > hovered_offset {
-                    found_identifier
+                    None
                 } else {
-                    return "There are no identifiers at this location, skip.".to_string();
+                    let found_identifier = &module.parser.identifiers_start_offset[index - 1].2;
+                    let start = module.parser.identifiers_start_offset[index - 1].0;
+                    let end = module.parser.identifiers_start_offset[index - 1].1;
+                    info!(
+                        "start: {}, end: {}, hovered offset: {} found_identifier: {}",
+                        start, end, hovered_offset, found_identifier
+                    );
+                    if start <= hovered_offset && end > hovered_offset {
+                        Some(found_identifier)
+                    } else {
+                        None
+                    }
                 }
             }
         };
-
-        debug!("line: {line}, column: {column} offset: {hovered_offset} symbol: {symbol_name}");
-        let scope_id = symbol_table
-            .scope_starts
-            .find(hovered_offset, hovered_offset + symbol_name.len() as u32)
-            .last()
-            .expect("scope id not found")
-            .val;
-
-        let symbol = match symbol_table.lookup_in_scope(crate::symbol_table::LookupSymbolRequest {
-            name: symbol_name,
-            scope: Some(scope_id),
-        }) {
-            Some(symbol) => symbol,
-            None => return "symbol not found".into(),
+        let hovered_offset_end = if let Some(name) = symbol_name {
+            name.len() as u32 + hovered_offset
+        } else {
+            return ("".to_string(), "".to_string());
+        };
+        debug!("line: {line}, column: {column} offset: {hovered_offset} symbol: {symbol_name:?}");
+        let symbol_info = match symbol_name {
+            Some(symbol_name) => {
+                let scope_id = symbol_table
+                    .scope_starts
+                    .find(hovered_offset, hovered_offset_end)
+                    .last()
+                    .expect("scope id not found")
+                    .val;
+                match symbol_table.lookup_in_scope(crate::symbol_table::LookupSymbolRequest {
+                    name: symbol_name,
+                    scope: Some(scope_id),
+                }) {
+                    Some(symbol) => symbol.to_string(),
+                    None => "symbol not found".to_string(),
+                }
+            }
+            None => "".to_string(),
         };
 
-        format!("Symbol Information {}", symbol)
+        let Some(checker) = module.type_checker else {
+            return (symbol_info, String::from(""));
+        };
+
+        let type_info = &checker
+            .types
+            .find(hovered_offset, hovered_offset_end)
+            .last();
+        let type_str = if let Some(type_info) = type_info {
+            &type_info.val
+        } else {
+            &PythonType::Unknown
+        };
+
+        (symbol_info, format!("{type_str:}"))
     }
 
     // Given a list of files, this function will resolve the imports in the files

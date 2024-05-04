@@ -7,9 +7,12 @@ use crate::{
     ast_visitor::TraversalVisitor, diagnostic::CharacterSpan, nodes::EnderpyFile,
     symbol_table::SymbolTable,
 };
+use rust_lapper::{Interval, Lapper};
 
+#[derive(Clone, Debug)]
 pub struct TypeChecker {
     pub errors: Vec<TypeCheckError>,
+    pub types: Lapper<u32, PythonType>,
     type_evaluator: TypeEvaluator,
 }
 
@@ -26,6 +29,7 @@ impl TypeChecker {
         TypeChecker {
             errors: vec![],
             type_evaluator: TypeEvaluator::new(symbol_table.clone(), symbol_tables.clone()),
+            types: Lapper::new(vec![]),
         }
     }
 
@@ -34,7 +38,7 @@ impl TypeChecker {
     }
 
     fn infer_expr_type(&mut self, expr: &Expression, emit_error: bool) -> PythonType {
-        match self.type_evaluator.get_type(expr, None, None) {
+        let t = match self.type_evaluator.get_type(expr, None, None) {
             Ok(t) => t,
             Err(e) => {
                 if emit_error {
@@ -46,7 +50,13 @@ impl TypeChecker {
                 }
                 PythonType::Unknown
             }
-        }
+        };
+        self.types.insert(Interval {
+            start: expr.get_node().start,
+            stop: expr.get_node().end,
+            val: t.clone(),
+        });
+        t
     }
 
     fn make_error(&mut self, msg: &str, start: u32, end: u32) {

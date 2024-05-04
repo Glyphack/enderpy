@@ -326,7 +326,7 @@ impl Display for SymbolTableNode {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct DeclarationPath {
     pub module_name: PathBuf,
     pub node: Node,
