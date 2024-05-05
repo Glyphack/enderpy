@@ -7,7 +7,7 @@ use parser::ast::{FunctionDef, GetNode, Name, Statement};
 
 use crate::{
     ast_visitor::TraversalVisitor,
-    nodes::EnderpyFile,
+    file::EnderpyFile,
     ruff_python_import_resolver::{
         import_result::ImportResult, module_descriptor::ImportModuleDescriptor,
     },

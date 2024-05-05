@@ -12,7 +12,7 @@ use log::{debug, info};
 
 use crate::{
     diagnostic::Diagnostic,
-    nodes::{EnderpyFile, ImportKinds},
+    file::{EnderpyFile, ImportKinds},
     ruff_python_import_resolver::{
         self as ruff_python_resolver, config::Config, execution_environment,
         import_result::ImportResult, module_descriptor::ImportModuleDescriptor, resolver,
@@ -30,11 +30,7 @@ pub struct BuildManager {
 }
 #[allow(unused)]
 impl BuildManager {
-    pub fn new(sources: Vec<PathBuf>, settings: Settings) -> Self {
-        if sources.len() > 1 {
-            panic!("analyzing more than 1 input is not supported");
-        }
-
+    pub fn new(settings: Settings) -> Self {
         let mut builder = Builder::new();
         builder
             .filter(None, log::LevelFilter::Info)
@@ -45,10 +41,6 @@ impl BuildManager {
         let builtins = EnderpyFile::new(&builtins_file, true);
         let mut modules = DashMap::new();
         modules.insert(builtins.path(), builtins);
-        for src in sources.iter() {
-            let module = EnderpyFile::new(src, false);
-            modules.insert(module.path(), module);
-        }
 
         BuildManager {
             errors: DashSet::new(),
@@ -75,6 +67,7 @@ impl BuildManager {
     }
 
     // Entry point to analyze the program
+    // this only prepares necessary python files.
     pub fn build(&self, root: &Path) {
         let imports = self.gather_files(
             self.modules.iter().map(|f| f.value().clone()).collect(),
@@ -294,7 +287,7 @@ impl BuildManager {
         files_to_resolve.extend(initial_files);
         let mut import_results = HashMap::new();
         while let Some(source) = files_to_resolve.pop() {
-            let resolved_imports = self.resolve_file_imports(
+            let resolved_imports = resolve_file_imports(
                 source.clone(),
                 execution_environment,
                 import_config,
@@ -322,52 +315,49 @@ impl BuildManager {
         }
         import_results
     }
+}
 
-    fn resolve_file_imports(
-        &self,
-        file: EnderpyFile,
-        execution_environment: &ruff_python_resolver::execution_environment::ExecutionEnvironment,
-        import_config: &ruff_python_resolver::config::Config,
-        host: &ruff_python_resolver::host::StaticHost,
-        cached_imports: &HashMap<ImportModuleDescriptor, ImportResult>,
-    ) -> HashMap<ImportModuleDescriptor, ImportResult> {
-        let mut imports = HashMap::new();
-        for import in file.imports.iter() {
-            let import_descriptions = match import {
-                ImportKinds::Import(i) => i
-                    .names
-                    .iter()
-                    .map(|x| {
-                        ruff_python_resolver::module_descriptor::ImportModuleDescriptor::from(x)
-                    })
-                    .collect::<Vec<ImportModuleDescriptor>>(),
-                ImportKinds::ImportFrom(i) => {
-                    vec![ruff_python_resolver::module_descriptor::ImportModuleDescriptor::from(i)]
-                }
+fn resolve_file_imports(
+    file: EnderpyFile,
+    execution_environment: &ruff_python_resolver::execution_environment::ExecutionEnvironment,
+    import_config: &ruff_python_resolver::config::Config,
+    host: &ruff_python_resolver::host::StaticHost,
+    cached_imports: &HashMap<ImportModuleDescriptor, ImportResult>,
+) -> HashMap<ImportModuleDescriptor, ImportResult> {
+    let mut imports = HashMap::new();
+    for import in file.imports.iter() {
+        let import_descriptions = match import {
+            ImportKinds::Import(i) => i
+                .names
+                .iter()
+                .map(ruff_python_resolver::module_descriptor::ImportModuleDescriptor::from)
+                .collect::<Vec<ImportModuleDescriptor>>(),
+            ImportKinds::ImportFrom(i) => {
+                vec![ruff_python_resolver::module_descriptor::ImportModuleDescriptor::from(i)]
+            }
+        };
+
+        for import_desc in import_descriptions {
+            let resolved = match cached_imports.contains_key(&import_desc) {
+                true => continue,
+                false => resolver::resolve_import(
+                    file.path().as_path(),
+                    execution_environment,
+                    &import_desc,
+                    import_config,
+                    host,
+                ),
             };
 
-            for import_desc in import_descriptions {
-                let resolved = match cached_imports.contains_key(&import_desc) {
-                    true => continue,
-                    false => resolver::resolve_import(
-                        file.path().as_path(),
-                        execution_environment,
-                        &import_desc,
-                        import_config,
-                        host,
-                    ),
-                };
-
-                if !resolved.is_import_found {
-                    let error = format!("cannot import name '{}'", import_desc.name());
-                    log::warn!("{}", error);
-                    continue;
-                }
-                imports.insert(import_desc, resolved.clone());
+            if !resolved.is_import_found {
+                let error = format!("cannot import name '{}'", import_desc.name());
+                log::warn!("{}", error);
+                continue;
             }
+            imports.insert(import_desc, resolved.clone());
         }
-        imports
     }
+    imports
 }
 
 #[cfg(test)]
@@ -380,8 +370,10 @@ mod tests {
             fn $test_name() {
                 let path = PathBuf::from($test_file);
                 let content = fs::read_to_string(path.clone()).unwrap();
-                let manager = BuildManager::new(vec![path], Settings::test_settings());
-                manager.build(&Path::new(""));
+                let manager = BuildManager::new(Settings::test_settings());
+                let root = &Path::new("");
+                manager.build(root);
+                manager.build_one(root, &path);
 
                 let module = manager.get_state(PathBuf::from($test_file).as_path());
 

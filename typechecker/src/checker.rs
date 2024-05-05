@@ -4,7 +4,7 @@ use enderpy_python_parser::ast::{self, *};
 
 use super::{type_evaluator::TypeEvaluator, types::PythonType};
 use crate::{
-    ast_visitor::TraversalVisitor, diagnostic::CharacterSpan, nodes::EnderpyFile,
+    ast_visitor::TraversalVisitor, diagnostic::CharacterSpan, file::EnderpyFile,
     symbol_table::SymbolTable,
 };
 use rust_lapper::{Interval, Lapper};

@@ -26,9 +26,11 @@ fn symbols(path: &Path) -> Result<()> {
     let dir_of_path = path.parent().unwrap();
     let typeshed_path = get_typeshed_path()?;
     let settings = Settings { typeshed_path };
-    let manager = BuildManager::new(vec![path.to_path_buf()], settings);
+    let manager = BuildManager::new(settings);
+
     let root = find_project_root(dir_of_path);
     manager.build(root);
+    manager.build_one(root, path);
 
     let module = manager.get_state(path);
     println!("{}", module.module_name());
@@ -104,8 +106,9 @@ fn check(path: &Path) -> Result<()> {
     let _python_executable = Some(get_python_executable()?);
     let typeshed_path = get_typeshed_path()?;
     let settings = Settings { typeshed_path };
-    let build_manager = BuildManager::new(vec![path.to_path_buf()], settings);
+    let build_manager = BuildManager::new(settings);
     build_manager.build(root);
+    build_manager.build_one(root, path);
     build_manager.type_check();
 
     for (path, errors) in build_manager.diagnostics {

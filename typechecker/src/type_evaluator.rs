@@ -18,7 +18,7 @@ use crate::{
     ast_visitor::TraversalVisitor,
     ast_visitor::TraversalVisitorGeneric,
     diagnostic::Position,
-    nodes::EnderpyFile,
+    file::EnderpyFile,
     semantic_analyzer::get_member_access_info,
     symbol_table::{self, Class, Declaration, LookupSymbolRequest, SymbolTable, SymbolTableNode},
     types::{ClassType, TypeEvalError, TypeVar},
@@ -1009,9 +1009,10 @@ impl TypeEvaluator {
                                 .get_symbol_table_of(&v.declaration_path.module_name)
                                 .expect("Variable declaration not found in symbol table");
                             // if not in a pyi file panic
-                            if !found_in_symbol_table.is_pyi() {
-                                panic!("Variable declaration cannot be pointing to a class")
-                            }
+                            assert!(
+                                !found_in_symbol_table.is_pyi(),
+                                "Variable declaration cannot be pointing to a class"
+                            );
 
                             let pointing_class = match &v.type_annotation {
                                 Some(annotation) => {
@@ -1603,8 +1604,10 @@ mod tests {
         // we use the manager to also import the python typeshed into modules
         // This can be refactored but for now it's fine
         let settings = Settings::test_settings();
-        let manager = BuildManager::new(vec![path.clone()], settings);
-        manager.build(&PathBuf::from(""));
+        let manager = BuildManager::new(settings);
+        let root = &PathBuf::from("");
+        manager.build(root);
+        manager.build_one(root, &path);
 
         let mut all_symbol_tables = Vec::new();
         for module in manager.modules.iter() {

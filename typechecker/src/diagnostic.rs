@@ -1,7 +1,5 @@
 use std::fmt::Display;
 
-use enderpy_python_parser::error::ParsingError;
-
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
 pub struct Diagnostic {
     /// The message body to display to the user, to explain the diagnostic.

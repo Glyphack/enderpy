@@ -1,10 +1,3 @@
-// This file holds nodes that represent the AST of a file.
-// This holds the same information as the parser AST, but
-// in a more convenient format for the type checker.
-// NOTE: at this point we're not sure what nodes need to be
-// here, so this has the minimum amount of nodes needed to
-// get the type checker working. But can be expanded.
-
 use core::panic;
 use std::path::Path;
 use std::{collections::HashMap, path::PathBuf};
@@ -31,6 +24,8 @@ pub enum ImportKinds {
     ImportFrom(ImportFrom),
 }
 
+/// EnderpyFile holds information about the files in the analyze
+/// and methods to perform semantic analysis and type check on them
 #[derive(Clone, Debug)]
 pub struct EnderpyFile {
     pub source: String,

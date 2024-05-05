@@ -1,7 +1,7 @@
 use std::path::Path;
 
 mod ast_visitor;
-mod nodes;
+mod file;
 mod ruff_python_import_resolver;
 mod symbol_table;
 

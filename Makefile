@@ -24,3 +24,7 @@ format-check:
 .PHONY: lint
 lint:
 	@cargo clippy --all --all-features --tests
+
+.PHONY: lint-fix
+lint-fix:
+	@cargo clippy --all --all-features --tests --fix

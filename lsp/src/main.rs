@@ -230,7 +230,7 @@ async fn main() {
         .unwrap()
         .join("typeshed");
     let settings = Settings { typeshed_path };
-    let manager = BuildManager::new(vec![], settings);
+    let manager = BuildManager::new(settings);
     let (service, socket) = LspService::new(|client| Backend { client, manager });
     Server::new(stdin, stdout, socket).serve(service).await;
 }
