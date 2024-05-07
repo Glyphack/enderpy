@@ -16,7 +16,6 @@ use super::{
 };
 use crate::{
     ast_visitor::TraversalVisitor,
-    ast_visitor::TraversalVisitorGeneric,
     diagnostic::Position,
     file::EnderpyFile,
     semantic_analyzer::get_member_access_info,
@@ -69,8 +68,8 @@ impl TypeEvaluator {
         let r = match expr {
             ast::Expression::Constant(c) => {
                 let typ = match &c.value {
-                    // We should consider constants are not literals unless they are explicitly
-                    // declared as such https://peps.python.org/pep-0586/#type-inference
+                    // Constants are not literals unless they are explicitly
+                    // typing.readthedocs.io/en/latest/spec/literal.html#backwards-compatibility
                     ast::ConstantValue::Int(_) => self.get_builtin_type("int"),
                     ast::ConstantValue::Float(_) => self.get_builtin_type("float"),
                     ast::ConstantValue::Str(_) => self.get_builtin_type("str"),
@@ -389,11 +388,14 @@ impl TypeEvaluator {
             }
             Expression::Subscript(s) => {
                 // This is a generic type
-                let typ = self.get_class_declaration(&s.value, &self.symbol_table);
+                let typ = self.get_type(&s.value, Some(&self.symbol_table), None);
                 match typ {
-                    Some(typ) => {
-                        if typ.special {
-                            return match typ.name.as_str() {
+                    Ok(typ) => {
+                        let Some(class_type) = typ.as_class() else {
+                            return PythonType::Unknown;
+                        };
+                        if class_type.details.special {
+                            return match class_type.details.name.as_str() {
                                 "Literal" => self.handle_literal_type(s),
                                 "Union" => {
                                     // try to convert subscript value into tuple and send the tuple
@@ -410,12 +412,12 @@ impl TypeEvaluator {
                         let type_parameters =
                             vec![self.get_type_from_annotation(&s.slice, symbol_table, None)];
                         PythonType::Class(ClassType {
-                            details: typ,
+                            details: class_type.details.clone(),
                             type_parameters,
                         })
                     }
                     // Illegal type annotation? Trying to subscript a non class type
-                    None => PythonType::Unknown,
+                    Err(e) => PythonType::Unknown,
                 }
             }
             Expression::BinOp(b) => {
@@ -464,6 +466,7 @@ impl TypeEvaluator {
 
     /// Get the type of a symbol node based on declarations
     fn get_symbol_node_type(&self, symbol: &SymbolTableNode) -> Result<PythonType> {
+        log::debug!("get_symbol_node_type: {symbol:}");
         let decl = symbol.last_declaration();
         let decl_scope = decl.declaration_path().scope_id;
         let Some(symbol_table) = self.get_symbol_table_of(&decl.declaration_path().module_name)
@@ -956,103 +959,6 @@ impl TypeEvaluator {
         false
     }
 
-    /// The expression is assumed to be used in type annotation context.
-    /// So some expressions are not allowed, for example a function call
-    /// TODO: This function is garbage.
-    fn get_class_declaration(
-        &self,
-        expression: &Expression,
-        symbol_table: &SymbolTable,
-    ) -> Option<symbol_table::Class> {
-        match expression {
-            // This is a Generic type with a param: Container[type, ...]
-            // name here is something like list or List or Literal or user defined class
-            Expression::Name(n) => {
-                // if it's not a builtin we want to get the class declaration
-                // form symbol table and find where this class
-
-                if let Some(builtin_type) = self.get_builtin_type(&n.id) {
-                    match builtin_type {
-                        PythonType::Class(c) => return Some(c.details),
-                        _ => return None,
-                    }
-                }
-
-                let mut declaration = match symbol_table.lookup_in_scope(LookupSymbolRequest {
-                    name: &n.id,
-                    scope: None,
-                }) {
-                    Some(s) => s.last_declaration(),
-                    None => return None,
-                };
-
-                // Follow symbols until we find a class declaration
-                loop {
-                    match declaration {
-                        Declaration::Class(c) => {
-                            return Some(c.clone());
-                        }
-                        Declaration::Alias(a) => {
-                            declaration = match self.resolve_alias(a) {
-                                Some(decl) => decl.last_declaration(),
-                                // TODO: Should we really skip if the alias is not resolved?
-                                // I'm doing it now because it is some module in typeshed and I
-                                // don't know what to do with it
-                                // Name(Name { node: Node { start: 1613, end: 1621 }, id: "Callable" })
-                                None => return None,
-                            };
-                        }
-                        // There are cases where a class is just a variable pointing to a class
-                        // Like Literal: _SpecialForm in stdlib/typing.pyi
-                        Declaration::Variable(v) => {
-                            let found_in_symbol_table = self
-                                .get_symbol_table_of(&v.declaration_path.module_name)
-                                .expect("Variable declaration not found in symbol table");
-                            // if not in a pyi file panic
-                            assert!(
-                                !found_in_symbol_table.is_pyi(),
-                                "Variable declaration cannot be pointing to a class"
-                            );
-
-                            let pointing_class = match &v.type_annotation {
-                                Some(annotation) => {
-                                    let class = self
-                                        .get_class_declaration(annotation, found_in_symbol_table)?;
-                                    if class.name == SPECIAL_FORM {
-                                        return Some(Class::new_special(
-                                            n.id.clone(),
-                                            v.declaration_path.clone(),
-                                        ));
-                                    }
-                                    Some(class)
-                                }
-                                None => {
-                                    todo!("Variable declaration without type annotation")
-                                }
-                            };
-
-                            let class_def = match pointing_class {
-                                None => return None,
-                                Some(ref pointing_class) => pointing_class,
-                            };
-
-                            return Some(class_def.clone());
-                        }
-                        _ => return None,
-                    }
-                }
-            }
-            // Allowed but TODO
-            Expression::Attribute(_) => None,
-            Expression::Subscript(_) => None,
-            Expression::Slice(_) => None,
-            _ => panic!(
-                "Expression {:?} is not allowed in type annotation",
-                expression
-            ),
-        }
-    }
-
     // Follows Alias declaration and resolves it to a class declaration
     // It searches through imported symbol tables for the module alias imports
     // and resolves the alias to the class declaration
@@ -1066,7 +972,7 @@ impl TypeEvaluator {
 
         let resolved_path = match a.import_result.resolved_paths.last() {
             Some(path) => path,
-            None => panic!("Alias {:?} has no resolved path", a),
+            None => return None,
         };
 
         // TODO: This is a hack to resolve Iterator alias in sys/__init__.pyi
@@ -1133,278 +1039,6 @@ impl TypeEvaluator {
         args: &[Expression],
     ) -> PythonType {
         f_type.return_type.clone()
-    }
-}
-
-impl TraversalVisitorGeneric<PythonType> for TypeEvaluator {
-    fn visit_stmt(&self, s: &ast::Statement) -> PythonType {
-        // map all statements and call visit
-        match s {
-            ast::Statement::ExpressionStatement(e) => self.visit_expr(e),
-            ast::Statement::Import(i) => self.visit_import(i),
-            ast::Statement::ImportFrom(i) => self.visit_import_from(i),
-            ast::Statement::AssignStatement(a) => self.visit_assign(a),
-            ast::Statement::AnnAssignStatement(a) => self.visit_ann_assign(a),
-            ast::Statement::AugAssignStatement(a) => self.visit_aug_assign(a),
-            ast::Statement::Assert(a) => self.visit_assert(a),
-            ast::Statement::Pass(p) => self.visit_pass(p),
-            ast::Statement::Delete(d) => self.visit_delete(d),
-            ast::Statement::Return(r) => self.visit_return(r),
-            ast::Statement::Raise(r) => self.visit_raise(r),
-            ast::Statement::Break(b) => self.visit_break(b),
-            ast::Statement::Continue(c) => self.visit_continue(c),
-            ast::Statement::Global(g) => self.visit_global(g),
-            ast::Statement::Nonlocal(n) => self.visit_nonlocal(n),
-            ast::Statement::IfStatement(i) => self.visit_if(i),
-            ast::Statement::WhileStatement(w) => self.visit_while(w),
-            ast::Statement::ForStatement(f) => self.visit_for(f),
-            ast::Statement::WithStatement(w) => self.visit_with(w),
-            ast::Statement::TryStatement(t) => self.visit_try(t),
-            ast::Statement::TryStarStatement(t) => self.visit_try_star(t),
-            ast::Statement::FunctionDef(f) => self.visit_function_def(f),
-            ast::Statement::ClassDef(c) => self.visit_class_def(c),
-            ast::Statement::Match(m) => self.visit_match(m),
-            Statement::AsyncForStatement(f) => self.visit_async_for(f),
-            Statement::AsyncWithStatement(w) => self.visit_async_with(w),
-            Statement::AsyncFunctionDef(f) => self.visit_async_function_def(f),
-            Statement::TypeAlias(a) => self.visit_type_alias(a),
-        }
-    }
-
-    fn visit_expr(&self, e: &ast::Expression) -> PythonType {
-        match e {
-            ast::Expression::Constant(c) => self.visit_constant(c),
-            ast::Expression::List(l) => self.visit_list(l),
-            ast::Expression::Tuple(t) => self.visit_tuple(t),
-            ast::Expression::Dict(d) => self.visit_dict(d),
-            ast::Expression::Set(s) => self.visit_set(s),
-            ast::Expression::Name(n) => self.visit_name(n),
-            ast::Expression::BoolOp(b) => self.visit_bool_op(b),
-            ast::Expression::UnaryOp(u) => self.visit_unary_op(u),
-            ast::Expression::BinOp(b) => self.visit_bin_op(b),
-            ast::Expression::NamedExpr(n) => self.visit_named_expr(n),
-            ast::Expression::Yield(y) => self.visit_yield(y),
-            ast::Expression::YieldFrom(y) => self.visit_yield_from(y),
-            ast::Expression::Starred(s) => self.visit_starred(s),
-            ast::Expression::Generator(g) => self.visit_generator(g),
-            ast::Expression::ListComp(l) => self.visit_list_comp(l),
-            ast::Expression::SetComp(s) => self.visit_set_comp(s),
-            ast::Expression::DictComp(d) => self.visit_dict_comp(d),
-            ast::Expression::Attribute(a) => self.visit_attribute(a),
-            ast::Expression::Subscript(s) => self.visit_subscript(s),
-            ast::Expression::Slice(s) => self.visit_slice(s),
-            ast::Expression::Call(c) => self.visit_call(c),
-            ast::Expression::Await(a) => self.visit_await(a),
-            ast::Expression::Compare(c) => self.visit_compare(c),
-            ast::Expression::Lambda(l) => self.visit_lambda(l),
-            ast::Expression::IfExp(i) => self.visit_if_exp(i),
-            ast::Expression::JoinedStr(j) => self.visit_joined_str(j),
-            ast::Expression::FormattedValue(f) => self.visit_formatted_value(f),
-        }
-    }
-
-    fn visit_import(&self, _i: &ast::Import) -> PythonType {
-        PythonType::Unknown
-    }
-
-    fn visit_import_from(&self, _i: &ast::ImportFrom) -> PythonType {
-        PythonType::Unknown
-    }
-
-    fn visit_if(&self, i: &parser::ast::If) -> PythonType {
-        PythonType::Unknown
-    }
-
-    fn visit_while(&self, w: &parser::ast::While) -> PythonType {
-        PythonType::Unknown
-    }
-
-    fn visit_for(&self, f: &parser::ast::For) -> PythonType {
-        PythonType::Unknown
-    }
-
-    fn visit_with(&self, w: &parser::ast::With) -> PythonType {
-        PythonType::Unknown
-    }
-
-    fn visit_try(&self, t: &parser::ast::Try) -> PythonType {
-        PythonType::Unknown
-    }
-
-    fn visit_try_star(&self, t: &parser::ast::TryStar) -> PythonType {
-        PythonType::Unknown
-    }
-
-    fn visit_function_def(&self, f: &parser::ast::FunctionDef) -> PythonType {
-        PythonType::Any
-    }
-
-    fn visit_class_def(&self, c: &parser::ast::ClassDef) -> PythonType {
-        PythonType::Unknown
-    }
-
-    fn visit_match(&self, m: &parser::ast::Match) -> PythonType {
-        PythonType::Unknown
-    }
-
-    fn visit_constant(&self, _c: &ast::Constant) -> PythonType {
-        PythonType::Unknown
-    }
-
-    fn visit_list(&self, _l: &ast::List) -> PythonType {
-        PythonType::Unknown
-    }
-
-    fn visit_tuple(&self, _t: &ast::Tuple) -> PythonType {
-        PythonType::Unknown
-    }
-
-    fn visit_dict(&self, _d: &ast::Dict) -> PythonType {
-        PythonType::Unknown
-    }
-
-    fn visit_set(&self, _s: &ast::Set) -> PythonType {
-        PythonType::Unknown
-    }
-
-    fn visit_name(&self, _n: &ast::Name) -> PythonType {
-        PythonType::Unknown
-    }
-
-    fn visit_bool_op(&self, _b: &ast::BoolOperation) -> PythonType {
-        PythonType::Unknown
-    }
-
-    fn visit_unary_op(&self, _u: &ast::UnaryOperation) -> PythonType {
-        PythonType::Unknown
-    }
-
-    fn visit_bin_op(&self, _b: &ast::BinOp) -> PythonType {
-        PythonType::Unknown
-    }
-
-    fn visit_named_expr(&self, _n: &ast::NamedExpression) -> PythonType {
-        PythonType::Unknown
-    }
-
-    fn visit_yield(&self, _y: &ast::Yield) -> PythonType {
-        PythonType::Unknown
-    }
-
-    fn visit_yield_from(&self, _y: &ast::YieldFrom) -> PythonType {
-        PythonType::Unknown
-    }
-
-    fn visit_starred(&self, _s: &ast::Starred) -> PythonType {
-        PythonType::Unknown
-    }
-
-    fn visit_generator(&self, _g: &ast::Generator) -> PythonType {
-        PythonType::Unknown
-    }
-
-    fn visit_list_comp(&self, _l: &ast::ListComp) -> PythonType {
-        PythonType::Unknown
-    }
-
-    fn visit_set_comp(&self, _s: &ast::SetComp) -> PythonType {
-        PythonType::Unknown
-    }
-
-    fn visit_dict_comp(&self, _d: &ast::DictComp) -> PythonType {
-        PythonType::Unknown
-    }
-
-    fn visit_attribute(&self, _a: &ast::Attribute) -> PythonType {
-        PythonType::Unknown
-    }
-
-    fn visit_subscript(&self, _s: &ast::Subscript) -> PythonType {
-        PythonType::Unknown
-    }
-
-    fn visit_slice(&self, _s: &ast::Slice) -> PythonType {
-        PythonType::Unknown
-    }
-
-    fn visit_call(&self, _c: &ast::Call) -> PythonType {
-        PythonType::Unknown
-    }
-
-    fn visit_await(&self, _a: &ast::Await) -> PythonType {
-        PythonType::Unknown
-    }
-
-    fn visit_compare(&self, _c: &ast::Compare) -> PythonType {
-        PythonType::Unknown
-    }
-
-    fn visit_lambda(&self, _l: &ast::Lambda) -> PythonType {
-        PythonType::Unknown
-    }
-
-    fn visit_if_exp(&self, _i: &ast::IfExp) -> PythonType {
-        PythonType::Unknown
-    }
-
-    fn visit_joined_str(&self, _j: &ast::JoinedStr) -> PythonType {
-        PythonType::Unknown
-    }
-
-    fn visit_formatted_value(&self, _f: &ast::FormattedValue) -> PythonType {
-        PythonType::Unknown
-    }
-
-    fn visit_alias(&self, _a: &ast::Alias) -> PythonType {
-        PythonType::Unknown
-    }
-
-    fn visit_assign(&self, _a: &ast::Assign) -> PythonType {
-        PythonType::Unknown
-    }
-
-    fn visit_ann_assign(&self, _a: &ast::AnnAssign) -> PythonType {
-        PythonType::Unknown
-    }
-
-    fn visit_aug_assign(&self, _a: &ast::AugAssign) -> PythonType {
-        PythonType::Unknown
-    }
-
-    fn visit_assert(&self, _a: &ast::Assert) -> PythonType {
-        PythonType::Unknown
-    }
-
-    fn visit_pass(&self, _p: &ast::Pass) -> PythonType {
-        PythonType::Unknown
-    }
-
-    fn visit_delete(&self, _d: &ast::Delete) -> PythonType {
-        PythonType::Unknown
-    }
-
-    fn visit_return(&self, _r: &ast::Return) -> PythonType {
-        PythonType::Unknown
-    }
-
-    fn visit_raise(&self, _r: &ast::Raise) -> PythonType {
-        PythonType::Unknown
-    }
-
-    fn visit_break(&self, _b: &ast::Break) -> PythonType {
-        PythonType::Unknown
-    }
-
-    fn visit_continue(&self, _c: &ast::Continue) -> PythonType {
-        PythonType::Unknown
-    }
-
-    fn visit_global(&self, _g: &ast::Global) -> PythonType {
-        PythonType::Unknown
-    }
-
-    fn visit_nonlocal(&self, _n: &ast::Nonlocal) -> PythonType {
-        PythonType::Unknown
     }
 }
 

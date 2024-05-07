@@ -8,7 +8,7 @@ use std::{
 use dashmap::{DashMap, DashSet};
 use enderpy_python_parser::error::ParsingError;
 use env_logger::Builder;
-use log::{debug, info};
+use log::{debug, info, warn};
 
 use crate::{
     diagnostic::Diagnostic,
@@ -83,17 +83,21 @@ impl BuildManager {
         for mut module in self.modules.iter_mut() {
             module.populate_symbol_table(imports.clone());
         }
-        log::info!("Symbol tables populated");
+        log::debug!("Prebuild finished");
     }
 
     // Resolves imports and adds file and its imports to modules
     pub fn build_one(&self, root: &Path, file: &Path) {
+        debug!("building {file:?}");
         let enderpy_file = EnderpyFile::new(file, false);
         self.modules
             .insert(enderpy_file.path(), enderpy_file.clone());
         let imports = self.gather_files(vec![enderpy_file], root);
         for imported_module in imports.iter() {
             for path in imported_module.1.resolved_paths.iter() {
+                if !path.is_file() {
+                    continue;
+                }
                 let module = EnderpyFile::new(path, true);
                 self.modules.insert(module.path(), module);
             }
@@ -103,13 +107,13 @@ impl BuildManager {
                 module.populate_symbol_table(imports.clone());
             }
         }
-        log::info!("Symbol tables populated");
+        log::debug!("Symbol tables populated");
     }
 
     // Performs type checking passes over the code
     // This step happens after the binding phase
-    pub fn type_check(&self) {
-        self.diagnostics.clear();
+    pub fn type_check(&self, path: PathBuf) {
+        let module_to_check = self.get_state(&path);
         // TODO: This is a hack to get all the symbol tables so we can resolve imports
         let mut all_symbol_tables = Vec::new();
         for module in self.modules.iter() {
@@ -117,19 +121,13 @@ impl BuildManager {
         }
 
         let mut checker_count = 0;
+        let mut modules_to_check = vec![module_to_check];
 
-        for mut state in self.modules.iter_mut() {
-            // do not type check builtins
-            if state.value().path().ends_with("builtins.pyi") {
-                continue;
-            }
-            if state.value().followed {
-                continue;
-            }
-            let path = &state.value().path;
+        for mut state in modules_to_check.iter_mut() {
+            let path = &state.path;
             checker_count += 1;
-            if !state.value().parser.errors.is_empty() {
-                for err in state.value().parser.errors.iter() {
+            if !state.parser.errors.is_empty() {
+                for err in state.parser.errors.iter() {
                     match err {
                         ParsingError::InvalidSyntax {
                             msg,
@@ -141,19 +139,19 @@ impl BuildManager {
                                 body: msg.to_string(),
                                 suggestion: Some(advice.to_string()),
                                 range: crate::diagnostic::Range {
-                                    start: state.value().get_position(span.0 as u32),
-                                    end: state.value().get_position(span.1 as u32),
+                                    start: state.get_position(span.0 as u32),
+                                    end: state.get_position(span.1 as u32),
                                 },
                             });
                             self.diagnostics
-                                .entry(state.value().path())
+                                .entry(state.path())
                                 .or_default()
                                 .push(Diagnostic {
                                     body: msg.to_string(),
                                     suggestion: Some(advice.to_string()),
                                     range: crate::diagnostic::Range {
-                                        start: state.value().get_position(span.0 as u32),
-                                        end: state.value().get_position(span.1 as u32),
+                                        start: state.get_position(span.0 as u32),
+                                        end: state.get_position(span.1 as u32),
                                     },
                                 });
                         }
@@ -167,19 +165,19 @@ impl BuildManager {
                     body: error.msg.to_string(),
                     suggestion: Some("".into()),
                     range: crate::diagnostic::Range {
-                        start: state.value().get_position(error.span.0 as u32),
-                        end: state.value().get_position(error.span.1 as u32),
+                        start: state.get_position(error.span.0 as u32),
+                        end: state.get_position(error.span.1 as u32),
                     },
                 });
                 self.diagnostics
-                    .entry(state.value().path())
+                    .entry(state.path())
                     .or_default()
                     .push(Diagnostic {
                         body: error.msg.to_string(),
                         suggestion: Some("".into()),
                         range: crate::diagnostic::Range {
-                            start: state.value().get_position(error.span.0 as u32),
-                            end: state.value().get_position(error.span.1 as u32),
+                            start: state.get_position(error.span.0 as u32),
+                            end: state.get_position(error.span.1 as u32),
                         },
                     });
             }
@@ -187,7 +185,7 @@ impl BuildManager {
         info!("checked {checker_count:} modules");
     }
 
-    pub fn get_hover_information(&self, path: &Path, line: u32, column: u32) -> (String, String) {
+    pub fn get_hover_information(&self, path: &Path, line: u32, column: u32) -> String {
         let module = self.get_state(path);
         let symbol_table = module.get_symbol_table();
         let hovered_offset = module.parser.line_starts()[line as usize] + column;
@@ -195,71 +193,20 @@ impl BuildManager {
             Ok(index) => index,
             Err(index) => index - 1,
         };
-        let symbol_name = match module
-            .parser
-            .identifiers_start_offset
-            .binary_search_by_key(&hovered_offset, |x| x.0)
-        {
-            Ok(index) => Some(&module.parser.identifiers_start_offset[index].2),
-            Err(index) => {
-                if index < 1 {
-                    None
-                } else {
-                    let found_identifier = &module.parser.identifiers_start_offset[index - 1].2;
-                    let start = module.parser.identifiers_start_offset[index - 1].0;
-                    let end = module.parser.identifiers_start_offset[index - 1].1;
-                    info!(
-                        "start: {}, end: {}, hovered offset: {} found_identifier: {}",
-                        start, end, hovered_offset, found_identifier
-                    );
-                    if start <= hovered_offset && end > hovered_offset {
-                        Some(found_identifier)
-                    } else {
-                        None
-                    }
-                }
-            }
-        };
-        let hovered_offset_end = if let Some(name) = symbol_name {
-            name.len() as u32 + hovered_offset
-        } else {
-            return ("".to_string(), "".to_string());
-        };
-        debug!("line: {line}, column: {column} offset: {hovered_offset} symbol: {symbol_name:?}");
-        let symbol_info = match symbol_name {
-            Some(symbol_name) => {
-                let scope_id = symbol_table
-                    .scope_starts
-                    .find(hovered_offset, hovered_offset_end)
-                    .last()
-                    .expect("scope id not found")
-                    .val;
-                match symbol_table.lookup_in_scope(crate::symbol_table::LookupSymbolRequest {
-                    name: symbol_name,
-                    scope: Some(scope_id),
-                }) {
-                    Some(symbol) => symbol.to_string(),
-                    None => "symbol not found".to_string(),
-                }
-            }
-            None => "".to_string(),
-        };
 
         let Some(checker) = module.type_checker else {
-            return (symbol_info, String::from(""));
+            warn!("type checker not ran yet");
+            return String::from("");
         };
 
-        let type_info = &checker
-            .types
-            .find(hovered_offset, hovered_offset_end)
-            .last();
+        let type_info = &checker.types.find(hovered_offset, hovered_offset).last();
         let type_str = if let Some(type_info) = type_info {
             &type_info.val
         } else {
             &PythonType::Unknown
         };
 
-        (symbol_info, format!("{type_str:}"))
+        format!("{type_str:}")
     }
 
     // Given a list of files, this function will resolve the imports in the files

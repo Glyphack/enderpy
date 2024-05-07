@@ -221,7 +221,6 @@ impl SymbolTable {
         }
     }
 
-    // TODO: this can be attribute of symbol table
     pub fn is_pyi(&self) -> bool {
         self.file_path.extension().unwrap() == "pyi"
     }

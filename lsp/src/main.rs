@@ -1,8 +1,8 @@
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use enderpy_python_type_checker::{build::BuildManager, find_project_root, settings::Settings};
 use env_logger::Builder;
-use log::{info, LevelFilter};
+use log::LevelFilter;
 use tower_lsp::{jsonrpc::Result, lsp_types::*, Client, LanguageServer, LspService, Server};
 
 #[derive(Debug)]
@@ -12,18 +12,10 @@ struct Backend {
 }
 
 impl Backend {
-    async fn on_change(&self, path: PathBuf) -> Vec<Diagnostic> {
-        let root = find_project_root(&path);
-        self.manager.build_one(root, &path);
-        self.manager.type_check();
-        let mut diagnostics = Vec::new();
-        if let Some(errors) = self.manager.diagnostics.get(&path) {
-            for err in errors.iter() {
-                diagnostics.push(from(err.clone()));
-            }
-        }
-
-        diagnostics
+    fn build(&self, path: &Path) {
+        let root = find_project_root(path);
+        self.manager.build_one(root, path);
+        self.manager.type_check(path.to_path_buf());
     }
 }
 
@@ -41,14 +33,6 @@ impl LanguageServer for Backend {
             capabilities: ServerCapabilities {
                 text_document_sync: Some(TextDocumentSyncCapability::Kind(
                     TextDocumentSyncKind::FULL,
-                )),
-                diagnostic_provider: Some(DiagnosticServerCapabilities::Options(
-                    DiagnosticOptions {
-                        identifier: Some("typechecker".to_string()),
-                        inter_file_dependencies: true,
-                        workspace_diagnostics: false,
-                        work_done_progress_options: Default::default(),
-                    },
                 )),
                 hover_provider: Some(HoverProviderCapability::Simple(true)),
                 ..ServerCapabilities::default()
@@ -70,10 +54,7 @@ impl LanguageServer for Backend {
         let uri = params.text_document.uri;
         let path = uri.to_file_path();
         if let Ok(path) = path {
-            let diagnostics = self.on_change(path).await;
-            self.client
-                .publish_diagnostics(uri, diagnostics, None)
-                .await;
+            self.build(&path);
         }
     }
 
@@ -84,10 +65,7 @@ impl LanguageServer for Backend {
         let uri = params.text_document.uri;
         let path = uri.to_file_path();
         if let Ok(path) = path {
-            let diagnostics = self.on_change(path).await;
-            self.client
-                .publish_diagnostics(uri, diagnostics, None)
-                .await;
+            self.build(&path);
         }
     }
 
@@ -98,46 +76,7 @@ impl LanguageServer for Backend {
         let uri = params.text_document.uri;
         let path = uri.to_file_path();
         if let Ok(path) = path {
-            let diagnostics = self.on_change(path).await;
-            self.client
-                .publish_diagnostics(uri, diagnostics, None)
-                .await;
-        }
-    }
-
-    async fn diagnostic(
-        &self,
-        params: DocumentDiagnosticParams,
-    ) -> Result<DocumentDiagnosticReportResult> {
-        self.client
-            .log_message(MessageType::INFO, "diagnostic!")
-            .await;
-        let uri = params.text_document.uri;
-        let path = uri.to_file_path();
-
-        info!("diagnostic: {:?}", path);
-        match path {
-            Ok(path) => {
-                let diagnostics = self.on_change(path).await;
-                info!("diagnostics: {:?}", diagnostics);
-                Ok(DocumentDiagnosticReportResult::Report(
-                    DocumentDiagnosticReport::Full(RelatedFullDocumentDiagnosticReport {
-                        related_documents: None,
-                        full_document_diagnostic_report: FullDocumentDiagnosticReport {
-                            result_id: None,
-                            items: diagnostics,
-                        },
-                    }),
-                ))
-            }
-            Err(_) => Ok(DocumentDiagnosticReportResult::Report(
-                DocumentDiagnosticReport::Unchanged(RelatedUnchangedDocumentDiagnosticReport {
-                    related_documents: None,
-                    unchanged_document_diagnostic_report: UnchangedDocumentDiagnosticReport {
-                        result_id: "typechecker".to_string(),
-                    },
-                }),
-            )),
+            self.build(&path);
         }
     }
 
@@ -161,15 +100,13 @@ impl LanguageServer for Backend {
 
         // TODO: Implement real logic to find the symbol at the hover position
         // For now, let's provide a sample hover message with placeholder values
-        let (def, type_info) =
+        let type_info =
             self.manager
                 .get_hover_information(&path, position.line, position.character);
 
         let markup_content = MarkupContent {
             kind: MarkupKind::Markdown,
-            value: format!(
-                "**Hover Information**\n\n- Definition: `{def}`\n\n- Type: `{type_info}`\n",
-            ),
+            value: format!("**Hover Information**\n\n- Type: `{type_info}`\n",),
         };
         let hover = Hover {
             contents: HoverContents::Markup(markup_content),
@@ -181,29 +118,6 @@ impl LanguageServer for Backend {
 
     async fn shutdown(&self) -> Result<()> {
         Ok(())
-    }
-}
-
-fn from(diagnostic: enderpy_python_type_checker::diagnostic::Diagnostic) -> Diagnostic {
-    Diagnostic {
-        range: Range {
-            start: Position {
-                line: diagnostic.range.start.line,
-                character: diagnostic.range.start.character,
-            },
-            end: Position {
-                line: diagnostic.range.end.line,
-                character: diagnostic.range.end.character,
-            },
-        },
-        severity: Some(DiagnosticSeverity::ERROR),
-        code: None,
-        code_description: None,
-        source: Some("Enderpy".to_string()),
-        message: diagnostic.body,
-        related_information: None,
-        tags: None,
-        data: None,
     }
 }
 
