@@ -406,7 +406,15 @@ impl TypeEvaluator {
                                     };
                                     self.handle_union_type(union_parameters.to_vec())
                                 }
-                                _ => todo!(),
+                                "Optional" => {
+                                    let inner_value = self.get_type_from_annotation(
+                                        &s.slice,
+                                        symbol_table,
+                                        scope_id,
+                                    );
+                                    PythonType::Optional(Box::new(inner_value))
+                                }
+                                _ => PythonType::Any,
                             };
                         }
                         let type_parameters =
@@ -504,7 +512,9 @@ impl TypeEvaluator {
                 {
                     self.get_type_from_annotation(type_annotation, symbol_table, Some(decl_scope))
                 } else {
-                    self.infer_function_return_type(f)
+                    // TODO: infer return type of function disabled because of recursive types
+                    // self.infer_function_return_type(f)
+                    PythonType::Unknown
                 };
 
                 let arguments = f.function_node.args.clone();

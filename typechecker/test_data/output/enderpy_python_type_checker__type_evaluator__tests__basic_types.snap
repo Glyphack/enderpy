@@ -1,6 +1,6 @@
 ---
 source: typechecker/src/type_evaluator.rs
-description: "1: a = 1\n2: b = \"1\"\n3: c = True\n4: d = False\n5: a + int(b)\n6: \n7: \n8: a + c\n9: \n10: def func(param1: int) -> int:\n11: \treturn param1 + a\n12: \n13: class C:\n14: \tcls_attribute = 1\n15: \n16: \tdef __init__(self, x: int):\n17: \t\tprint(self.cls_attribute)\n18: \t\tself.x = float(x)\n19: \t\tprint(self.x)\n20: \n21: \tdef add(self, value: int):\n22: \t\tself.cls_attribute += value\n23: \n24: \tdef get_attr(self) -> int:\n25: \t\treturn self.cls_attribute\n26: \n27: \tdef\tget_x(self) -> float:\n28: \t\treturn self.x\n29: \n30: t = C(0)\n31: t.add(2)\n32: t.cls_attribute\n33: t.x\n34: t.get_x()\n35: t.get_attr()\n36: \n37: l = [1,2,3]\n38: d = {\"a\": 1, \"b\": 2}\n39: s = {1,2,3}\n40: \n41: l.append(4)\n42: \n"
+description: "1: a = 1\n2: b = \"1\"\n3: c = True\n4: d = False\n5: a + int(b)\n6: \n7: \n8: a + c\n9: \n10: \n11: def func(param1: int) -> int:\n12:     return param1 + a\n13: \n14: \n15: class C:\n16:     cls_attribute = 1\n17: \n18:     def __init__(self, x: int):\n19:         print(self.cls_attribute)\n20:         self.x = float(x)\n21:         print(self.x)\n22: \n23:     def add(self, value: int) -> None:\n24:         self.cls_attribute += value\n25: \n26:     def get_attr(self) -> int:\n27:         return self.cls_attribute\n28: \n29:     def get_x(self) -> float:\n30:         return self.x\n31: \n32: \n33: t = C(0)\n34: t.add(2)\n35: t.cls_attribute\n36: t.x\n37: t.get_x()\n38: t.get_attr()\n39: \n40: l = [1, 2, 3]\n41: d = {\"a\": 1, \"b\": 2}\n42: s = {1, 2, 3}\n43: \n44: l.append(4)\n"
 expression: result
 ---
 Line 1: a = 1
@@ -41,7 +41,7 @@ Expr types in the line --->:
         "c" => bool
 
 ---
-Line 11: 	return param1 + a
+Line 12:     return param1 + a
 
 Expr types in the line --->:
         "param1" => int
@@ -49,88 +49,88 @@ Expr types in the line --->:
         "param1 + a" => int
 
 ---
-Line 14: 	cls_attribute = 1
+Line 16:     cls_attribute = 1
 
 Expr types in the line --->:
         "1" => int
 
 ---
-Line 17: 		print(self.cls_attribute)
+Line 19:         print(self.cls_attribute)
 
 Expr types in the line --->:
         "print(self.cls_attribute)" => None
         "self.cls_attribute" => int
 
 ---
-Line 18: 		self.x = float(x)
+Line 20:         self.x = float(x)
 
 Expr types in the line --->:
         "float(x)" => float
 
 ---
-Line 19: 		print(self.x)
+Line 21:         print(self.x)
 
 Expr types in the line --->:
         "print(self.x)" => None
         "self.x" => float
 
 ---
-Line 25: 		return self.cls_attribute
+Line 27:         return self.cls_attribute
 
 Expr types in the line --->:
         "self.cls_attribute" => int
 
 ---
-Line 28: 		return self.x
+Line 30:         return self.x
 
 Expr types in the line --->:
         "self.x" => float
 
 ---
-Line 30: t = C(0)
+Line 33: t = C(0)
 
 Expr types in the line --->:
         "C(0)" => C
 
 ---
-Line 31: t.add(2)
+Line 34: t.add(2)
 
 Expr types in the line --->:
         "t.add(2)" => None
         "2" => int
 
 ---
-Line 34: t.get_x()
+Line 37: t.get_x()
 
 Expr types in the line --->:
         "t.get_x()" => float
 
 ---
-Line 35: t.get_attr()
+Line 38: t.get_attr()
 
 Expr types in the line --->:
         "t.get_attr()" => int
 
 ---
-Line 37: l = [1,2,3]
+Line 40: l = [1, 2, 3]
 
 Expr types in the line --->:
-        "[1,2,3]" => builtins.list[int]
+        "[1, 2, 3]" => builtins.list[int]
 
 ---
-Line 38: d = {"a": 1, "b": 2}
+Line 41: d = {"a": 1, "b": 2}
 
 Expr types in the line --->:
         "{\"a\": 1, \"b\": 2}" => builtins.dict[str, int]
 
 ---
-Line 39: s = {1,2,3}
+Line 42: s = {1, 2, 3}
 
 Expr types in the line --->:
-        "{1,2,3}" => builtins.set[int]
+        "{1, 2, 3}" => builtins.set[int]
 
 ---
-Line 41: l.append(4)
+Line 44: l.append(4)
 
 Expr types in the line --->:
         "l.append(4)" => None

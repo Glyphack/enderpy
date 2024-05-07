@@ -69,11 +69,15 @@ impl SemanticAnalyzer {
         &mut self,
         target: &Expression,
         value: Option<Expression>,
-        declaration_path: DeclarationPath,
         type_annotation: Option<Expression>,
     ) {
         match target {
             Expression::Name(n) => {
+                let declaration_path = DeclarationPath::new(
+                    self.file.path(),
+                    target.get_node(),
+                    self.symbol_table.current_scope_id,
+                );
                 let decl = Declaration::Variable(Variable {
                     declaration_path,
                     type_annotation,
@@ -93,7 +97,6 @@ impl SemanticAnalyzer {
                     self.create_variable_declaration_symbol(
                         elm,
                         value.clone(),
-                        declaration_path.clone(),
                         type_annotation.clone(),
                     )
                 }
@@ -122,42 +125,6 @@ impl SemanticAnalyzer {
                     self.create_symbol(a.attr.clone(), declaration, symbol_flags);
                 }
             }
-            // Expression::Call(c) => {
-            //     let Some(func_name) = c.func.as_name() else {
-            //         return;
-            //     };
-            //     let Some(node) =
-            //         self.symbol_table
-            //             .lookup_in_scope(crate::symbol_table::LookupSymbolRequest {
-            //                 name: func_name.id.clone(),
-            //                 position: None,
-            //             })
-            //     else {
-            //         return;
-            //     };
-            //
-            //     if let Declaration::Class(class) = node.last_declaration() {
-            //         if class.get_qualname() == "typing.TypeVar" {
-            //             let declaration_path = DeclarationPath {
-            //                 module_name: self.file.path(),
-            //                 node: c.node,
-            //             };
-            //
-            //             let declaration = Declaration::TypeParameter(TypeParameter {
-            //                 declaration_path,
-            //                 type_parameter_node: c.clone(),
-            //             });
-            //
-            //             let symbol_node = SymbolTableNode {
-            //                 name: a.attr.clone(),
-            //                 declarations: vec![declaration],
-            //                 flags: symbol_flags,
-            //             };
-            //             self.symbol_table.add_symbol(symbol_node)
-            //         }
-            //     }
-            // }
-            // TODO: Add other expressions that can be assigned
             _ => {}
         }
     }
@@ -428,6 +395,7 @@ impl TraversalVisitor for SemanticAnalyzer {
     }
 
     fn visit_for(&mut self, f: &parser::ast::For) {
+        self.create_variable_declaration_symbol(&f.target, Some(*f.iter.clone()), None);
         for stmt in &f.body {
             self.visit_stmt(stmt);
         }
@@ -733,17 +701,7 @@ impl TraversalVisitor for SemanticAnalyzer {
             .targets
             .last()
             .expect("Assignment has at least one target");
-        let declaration_path = DeclarationPath::new(
-            self.file.path(),
-            assign.node,
-            self.symbol_table.current_scope_id,
-        );
-        self.create_variable_declaration_symbol(
-            target,
-            Some(value.clone()),
-            declaration_path,
-            None,
-        );
+        self.create_variable_declaration_symbol(target, Some(value.clone()), None);
 
         self.visit_expr(&assign.value);
     }
@@ -751,14 +709,7 @@ impl TraversalVisitor for SemanticAnalyzer {
     fn visit_ann_assign(&mut self, a: &parser::ast::AnnAssign) {
         let value = &a.value;
         let target = &a.target;
-        let declaration_path =
-            DeclarationPath::new(self.file.path(), a.node, self.symbol_table.current_scope_id);
-        self.create_variable_declaration_symbol(
-            target,
-            value.clone(),
-            declaration_path,
-            Some(a.annotation.clone()),
-        );
+        self.create_variable_declaration_symbol(target, value.clone(), Some(a.annotation.clone()));
 
         if let Some(val) = &a.value {
             self.visit_expr(val);

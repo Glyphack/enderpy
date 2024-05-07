@@ -26,6 +26,7 @@ pub enum PythonType {
     MultiValue(Vec<PythonType>),
     Callable(Box<CallableType>),
     Class(ClassType),
+    Optional(Box<PythonType>),
     Never,
     TypeVar(TypeVar),
 
@@ -241,6 +242,7 @@ impl Display for PythonType {
                     .join(", ");
                 return write!(f, "TypeVar[{}, {}]", type_var.name, bounds);
             }
+            PythonType::Optional(optional) => return write!(f, "Optional[{optional:}]"),
             PythonType::Error(error) => return write!(f, "Error[{}]", error.message),
         };
 
