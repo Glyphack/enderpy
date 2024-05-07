@@ -1,6 +1,10 @@
 .PHONY: all
 all: test check format-check lint
 
+.PHONY: hotreload
+hotreload:
+	@watchexec -e rs cargo b
+
 .PHONY: build
 build:
 	@cargo build --all
