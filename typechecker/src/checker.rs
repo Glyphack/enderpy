@@ -59,6 +59,23 @@ impl TypeChecker {
         t
     }
 
+    fn infer_name_type(&mut self, name: &str, start: u32, stop: u32) {
+        let name_type = self
+            .type_evaluator
+            .infer_type_from_symbol_table(
+                name,
+                None,
+                &self.type_evaluator.symbol_table,
+                Some(self.type_evaluator.symbol_table.current_scope_id),
+            )
+            .unwrap();
+        self.types.insert(Interval {
+            start,
+            stop,
+            val: name_type,
+        });
+    }
+
     fn make_error(&mut self, msg: &str, start: u32, end: u32) {
         let error = TypeCheckError {
             msg: msg.to_string(),
@@ -110,16 +127,14 @@ impl TraversalVisitor for TypeChecker {
     }
 
     fn visit_expr(&mut self, e: &Expression) {
+        self.infer_expr_type(e, true);
         match e {
             Expression::Constant(c) => self.visit_constant(c),
             Expression::List(l) => self.visit_list(l),
             Expression::Tuple(t) => self.visit_tuple(t),
             Expression::Dict(d) => self.visit_dict(d),
             Expression::Set(s) => self.visit_set(s),
-            Expression::Name(n) => {
-                self.infer_expr_type(e, true);
-                self.visit_name(n)
-            }
+            Expression::Name(n) => self.visit_name(n),
             Expression::BoolOp(b) => self.visit_bool_op(b),
             Expression::UnaryOp(u) => self.visit_unary_op(u),
             Expression::BinOp(b) => self.visit_bin_op(b),
@@ -131,16 +146,10 @@ impl TraversalVisitor for TypeChecker {
             Expression::ListComp(l) => self.visit_list_comp(l),
             Expression::SetComp(s) => self.visit_set_comp(s),
             Expression::DictComp(d) => self.visit_dict_comp(d),
-            Expression::Attribute(a) => {
-                self.infer_expr_type(e, true);
-                self.visit_attribute(a)
-            }
+            Expression::Attribute(a) => self.visit_attribute(a),
             Expression::Subscript(s) => self.visit_subscript(s),
             Expression::Slice(s) => self.visit_slice(s),
-            Expression::Call(c) => {
-                self.infer_expr_type(e, true);
-                self.visit_call(c)
-            }
+            Expression::Call(c) => self.visit_call(c),
             Expression::Await(a) => self.visit_await(a),
             Expression::Compare(c) => self.visit_compare(c),
             Expression::Lambda(l) => self.visit_lambda(l),
@@ -152,7 +161,11 @@ impl TraversalVisitor for TypeChecker {
 
     fn visit_import(&mut self, _i: &Import) {}
 
-    fn visit_import_from(&mut self, _i: &ImportFrom) {}
+    fn visit_import_from(&mut self, _i: &ImportFrom) {
+        for alias in _i.names.iter() {
+            self.infer_name_type(&alias.name, alias.node.start, alias.node.end)
+        }
+    }
 
     fn visit_if(&mut self, i: &parser::ast::If) {
         self.visit_expr(&i.test);
@@ -235,6 +248,14 @@ impl TraversalVisitor for TypeChecker {
     }
 
     fn visit_function_def(&mut self, f: &parser::ast::FunctionDef) {
+        self.infer_name_type(
+            &f.name,
+            f.node.start,
+            f.node.start + 4 + f.name.len() as u32,
+        );
+        if let Some(ret_type) = &f.returns {
+            self.visit_expr(ret_type);
+        }
         self.type_evaluator.symbol_table.set_scope(f.node.start);
         for stmt in &f.body {
             self.visit_stmt(stmt);
@@ -243,6 +264,11 @@ impl TraversalVisitor for TypeChecker {
     }
 
     fn visit_async_function_def(&mut self, f: &parser::ast::AsyncFunctionDef) {
+        self.infer_name_type(
+            &f.name,
+            f.node.start,
+            f.node.start + 4 + f.name.len() as u32,
+        );
         self.type_evaluator.symbol_table.set_scope(f.node.start);
         for stmt in &f.body {
             self.visit_stmt(stmt);
@@ -251,6 +277,12 @@ impl TraversalVisitor for TypeChecker {
     }
 
     fn visit_class_def(&mut self, c: &parser::ast::ClassDef) {
+        self.infer_name_type(
+            &c.name,
+            c.node.start,
+            c.node.start + 6 + c.name.len() as u32,
+        );
+
         self.type_evaluator.symbol_table.set_scope(c.node.start);
         for base in &c.bases {
             self.visit_expr(base);
@@ -425,8 +457,8 @@ impl TraversalVisitor for TypeChecker {
         }
     }
 
-    fn visit_attribute(&mut self, _a: &Attribute) {
-        self.visit_expr(&_a.value);
+    fn visit_attribute(&mut self, a: &Attribute) {
+        self.infer_expr_type(&a.value, true);
     }
 
     fn visit_subscript(&mut self, _s: &Subscript) {
@@ -446,11 +478,12 @@ impl TraversalVisitor for TypeChecker {
         }
     }
 
-    fn visit_call(&mut self, _c: &Call) {
-        for arg in &_c.args {
+    fn visit_call(&mut self, c: &Call) {
+        self.infer_expr_type(&c.func, false);
+        for arg in &c.args {
             self.visit_expr(arg);
         }
-        for keyword in &_c.keywords {
+        for keyword in &c.keywords {
             self.visit_expr(&keyword.value);
         }
     }
@@ -489,22 +522,17 @@ impl TraversalVisitor for TypeChecker {
 
     fn visit_alias(&mut self, _a: &Alias) {}
 
-    fn visit_assign(&mut self, _a: &Assign) {
-        self.visit_expr(&_a.value);
-        for target in &_a.targets {
-            #[allow(clippy::single_match)]
-            match target {
-                ast::Expression::Name(n) => {
-                    // TODO: Check reassignment
-                }
-                _ => {}
-            }
+    fn visit_assign(&mut self, a: &Assign) {
+        self.visit_expr(&a.value);
+        for target in &a.targets {
+            self.visit_expr(target);
         }
     }
     fn visit_ann_assign(&mut self, _a: &AnnAssign) {
         if let Some(value) = &_a.value {
             self.visit_expr(value);
         }
+        self.infer_expr_type(&_a.target, false);
     }
 
     fn visit_aug_assign(&mut self, _a: &AugAssign) {
@@ -546,7 +574,94 @@ impl TraversalVisitor for TypeChecker {
 
     fn visit_continue(&mut self, _c: &Continue) {}
 
-    fn visit_global(&mut self, _g: &Global) {}
+    fn visit_global(&mut self, _g: &Global) {
+        let mut cur_offset = _g.node.start + 6;
+        for name in _g.names.iter() {
+            self.infer_name_type(name, _g.node.start, _g.node.end);
+            cur_offset += name.len() as u32;
+        }
+    }
 
     fn visit_nonlocal(&mut self, _n: &Nonlocal) {}
+}
+
+#[cfg(test)]
+mod tests {
+    use std::{fs, path::PathBuf};
+
+    use crate::{build::BuildManager, settings::Settings};
+
+    fn snapshot_type_checker_types(path: PathBuf) -> String {
+        let settings = Settings::test_settings();
+        let manager = BuildManager::new(settings);
+        let root = &PathBuf::from("");
+        manager.build(root);
+        manager.build_one(root, &path);
+        manager.type_check(&path);
+        let module = manager.get_state(&path);
+
+        let checker = module.get_checker();
+
+        let result = checker.types;
+
+        // sort result by key
+        let mut str = String::new();
+        let mut last_line = None;
+
+        for r in result {
+            let pos = module.get_position(r.start);
+            let cur_line = pos.line;
+
+            if last_line.is_none() {
+                let line_content = module.get_line_content(cur_line as usize);
+                str.push_str(format!("Line {}: {}", cur_line + 1, line_content).as_str());
+                str.push_str("\nExpr types in the line --->:\n");
+                last_line = Some(cur_line);
+            }
+            // So we also print the first line
+            if let Some(last_line_num) = last_line {
+                if last_line_num < cur_line {
+                    str.push_str("\n---\n");
+                    let line_content = module.get_line_content(cur_line as usize);
+                    str.push_str(format!("Line {}: {}", cur_line + 1, line_content).as_str());
+                    str.push_str("\nExpr types in the line --->:\n");
+                    last_line = Some(cur_line);
+                }
+            }
+            let source_text = &module.source[r.start as usize..r.stop as usize];
+            str.push_str(&format!("        {} => {}\n", source_text, r.val))
+        }
+        str.push_str("\n---\n");
+
+        str
+    }
+
+    macro_rules! type_eval_test {
+        ($test_name:ident, $test_file:expr) => {
+            #[test]
+            fn $test_name() {
+                let path = PathBuf::from($test_file);
+                let contents = fs::read_to_string(&path).unwrap();
+                let result = snapshot_type_checker_types(path);
+
+                let mut content_with_line_numbers = String::new();
+                for (i, line) in contents.lines().enumerate() {
+                    content_with_line_numbers.push_str(&format!("{}: {}\n", i + 1, line));
+                }
+
+                // TODO move this redaction setting to a central place
+                let mut settings = insta::Settings::clone_current();
+                settings.add_filter(r"module_name: .*.typeshed.", "module_name: [TYPESHED].");
+                settings.set_snapshot_path("../test_data/output/");
+                settings.set_description(content_with_line_numbers);
+                // TODO CLEAN THE classes name
+                settings.bind(|| {
+                    insta::assert_snapshot!(result);
+                });
+            }
+        };
+    }
+
+    type_eval_test!(basic_types, "test_data/inputs/basic_types.py");
+    type_eval_test!(basic_generics, "test_data/inputs/basic_generics.py");
 }

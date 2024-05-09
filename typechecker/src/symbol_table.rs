@@ -133,8 +133,11 @@ impl SymbolTable {
         };
         loop {
             if let Some(symbol) = scope.symbols.get(lookup_request.name) {
-                if !symbol.flags.contains(SymbolFlags::INSTANCE_MEMBER)
-                    && !symbol.flags.contains(SymbolFlags::CLASS_MEMBER)
+                // class attributes are invisible inside functions but they are available in
+                // the class body
+                if (!symbol.flags.contains(SymbolFlags::INSTANCE_MEMBER)
+                    && !symbol.flags.contains(SymbolFlags::CLASS_MEMBER))
+                    || scope.kind.is_class()
                 {
                     return Some(symbol);
                 }

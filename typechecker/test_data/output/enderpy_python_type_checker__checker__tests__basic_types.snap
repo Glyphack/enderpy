@@ -1,0 +1,257 @@
+---
+source: typechecker/src/checker.rs
+description: "1: from typing import Dict, Set, List\n2: \n3: a = 1\n4: b = \"1\"\n5: c = True\n6: d = False\n7: _ = a + int(b)\n8: \n9: \n10: _ = a + c\n11: \n12: \n13: def func(params: List[int]) -> Dict[int, int]:\n14:     return {params[0]: a}\n15: \n16: \n17: class C:\n18:     cls_attribute = {1}\n19: \n20:     def __init__(self, x: int):\n21:         print(self.cls_attribute)\n22:         self.x = float(x)\n23:         print(self.x)\n24: \n25:     def add(self, value: int) -> None:\n26:         self.cls_attribute.add(value)\n27: \n28:     def get_attr(self) -> Set[int]:\n29:         return self.cls_attribute\n30: \n31:     def get_x(self) -> float:\n32:         return self.x\n33: \n34: \n35: t = C(0)\n36: t.add(2)\n37: t.cls_attribute\n38: t.x\n39: t.get_x()\n40: t.get_attr()\n41: \n42: l = [1, 2, 3]\n43: d = {\"a\": 1, \"b\": 2}\n44: s = {1, 2, 3}\n45: \n46: l.append(4)\n"
+expression: result
+---
+Line 1: from typing import Dict, Set, List
+
+Expr types in the line --->:
+        Dict => (class) builtins.dict[TypeVar[_KT, ], TypeVar[_VT, ]]
+        Set => (class) set
+        List => (class) builtins.list[TypeVar[_T, ]]
+
+---
+Line 3: a = 1
+
+Expr types in the line --->:
+        a => (class) int
+        1 => (class) int
+
+---
+Line 4: b = "1"
+
+Expr types in the line --->:
+        b => (class) str
+        "1" => (class) str
+
+---
+Line 5: c = True
+
+Expr types in the line --->:
+        c => (class) bool
+        True => (class) bool
+
+---
+Line 6: d = False
+
+Expr types in the line --->:
+        d => (class) bool
+        False => (class) bool
+
+---
+Line 7: _ = a + int(b)
+
+Expr types in the line --->:
+        _ => (class) int
+        a => (class) int
+        a + int(b) => (class) int
+        int(b) => (class) int
+
+---
+Line 10: _ = a + c
+
+Expr types in the line --->:
+        _ => (class) int
+        a => (class) int
+        a + c => (class) int
+        c => (class) bool
+
+---
+Line 13: def func(params: List[int]) -> Dict[int, int]:
+
+Expr types in the line --->:
+        def func => (function) func
+        Dict => (class) builtins.dict[TypeVar[_KT, ], TypeVar[_VT, ]]
+        Dict[int, int] => (class) builtins.dict[TypeVar[_KT, ], TypeVar[_VT, ]]
+        int => (class) int
+        int, int] => (class) builtins.tuple[(class) int]
+        int => (class) int
+
+---
+Line 14:     return {params[0]: a}
+
+Expr types in the line --->:
+        {params[0]: a} => (class) builtins.dict[(class) builtins.list[(class) int], (class) int]
+        params => (class) builtins.list[(class) int]
+        params[0] => (class) builtins.list[(class) int]
+        0 => (class) int
+        a => (class) int
+
+---
+Line 17: class C:
+
+Expr types in the line --->:
+        class C => (class) C
+
+---
+Line 18:     cls_attribute = {1}
+
+Expr types in the line --->:
+        cls_attribute => (class) builtins.set[(class) int]
+        {1} => (class) builtins.set[(class) int]
+        1 => (class) int
+
+---
+Line 20:     def __init__(self, x: int):
+
+Expr types in the line --->:
+        def __init__ => (function) __init__
+
+---
+Line 21:         print(self.cls_attribute)
+
+Expr types in the line --->:
+        print => (function) print
+        print(self.cls_attribute) => None
+        self => Unknown
+        self.cls_attribute => (class) builtins.set[(class) int]
+
+---
+Line 22:         self.x = float(x)
+
+Expr types in the line --->:
+        self => Unknown
+        self.x => (class) float
+        float => (class) float
+        float(x) => (class) float
+        x => (class) int
+
+---
+Line 23:         print(self.x)
+
+Expr types in the line --->:
+        print => (function) print
+        print(self.x) => None
+        self => Unknown
+        self.x => (class) float
+
+---
+Line 25:     def add(self, value: int) -> None:
+
+Expr types in the line --->:
+        def add => (function) add
+        None => None
+
+---
+Line 26:         self.cls_attribute.add(value)
+
+Expr types in the line --->:
+        self.cls_attribute.add => (function) add
+        self.cls_attribute.add(value) => None
+        value => (class) int
+
+---
+Line 28:     def get_attr(self) -> Set[int]:
+
+Expr types in the line --->:
+        def get_attr => (function) get_attr
+        Set => (class) set
+        Set[int] => (class) set
+        int => (class) int
+
+---
+Line 29:         return self.cls_attribute
+
+Expr types in the line --->:
+        self => Unknown
+        self.cls_attribute => (class) builtins.set[(class) int]
+
+---
+Line 31:     def get_x(self) -> float:
+
+Expr types in the line --->:
+        def get_x => (function) get_x
+        float => (class) float
+
+---
+Line 32:         return self.x
+
+Expr types in the line --->:
+        self => Unknown
+        self.x => (class) float
+
+---
+Line 35: t = C(0)
+
+Expr types in the line --->:
+        t => (class) C
+        C => (class) C
+        C(0) => (class) C
+        0 => (class) int
+
+---
+Line 36: t.add(2)
+
+Expr types in the line --->:
+        t.add => (function) add
+        t.add(2) => None
+        2 => (class) int
+
+---
+Line 37: t.cls_attribute
+
+Expr types in the line --->:
+        t => (class) C
+        t.cls_attribute => (class) builtins.set[(class) int]
+
+---
+Line 38: t.x
+
+Expr types in the line --->:
+        t => (class) C
+        t.x => (class) float
+
+---
+Line 39: t.get_x()
+
+Expr types in the line --->:
+        t.get_x => (function) get_x
+        t.get_x() => (class) float
+
+---
+Line 40: t.get_attr()
+
+Expr types in the line --->:
+        t.get_attr => (function) get_attr
+        t.get_attr() => (class) builtins.set[(class) int]
+
+---
+Line 42: l = [1, 2, 3]
+
+Expr types in the line --->:
+        l => (class) builtins.list[(class) int]
+        [1, 2, 3] => (class) builtins.list[(class) int]
+        1 => (class) int
+        2 => (class) int
+        3 => (class) int
+
+---
+Line 43: d = {"a": 1, "b": 2}
+
+Expr types in the line --->:
+        d => (class) bool
+        {"a": 1, "b": 2} => (class) builtins.dict[(class) str, (class) int]
+        "a" => (class) str
+        1 => (class) int
+        "b" => (class) str
+        2 => (class) int
+
+---
+Line 44: s = {1, 2, 3}
+
+Expr types in the line --->:
+        s => (class) builtins.set[(class) int]
+        {1, 2, 3} => (class) builtins.set[(class) int]
+        1 => (class) int
+        2 => (class) int
+        3 => (class) int
+
+---
+Line 46: l.append(4)
+
+Expr types in the line --->:
+        l.append => (function) append
+        l.append(4) => None
+        4 => (class) int
+
+---

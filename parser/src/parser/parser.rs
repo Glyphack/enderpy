@@ -2823,7 +2823,7 @@ impl Parser {
                 }))
             }
             Kind::FStringStart => {
-                let fstring = self.parse_fstring()?;
+                let fstring = self.parse_fstring(start)?;
                 Expression::JoinedStr(Box::new(JoinedStr {
                     node: self.finish_node(start),
                     values: fstring,
@@ -3069,7 +3069,7 @@ impl Parser {
     }
 
     // the FStringStart token is consumed by the caller
-    fn parse_fstring(&mut self) -> Result<Vec<Expression>, ParsingError> {
+    fn parse_fstring(&mut self, node: Node) -> Result<Vec<Expression>, ParsingError> {
         let mut expressions = vec![];
         while self.cur_kind() != Kind::FStringEnd {
             match self.cur_kind() {
@@ -3077,7 +3077,7 @@ impl Parser {
                     let str_val = self.cur_token().value.to_string().clone();
                     self.bump(Kind::FStringMiddle);
                     expressions.push(Expression::Constant(Box::new(Constant {
-                        node: self.start_node(),
+                        node: self.finish_node(node),
                         value: ConstantValue::Str(str_val),
                     })));
                 }
@@ -3088,7 +3088,7 @@ impl Parser {
                 }
                 _ => {
                     return Err(self
-                        .unepxted_token(self.start_node(), self.cur_kind())
+                        .unepxted_token(self.finish_node(node), self.cur_kind())
                         .err()
                         .unwrap());
                 }

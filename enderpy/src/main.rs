@@ -109,7 +109,7 @@ fn check(path: &Path) -> Result<()> {
     let build_manager = BuildManager::new(settings);
     build_manager.build(root);
     build_manager.build_one(root, path);
-    build_manager.type_check(path.to_path_buf());
+    build_manager.type_check(path);
 
     if build_manager.diagnostics.is_empty() {
         println!("zero errors");

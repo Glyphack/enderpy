@@ -6,9 +6,8 @@ use std::{
 };
 
 use dashmap::{DashMap, DashSet};
-use enderpy_python_parser::error::ParsingError;
 use env_logger::Builder;
-use log::{debug, info, warn};
+use log::{debug, warn};
 
 use crate::{
     diagnostic::Diagnostic,
@@ -112,77 +111,15 @@ impl BuildManager {
 
     // Performs type checking passes over the code
     // This step happens after the binding phase
-    pub fn type_check(&self, path: PathBuf) {
-        let module_to_check = self.get_state(&path);
+    pub fn type_check(&self, path: &Path) {
+        let mut module_to_check = self.get_state(path);
         // TODO: This is a hack to get all the symbol tables so we can resolve imports
         let mut all_symbol_tables = Vec::new();
         for module in self.modules.iter() {
             all_symbol_tables.push(module.value().get_symbol_table());
         }
-
-        let mut checker_count = 0;
-        let mut modules_to_check = vec![module_to_check];
-
-        for mut state in modules_to_check.iter_mut() {
-            let path = &state.path;
-            checker_count += 1;
-            if !state.parser.errors.is_empty() {
-                for err in state.parser.errors.iter() {
-                    match err {
-                        ParsingError::InvalidSyntax {
-                            msg,
-                            input,
-                            advice,
-                            span,
-                        } => {
-                            self.errors.insert(Diagnostic {
-                                body: msg.to_string(),
-                                suggestion: Some(advice.to_string()),
-                                range: crate::diagnostic::Range {
-                                    start: state.get_position(span.0 as u32),
-                                    end: state.get_position(span.1 as u32),
-                                },
-                            });
-                            self.diagnostics
-                                .entry(state.path())
-                                .or_default()
-                                .push(Diagnostic {
-                                    body: msg.to_string(),
-                                    suggestion: Some(advice.to_string()),
-                                    range: crate::diagnostic::Range {
-                                        start: state.get_position(span.0 as u32),
-                                        end: state.get_position(span.1 as u32),
-                                    },
-                                });
-                        }
-                    }
-                }
-            }
-            state.type_check(all_symbol_tables.clone());
-            let checker = state.get_checker();
-            for error in checker.errors {
-                self.errors.insert(Diagnostic {
-                    body: error.msg.to_string(),
-                    suggestion: Some("".into()),
-                    range: crate::diagnostic::Range {
-                        start: state.get_position(error.span.0 as u32),
-                        end: state.get_position(error.span.1 as u32),
-                    },
-                });
-                self.diagnostics
-                    .entry(state.path())
-                    .or_default()
-                    .push(Diagnostic {
-                        body: error.msg.to_string(),
-                        suggestion: Some("".into()),
-                        range: crate::diagnostic::Range {
-                            start: state.get_position(error.span.0 as u32),
-                            end: state.get_position(error.span.1 as u32),
-                        },
-                    });
-            }
-        }
-        info!("checked {checker_count:} modules");
+        module_to_check.type_check(all_symbol_tables);
+        self.modules.insert(path.to_path_buf(), module_to_check);
     }
 
     pub fn get_hover_information(&self, path: &Path, line: u32, column: u32) -> String {

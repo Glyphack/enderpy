@@ -140,9 +140,12 @@ impl EnderpyFile {
     }
 
     pub fn get_checker(&self) -> TypeChecker {
-        self.type_checker
-            .clone()
-            .expect("Accessing type checker before type check")
+        self.type_checker.clone().unwrap_or_else(|| {
+            panic!(
+                "Accessing type checker on {:?} before type check",
+                self.path_str()
+            )
+        })
     }
 
     pub fn get_symbol_table(&self) -> SymbolTable {

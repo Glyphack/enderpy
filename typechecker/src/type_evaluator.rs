@@ -7,17 +7,15 @@ use std::path::Path;
 use enderpy_python_parser as parser;
 use enderpy_python_parser::ast;
 
+use log::debug;
 use miette::Result;
-use parser::ast::{Expression, GetNode, Statement};
+use parser::ast::Expression;
 
 use super::{
     builtins,
     types::{CallableType, LiteralValue, PythonType},
 };
 use crate::{
-    ast_visitor::TraversalVisitor,
-    diagnostic::Position,
-    file::EnderpyFile,
     semantic_analyzer::get_member_access_info,
     symbol_table::{self, Class, Declaration, LookupSymbolRequest, SymbolTable, SymbolTableNode},
     types::{ClassType, TypeEvalError, TypeVar},
@@ -76,7 +74,7 @@ impl TypeEvaluator {
                     ast::ConstantValue::Bool(_) => self.get_builtin_type("bool"),
                     ast::ConstantValue::None => Some(PythonType::None),
                     ast::ConstantValue::Bytes(_) => self.get_builtin_type("bytes"),
-                    ast::ConstantValue::Ellipsis => Some(PythonType::Unknown),
+                    ast::ConstantValue::Ellipsis => Some(PythonType::Any),
                     // TODO: implement
                     ast::ConstantValue::Tuple(_) => Some(PythonType::Unknown),
                     ast::ConstantValue::Complex { real, imaginary } => Some(PythonType::Unknown),
@@ -447,7 +445,7 @@ impl TypeEvaluator {
     }
 
     /// Get the python type of a name from the symbol table
-    fn infer_type_from_symbol_table(
+    pub fn infer_type_from_symbol_table(
         &self,
         name: &str,
         position: Option<u32>,
@@ -501,7 +499,26 @@ impl TypeEvaluator {
                         Ok(var_type)
                     }
                 } else if let Some(source) = &v.inferred_type_source {
-                    self.get_type(source, Some(symbol_table), Some(decl_scope))
+                    // TODO: Hacky way to resolve Dict, List, ... to something other than
+                    // _Alias which is in the typeshed repo
+                    let builtin_type = if source.as_call().is_some_and(|f| {
+                        f.func.as_name().is_some_and(|n| n.id.as_str() == "_Alias")
+                    }) {
+                        let val = self.get_builtin_type(&symbol.name.to_lowercase());
+                        debug!(
+                            "found _alias {:?} resolved to {:?}",
+                            &symbol.name.to_lowercase(),
+                            val
+                        );
+                        val
+                    } else {
+                        None
+                    };
+                    if let Some(b_type) = builtin_type {
+                        Ok(b_type)
+                    } else {
+                        self.get_type(source, Some(symbol_table), Some(decl_scope))
+                    }
                 } else {
                     Ok(PythonType::Unknown)
                 }
@@ -514,7 +531,7 @@ impl TypeEvaluator {
                 } else {
                     // TODO: infer return type of function disabled because of recursive types
                     // self.infer_function_return_type(f)
-                    PythonType::Unknown
+                    PythonType::Any
                 };
 
                 let arguments = f.function_node.args.clone();
@@ -1050,285 +1067,4 @@ impl TypeEvaluator {
     ) -> PythonType {
         f_type.return_type.clone()
     }
-}
-
-/// visits the ast and calls get_type on each expression and saves that type in
-/// the types hashmap the key is the position of the expression in the source:
-/// (line, start, end)
-struct DumpTypes {
-    pub type_eval: TypeEvaluator,
-    pub types: Vec<SnapshtType>,
-    pub enderpy_file: EnderpyFile,
-}
-
-#[derive(Debug)]
-struct SnapshtType {
-    pub position: Position,
-    pub symbol_text: String,
-    pub typ: Result<PythonType>,
-}
-
-impl DumpTypes {
-    pub fn new(enderpy_file: EnderpyFile, type_eval: TypeEvaluator) -> Self {
-        Self {
-            types: vec![],
-            type_eval,
-            enderpy_file,
-        }
-    }
-
-    pub fn enderpy_file(&self) -> &EnderpyFile {
-        &self.enderpy_file
-    }
-
-    /// This function is called on every expression in the ast
-    pub fn save_type(&mut self, expr: &ast::Expression) {
-        let typ = self.type_eval.get_type(expr, None, None);
-        let symbol_text = self.enderpy_file().source()
-            [expr.get_node().start as usize..expr.get_node().end as usize]
-            .to_string();
-        let position = self.enderpy_file().get_position(expr.get_node().start);
-        let typ = SnapshtType {
-            position,
-            symbol_text,
-            typ,
-        };
-        self.types.push(typ);
-    }
-
-    // TODO: move type annotation tests to its own file
-    pub fn save_type_annotation(&mut self, expr: &ast::Expression) {
-        let typ = self
-            .type_eval
-            .get_type_from_annotation(expr, &self.type_eval.symbol_table, None);
-        let symbol_text = self.enderpy_file().source()
-            [expr.get_node().start as usize..expr.get_node().end as usize]
-            .to_string();
-        let typ = SnapshtType {
-            position: self.enderpy_file().get_position(expr.get_node().start),
-            symbol_text,
-            typ: Ok(typ),
-        };
-        self.types.push(typ);
-    }
-
-    fn visit_module(&mut self) {
-        let body = self.enderpy_file().body.clone();
-        for statement in body.iter() {
-            self.visit_stmt(statement);
-        }
-    }
-}
-
-/// Traverse the ast and call call save_type on each expression
-impl TraversalVisitor for DumpTypes {
-    fn visit_stmt(&mut self, s: &ast::Statement) {
-        // map all statements and call visit
-        match s {
-            ast::Statement::ExpressionStatement(e) => self.visit_expr(e),
-            ast::Statement::Import(i) => {}
-            ast::Statement::ImportFrom(i) => {}
-            ast::Statement::AssignStatement(a) => {
-                self.save_type(&a.value);
-            }
-            ast::Statement::AnnAssignStatement(a) => {
-                if let Some(v) = a.value.as_ref() {
-                    self.save_type(v);
-                }
-
-                self.save_type_annotation(&a.annotation)
-            }
-            ast::Statement::AugAssignStatement(a) => (),
-            ast::Statement::Assert(a) => (),
-            ast::Statement::Pass(p) => (),
-            ast::Statement::Delete(d) => (),
-            ast::Statement::Return(r) => {
-                if let Some(r) = r.value.as_ref() {
-                    self.visit_expr(r);
-                    self.save_type(r);
-                }
-            }
-            ast::Statement::Raise(r) => {
-                if let Some(r) = r.exc.as_ref() {
-                    self.save_type(r);
-                }
-                if let Some(r) = r.cause.as_ref() {
-                    self.save_type(r);
-                }
-            }
-            ast::Statement::Break(b) => (),
-            ast::Statement::Continue(c) => (),
-            ast::Statement::Global(g) => (),
-            ast::Statement::Nonlocal(n) => (),
-            ast::Statement::IfStatement(i) => (),
-            ast::Statement::WhileStatement(w) => (),
-            ast::Statement::ForStatement(f) => (),
-            ast::Statement::WithStatement(w) => (),
-            ast::Statement::TryStatement(t) => (),
-            ast::Statement::TryStarStatement(t) => (),
-            ast::Statement::FunctionDef(f) => {
-                // This is duplicated
-                self.type_eval.symbol_table.set_scope(f.node.start);
-                for stmt in &f.body {
-                    self.visit_stmt(stmt);
-                }
-
-                self.type_eval.symbol_table.revert_scope();
-            }
-            ast::Statement::ClassDef(c) => {
-                self.type_eval.symbol_table.set_scope(c.node.start);
-                for stmt in &c.body {
-                    self.visit_stmt(stmt);
-                }
-                self.type_eval.symbol_table.revert_scope();
-            }
-            ast::Statement::Match(m) => (),
-            Statement::AsyncForStatement(f) => (),
-            Statement::AsyncWithStatement(w) => (),
-            Statement::AsyncFunctionDef(f) => {
-                self.type_eval.symbol_table.set_scope(f.node.start);
-                for stmt in &f.body {
-                    self.visit_stmt(stmt);
-                }
-                self.type_eval.symbol_table.revert_scope();
-            }
-            Statement::TypeAlias(a) => (),
-        }
-    }
-
-    fn visit_expr(&mut self, e: &ast::Expression) {
-        match e {
-            ast::Expression::Constant(c) => (),
-            ast::Expression::List(l) => (),
-            ast::Expression::Tuple(t) => (),
-            ast::Expression::Dict(d) => (),
-            ast::Expression::Set(s) => (),
-            ast::Expression::Name(n) => self.save_type(e),
-            ast::Expression::BoolOp(b) => (),
-            ast::Expression::UnaryOp(u) => (),
-            ast::Expression::BinOp(b) => {
-                self.save_type(&b.left);
-                self.save_type(&b.right);
-            }
-            ast::Expression::NamedExpr(n) => (),
-            ast::Expression::Yield(y) => (),
-            ast::Expression::YieldFrom(y) => (),
-            ast::Expression::Starred(s) => (),
-            ast::Expression::Generator(g) => (),
-            ast::Expression::ListComp(l) => (),
-            ast::Expression::SetComp(s) => (),
-            ast::Expression::DictComp(d) => (),
-            ast::Expression::Attribute(a) => {}
-            ast::Expression::Subscript(s) => (),
-            ast::Expression::Slice(s) => (),
-            ast::Expression::Call(c) => {
-                self.save_type(e);
-                for arg in &c.args {
-                    self.save_type(arg);
-                }
-            }
-            ast::Expression::Await(a) => (),
-            ast::Expression::Compare(c) => (),
-            ast::Expression::Lambda(l) => (),
-            ast::Expression::IfExp(i) => (),
-            ast::Expression::JoinedStr(j) => (),
-            ast::Expression::FormattedValue(f) => (),
-        }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use std::{fs, path::PathBuf};
-
-    use super::*;
-    use crate::{build::BuildManager, settings::Settings};
-
-    fn snapshot_type_eval(path: PathBuf) -> String {
-        // we use the manager to also import the python typeshed into modules
-        // This can be refactored but for now it's fine
-        let settings = Settings::test_settings();
-        let manager = BuildManager::new(settings);
-        let root = &PathBuf::from("");
-        manager.build(root);
-        manager.build_one(root, &path);
-
-        let mut all_symbol_tables = Vec::new();
-        for module in manager.modules.iter() {
-            all_symbol_tables.push(module.get_symbol_table());
-        }
-
-        let module = manager.get_state(path.as_path());
-        let symbol_table = module.get_symbol_table();
-
-        let type_eval = TypeEvaluator::new(symbol_table, all_symbol_tables);
-        let mut type_eval_visitor = DumpTypes::new(module.clone(), type_eval);
-        type_eval_visitor.visit_module();
-
-        let result = type_eval_visitor.types;
-
-        // sort result by key
-        let mut result_sorted = result.into_iter().collect::<Vec<_>>();
-        result_sorted.sort_by(|a, b| a.position.line.cmp(&b.position.line));
-
-        let mut str = String::new();
-        let mut last_line = None;
-
-        for r in result_sorted {
-            let cur_line = r.position.line;
-
-            if last_line.is_none() {
-                let line_content = module.get_line_content(cur_line as usize);
-                str.push_str(format!("Line {}: {}", cur_line + 1, line_content).as_str());
-                str.push_str("\nExpr types in the line --->:\n");
-                last_line = Some(cur_line);
-            }
-            // So we also print the first line
-            if let Some(last_line_num) = last_line {
-                if last_line_num < cur_line {
-                    str.push_str("\n---\n");
-                    let line_content = module.get_line_content(cur_line as usize);
-                    str.push_str(format!("Line {}: {}", cur_line + 1, line_content).as_str());
-                    str.push_str("\nExpr types in the line --->:\n");
-                    last_line = Some(cur_line);
-                }
-            }
-            match r.typ {
-                Ok(t) => str.push_str(&format!("        {:?} => {}\n", r.symbol_text, t)),
-                Err(e) => str.push_str(&format!("        {:?} => {:?}\n", r.symbol_text, e)),
-            }
-        }
-        str.push_str("\n---\n");
-
-        str
-    }
-
-    macro_rules! type_eval_test {
-        ($test_name:ident, $test_file:expr) => {
-            #[test]
-            fn $test_name() {
-                let path = PathBuf::from($test_file);
-                let contents = fs::read_to_string(&path).unwrap();
-                let result = snapshot_type_eval(path);
-
-                let mut content_with_line_numbers = String::new();
-                for (i, line) in contents.lines().enumerate() {
-                    content_with_line_numbers.push_str(&format!("{}: {}\n", i + 1, line));
-                }
-
-                // TODO move this redaction setting to a central place
-                let mut settings = insta::Settings::clone_current();
-                settings.add_filter(r"module_name: .*.typeshed.", "module_name: [TYPESHED].");
-                settings.set_snapshot_path("../test_data/output/");
-                settings.set_description(content_with_line_numbers);
-                // TODO CLEAN THE classes name
-                settings.bind(|| {
-                    insta::assert_snapshot!(result);
-                });
-            }
-        };
-    }
-
-    type_eval_test!(basic_types, "test_data/inputs/basic_types.py");
-    type_eval_test!(basic_generics, "test_data/inputs/basic_generics.py");
 }

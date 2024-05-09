@@ -1,19 +1,21 @@
+from typing import Dict, Set, List
+
 a = 1
 b = "1"
 c = True
 d = False
-a + int(b)
+_ = a + int(b)
 
 
-a + c
+_ = a + c
 
 
-def func(param1: int) -> int:
-    return param1 + a
+def func(params: List[int]) -> Dict[int, int]:
+    return {params[0]: a}
 
 
 class C:
-    cls_attribute = 1
+    cls_attribute = {1}
 
     def __init__(self, x: int):
         print(self.cls_attribute)
@@ -21,9 +23,9 @@ class C:
         print(self.x)
 
     def add(self, value: int) -> None:
-        self.cls_attribute += value
+        self.cls_attribute.add(value)
 
-    def get_attr(self) -> int:
+    def get_attr(self) -> Set[int]:
         return self.cls_attribute
 
     def get_x(self) -> float:

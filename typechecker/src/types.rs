@@ -204,7 +204,10 @@ impl Display for PythonType {
             PythonType::None => "None",
             PythonType::Any => "Any",
             PythonType::Unknown => "Unknown",
-            PythonType::Callable(callable_type) => callable_type.name.as_str(),
+            PythonType::Callable(callable_type) => {
+                let fmt = format!("(function) {}", callable_type.name.as_str());
+                return write!(f, "{}", fmt);
+            }
             PythonType::Class(class_type) => {
                 // show it like class[args]
                 let args_str = class_type
@@ -214,9 +217,13 @@ impl Display for PythonType {
                     .collect::<Vec<String>>()
                     .join(", ");
                 let fmt = if args_str.is_empty() {
-                    class_type.details.name.clone()
+                    format!("(class) {}", class_type.details.name.clone())
                 } else {
-                    format!("{}[{}]", class_type.details.get_qualname(), args_str)
+                    format!(
+                        "(class) {}[{}]",
+                        class_type.details.get_qualname(),
+                        args_str
+                    )
                 };
                 return write!(f, "{}", fmt);
             }
