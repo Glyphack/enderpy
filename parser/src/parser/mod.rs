@@ -18,8 +18,8 @@ pub fn is_at_compound_statement(token: &Token) -> bool {
         | Kind::With
         | Kind::Def
         | Kind::Class
-        // Decorators
-        | Kind::MatrixMul => true,
+        // Decorator
+        | Kind::MatrixMul
         | Kind::Async => true,
         _ => false,
     };
@@ -27,6 +27,7 @@ pub fn is_at_compound_statement(token: &Token) -> bool {
         return true;
     }
 
+    // Match is a soft keyword so it's an identifier token
     if Kind::Identifier == token.kind && token.value.to_string() == "match" {
         return true;
     }
@@ -46,8 +47,6 @@ pub fn extract_string_inside(val: String) -> String {
     };
 
     for delimiter in delimiters {
-        // TODO: The string value data structure should be changed so we can be sure
-        // that the string is enclosed with the delimiter and not check for it here
         if let Some(val) = val.strip_prefix(delimiter) {
             let message = format!("String must be enclosed with {}", delimiter);
             result = val.strip_suffix(delimiter).expect(&message).to_string();
@@ -60,13 +59,6 @@ pub fn extract_string_inside(val: String) -> String {
     }
 
     result
-}
-
-pub fn is_string(kind: &Kind) -> bool {
-    matches!(
-        kind,
-        Kind::StringLiteral | Kind::RawBytes | Kind::Bytes | Kind::FStringStart
-    )
 }
 
 pub fn concat_string_exprs(lhs: Expression, rhs: Expression) -> Result<Expression, ParsingError> {
@@ -179,10 +171,6 @@ pub fn concat_string_exprs(lhs: Expression, rhs: Expression) -> Result<Expressio
     }
 }
 
-pub fn is_unary_op(kind: &Kind) -> bool {
-    matches!(kind, Kind::Not | Kind::BitNot | Kind::Minus | Kind::Plus)
-}
-
 pub fn map_unary_operator(kind: &Kind) -> UnaryOperator {
     match kind {
         Kind::Not => UnaryOperator::Not,
@@ -190,68 +178,6 @@ pub fn map_unary_operator(kind: &Kind) -> UnaryOperator {
         Kind::Minus => UnaryOperator::USub,
         Kind::Plus => UnaryOperator::UAdd,
         _ => panic!("Not a unary operator"),
-    }
-}
-
-pub fn is_bin_arithmetic_op(kind: &Kind) -> bool {
-    matches!(
-        kind,
-        Kind::Plus
-            | Kind::Minus
-            | Kind::Mul
-            | Kind::MatrixMul
-            | Kind::Div
-            | Kind::Mod
-            | Kind::Pow
-            | Kind::IntDiv
-    )
-}
-
-pub fn is_comparison_operator(kind: &Kind) -> bool {
-    match kind {
-        Kind::Eq
-        | Kind::NotEq
-        | Kind::Less
-        | Kind::LessEq
-        | Kind::Greater
-        | Kind::GreaterEq
-        | Kind::Is
-        | Kind::In
-        // Not is not a comparison operator, but it is used in the
-        // "not in" operator
-        | Kind::Not => true,
-        _ => false,
-    }
-}
-
-pub fn is_atom(kind: &Kind) -> bool {
-    match kind {
-        Kind::Identifier
-        | Kind::StringLiteral
-        | Kind::RawBytes
-        | Kind::Bytes
-        | Kind::FStringStart
-        | Kind::RawFStringStart
-        | Kind::Integer
-        | Kind::True
-        | Kind::False
-        | Kind::Binary
-        | Kind::Octal
-        | Kind::Hexadecimal
-        | Kind::PointFloat
-        | Kind::ExponentFloat
-        | Kind::ImaginaryInteger
-        | Kind::ImaginaryPointFloat
-        | Kind::ImaginaryExponentFloat
-        // These might start a enclosured expression
-        // https://docs.python.org/3/reference/expressions.html#atoms
-        | Kind::LeftParen
-        | Kind::LeftBracket
-        | Kind::LeftBrace
-        | Kind::Yield
-        | Kind::Ellipsis
-        | Kind::None => true,
-        _ => false,
     }
 }
 
@@ -263,18 +189,4 @@ pub fn is_iterable(expr: &Expression) -> bool {
             | Expression::Set { .. }
             | Expression::Name { .. }
     )
-}
-
-/// Checks weather a token kind can start a bitwise operation
-/// start of bitwise operation cannot be a await primary
-#[allow(dead_code)]
-pub fn is_bitwise_or_op(cur_kind: &Kind) -> bool {
-    match cur_kind {
-        Kind::Plus | Kind::Minus | Kind::BitNot | Kind::Await => return false,
-        _ => (),
-    }
-    if is_atom(cur_kind) {
-        return false;
-    }
-    true
 }

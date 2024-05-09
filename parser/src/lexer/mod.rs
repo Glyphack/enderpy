@@ -51,6 +51,18 @@ impl Lexer {
         }
     }
 
+    pub fn lex(&mut self) -> Vec<Token> {
+        let mut tokens = vec![];
+        loop {
+            let token = self.next_token();
+            tokens.push(token.clone());
+            if token.kind == Kind::Eof {
+                break;
+            }
+        }
+        tokens
+    }
+
     pub fn next_token(&mut self) -> Token {
         if self.next_token_is_dedent > 0 {
             self.next_token_is_dedent -= 1;
@@ -193,7 +205,7 @@ impl Lexer {
     }
 
     fn next_kind(&mut self) -> Result<Kind, LexError> {
-        if self.start_of_line {
+        if self.start_of_line && self.nesting == 0 {
             self.line_starts.push(self.current);
             if let Some(indent_kind) = self.match_indentation()? {
                 self.start_of_line = false; // WHY!?
@@ -414,17 +426,8 @@ impl Lexer {
                 },
                 '\n' | '\r' => {
                     self.current_line += 1;
-                    // Expressions in parentheses, square brackets or curly braces can be split over
-                    // more than one physical line without using backslashes.
-                    // The indentation of the continuation lines is not important. Blank
-                    // continuation lines are allowed. There is no NEWLINE token
-                    // between implicit continuation lines.
-                    if self.nesting == 0 {
-                        self.start_of_line = true;
-                        return Ok(Kind::NewLine);
-                    } else {
-                        return Ok(Kind::WhiteSpace);
-                    }
+                    self.start_of_line = true;
+                    return Ok(Kind::NewLine);
                 }
                 c if match_whitespace(c) => return Ok(Kind::WhiteSpace),
                 _ => {}
@@ -945,7 +948,7 @@ fn match_whitespace(c: char) -> bool {
 mod tests {
     use std::fs;
 
-    use insta::{assert_debug_snapshot, glob};
+    use insta::glob;
 
     use super::{Kind, Lexer};
     use crate::error::LexError;
@@ -954,19 +957,21 @@ mod tests {
         for (i, test_input) in inputs.iter().enumerate() {
             let mut lexer = Lexer::new(test_input);
             let mut tokens = vec![];
+            let mut snapshot = String::from("");
             loop {
                 let token = lexer.next_token();
                 if token.kind == Kind::Eof {
                     break;
                 }
+                snapshot += format!("{}\n", token).as_str();
                 tokens.push(token);
             }
-            let snap_file_name = format!("{}-{}", snap_name, i);
-            insta::with_settings!({
-                description => test_input.to_string(), // the template source code
-                omit_expression => true // do not include the default expression
-            }, {
-                    assert_debug_snapshot!(snap_file_name, tokens);
+            let mut settings = insta::Settings::clone_current();
+            settings.set_snapshot_path("../../test_data/output/");
+            settings.set_description(test_input.to_string());
+            settings.set_omit_expression(true);
+            settings.bind(|| {
+                insta::assert_snapshot!(snapshot);
             });
         }
         Ok(())
@@ -1280,18 +1285,21 @@ def",
     fn snapshot_test_lexer_and_errors(test_case: &str) {
         let mut lexer = Lexer::new(test_case);
         let mut tokens = vec![];
+        let mut snapshot = String::from("");
         loop {
             let token = lexer.next_token();
             if token.kind == Kind::Eof {
                 break;
             }
+            snapshot += format!("{}\n", token).as_str();
             tokens.push(token);
         }
-        insta::with_settings!({
-            description => test_case.to_string(), // the template source code
-            omit_expression => true // do not include the default expression
-        }, {
-                assert_debug_snapshot!(tokens);
+        let mut settings = insta::Settings::clone_current();
+        settings.set_snapshot_path("../../test_data/output/");
+        settings.set_description(test_case.to_string());
+        settings.set_omit_expression(true);
+        settings.bind(|| {
+            insta::assert_snapshot!(snapshot);
         });
     }
 

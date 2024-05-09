@@ -48,7 +48,7 @@ Module {
                                         Name {
                                             node: Node {
                                                 start: 4,
-                                                end: 5,
+                                                end: 6,
                                             },
                                             id: "b",
                                         },

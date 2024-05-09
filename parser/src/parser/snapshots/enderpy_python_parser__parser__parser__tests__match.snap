@@ -1,0 +1,939 @@
+---
+source: parser/src/parser/parser.rs
+description: "match a:\n    case 1:\n        pass\n\nmatch a:\n    case 1 | 2:\n        pass\n\nmatch a.b:\n    case 1:\n        pass\n\nmatch a:\n    case None:\n        pass\n    case True:\n        pass\n    case False:\n        pass\n    case -1:\n        pass\n    case 1.0:\n        pass\n    case _:\n        pass\n\nmatch a:\n    case a.b:\n        pass\n    case a:\n        pass\n\nmatch a:\n    case (a, b):\n        pass\n    case {1: _ ,2: _}:\n        pass\n    case {**rest}:\n        pass\n\nmatch x:\n    case Point2D(0, 0):\n        pass\n    case Point3D(x=0, y=0, z=0):\n        pass\n\nmatch x:\n    case [a, b, c]:\n        pass\n"
+---
+Module {
+    node: Node {
+        start: 0,
+        end: 589,
+    },
+    body: [
+        Match(
+            Match {
+                node: Node {
+                    start: 0,
+                    end: 35,
+                },
+                subject: Name(
+                    Name {
+                        node: Node {
+                            start: 6,
+                            end: 7,
+                        },
+                        id: "a",
+                    },
+                ),
+                cases: [
+                    MatchCase {
+                        node: Node {
+                            start: 13,
+                            end: 35,
+                        },
+                        pattern: MatchValue(
+                            MatchValue {
+                                node: Node {
+                                    start: 18,
+                                    end: 19,
+                                },
+                                value: Constant(
+                                    Constant {
+                                        node: Node {
+                                            start: 18,
+                                            end: 19,
+                                        },
+                                        value: 1,
+                                    },
+                                ),
+                            },
+                        ),
+                        guard: None,
+                        body: [
+                            Pass(
+                                Pass {
+                                    node: Node {
+                                        start: 29,
+                                        end: 33,
+                                    },
+                                },
+                            ),
+                        ],
+                    },
+                ],
+            },
+        ),
+        Match(
+            Match {
+                node: Node {
+                    start: 35,
+                    end: 74,
+                },
+                subject: Name(
+                    Name {
+                        node: Node {
+                            start: 41,
+                            end: 42,
+                        },
+                        id: "a",
+                    },
+                ),
+                cases: [
+                    MatchCase {
+                        node: Node {
+                            start: 48,
+                            end: 74,
+                        },
+                        pattern: MatchOr(
+                            [
+                                MatchValue(
+                                    MatchValue {
+                                        node: Node {
+                                            start: 53,
+                                            end: 54,
+                                        },
+                                        value: Constant(
+                                            Constant {
+                                                node: Node {
+                                                    start: 53,
+                                                    end: 54,
+                                                },
+                                                value: 1,
+                                            },
+                                        ),
+                                    },
+                                ),
+                                MatchValue(
+                                    MatchValue {
+                                        node: Node {
+                                            start: 57,
+                                            end: 58,
+                                        },
+                                        value: Constant(
+                                            Constant {
+                                                node: Node {
+                                                    start: 57,
+                                                    end: 58,
+                                                },
+                                                value: 2,
+                                            },
+                                        ),
+                                    },
+                                ),
+                            ],
+                        ),
+                        guard: None,
+                        body: [
+                            Pass(
+                                Pass {
+                                    node: Node {
+                                        start: 68,
+                                        end: 72,
+                                    },
+                                },
+                            ),
+                        ],
+                    },
+                ],
+            },
+        ),
+        Match(
+            Match {
+                node: Node {
+                    start: 74,
+                    end: 111,
+                },
+                subject: Attribute(
+                    Attribute {
+                        node: Node {
+                            start: 80,
+                            end: 83,
+                        },
+                        value: Name(
+                            Name {
+                                node: Node {
+                                    start: 80,
+                                    end: 81,
+                                },
+                                id: "a",
+                            },
+                        ),
+                        attr: "b",
+                    },
+                ),
+                cases: [
+                    MatchCase {
+                        node: Node {
+                            start: 89,
+                            end: 111,
+                        },
+                        pattern: MatchValue(
+                            MatchValue {
+                                node: Node {
+                                    start: 94,
+                                    end: 95,
+                                },
+                                value: Constant(
+                                    Constant {
+                                        node: Node {
+                                            start: 94,
+                                            end: 95,
+                                        },
+                                        value: 1,
+                                    },
+                                ),
+                            },
+                        ),
+                        guard: None,
+                        body: [
+                            Pass(
+                                Pass {
+                                    node: Node {
+                                        start: 105,
+                                        end: 109,
+                                    },
+                                },
+                            ),
+                        ],
+                    },
+                ],
+            },
+        ),
+        Match(
+            Match {
+                node: Node {
+                    start: 111,
+                    end: 284,
+                },
+                subject: Name(
+                    Name {
+                        node: Node {
+                            start: 117,
+                            end: 118,
+                        },
+                        id: "a",
+                    },
+                ),
+                cases: [
+                    MatchCase {
+                        node: Node {
+                            start: 124,
+                            end: 152,
+                        },
+                        pattern: MatchValue(
+                            MatchValue {
+                                node: Node {
+                                    start: 129,
+                                    end: 133,
+                                },
+                                value: Constant(
+                                    Constant {
+                                        node: Node {
+                                            start: 129,
+                                            end: 133,
+                                        },
+                                        value: None,
+                                    },
+                                ),
+                            },
+                        ),
+                        guard: None,
+                        body: [
+                            Pass(
+                                Pass {
+                                    node: Node {
+                                        start: 143,
+                                        end: 147,
+                                    },
+                                },
+                            ),
+                        ],
+                    },
+                    MatchCase {
+                        node: Node {
+                            start: 152,
+                            end: 180,
+                        },
+                        pattern: MatchValue(
+                            MatchValue {
+                                node: Node {
+                                    start: 157,
+                                    end: 161,
+                                },
+                                value: Constant(
+                                    Constant {
+                                        node: Node {
+                                            start: 157,
+                                            end: 161,
+                                        },
+                                        value: true,
+                                    },
+                                ),
+                            },
+                        ),
+                        guard: None,
+                        body: [
+                            Pass(
+                                Pass {
+                                    node: Node {
+                                        start: 171,
+                                        end: 175,
+                                    },
+                                },
+                            ),
+                        ],
+                    },
+                    MatchCase {
+                        node: Node {
+                            start: 180,
+                            end: 209,
+                        },
+                        pattern: MatchValue(
+                            MatchValue {
+                                node: Node {
+                                    start: 185,
+                                    end: 190,
+                                },
+                                value: Constant(
+                                    Constant {
+                                        node: Node {
+                                            start: 185,
+                                            end: 190,
+                                        },
+                                        value: false,
+                                    },
+                                ),
+                            },
+                        ),
+                        guard: None,
+                        body: [
+                            Pass(
+                                Pass {
+                                    node: Node {
+                                        start: 200,
+                                        end: 204,
+                                    },
+                                },
+                            ),
+                        ],
+                    },
+                    MatchCase {
+                        node: Node {
+                            start: 209,
+                            end: 235,
+                        },
+                        pattern: MatchValue(
+                            MatchValue {
+                                node: Node {
+                                    start: 214,
+                                    end: 216,
+                                },
+                                value: UnaryOp(
+                                    UnaryOperation {
+                                        node: Node {
+                                            start: 214,
+                                            end: 216,
+                                        },
+                                        op: USub,
+                                        operand: Constant(
+                                            Constant {
+                                                node: Node {
+                                                    start: 215,
+                                                    end: 216,
+                                                },
+                                                value: 1,
+                                            },
+                                        ),
+                                    },
+                                ),
+                            },
+                        ),
+                        guard: None,
+                        body: [
+                            Pass(
+                                Pass {
+                                    node: Node {
+                                        start: 226,
+                                        end: 230,
+                                    },
+                                },
+                            ),
+                        ],
+                    },
+                    MatchCase {
+                        node: Node {
+                            start: 235,
+                            end: 262,
+                        },
+                        pattern: MatchValue(
+                            MatchValue {
+                                node: Node {
+                                    start: 240,
+                                    end: 243,
+                                },
+                                value: Constant(
+                                    Constant {
+                                        node: Node {
+                                            start: 240,
+                                            end: 243,
+                                        },
+                                        value: 1.0,
+                                    },
+                                ),
+                            },
+                        ),
+                        guard: None,
+                        body: [
+                            Pass(
+                                Pass {
+                                    node: Node {
+                                        start: 253,
+                                        end: 257,
+                                    },
+                                },
+                            ),
+                        ],
+                    },
+                    MatchCase {
+                        node: Node {
+                            start: 262,
+                            end: 284,
+                        },
+                        pattern: MatchAs(
+                            MatchAs {
+                                node: Node {
+                                    start: 267,
+                                    end: 268,
+                                },
+                                name: None,
+                                pattern: None,
+                            },
+                        ),
+                        guard: None,
+                        body: [
+                            Pass(
+                                Pass {
+                                    node: Node {
+                                        start: 278,
+                                        end: 282,
+                                    },
+                                },
+                            ),
+                        ],
+                    },
+                ],
+            },
+        ),
+        Match(
+            Match {
+                node: Node {
+                    start: 284,
+                    end: 346,
+                },
+                subject: Name(
+                    Name {
+                        node: Node {
+                            start: 290,
+                            end: 291,
+                        },
+                        id: "a",
+                    },
+                ),
+                cases: [
+                    MatchCase {
+                        node: Node {
+                            start: 297,
+                            end: 324,
+                        },
+                        pattern: MatchValue(
+                            MatchValue {
+                                node: Node {
+                                    start: 302,
+                                    end: 305,
+                                },
+                                value: Attribute(
+                                    Attribute {
+                                        node: Node {
+                                            start: 302,
+                                            end: 305,
+                                        },
+                                        value: Name(
+                                            Name {
+                                                node: Node {
+                                                    start: 302,
+                                                    end: 301,
+                                                },
+                                                id: "a",
+                                            },
+                                        ),
+                                        attr: "b",
+                                    },
+                                ),
+                            },
+                        ),
+                        guard: None,
+                        body: [
+                            Pass(
+                                Pass {
+                                    node: Node {
+                                        start: 315,
+                                        end: 319,
+                                    },
+                                },
+                            ),
+                        ],
+                    },
+                    MatchCase {
+                        node: Node {
+                            start: 324,
+                            end: 346,
+                        },
+                        pattern: MatchAs(
+                            MatchAs {
+                                node: Node {
+                                    start: 329,
+                                    end: 330,
+                                },
+                                name: Some(
+                                    "a",
+                                ),
+                                pattern: None,
+                            },
+                        ),
+                        guard: None,
+                        body: [
+                            Pass(
+                                Pass {
+                                    node: Node {
+                                        start: 340,
+                                        end: 344,
+                                    },
+                                },
+                            ),
+                        ],
+                    },
+                ],
+            },
+        ),
+        Match(
+            Match {
+                node: Node {
+                    start: 346,
+                    end: 454,
+                },
+                subject: Name(
+                    Name {
+                        node: Node {
+                            start: 352,
+                            end: 353,
+                        },
+                        id: "a",
+                    },
+                ),
+                cases: [
+                    MatchCase {
+                        node: Node {
+                            start: 359,
+                            end: 389,
+                        },
+                        pattern: MatchSequence(
+                            [
+                                MatchAs(
+                                    MatchAs {
+                                        node: Node {
+                                            start: 365,
+                                            end: 366,
+                                        },
+                                        name: Some(
+                                            "a",
+                                        ),
+                                        pattern: None,
+                                    },
+                                ),
+                                MatchAs(
+                                    MatchAs {
+                                        node: Node {
+                                            start: 368,
+                                            end: 369,
+                                        },
+                                        name: Some(
+                                            "b",
+                                        ),
+                                        pattern: None,
+                                    },
+                                ),
+                            ],
+                        ),
+                        guard: None,
+                        body: [
+                            Pass(
+                                Pass {
+                                    node: Node {
+                                        start: 380,
+                                        end: 384,
+                                    },
+                                },
+                            ),
+                        ],
+                    },
+                    MatchCase {
+                        node: Node {
+                            start: 389,
+                            end: 425,
+                        },
+                        pattern: MatchMapping(
+                            MatchMapping {
+                                node: Node {
+                                    start: 394,
+                                    end: 406,
+                                },
+                                keys: [
+                                    Constant(
+                                        Constant {
+                                            node: Node {
+                                                start: 395,
+                                                end: 396,
+                                            },
+                                            value: 1,
+                                        },
+                                    ),
+                                    Constant(
+                                        Constant {
+                                            node: Node {
+                                                start: 401,
+                                                end: 402,
+                                            },
+                                            value: 2,
+                                        },
+                                    ),
+                                ],
+                                patterns: [
+                                    MatchAs(
+                                        MatchAs {
+                                            node: Node {
+                                                start: 398,
+                                                end: 399,
+                                            },
+                                            name: None,
+                                            pattern: None,
+                                        },
+                                    ),
+                                    MatchAs(
+                                        MatchAs {
+                                            node: Node {
+                                                start: 404,
+                                                end: 405,
+                                            },
+                                            name: None,
+                                            pattern: None,
+                                        },
+                                    ),
+                                ],
+                                rest: None,
+                            },
+                        ),
+                        guard: None,
+                        body: [
+                            Pass(
+                                Pass {
+                                    node: Node {
+                                        start: 416,
+                                        end: 420,
+                                    },
+                                },
+                            ),
+                        ],
+                    },
+                    MatchCase {
+                        node: Node {
+                            start: 425,
+                            end: 454,
+                        },
+                        pattern: MatchMapping(
+                            MatchMapping {
+                                node: Node {
+                                    start: 430,
+                                    end: 438,
+                                },
+                                keys: [],
+                                patterns: [],
+                                rest: Some(
+                                    "rest",
+                                ),
+                            },
+                        ),
+                        guard: None,
+                        body: [
+                            Pass(
+                                Pass {
+                                    node: Node {
+                                        start: 448,
+                                        end: 452,
+                                    },
+                                },
+                            ),
+                        ],
+                    },
+                ],
+            },
+        ),
+        Match(
+            Match {
+                node: Node {
+                    start: 454,
+                    end: 547,
+                },
+                subject: Name(
+                    Name {
+                        node: Node {
+                            start: 460,
+                            end: 461,
+                        },
+                        id: "x",
+                    },
+                ),
+                cases: [
+                    MatchCase {
+                        node: Node {
+                            start: 467,
+                            end: 504,
+                        },
+                        pattern: MatchClass(
+                            MatchClass {
+                                node: Node {
+                                    start: 479,
+                                    end: 485,
+                                },
+                                cls: Name(
+                                    Name {
+                                        node: Node {
+                                            start: 472,
+                                            end: 471,
+                                        },
+                                        id: "Point2D",
+                                    },
+                                ),
+                                patterns: [
+                                    MatchValue(
+                                        MatchValue {
+                                            node: Node {
+                                                start: 480,
+                                                end: 481,
+                                            },
+                                            value: Constant(
+                                                Constant {
+                                                    node: Node {
+                                                        start: 480,
+                                                        end: 481,
+                                                    },
+                                                    value: 0,
+                                                },
+                                            ),
+                                        },
+                                    ),
+                                    MatchValue(
+                                        MatchValue {
+                                            node: Node {
+                                                start: 483,
+                                                end: 484,
+                                            },
+                                            value: Constant(
+                                                Constant {
+                                                    node: Node {
+                                                        start: 483,
+                                                        end: 484,
+                                                    },
+                                                    value: 0,
+                                                },
+                                            ),
+                                        },
+                                    ),
+                                ],
+                                kwd_attrs: [],
+                                kwd_patterns: [],
+                            },
+                        ),
+                        guard: None,
+                        body: [
+                            Pass(
+                                Pass {
+                                    node: Node {
+                                        start: 495,
+                                        end: 499,
+                                    },
+                                },
+                            ),
+                        ],
+                    },
+                    MatchCase {
+                        node: Node {
+                            start: 504,
+                            end: 547,
+                        },
+                        pattern: MatchClass(
+                            MatchClass {
+                                node: Node {
+                                    start: 516,
+                                    end: 531,
+                                },
+                                cls: Name(
+                                    Name {
+                                        node: Node {
+                                            start: 509,
+                                            end: 508,
+                                        },
+                                        id: "Point3D",
+                                    },
+                                ),
+                                patterns: [],
+                                kwd_attrs: [
+                                    "x",
+                                    "y",
+                                    "z",
+                                ],
+                                kwd_patterns: [
+                                    MatchValue(
+                                        MatchValue {
+                                            node: Node {
+                                                start: 519,
+                                                end: 520,
+                                            },
+                                            value: Constant(
+                                                Constant {
+                                                    node: Node {
+                                                        start: 519,
+                                                        end: 520,
+                                                    },
+                                                    value: 0,
+                                                },
+                                            ),
+                                        },
+                                    ),
+                                    MatchValue(
+                                        MatchValue {
+                                            node: Node {
+                                                start: 524,
+                                                end: 525,
+                                            },
+                                            value: Constant(
+                                                Constant {
+                                                    node: Node {
+                                                        start: 524,
+                                                        end: 525,
+                                                    },
+                                                    value: 0,
+                                                },
+                                            ),
+                                        },
+                                    ),
+                                    MatchValue(
+                                        MatchValue {
+                                            node: Node {
+                                                start: 529,
+                                                end: 530,
+                                            },
+                                            value: Constant(
+                                                Constant {
+                                                    node: Node {
+                                                        start: 529,
+                                                        end: 530,
+                                                    },
+                                                    value: 0,
+                                                },
+                                            ),
+                                        },
+                                    ),
+                                ],
+                            },
+                        ),
+                        guard: None,
+                        body: [
+                            Pass(
+                                Pass {
+                                    node: Node {
+                                        start: 541,
+                                        end: 545,
+                                    },
+                                },
+                            ),
+                        ],
+                    },
+                ],
+            },
+        ),
+        Match(
+            Match {
+                node: Node {
+                    start: 547,
+                    end: 589,
+                },
+                subject: Name(
+                    Name {
+                        node: Node {
+                            start: 553,
+                            end: 554,
+                        },
+                        id: "x",
+                    },
+                ),
+                cases: [
+                    MatchCase {
+                        node: Node {
+                            start: 560,
+                            end: 589,
+                        },
+                        pattern: MatchSequence(
+                            [
+                                MatchAs(
+                                    MatchAs {
+                                        node: Node {
+                                            start: 566,
+                                            end: 567,
+                                        },
+                                        name: Some(
+                                            "a",
+                                        ),
+                                        pattern: None,
+                                    },
+                                ),
+                                MatchAs(
+                                    MatchAs {
+                                        node: Node {
+                                            start: 569,
+                                            end: 570,
+                                        },
+                                        name: Some(
+                                            "b",
+                                        ),
+                                        pattern: None,
+                                    },
+                                ),
+                                MatchAs(
+                                    MatchAs {
+                                        node: Node {
+                                            start: 572,
+                                            end: 573,
+                                        },
+                                        name: Some(
+                                            "c",
+                                        ),
+                                        pattern: None,
+                                    },
+                                ),
+                            ],
+                        ),
+                        guard: None,
+                        body: [
+                            Pass(
+                                Pass {
+                                    node: Node {
+                                        start: 584,
+                                        end: 588,
+                                    },
+                                },
+                            ),
+                        ],
+                    },
+                ],
+            },
+        ),
+    ],
+}

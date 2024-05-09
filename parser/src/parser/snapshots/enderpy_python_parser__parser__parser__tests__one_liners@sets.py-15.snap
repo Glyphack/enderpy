@@ -1,0 +1,12 @@
+---
+source: parser/src/parser/parser.rs
+description: "{\n    (a,b) for a in range(11) for b in range(10)\n}\n"
+input_file: parser/test_data/inputs/one_liners/sets.py
+---
+Module {
+    node: Node {
+        start: 0,
+        end: 2,
+    },
+    body: [],
+}

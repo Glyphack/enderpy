@@ -1,19 +1,19 @@
 ---
 source: parser/src/parser/parser.rs
-description: "class a[T, *U, **V]: pass"
+description: "class a[T: U, V: W, **X]: pass"
 input_file: parser/test_data/inputs/one_liners/class.py
 ---
 Module {
     node: Node {
         start: 0,
-        end: 25,
+        end: 30,
     },
     body: [
         ClassDef(
             ClassDef {
                 node: Node {
                     start: 0,
-                    end: 25,
+                    end: 30,
                 },
                 name: "a",
                 bases: [],
@@ -22,8 +22,8 @@ Module {
                     Pass(
                         Pass {
                             node: Node {
-                                start: 21,
-                                end: 25,
+                                start: 26,
+                                end: 30,
                             },
                         },
                     ),
@@ -34,28 +34,49 @@ Module {
                         TypeVar {
                             node: Node {
                                 start: 8,
-                                end: 9,
+                                end: 12,
                             },
                             name: "T",
-                            bound: None,
+                            bound: Some(
+                                Name(
+                                    Name {
+                                        node: Node {
+                                            start: 11,
+                                            end: 12,
+                                        },
+                                        id: "U",
+                                    },
+                                ),
+                            ),
                         },
                     ),
-                    TypeVarTuple(
-                        TypeVarTuple {
+                    TypeVar(
+                        TypeVar {
                             node: Node {
-                                start: 11,
-                                end: 13,
+                                start: 14,
+                                end: 18,
                             },
-                            name: "U",
+                            name: "V",
+                            bound: Some(
+                                Name(
+                                    Name {
+                                        node: Node {
+                                            start: 17,
+                                            end: 18,
+                                        },
+                                        id: "W",
+                                    },
+                                ),
+                            ),
                         },
                     ),
                     ParamSpec(
                         ParamSpec {
                             node: Node {
-                                start: 15,
-                                end: 18,
+                                start: 20,
+                                end: 23,
                             },
-                            name: "V",
+                            name: "X",
                         },
                     ),
                 ],

@@ -1,0 +1,10 @@
+---
+source: parser/src/lexer/mod.rs
+description: 0.0 0.1 00.0 00.1 0.1j 0.01J
+---
+0,3: PointFloat             (Number("0.0"))
+4,7: PointFloat             (Number("0.1"))
+8,12: PointFloat           (Number("00.0"))
+13,17: PointFloat          (Number("00.1"))
+18,22: ImaginaryPointFloat(Number("0.1j"))
+23,28: ImaginaryPointFloat(Number("0.01J"))

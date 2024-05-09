@@ -58,7 +58,7 @@ fn get_typeshed_path() -> Result<PathBuf> {
 fn tokenize(file: &PathBuf) -> Result<()> {
     let source = fs::read_to_string(file).into_diagnostic()?;
     let mut lexer = Lexer::new(&source);
-    let tokens = enderpy_python_parser::utils::lex(&mut lexer);
+    let tokens = lexer.lex();
     for token in tokens {
         let (start_line_num, start_line_offset) =
             match lexer.line_starts.binary_search(&token.start) {

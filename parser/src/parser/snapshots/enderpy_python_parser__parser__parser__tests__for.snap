@@ -1,0 +1,388 @@
+---
+source: parser/src/parser/parser.rs
+description: "for a in b: pass\n\nfor a in b:\n    pass\n\nfor a in range(10):\n    a = 1\nelse:\n    b = 1\n\nfor a in range(10), range(10):\n    a = 1\n\nasync for a in b: pass\n\nasync for a in b:\n    pass\n"
+---
+Module {
+    node: Node {
+        start: 0,
+        end: 180,
+    },
+    body: [
+        ForStatement(
+            For {
+                node: Node {
+                    start: 0,
+                    end: 17,
+                },
+                target: Name(
+                    Name {
+                        node: Node {
+                            start: 4,
+                            end: 5,
+                        },
+                        id: "a",
+                    },
+                ),
+                iter: Name(
+                    Name {
+                        node: Node {
+                            start: 9,
+                            end: 10,
+                        },
+                        id: "b",
+                    },
+                ),
+                body: [
+                    Pass(
+                        Pass {
+                            node: Node {
+                                start: 12,
+                                end: 16,
+                            },
+                        },
+                    ),
+                ],
+                orelse: [],
+            },
+        ),
+        ForStatement(
+            For {
+                node: Node {
+                    start: 18,
+                    end: 40,
+                },
+                target: Name(
+                    Name {
+                        node: Node {
+                            start: 22,
+                            end: 23,
+                        },
+                        id: "a",
+                    },
+                ),
+                iter: Name(
+                    Name {
+                        node: Node {
+                            start: 27,
+                            end: 28,
+                        },
+                        id: "b",
+                    },
+                ),
+                body: [
+                    Pass(
+                        Pass {
+                            node: Node {
+                                start: 34,
+                                end: 38,
+                            },
+                        },
+                    ),
+                ],
+                orelse: [],
+            },
+        ),
+        ForStatement(
+            For {
+                node: Node {
+                    start: 40,
+                    end: 87,
+                },
+                target: Name(
+                    Name {
+                        node: Node {
+                            start: 44,
+                            end: 45,
+                        },
+                        id: "a",
+                    },
+                ),
+                iter: Call(
+                    Call {
+                        node: Node {
+                            start: 49,
+                            end: 58,
+                        },
+                        func: Name(
+                            Name {
+                                node: Node {
+                                    start: 49,
+                                    end: 54,
+                                },
+                                id: "range",
+                            },
+                        ),
+                        args: [
+                            Constant(
+                                Constant {
+                                    node: Node {
+                                        start: 55,
+                                        end: 57,
+                                    },
+                                    value: 10,
+                                },
+                            ),
+                        ],
+                        keywords: [],
+                        starargs: None,
+                        kwargs: None,
+                    },
+                ),
+                body: [
+                    AssignStatement(
+                        Assign {
+                            node: Node {
+                                start: 64,
+                                end: 69,
+                            },
+                            targets: [
+                                Name(
+                                    Name {
+                                        node: Node {
+                                            start: 64,
+                                            end: 65,
+                                        },
+                                        id: "a",
+                                    },
+                                ),
+                            ],
+                            value: Constant(
+                                Constant {
+                                    node: Node {
+                                        start: 68,
+                                        end: 69,
+                                    },
+                                    value: 1,
+                                },
+                            ),
+                        },
+                    ),
+                ],
+                orelse: [
+                    AssignStatement(
+                        Assign {
+                            node: Node {
+                                start: 80,
+                                end: 85,
+                            },
+                            targets: [
+                                Name(
+                                    Name {
+                                        node: Node {
+                                            start: 80,
+                                            end: 81,
+                                        },
+                                        id: "b",
+                                    },
+                                ),
+                            ],
+                            value: Constant(
+                                Constant {
+                                    node: Node {
+                                        start: 84,
+                                        end: 85,
+                                    },
+                                    value: 1,
+                                },
+                            ),
+                        },
+                    ),
+                ],
+            },
+        ),
+        ForStatement(
+            For {
+                node: Node {
+                    start: 87,
+                    end: 129,
+                },
+                target: Name(
+                    Name {
+                        node: Node {
+                            start: 91,
+                            end: 92,
+                        },
+                        id: "a",
+                    },
+                ),
+                iter: Tuple(
+                    Tuple {
+                        node: Node {
+                            start: 87,
+                            end: 116,
+                        },
+                        elements: [
+                            Call(
+                                Call {
+                                    node: Node {
+                                        start: 96,
+                                        end: 105,
+                                    },
+                                    func: Name(
+                                        Name {
+                                            node: Node {
+                                                start: 96,
+                                                end: 101,
+                                            },
+                                            id: "range",
+                                        },
+                                    ),
+                                    args: [
+                                        Constant(
+                                            Constant {
+                                                node: Node {
+                                                    start: 102,
+                                                    end: 104,
+                                                },
+                                                value: 10,
+                                            },
+                                        ),
+                                    ],
+                                    keywords: [],
+                                    starargs: None,
+                                    kwargs: None,
+                                },
+                            ),
+                            Call(
+                                Call {
+                                    node: Node {
+                                        start: 107,
+                                        end: 116,
+                                    },
+                                    func: Name(
+                                        Name {
+                                            node: Node {
+                                                start: 107,
+                                                end: 112,
+                                            },
+                                            id: "range",
+                                        },
+                                    ),
+                                    args: [
+                                        Constant(
+                                            Constant {
+                                                node: Node {
+                                                    start: 113,
+                                                    end: 115,
+                                                },
+                                                value: 10,
+                                            },
+                                        ),
+                                    ],
+                                    keywords: [],
+                                    starargs: None,
+                                    kwargs: None,
+                                },
+                            ),
+                        ],
+                    },
+                ),
+                body: [
+                    AssignStatement(
+                        Assign {
+                            node: Node {
+                                start: 122,
+                                end: 127,
+                            },
+                            targets: [
+                                Name(
+                                    Name {
+                                        node: Node {
+                                            start: 122,
+                                            end: 123,
+                                        },
+                                        id: "a",
+                                    },
+                                ),
+                            ],
+                            value: Constant(
+                                Constant {
+                                    node: Node {
+                                        start: 126,
+                                        end: 127,
+                                    },
+                                    value: 1,
+                                },
+                            ),
+                        },
+                    ),
+                ],
+                orelse: [],
+            },
+        ),
+        AsyncForStatement(
+            AsyncFor {
+                node: Node {
+                    start: 129,
+                    end: 152,
+                },
+                target: Name(
+                    Name {
+                        node: Node {
+                            start: 139,
+                            end: 140,
+                        },
+                        id: "a",
+                    },
+                ),
+                iter: Name(
+                    Name {
+                        node: Node {
+                            start: 144,
+                            end: 145,
+                        },
+                        id: "b",
+                    },
+                ),
+                body: [
+                    Pass(
+                        Pass {
+                            node: Node {
+                                start: 147,
+                                end: 151,
+                            },
+                        },
+                    ),
+                ],
+                orelse: [],
+            },
+        ),
+        AsyncForStatement(
+            AsyncFor {
+                node: Node {
+                    start: 153,
+                    end: 180,
+                },
+                target: Name(
+                    Name {
+                        node: Node {
+                            start: 163,
+                            end: 164,
+                        },
+                        id: "a",
+                    },
+                ),
+                iter: Name(
+                    Name {
+                        node: Node {
+                            start: 168,
+                            end: 169,
+                        },
+                        id: "b",
+                    },
+                ),
+                body: [
+                    Pass(
+                        Pass {
+                            node: Node {
+                                start: 175,
+                                end: 179,
+                            },
+                        },
+                    ),
+                ],
+                orelse: [],
+            },
+        ),
+    ],
+}

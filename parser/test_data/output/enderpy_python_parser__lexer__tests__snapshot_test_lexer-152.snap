@@ -1,0 +1,5 @@
+---
+source: parser/src/lexer/mod.rs
+description: "b'''hello'''"
+---
+0,12: Bytes                (Str("b'''hello'''"))

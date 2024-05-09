@@ -1,0 +1,448 @@
+---
+source: parser/src/parser/parser.rs
+description: "with a: pass\n\nwith a as b: pass\n\nwith a as b, c as d: pass\n\nwith (a as b, c as d): pass\n\nasync with a as b: pass\n\nasync with a as b, c as d:\n    pass\n\nasync with (\n        a as b, c as d\n):\n    a = 1\n"
+---
+Module {
+    node: Node {
+        start: 0,
+        end: 200,
+    },
+    body: [
+        WithStatement(
+            With {
+                node: Node {
+                    start: 0,
+                    end: 13,
+                },
+                items: [
+                    WithItem {
+                        node: Node {
+                            start: 5,
+                            end: 6,
+                        },
+                        context_expr: Name(
+                            Name {
+                                node: Node {
+                                    start: 5,
+                                    end: 6,
+                                },
+                                id: "a",
+                            },
+                        ),
+                        optional_vars: None,
+                    },
+                ],
+                body: [
+                    Pass(
+                        Pass {
+                            node: Node {
+                                start: 8,
+                                end: 12,
+                            },
+                        },
+                    ),
+                ],
+            },
+        ),
+        WithStatement(
+            With {
+                node: Node {
+                    start: 14,
+                    end: 32,
+                },
+                items: [
+                    WithItem {
+                        node: Node {
+                            start: 19,
+                            end: 25,
+                        },
+                        context_expr: Name(
+                            Name {
+                                node: Node {
+                                    start: 19,
+                                    end: 20,
+                                },
+                                id: "a",
+                            },
+                        ),
+                        optional_vars: Some(
+                            Name(
+                                Name {
+                                    node: Node {
+                                        start: 24,
+                                        end: 25,
+                                    },
+                                    id: "b",
+                                },
+                            ),
+                        ),
+                    },
+                ],
+                body: [
+                    Pass(
+                        Pass {
+                            node: Node {
+                                start: 27,
+                                end: 31,
+                            },
+                        },
+                    ),
+                ],
+            },
+        ),
+        WithStatement(
+            With {
+                node: Node {
+                    start: 33,
+                    end: 59,
+                },
+                items: [
+                    WithItem {
+                        node: Node {
+                            start: 38,
+                            end: 44,
+                        },
+                        context_expr: Name(
+                            Name {
+                                node: Node {
+                                    start: 38,
+                                    end: 39,
+                                },
+                                id: "a",
+                            },
+                        ),
+                        optional_vars: Some(
+                            Name(
+                                Name {
+                                    node: Node {
+                                        start: 43,
+                                        end: 44,
+                                    },
+                                    id: "b",
+                                },
+                            ),
+                        ),
+                    },
+                    WithItem {
+                        node: Node {
+                            start: 46,
+                            end: 52,
+                        },
+                        context_expr: Name(
+                            Name {
+                                node: Node {
+                                    start: 46,
+                                    end: 47,
+                                },
+                                id: "c",
+                            },
+                        ),
+                        optional_vars: Some(
+                            Name(
+                                Name {
+                                    node: Node {
+                                        start: 51,
+                                        end: 52,
+                                    },
+                                    id: "d",
+                                },
+                            ),
+                        ),
+                    },
+                ],
+                body: [
+                    Pass(
+                        Pass {
+                            node: Node {
+                                start: 54,
+                                end: 58,
+                            },
+                        },
+                    ),
+                ],
+            },
+        ),
+        WithStatement(
+            With {
+                node: Node {
+                    start: 60,
+                    end: 88,
+                },
+                items: [
+                    WithItem {
+                        node: Node {
+                            start: 66,
+                            end: 72,
+                        },
+                        context_expr: Name(
+                            Name {
+                                node: Node {
+                                    start: 66,
+                                    end: 67,
+                                },
+                                id: "a",
+                            },
+                        ),
+                        optional_vars: Some(
+                            Name(
+                                Name {
+                                    node: Node {
+                                        start: 71,
+                                        end: 72,
+                                    },
+                                    id: "b",
+                                },
+                            ),
+                        ),
+                    },
+                    WithItem {
+                        node: Node {
+                            start: 74,
+                            end: 80,
+                        },
+                        context_expr: Name(
+                            Name {
+                                node: Node {
+                                    start: 74,
+                                    end: 75,
+                                },
+                                id: "c",
+                            },
+                        ),
+                        optional_vars: Some(
+                            Name(
+                                Name {
+                                    node: Node {
+                                        start: 79,
+                                        end: 80,
+                                    },
+                                    id: "d",
+                                },
+                            ),
+                        ),
+                    },
+                ],
+                body: [
+                    Pass(
+                        Pass {
+                            node: Node {
+                                start: 83,
+                                end: 87,
+                            },
+                        },
+                    ),
+                ],
+            },
+        ),
+        AsyncWithStatement(
+            AsyncWith {
+                node: Node {
+                    start: 89,
+                    end: 113,
+                },
+                items: [
+                    WithItem {
+                        node: Node {
+                            start: 100,
+                            end: 106,
+                        },
+                        context_expr: Name(
+                            Name {
+                                node: Node {
+                                    start: 100,
+                                    end: 101,
+                                },
+                                id: "a",
+                            },
+                        ),
+                        optional_vars: Some(
+                            Name(
+                                Name {
+                                    node: Node {
+                                        start: 105,
+                                        end: 106,
+                                    },
+                                    id: "b",
+                                },
+                            ),
+                        ),
+                    },
+                ],
+                body: [
+                    Pass(
+                        Pass {
+                            node: Node {
+                                start: 108,
+                                end: 112,
+                            },
+                        },
+                    ),
+                ],
+            },
+        ),
+        AsyncWithStatement(
+            AsyncWith {
+                node: Node {
+                    start: 114,
+                    end: 151,
+                },
+                items: [
+                    WithItem {
+                        node: Node {
+                            start: 125,
+                            end: 131,
+                        },
+                        context_expr: Name(
+                            Name {
+                                node: Node {
+                                    start: 125,
+                                    end: 126,
+                                },
+                                id: "a",
+                            },
+                        ),
+                        optional_vars: Some(
+                            Name(
+                                Name {
+                                    node: Node {
+                                        start: 130,
+                                        end: 131,
+                                    },
+                                    id: "b",
+                                },
+                            ),
+                        ),
+                    },
+                    WithItem {
+                        node: Node {
+                            start: 133,
+                            end: 139,
+                        },
+                        context_expr: Name(
+                            Name {
+                                node: Node {
+                                    start: 133,
+                                    end: 134,
+                                },
+                                id: "c",
+                            },
+                        ),
+                        optional_vars: Some(
+                            Name(
+                                Name {
+                                    node: Node {
+                                        start: 138,
+                                        end: 139,
+                                    },
+                                    id: "d",
+                                },
+                            ),
+                        ),
+                    },
+                ],
+                body: [
+                    Pass(
+                        Pass {
+                            node: Node {
+                                start: 145,
+                                end: 149,
+                            },
+                        },
+                    ),
+                ],
+            },
+        ),
+        AsyncWithStatement(
+            AsyncWith {
+                node: Node {
+                    start: 151,
+                    end: 200,
+                },
+                items: [
+                    WithItem {
+                        node: Node {
+                            start: 172,
+                            end: 178,
+                        },
+                        context_expr: Name(
+                            Name {
+                                node: Node {
+                                    start: 172,
+                                    end: 173,
+                                },
+                                id: "a",
+                            },
+                        ),
+                        optional_vars: Some(
+                            Name(
+                                Name {
+                                    node: Node {
+                                        start: 177,
+                                        end: 178,
+                                    },
+                                    id: "b",
+                                },
+                            ),
+                        ),
+                    },
+                    WithItem {
+                        node: Node {
+                            start: 180,
+                            end: 187,
+                        },
+                        context_expr: Name(
+                            Name {
+                                node: Node {
+                                    start: 180,
+                                    end: 181,
+                                },
+                                id: "c",
+                            },
+                        ),
+                        optional_vars: Some(
+                            Name(
+                                Name {
+                                    node: Node {
+                                        start: 185,
+                                        end: 187,
+                                    },
+                                    id: "d",
+                                },
+                            ),
+                        ),
+                    },
+                ],
+                body: [
+                    AssignStatement(
+                        Assign {
+                            node: Node {
+                                start: 194,
+                                end: 199,
+                            },
+                            targets: [
+                                Name(
+                                    Name {
+                                        node: Node {
+                                            start: 194,
+                                            end: 195,
+                                        },
+                                        id: "a",
+                                    },
+                                ),
+                            ],
+                            value: Constant(
+                                Constant {
+                                    node: Node {
+                                        start: 198,
+                                        end: 199,
+                                    },
+                                    value: 1,
+                                },
+                            ),
+                        },
+                    ),
+                ],
+            },
+        ),
+    ],
+}

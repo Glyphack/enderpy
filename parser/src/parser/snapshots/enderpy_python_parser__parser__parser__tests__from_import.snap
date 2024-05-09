@@ -1,0 +1,290 @@
+---
+source: parser/src/parser/parser.rs
+description: "import a\nimport a as b\nimport a.b\nimport a.b as c\nimport a.b.c\nfrom a import b\nfrom a import b as c\nfrom a.b import c\nfrom a.b import c as d\nfrom ...a import b\nfrom ....a import b\nfrom .....a import b\nfrom ......a import b\nfrom .......a import b\nfrom ...\n"
+---
+Module {
+    node: Node {
+        start: 0,
+        end: 255,
+    },
+    body: [
+        Import(
+            Import {
+                node: Node {
+                    start: 0,
+                    end: 8,
+                },
+                names: [
+                    Alias {
+                        node: Node {
+                            start: 7,
+                            end: 8,
+                        },
+                        name: "a",
+                        asname: None,
+                    },
+                ],
+            },
+        ),
+        Import(
+            Import {
+                node: Node {
+                    start: 9,
+                    end: 22,
+                },
+                names: [
+                    Alias {
+                        node: Node {
+                            start: 16,
+                            end: 22,
+                        },
+                        name: "a",
+                        asname: Some(
+                            "b",
+                        ),
+                    },
+                ],
+            },
+        ),
+        Import(
+            Import {
+                node: Node {
+                    start: 23,
+                    end: 33,
+                },
+                names: [
+                    Alias {
+                        node: Node {
+                            start: 30,
+                            end: 33,
+                        },
+                        name: "a.b",
+                        asname: None,
+                    },
+                ],
+            },
+        ),
+        Import(
+            Import {
+                node: Node {
+                    start: 34,
+                    end: 49,
+                },
+                names: [
+                    Alias {
+                        node: Node {
+                            start: 41,
+                            end: 49,
+                        },
+                        name: "a.b",
+                        asname: Some(
+                            "c",
+                        ),
+                    },
+                ],
+            },
+        ),
+        Import(
+            Import {
+                node: Node {
+                    start: 50,
+                    end: 62,
+                },
+                names: [
+                    Alias {
+                        node: Node {
+                            start: 57,
+                            end: 62,
+                        },
+                        name: "a.b.c",
+                        asname: None,
+                    },
+                ],
+            },
+        ),
+        ImportFrom(
+            ImportFrom {
+                node: Node {
+                    start: 63,
+                    end: 78,
+                },
+                module: "a",
+                names: [
+                    Alias {
+                        node: Node {
+                            start: 77,
+                            end: 78,
+                        },
+                        name: "b",
+                        asname: None,
+                    },
+                ],
+                level: 0,
+            },
+        ),
+        ImportFrom(
+            ImportFrom {
+                node: Node {
+                    start: 79,
+                    end: 99,
+                },
+                module: "a",
+                names: [
+                    Alias {
+                        node: Node {
+                            start: 93,
+                            end: 99,
+                        },
+                        name: "b",
+                        asname: Some(
+                            "c",
+                        ),
+                    },
+                ],
+                level: 0,
+            },
+        ),
+        ImportFrom(
+            ImportFrom {
+                node: Node {
+                    start: 100,
+                    end: 117,
+                },
+                module: "a.b",
+                names: [
+                    Alias {
+                        node: Node {
+                            start: 116,
+                            end: 117,
+                        },
+                        name: "c",
+                        asname: None,
+                    },
+                ],
+                level: 0,
+            },
+        ),
+        ImportFrom(
+            ImportFrom {
+                node: Node {
+                    start: 118,
+                    end: 140,
+                },
+                module: "a.b",
+                names: [
+                    Alias {
+                        node: Node {
+                            start: 134,
+                            end: 140,
+                        },
+                        name: "c",
+                        asname: Some(
+                            "d",
+                        ),
+                    },
+                ],
+                level: 0,
+            },
+        ),
+        ImportFrom(
+            ImportFrom {
+                node: Node {
+                    start: 141,
+                    end: 159,
+                },
+                module: "a",
+                names: [
+                    Alias {
+                        node: Node {
+                            start: 158,
+                            end: 159,
+                        },
+                        name: "b",
+                        asname: None,
+                    },
+                ],
+                level: 3,
+            },
+        ),
+        ImportFrom(
+            ImportFrom {
+                node: Node {
+                    start: 160,
+                    end: 179,
+                },
+                module: "a",
+                names: [
+                    Alias {
+                        node: Node {
+                            start: 178,
+                            end: 179,
+                        },
+                        name: "b",
+                        asname: None,
+                    },
+                ],
+                level: 4,
+            },
+        ),
+        ImportFrom(
+            ImportFrom {
+                node: Node {
+                    start: 180,
+                    end: 200,
+                },
+                module: "a",
+                names: [
+                    Alias {
+                        node: Node {
+                            start: 199,
+                            end: 200,
+                        },
+                        name: "b",
+                        asname: None,
+                    },
+                ],
+                level: 5,
+            },
+        ),
+        ImportFrom(
+            ImportFrom {
+                node: Node {
+                    start: 201,
+                    end: 222,
+                },
+                module: "a",
+                names: [
+                    Alias {
+                        node: Node {
+                            start: 221,
+                            end: 222,
+                        },
+                        name: "b",
+                        asname: None,
+                    },
+                ],
+                level: 6,
+            },
+        ),
+        ImportFrom(
+            ImportFrom {
+                node: Node {
+                    start: 223,
+                    end: 245,
+                },
+                module: "a",
+                names: [
+                    Alias {
+                        node: Node {
+                            start: 244,
+                            end: 245,
+                        },
+                        name: "b",
+                        asname: None,
+                    },
+                ],
+                level: 7,
+            },
+        ),
+    ],
+}

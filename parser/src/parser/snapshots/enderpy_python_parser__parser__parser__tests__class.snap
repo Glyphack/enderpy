@@ -1,0 +1,955 @@
+---
+source: parser/src/parser/parser.rs
+description: "class a: pass\n\nclass a():\n    pass\n\nclass a(b, c): pass\n\nclass a(b, *c, **d): pass\n\nclass a(b,\nc,\nd): pass\n\n@decor\nclass a: pass\n\nclass a[T]: pass\n\nclass a[T, U]: pass\n\nclass a[T: U]: pass\n\nclass a[T: U, V: W]: pass\n\nclass a[*T]: pass\n\nclass a[T, *U]: pass\n\nclass a[T: U, *V]: pass\n\nclass a[T: U, V: W, *X]: pass\n\nclass a[**T]: pass\n\nclass a[T, **U]: pass\n\nclass a[T: U, **V]: pass\n\nclass a[T: U, V: W, **X]: pass\n\nclass a[T, *U, **V]: pass\n\nclass a[T: U, *V, **W]: pass\n"
+---
+Module {
+    node: Node {
+        start: 0,
+        end: 471,
+    },
+    body: [
+        ClassDef(
+            ClassDef {
+                node: Node {
+                    start: 0,
+                    end: 14,
+                },
+                name: "a",
+                bases: [],
+                keywords: [],
+                body: [
+                    Pass(
+                        Pass {
+                            node: Node {
+                                start: 9,
+                                end: 13,
+                            },
+                        },
+                    ),
+                ],
+                decorator_list: [],
+                type_params: [],
+            },
+        ),
+        ClassDef(
+            ClassDef {
+                node: Node {
+                    start: 15,
+                    end: 36,
+                },
+                name: "a",
+                bases: [],
+                keywords: [],
+                body: [
+                    Pass(
+                        Pass {
+                            node: Node {
+                                start: 30,
+                                end: 34,
+                            },
+                        },
+                    ),
+                ],
+                decorator_list: [],
+                type_params: [],
+            },
+        ),
+        ClassDef(
+            ClassDef {
+                node: Node {
+                    start: 36,
+                    end: 56,
+                },
+                name: "a",
+                bases: [
+                    Name(
+                        Name {
+                            node: Node {
+                                start: 44,
+                                end: 45,
+                            },
+                            id: "b",
+                        },
+                    ),
+                    Name(
+                        Name {
+                            node: Node {
+                                start: 47,
+                                end: 48,
+                            },
+                            id: "c",
+                        },
+                    ),
+                ],
+                keywords: [],
+                body: [
+                    Pass(
+                        Pass {
+                            node: Node {
+                                start: 51,
+                                end: 55,
+                            },
+                        },
+                    ),
+                ],
+                decorator_list: [],
+                type_params: [],
+            },
+        ),
+        ClassDef(
+            ClassDef {
+                node: Node {
+                    start: 57,
+                    end: 83,
+                },
+                name: "a",
+                bases: [
+                    Name(
+                        Name {
+                            node: Node {
+                                start: 65,
+                                end: 66,
+                            },
+                            id: "b",
+                        },
+                    ),
+                    Starred(
+                        Starred {
+                            node: Node {
+                                start: 68,
+                                end: 69,
+                            },
+                            value: Name(
+                                Name {
+                                    node: Node {
+                                        start: 69,
+                                        end: 70,
+                                    },
+                                    id: "c",
+                                },
+                            ),
+                        },
+                    ),
+                ],
+                keywords: [
+                    Keyword {
+                        node: Node {
+                            start: 72,
+                            end: 74,
+                        },
+                        arg: None,
+                        value: Name(
+                            Name {
+                                node: Node {
+                                    start: 74,
+                                    end: 75,
+                                },
+                                id: "d",
+                            },
+                        ),
+                    },
+                ],
+                body: [
+                    Pass(
+                        Pass {
+                            node: Node {
+                                start: 78,
+                                end: 82,
+                            },
+                        },
+                    ),
+                ],
+                decorator_list: [],
+                type_params: [],
+            },
+        ),
+        ClassDef(
+            ClassDef {
+                node: Node {
+                    start: 84,
+                    end: 107,
+                },
+                name: "a",
+                bases: [
+                    Name(
+                        Name {
+                            node: Node {
+                                start: 92,
+                                end: 93,
+                            },
+                            id: "b",
+                        },
+                    ),
+                    Name(
+                        Name {
+                            node: Node {
+                                start: 95,
+                                end: 96,
+                            },
+                            id: "c",
+                        },
+                    ),
+                    Name(
+                        Name {
+                            node: Node {
+                                start: 98,
+                                end: 99,
+                            },
+                            id: "d",
+                        },
+                    ),
+                ],
+                keywords: [],
+                body: [
+                    Pass(
+                        Pass {
+                            node: Node {
+                                start: 102,
+                                end: 106,
+                            },
+                        },
+                    ),
+                ],
+                decorator_list: [],
+                type_params: [],
+            },
+        ),
+        ClassDef(
+            ClassDef {
+                node: Node {
+                    start: 115,
+                    end: 129,
+                },
+                name: "a",
+                bases: [],
+                keywords: [],
+                body: [
+                    Pass(
+                        Pass {
+                            node: Node {
+                                start: 124,
+                                end: 128,
+                            },
+                        },
+                    ),
+                ],
+                decorator_list: [
+                    Name(
+                        Name {
+                            node: Node {
+                                start: 109,
+                                end: 114,
+                            },
+                            id: "decor",
+                        },
+                    ),
+                ],
+                type_params: [],
+            },
+        ),
+        ClassDef(
+            ClassDef {
+                node: Node {
+                    start: 130,
+                    end: 147,
+                },
+                name: "a",
+                bases: [],
+                keywords: [],
+                body: [
+                    Pass(
+                        Pass {
+                            node: Node {
+                                start: 142,
+                                end: 146,
+                            },
+                        },
+                    ),
+                ],
+                decorator_list: [],
+                type_params: [
+                    TypeVar(
+                        TypeVar {
+                            node: Node {
+                                start: 138,
+                                end: 139,
+                            },
+                            name: "T",
+                            bound: None,
+                        },
+                    ),
+                ],
+            },
+        ),
+        ClassDef(
+            ClassDef {
+                node: Node {
+                    start: 148,
+                    end: 168,
+                },
+                name: "a",
+                bases: [],
+                keywords: [],
+                body: [
+                    Pass(
+                        Pass {
+                            node: Node {
+                                start: 163,
+                                end: 167,
+                            },
+                        },
+                    ),
+                ],
+                decorator_list: [],
+                type_params: [
+                    TypeVar(
+                        TypeVar {
+                            node: Node {
+                                start: 156,
+                                end: 157,
+                            },
+                            name: "T",
+                            bound: None,
+                        },
+                    ),
+                    TypeVar(
+                        TypeVar {
+                            node: Node {
+                                start: 159,
+                                end: 160,
+                            },
+                            name: "U",
+                            bound: None,
+                        },
+                    ),
+                ],
+            },
+        ),
+        ClassDef(
+            ClassDef {
+                node: Node {
+                    start: 169,
+                    end: 189,
+                },
+                name: "a",
+                bases: [],
+                keywords: [],
+                body: [
+                    Pass(
+                        Pass {
+                            node: Node {
+                                start: 184,
+                                end: 188,
+                            },
+                        },
+                    ),
+                ],
+                decorator_list: [],
+                type_params: [
+                    TypeVar(
+                        TypeVar {
+                            node: Node {
+                                start: 177,
+                                end: 181,
+                            },
+                            name: "T",
+                            bound: Some(
+                                Name(
+                                    Name {
+                                        node: Node {
+                                            start: 180,
+                                            end: 181,
+                                        },
+                                        id: "U",
+                                    },
+                                ),
+                            ),
+                        },
+                    ),
+                ],
+            },
+        ),
+        ClassDef(
+            ClassDef {
+                node: Node {
+                    start: 190,
+                    end: 216,
+                },
+                name: "a",
+                bases: [],
+                keywords: [],
+                body: [
+                    Pass(
+                        Pass {
+                            node: Node {
+                                start: 211,
+                                end: 215,
+                            },
+                        },
+                    ),
+                ],
+                decorator_list: [],
+                type_params: [
+                    TypeVar(
+                        TypeVar {
+                            node: Node {
+                                start: 198,
+                                end: 202,
+                            },
+                            name: "T",
+                            bound: Some(
+                                Name(
+                                    Name {
+                                        node: Node {
+                                            start: 201,
+                                            end: 202,
+                                        },
+                                        id: "U",
+                                    },
+                                ),
+                            ),
+                        },
+                    ),
+                    TypeVar(
+                        TypeVar {
+                            node: Node {
+                                start: 204,
+                                end: 208,
+                            },
+                            name: "V",
+                            bound: Some(
+                                Name(
+                                    Name {
+                                        node: Node {
+                                            start: 207,
+                                            end: 208,
+                                        },
+                                        id: "W",
+                                    },
+                                ),
+                            ),
+                        },
+                    ),
+                ],
+            },
+        ),
+        ClassDef(
+            ClassDef {
+                node: Node {
+                    start: 217,
+                    end: 235,
+                },
+                name: "a",
+                bases: [],
+                keywords: [],
+                body: [
+                    Pass(
+                        Pass {
+                            node: Node {
+                                start: 230,
+                                end: 234,
+                            },
+                        },
+                    ),
+                ],
+                decorator_list: [],
+                type_params: [
+                    TypeVarTuple(
+                        TypeVarTuple {
+                            node: Node {
+                                start: 225,
+                                end: 227,
+                            },
+                            name: "T",
+                        },
+                    ),
+                ],
+            },
+        ),
+        ClassDef(
+            ClassDef {
+                node: Node {
+                    start: 236,
+                    end: 257,
+                },
+                name: "a",
+                bases: [],
+                keywords: [],
+                body: [
+                    Pass(
+                        Pass {
+                            node: Node {
+                                start: 252,
+                                end: 256,
+                            },
+                        },
+                    ),
+                ],
+                decorator_list: [],
+                type_params: [
+                    TypeVar(
+                        TypeVar {
+                            node: Node {
+                                start: 244,
+                                end: 245,
+                            },
+                            name: "T",
+                            bound: None,
+                        },
+                    ),
+                    TypeVarTuple(
+                        TypeVarTuple {
+                            node: Node {
+                                start: 247,
+                                end: 249,
+                            },
+                            name: "U",
+                        },
+                    ),
+                ],
+            },
+        ),
+        ClassDef(
+            ClassDef {
+                node: Node {
+                    start: 258,
+                    end: 282,
+                },
+                name: "a",
+                bases: [],
+                keywords: [],
+                body: [
+                    Pass(
+                        Pass {
+                            node: Node {
+                                start: 277,
+                                end: 281,
+                            },
+                        },
+                    ),
+                ],
+                decorator_list: [],
+                type_params: [
+                    TypeVar(
+                        TypeVar {
+                            node: Node {
+                                start: 266,
+                                end: 270,
+                            },
+                            name: "T",
+                            bound: Some(
+                                Name(
+                                    Name {
+                                        node: Node {
+                                            start: 269,
+                                            end: 270,
+                                        },
+                                        id: "U",
+                                    },
+                                ),
+                            ),
+                        },
+                    ),
+                    TypeVarTuple(
+                        TypeVarTuple {
+                            node: Node {
+                                start: 272,
+                                end: 274,
+                            },
+                            name: "V",
+                        },
+                    ),
+                ],
+            },
+        ),
+        ClassDef(
+            ClassDef {
+                node: Node {
+                    start: 283,
+                    end: 313,
+                },
+                name: "a",
+                bases: [],
+                keywords: [],
+                body: [
+                    Pass(
+                        Pass {
+                            node: Node {
+                                start: 308,
+                                end: 312,
+                            },
+                        },
+                    ),
+                ],
+                decorator_list: [],
+                type_params: [
+                    TypeVar(
+                        TypeVar {
+                            node: Node {
+                                start: 291,
+                                end: 295,
+                            },
+                            name: "T",
+                            bound: Some(
+                                Name(
+                                    Name {
+                                        node: Node {
+                                            start: 294,
+                                            end: 295,
+                                        },
+                                        id: "U",
+                                    },
+                                ),
+                            ),
+                        },
+                    ),
+                    TypeVar(
+                        TypeVar {
+                            node: Node {
+                                start: 297,
+                                end: 301,
+                            },
+                            name: "V",
+                            bound: Some(
+                                Name(
+                                    Name {
+                                        node: Node {
+                                            start: 300,
+                                            end: 301,
+                                        },
+                                        id: "W",
+                                    },
+                                ),
+                            ),
+                        },
+                    ),
+                    TypeVarTuple(
+                        TypeVarTuple {
+                            node: Node {
+                                start: 303,
+                                end: 305,
+                            },
+                            name: "X",
+                        },
+                    ),
+                ],
+            },
+        ),
+        ClassDef(
+            ClassDef {
+                node: Node {
+                    start: 314,
+                    end: 333,
+                },
+                name: "a",
+                bases: [],
+                keywords: [],
+                body: [
+                    Pass(
+                        Pass {
+                            node: Node {
+                                start: 328,
+                                end: 332,
+                            },
+                        },
+                    ),
+                ],
+                decorator_list: [],
+                type_params: [
+                    ParamSpec(
+                        ParamSpec {
+                            node: Node {
+                                start: 322,
+                                end: 325,
+                            },
+                            name: "T",
+                        },
+                    ),
+                ],
+            },
+        ),
+        ClassDef(
+            ClassDef {
+                node: Node {
+                    start: 334,
+                    end: 356,
+                },
+                name: "a",
+                bases: [],
+                keywords: [],
+                body: [
+                    Pass(
+                        Pass {
+                            node: Node {
+                                start: 351,
+                                end: 355,
+                            },
+                        },
+                    ),
+                ],
+                decorator_list: [],
+                type_params: [
+                    TypeVar(
+                        TypeVar {
+                            node: Node {
+                                start: 342,
+                                end: 343,
+                            },
+                            name: "T",
+                            bound: None,
+                        },
+                    ),
+                    ParamSpec(
+                        ParamSpec {
+                            node: Node {
+                                start: 345,
+                                end: 348,
+                            },
+                            name: "U",
+                        },
+                    ),
+                ],
+            },
+        ),
+        ClassDef(
+            ClassDef {
+                node: Node {
+                    start: 357,
+                    end: 382,
+                },
+                name: "a",
+                bases: [],
+                keywords: [],
+                body: [
+                    Pass(
+                        Pass {
+                            node: Node {
+                                start: 377,
+                                end: 381,
+                            },
+                        },
+                    ),
+                ],
+                decorator_list: [],
+                type_params: [
+                    TypeVar(
+                        TypeVar {
+                            node: Node {
+                                start: 365,
+                                end: 369,
+                            },
+                            name: "T",
+                            bound: Some(
+                                Name(
+                                    Name {
+                                        node: Node {
+                                            start: 368,
+                                            end: 369,
+                                        },
+                                        id: "U",
+                                    },
+                                ),
+                            ),
+                        },
+                    ),
+                    ParamSpec(
+                        ParamSpec {
+                            node: Node {
+                                start: 371,
+                                end: 374,
+                            },
+                            name: "V",
+                        },
+                    ),
+                ],
+            },
+        ),
+        ClassDef(
+            ClassDef {
+                node: Node {
+                    start: 383,
+                    end: 414,
+                },
+                name: "a",
+                bases: [],
+                keywords: [],
+                body: [
+                    Pass(
+                        Pass {
+                            node: Node {
+                                start: 409,
+                                end: 413,
+                            },
+                        },
+                    ),
+                ],
+                decorator_list: [],
+                type_params: [
+                    TypeVar(
+                        TypeVar {
+                            node: Node {
+                                start: 391,
+                                end: 395,
+                            },
+                            name: "T",
+                            bound: Some(
+                                Name(
+                                    Name {
+                                        node: Node {
+                                            start: 394,
+                                            end: 395,
+                                        },
+                                        id: "U",
+                                    },
+                                ),
+                            ),
+                        },
+                    ),
+                    TypeVar(
+                        TypeVar {
+                            node: Node {
+                                start: 397,
+                                end: 401,
+                            },
+                            name: "V",
+                            bound: Some(
+                                Name(
+                                    Name {
+                                        node: Node {
+                                            start: 400,
+                                            end: 401,
+                                        },
+                                        id: "W",
+                                    },
+                                ),
+                            ),
+                        },
+                    ),
+                    ParamSpec(
+                        ParamSpec {
+                            node: Node {
+                                start: 403,
+                                end: 406,
+                            },
+                            name: "X",
+                        },
+                    ),
+                ],
+            },
+        ),
+        ClassDef(
+            ClassDef {
+                node: Node {
+                    start: 415,
+                    end: 441,
+                },
+                name: "a",
+                bases: [],
+                keywords: [],
+                body: [
+                    Pass(
+                        Pass {
+                            node: Node {
+                                start: 436,
+                                end: 440,
+                            },
+                        },
+                    ),
+                ],
+                decorator_list: [],
+                type_params: [
+                    TypeVar(
+                        TypeVar {
+                            node: Node {
+                                start: 423,
+                                end: 424,
+                            },
+                            name: "T",
+                            bound: None,
+                        },
+                    ),
+                    TypeVarTuple(
+                        TypeVarTuple {
+                            node: Node {
+                                start: 426,
+                                end: 428,
+                            },
+                            name: "U",
+                        },
+                    ),
+                    ParamSpec(
+                        ParamSpec {
+                            node: Node {
+                                start: 430,
+                                end: 433,
+                            },
+                            name: "V",
+                        },
+                    ),
+                ],
+            },
+        ),
+        ClassDef(
+            ClassDef {
+                node: Node {
+                    start: 442,
+                    end: 471,
+                },
+                name: "a",
+                bases: [],
+                keywords: [],
+                body: [
+                    Pass(
+                        Pass {
+                            node: Node {
+                                start: 466,
+                                end: 470,
+                            },
+                        },
+                    ),
+                ],
+                decorator_list: [],
+                type_params: [
+                    TypeVar(
+                        TypeVar {
+                            node: Node {
+                                start: 450,
+                                end: 454,
+                            },
+                            name: "T",
+                            bound: Some(
+                                Name(
+                                    Name {
+                                        node: Node {
+                                            start: 453,
+                                            end: 454,
+                                        },
+                                        id: "U",
+                                    },
+                                ),
+                            ),
+                        },
+                    ),
+                    TypeVarTuple(
+                        TypeVarTuple {
+                            node: Node {
+                                start: 456,
+                                end: 458,
+                            },
+                            name: "V",
+                        },
+                    ),
+                    ParamSpec(
+                        ParamSpec {
+                            node: Node {
+                                start: 460,
+                                end: 463,
+                            },
+                            name: "W",
+                        },
+                    ),
+                ],
+            },
+        ),
+    ],
+}

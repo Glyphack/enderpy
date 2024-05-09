@@ -1,0 +1,6 @@
+---
+source: parser/src/lexer/mod.rs
+description: "f\"\""
+---
+0,2: FStringStart            (Str("f\""))
+2,3: FStringEnd                 (Str("\""))

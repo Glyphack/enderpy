@@ -1,0 +1,7 @@
+---
+source: parser/src/lexer/mod.rs
+description: xX = 2
+---
+0,2: Identifier                 (Str("xX"))
+3,4: =                                        (None)
+5,6: Integer                     (Number("2"))

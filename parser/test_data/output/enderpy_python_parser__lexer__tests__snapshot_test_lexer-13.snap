@@ -1,0 +1,5 @@
+---
+source: parser/src/lexer/mod.rs
+description: "'''hello'"
+---
+0,8: Error        (Str("String not terminated"))

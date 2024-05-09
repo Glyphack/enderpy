@@ -1,0 +1,15 @@
+---
+source: parser/src/parser/parser.rs
+description: "import a\nimport a as b\nimport a.b\nimport a.b as c\nimport a.b.c\nfrom a import b\nfrom a import b as c\nfrom a.b import c\nfrom a.b import c as d\nfrom ...a import b\nfrom ....a import b\nfrom .....a import b\nfrom ......a import b\nfrom .......a import b\nfrom ...\n"
+---
+[
+    InvalidSyntax {
+        msg: "Expected one of \"Identifier, Mul, LeftParen, \" but found Eof",
+        input: "",
+        advice: "Use * for importing everything or use () to specify names to import or specify the name you want to import",
+        span: (
+            246,
+            255,
+        ),
+    },
+]

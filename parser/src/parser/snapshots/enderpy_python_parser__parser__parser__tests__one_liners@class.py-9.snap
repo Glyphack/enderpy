@@ -1,6 +1,6 @@
 ---
 source: parser/src/parser/parser.rs
-description: "class a[T: U]: pass"
+description: "class a[T, U]: pass"
 input_file: parser/test_data/inputs/one_liners/class.py
 ---
 Module {
@@ -34,20 +34,20 @@ Module {
                         TypeVar {
                             node: Node {
                                 start: 8,
-                                end: 12,
+                                end: 9,
                             },
                             name: "T",
-                            bound: Some(
-                                Name(
-                                    Name {
-                                        node: Node {
-                                            start: 11,
-                                            end: 12,
-                                        },
-                                        id: "U",
-                                    },
-                                ),
-                            ),
+                            bound: None,
+                        },
+                    ),
+                    TypeVar(
+                        TypeVar {
+                            node: Node {
+                                start: 11,
+                                end: 12,
+                            },
+                            name: "U",
+                            bound: None,
                         },
                     ),
                 ],

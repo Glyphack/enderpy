@@ -1,0 +1,7 @@
+---
+source: parser/src/lexer/mod.rs
+description: "a = rb\"hello\""
+---
+0,1: Identifier                  (Str("a"))
+2,3: =                                        (None)
+4,13: RawBytes           (Str("rb\"hello\""))

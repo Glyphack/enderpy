@@ -14,7 +14,7 @@ Module {
                 SetComp {
                     node: Node {
                         start: 0,
-                        end: 51,
+                        end: 52,
                     },
                     element: Tuple(
                         Tuple {
@@ -96,7 +96,7 @@ Module {
                         Comprehension {
                             node: Node {
                                 start: 31,
-                                end: 49,
+                                end: 50,
                             },
                             target: Name(
                                 Name {
@@ -111,7 +111,7 @@ Module {
                                 Call {
                                     node: Node {
                                         start: 40,
-                                        end: 49,
+                                        end: 50,
                                     },
                                     func: Name(
                                         Name {

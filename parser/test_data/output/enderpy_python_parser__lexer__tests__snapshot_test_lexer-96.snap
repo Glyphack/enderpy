@@ -1,0 +1,5 @@
+---
+source: parser/src/lexer/mod.rs
+description: ಠ_ಠ
+---
+0,7: Identifier            (Str("ಠ_ಠ"))

@@ -1,19 +1,19 @@
 ---
 source: parser/src/parser/parser.rs
-description: "class a[T]: pass"
+description: "@decor\nclass a: pass"
 input_file: parser/test_data/inputs/one_liners/class.py
 ---
 Module {
     node: Node {
         start: 0,
-        end: 16,
+        end: 20,
     },
     body: [
         ClassDef(
             ClassDef {
                 node: Node {
-                    start: 0,
-                    end: 16,
+                    start: 7,
+                    end: 20,
                 },
                 name: "a",
                 bases: [],
@@ -22,25 +22,24 @@ Module {
                     Pass(
                         Pass {
                             node: Node {
-                                start: 12,
-                                end: 16,
+                                start: 16,
+                                end: 20,
                             },
                         },
                     ),
                 ],
-                decorator_list: [],
-                type_params: [
-                    TypeVar(
-                        TypeVar {
+                decorator_list: [
+                    Name(
+                        Name {
                             node: Node {
-                                start: 8,
-                                end: 9,
+                                start: 1,
+                                end: 6,
                             },
-                            name: "T",
-                            bound: None,
+                            id: "decor",
                         },
                     ),
                 ],
+                type_params: [],
             },
         ),
     ],

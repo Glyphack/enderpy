@@ -14,7 +14,7 @@ Module {
                 Generator {
                     node: Node {
                         start: 0,
-                        end: 55,
+                        end: 56,
                     },
                     element: BinOp(
                         BinOp {

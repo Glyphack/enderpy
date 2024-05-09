@@ -13,7 +13,7 @@ Module {
             Assign {
                 node: Node {
                     start: 0,
-                    end: 44,
+                    end: 45,
                 },
                 targets: [
                     Name(
@@ -30,7 +30,7 @@ Module {
                     Dict {
                         node: Node {
                             start: 5,
-                            end: 44,
+                            end: 45,
                         },
                         keys: [
                             Constant(

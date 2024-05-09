@@ -170,6 +170,80 @@ pub enum Kind {
     Eof,
 }
 
+impl Kind {
+    pub fn is_string(&self) -> bool {
+        matches!(
+            self,
+            Self::StringLiteral | Self::RawBytes | Self::Bytes | Self::FStringStart
+        )
+    }
+    pub fn is_unary_op(&self) -> bool {
+        matches!(self, Kind::Not | Kind::BitNot | Kind::Minus | Kind::Plus)
+    }
+
+    pub fn is_bin_arithmetic_op(&self) -> bool {
+        matches!(
+            self,
+            Kind::Plus
+                | Kind::Minus
+                | Kind::Mul
+                | Kind::MatrixMul
+                | Kind::Div
+                | Kind::Mod
+                | Kind::Pow
+                | Kind::IntDiv
+        )
+    }
+
+    pub fn is_comparison_operator(&self) -> bool {
+        match self {
+        Kind::Eq
+        | Kind::NotEq
+        | Kind::Less
+        | Kind::LessEq
+        | Kind::Greater
+        | Kind::GreaterEq
+        | Kind::Is
+        | Kind::In
+        // Not is not a comparison operator, but it is used in the
+        // "not in" operator
+        | Kind::Not => true,
+        _ => false,
+    }
+    }
+
+    pub fn is_atom(&self) -> bool {
+        match self {
+        Kind::Identifier
+        | Kind::StringLiteral
+        | Kind::RawBytes
+        | Kind::Bytes
+        | Kind::FStringStart
+        | Kind::RawFStringStart
+        | Kind::Integer
+        | Kind::True
+        | Kind::False
+        | Kind::Binary
+        | Kind::Octal
+        | Kind::Hexadecimal
+        | Kind::PointFloat
+        | Kind::ExponentFloat
+        | Kind::ImaginaryInteger
+        | Kind::ImaginaryPointFloat
+        | Kind::ImaginaryExponentFloat
+        // These might start a enclosured expression
+        // https://docs.python.org/3/reference/expressions.html#atoms
+        | Kind::LeftParen
+        | Kind::LeftBracket
+        | Kind::LeftBrace
+        | Kind::Yield
+        | Kind::Ellipsis
+        | Kind::None => true,
+        _ => false,
+        }
+    }
+}
+
 impl From<Kind> for &str {
     fn from(val: Kind) -> Self {
         match val {

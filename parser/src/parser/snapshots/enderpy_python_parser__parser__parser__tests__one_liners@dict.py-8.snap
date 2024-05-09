@@ -38,7 +38,7 @@ Module {
                         Comprehension {
                             node: Node {
                                 start: 11,
-                                end: 34,
+                                end: 35,
                             },
                             target: Name(
                                 Name {
@@ -53,7 +53,7 @@ Module {
                                 Call {
                                     node: Node {
                                         start: 23,
-                                        end: 34,
+                                        end: 35,
                                     },
                                     func: Name(
                                         Name {

@@ -1,0 +1,991 @@
+---
+source: parser/src/parser/parser.rs
+description: "{a, b, c}\n\n{a,\nb, c}\n\n{a\n, b, c}\n\n{a,\nb,\n    c}\n\n{a,\n}\n\n{a, b, c,}\n\n{a for a in range(10)}\n\n{a for a in range(10)\n}\n\n{a for a in range(10)}\n\n{a for a in range(10)}\n\n{a for a in range(10) for b in range(10)}\n\n{a for a in range(10) for b in range(10)\n}\n\n{a for a in range(11) for b in range(10)\n}\n\n{\n    (a,b) for a in range(11) for b in range(10)\n}\n"
+---
+Module {
+    node: Node {
+        start: 0,
+        end: 348,
+    },
+    body: [
+        ExpressionStatement(
+            Set(
+                Set {
+                    node: Node {
+                        start: 0,
+                        end: 9,
+                    },
+                    elements: [
+                        Name(
+                            Name {
+                                node: Node {
+                                    start: 1,
+                                    end: 2,
+                                },
+                                id: "a",
+                            },
+                        ),
+                        Name(
+                            Name {
+                                node: Node {
+                                    start: 4,
+                                    end: 5,
+                                },
+                                id: "b",
+                            },
+                        ),
+                        Name(
+                            Name {
+                                node: Node {
+                                    start: 7,
+                                    end: 8,
+                                },
+                                id: "c",
+                            },
+                        ),
+                    ],
+                },
+            ),
+        ),
+        ExpressionStatement(
+            Set(
+                Set {
+                    node: Node {
+                        start: 11,
+                        end: 20,
+                    },
+                    elements: [
+                        Name(
+                            Name {
+                                node: Node {
+                                    start: 12,
+                                    end: 13,
+                                },
+                                id: "a",
+                            },
+                        ),
+                        Name(
+                            Name {
+                                node: Node {
+                                    start: 15,
+                                    end: 16,
+                                },
+                                id: "b",
+                            },
+                        ),
+                        Name(
+                            Name {
+                                node: Node {
+                                    start: 18,
+                                    end: 19,
+                                },
+                                id: "c",
+                            },
+                        ),
+                    ],
+                },
+            ),
+        ),
+        ExpressionStatement(
+            Set(
+                Set {
+                    node: Node {
+                        start: 22,
+                        end: 32,
+                    },
+                    elements: [
+                        Name(
+                            Name {
+                                node: Node {
+                                    start: 23,
+                                    end: 25,
+                                },
+                                id: "a",
+                            },
+                        ),
+                        Name(
+                            Name {
+                                node: Node {
+                                    start: 27,
+                                    end: 28,
+                                },
+                                id: "b",
+                            },
+                        ),
+                        Name(
+                            Name {
+                                node: Node {
+                                    start: 30,
+                                    end: 31,
+                                },
+                                id: "c",
+                            },
+                        ),
+                    ],
+                },
+            ),
+        ),
+        ExpressionStatement(
+            Set(
+                Set {
+                    node: Node {
+                        start: 34,
+                        end: 47,
+                    },
+                    elements: [
+                        Name(
+                            Name {
+                                node: Node {
+                                    start: 35,
+                                    end: 36,
+                                },
+                                id: "a",
+                            },
+                        ),
+                        Name(
+                            Name {
+                                node: Node {
+                                    start: 38,
+                                    end: 39,
+                                },
+                                id: "b",
+                            },
+                        ),
+                        Name(
+                            Name {
+                                node: Node {
+                                    start: 45,
+                                    end: 46,
+                                },
+                                id: "c",
+                            },
+                        ),
+                    ],
+                },
+            ),
+        ),
+        ExpressionStatement(
+            Set(
+                Set {
+                    node: Node {
+                        start: 49,
+                        end: 54,
+                    },
+                    elements: [
+                        Name(
+                            Name {
+                                node: Node {
+                                    start: 50,
+                                    end: 51,
+                                },
+                                id: "a",
+                            },
+                        ),
+                    ],
+                },
+            ),
+        ),
+        ExpressionStatement(
+            Set(
+                Set {
+                    node: Node {
+                        start: 56,
+                        end: 66,
+                    },
+                    elements: [
+                        Name(
+                            Name {
+                                node: Node {
+                                    start: 57,
+                                    end: 58,
+                                },
+                                id: "a",
+                            },
+                        ),
+                        Name(
+                            Name {
+                                node: Node {
+                                    start: 60,
+                                    end: 61,
+                                },
+                                id: "b",
+                            },
+                        ),
+                        Name(
+                            Name {
+                                node: Node {
+                                    start: 63,
+                                    end: 64,
+                                },
+                                id: "c",
+                            },
+                        ),
+                    ],
+                },
+            ),
+        ),
+        ExpressionStatement(
+            SetComp(
+                SetComp {
+                    node: Node {
+                        start: 68,
+                        end: 90,
+                    },
+                    element: Name(
+                        Name {
+                            node: Node {
+                                start: 69,
+                                end: 70,
+                            },
+                            id: "a",
+                        },
+                    ),
+                    generators: [
+                        Comprehension {
+                            node: Node {
+                                start: 71,
+                                end: 89,
+                            },
+                            target: Name(
+                                Name {
+                                    node: Node {
+                                        start: 75,
+                                        end: 76,
+                                    },
+                                    id: "a",
+                                },
+                            ),
+                            iter: Call(
+                                Call {
+                                    node: Node {
+                                        start: 80,
+                                        end: 89,
+                                    },
+                                    func: Name(
+                                        Name {
+                                            node: Node {
+                                                start: 80,
+                                                end: 85,
+                                            },
+                                            id: "range",
+                                        },
+                                    ),
+                                    args: [
+                                        Constant(
+                                            Constant {
+                                                node: Node {
+                                                    start: 86,
+                                                    end: 88,
+                                                },
+                                                value: 10,
+                                            },
+                                        ),
+                                    ],
+                                    keywords: [],
+                                    starargs: None,
+                                    kwargs: None,
+                                },
+                            ),
+                            ifs: [],
+                            is_async: false,
+                        },
+                    ],
+                },
+            ),
+        ),
+        ExpressionStatement(
+            SetComp(
+                SetComp {
+                    node: Node {
+                        start: 92,
+                        end: 115,
+                    },
+                    element: Name(
+                        Name {
+                            node: Node {
+                                start: 93,
+                                end: 94,
+                            },
+                            id: "a",
+                        },
+                    ),
+                    generators: [
+                        Comprehension {
+                            node: Node {
+                                start: 95,
+                                end: 114,
+                            },
+                            target: Name(
+                                Name {
+                                    node: Node {
+                                        start: 99,
+                                        end: 100,
+                                    },
+                                    id: "a",
+                                },
+                            ),
+                            iter: Call(
+                                Call {
+                                    node: Node {
+                                        start: 104,
+                                        end: 114,
+                                    },
+                                    func: Name(
+                                        Name {
+                                            node: Node {
+                                                start: 104,
+                                                end: 109,
+                                            },
+                                            id: "range",
+                                        },
+                                    ),
+                                    args: [
+                                        Constant(
+                                            Constant {
+                                                node: Node {
+                                                    start: 110,
+                                                    end: 112,
+                                                },
+                                                value: 10,
+                                            },
+                                        ),
+                                    ],
+                                    keywords: [],
+                                    starargs: None,
+                                    kwargs: None,
+                                },
+                            ),
+                            ifs: [],
+                            is_async: false,
+                        },
+                    ],
+                },
+            ),
+        ),
+        ExpressionStatement(
+            SetComp(
+                SetComp {
+                    node: Node {
+                        start: 117,
+                        end: 139,
+                    },
+                    element: Name(
+                        Name {
+                            node: Node {
+                                start: 118,
+                                end: 119,
+                            },
+                            id: "a",
+                        },
+                    ),
+                    generators: [
+                        Comprehension {
+                            node: Node {
+                                start: 120,
+                                end: 138,
+                            },
+                            target: Name(
+                                Name {
+                                    node: Node {
+                                        start: 124,
+                                        end: 125,
+                                    },
+                                    id: "a",
+                                },
+                            ),
+                            iter: Call(
+                                Call {
+                                    node: Node {
+                                        start: 129,
+                                        end: 138,
+                                    },
+                                    func: Name(
+                                        Name {
+                                            node: Node {
+                                                start: 129,
+                                                end: 134,
+                                            },
+                                            id: "range",
+                                        },
+                                    ),
+                                    args: [
+                                        Constant(
+                                            Constant {
+                                                node: Node {
+                                                    start: 135,
+                                                    end: 137,
+                                                },
+                                                value: 10,
+                                            },
+                                        ),
+                                    ],
+                                    keywords: [],
+                                    starargs: None,
+                                    kwargs: None,
+                                },
+                            ),
+                            ifs: [],
+                            is_async: false,
+                        },
+                    ],
+                },
+            ),
+        ),
+        ExpressionStatement(
+            SetComp(
+                SetComp {
+                    node: Node {
+                        start: 141,
+                        end: 163,
+                    },
+                    element: Name(
+                        Name {
+                            node: Node {
+                                start: 142,
+                                end: 143,
+                            },
+                            id: "a",
+                        },
+                    ),
+                    generators: [
+                        Comprehension {
+                            node: Node {
+                                start: 144,
+                                end: 162,
+                            },
+                            target: Name(
+                                Name {
+                                    node: Node {
+                                        start: 148,
+                                        end: 149,
+                                    },
+                                    id: "a",
+                                },
+                            ),
+                            iter: Call(
+                                Call {
+                                    node: Node {
+                                        start: 153,
+                                        end: 162,
+                                    },
+                                    func: Name(
+                                        Name {
+                                            node: Node {
+                                                start: 153,
+                                                end: 158,
+                                            },
+                                            id: "range",
+                                        },
+                                    ),
+                                    args: [
+                                        Constant(
+                                            Constant {
+                                                node: Node {
+                                                    start: 159,
+                                                    end: 161,
+                                                },
+                                                value: 10,
+                                            },
+                                        ),
+                                    ],
+                                    keywords: [],
+                                    starargs: None,
+                                    kwargs: None,
+                                },
+                            ),
+                            ifs: [],
+                            is_async: false,
+                        },
+                    ],
+                },
+            ),
+        ),
+        ExpressionStatement(
+            SetComp(
+                SetComp {
+                    node: Node {
+                        start: 165,
+                        end: 206,
+                    },
+                    element: Name(
+                        Name {
+                            node: Node {
+                                start: 166,
+                                end: 167,
+                            },
+                            id: "a",
+                        },
+                    ),
+                    generators: [
+                        Comprehension {
+                            node: Node {
+                                start: 168,
+                                end: 186,
+                            },
+                            target: Name(
+                                Name {
+                                    node: Node {
+                                        start: 172,
+                                        end: 173,
+                                    },
+                                    id: "a",
+                                },
+                            ),
+                            iter: Call(
+                                Call {
+                                    node: Node {
+                                        start: 177,
+                                        end: 186,
+                                    },
+                                    func: Name(
+                                        Name {
+                                            node: Node {
+                                                start: 177,
+                                                end: 182,
+                                            },
+                                            id: "range",
+                                        },
+                                    ),
+                                    args: [
+                                        Constant(
+                                            Constant {
+                                                node: Node {
+                                                    start: 183,
+                                                    end: 185,
+                                                },
+                                                value: 10,
+                                            },
+                                        ),
+                                    ],
+                                    keywords: [],
+                                    starargs: None,
+                                    kwargs: None,
+                                },
+                            ),
+                            ifs: [],
+                            is_async: false,
+                        },
+                        Comprehension {
+                            node: Node {
+                                start: 187,
+                                end: 205,
+                            },
+                            target: Name(
+                                Name {
+                                    node: Node {
+                                        start: 191,
+                                        end: 192,
+                                    },
+                                    id: "b",
+                                },
+                            ),
+                            iter: Call(
+                                Call {
+                                    node: Node {
+                                        start: 196,
+                                        end: 205,
+                                    },
+                                    func: Name(
+                                        Name {
+                                            node: Node {
+                                                start: 196,
+                                                end: 201,
+                                            },
+                                            id: "range",
+                                        },
+                                    ),
+                                    args: [
+                                        Constant(
+                                            Constant {
+                                                node: Node {
+                                                    start: 202,
+                                                    end: 204,
+                                                },
+                                                value: 10,
+                                            },
+                                        ),
+                                    ],
+                                    keywords: [],
+                                    starargs: None,
+                                    kwargs: None,
+                                },
+                            ),
+                            ifs: [],
+                            is_async: false,
+                        },
+                    ],
+                },
+            ),
+        ),
+        ExpressionStatement(
+            SetComp(
+                SetComp {
+                    node: Node {
+                        start: 208,
+                        end: 250,
+                    },
+                    element: Name(
+                        Name {
+                            node: Node {
+                                start: 209,
+                                end: 210,
+                            },
+                            id: "a",
+                        },
+                    ),
+                    generators: [
+                        Comprehension {
+                            node: Node {
+                                start: 211,
+                                end: 229,
+                            },
+                            target: Name(
+                                Name {
+                                    node: Node {
+                                        start: 215,
+                                        end: 216,
+                                    },
+                                    id: "a",
+                                },
+                            ),
+                            iter: Call(
+                                Call {
+                                    node: Node {
+                                        start: 220,
+                                        end: 229,
+                                    },
+                                    func: Name(
+                                        Name {
+                                            node: Node {
+                                                start: 220,
+                                                end: 225,
+                                            },
+                                            id: "range",
+                                        },
+                                    ),
+                                    args: [
+                                        Constant(
+                                            Constant {
+                                                node: Node {
+                                                    start: 226,
+                                                    end: 228,
+                                                },
+                                                value: 10,
+                                            },
+                                        ),
+                                    ],
+                                    keywords: [],
+                                    starargs: None,
+                                    kwargs: None,
+                                },
+                            ),
+                            ifs: [],
+                            is_async: false,
+                        },
+                        Comprehension {
+                            node: Node {
+                                start: 230,
+                                end: 249,
+                            },
+                            target: Name(
+                                Name {
+                                    node: Node {
+                                        start: 234,
+                                        end: 235,
+                                    },
+                                    id: "b",
+                                },
+                            ),
+                            iter: Call(
+                                Call {
+                                    node: Node {
+                                        start: 239,
+                                        end: 249,
+                                    },
+                                    func: Name(
+                                        Name {
+                                            node: Node {
+                                                start: 239,
+                                                end: 244,
+                                            },
+                                            id: "range",
+                                        },
+                                    ),
+                                    args: [
+                                        Constant(
+                                            Constant {
+                                                node: Node {
+                                                    start: 245,
+                                                    end: 247,
+                                                },
+                                                value: 10,
+                                            },
+                                        ),
+                                    ],
+                                    keywords: [],
+                                    starargs: None,
+                                    kwargs: None,
+                                },
+                            ),
+                            ifs: [],
+                            is_async: false,
+                        },
+                    ],
+                },
+            ),
+        ),
+        ExpressionStatement(
+            SetComp(
+                SetComp {
+                    node: Node {
+                        start: 252,
+                        end: 294,
+                    },
+                    element: Name(
+                        Name {
+                            node: Node {
+                                start: 253,
+                                end: 254,
+                            },
+                            id: "a",
+                        },
+                    ),
+                    generators: [
+                        Comprehension {
+                            node: Node {
+                                start: 255,
+                                end: 273,
+                            },
+                            target: Name(
+                                Name {
+                                    node: Node {
+                                        start: 259,
+                                        end: 260,
+                                    },
+                                    id: "a",
+                                },
+                            ),
+                            iter: Call(
+                                Call {
+                                    node: Node {
+                                        start: 264,
+                                        end: 273,
+                                    },
+                                    func: Name(
+                                        Name {
+                                            node: Node {
+                                                start: 264,
+                                                end: 269,
+                                            },
+                                            id: "range",
+                                        },
+                                    ),
+                                    args: [
+                                        Constant(
+                                            Constant {
+                                                node: Node {
+                                                    start: 270,
+                                                    end: 272,
+                                                },
+                                                value: 11,
+                                            },
+                                        ),
+                                    ],
+                                    keywords: [],
+                                    starargs: None,
+                                    kwargs: None,
+                                },
+                            ),
+                            ifs: [],
+                            is_async: false,
+                        },
+                        Comprehension {
+                            node: Node {
+                                start: 274,
+                                end: 293,
+                            },
+                            target: Name(
+                                Name {
+                                    node: Node {
+                                        start: 278,
+                                        end: 279,
+                                    },
+                                    id: "b",
+                                },
+                            ),
+                            iter: Call(
+                                Call {
+                                    node: Node {
+                                        start: 283,
+                                        end: 293,
+                                    },
+                                    func: Name(
+                                        Name {
+                                            node: Node {
+                                                start: 283,
+                                                end: 288,
+                                            },
+                                            id: "range",
+                                        },
+                                    ),
+                                    args: [
+                                        Constant(
+                                            Constant {
+                                                node: Node {
+                                                    start: 289,
+                                                    end: 291,
+                                                },
+                                                value: 10,
+                                            },
+                                        ),
+                                    ],
+                                    keywords: [],
+                                    starargs: None,
+                                    kwargs: None,
+                                },
+                            ),
+                            ifs: [],
+                            is_async: false,
+                        },
+                    ],
+                },
+            ),
+        ),
+        ExpressionStatement(
+            SetComp(
+                SetComp {
+                    node: Node {
+                        start: 296,
+                        end: 347,
+                    },
+                    element: Tuple(
+                        Tuple {
+                            node: Node {
+                                start: 302,
+                                end: 306,
+                            },
+                            elements: [
+                                Name(
+                                    Name {
+                                        node: Node {
+                                            start: 303,
+                                            end: 304,
+                                        },
+                                        id: "a",
+                                    },
+                                ),
+                                Name(
+                                    Name {
+                                        node: Node {
+                                            start: 305,
+                                            end: 306,
+                                        },
+                                        id: "b",
+                                    },
+                                ),
+                            ],
+                        },
+                    ),
+                    generators: [
+                        Comprehension {
+                            node: Node {
+                                start: 308,
+                                end: 326,
+                            },
+                            target: Name(
+                                Name {
+                                    node: Node {
+                                        start: 312,
+                                        end: 313,
+                                    },
+                                    id: "a",
+                                },
+                            ),
+                            iter: Call(
+                                Call {
+                                    node: Node {
+                                        start: 317,
+                                        end: 326,
+                                    },
+                                    func: Name(
+                                        Name {
+                                            node: Node {
+                                                start: 317,
+                                                end: 322,
+                                            },
+                                            id: "range",
+                                        },
+                                    ),
+                                    args: [
+                                        Constant(
+                                            Constant {
+                                                node: Node {
+                                                    start: 323,
+                                                    end: 325,
+                                                },
+                                                value: 11,
+                                            },
+                                        ),
+                                    ],
+                                    keywords: [],
+                                    starargs: None,
+                                    kwargs: None,
+                                },
+                            ),
+                            ifs: [],
+                            is_async: false,
+                        },
+                        Comprehension {
+                            node: Node {
+                                start: 327,
+                                end: 346,
+                            },
+                            target: Name(
+                                Name {
+                                    node: Node {
+                                        start: 331,
+                                        end: 332,
+                                    },
+                                    id: "b",
+                                },
+                            ),
+                            iter: Call(
+                                Call {
+                                    node: Node {
+                                        start: 336,
+                                        end: 346,
+                                    },
+                                    func: Name(
+                                        Name {
+                                            node: Node {
+                                                start: 336,
+                                                end: 341,
+                                            },
+                                            id: "range",
+                                        },
+                                    ),
+                                    args: [
+                                        Constant(
+                                            Constant {
+                                                node: Node {
+                                                    start: 342,
+                                                    end: 344,
+                                                },
+                                                value: 10,
+                                            },
+                                        ),
+                                    ],
+                                    keywords: [],
+                                    starargs: None,
+                                    kwargs: None,
+                                },
+                            ),
+                            ifs: [],
+                            is_async: false,
+                        },
+                    ],
+                },
+            ),
+        ),
+    ],
+}

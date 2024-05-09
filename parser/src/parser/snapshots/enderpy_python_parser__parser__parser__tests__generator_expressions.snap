@@ -1,0 +1,535 @@
+---
+source: parser/src/parser/parser.rs
+description: "(a for a in b)\n\n(a for a in b if c)\n\n(a for a in b if c if d)\n\n(a for a in b for c in d)\n\n(ord(c) for line in file for c in line)\n\n(x*y for x in range(10) for y in range(10) if x*y > 10)\n"
+---
+Module {
+    node: Node {
+        start: 0,
+        end: 187,
+    },
+    body: [
+        ExpressionStatement(
+            Generator(
+                Generator {
+                    node: Node {
+                        start: 0,
+                        end: 14,
+                    },
+                    element: Name(
+                        Name {
+                            node: Node {
+                                start: 1,
+                                end: 2,
+                            },
+                            id: "a",
+                        },
+                    ),
+                    generators: [
+                        Comprehension {
+                            node: Node {
+                                start: 3,
+                                end: 13,
+                            },
+                            target: Name(
+                                Name {
+                                    node: Node {
+                                        start: 7,
+                                        end: 8,
+                                    },
+                                    id: "a",
+                                },
+                            ),
+                            iter: Name(
+                                Name {
+                                    node: Node {
+                                        start: 12,
+                                        end: 13,
+                                    },
+                                    id: "b",
+                                },
+                            ),
+                            ifs: [],
+                            is_async: false,
+                        },
+                    ],
+                },
+            ),
+        ),
+        ExpressionStatement(
+            Generator(
+                Generator {
+                    node: Node {
+                        start: 16,
+                        end: 35,
+                    },
+                    element: Name(
+                        Name {
+                            node: Node {
+                                start: 17,
+                                end: 18,
+                            },
+                            id: "a",
+                        },
+                    ),
+                    generators: [
+                        Comprehension {
+                            node: Node {
+                                start: 19,
+                                end: 34,
+                            },
+                            target: Name(
+                                Name {
+                                    node: Node {
+                                        start: 23,
+                                        end: 24,
+                                    },
+                                    id: "a",
+                                },
+                            ),
+                            iter: Name(
+                                Name {
+                                    node: Node {
+                                        start: 28,
+                                        end: 29,
+                                    },
+                                    id: "b",
+                                },
+                            ),
+                            ifs: [
+                                Name(
+                                    Name {
+                                        node: Node {
+                                            start: 33,
+                                            end: 34,
+                                        },
+                                        id: "c",
+                                    },
+                                ),
+                            ],
+                            is_async: false,
+                        },
+                    ],
+                },
+            ),
+        ),
+        ExpressionStatement(
+            Generator(
+                Generator {
+                    node: Node {
+                        start: 37,
+                        end: 61,
+                    },
+                    element: Name(
+                        Name {
+                            node: Node {
+                                start: 38,
+                                end: 39,
+                            },
+                            id: "a",
+                        },
+                    ),
+                    generators: [
+                        Comprehension {
+                            node: Node {
+                                start: 40,
+                                end: 60,
+                            },
+                            target: Name(
+                                Name {
+                                    node: Node {
+                                        start: 44,
+                                        end: 45,
+                                    },
+                                    id: "a",
+                                },
+                            ),
+                            iter: Name(
+                                Name {
+                                    node: Node {
+                                        start: 49,
+                                        end: 50,
+                                    },
+                                    id: "b",
+                                },
+                            ),
+                            ifs: [
+                                Name(
+                                    Name {
+                                        node: Node {
+                                            start: 54,
+                                            end: 55,
+                                        },
+                                        id: "c",
+                                    },
+                                ),
+                                Name(
+                                    Name {
+                                        node: Node {
+                                            start: 59,
+                                            end: 60,
+                                        },
+                                        id: "d",
+                                    },
+                                ),
+                            ],
+                            is_async: false,
+                        },
+                    ],
+                },
+            ),
+        ),
+        ExpressionStatement(
+            Generator(
+                Generator {
+                    node: Node {
+                        start: 63,
+                        end: 88,
+                    },
+                    element: Name(
+                        Name {
+                            node: Node {
+                                start: 64,
+                                end: 65,
+                            },
+                            id: "a",
+                        },
+                    ),
+                    generators: [
+                        Comprehension {
+                            node: Node {
+                                start: 66,
+                                end: 76,
+                            },
+                            target: Name(
+                                Name {
+                                    node: Node {
+                                        start: 70,
+                                        end: 71,
+                                    },
+                                    id: "a",
+                                },
+                            ),
+                            iter: Name(
+                                Name {
+                                    node: Node {
+                                        start: 75,
+                                        end: 76,
+                                    },
+                                    id: "b",
+                                },
+                            ),
+                            ifs: [],
+                            is_async: false,
+                        },
+                        Comprehension {
+                            node: Node {
+                                start: 77,
+                                end: 87,
+                            },
+                            target: Name(
+                                Name {
+                                    node: Node {
+                                        start: 81,
+                                        end: 82,
+                                    },
+                                    id: "c",
+                                },
+                            ),
+                            iter: Name(
+                                Name {
+                                    node: Node {
+                                        start: 86,
+                                        end: 87,
+                                    },
+                                    id: "d",
+                                },
+                            ),
+                            ifs: [],
+                            is_async: false,
+                        },
+                    ],
+                },
+            ),
+        ),
+        ExpressionStatement(
+            Generator(
+                Generator {
+                    node: Node {
+                        start: 90,
+                        end: 129,
+                    },
+                    element: Call(
+                        Call {
+                            node: Node {
+                                start: 91,
+                                end: 97,
+                            },
+                            func: Name(
+                                Name {
+                                    node: Node {
+                                        start: 91,
+                                        end: 94,
+                                    },
+                                    id: "ord",
+                                },
+                            ),
+                            args: [
+                                Name(
+                                    Name {
+                                        node: Node {
+                                            start: 95,
+                                            end: 96,
+                                        },
+                                        id: "c",
+                                    },
+                                ),
+                            ],
+                            keywords: [],
+                            starargs: None,
+                            kwargs: None,
+                        },
+                    ),
+                    generators: [
+                        Comprehension {
+                            node: Node {
+                                start: 98,
+                                end: 114,
+                            },
+                            target: Name(
+                                Name {
+                                    node: Node {
+                                        start: 102,
+                                        end: 106,
+                                    },
+                                    id: "line",
+                                },
+                            ),
+                            iter: Name(
+                                Name {
+                                    node: Node {
+                                        start: 110,
+                                        end: 114,
+                                    },
+                                    id: "file",
+                                },
+                            ),
+                            ifs: [],
+                            is_async: false,
+                        },
+                        Comprehension {
+                            node: Node {
+                                start: 115,
+                                end: 128,
+                            },
+                            target: Name(
+                                Name {
+                                    node: Node {
+                                        start: 119,
+                                        end: 120,
+                                    },
+                                    id: "c",
+                                },
+                            ),
+                            iter: Name(
+                                Name {
+                                    node: Node {
+                                        start: 124,
+                                        end: 128,
+                                    },
+                                    id: "line",
+                                },
+                            ),
+                            ifs: [],
+                            is_async: false,
+                        },
+                    ],
+                },
+            ),
+        ),
+        ExpressionStatement(
+            Generator(
+                Generator {
+                    node: Node {
+                        start: 131,
+                        end: 186,
+                    },
+                    element: BinOp(
+                        BinOp {
+                            node: Node {
+                                start: 132,
+                                end: 135,
+                            },
+                            op: Mult,
+                            left: Name(
+                                Name {
+                                    node: Node {
+                                        start: 132,
+                                        end: 133,
+                                    },
+                                    id: "x",
+                                },
+                            ),
+                            right: Name(
+                                Name {
+                                    node: Node {
+                                        start: 134,
+                                        end: 135,
+                                    },
+                                    id: "y",
+                                },
+                            ),
+                        },
+                    ),
+                    generators: [
+                        Comprehension {
+                            node: Node {
+                                start: 136,
+                                end: 154,
+                            },
+                            target: Name(
+                                Name {
+                                    node: Node {
+                                        start: 140,
+                                        end: 141,
+                                    },
+                                    id: "x",
+                                },
+                            ),
+                            iter: Call(
+                                Call {
+                                    node: Node {
+                                        start: 145,
+                                        end: 154,
+                                    },
+                                    func: Name(
+                                        Name {
+                                            node: Node {
+                                                start: 145,
+                                                end: 150,
+                                            },
+                                            id: "range",
+                                        },
+                                    ),
+                                    args: [
+                                        Constant(
+                                            Constant {
+                                                node: Node {
+                                                    start: 151,
+                                                    end: 153,
+                                                },
+                                                value: 10,
+                                            },
+                                        ),
+                                    ],
+                                    keywords: [],
+                                    starargs: None,
+                                    kwargs: None,
+                                },
+                            ),
+                            ifs: [],
+                            is_async: false,
+                        },
+                        Comprehension {
+                            node: Node {
+                                start: 155,
+                                end: 185,
+                            },
+                            target: Name(
+                                Name {
+                                    node: Node {
+                                        start: 159,
+                                        end: 160,
+                                    },
+                                    id: "y",
+                                },
+                            ),
+                            iter: Call(
+                                Call {
+                                    node: Node {
+                                        start: 164,
+                                        end: 173,
+                                    },
+                                    func: Name(
+                                        Name {
+                                            node: Node {
+                                                start: 164,
+                                                end: 169,
+                                            },
+                                            id: "range",
+                                        },
+                                    ),
+                                    args: [
+                                        Constant(
+                                            Constant {
+                                                node: Node {
+                                                    start: 170,
+                                                    end: 172,
+                                                },
+                                                value: 10,
+                                            },
+                                        ),
+                                    ],
+                                    keywords: [],
+                                    starargs: None,
+                                    kwargs: None,
+                                },
+                            ),
+                            ifs: [
+                                Compare(
+                                    Compare {
+                                        node: Node {
+                                            start: 177,
+                                            end: 185,
+                                        },
+                                        left: BinOp(
+                                            BinOp {
+                                                node: Node {
+                                                    start: 177,
+                                                    end: 180,
+                                                },
+                                                op: Mult,
+                                                left: Name(
+                                                    Name {
+                                                        node: Node {
+                                                            start: 177,
+                                                            end: 178,
+                                                        },
+                                                        id: "x",
+                                                    },
+                                                ),
+                                                right: Name(
+                                                    Name {
+                                                        node: Node {
+                                                            start: 179,
+                                                            end: 180,
+                                                        },
+                                                        id: "y",
+                                                    },
+                                                ),
+                                            },
+                                        ),
+                                        ops: [
+                                            Gt,
+                                        ],
+                                        comparators: [
+                                            Constant(
+                                                Constant {
+                                                    node: Node {
+                                                        start: 183,
+                                                        end: 185,
+                                                    },
+                                                    value: 10,
+                                                },
+                                            ),
+                                        ],
+                                    },
+                                ),
+                            ],
+                            is_async: false,
+                        },
+                    ],
+                },
+            ),
+        ),
+    ],
+}

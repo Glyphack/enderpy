@@ -1,19 +1,19 @@
 ---
 source: parser/src/parser/parser.rs
-description: "class a[T: U, V: W, *X]: pass"
+description: "class a[T: U, *V]: pass"
 input_file: parser/test_data/inputs/one_liners/class.py
 ---
 Module {
     node: Node {
         start: 0,
-        end: 29,
+        end: 23,
     },
     body: [
         ClassDef(
             ClassDef {
                 node: Node {
                     start: 0,
-                    end: 29,
+                    end: 23,
                 },
                 name: "a",
                 bases: [],
@@ -22,8 +22,8 @@ Module {
                     Pass(
                         Pass {
                             node: Node {
-                                start: 25,
-                                end: 29,
+                                start: 19,
+                                end: 23,
                             },
                         },
                     ),
@@ -50,33 +50,13 @@ Module {
                             ),
                         },
                     ),
-                    TypeVar(
-                        TypeVar {
-                            node: Node {
-                                start: 14,
-                                end: 18,
-                            },
-                            name: "V",
-                            bound: Some(
-                                Name(
-                                    Name {
-                                        node: Node {
-                                            start: 17,
-                                            end: 18,
-                                        },
-                                        id: "W",
-                                    },
-                                ),
-                            ),
-                        },
-                    ),
                     TypeVarTuple(
                         TypeVarTuple {
                             node: Node {
-                                start: 20,
-                                end: 22,
+                                start: 14,
+                                end: 16,
                             },
-                            name: "X",
+                            name: "V",
                         },
                     ),
                 ],

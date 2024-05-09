@@ -1,0 +1,5 @@
+---
+source: parser/src/lexer/mod.rs
+description: 0b1
+---
+0,3: Binary                     (Number("0b1"))
