@@ -1,0 +1,12 @@
+---
+source: parser/src/lexer/mod.rs
+description: False None True and as assert async await
+---
+0,5: False   (None)
+6,10: None   (None)
+11,15: True   (None)
+16,19: And   (None)
+20,22: As   (None)
+23,29: Assert   (None)
+30,35: Async   (None)
+36,41: Await   (None)

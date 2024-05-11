@@ -1,0 +1,5 @@
+---
+source: parser/src/lexer/mod.rs
+description: "r'hello'"
+---
+0,8: StringLiteral   (Str("r'hello'"))

@@ -5,7 +5,9 @@ def foo():
     return x + y
 
 def bar():
-    x = 1 y = 2
+    # TODO(parser): enable after error handling
+    # x = 1 y = 2
     return x + y
 
-a = 1  b = 2
+# TODO(parser): enable after error handling
+# a = 1  b = 2

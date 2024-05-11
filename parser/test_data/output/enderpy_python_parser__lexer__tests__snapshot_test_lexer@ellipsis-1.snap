@@ -1,0 +1,12 @@
+---
+source: parser/src/lexer/mod.rs
+description: "def a():\n    ..."
+---
+0,3: Def   (None)
+4,5: Identifier   (Str("a"))
+5,6: (   (None)
+6,7: )   (None)
+7,8: :   (None)
+8,9: NewLine   (None)
+9,13: Indent   (Indent(1))
+13,16: Ellipsis   (None)

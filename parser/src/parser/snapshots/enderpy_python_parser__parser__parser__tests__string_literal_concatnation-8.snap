@@ -1,21 +1,40 @@
 ---
 source: parser/src/parser/parser.rs
-description: "('a'\n                'b'\n'c')"
+description: "f'a' 'c'"
 ---
 Module {
     node: Node {
         start: 0,
-        end: 29,
+        end: 8,
     },
     body: [
         ExpressionStatement(
-            Constant(
-                Constant {
+            JoinedStr(
+                JoinedStr {
                     node: Node {
-                        start: 1,
-                        end: 28,
+                        start: 0,
+                        end: 8,
                     },
-                    value: "abc",
+                    values: [
+                        Constant(
+                            Constant {
+                                node: Node {
+                                    start: 0,
+                                    end: 3,
+                                },
+                                value: "a",
+                            },
+                        ),
+                        Constant(
+                            Constant {
+                                node: Node {
+                                    start: 0,
+                                    end: 8,
+                                },
+                                value: "c",
+                            },
+                        ),
+                    ],
                 },
             ),
         ),

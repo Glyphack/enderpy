@@ -1,4 +1,0 @@
----
-source: parser/src/lexer/mod.rs
----
-0,3: Octal                       (Number("0o5"))

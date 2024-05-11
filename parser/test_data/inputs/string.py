@@ -4,4 +4,5 @@ raw = r'raw_text\n'
 
 y = """multi"""
 
-raw_err = r'ss
+# TODO: enable with better error handling in parser
+# raw_err = r'ss

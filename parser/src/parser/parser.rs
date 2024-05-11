@@ -7,7 +7,7 @@ use crate::{
     error::ParsingError,
     lexer::Lexer,
     parser::{ast::*, extract_string_inside},
-    token::{Kind, Token, TokenValue},
+    token::{Kind, Token},
 };
 
 #[allow(unused)]
@@ -120,15 +120,7 @@ impl Parser {
     fn peek_token(&mut self) -> Result<Token, ParsingError> {
         let token = self.lexer.peek_token();
         if matches!(token.kind, Kind::Error) {
-            let pos = self.cur_token.end;
-            let line_number = self.get_offset_line_number(pos);
-            let err = ParsingError::InvalidSyntax {
-                msg: format!("Syntax error: {:?}", token.value),
-                input: self.curr_line_string(),
-                advice: "".to_string(),
-                span: self.get_span_on_line(pos, pos),
-            };
-            return Err(err);
+            panic!("Next token is Error {token:?}");
         }
         Ok(token)
     }
@@ -207,22 +199,10 @@ impl Parser {
 
     /// Expect a `Kind` or return error
     pub fn expect(&mut self, kind: Kind) -> Result<(), ParsingError> {
-        if self.at(Kind::Error) {
-            let err = self.into();
-            return Err(err);
-        }
         if !self.at(kind) {
-            let found = self.cur_token.kind;
-            let node = self.start_node();
-            let range = self.finish_node(node);
-            let err = ParsingError::InvalidSyntax {
-                msg: format!("Expected {:?} but found {:?}", kind, found),
-                input: self.curr_line_string(),
-                advice: "maybe you forgot to put this character".to_string(),
-                span: self.get_span_on_line(range.start, range.end),
-            };
-            self.advance_to_next_line_or_semicolon();
-            return Err(err);
+            let found = &self.cur_token;
+            let file = &self.path;
+            panic!("Expected {:?} but found {:?} {file}", kind, found);
         }
         self.bump_any();
         Ok(())
@@ -230,76 +210,21 @@ impl Parser {
 
     /// Expect any of `Kinds` or return error
     pub fn expect_any(&mut self, kind: Vec<Kind>) -> Result<(), ParsingError> {
-        if self.at(Kind::Error) {
-            let err = self.into();
-            self.advance_to_next_line_or_semicolon();
-            return Err(err);
-        }
         if !kind.contains(&self.cur_token.kind) {
-            let found = self.cur_token.kind;
-            let node = self.start_node();
-            let range = self.finish_node(node);
             let mut expected = String::new();
             for kind in kind {
                 expected.push_str(&format!("{:?}, ", kind));
             }
-            let err = ParsingError::InvalidSyntax {
-                msg: format!("Expected one of {:?} but found {:?}", expected, found),
-                input: self.curr_line_string(),
-                advice: "maybe you forgot to put this character".to_string(),
-                span: self.get_span_on_line(range.start, range.end),
-            };
-            self.advance_to_next_line_or_semicolon();
-            return Err(err);
+            let found = self.cur_token.kind;
+            panic!("Expected one of {:?} but found {:?}", expected, found);
         }
         self.bump_any();
         Ok(())
     }
 
-    // deprecated
-    fn unepxted_token(&mut self, node: Node, kind: Kind) -> Result<(), ParsingError> {
-        if kind == Kind::Error {
-            let err = self.into();
-            self.bump_any();
-            return Err(err);
-        }
-        self.bump_any();
-        let range = self.finish_node(node);
-        let line_number = self.get_offset_line_number(range.start);
-        let err = ParsingError::InvalidSyntax {
-            msg: format!("Unexpected token {:?}", kind),
-            input: self.curr_line_string(),
-            advice: String::new(),
-            span: self.get_span_on_line(range.start, range.end),
-        };
-        Err(err)
-    }
-
     fn unexpected_token_new(&mut self, node: Node, kinds: Vec<Kind>, advice: &str) -> ParsingError {
-        let curr_kind = self.cur_kind();
-        if curr_kind == Kind::Error {
-            let err = self.into();
-            self.advance_to_next_line_or_semicolon();
-            return err;
-        }
-        self.bump_any();
-        let range = self.finish_node(node);
-        let line_number = self.curr_line_number;
-        let mut expected = String::new();
-        for kind in kinds {
-            expected.push_str(&format!("{:?}, ", kind));
-        }
-
-        ParsingError::InvalidSyntax {
-            msg: format!(
-                "Expected one of {:?} but found {:?}",
-                expected,
-                self.cur_kind()
-            ),
-            input: self.curr_line_string(),
-            advice: advice.to_string(),
-            span: self.get_span_on_line(range.start, range.end),
-        }
+        let token = self.cur_token();
+        panic!("Unexpected token {token:?}");
     }
 
     fn get_offset_line_number(&self, pos: u32) -> u32 {
@@ -329,6 +254,7 @@ impl Parser {
             _ => {
                 if self.cur_kind() == Kind::Identifier
                     && self.cur_token().value.to_string() == "type"
+                    && self.peek_kind()? == Kind::Identifier
                 {
                     self.parse_type_alias_statement()
                 } else if self.cur_kind() == Kind::Indent {
@@ -389,18 +315,12 @@ impl Parser {
                     let node = self.start_node();
                     let kind = self.cur_kind();
                     self.bump_any();
-                    // Err(self.unepxted_token(node, kind).err().unwrap())
                     panic!("");
                 }
             }
             _ => {
                 let range = self.finish_node(self.start_node());
-                Err(ParsingError::InvalidSyntax {
-                    msg: "Expected compound statement".to_owned(),
-                    input: self.curr_line_string(),
-                    advice: "maybe you forgot to put this character".to_string(),
-                    span: self.get_span_on_line(range.start, range.end),
-                })
+                panic!("Expected compound statement");
             }
         };
 
@@ -415,16 +335,7 @@ impl Parser {
         while self.eat(Kind::WhiteSpace) || self.eat(Kind::Comment) {}
 
         if !matches!(self.cur_kind(), Kind::NewLine | Kind::SemiColon | Kind::Eof) {
-            let node = self.finish_node(node);
-            let kind = self.cur_kind();
-            let err = ParsingError::InvalidSyntax {
-                msg: "Statement does not end in new line or semicolon".to_owned(),
-                input: self.curr_line_string(),
-                advice: "Split the statements into two separate lines or add a semicolon"
-                    .to_string(),
-                span: self.get_span_on_line(node.start, node.end),
-            };
-            self.errors.push(err);
+            panic!("Statement does not end in new line or semicolon");
         }
     }
 
@@ -432,6 +343,7 @@ impl Parser {
         let node = self.start_node();
         self.expect(Kind::If)?;
         let test = Box::new(self.parse_named_expression()?);
+        println!("test is {test:?}");
         self.expect(Kind::Colon)?;
         let body = self.parse_suite()?;
         let mut orelse: Option<If> = None;
@@ -1159,12 +1071,7 @@ impl Parser {
                 kwd_patterns.push(self.parse_pattern()?);
             } else {
                 if seen_keyword_pattern {
-                    return Err(ParsingError::InvalidSyntax {
-                        msg: "Positional arguments cannot come after keyword arguments.".to_owned(),
-                        input: self.curr_line_string(),
-                        advice: "you can only use arguments in form a=b here.".to_string(),
-                        span: self.get_span_on_line(node.start, node.end),
-                    });
+                    panic!("Positional arguments cannot come after keyword arguments.");
                 }
                 patterns.push(self.parse_pattern()?);
             }
@@ -1614,21 +1521,20 @@ impl Parser {
                     level += 3;
                 }
                 _ => {
-                    return Err(self.unexpected_token_new(
-                        self.start_node(),
-                        vec![Kind::Dot, Kind::Ellipsis],
-                        "use . or ... to specify relative import",
-                    ));
+                    panic!("lol");
                 }
             }
             self.bump_any();
         }
-        let mut module = self.cur_token().value.to_string();
-        self.expect(Kind::Identifier);
-        while self.eat(Kind::Dot) {
-            module.push('.');
-            module.push_str(self.cur_token().value.to_string().as_str());
-            self.expect(Kind::Identifier);
+        let mut module = String::from("");
+        if self.at(Kind::Identifier) {
+            module += &self.cur_token().value.to_string();
+            self.bump_any();
+            while self.eat(Kind::Dot) {
+                module.push('.');
+                module.push_str(self.cur_token().value.to_string().as_str());
+                self.expect(Kind::Identifier);
+            }
         }
         Ok((module, level))
     }
@@ -1642,7 +1548,9 @@ impl Parser {
         if self.at(Kind::Comma) {
             exprs.push(expr);
             while self.eat(Kind::Comma) {
-                if self.at(Kind::Eof) {
+                // expressions start with same tokens as star
+                // expressions
+                if self.at(Kind::Eof) || !self.cur_kind().is_star_expression() {
                     break;
                 }
                 exprs.push(self.parse_expression()?);
@@ -2000,12 +1908,7 @@ impl Parser {
     ) -> Result<Expression, ParsingError> {
         if self.at(Kind::For) || self.at(Kind::Async) && matches!(self.peek_kind(), Ok(Kind::For)) {
             let Some(key) = first_key else {
-                return Err(ParsingError::InvalidSyntax {
-                    msg: "cannot use ** in dict comprehension".to_owned(),
-                    input: self.curr_line_string(),
-                    advice: String::default(),
-                    span: self.get_span_on_line(node.start, node.end),
-                });
+                panic!("cannot use ** in dict comprehension");
             };
 
             // make sure the first key is some
@@ -2156,32 +2059,32 @@ impl Parser {
     // https://docs.python.org/3/reference/expressions.html#boolean-operations
     fn parse_or_test(&mut self) -> Result<Expression, ParsingError> {
         let node = self.start_node();
-        let lhs = self.parse_and_test()?;
+        let mut expr = self.parse_and_test()?;
         if self.eat(Kind::Or) {
             let rhs = self.parse_or_test()?;
-            return Ok(Expression::BoolOp(Box::new(BoolOperation {
+            expr = Expression::BoolOp(Box::new(BoolOperation {
                 node: self.finish_node(node),
                 op: BooleanOperator::Or,
-                values: vec![lhs, rhs],
-            })));
+                values: vec![expr, rhs],
+            }));
         }
-        Ok(lhs)
+        Ok(expr)
     }
 
     // https://docs.python.org/3/reference/expressions.html#boolean-operations
     fn parse_and_test(&mut self) -> Result<Expression, ParsingError> {
         let node = self.start_node();
-        let lhs = self.parse_not_test()?;
-        if self.at(Kind::And) {
-            self.bump(Kind::And);
+        let mut expr = self.parse_not_test()?;
+        while self.at(Kind::And) {
+            self.bump_any();
             let rhs = self.parse_not_test()?;
-            return Ok(Expression::BoolOp(Box::new(BoolOperation {
+            expr = Expression::BoolOp(Box::new(BoolOperation {
                 node: self.finish_node(node),
                 op: BooleanOperator::And,
-                values: vec![lhs, rhs],
-            })));
+                values: vec![expr, rhs],
+            }));
         }
-        Ok(lhs)
+        Ok(expr)
     }
 
     // https://docs.python.org/3/reference/expressions.html#boolean-operations
@@ -2357,6 +2260,7 @@ impl Parser {
     // primaries can be chained together, when they are chained the base is the
     // previous primary
     fn parse_primary(&mut self, base: Option<Expression>) -> Result<Expression, ParsingError> {
+        let next = self.peek_token();
         let node = self.start_node();
         let call_node = self.start_node();
         let mut atom_or_primary = if let Some(base) = base {
@@ -2364,8 +2268,8 @@ impl Parser {
         } else if self.cur_kind().is_atom() {
             self.parse_atom()?
         } else {
-            // return Err(self.unepxted_token(node, self.cur_kind()).err().unwrap());
-            panic!();
+            let path = &self.path;
+            panic!("not a primary {} {path:?}", self.cur_token());
         };
 
         let mut primary = if self.at(Kind::Dot) {
@@ -2409,13 +2313,7 @@ impl Parser {
                 } else {
                     if seen_keyword {
                         let node_end = self.finish_node(node);
-                        return Err(ParsingError::InvalidSyntax {
-                            msg: "Positional arguments cannot come after keyword arguments."
-                                .to_owned(),
-                            input: self.curr_line_string(),
-                            advice: "you can only use arguments in form a=b here.".to_string(),
-                            span: self.get_span_on_line(node_end.start, node_end.end),
-                        });
+                        panic!("Positional arguments cannot come after keyword arguments.");
                     }
                     let arg = self.parse_named_expression()?;
                     positional_args.push(arg);
@@ -2489,12 +2387,7 @@ impl Parser {
             } else {
                 if seen_keyword {
                     let node_end = self.finish_node(node);
-                    return Err(ParsingError::InvalidSyntax {
-                        msg: "Positional arguments cannot come after keyword arguments.".to_owned(),
-                        input: self.curr_line_string(),
-                        advice: "you can only use arguments in form a=b here.".to_string(),
-                        span: self.get_span_on_line(node_end.start, node_end.end),
-                    });
+                    panic!("Positional arguments cannot come after keyword arguments.");
                 }
                 let arg = self.parse_named_expression()?;
                 positional_args.push(arg);
@@ -2557,25 +2450,20 @@ impl Parser {
             return tuple_or_named_expr;
         } else if self.at(Kind::Identifier) {
             return self.parse_identifier();
+            // TODO: is atom is duplicate check. Maybe inline the function
+            // panic when it cannot be mapped to atom
         } else if self.cur_kind().is_atom() {
             // value must be cloned to be assigned to the node
-            let token_value = self.cur_token().value.clone();
-            let token_kind = self.cur_kind();
-            // bump needs to happen before creating the atom node
-            // otherwise the end would be the same as the start
-            self.bump_any();
-            let mut expr = self.map_to_atom(node, &token_kind, token_value)?;
+            let atom_is_string = self.cur_kind().is_string();
+            let mut expr = self.map_to_atom(node, self.cur_token().clone())?;
 
             // If the current token is a string, we need to check if there are more strings
             // and concat them
             // https://docs.python.org/3/reference/lexical_analysis.html#string-literal-concatenation
-            if token_kind.is_string() {
+            if atom_is_string {
                 loop {
-                    if token_kind.is_string() {
-                        let token_value = self.cur_token().value.clone();
-                        let token_kind = self.cur_kind();
-                        self.bump_any();
-                        let next_str = self.map_to_atom(node, &token_kind, token_value)?;
+                    if self.cur_kind().is_string() {
+                        let next_str = self.map_to_atom(node, self.cur_token().clone())?;
                         expr = concat_string_exprs(expr, next_str)?;
                     } else if self.eat(Kind::WhiteSpace) {
                         continue;
@@ -2648,6 +2536,9 @@ impl Parser {
         let mut expressions = vec![];
         expressions.push(self.parse_expression()?);
         while self.eat(Kind::Comma) && !self.at(Kind::Eof) {
+            if !self.cur_kind().is_star_expression() {
+                break;
+            }
             let expr = self.parse_expression()?;
             expressions.push(expr);
         }
@@ -2760,12 +2651,11 @@ impl Parser {
         })))
     }
 
-    fn map_to_atom(
-        &mut self,
-        start: Node,
-        kind: &Kind,
-        value: TokenValue,
-    ) -> Result<Expression, ParsingError> {
+    fn map_to_atom(&mut self, start: Node, token: Token) -> Result<Expression, ParsingError> {
+        let kind = token.kind;
+        let value = &token.value;
+        // The token we just consumed
+        self.bump_any();
         let atom = match kind {
             Kind::Identifier => Expression::Name(Box::new(Name {
                 node: self.finish_node(start),
@@ -2859,9 +2749,19 @@ impl Parser {
                 node: self.finish_node(start),
                 value: ConstantValue::Ellipsis,
             })),
+            // TODO: is there something for octal and Hexadecimal?
+            Kind::Octal => Expression::Constant(Box::new(Constant {
+                node: self.finish_node(start),
+                value: ConstantValue::Int(value.to_string()),
+            })),
+            Kind::Hexadecimal => Expression::Constant(Box::new(Constant {
+                node: self.finish_node(start),
+                value: ConstantValue::Int(value.to_string()),
+            })),
             _ => {
                 // return Err(self.unepxted_token(start, self.cur_kind()).err().unwrap());
-                panic!();
+                let line = self.get_offset_line_number(start.start);
+                panic!("token {kind:?} {value:?} {start:?} is not atom");
             }
         };
         Ok(atom)
@@ -2958,12 +2858,7 @@ impl Parser {
                 if seen_vararg {
                     kwonlyargs.push(param);
                 } else if seen_kwarg {
-                    return Err(ParsingError::InvalidSyntax {
-                        msg: "positional argument follows keyword argument".to_owned(),
-                        input: self.curr_line_string(),
-                        advice: "you can only use arguments in form a=b here.".to_string(),
-                        span: self.get_span_on_line(self.cur_token().start, self.cur_token().end),
-                    });
+                    panic!("positional argument follows keyword argument");
                 } else {
                     args.push(param);
                 }
@@ -2975,12 +2870,7 @@ impl Parser {
                     must_have_default = true;
                     defaults.push(default_value);
                 } else if must_have_default {
-                    return Err(ParsingError::InvalidSyntax {
-                        msg: "non-default argument follows default argument".to_owned(),
-                        input: self.curr_line_string(),
-                        advice: "you can only use arguments with default value here.".to_string(),
-                        span: self.get_span_on_line(self.cur_token().start, self.cur_token().end),
-                    });
+                    panic!("non-default argument follows default argument");
                 }
             // If a parameter has a default value, all following parameters up
             // until the “*” must also have a default value — this
@@ -2998,12 +2888,7 @@ impl Parser {
                 let (param, default) = self.parse_parameter(is_lambda)?;
                 // default is not allowed for vararg
                 if default.is_some() {
-                    return Err(ParsingError::InvalidSyntax {
-                        msg: "var-positional argument cannot have default value".to_owned(),
-                        input: self.curr_line_string(),
-                        advice: "remove the default value of this argument".to_string(),
-                        span: self.get_span_on_line(self.cur_token().start, self.cur_token().end),
-                    });
+                    panic!("var-positional argument cannot have default value");
                 }
                 vararg = Some(param);
             } else if self.eat(Kind::Pow) {
@@ -3011,12 +2896,7 @@ impl Parser {
                 let (param, default) = self.parse_parameter(is_lambda)?;
                 // default is not allowed for kwarg
                 if default.is_some() {
-                    return Err(ParsingError::InvalidSyntax {
-                        msg: "var-keyword argument cannot have default value".to_owned(),
-                        input: self.curr_line_string(),
-                        advice: "remove the default value of this argument".to_string(),
-                        span: self.get_span_on_line(self.cur_token().start, self.cur_token().end),
-                    });
+                    panic!("var-keyword argument cannot have default value");
                 }
                 kwarg = Some(param);
             } else if self.eat(Kind::Comma) {
@@ -3208,7 +3088,8 @@ impl Parser {
 mod tests {
     use std::fs;
 
-    use insta::{assert_debug_snapshot, glob};
+    use insta::assert_debug_snapshot;
+    use insta::assert_snapshot;
 
     use super::*;
 
@@ -3555,7 +3436,8 @@ mod tests {
             "b'a' b'b'",
             "'a'   'b'",
             "r'a' 'b'",
-            "b'a' 'b'",
+            // TODO(parser): enable after error handling
+            // "b'a' 'b'",
             "('a'
             'b')",
             "('a'
@@ -3721,36 +3603,6 @@ except *Exception as e:
         }
     }
 
-    #[test]
-    fn test_comment() {
-        for test_case in &[
-            "# a",
-            "# a\n",
-            "# a\n# b",
-            "# a\n# b\n",
-            "# a\n# b\n# c",
-            "# a\n# b\n# c\n",
-            "# a\n# b\n# c\n# d",
-            "def a(): ... # a",
-            "def a(): ... # a\n",
-            "def a():
-    ... # a",
-            "# this is a comment only  program",
-            "if a:
-
-	pass",
-        ] {
-            let mut parser = Parser::new(test_case.to_string(), String::from(""));
-            let program = parser.parse();
-            insta::with_settings!({
-                    description => test_case.to_string(), // the template source code
-                    omit_expression => true // do not include the default expression
-                }, {
-                    assert_debug_snapshot!(program);
-            });
-        }
-    }
-
     macro_rules! parser_test {
         ($test_name:ident, $test_file:expr) => {
             #[test]
@@ -3761,22 +3613,18 @@ except *Exception as e:
                     String::from($test_file),
                 );
                 let program = parser.parse();
-
+                let errors = parser.errors;
+                let snapshot = if errors.is_empty() {
+                    format!("{program:#?}")
+                } else {
+                    format!("{program:#?}\n {errors:#?}")
+                };
                 insta::with_settings!({
                         description => test_case.clone(),
                         omit_expression => true
                     }, {
-                        assert_debug_snapshot!(program);
+                        assert_snapshot!(snapshot);
                 });
-
-                if !parser.errors.is_empty() {
-                    insta::with_settings!({
-                            description => test_case,
-                            omit_expression => true
-                        }, {
-                            assert_debug_snapshot!(parser.errors);
-                    });
-                }
             }
             }
 
@@ -3810,4 +3658,6 @@ except *Exception as e:
     parser_test!(string, "test_data/inputs/string.py");
     parser_test!(subscript, "test_data/inputs/subscript.py");
     parser_test!(with, "test_data/inputs/with.py");
+    parser_test!(newlines, "test_data/inputs/newlines.py");
+    parser_test!(comments, "test_data/inputs/comments.py");
 }

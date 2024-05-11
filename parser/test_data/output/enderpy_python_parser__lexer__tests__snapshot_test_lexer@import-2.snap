@@ -1,0 +1,10 @@
+---
+source: parser/src/lexer/mod.rs
+description: import a.b.c
+---
+0,6: Import   (None)
+7,8: Identifier   (Str("a"))
+8,9: .   (None)
+9,10: Identifier   (Str("b"))
+10,11: .   (None)
+11,12: Identifier   (Str("c"))

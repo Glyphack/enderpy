@@ -1,6 +1,6 @@
 ---
 source: parser/src/parser/parser.rs
-description: "'d' f'a' 'b'"
+description: "f'a_{1}' 'b' "
 ---
 Module {
     node: Node {
@@ -20,18 +20,18 @@ Module {
                             Constant {
                                 node: Node {
                                     start: 0,
-                                    end: 3,
+                                    end: 4,
                                 },
-                                value: "d",
+                                value: "a_",
                             },
                         ),
                         Constant(
                             Constant {
                                 node: Node {
-                                    start: 0,
-                                    end: 7,
+                                    start: 5,
+                                    end: 6,
                                 },
-                                value: "a",
+                                value: 1,
                             },
                         ),
                         Constant(

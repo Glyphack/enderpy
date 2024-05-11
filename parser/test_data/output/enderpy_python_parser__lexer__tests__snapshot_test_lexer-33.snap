@@ -1,7 +1,0 @@
----
-source: parser/src/lexer/mod.rs
-description: "rf\"world\""
----
-0,3: RawFString               (Str("rf\""))
-3,8: FstringMiddle        (Str("world"))
-8,9: FStringEnd                 (Str("\""))

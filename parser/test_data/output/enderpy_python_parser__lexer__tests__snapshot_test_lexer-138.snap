@@ -1,8 +1,0 @@
----
-source: parser/src/lexer/mod.rs
-description: 11 33 1j 1_000_000j
----
-0,2: Integer                    (Number("11"))
-3,5: Integer                    (Number("33"))
-6,8: ImaginaryInteger  (Number("1j"))
-9,19: ImaginaryInteger(Number("1_000_000j"))

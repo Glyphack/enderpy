@@ -1,5 +1,0 @@
----
-source: parser/src/lexer/mod.rs
-description: "rb'''hello'''"
----
-0,13: RawBytes         (Str("rb'''hello'''"))

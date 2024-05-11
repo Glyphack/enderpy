@@ -15,17 +15,8 @@ impl Display for Token {
         let value = format!("({:?})", self.value);
         let start = self.start.to_string();
         let end = self.end.to_string();
-        let padding = 50 - (start.len() + end.len() + kind.len() + value.len());
 
-        write!(
-            f,
-            "{},{}: {:padding$}{}",
-            start,
-            end,
-            kind,
-            value,
-            padding = padding
-        )
+        write!(f, "{},{}: {}   {}", start, end, kind, value,)
     }
 }
 
@@ -120,14 +111,15 @@ pub enum Kind {
     BitAnd,     // &
     BitOr,      // |
     BitXor,     // ^
-    BitNot,     // ~
-    Walrus,     // :=
-    Less,       // <
-    Greater,    // >
-    LessEq,     // <=
-    GreaterEq,  // >=
-    Eq,         // ==
-    NotEq,      // !=
+    /// ~
+    BitNot,
+    Walrus,    // :=
+    Less,      // <
+    Greater,   // >
+    LessEq,    // <=
+    GreaterEq, // >=
+    Eq,        // ==
+    NotEq,     // !=
 
     // Delimiters
     LeftParen,        // (
@@ -241,6 +233,17 @@ impl Kind {
         | Kind::None => true,
         _ => false,
         }
+    }
+
+    /// Determines if the kind can be start of a python expression in grammar
+    pub fn is_star_expression(&self) -> bool {
+        if self.is_atom() {
+            return true;
+        }
+        matches!(
+            self,
+            Kind::Await | Kind::BitNot | Kind::Minus | Kind::Plus | Kind::Mul
+        )
     }
 }
 

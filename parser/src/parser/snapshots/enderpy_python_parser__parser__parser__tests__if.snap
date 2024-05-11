@@ -1,18 +1,18 @@
 ---
 source: parser/src/parser/parser.rs
-description: "if a: pass"
+description: "if a:\n    pass\n\nif a:\n\n    pass\n\nif a: pass\n\nif a:\n    pass;pass\n\nif a is b:\n            pass\n\nif a is b:\n                pass\nelif a is c:\n                pass\n\nif a is b:\n                pass\nelif a is c:\n                pass\nelse:\n                pass\n\n\nif a:\n    a = 1\nif a:\n    b = 1\n\nif self.adjust:\n    if True:\n        print(\"adjust is True and adjusted_daily_records_csv_path exists\")\n    else:\n        print(\"adjust is True\")\nelse:\n    print(\"adjust is False\")\n"
 ---
 Module {
     node: Node {
         start: 0,
-        end: 10,
+        end: 471,
     },
     body: [
         IfStatement(
             If {
                 node: Node {
                     start: 0,
-                    end: 10,
+                    end: 16,
                 },
                 test: Name(
                     Name {
@@ -27,13 +27,612 @@ Module {
                     Pass(
                         Pass {
                             node: Node {
-                                start: 6,
-                                end: 10,
+                                start: 10,
+                                end: 14,
                             },
                         },
                     ),
                 ],
                 orelse: [],
+            },
+        ),
+        IfStatement(
+            If {
+                node: Node {
+                    start: 16,
+                    end: 33,
+                },
+                test: Name(
+                    Name {
+                        node: Node {
+                            start: 19,
+                            end: 20,
+                        },
+                        id: "a",
+                    },
+                ),
+                body: [
+                    Pass(
+                        Pass {
+                            node: Node {
+                                start: 27,
+                                end: 31,
+                            },
+                        },
+                    ),
+                ],
+                orelse: [],
+            },
+        ),
+        IfStatement(
+            If {
+                node: Node {
+                    start: 33,
+                    end: 44,
+                },
+                test: Name(
+                    Name {
+                        node: Node {
+                            start: 36,
+                            end: 37,
+                        },
+                        id: "a",
+                    },
+                ),
+                body: [
+                    Pass(
+                        Pass {
+                            node: Node {
+                                start: 39,
+                                end: 43,
+                            },
+                        },
+                    ),
+                ],
+                orelse: [],
+            },
+        ),
+        IfStatement(
+            If {
+                node: Node {
+                    start: 45,
+                    end: 66,
+                },
+                test: Name(
+                    Name {
+                        node: Node {
+                            start: 48,
+                            end: 49,
+                        },
+                        id: "a",
+                    },
+                ),
+                body: [
+                    Pass(
+                        Pass {
+                            node: Node {
+                                start: 55,
+                                end: 59,
+                            },
+                        },
+                    ),
+                    Pass(
+                        Pass {
+                            node: Node {
+                                start: 60,
+                                end: 64,
+                            },
+                        },
+                    ),
+                ],
+                orelse: [],
+            },
+        ),
+        IfStatement(
+            If {
+                node: Node {
+                    start: 66,
+                    end: 95,
+                },
+                test: Compare(
+                    Compare {
+                        node: Node {
+                            start: 69,
+                            end: 75,
+                        },
+                        left: Name(
+                            Name {
+                                node: Node {
+                                    start: 69,
+                                    end: 70,
+                                },
+                                id: "a",
+                            },
+                        ),
+                        ops: [
+                            Is,
+                        ],
+                        comparators: [
+                            Name(
+                                Name {
+                                    node: Node {
+                                        start: 74,
+                                        end: 75,
+                                    },
+                                    id: "b",
+                                },
+                            ),
+                        ],
+                    },
+                ),
+                body: [
+                    Pass(
+                        Pass {
+                            node: Node {
+                                start: 89,
+                                end: 93,
+                            },
+                        },
+                    ),
+                ],
+                orelse: [],
+            },
+        ),
+        IfStatement(
+            If {
+                node: Node {
+                    start: 95,
+                    end: 162,
+                },
+                test: Compare(
+                    Compare {
+                        node: Node {
+                            start: 98,
+                            end: 104,
+                        },
+                        left: Name(
+                            Name {
+                                node: Node {
+                                    start: 98,
+                                    end: 99,
+                                },
+                                id: "a",
+                            },
+                        ),
+                        ops: [
+                            Is,
+                        ],
+                        comparators: [
+                            Name(
+                                Name {
+                                    node: Node {
+                                        start: 103,
+                                        end: 104,
+                                    },
+                                    id: "b",
+                                },
+                            ),
+                        ],
+                    },
+                ),
+                body: [
+                    Pass(
+                        Pass {
+                            node: Node {
+                                start: 122,
+                                end: 126,
+                            },
+                        },
+                    ),
+                ],
+                orelse: [
+                    IfStatement(
+                        If {
+                            node: Node {
+                                start: 127,
+                                end: 162,
+                            },
+                            test: Compare(
+                                Compare {
+                                    node: Node {
+                                        start: 132,
+                                        end: 138,
+                                    },
+                                    left: Name(
+                                        Name {
+                                            node: Node {
+                                                start: 132,
+                                                end: 133,
+                                            },
+                                            id: "a",
+                                        },
+                                    ),
+                                    ops: [
+                                        Is,
+                                    ],
+                                    comparators: [
+                                        Name(
+                                            Name {
+                                                node: Node {
+                                                    start: 137,
+                                                    end: 138,
+                                                },
+                                                id: "c",
+                                            },
+                                        ),
+                                    ],
+                                },
+                            ),
+                            body: [
+                                Pass(
+                                    Pass {
+                                        node: Node {
+                                            start: 156,
+                                            end: 160,
+                                        },
+                                    },
+                                ),
+                            ],
+                            orelse: [],
+                        },
+                    ),
+                ],
+            },
+        ),
+        IfStatement(
+            If {
+                node: Node {
+                    start: 162,
+                    end: 257,
+                },
+                test: Compare(
+                    Compare {
+                        node: Node {
+                            start: 165,
+                            end: 171,
+                        },
+                        left: Name(
+                            Name {
+                                node: Node {
+                                    start: 165,
+                                    end: 166,
+                                },
+                                id: "a",
+                            },
+                        ),
+                        ops: [
+                            Is,
+                        ],
+                        comparators: [
+                            Name(
+                                Name {
+                                    node: Node {
+                                        start: 170,
+                                        end: 171,
+                                    },
+                                    id: "b",
+                                },
+                            ),
+                        ],
+                    },
+                ),
+                body: [
+                    Pass(
+                        Pass {
+                            node: Node {
+                                start: 189,
+                                end: 193,
+                            },
+                        },
+                    ),
+                ],
+                orelse: [
+                    IfStatement(
+                        If {
+                            node: Node {
+                                start: 194,
+                                end: 228,
+                            },
+                            test: Compare(
+                                Compare {
+                                    node: Node {
+                                        start: 199,
+                                        end: 205,
+                                    },
+                                    left: Name(
+                                        Name {
+                                            node: Node {
+                                                start: 199,
+                                                end: 200,
+                                            },
+                                            id: "a",
+                                        },
+                                    ),
+                                    ops: [
+                                        Is,
+                                    ],
+                                    comparators: [
+                                        Name(
+                                            Name {
+                                                node: Node {
+                                                    start: 204,
+                                                    end: 205,
+                                                },
+                                                id: "c",
+                                            },
+                                        ),
+                                    ],
+                                },
+                            ),
+                            body: [
+                                Pass(
+                                    Pass {
+                                        node: Node {
+                                            start: 223,
+                                            end: 227,
+                                        },
+                                    },
+                                ),
+                            ],
+                            orelse: [
+                                Pass(
+                                    Pass {
+                                        node: Node {
+                                            start: 250,
+                                            end: 254,
+                                        },
+                                    },
+                                ),
+                            ],
+                        },
+                    ),
+                ],
+            },
+        ),
+        IfStatement(
+            If {
+                node: Node {
+                    start: 257,
+                    end: 273,
+                },
+                test: Name(
+                    Name {
+                        node: Node {
+                            start: 260,
+                            end: 261,
+                        },
+                        id: "a",
+                    },
+                ),
+                body: [
+                    AssignStatement(
+                        Assign {
+                            node: Node {
+                                start: 267,
+                                end: 272,
+                            },
+                            targets: [
+                                Name(
+                                    Name {
+                                        node: Node {
+                                            start: 267,
+                                            end: 268,
+                                        },
+                                        id: "a",
+                                    },
+                                ),
+                            ],
+                            value: Constant(
+                                Constant {
+                                    node: Node {
+                                        start: 271,
+                                        end: 272,
+                                    },
+                                    value: 1,
+                                },
+                            ),
+                        },
+                    ),
+                ],
+                orelse: [],
+            },
+        ),
+        IfStatement(
+            If {
+                node: Node {
+                    start: 273,
+                    end: 290,
+                },
+                test: Name(
+                    Name {
+                        node: Node {
+                            start: 276,
+                            end: 277,
+                        },
+                        id: "a",
+                    },
+                ),
+                body: [
+                    AssignStatement(
+                        Assign {
+                            node: Node {
+                                start: 283,
+                                end: 288,
+                            },
+                            targets: [
+                                Name(
+                                    Name {
+                                        node: Node {
+                                            start: 283,
+                                            end: 284,
+                                        },
+                                        id: "b",
+                                    },
+                                ),
+                            ],
+                            value: Constant(
+                                Constant {
+                                    node: Node {
+                                        start: 287,
+                                        end: 288,
+                                    },
+                                    value: 1,
+                                },
+                            ),
+                        },
+                    ),
+                ],
+                orelse: [],
+            },
+        ),
+        IfStatement(
+            If {
+                node: Node {
+                    start: 290,
+                    end: 471,
+                },
+                test: Attribute(
+                    Attribute {
+                        node: Node {
+                            start: 293,
+                            end: 304,
+                        },
+                        value: Name(
+                            Name {
+                                node: Node {
+                                    start: 293,
+                                    end: 297,
+                                },
+                                id: "self",
+                            },
+                        ),
+                        attr: "adjust",
+                    },
+                ),
+                body: [
+                    IfStatement(
+                        If {
+                            node: Node {
+                                start: 310,
+                                end: 436,
+                            },
+                            test: Constant(
+                                Constant {
+                                    node: Node {
+                                        start: 313,
+                                        end: 317,
+                                    },
+                                    value: true,
+                                },
+                            ),
+                            body: [
+                                ExpressionStatement(
+                                    Call(
+                                        Call {
+                                            node: Node {
+                                                start: 327,
+                                                end: 393,
+                                            },
+                                            func: Name(
+                                                Name {
+                                                    node: Node {
+                                                        start: 327,
+                                                        end: 332,
+                                                    },
+                                                    id: "print",
+                                                },
+                                            ),
+                                            args: [
+                                                Constant(
+                                                    Constant {
+                                                        node: Node {
+                                                            start: 333,
+                                                            end: 392,
+                                                        },
+                                                        value: "adjust is True and adjusted_daily_records_csv_path exists",
+                                                    },
+                                                ),
+                                            ],
+                                            keywords: [],
+                                            starargs: None,
+                                            kwargs: None,
+                                        },
+                                    ),
+                                ),
+                            ],
+                            orelse: [
+                                ExpressionStatement(
+                                    Call(
+                                        Call {
+                                            node: Node {
+                                                start: 412,
+                                                end: 435,
+                                            },
+                                            func: Name(
+                                                Name {
+                                                    node: Node {
+                                                        start: 412,
+                                                        end: 417,
+                                                    },
+                                                    id: "print",
+                                                },
+                                            ),
+                                            args: [
+                                                Constant(
+                                                    Constant {
+                                                        node: Node {
+                                                            start: 418,
+                                                            end: 434,
+                                                        },
+                                                        value: "adjust is True",
+                                                    },
+                                                ),
+                                            ],
+                                            keywords: [],
+                                            starargs: None,
+                                            kwargs: None,
+                                        },
+                                    ),
+                                ),
+                            ],
+                        },
+                    ),
+                ],
+                orelse: [
+                    ExpressionStatement(
+                        Call(
+                            Call {
+                                node: Node {
+                                    start: 446,
+                                    end: 470,
+                                },
+                                func: Name(
+                                    Name {
+                                        node: Node {
+                                            start: 446,
+                                            end: 451,
+                                        },
+                                        id: "print",
+                                    },
+                                ),
+                                args: [
+                                    Constant(
+                                        Constant {
+                                            node: Node {
+                                                start: 452,
+                                                end: 469,
+                                            },
+                                            value: "adjust is False",
+                                        },
+                                    ),
+                                ],
+                                keywords: [],
+                                starargs: None,
+                                kwargs: None,
+                            },
+                        ),
+                    ),
+                ],
             },
         ),
     ],

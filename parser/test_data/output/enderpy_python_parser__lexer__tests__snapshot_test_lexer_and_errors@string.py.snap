@@ -1,0 +1,24 @@
+---
+source: parser/src/lexer/mod.rs
+description: "x = 'simple text\\n'\n\nraw = r'raw_text\\n'\n\ny = \"\"\"multi\"\"\"\n\n# TODO: enable with better error handling in parser\n# raw_err = r'ss\n"
+input_file: parser/test_data/inputs/string.py
+---
+0,1: Identifier   (Str("x"))
+2,3: =   (None)
+4,19: StringLiteral   (Str("'simple text\\n'"))
+19,20: NewLine   (None)
+20,21: NewLine   (None)
+21,24: Identifier   (Str("raw"))
+25,26: =   (None)
+27,40: StringLiteral   (Str("r'raw_text\\n'"))
+40,41: NewLine   (None)
+41,42: NewLine   (None)
+42,43: Identifier   (Str("y"))
+44,45: =   (None)
+46,57: StringLiteral   (Str("\"\"\"multi\"\"\""))
+57,58: NewLine   (None)
+58,59: NewLine   (None)
+59,110: Comment   (Str("# TODO: enable with better error handling in parser"))
+110,111: NewLine   (None)
+111,127: Comment   (Str("# raw_err = r'ss"))
+127,128: NewLine   (None)

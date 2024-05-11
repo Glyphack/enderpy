@@ -1,0 +1,1850 @@
+---
+source: parser/src/parser/parser.rs
+description: "def a(): pass\n\ndef a():\n    pass\n\ndef a(a, b, c): pass\n\ndef a(a, *b, **c): pass\n\ndef a(a,\nb,\nc): pass\n\n@decor\ndef a(): pass\n\n@decor\ndef f(a: 'annotation', b=1, c=2, *d, e, f=3, **g): pass\n\ndef func() -> None: pass\n\nasync def a(): pass\n\nasync def a():\n    pass\n\nasync def a(a, b, c): pass\n\ndef a[T](): pass\n\ndef a[T, U](): pass\n\ndef a[T: U](): pass\n\ndef a[T: U, V: W](): pass\n\ndef a[*T](): pass\n\ndef a[T, *U](): pass\n\ndef a[T: U, *V](): pass\n\ndef a[T: U, V: W, *X](): pass\n\ndef a[**T](): pass\n\ndef a[T, **U](): pass\n\ndef a[T: U, **V](): pass\n\ndef a[T: U, V: W, **X](): pass\n\ndef a[T, *U, **V](): pass\n\ndef a[T: U, *V, **W](): pass\n\ndef dataclass_transform(\n    *,\n    eq_default: bool = True,\n    order_default: bool = False,\n    kw_only_default: bool = False,\n    frozen_default: bool = False,  # on 3.11, runtime accepts it as part of kwargs\n    # this next annotation cannot be parsed need fix\n    field_specifiers: tuple[type[Any] | Callable[..., Any], ...] = (),\n    **kwargs: Any,\n) -> IdentityFunction: ...\n"
+---
+Module {
+    node: Node {
+        start: 0,
+        end: 1013,
+    },
+    body: [
+        FunctionDef(
+            FunctionDef {
+                node: Node {
+                    start: 0,
+                    end: 14,
+                },
+                name: "a",
+                args: Arguments {
+                    node: Node {
+                        start: 6,
+                        end: 6,
+                    },
+                    posonlyargs: [],
+                    args: [],
+                    vararg: None,
+                    kwonlyargs: [],
+                    kw_defaults: [],
+                    kwarg: None,
+                    defaults: [],
+                },
+                body: [
+                    Pass(
+                        Pass {
+                            node: Node {
+                                start: 9,
+                                end: 13,
+                            },
+                        },
+                    ),
+                ],
+                decorator_list: [],
+                returns: None,
+                type_comment: None,
+                type_params: [],
+            },
+        ),
+        FunctionDef(
+            FunctionDef {
+                node: Node {
+                    start: 15,
+                    end: 34,
+                },
+                name: "a",
+                args: Arguments {
+                    node: Node {
+                        start: 21,
+                        end: 21,
+                    },
+                    posonlyargs: [],
+                    args: [],
+                    vararg: None,
+                    kwonlyargs: [],
+                    kw_defaults: [],
+                    kwarg: None,
+                    defaults: [],
+                },
+                body: [
+                    Pass(
+                        Pass {
+                            node: Node {
+                                start: 28,
+                                end: 32,
+                            },
+                        },
+                    ),
+                ],
+                decorator_list: [],
+                returns: None,
+                type_comment: None,
+                type_params: [],
+            },
+        ),
+        FunctionDef(
+            FunctionDef {
+                node: Node {
+                    start: 34,
+                    end: 55,
+                },
+                name: "a",
+                args: Arguments {
+                    node: Node {
+                        start: 40,
+                        end: 47,
+                    },
+                    posonlyargs: [],
+                    args: [
+                        Arg {
+                            node: Node {
+                                start: 40,
+                                end: 41,
+                            },
+                            arg: "a",
+                            annotation: None,
+                        },
+                        Arg {
+                            node: Node {
+                                start: 43,
+                                end: 44,
+                            },
+                            arg: "b",
+                            annotation: None,
+                        },
+                        Arg {
+                            node: Node {
+                                start: 46,
+                                end: 47,
+                            },
+                            arg: "c",
+                            annotation: None,
+                        },
+                    ],
+                    vararg: None,
+                    kwonlyargs: [],
+                    kw_defaults: [],
+                    kwarg: None,
+                    defaults: [],
+                },
+                body: [
+                    Pass(
+                        Pass {
+                            node: Node {
+                                start: 50,
+                                end: 54,
+                            },
+                        },
+                    ),
+                ],
+                decorator_list: [],
+                returns: None,
+                type_comment: None,
+                type_params: [],
+            },
+        ),
+        FunctionDef(
+            FunctionDef {
+                node: Node {
+                    start: 56,
+                    end: 80,
+                },
+                name: "a",
+                args: Arguments {
+                    node: Node {
+                        start: 62,
+                        end: 72,
+                    },
+                    posonlyargs: [],
+                    args: [
+                        Arg {
+                            node: Node {
+                                start: 62,
+                                end: 63,
+                            },
+                            arg: "a",
+                            annotation: None,
+                        },
+                    ],
+                    vararg: Some(
+                        Arg {
+                            node: Node {
+                                start: 66,
+                                end: 67,
+                            },
+                            arg: "b",
+                            annotation: None,
+                        },
+                    ),
+                    kwonlyargs: [],
+                    kw_defaults: [],
+                    kwarg: Some(
+                        Arg {
+                            node: Node {
+                                start: 71,
+                                end: 72,
+                            },
+                            arg: "c",
+                            annotation: None,
+                        },
+                    ),
+                    defaults: [],
+                },
+                body: [
+                    Pass(
+                        Pass {
+                            node: Node {
+                                start: 75,
+                                end: 79,
+                            },
+                        },
+                    ),
+                ],
+                decorator_list: [],
+                returns: None,
+                type_comment: None,
+                type_params: [],
+            },
+        ),
+        FunctionDef(
+            FunctionDef {
+                node: Node {
+                    start: 81,
+                    end: 102,
+                },
+                name: "a",
+                args: Arguments {
+                    node: Node {
+                        start: 87,
+                        end: 94,
+                    },
+                    posonlyargs: [],
+                    args: [
+                        Arg {
+                            node: Node {
+                                start: 87,
+                                end: 88,
+                            },
+                            arg: "a",
+                            annotation: None,
+                        },
+                        Arg {
+                            node: Node {
+                                start: 90,
+                                end: 91,
+                            },
+                            arg: "b",
+                            annotation: None,
+                        },
+                        Arg {
+                            node: Node {
+                                start: 93,
+                                end: 94,
+                            },
+                            arg: "c",
+                            annotation: None,
+                        },
+                    ],
+                    vararg: None,
+                    kwonlyargs: [],
+                    kw_defaults: [],
+                    kwarg: None,
+                    defaults: [],
+                },
+                body: [
+                    Pass(
+                        Pass {
+                            node: Node {
+                                start: 97,
+                                end: 101,
+                            },
+                        },
+                    ),
+                ],
+                decorator_list: [],
+                returns: None,
+                type_comment: None,
+                type_params: [],
+            },
+        ),
+        FunctionDef(
+            FunctionDef {
+                node: Node {
+                    start: 110,
+                    end: 124,
+                },
+                name: "a",
+                args: Arguments {
+                    node: Node {
+                        start: 116,
+                        end: 116,
+                    },
+                    posonlyargs: [],
+                    args: [],
+                    vararg: None,
+                    kwonlyargs: [],
+                    kw_defaults: [],
+                    kwarg: None,
+                    defaults: [],
+                },
+                body: [
+                    Pass(
+                        Pass {
+                            node: Node {
+                                start: 119,
+                                end: 123,
+                            },
+                        },
+                    ),
+                ],
+                decorator_list: [
+                    Name(
+                        Name {
+                            node: Node {
+                                start: 104,
+                                end: 109,
+                            },
+                            id: "decor",
+                        },
+                    ),
+                ],
+                returns: None,
+                type_comment: None,
+                type_params: [],
+            },
+        ),
+        FunctionDef(
+            FunctionDef {
+                node: Node {
+                    start: 132,
+                    end: 188,
+                },
+                name: "f",
+                args: Arguments {
+                    node: Node {
+                        start: 138,
+                        end: 180,
+                    },
+                    posonlyargs: [],
+                    args: [
+                        Arg {
+                            node: Node {
+                                start: 138,
+                                end: 153,
+                            },
+                            arg: "a",
+                            annotation: Some(
+                                Constant(
+                                    Constant {
+                                        node: Node {
+                                            start: 141,
+                                            end: 153,
+                                        },
+                                        value: "annotation",
+                                    },
+                                ),
+                            ),
+                        },
+                        Arg {
+                            node: Node {
+                                start: 155,
+                                end: 158,
+                            },
+                            arg: "b",
+                            annotation: None,
+                        },
+                        Arg {
+                            node: Node {
+                                start: 160,
+                                end: 163,
+                            },
+                            arg: "c",
+                            annotation: None,
+                        },
+                    ],
+                    vararg: Some(
+                        Arg {
+                            node: Node {
+                                start: 166,
+                                end: 167,
+                            },
+                            arg: "d",
+                            annotation: None,
+                        },
+                    ),
+                    kwonlyargs: [
+                        Arg {
+                            node: Node {
+                                start: 169,
+                                end: 170,
+                            },
+                            arg: "e",
+                            annotation: None,
+                        },
+                        Arg {
+                            node: Node {
+                                start: 172,
+                                end: 175,
+                            },
+                            arg: "f",
+                            annotation: None,
+                        },
+                    ],
+                    kw_defaults: [
+                        None,
+                        Some(
+                            Constant(
+                                Constant {
+                                    node: Node {
+                                        start: 174,
+                                        end: 175,
+                                    },
+                                    value: 3,
+                                },
+                            ),
+                        ),
+                    ],
+                    kwarg: Some(
+                        Arg {
+                            node: Node {
+                                start: 179,
+                                end: 180,
+                            },
+                            arg: "g",
+                            annotation: None,
+                        },
+                    ),
+                    defaults: [
+                        Constant(
+                            Constant {
+                                node: Node {
+                                    start: 157,
+                                    end: 158,
+                                },
+                                value: 1,
+                            },
+                        ),
+                        Constant(
+                            Constant {
+                                node: Node {
+                                    start: 162,
+                                    end: 163,
+                                },
+                                value: 2,
+                            },
+                        ),
+                    ],
+                },
+                body: [
+                    Pass(
+                        Pass {
+                            node: Node {
+                                start: 183,
+                                end: 187,
+                            },
+                        },
+                    ),
+                ],
+                decorator_list: [
+                    Name(
+                        Name {
+                            node: Node {
+                                start: 126,
+                                end: 131,
+                            },
+                            id: "decor",
+                        },
+                    ),
+                ],
+                returns: None,
+                type_comment: None,
+                type_params: [],
+            },
+        ),
+        FunctionDef(
+            FunctionDef {
+                node: Node {
+                    start: 189,
+                    end: 214,
+                },
+                name: "func",
+                args: Arguments {
+                    node: Node {
+                        start: 198,
+                        end: 198,
+                    },
+                    posonlyargs: [],
+                    args: [],
+                    vararg: None,
+                    kwonlyargs: [],
+                    kw_defaults: [],
+                    kwarg: None,
+                    defaults: [],
+                },
+                body: [
+                    Pass(
+                        Pass {
+                            node: Node {
+                                start: 209,
+                                end: 213,
+                            },
+                        },
+                    ),
+                ],
+                decorator_list: [],
+                returns: Some(
+                    Constant(
+                        Constant {
+                            node: Node {
+                                start: 203,
+                                end: 207,
+                            },
+                            value: None,
+                        },
+                    ),
+                ),
+                type_comment: None,
+                type_params: [],
+            },
+        ),
+        AsyncFunctionDef(
+            AsyncFunctionDef {
+                node: Node {
+                    start: 215,
+                    end: 235,
+                },
+                name: "a",
+                args: Arguments {
+                    node: Node {
+                        start: 227,
+                        end: 227,
+                    },
+                    posonlyargs: [],
+                    args: [],
+                    vararg: None,
+                    kwonlyargs: [],
+                    kw_defaults: [],
+                    kwarg: None,
+                    defaults: [],
+                },
+                body: [
+                    Pass(
+                        Pass {
+                            node: Node {
+                                start: 230,
+                                end: 234,
+                            },
+                        },
+                    ),
+                ],
+                decorator_list: [],
+                returns: None,
+                type_comment: None,
+                type_params: [],
+            },
+        ),
+        AsyncFunctionDef(
+            AsyncFunctionDef {
+                node: Node {
+                    start: 236,
+                    end: 261,
+                },
+                name: "a",
+                args: Arguments {
+                    node: Node {
+                        start: 248,
+                        end: 248,
+                    },
+                    posonlyargs: [],
+                    args: [],
+                    vararg: None,
+                    kwonlyargs: [],
+                    kw_defaults: [],
+                    kwarg: None,
+                    defaults: [],
+                },
+                body: [
+                    Pass(
+                        Pass {
+                            node: Node {
+                                start: 255,
+                                end: 259,
+                            },
+                        },
+                    ),
+                ],
+                decorator_list: [],
+                returns: None,
+                type_comment: None,
+                type_params: [],
+            },
+        ),
+        AsyncFunctionDef(
+            AsyncFunctionDef {
+                node: Node {
+                    start: 261,
+                    end: 288,
+                },
+                name: "a",
+                args: Arguments {
+                    node: Node {
+                        start: 273,
+                        end: 280,
+                    },
+                    posonlyargs: [],
+                    args: [
+                        Arg {
+                            node: Node {
+                                start: 273,
+                                end: 274,
+                            },
+                            arg: "a",
+                            annotation: None,
+                        },
+                        Arg {
+                            node: Node {
+                                start: 276,
+                                end: 277,
+                            },
+                            arg: "b",
+                            annotation: None,
+                        },
+                        Arg {
+                            node: Node {
+                                start: 279,
+                                end: 280,
+                            },
+                            arg: "c",
+                            annotation: None,
+                        },
+                    ],
+                    vararg: None,
+                    kwonlyargs: [],
+                    kw_defaults: [],
+                    kwarg: None,
+                    defaults: [],
+                },
+                body: [
+                    Pass(
+                        Pass {
+                            node: Node {
+                                start: 283,
+                                end: 287,
+                            },
+                        },
+                    ),
+                ],
+                decorator_list: [],
+                returns: None,
+                type_comment: None,
+                type_params: [],
+            },
+        ),
+        FunctionDef(
+            FunctionDef {
+                node: Node {
+                    start: 289,
+                    end: 306,
+                },
+                name: "a",
+                args: Arguments {
+                    node: Node {
+                        start: 298,
+                        end: 298,
+                    },
+                    posonlyargs: [],
+                    args: [],
+                    vararg: None,
+                    kwonlyargs: [],
+                    kw_defaults: [],
+                    kwarg: None,
+                    defaults: [],
+                },
+                body: [
+                    Pass(
+                        Pass {
+                            node: Node {
+                                start: 301,
+                                end: 305,
+                            },
+                        },
+                    ),
+                ],
+                decorator_list: [],
+                returns: None,
+                type_comment: None,
+                type_params: [
+                    TypeVar(
+                        TypeVar {
+                            node: Node {
+                                start: 295,
+                                end: 296,
+                            },
+                            name: "T",
+                            bound: None,
+                        },
+                    ),
+                ],
+            },
+        ),
+        FunctionDef(
+            FunctionDef {
+                node: Node {
+                    start: 307,
+                    end: 327,
+                },
+                name: "a",
+                args: Arguments {
+                    node: Node {
+                        start: 319,
+                        end: 319,
+                    },
+                    posonlyargs: [],
+                    args: [],
+                    vararg: None,
+                    kwonlyargs: [],
+                    kw_defaults: [],
+                    kwarg: None,
+                    defaults: [],
+                },
+                body: [
+                    Pass(
+                        Pass {
+                            node: Node {
+                                start: 322,
+                                end: 326,
+                            },
+                        },
+                    ),
+                ],
+                decorator_list: [],
+                returns: None,
+                type_comment: None,
+                type_params: [
+                    TypeVar(
+                        TypeVar {
+                            node: Node {
+                                start: 313,
+                                end: 314,
+                            },
+                            name: "T",
+                            bound: None,
+                        },
+                    ),
+                    TypeVar(
+                        TypeVar {
+                            node: Node {
+                                start: 316,
+                                end: 317,
+                            },
+                            name: "U",
+                            bound: None,
+                        },
+                    ),
+                ],
+            },
+        ),
+        FunctionDef(
+            FunctionDef {
+                node: Node {
+                    start: 328,
+                    end: 348,
+                },
+                name: "a",
+                args: Arguments {
+                    node: Node {
+                        start: 340,
+                        end: 340,
+                    },
+                    posonlyargs: [],
+                    args: [],
+                    vararg: None,
+                    kwonlyargs: [],
+                    kw_defaults: [],
+                    kwarg: None,
+                    defaults: [],
+                },
+                body: [
+                    Pass(
+                        Pass {
+                            node: Node {
+                                start: 343,
+                                end: 347,
+                            },
+                        },
+                    ),
+                ],
+                decorator_list: [],
+                returns: None,
+                type_comment: None,
+                type_params: [
+                    TypeVar(
+                        TypeVar {
+                            node: Node {
+                                start: 334,
+                                end: 338,
+                            },
+                            name: "T",
+                            bound: Some(
+                                Name(
+                                    Name {
+                                        node: Node {
+                                            start: 337,
+                                            end: 338,
+                                        },
+                                        id: "U",
+                                    },
+                                ),
+                            ),
+                        },
+                    ),
+                ],
+            },
+        ),
+        FunctionDef(
+            FunctionDef {
+                node: Node {
+                    start: 349,
+                    end: 375,
+                },
+                name: "a",
+                args: Arguments {
+                    node: Node {
+                        start: 367,
+                        end: 367,
+                    },
+                    posonlyargs: [],
+                    args: [],
+                    vararg: None,
+                    kwonlyargs: [],
+                    kw_defaults: [],
+                    kwarg: None,
+                    defaults: [],
+                },
+                body: [
+                    Pass(
+                        Pass {
+                            node: Node {
+                                start: 370,
+                                end: 374,
+                            },
+                        },
+                    ),
+                ],
+                decorator_list: [],
+                returns: None,
+                type_comment: None,
+                type_params: [
+                    TypeVar(
+                        TypeVar {
+                            node: Node {
+                                start: 355,
+                                end: 359,
+                            },
+                            name: "T",
+                            bound: Some(
+                                Name(
+                                    Name {
+                                        node: Node {
+                                            start: 358,
+                                            end: 359,
+                                        },
+                                        id: "U",
+                                    },
+                                ),
+                            ),
+                        },
+                    ),
+                    TypeVar(
+                        TypeVar {
+                            node: Node {
+                                start: 361,
+                                end: 365,
+                            },
+                            name: "V",
+                            bound: Some(
+                                Name(
+                                    Name {
+                                        node: Node {
+                                            start: 364,
+                                            end: 365,
+                                        },
+                                        id: "W",
+                                    },
+                                ),
+                            ),
+                        },
+                    ),
+                ],
+            },
+        ),
+        FunctionDef(
+            FunctionDef {
+                node: Node {
+                    start: 376,
+                    end: 394,
+                },
+                name: "a",
+                args: Arguments {
+                    node: Node {
+                        start: 386,
+                        end: 386,
+                    },
+                    posonlyargs: [],
+                    args: [],
+                    vararg: None,
+                    kwonlyargs: [],
+                    kw_defaults: [],
+                    kwarg: None,
+                    defaults: [],
+                },
+                body: [
+                    Pass(
+                        Pass {
+                            node: Node {
+                                start: 389,
+                                end: 393,
+                            },
+                        },
+                    ),
+                ],
+                decorator_list: [],
+                returns: None,
+                type_comment: None,
+                type_params: [
+                    TypeVarTuple(
+                        TypeVarTuple {
+                            node: Node {
+                                start: 382,
+                                end: 384,
+                            },
+                            name: "T",
+                        },
+                    ),
+                ],
+            },
+        ),
+        FunctionDef(
+            FunctionDef {
+                node: Node {
+                    start: 395,
+                    end: 416,
+                },
+                name: "a",
+                args: Arguments {
+                    node: Node {
+                        start: 408,
+                        end: 408,
+                    },
+                    posonlyargs: [],
+                    args: [],
+                    vararg: None,
+                    kwonlyargs: [],
+                    kw_defaults: [],
+                    kwarg: None,
+                    defaults: [],
+                },
+                body: [
+                    Pass(
+                        Pass {
+                            node: Node {
+                                start: 411,
+                                end: 415,
+                            },
+                        },
+                    ),
+                ],
+                decorator_list: [],
+                returns: None,
+                type_comment: None,
+                type_params: [
+                    TypeVar(
+                        TypeVar {
+                            node: Node {
+                                start: 401,
+                                end: 402,
+                            },
+                            name: "T",
+                            bound: None,
+                        },
+                    ),
+                    TypeVarTuple(
+                        TypeVarTuple {
+                            node: Node {
+                                start: 404,
+                                end: 406,
+                            },
+                            name: "U",
+                        },
+                    ),
+                ],
+            },
+        ),
+        FunctionDef(
+            FunctionDef {
+                node: Node {
+                    start: 417,
+                    end: 441,
+                },
+                name: "a",
+                args: Arguments {
+                    node: Node {
+                        start: 433,
+                        end: 433,
+                    },
+                    posonlyargs: [],
+                    args: [],
+                    vararg: None,
+                    kwonlyargs: [],
+                    kw_defaults: [],
+                    kwarg: None,
+                    defaults: [],
+                },
+                body: [
+                    Pass(
+                        Pass {
+                            node: Node {
+                                start: 436,
+                                end: 440,
+                            },
+                        },
+                    ),
+                ],
+                decorator_list: [],
+                returns: None,
+                type_comment: None,
+                type_params: [
+                    TypeVar(
+                        TypeVar {
+                            node: Node {
+                                start: 423,
+                                end: 427,
+                            },
+                            name: "T",
+                            bound: Some(
+                                Name(
+                                    Name {
+                                        node: Node {
+                                            start: 426,
+                                            end: 427,
+                                        },
+                                        id: "U",
+                                    },
+                                ),
+                            ),
+                        },
+                    ),
+                    TypeVarTuple(
+                        TypeVarTuple {
+                            node: Node {
+                                start: 429,
+                                end: 431,
+                            },
+                            name: "V",
+                        },
+                    ),
+                ],
+            },
+        ),
+        FunctionDef(
+            FunctionDef {
+                node: Node {
+                    start: 442,
+                    end: 472,
+                },
+                name: "a",
+                args: Arguments {
+                    node: Node {
+                        start: 464,
+                        end: 464,
+                    },
+                    posonlyargs: [],
+                    args: [],
+                    vararg: None,
+                    kwonlyargs: [],
+                    kw_defaults: [],
+                    kwarg: None,
+                    defaults: [],
+                },
+                body: [
+                    Pass(
+                        Pass {
+                            node: Node {
+                                start: 467,
+                                end: 471,
+                            },
+                        },
+                    ),
+                ],
+                decorator_list: [],
+                returns: None,
+                type_comment: None,
+                type_params: [
+                    TypeVar(
+                        TypeVar {
+                            node: Node {
+                                start: 448,
+                                end: 452,
+                            },
+                            name: "T",
+                            bound: Some(
+                                Name(
+                                    Name {
+                                        node: Node {
+                                            start: 451,
+                                            end: 452,
+                                        },
+                                        id: "U",
+                                    },
+                                ),
+                            ),
+                        },
+                    ),
+                    TypeVar(
+                        TypeVar {
+                            node: Node {
+                                start: 454,
+                                end: 458,
+                            },
+                            name: "V",
+                            bound: Some(
+                                Name(
+                                    Name {
+                                        node: Node {
+                                            start: 457,
+                                            end: 458,
+                                        },
+                                        id: "W",
+                                    },
+                                ),
+                            ),
+                        },
+                    ),
+                    TypeVarTuple(
+                        TypeVarTuple {
+                            node: Node {
+                                start: 460,
+                                end: 462,
+                            },
+                            name: "X",
+                        },
+                    ),
+                ],
+            },
+        ),
+        FunctionDef(
+            FunctionDef {
+                node: Node {
+                    start: 473,
+                    end: 492,
+                },
+                name: "a",
+                args: Arguments {
+                    node: Node {
+                        start: 484,
+                        end: 484,
+                    },
+                    posonlyargs: [],
+                    args: [],
+                    vararg: None,
+                    kwonlyargs: [],
+                    kw_defaults: [],
+                    kwarg: None,
+                    defaults: [],
+                },
+                body: [
+                    Pass(
+                        Pass {
+                            node: Node {
+                                start: 487,
+                                end: 491,
+                            },
+                        },
+                    ),
+                ],
+                decorator_list: [],
+                returns: None,
+                type_comment: None,
+                type_params: [
+                    ParamSpec(
+                        ParamSpec {
+                            node: Node {
+                                start: 479,
+                                end: 482,
+                            },
+                            name: "T",
+                        },
+                    ),
+                ],
+            },
+        ),
+        FunctionDef(
+            FunctionDef {
+                node: Node {
+                    start: 493,
+                    end: 515,
+                },
+                name: "a",
+                args: Arguments {
+                    node: Node {
+                        start: 507,
+                        end: 507,
+                    },
+                    posonlyargs: [],
+                    args: [],
+                    vararg: None,
+                    kwonlyargs: [],
+                    kw_defaults: [],
+                    kwarg: None,
+                    defaults: [],
+                },
+                body: [
+                    Pass(
+                        Pass {
+                            node: Node {
+                                start: 510,
+                                end: 514,
+                            },
+                        },
+                    ),
+                ],
+                decorator_list: [],
+                returns: None,
+                type_comment: None,
+                type_params: [
+                    TypeVar(
+                        TypeVar {
+                            node: Node {
+                                start: 499,
+                                end: 500,
+                            },
+                            name: "T",
+                            bound: None,
+                        },
+                    ),
+                    ParamSpec(
+                        ParamSpec {
+                            node: Node {
+                                start: 502,
+                                end: 505,
+                            },
+                            name: "U",
+                        },
+                    ),
+                ],
+            },
+        ),
+        FunctionDef(
+            FunctionDef {
+                node: Node {
+                    start: 516,
+                    end: 541,
+                },
+                name: "a",
+                args: Arguments {
+                    node: Node {
+                        start: 533,
+                        end: 533,
+                    },
+                    posonlyargs: [],
+                    args: [],
+                    vararg: None,
+                    kwonlyargs: [],
+                    kw_defaults: [],
+                    kwarg: None,
+                    defaults: [],
+                },
+                body: [
+                    Pass(
+                        Pass {
+                            node: Node {
+                                start: 536,
+                                end: 540,
+                            },
+                        },
+                    ),
+                ],
+                decorator_list: [],
+                returns: None,
+                type_comment: None,
+                type_params: [
+                    TypeVar(
+                        TypeVar {
+                            node: Node {
+                                start: 522,
+                                end: 526,
+                            },
+                            name: "T",
+                            bound: Some(
+                                Name(
+                                    Name {
+                                        node: Node {
+                                            start: 525,
+                                            end: 526,
+                                        },
+                                        id: "U",
+                                    },
+                                ),
+                            ),
+                        },
+                    ),
+                    ParamSpec(
+                        ParamSpec {
+                            node: Node {
+                                start: 528,
+                                end: 531,
+                            },
+                            name: "V",
+                        },
+                    ),
+                ],
+            },
+        ),
+        FunctionDef(
+            FunctionDef {
+                node: Node {
+                    start: 542,
+                    end: 573,
+                },
+                name: "a",
+                args: Arguments {
+                    node: Node {
+                        start: 565,
+                        end: 565,
+                    },
+                    posonlyargs: [],
+                    args: [],
+                    vararg: None,
+                    kwonlyargs: [],
+                    kw_defaults: [],
+                    kwarg: None,
+                    defaults: [],
+                },
+                body: [
+                    Pass(
+                        Pass {
+                            node: Node {
+                                start: 568,
+                                end: 572,
+                            },
+                        },
+                    ),
+                ],
+                decorator_list: [],
+                returns: None,
+                type_comment: None,
+                type_params: [
+                    TypeVar(
+                        TypeVar {
+                            node: Node {
+                                start: 548,
+                                end: 552,
+                            },
+                            name: "T",
+                            bound: Some(
+                                Name(
+                                    Name {
+                                        node: Node {
+                                            start: 551,
+                                            end: 552,
+                                        },
+                                        id: "U",
+                                    },
+                                ),
+                            ),
+                        },
+                    ),
+                    TypeVar(
+                        TypeVar {
+                            node: Node {
+                                start: 554,
+                                end: 558,
+                            },
+                            name: "V",
+                            bound: Some(
+                                Name(
+                                    Name {
+                                        node: Node {
+                                            start: 557,
+                                            end: 558,
+                                        },
+                                        id: "W",
+                                    },
+                                ),
+                            ),
+                        },
+                    ),
+                    ParamSpec(
+                        ParamSpec {
+                            node: Node {
+                                start: 560,
+                                end: 563,
+                            },
+                            name: "X",
+                        },
+                    ),
+                ],
+            },
+        ),
+        FunctionDef(
+            FunctionDef {
+                node: Node {
+                    start: 574,
+                    end: 600,
+                },
+                name: "a",
+                args: Arguments {
+                    node: Node {
+                        start: 592,
+                        end: 592,
+                    },
+                    posonlyargs: [],
+                    args: [],
+                    vararg: None,
+                    kwonlyargs: [],
+                    kw_defaults: [],
+                    kwarg: None,
+                    defaults: [],
+                },
+                body: [
+                    Pass(
+                        Pass {
+                            node: Node {
+                                start: 595,
+                                end: 599,
+                            },
+                        },
+                    ),
+                ],
+                decorator_list: [],
+                returns: None,
+                type_comment: None,
+                type_params: [
+                    TypeVar(
+                        TypeVar {
+                            node: Node {
+                                start: 580,
+                                end: 581,
+                            },
+                            name: "T",
+                            bound: None,
+                        },
+                    ),
+                    TypeVarTuple(
+                        TypeVarTuple {
+                            node: Node {
+                                start: 583,
+                                end: 585,
+                            },
+                            name: "U",
+                        },
+                    ),
+                    ParamSpec(
+                        ParamSpec {
+                            node: Node {
+                                start: 587,
+                                end: 590,
+                            },
+                            name: "V",
+                        },
+                    ),
+                ],
+            },
+        ),
+        FunctionDef(
+            FunctionDef {
+                node: Node {
+                    start: 601,
+                    end: 630,
+                },
+                name: "a",
+                args: Arguments {
+                    node: Node {
+                        start: 622,
+                        end: 622,
+                    },
+                    posonlyargs: [],
+                    args: [],
+                    vararg: None,
+                    kwonlyargs: [],
+                    kw_defaults: [],
+                    kwarg: None,
+                    defaults: [],
+                },
+                body: [
+                    Pass(
+                        Pass {
+                            node: Node {
+                                start: 625,
+                                end: 629,
+                            },
+                        },
+                    ),
+                ],
+                decorator_list: [],
+                returns: None,
+                type_comment: None,
+                type_params: [
+                    TypeVar(
+                        TypeVar {
+                            node: Node {
+                                start: 607,
+                                end: 611,
+                            },
+                            name: "T",
+                            bound: Some(
+                                Name(
+                                    Name {
+                                        node: Node {
+                                            start: 610,
+                                            end: 611,
+                                        },
+                                        id: "U",
+                                    },
+                                ),
+                            ),
+                        },
+                    ),
+                    TypeVarTuple(
+                        TypeVarTuple {
+                            node: Node {
+                                start: 613,
+                                end: 615,
+                            },
+                            name: "V",
+                        },
+                    ),
+                    ParamSpec(
+                        ParamSpec {
+                            node: Node {
+                                start: 617,
+                                end: 620,
+                            },
+                            name: "W",
+                        },
+                    ),
+                ],
+            },
+        ),
+        FunctionDef(
+            FunctionDef {
+                node: Node {
+                    start: 631,
+                    end: 1013,
+                },
+                name: "dataclass_transform",
+                args: Arguments {
+                    node: Node {
+                        start: 660,
+                        end: 986,
+                    },
+                    posonlyargs: [],
+                    args: [],
+                    vararg: None,
+                    kwonlyargs: [
+                        Arg {
+                            node: Node {
+                                start: 667,
+                                end: 690,
+                            },
+                            arg: "eq_default",
+                            annotation: Some(
+                                Name(
+                                    Name {
+                                        node: Node {
+                                            start: 679,
+                                            end: 683,
+                                        },
+                                        id: "bool",
+                                    },
+                                ),
+                            ),
+                        },
+                        Arg {
+                            node: Node {
+                                start: 696,
+                                end: 723,
+                            },
+                            arg: "order_default",
+                            annotation: Some(
+                                Name(
+                                    Name {
+                                        node: Node {
+                                            start: 711,
+                                            end: 715,
+                                        },
+                                        id: "bool",
+                                    },
+                                ),
+                            ),
+                        },
+                        Arg {
+                            node: Node {
+                                start: 729,
+                                end: 758,
+                            },
+                            arg: "kw_only_default",
+                            annotation: Some(
+                                Name(
+                                    Name {
+                                        node: Node {
+                                            start: 746,
+                                            end: 750,
+                                        },
+                                        id: "bool",
+                                    },
+                                ),
+                            ),
+                        },
+                        Arg {
+                            node: Node {
+                                start: 764,
+                                end: 792,
+                            },
+                            arg: "frozen_default",
+                            annotation: Some(
+                                Name(
+                                    Name {
+                                        node: Node {
+                                            start: 780,
+                                            end: 784,
+                                        },
+                                        id: "bool",
+                                    },
+                                ),
+                            ),
+                        },
+                        Arg {
+                            node: Node {
+                                start: 900,
+                                end: 965,
+                            },
+                            arg: "field_specifiers",
+                            annotation: Some(
+                                Subscript(
+                                    Subscript {
+                                        node: Node {
+                                            start: 918,
+                                            end: 960,
+                                        },
+                                        value: Name(
+                                            Name {
+                                                node: Node {
+                                                    start: 918,
+                                                    end: 923,
+                                                },
+                                                id: "tuple",
+                                            },
+                                        ),
+                                        slice: Tuple(
+                                            Tuple {
+                                                node: Node {
+                                                    start: 924,
+                                                    end: 960,
+                                                },
+                                                elements: [
+                                                    BinOp(
+                                                        BinOp {
+                                                            node: Node {
+                                                                start: 924,
+                                                                end: 954,
+                                                            },
+                                                            op: BitOr,
+                                                            left: Subscript(
+                                                                Subscript {
+                                                                    node: Node {
+                                                                        start: 924,
+                                                                        end: 933,
+                                                                    },
+                                                                    value: Name(
+                                                                        Name {
+                                                                            node: Node {
+                                                                                start: 924,
+                                                                                end: 928,
+                                                                            },
+                                                                            id: "type",
+                                                                        },
+                                                                    ),
+                                                                    slice: Name(
+                                                                        Name {
+                                                                            node: Node {
+                                                                                start: 929,
+                                                                                end: 932,
+                                                                            },
+                                                                            id: "Any",
+                                                                        },
+                                                                    ),
+                                                                },
+                                                            ),
+                                                            right: Subscript(
+                                                                Subscript {
+                                                                    node: Node {
+                                                                        start: 936,
+                                                                        end: 954,
+                                                                    },
+                                                                    value: Name(
+                                                                        Name {
+                                                                            node: Node {
+                                                                                start: 936,
+                                                                                end: 944,
+                                                                            },
+                                                                            id: "Callable",
+                                                                        },
+                                                                    ),
+                                                                    slice: Tuple(
+                                                                        Tuple {
+                                                                            node: Node {
+                                                                                start: 945,
+                                                                                end: 954,
+                                                                            },
+                                                                            elements: [
+                                                                                Constant(
+                                                                                    Constant {
+                                                                                        node: Node {
+                                                                                            start: 945,
+                                                                                            end: 948,
+                                                                                        },
+                                                                                        value: ...,
+                                                                                    },
+                                                                                ),
+                                                                                Name(
+                                                                                    Name {
+                                                                                        node: Node {
+                                                                                            start: 950,
+                                                                                            end: 953,
+                                                                                        },
+                                                                                        id: "Any",
+                                                                                    },
+                                                                                ),
+                                                                            ],
+                                                                        },
+                                                                    ),
+                                                                },
+                                                            ),
+                                                        },
+                                                    ),
+                                                    Constant(
+                                                        Constant {
+                                                            node: Node {
+                                                                start: 956,
+                                                                end: 959,
+                                                            },
+                                                            value: ...,
+                                                        },
+                                                    ),
+                                                ],
+                                            },
+                                        ),
+                                    },
+                                ),
+                            ),
+                        },
+                    ],
+                    kw_defaults: [
+                        Some(
+                            Constant(
+                                Constant {
+                                    node: Node {
+                                        start: 686,
+                                        end: 690,
+                                    },
+                                    value: true,
+                                },
+                            ),
+                        ),
+                        Some(
+                            Constant(
+                                Constant {
+                                    node: Node {
+                                        start: 718,
+                                        end: 723,
+                                    },
+                                    value: false,
+                                },
+                            ),
+                        ),
+                        Some(
+                            Constant(
+                                Constant {
+                                    node: Node {
+                                        start: 753,
+                                        end: 758,
+                                    },
+                                    value: false,
+                                },
+                            ),
+                        ),
+                        Some(
+                            Constant(
+                                Constant {
+                                    node: Node {
+                                        start: 787,
+                                        end: 792,
+                                    },
+                                    value: false,
+                                },
+                            ),
+                        ),
+                        Some(
+                            Tuple(
+                                Tuple {
+                                    node: Node {
+                                        start: 963,
+                                        end: 965,
+                                    },
+                                    elements: [],
+                                },
+                            ),
+                        ),
+                    ],
+                    kwarg: Some(
+                        Arg {
+                            node: Node {
+                                start: 973,
+                                end: 984,
+                            },
+                            arg: "kwargs",
+                            annotation: Some(
+                                Name(
+                                    Name {
+                                        node: Node {
+                                            start: 981,
+                                            end: 984,
+                                        },
+                                        id: "Any",
+                                    },
+                                ),
+                            ),
+                        },
+                    ),
+                    defaults: [],
+                },
+                body: [
+                    ExpressionStatement(
+                        Constant(
+                            Constant {
+                                node: Node {
+                                    start: 1009,
+                                    end: 1012,
+                                },
+                                value: ...,
+                            },
+                        ),
+                    ),
+                ],
+                decorator_list: [],
+                returns: Some(
+                    Name(
+                        Name {
+                            node: Node {
+                                start: 991,
+                                end: 1007,
+                            },
+                            id: "IdentityFunction",
+                        },
+                    ),
+                ),
+                type_comment: None,
+                type_params: [],
+            },
+        ),
+    ],
+}

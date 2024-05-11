@@ -78,19 +78,7 @@ impl Lexer {
         let kind = match self.next_kind() {
             Ok(kind) => kind,
             Err(e) => {
-                return Token {
-                    kind: Kind::Error,
-                    value: TokenValue::Str(e.to_string()),
-                    start,
-                    end: match e {
-                        //  If the string is not terminated it means that we consumed all the
-                        // characters  in the source code and we are at the
-                        // end of the file  so we return the position of
-                        // character before the end of the file
-                        LexError::StringNotTerminated => self.current - 1,
-                        _ => self.current,
-                    },
-                };
+                panic!("Invalid token {e}");
             }
         };
 
@@ -667,7 +655,7 @@ impl Lexer {
                         '_' => {
                             self.next();
                         }
-                        _ => return Err(LexError::InvalidDigitInBinaryLiteral(c)),
+                        _ => break,
                     }
                 }
                 return Ok(Kind::Binary);
@@ -682,7 +670,7 @@ impl Lexer {
                         '_' => {
                             self.next();
                         }
-                        _ => return Err(LexError::InvalidDigitInOctalLiteral(c)),
+                        _ => break,
                     }
                 }
                 return Ok(Kind::Octal);
@@ -697,7 +685,7 @@ impl Lexer {
                         '_' => {
                             self.next();
                         }
-                        _ => return Err(LexError::InvalidDigitInHexadecimalLiteral(c)),
+                        _ => break,
                     }
                 }
                 return Ok(Kind::Hexadecimal);
@@ -729,7 +717,7 @@ impl Lexer {
                                     Some('0'..='9') => {
                                         self.next();
                                     }
-                                    _ => return Err(LexError::InvalidDigitInDecimalLiteral),
+                                    _ => break,
                                 }
                             }
                             'j' | 'J' => {
@@ -967,6 +955,7 @@ mod tests {
                 tokens.push(token);
             }
             let mut settings = insta::Settings::clone_current();
+            settings.set_snapshot_suffix(format!("{snap_name}-{i}"));
             settings.set_snapshot_path("../../test_data/output/");
             settings.set_description(test_input.to_string());
             settings.set_omit_expression(true);
@@ -1274,6 +1263,7 @@ def",
     }
 
     #[test]
+    #[should_panic]
     fn test_unterminated_string_double_quotes() {
         snapshot_test_lexer(
             "unterminated-string",
@@ -1309,15 +1299,5 @@ def",
             let test_case = fs::read_to_string(path).unwrap();
             snapshot_test_lexer_and_errors(&test_case);
         })
-    }
-
-    #[test]
-    fn test_one_liners() {
-        glob!("../../test_data", "inputs/one_liners/*.py", |path| {
-            let input = fs::read_to_string(path).unwrap();
-            for test_case in input.split("\n\n") {
-                snapshot_test_lexer_and_errors(test_case);
-            }
-        });
     }
 }

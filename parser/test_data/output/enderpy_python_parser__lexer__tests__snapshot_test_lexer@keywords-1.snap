@@ -1,0 +1,12 @@
+---
+source: parser/src/lexer/mod.rs
+description: break class continue def del elif else except
+---
+0,5: Break   (None)
+6,11: Class   (None)
+12,20: Continue   (None)
+21,24: Def   (None)
+25,28: Del   (None)
+29,33: Elif   (None)
+34,38: Else   (None)
+39,45: Except   (None)

@@ -1,5 +1,0 @@
----
-source: parser/src/lexer/mod.rs
-description: "\"\"\"hello\"\"\""
----
-0,11: StringLiteral(Str("\"\"\"hello\"\"\""))

@@ -1,7 +1,0 @@
----
-source: parser/src/lexer/mod.rs
-description: "f\"oh_{{hey}}\""
----
-0,2: FStringStart            (Str("f\""))
-2,12: FstringMiddle  (Str("oh_{{hey}}"))
-12,13: FStringEnd               (Str("\""))

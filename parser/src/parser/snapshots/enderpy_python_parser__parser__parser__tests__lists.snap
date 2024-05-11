@@ -1,0 +1,731 @@
+---
+source: parser/src/parser/parser.rs
+description: "\n[a, b, c]\n\n[a,\nb, c],\n\n[a\n, b, c],\n\n[a,\nb,\n    c],\n\n[a,\n],\n\n[a, b, c,]\n\nmonth_names = ['Januari', 'Februari', 'Maart',      # These are the\n   'April',   'Mei',      'June',       # Dutch names\n   'July',    'Augustus', 'September',  # for the months\n   'October', 'November', 'December']   # of the year,\n\n[a for a in b]\n\n[a for a in b if c]\n\n[a for a in b if c if d]\n\n[a for a in b for c in d]\n\n[a for a in b if c for d in e]\n"
+---
+Module {
+    node: Node {
+        start: 0,
+        end: 429,
+    },
+    body: [
+        ExpressionStatement(
+            List(
+                List {
+                    node: Node {
+                        start: 1,
+                        end: 10,
+                    },
+                    elements: [
+                        Name(
+                            Name {
+                                node: Node {
+                                    start: 2,
+                                    end: 3,
+                                },
+                                id: "a",
+                            },
+                        ),
+                        Name(
+                            Name {
+                                node: Node {
+                                    start: 5,
+                                    end: 6,
+                                },
+                                id: "b",
+                            },
+                        ),
+                        Name(
+                            Name {
+                                node: Node {
+                                    start: 8,
+                                    end: 9,
+                                },
+                                id: "c",
+                            },
+                        ),
+                    ],
+                },
+            ),
+        ),
+        ExpressionStatement(
+            Tuple(
+                Tuple {
+                    node: Node {
+                        start: 12,
+                        end: 22,
+                    },
+                    elements: [
+                        List(
+                            List {
+                                node: Node {
+                                    start: 12,
+                                    end: 21,
+                                },
+                                elements: [
+                                    Name(
+                                        Name {
+                                            node: Node {
+                                                start: 13,
+                                                end: 14,
+                                            },
+                                            id: "a",
+                                        },
+                                    ),
+                                    Name(
+                                        Name {
+                                            node: Node {
+                                                start: 16,
+                                                end: 17,
+                                            },
+                                            id: "b",
+                                        },
+                                    ),
+                                    Name(
+                                        Name {
+                                            node: Node {
+                                                start: 19,
+                                                end: 20,
+                                            },
+                                            id: "c",
+                                        },
+                                    ),
+                                ],
+                            },
+                        ),
+                    ],
+                },
+            ),
+        ),
+        ExpressionStatement(
+            Tuple(
+                Tuple {
+                    node: Node {
+                        start: 24,
+                        end: 35,
+                    },
+                    elements: [
+                        List(
+                            List {
+                                node: Node {
+                                    start: 24,
+                                    end: 34,
+                                },
+                                elements: [
+                                    Name(
+                                        Name {
+                                            node: Node {
+                                                start: 25,
+                                                end: 27,
+                                            },
+                                            id: "a",
+                                        },
+                                    ),
+                                    Name(
+                                        Name {
+                                            node: Node {
+                                                start: 29,
+                                                end: 30,
+                                            },
+                                            id: "b",
+                                        },
+                                    ),
+                                    Name(
+                                        Name {
+                                            node: Node {
+                                                start: 32,
+                                                end: 33,
+                                            },
+                                            id: "c",
+                                        },
+                                    ),
+                                ],
+                            },
+                        ),
+                    ],
+                },
+            ),
+        ),
+        ExpressionStatement(
+            Tuple(
+                Tuple {
+                    node: Node {
+                        start: 37,
+                        end: 51,
+                    },
+                    elements: [
+                        List(
+                            List {
+                                node: Node {
+                                    start: 37,
+                                    end: 50,
+                                },
+                                elements: [
+                                    Name(
+                                        Name {
+                                            node: Node {
+                                                start: 38,
+                                                end: 39,
+                                            },
+                                            id: "a",
+                                        },
+                                    ),
+                                    Name(
+                                        Name {
+                                            node: Node {
+                                                start: 41,
+                                                end: 42,
+                                            },
+                                            id: "b",
+                                        },
+                                    ),
+                                    Name(
+                                        Name {
+                                            node: Node {
+                                                start: 48,
+                                                end: 49,
+                                            },
+                                            id: "c",
+                                        },
+                                    ),
+                                ],
+                            },
+                        ),
+                    ],
+                },
+            ),
+        ),
+        ExpressionStatement(
+            Tuple(
+                Tuple {
+                    node: Node {
+                        start: 53,
+                        end: 59,
+                    },
+                    elements: [
+                        List(
+                            List {
+                                node: Node {
+                                    start: 53,
+                                    end: 58,
+                                },
+                                elements: [
+                                    Name(
+                                        Name {
+                                            node: Node {
+                                                start: 54,
+                                                end: 55,
+                                            },
+                                            id: "a",
+                                        },
+                                    ),
+                                ],
+                            },
+                        ),
+                    ],
+                },
+            ),
+        ),
+        ExpressionStatement(
+            List(
+                List {
+                    node: Node {
+                        start: 61,
+                        end: 71,
+                    },
+                    elements: [
+                        Name(
+                            Name {
+                                node: Node {
+                                    start: 62,
+                                    end: 63,
+                                },
+                                id: "a",
+                            },
+                        ),
+                        Name(
+                            Name {
+                                node: Node {
+                                    start: 65,
+                                    end: 66,
+                                },
+                                id: "b",
+                            },
+                        ),
+                        Name(
+                            Name {
+                                node: Node {
+                                    start: 68,
+                                    end: 69,
+                                },
+                                id: "c",
+                            },
+                        ),
+                    ],
+                },
+            ),
+        ),
+        AssignStatement(
+            Assign {
+                node: Node {
+                    start: 73,
+                    end: 306,
+                },
+                targets: [
+                    Name(
+                        Name {
+                            node: Node {
+                                start: 73,
+                                end: 84,
+                            },
+                            id: "month_names",
+                        },
+                    ),
+                ],
+                value: List(
+                    List {
+                        node: Node {
+                            start: 87,
+                            end: 306,
+                        },
+                        elements: [
+                            Constant(
+                                Constant {
+                                    node: Node {
+                                        start: 88,
+                                        end: 97,
+                                    },
+                                    value: "Januari",
+                                },
+                            ),
+                            Constant(
+                                Constant {
+                                    node: Node {
+                                        start: 99,
+                                        end: 109,
+                                    },
+                                    value: "Februari",
+                                },
+                            ),
+                            Constant(
+                                Constant {
+                                    node: Node {
+                                        start: 111,
+                                        end: 118,
+                                    },
+                                    value: "Maart",
+                                },
+                            ),
+                            Constant(
+                                Constant {
+                                    node: Node {
+                                        start: 144,
+                                        end: 151,
+                                    },
+                                    value: "April",
+                                },
+                            ),
+                            Constant(
+                                Constant {
+                                    node: Node {
+                                        start: 155,
+                                        end: 160,
+                                    },
+                                    value: "Mei",
+                                },
+                            ),
+                            Constant(
+                                Constant {
+                                    node: Node {
+                                        start: 167,
+                                        end: 173,
+                                    },
+                                    value: "June",
+                                },
+                            ),
+                            Constant(
+                                Constant {
+                                    node: Node {
+                                        start: 198,
+                                        end: 204,
+                                    },
+                                    value: "July",
+                                },
+                            ),
+                            Constant(
+                                Constant {
+                                    node: Node {
+                                        start: 209,
+                                        end: 219,
+                                    },
+                                    value: "Augustus",
+                                },
+                            ),
+                            Constant(
+                                Constant {
+                                    node: Node {
+                                        start: 221,
+                                        end: 232,
+                                    },
+                                    value: "September",
+                                },
+                            ),
+                            Constant(
+                                Constant {
+                                    node: Node {
+                                        start: 255,
+                                        end: 264,
+                                    },
+                                    value: "October",
+                                },
+                            ),
+                            Constant(
+                                Constant {
+                                    node: Node {
+                                        start: 266,
+                                        end: 276,
+                                    },
+                                    value: "November",
+                                },
+                            ),
+                            Constant(
+                                Constant {
+                                    node: Node {
+                                        start: 278,
+                                        end: 288,
+                                    },
+                                    value: "December",
+                                },
+                            ),
+                        ],
+                    },
+                ),
+            },
+        ),
+        ExpressionStatement(
+            ListComp(
+                ListComp {
+                    node: Node {
+                        start: 308,
+                        end: 322,
+                    },
+                    element: Name(
+                        Name {
+                            node: Node {
+                                start: 309,
+                                end: 310,
+                            },
+                            id: "a",
+                        },
+                    ),
+                    generators: [
+                        Comprehension {
+                            node: Node {
+                                start: 311,
+                                end: 321,
+                            },
+                            target: Name(
+                                Name {
+                                    node: Node {
+                                        start: 315,
+                                        end: 316,
+                                    },
+                                    id: "a",
+                                },
+                            ),
+                            iter: Name(
+                                Name {
+                                    node: Node {
+                                        start: 320,
+                                        end: 321,
+                                    },
+                                    id: "b",
+                                },
+                            ),
+                            ifs: [],
+                            is_async: false,
+                        },
+                    ],
+                },
+            ),
+        ),
+        ExpressionStatement(
+            ListComp(
+                ListComp {
+                    node: Node {
+                        start: 324,
+                        end: 343,
+                    },
+                    element: Name(
+                        Name {
+                            node: Node {
+                                start: 325,
+                                end: 326,
+                            },
+                            id: "a",
+                        },
+                    ),
+                    generators: [
+                        Comprehension {
+                            node: Node {
+                                start: 327,
+                                end: 342,
+                            },
+                            target: Name(
+                                Name {
+                                    node: Node {
+                                        start: 331,
+                                        end: 332,
+                                    },
+                                    id: "a",
+                                },
+                            ),
+                            iter: Name(
+                                Name {
+                                    node: Node {
+                                        start: 336,
+                                        end: 337,
+                                    },
+                                    id: "b",
+                                },
+                            ),
+                            ifs: [
+                                Name(
+                                    Name {
+                                        node: Node {
+                                            start: 341,
+                                            end: 342,
+                                        },
+                                        id: "c",
+                                    },
+                                ),
+                            ],
+                            is_async: false,
+                        },
+                    ],
+                },
+            ),
+        ),
+        ExpressionStatement(
+            ListComp(
+                ListComp {
+                    node: Node {
+                        start: 345,
+                        end: 369,
+                    },
+                    element: Name(
+                        Name {
+                            node: Node {
+                                start: 346,
+                                end: 347,
+                            },
+                            id: "a",
+                        },
+                    ),
+                    generators: [
+                        Comprehension {
+                            node: Node {
+                                start: 348,
+                                end: 368,
+                            },
+                            target: Name(
+                                Name {
+                                    node: Node {
+                                        start: 352,
+                                        end: 353,
+                                    },
+                                    id: "a",
+                                },
+                            ),
+                            iter: Name(
+                                Name {
+                                    node: Node {
+                                        start: 357,
+                                        end: 358,
+                                    },
+                                    id: "b",
+                                },
+                            ),
+                            ifs: [
+                                Name(
+                                    Name {
+                                        node: Node {
+                                            start: 362,
+                                            end: 363,
+                                        },
+                                        id: "c",
+                                    },
+                                ),
+                                Name(
+                                    Name {
+                                        node: Node {
+                                            start: 367,
+                                            end: 368,
+                                        },
+                                        id: "d",
+                                    },
+                                ),
+                            ],
+                            is_async: false,
+                        },
+                    ],
+                },
+            ),
+        ),
+        ExpressionStatement(
+            ListComp(
+                ListComp {
+                    node: Node {
+                        start: 371,
+                        end: 396,
+                    },
+                    element: Name(
+                        Name {
+                            node: Node {
+                                start: 372,
+                                end: 373,
+                            },
+                            id: "a",
+                        },
+                    ),
+                    generators: [
+                        Comprehension {
+                            node: Node {
+                                start: 374,
+                                end: 384,
+                            },
+                            target: Name(
+                                Name {
+                                    node: Node {
+                                        start: 378,
+                                        end: 379,
+                                    },
+                                    id: "a",
+                                },
+                            ),
+                            iter: Name(
+                                Name {
+                                    node: Node {
+                                        start: 383,
+                                        end: 384,
+                                    },
+                                    id: "b",
+                                },
+                            ),
+                            ifs: [],
+                            is_async: false,
+                        },
+                        Comprehension {
+                            node: Node {
+                                start: 385,
+                                end: 395,
+                            },
+                            target: Name(
+                                Name {
+                                    node: Node {
+                                        start: 389,
+                                        end: 390,
+                                    },
+                                    id: "c",
+                                },
+                            ),
+                            iter: Name(
+                                Name {
+                                    node: Node {
+                                        start: 394,
+                                        end: 395,
+                                    },
+                                    id: "d",
+                                },
+                            ),
+                            ifs: [],
+                            is_async: false,
+                        },
+                    ],
+                },
+            ),
+        ),
+        ExpressionStatement(
+            ListComp(
+                ListComp {
+                    node: Node {
+                        start: 398,
+                        end: 428,
+                    },
+                    element: Name(
+                        Name {
+                            node: Node {
+                                start: 399,
+                                end: 400,
+                            },
+                            id: "a",
+                        },
+                    ),
+                    generators: [
+                        Comprehension {
+                            node: Node {
+                                start: 401,
+                                end: 416,
+                            },
+                            target: Name(
+                                Name {
+                                    node: Node {
+                                        start: 405,
+                                        end: 406,
+                                    },
+                                    id: "a",
+                                },
+                            ),
+                            iter: Name(
+                                Name {
+                                    node: Node {
+                                        start: 410,
+                                        end: 411,
+                                    },
+                                    id: "b",
+                                },
+                            ),
+                            ifs: [
+                                Name(
+                                    Name {
+                                        node: Node {
+                                            start: 415,
+                                            end: 416,
+                                        },
+                                        id: "c",
+                                    },
+                                ),
+                            ],
+                            is_async: false,
+                        },
+                        Comprehension {
+                            node: Node {
+                                start: 417,
+                                end: 427,
+                            },
+                            target: Name(
+                                Name {
+                                    node: Node {
+                                        start: 421,
+                                        end: 422,
+                                    },
+                                    id: "d",
+                                },
+                            ),
+                            iter: Name(
+                                Name {
+                                    node: Node {
+                                        start: 426,
+                                        end: 427,
+                                    },
+                                    id: "e",
+                                },
+                            ),
+                            ifs: [],
+                            is_async: false,
+                        },
+                    ],
+                },
+            ),
+        ),
+    ],
+}

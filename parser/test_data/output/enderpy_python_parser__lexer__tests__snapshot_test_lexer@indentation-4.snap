@@ -1,0 +1,18 @@
+---
+source: parser/src/lexer/mod.rs
+description: "if a:\n\n    f = c\n\n    # Path: test_local.py\n"
+---
+0,2: If   (None)
+3,4: Identifier   (Str("a"))
+4,5: :   (None)
+5,6: NewLine   (None)
+6,7: NewLine   (None)
+7,11: Indent   (Indent(1))
+11,12: Identifier   (Str("f"))
+13,14: =   (None)
+15,16: Identifier   (Str("c"))
+16,17: NewLine   (None)
+17,18: NewLine   (None)
+22,43: Comment   (Str("# Path: test_local.py"))
+43,44: NewLine   (None)
+44,44: Dedent   (Indent(1))

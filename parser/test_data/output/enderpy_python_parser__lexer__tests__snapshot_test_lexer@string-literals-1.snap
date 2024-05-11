@@ -1,0 +1,5 @@
+---
+source: parser/src/lexer/mod.rs
+description: "\"world\""
+---
+0,7: StringLiteral   (Str("\"world\""))

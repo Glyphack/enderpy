@@ -1,5 +1,0 @@
----
-source: parser/src/lexer/mod.rs
-description: "u\"world\""
----
-0,8: Unicode               (Str("u\"world\""))

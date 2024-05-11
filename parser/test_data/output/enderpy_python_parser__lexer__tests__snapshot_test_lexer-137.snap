@@ -1,9 +1,0 @@
----
-source: parser/src/lexer/mod.rs
-description: 0e0 0e-1 0e+2 0e+3j 0e+3J
----
-0,3: ExponentFloat       (Number("0e0"))
-4,8: ExponentFloat      (Number("0e-1"))
-9,13: ExponentFloat     (Number("0e+2"))
-14,19: ImaginaryExponentFloat(Number("0e+3j"))
-20,25: ImaginaryExponentFloat(Number("0e+3J"))

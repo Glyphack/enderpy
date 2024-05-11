@@ -1,0 +1,5 @@
+---
+source: parser/src/lexer/mod.rs
+description: "0xc"
+---
+0,3: Hexadecimal   (Number("0xc"))

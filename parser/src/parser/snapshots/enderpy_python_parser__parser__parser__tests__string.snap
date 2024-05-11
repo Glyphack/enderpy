@@ -1,0 +1,96 @@
+---
+source: parser/src/parser/parser.rs
+description: "x = 'simple text\\n'\n\nraw = r'raw_text\\n'\n\ny = \"\"\"multi\"\"\"\n\n# TODO: enable with better error handling in parser\n# raw_err = r'ss\n"
+---
+Module {
+    node: Node {
+        start: 0,
+        end: 128,
+    },
+    body: [
+        AssignStatement(
+            Assign {
+                node: Node {
+                    start: 0,
+                    end: 19,
+                },
+                targets: [
+                    Name(
+                        Name {
+                            node: Node {
+                                start: 0,
+                                end: 1,
+                            },
+                            id: "x",
+                        },
+                    ),
+                ],
+                value: Constant(
+                    Constant {
+                        node: Node {
+                            start: 4,
+                            end: 19,
+                        },
+                        value: "simple text\n",
+                    },
+                ),
+            },
+        ),
+        AssignStatement(
+            Assign {
+                node: Node {
+                    start: 21,
+                    end: 40,
+                },
+                targets: [
+                    Name(
+                        Name {
+                            node: Node {
+                                start: 21,
+                                end: 24,
+                            },
+                            id: "raw",
+                        },
+                    ),
+                ],
+                value: Constant(
+                    Constant {
+                        node: Node {
+                            start: 27,
+                            end: 40,
+                        },
+                        value: "raw_text\\n",
+                    },
+                ),
+            },
+        ),
+        AssignStatement(
+            Assign {
+                node: Node {
+                    start: 42,
+                    end: 57,
+                },
+                targets: [
+                    Name(
+                        Name {
+                            node: Node {
+                                start: 42,
+                                end: 43,
+                            },
+                            id: "y",
+                        },
+                    ),
+                ],
+                value: Constant(
+                    Constant {
+                        node: Node {
+                            start: 46,
+                            end: 57,
+                        },
+                        value: "multi",
+                    },
+                ),
+            },
+        ),
+    ],
+}

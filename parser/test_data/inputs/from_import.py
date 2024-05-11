@@ -12,4 +12,5 @@ from ....a import b
 from .....a import b
 from ......a import b
 from .......a import b
-from ...
+# TODO(parser): enable after error handling
+# from ...

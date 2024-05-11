@@ -1,40 +1,21 @@
 ---
 source: parser/src/parser/parser.rs
-description: "('a'\n            'b', 'c')"
+description: "('a'\n                'b'\n'c')"
 ---
 Module {
     node: Node {
         start: 0,
-        end: 26,
+        end: 29,
     },
     body: [
         ExpressionStatement(
-            Tuple(
-                Tuple {
+            Constant(
+                Constant {
                     node: Node {
-                        start: 0,
-                        end: 25,
+                        start: 1,
+                        end: 28,
                     },
-                    elements: [
-                        Constant(
-                            Constant {
-                                node: Node {
-                                    start: 1,
-                                    end: 20,
-                                },
-                                value: "ab",
-                            },
-                        ),
-                        Constant(
-                            Constant {
-                                node: Node {
-                                    start: 22,
-                                    end: 25,
-                                },
-                                value: "c",
-                            },
-                        ),
-                    ],
+                    value: "abc",
                 },
             ),
         ),

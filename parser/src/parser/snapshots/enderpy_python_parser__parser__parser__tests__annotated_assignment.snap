@@ -1,0 +1,541 @@
+---
+source: parser/src/parser/parser.rs
+description: "a: int = 1\n\nb: tuple[int, int] = 1, 2\n\nc: tuple[str, int] = \"1\", 2, \n\nd: tuple[int, int] = b\n\ne: tuple[int, int]\n\nf: tuple[int, int] = e\n\ng: tuple[int,\n         int] = 1, 2\n\n"
+---
+Module {
+    node: Node {
+        start: 0,
+        end: 174,
+    },
+    body: [
+        AnnAssignStatement(
+            AnnAssign {
+                node: Node {
+                    start: 0,
+                    end: 10,
+                },
+                target: Name(
+                    Name {
+                        node: Node {
+                            start: 0,
+                            end: 1,
+                        },
+                        id: "a",
+                    },
+                ),
+                annotation: Name(
+                    Name {
+                        node: Node {
+                            start: 3,
+                            end: 6,
+                        },
+                        id: "int",
+                    },
+                ),
+                value: Some(
+                    Constant(
+                        Constant {
+                            node: Node {
+                                start: 9,
+                                end: 10,
+                            },
+                            value: 1,
+                        },
+                    ),
+                ),
+                simple: true,
+            },
+        ),
+        AnnAssignStatement(
+            AnnAssign {
+                node: Node {
+                    start: 12,
+                    end: 37,
+                },
+                target: Name(
+                    Name {
+                        node: Node {
+                            start: 12,
+                            end: 13,
+                        },
+                        id: "b",
+                    },
+                ),
+                annotation: Subscript(
+                    Subscript {
+                        node: Node {
+                            start: 15,
+                            end: 30,
+                        },
+                        value: Name(
+                            Name {
+                                node: Node {
+                                    start: 15,
+                                    end: 20,
+                                },
+                                id: "tuple",
+                            },
+                        ),
+                        slice: Tuple(
+                            Tuple {
+                                node: Node {
+                                    start: 21,
+                                    end: 30,
+                                },
+                                elements: [
+                                    Name(
+                                        Name {
+                                            node: Node {
+                                                start: 21,
+                                                end: 24,
+                                            },
+                                            id: "int",
+                                        },
+                                    ),
+                                    Name(
+                                        Name {
+                                            node: Node {
+                                                start: 26,
+                                                end: 29,
+                                            },
+                                            id: "int",
+                                        },
+                                    ),
+                                ],
+                            },
+                        ),
+                    },
+                ),
+                value: Some(
+                    Tuple(
+                        Tuple {
+                            node: Node {
+                                start: 33,
+                                end: 37,
+                            },
+                            elements: [
+                                Constant(
+                                    Constant {
+                                        node: Node {
+                                            start: 33,
+                                            end: 34,
+                                        },
+                                        value: 1,
+                                    },
+                                ),
+                                Constant(
+                                    Constant {
+                                        node: Node {
+                                            start: 36,
+                                            end: 37,
+                                        },
+                                        value: 2,
+                                    },
+                                ),
+                            ],
+                        },
+                    ),
+                ),
+                simple: true,
+            },
+        ),
+        AnnAssignStatement(
+            AnnAssign {
+                node: Node {
+                    start: 39,
+                    end: 67,
+                },
+                target: Name(
+                    Name {
+                        node: Node {
+                            start: 39,
+                            end: 40,
+                        },
+                        id: "c",
+                    },
+                ),
+                annotation: Subscript(
+                    Subscript {
+                        node: Node {
+                            start: 42,
+                            end: 57,
+                        },
+                        value: Name(
+                            Name {
+                                node: Node {
+                                    start: 42,
+                                    end: 47,
+                                },
+                                id: "tuple",
+                            },
+                        ),
+                        slice: Tuple(
+                            Tuple {
+                                node: Node {
+                                    start: 48,
+                                    end: 57,
+                                },
+                                elements: [
+                                    Name(
+                                        Name {
+                                            node: Node {
+                                                start: 48,
+                                                end: 51,
+                                            },
+                                            id: "str",
+                                        },
+                                    ),
+                                    Name(
+                                        Name {
+                                            node: Node {
+                                                start: 53,
+                                                end: 56,
+                                            },
+                                            id: "int",
+                                        },
+                                    ),
+                                ],
+                            },
+                        ),
+                    },
+                ),
+                value: Some(
+                    Tuple(
+                        Tuple {
+                            node: Node {
+                                start: 60,
+                                end: 67,
+                            },
+                            elements: [
+                                Constant(
+                                    Constant {
+                                        node: Node {
+                                            start: 60,
+                                            end: 63,
+                                        },
+                                        value: "1",
+                                    },
+                                ),
+                                Constant(
+                                    Constant {
+                                        node: Node {
+                                            start: 65,
+                                            end: 66,
+                                        },
+                                        value: 2,
+                                    },
+                                ),
+                            ],
+                        },
+                    ),
+                ),
+                simple: true,
+            },
+        ),
+        AnnAssignStatement(
+            AnnAssign {
+                node: Node {
+                    start: 70,
+                    end: 92,
+                },
+                target: Name(
+                    Name {
+                        node: Node {
+                            start: 70,
+                            end: 71,
+                        },
+                        id: "d",
+                    },
+                ),
+                annotation: Subscript(
+                    Subscript {
+                        node: Node {
+                            start: 73,
+                            end: 88,
+                        },
+                        value: Name(
+                            Name {
+                                node: Node {
+                                    start: 73,
+                                    end: 78,
+                                },
+                                id: "tuple",
+                            },
+                        ),
+                        slice: Tuple(
+                            Tuple {
+                                node: Node {
+                                    start: 79,
+                                    end: 88,
+                                },
+                                elements: [
+                                    Name(
+                                        Name {
+                                            node: Node {
+                                                start: 79,
+                                                end: 82,
+                                            },
+                                            id: "int",
+                                        },
+                                    ),
+                                    Name(
+                                        Name {
+                                            node: Node {
+                                                start: 84,
+                                                end: 87,
+                                            },
+                                            id: "int",
+                                        },
+                                    ),
+                                ],
+                            },
+                        ),
+                    },
+                ),
+                value: Some(
+                    Name(
+                        Name {
+                            node: Node {
+                                start: 91,
+                                end: 92,
+                            },
+                            id: "b",
+                        },
+                    ),
+                ),
+                simple: true,
+            },
+        ),
+        AnnAssignStatement(
+            AnnAssign {
+                node: Node {
+                    start: 94,
+                    end: 112,
+                },
+                target: Name(
+                    Name {
+                        node: Node {
+                            start: 94,
+                            end: 95,
+                        },
+                        id: "e",
+                    },
+                ),
+                annotation: Subscript(
+                    Subscript {
+                        node: Node {
+                            start: 97,
+                            end: 112,
+                        },
+                        value: Name(
+                            Name {
+                                node: Node {
+                                    start: 97,
+                                    end: 102,
+                                },
+                                id: "tuple",
+                            },
+                        ),
+                        slice: Tuple(
+                            Tuple {
+                                node: Node {
+                                    start: 103,
+                                    end: 112,
+                                },
+                                elements: [
+                                    Name(
+                                        Name {
+                                            node: Node {
+                                                start: 103,
+                                                end: 106,
+                                            },
+                                            id: "int",
+                                        },
+                                    ),
+                                    Name(
+                                        Name {
+                                            node: Node {
+                                                start: 108,
+                                                end: 111,
+                                            },
+                                            id: "int",
+                                        },
+                                    ),
+                                ],
+                            },
+                        ),
+                    },
+                ),
+                value: None,
+                simple: true,
+            },
+        ),
+        AnnAssignStatement(
+            AnnAssign {
+                node: Node {
+                    start: 114,
+                    end: 136,
+                },
+                target: Name(
+                    Name {
+                        node: Node {
+                            start: 114,
+                            end: 115,
+                        },
+                        id: "f",
+                    },
+                ),
+                annotation: Subscript(
+                    Subscript {
+                        node: Node {
+                            start: 117,
+                            end: 132,
+                        },
+                        value: Name(
+                            Name {
+                                node: Node {
+                                    start: 117,
+                                    end: 122,
+                                },
+                                id: "tuple",
+                            },
+                        ),
+                        slice: Tuple(
+                            Tuple {
+                                node: Node {
+                                    start: 123,
+                                    end: 132,
+                                },
+                                elements: [
+                                    Name(
+                                        Name {
+                                            node: Node {
+                                                start: 123,
+                                                end: 126,
+                                            },
+                                            id: "int",
+                                        },
+                                    ),
+                                    Name(
+                                        Name {
+                                            node: Node {
+                                                start: 128,
+                                                end: 131,
+                                            },
+                                            id: "int",
+                                        },
+                                    ),
+                                ],
+                            },
+                        ),
+                    },
+                ),
+                value: Some(
+                    Name(
+                        Name {
+                            node: Node {
+                                start: 135,
+                                end: 136,
+                            },
+                            id: "e",
+                        },
+                    ),
+                ),
+                simple: true,
+            },
+        ),
+        AnnAssignStatement(
+            AnnAssign {
+                node: Node {
+                    start: 138,
+                    end: 172,
+                },
+                target: Name(
+                    Name {
+                        node: Node {
+                            start: 138,
+                            end: 139,
+                        },
+                        id: "g",
+                    },
+                ),
+                annotation: Subscript(
+                    Subscript {
+                        node: Node {
+                            start: 141,
+                            end: 165,
+                        },
+                        value: Name(
+                            Name {
+                                node: Node {
+                                    start: 141,
+                                    end: 146,
+                                },
+                                id: "tuple",
+                            },
+                        ),
+                        slice: Tuple(
+                            Tuple {
+                                node: Node {
+                                    start: 147,
+                                    end: 165,
+                                },
+                                elements: [
+                                    Name(
+                                        Name {
+                                            node: Node {
+                                                start: 147,
+                                                end: 150,
+                                            },
+                                            id: "int",
+                                        },
+                                    ),
+                                    Name(
+                                        Name {
+                                            node: Node {
+                                                start: 161,
+                                                end: 164,
+                                            },
+                                            id: "int",
+                                        },
+                                    ),
+                                ],
+                            },
+                        ),
+                    },
+                ),
+                value: Some(
+                    Tuple(
+                        Tuple {
+                            node: Node {
+                                start: 168,
+                                end: 172,
+                            },
+                            elements: [
+                                Constant(
+                                    Constant {
+                                        node: Node {
+                                            start: 168,
+                                            end: 169,
+                                        },
+                                        value: 1,
+                                    },
+                                ),
+                                Constant(
+                                    Constant {
+                                        node: Node {
+                                            start: 171,
+                                            end: 172,
+                                        },
+                                        value: 2,
+                                    },
+                                ),
+                            ],
+                        },
+                    ),
+                ),
+                simple: true,
+            },
+        ),
+    ],
+}

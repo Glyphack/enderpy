@@ -1,0 +1,13 @@
+---
+source: parser/src/lexer/mod.rs
+description: finally for from global if import in is lambda
+---
+0,7: Finally   (None)
+8,11: For   (None)
+12,16: From   (None)
+17,23: Global   (None)
+24,26: If   (None)
+27,33: Import   (None)
+34,36: In   (None)
+37,39: Is   (None)
+40,46: Lambda   (None)

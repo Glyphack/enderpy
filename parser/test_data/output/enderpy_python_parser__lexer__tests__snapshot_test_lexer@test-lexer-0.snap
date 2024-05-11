@@ -1,0 +1,7 @@
+---
+source: parser/src/lexer/mod.rs
+description: 1+2
+---
+0,1: Integer   (Number("1"))
+1,2: +   (None)
+2,3: Integer   (Number("2"))

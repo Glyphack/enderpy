@@ -1,0 +1,9 @@
+---
+source: parser/src/lexer/mod.rs
+description: "a = rf\"hello\""
+---
+0,1: Identifier   (Str("a"))
+2,3: =   (None)
+4,7: RawFString   (Str("rf\""))
+7,12: FstringMiddle   (Str("hello"))
+12,13: FStringEnd   (Str("\""))

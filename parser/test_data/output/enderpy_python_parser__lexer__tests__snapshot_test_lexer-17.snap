@@ -1,9 +1,0 @@
----
-source: parser/src/lexer/mod.rs
-description: "a = f\"hello\""
----
-0,1: Identifier                  (Str("a"))
-2,3: =                                        (None)
-4,6: FStringStart            (Str("f\""))
-6,11: FstringMiddle       (Str("hello"))
-11,12: FStringEnd               (Str("\""))

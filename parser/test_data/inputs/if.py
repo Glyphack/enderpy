@@ -1,6 +1,10 @@
 if a:
     pass
 
+if a:
+
+    pass
+
 if a: pass
 
 if a:

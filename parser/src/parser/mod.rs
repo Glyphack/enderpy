@@ -84,20 +84,10 @@ pub fn concat_string_exprs(lhs: Expression, rhs: Expression) -> Result<Expressio
                     }))
                 }
                 (ConstantValue::Bytes(_lhs), _) => {
-                    return Err(ParsingError::InvalidSyntax {
-                        msg: "Cannot concat bytes and string".into(),
-                        input: "test".into(),
-                        advice: "test".into(),
-                        span: (0, 0),
-                    });
+                    panic!("Cannot concat bytes and string");
                 }
                 (_, ConstantValue::Bytes(_rhs)) => {
-                    return Err(ParsingError::InvalidSyntax {
-                        msg: "Can only concat bytes with other bytes".into(),
-                        input: "test".into(),
-                        advice: "test".into(),
-                        span: (0, 0),
-                    });
+                    panic!("Can only concat bytes with other bytes");
                 }
                 _ => panic!("Cannot concat string"),
             };
@@ -124,12 +114,7 @@ pub fn concat_string_exprs(lhs: Expression, rhs: Expression) -> Result<Expressio
                     })));
                 }
                 ConstantValue::Bytes(_) => {
-                    return Err(ParsingError::InvalidSyntax {
-                        msg: "Cannot concat string and bytes".into(),
-                        input: "test".into(),
-                        advice: "test".into(),
-                        span: (0, 0),
-                    });
+                    panic!("Cannot concat string and bytes");
                 }
                 _ => panic!("Cannot concat string"),
             }
@@ -148,12 +133,7 @@ pub fn concat_string_exprs(lhs: Expression, rhs: Expression) -> Result<Expressio
                     value: ConstantValue::Str(rhs_val),
                 })),
                 ConstantValue::Bytes(_) => {
-                    return Err(ParsingError::InvalidSyntax {
-                        msg: "Cannot concat string and bytes".into(),
-                        input: "test".into(),
-                        advice: "test".into(),
-                        span: (0, 0),
-                    });
+                    panic!("Cannot concat string and bytes");
                 }
                 _ => panic!("Cannot concat string"),
             };
