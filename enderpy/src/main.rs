@@ -92,9 +92,6 @@ fn parse(file: &PathBuf) -> Result<()> {
     let mut parser = Parser::new(source, file_path.into());
     let ast = parser.parse();
     println!("{:#?}", ast);
-    for err in parser.errors {
-        println!("{:#?}", err);
-    }
     Ok(())
 }
 

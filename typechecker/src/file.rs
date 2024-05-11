@@ -49,7 +49,7 @@ impl EnderpyFile {
             std::fs::read_to_string(path).unwrap_or_else(|_| panic!("cannot read file {path:?}"));
         let module = get_module_name(path);
         let mut parser = Parser::new(source.clone(), path.to_str().unwrap().to_string());
-        let tree = parser.parse();
+        let tree = parser.parse().expect("parsing {path:?} failed");
 
         let mut file = Self {
             imports: vec![],

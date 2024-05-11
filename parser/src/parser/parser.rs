@@ -14,7 +14,6 @@ use crate::{
 #[derive(Debug, Clone)]
 pub struct Parser {
     pub identifiers_start_offset: Vec<(u32, u32, String)>,
-    pub errors: Vec<ParsingError>,
     source: String,
     lexer: Lexer,
     cur_token: Token,
@@ -58,7 +57,6 @@ impl Parser {
             cur_token,
             prev_token_end,
             nested_expression_list,
-            errors: vec![],
             curr_line_string: String::new(),
             path,
             curr_line_number: 1,
@@ -66,7 +64,7 @@ impl Parser {
         }
     }
 
-    pub fn parse(&mut self) -> Module {
+    pub fn parse(&mut self) -> Result<Module, ParsingError> {
         let node = self.start_node();
         let mut body = vec![];
         while self.cur_kind() != Kind::Eof {
@@ -80,20 +78,14 @@ impl Parser {
             };
             match stmt {
                 Ok(stmt) => body.push(stmt),
-                Err(err) => {
-                    self.errors.push(err);
-                    // It's better to exit on the first error otherwise we will get
-                    // a lot of errors that are not relevant
-                    // TODO: Implement resilient parsing
-                    break;
-                }
+                Err(err) => return Err(err),
             }
         }
 
-        Module {
+        Ok(Module {
             node: self.finish_node(node),
             body,
-        }
+        })
     }
 
     fn start_node(&self) -> Node {
@@ -343,7 +335,6 @@ impl Parser {
         let node = self.start_node();
         self.expect(Kind::If)?;
         let test = Box::new(self.parse_named_expression()?);
-        println!("test is {test:?}");
         self.expect(Kind::Colon)?;
         let body = self.parse_suite()?;
         let mut orelse: Option<If> = None;
@@ -3128,7 +3119,7 @@ mod tests {
             // annotated assignment
         ] {
             let mut parser = Parser::new(test_case.to_string(), String::from(""));
-            let program = parser.parse();
+            let program = parser.parse().expect("parsing failed");
 
             insta::with_settings!({
                     description => test_case.to_string(), // the template source code
@@ -3143,7 +3134,7 @@ mod tests {
     fn test_parse_assert_stmt() {
         for test_case in &["assert a", "assert a, b", "assert True, 'fancy message'"] {
             let mut parser = Parser::new(test_case.to_string(), String::from(""));
-            let program = parser.parse();
+            let program = parser.parse().expect("parsing failed");
 
             insta::with_settings!({
                     description => test_case.to_string(), // the template source code
@@ -3158,7 +3149,7 @@ mod tests {
     fn test_pass_stmt() {
         for test_case in &["pass", "pass ", "pass\n"] {
             let mut parser = Parser::new(test_case.to_string(), String::from(""));
-            let program = parser.parse();
+            let program = parser.parse().expect("parsing failed");
 
             insta::with_settings!({
                     description => test_case.to_string(), // the template source code
@@ -3173,7 +3164,7 @@ mod tests {
     fn test_parse_del_stmt() {
         for test_case in &["del a", "del a, b", "del a, b, "] {
             let mut parser = Parser::new(test_case.to_string(), String::from(""));
-            let program = parser.parse();
+            let program = parser.parse().expect("parsing failed");
 
             insta::with_settings!({
                     description => test_case.to_string(), // the template source code
@@ -3188,7 +3179,7 @@ mod tests {
     fn parse_yield_statement() {
         for test_case in &["yield", "yield a", "yield a, b", "yield a, b, "] {
             let mut parser = Parser::new(test_case.to_string(), String::from(""));
-            let program = parser.parse();
+            let program = parser.parse().expect("parsing failed");
 
             insta::with_settings!({
                     description => test_case.to_string(), // the template source code
@@ -3203,7 +3194,7 @@ mod tests {
     fn test_raise_statement() {
         for test_case in &["raise", "raise a", "raise a from c"] {
             let mut parser = Parser::new(test_case.to_string(), String::from(""));
-            let program = parser.parse();
+            let program = parser.parse().expect("parsing failed");
 
             insta::with_settings!({
                     description => test_case.to_string(), // the template source code
@@ -3218,7 +3209,7 @@ mod tests {
     fn test_parse_break_continue() {
         for test_case in &["break", "continue"] {
             let mut parser = Parser::new(test_case.to_string(), String::from(""));
-            let program = parser.parse();
+            let program = parser.parse().expect("parsing failed");
 
             insta::with_settings!({
                     description => test_case.to_string(), // the template source code
@@ -3233,7 +3224,7 @@ mod tests {
     fn test_parse_bool_op() {
         for test_case in &["a or b", "a and b", "a or b or c", "a and b or c"] {
             let mut parser = Parser::new(test_case.to_string(), String::from(""));
-            let program = parser.parse();
+            let program = parser.parse().expect("parsing failed");
 
             insta::with_settings!({
                     description => test_case.to_string(), // the template source code
@@ -3248,7 +3239,7 @@ mod tests {
     fn test_parse_unary_op() {
         for test_case in &["not a", "+ a", "~ a", "-a"] {
             let mut parser = Parser::new(test_case.to_string(), String::from(""));
-            let program = parser.parse();
+            let program = parser.parse().expect("parsing failed");
 
             insta::with_settings!({
                     description => test_case.to_string(), // the template source code
@@ -3264,7 +3255,7 @@ mod tests {
         {
             let test_case = &"(a := b)";
             let mut parser = Parser::new(test_case.to_string(), String::from(""));
-            let program = parser.parse();
+            let program = parser.parse().expect("parsing failed");
 
             insta::with_settings!({
                     description => test_case.to_string(), // the template source code
@@ -3291,7 +3282,7 @@ mod tests {
             "(a, b, c,)",
         ] {
             let mut parser = Parser::new(test_case.to_string(), String::from(""));
-            let program = parser.parse();
+            let program = parser.parse().expect("parsing failed");
 
             insta::with_settings!({
                     description => test_case.to_string(), // the template source code
@@ -3306,7 +3297,7 @@ mod tests {
     fn test_yield_expression() {
         for test_case in &["yield", "yield a", "yield from a"] {
             let mut parser = Parser::new(test_case.to_string(), String::from(""));
-            let program = parser.parse();
+            let program = parser.parse().expect("parsing failed");
 
             insta::with_settings!({
                     description => test_case.to_string(), // the template source code
@@ -3322,7 +3313,7 @@ mod tests {
         {
             let test_case = &"(*a)";
             let mut parser = Parser::new(test_case.to_string(), String::from(""));
-            let program = parser.parse();
+            let program = parser.parse().expect("parsing failed");
 
             insta::with_settings!({
                     description => test_case.to_string(), // the template source code
@@ -3338,7 +3329,7 @@ mod tests {
         {
             let test_case = &"await a";
             let mut parser = Parser::new(test_case.to_string(), String::from(""));
-            let program = parser.parse();
+            let program = parser.parse().expect("parsing failed");
 
             insta::with_settings!({
                     description => test_case.to_string(), // the template source code
@@ -3353,7 +3344,7 @@ mod tests {
     fn test_attribute_ref() {
         for test_case in &["a.b", "a.b.c", "a.b_c", "a.b.c.d"] {
             let mut parser = Parser::new(test_case.to_string(), String::from(""));
-            let program = parser.parse();
+            let program = parser.parse().expect("parsing failed");
 
             insta::with_settings!({
                     description => test_case.to_string(), // the template source code
@@ -3377,7 +3368,7 @@ mod tests {
             "func(a,)",
         ] {
             let mut parser = Parser::new(test_case.to_string(), String::from(""));
-            let program = parser.parse();
+            let program = parser.parse().expect("parsing failed");
 
             insta::with_settings!({
                     description => test_case.to_string(), // the template source code
@@ -3402,7 +3393,7 @@ mod tests {
             "lambda a=1 : a,",
         ] {
             let mut parser = Parser::new(test_case.to_string(), String::from(""));
-            let program = parser.parse();
+            let program = parser.parse().expect("parsing failed");
 
             insta::with_settings!({
                     description => test_case.to_string(), // the template source code
@@ -3418,7 +3409,7 @@ mod tests {
         {
             let test_case = &"a if b else c if d else e";
             let mut parser = Parser::new(test_case.to_string(), String::from(""));
-            let program = parser.parse();
+            let program = parser.parse().expect("parsing failed");
 
             insta::with_settings!({
                     description => test_case.to_string(), // the template source code
@@ -3451,7 +3442,7 @@ mod tests {
             "f'a_{1}' 'b' ",
         ] {
             let mut parser = Parser::new(test_case.to_string(), String::from(""));
-            let program = parser.parse();
+            let program = parser.parse().expect("parsing failed");
 
             insta::with_settings!({
                     description => test_case.to_string(), // the template source code
@@ -3473,7 +3464,7 @@ mod tests {
             // "f'hello_{f'''{a}'''}'",
         ] {
             let mut parser = Parser::new(test_case.to_string(), String::from(""));
-            let program = parser.parse();
+            let program = parser.parse().expect("parsing failed");
 
             insta::with_settings!({
                     description => test_case.to_string(), // the template source code
@@ -3500,7 +3491,7 @@ mod tests {
             "a < b < c",
         ] {
             let mut parser = Parser::new(test_case.to_string(), String::from(""));
-            let program = parser.parse();
+            let program = parser.parse().expect("parsing failed");
 
             insta::with_settings!({
                 description => test_case.to_string(), // the template source code
@@ -3524,7 +3515,7 @@ else:
 ",
         ] {
             let mut parser = Parser::new(test_case.to_string(), String::from(""));
-            let program = parser.parse();
+            let program = parser.parse().expect("parsing failed");
 
             insta::with_settings!({
                     description => test_case.to_string(), // the template source code
@@ -3571,7 +3562,7 @@ except *Exception as e:
 ",
         ] {
             let mut parser = Parser::new(test_case.to_string(), String::from(""));
-            let program = parser.parse();
+            let program = parser.parse().expect("parsing failed");
 
             insta::with_settings!({
                     description => test_case.to_string(), // the template source code
@@ -3592,7 +3583,7 @@ except *Exception as e:
             "... + 1",
         ] {
             let mut parser = Parser::new(test_case.to_string(), String::from(""));
-            let program = parser.parse();
+            let program = parser.parse().expect("parsing failed");
 
             insta::with_settings!({
                     description => test_case.to_string(), // the template source code
@@ -3612,13 +3603,8 @@ except *Exception as e:
                     test_case.clone(),
                     String::from($test_file),
                 );
-                let program = parser.parse();
-                let errors = parser.errors;
-                let snapshot = if errors.is_empty() {
-                    format!("{program:#?}")
-                } else {
-                    format!("{program:#?}\n {errors:#?}")
-                };
+                let program = parser.parse().expect("parsing failed");
+                let snapshot = format!("{program:#?}");
                 insta::with_settings!({
                         description => test_case.clone(),
                         omit_expression => true
