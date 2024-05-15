@@ -8,7 +8,7 @@ use enderpy_python_parser as parser;
 use enderpy_python_parser::ast;
 
 use log::debug;
-use miette::Result;
+use miette::{bail, Result};
 use parser::ast::Expression;
 
 use super::{
@@ -18,7 +18,7 @@ use super::{
 use crate::{
     semantic_analyzer::get_member_access_info,
     symbol_table::{self, Class, Declaration, LookupSymbolRequest, SymbolTable, SymbolTableNode},
-    types::{ClassType, TypeEvalError, TypeVar},
+    types::{ClassType, TypeVar},
 };
 
 const LITERAL_TYPE_PARAMETER_MSG: &str = "Type arguments for 'Literal' must be None, a literal value (int, bool, str, or bytes), or an enum value";
@@ -81,9 +81,7 @@ impl TypeEvaluator {
                 };
                 Ok(match typ {
                     Some(t) => t,
-                    None => PythonType::Error(TypeEvalError {
-                        message: "Unknown constant type".to_string(),
-                    }),
+                    None => bail!("Unknown constant type"),
                 })
             }
             ast::Expression::Name(n) => {
@@ -107,9 +105,7 @@ impl TypeEvaluator {
                     Ok(f_type)
                 } else if let PythonType::TypeVar(t) = &f_type {
                     let Some(first_arg) = call.args.first() else {
-                        return Ok(PythonType::Error(TypeEvalError {
-                            message: "TypeVar must be called with a name".to_string(),
-                        }));
+                        bail!("TypeVar must be called with a name");
                     };
                     let type_name = match first_arg {
                         ast::Expression::Constant(str) => match &str.value {
@@ -131,16 +127,12 @@ impl TypeEvaluator {
 
                     // Disallow specifying a single bound
                     if bounds.len() == 1 {
-                        return Ok(PythonType::Error(TypeEvalError {
-                            message: "TypeVar must be called with at least two bounds".to_string(),
-                        }));
+                        bail!("TypeVar must be called with at least two bounds");
                     }
 
                     // Disallow specifying a type var as a bound
                     if bounds.iter().any(|b| matches!(b, PythonType::TypeVar(_))) {
-                        return Ok(PythonType::Error(TypeEvalError {
-                            message: "TypeVar cannot be used as a bound".to_string(),
-                        }));
+                        bail!("TypeVar cannot be used as a bound");
                     }
 
                     Ok(PythonType::TypeVar(TypeVar {
@@ -148,9 +140,7 @@ impl TypeEvaluator {
                         bounds,
                     }))
                 } else {
-                    Ok(PythonType::Error(TypeEvalError {
-                        message: format!("{f_type:?} is not callable"),
-                    }))
+                    bail!("{f_type:?} is not callable");
                 }
             }
             ast::Expression::List(l) => {
@@ -211,14 +201,9 @@ impl TypeEvaluator {
             ast::Expression::BoolOp(_) => Ok(self.get_builtin_type("bool").expect("typeshed")),
             ast::Expression::UnaryOp(u) => match u.op {
                 ast::UnaryOperator::Not => Ok(self.get_builtin_type("bool").expect("typeshed")),
-                ast::UnaryOperator::Invert => match self.get_type(&u.operand, None, None)? {
-                    // TODO: dummy
-                    PythonType::Class(_) => Ok(PythonType::Unknown),
-                    _ => Ok(PythonType::Error(TypeEvalError {
-                        message: "cannot invert type {}".to_string(),
-                    })),
-                },
-                _ => self.get_type(&u.operand, None, None),
+                ast::UnaryOperator::UAdd
+                | ast::UnaryOperator::USub
+                | ast::UnaryOperator::Invert => Ok(PythonType::Unknown),
             },
             ast::Expression::NamedExpr(e) => self.get_type(&e.value, None, None),
             ast::Expression::Yield(a) => {
@@ -317,9 +302,7 @@ impl TypeEvaluator {
                         match symbol_table_node {
                             Some(node) => self.get_symbol_node_type(node),
                             None => {
-                                return Ok(PythonType::Error(TypeEvalError {
-                                    message: "Attribute does not exist".to_string(),
-                                }));
+                                bail!("Attribute does not exist");
                             }
                         }
                     }
@@ -463,9 +446,7 @@ impl TypeEvaluator {
         );
         let result = match symbol_table.lookup_in_scope(lookup_request) {
             Some(symbol) => self.get_symbol_node_type(symbol),
-            None => Ok(PythonType::Error(TypeEvalError {
-                message: format!("name: {name} is not defined"),
-            })),
+            None => bail!("name {name} is not defined"),
         };
         result
     }
@@ -556,7 +537,7 @@ impl TypeEvaluator {
                 }
             }
             Declaration::Alias(a) => {
-                let resolved = self.resolve_alias(a);
+                let resolved = self.resolve_alias(a, symbol_table);
                 match resolved {
                     Some(node) => self.get_symbol_node_type(node),
                     None => Ok(PythonType::Unknown),
@@ -584,6 +565,7 @@ impl TypeEvaluator {
         symbol_table: &SymbolTable,
         decl_scope: u32,
     ) -> Result<PythonType> {
+        // TODO: typevar itself is a class but the rhs is typevar type
         if class_symbol.get_qualname() == "typing.TypeVar" {
             Ok(PythonType::TypeVar(TypeVar {
                 name: "".to_string(),
@@ -620,7 +602,7 @@ impl TypeEvaluator {
                     class_def_type_parameters.extend(c.type_parameters);
                     continue;
                 };
-                log::debug!("checking base: {:?}", base);
+                log::debug!("checking base: {:?} with type {c:?}", base);
                 match &possible_type_parameter.slice {
                     ast::Expression::Name(type_parameter_name) => {
                         if class_symbol.name == type_parameter_name.id {
@@ -637,9 +619,7 @@ impl TypeEvaluator {
                             Some(decl_scope),
                         )?;
                         if class_def_type_parameters.contains(&type_parameter) {
-                            // TODO: Error type parameters must be unique
-                            class_def_type_parameters = vec![PythonType::Unknown];
-                            break;
+                            continue;
                         }
                         class_def_type_parameters.push(type_parameter);
                     }
@@ -990,45 +970,54 @@ impl TypeEvaluator {
     // It searches through imported symbol tables for the module alias imports
     // and resolves the alias to the class declaration
     // TODO: refactor all aliases and not only classes
-    fn resolve_alias(&self, a: &symbol_table::Alias) -> Option<&symbol_table::SymbolTableNode> {
+    fn resolve_alias(
+        &self,
+        a: &symbol_table::Alias,
+        alias_symbol_table: &SymbolTable,
+    ) -> Option<&symbol_table::SymbolTableNode> {
         log::debug!("resolving alias: {:?}", a);
         let class_name = match a.symbol_name {
             Some(ref name) => name.clone(),
             None => panic!("Alias {:?} has no symbol name", a.import_node),
         };
 
-        let resolved_path = match a.import_result.resolved_paths.last() {
-            Some(path) => path,
-            None => return None,
-        };
+        for resolved_path in a.import_result.resolved_paths.iter() {
+            log::debug!("checking path {:?}", resolved_path);
+            // TODO: This is a hack to resolve Iterator alias in sys/__init__.pyi
+            let symbol_table_with_alias_def = if class_name == "Iterator" {
+                self.imported_symbol_tables
+                    .iter()
+                    .find(|symbol_table| symbol_table.file_path.ends_with("stdlib/typing.pyi"))
+            } else {
+                self.get_symbol_table_of(resolved_path)
+            };
 
-        // TODO: This is a hack to resolve Iterator alias in sys/__init__.pyi
-        let symbol_table_with_alias_def = if class_name == "Iterator" {
-            self.imported_symbol_tables
-                .iter()
-                .find(|symbol_table| symbol_table.file_path.ends_with("stdlib/typing.pyi"))
-        } else {
-            self.get_symbol_table_of(resolved_path)
-        };
+            if symbol_table_with_alias_def.is_none() {
+                panic!("Symbol table not found for alias: {:?}", resolved_path);
+            }
 
-        if symbol_table_with_alias_def.is_none() {
-            panic!("Symbol table not found for alias: {:?}", resolved_path);
+            // sys/__init__.pyi imports sys itself don't know why
+            // If the resolved path is same as current symbol file path
+            // then it's cyclic and do not resolve
+            if alias_symbol_table.file_path.as_path() == resolved_path {
+                log::debug!("alias resolution skipped");
+                return None;
+            }
+
+            let resolved_symbol =
+                symbol_table_with_alias_def?.lookup_in_scope(LookupSymbolRequest {
+                    name: &class_name,
+                    scope: None,
+                });
+
+            log::debug!("symbols {:?}", symbol_table_with_alias_def?.global_scope());
+
+            if resolved_symbol.is_some() {
+                log::debug!("alias resolved to {:?}", resolved_symbol);
+                return resolved_symbol;
+            }
         }
-
-        // if the current file is typeshed/stdlib/sys/__init__.pyi then don't resolve the alias
-        // This is because sys/__init__.pyi imports sys itself and it causes an infinite loop
-        if symbol_table_with_alias_def?
-            .file_path
-            .ends_with("stdlib/sys/__init__.pyi")
-            && class_name == "sys"
-        {
-            log::debug!("alias resolution skipped for sys/__init__.pyi");
-            return None;
-        }
-        return symbol_table_with_alias_def?.lookup_in_scope(LookupSymbolRequest {
-            name: &class_name,
-            scope: None,
-        });
+        None
     }
 
     fn get_symbol_table_of(&self, path: &Path) -> Option<&SymbolTable> {

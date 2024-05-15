@@ -1,15 +1,31 @@
-from logging import Logger
-from typing import Generic, Sequence, TypeVar, Iterable
+"""
+Tests for basic usage of generics.
+"""
+
+# Specification: https://typing.readthedocs.io/en/latest/spec/generics.html#introduction
+
+from __future__ import annotations
+
+from collections.abc import Sequence
+from typing import Any, Generic, TypeVar, assert_type
 
 T = TypeVar("T")
+
+# > Generics can be parameterized by using a factory available in
+# > ``typing`` called ``TypeVar``.
 
 
 def first(l: Sequence[T]) -> T:
     return l[0]
 
 
-first([1, 2, 3])  # return type type parameter
+def test_first(seq_int: Sequence[int], seq_str: Sequence[str]) -> None:
+    assert_type(first(seq_int), int)
+    assert_type(first(seq_str), str)
 
+
+# > ``TypeVar`` supports constraining parametric types to a fixed set of
+# > possible types
 
 AnyStr = TypeVar("AnyStr", str, bytes)
 
@@ -18,13 +34,52 @@ def concat(x: AnyStr, y: AnyStr) -> AnyStr:
     return x + y
 
 
+def test_concat(s: str, b: bytes, a: Any) -> None:
+    concat(s, s)  # OK
+    concat(b, b)  # OK
+    concat(s, b)  # E
+    concat(b, s)  # E
+
+    concat(s, a)  # OK
+    concat(a, b)  # OK
+
+
 # > Specifying a single constraint is disallowed.
 
-BadConstraint1 = TypeVar("BadConstraint1", str)  # Type error
+BadConstraint1 = TypeVar("BadConstraint1", str)  # E
 
 # > Note: those types cannot be parameterized by type variables
 
-BadConstraint2 = TypeVar("BadConstraint2", str, T)  # Type error
+
+class Test(Generic[T]):
+    BadConstraint2 = TypeVar("BadConstraint2", str, list[T])  # E
+
+
+# > Subtypes of types constrained by a type variable should be treated
+# > as their respective explicitly listed base types in the context of the
+# > type variable.
+
+
+class MyStr(str): ...
+
+
+def test_concat_subtype(s: str, b: bytes, a: Any, m: MyStr) -> None:
+    assert_type(concat(m, m), str)
+    assert_type(concat(m, s), str)
+    concat(m, b)  # E
+
+    # TODO: should these be str or Any?
+    # reveal_type(concat(m, a))
+    # reveal_type(concat(a, m))
+
+
+# Specification: https://typing.readthedocs.io/en/latest/spec/generics.html#user-defined-generic-classes
+
+# > You can include a ``Generic`` base class to define a user-defined class
+# > as generic.
+
+from logging import Logger
+from collections.abc import Iterable
 
 
 class LoggedVar(Generic[T]):
@@ -42,19 +97,13 @@ class LoggedVar(Generic[T]):
         return self.value
 
     def log(self, message: str) -> None:
-        msg = "{}: {}".format(self.name, message)
-        self.logger.info(msg)
-
-
-log_var = LoggedVar(1, "var1", Logger("test"))
+        self.logger.info("{}: {}".format(self.name, message))
 
 
 def zero_all_vars(vars: Iterable[LoggedVar[int]]) -> None:
     for var in vars:
         var.set(0)
-
-
-zero_all_vars([log_var])  # OK
+        assert_type(var.get(), int)
 
 
 # > A generic type can have any number of type variables, and type variables
@@ -66,16 +115,12 @@ S = TypeVar("S")
 class Pair1(Generic[T, S]): ...
 
 
-pair1 = Pair1()
-
 # > Each type variable argument to ``Generic`` must be distinct.
 
 
-class Pair2(Generic[T, T]):  # Type error
+class Pair2(Generic[T, T]):  # E
     ...
 
-
-pair2 = Pair2()
 
 # > The ``Generic[T]`` base class is redundant in simple cases where you
 # > subclass some other generic class and specify type variables for its
@@ -90,8 +135,10 @@ class MyIter1(Iterator[T]): ...
 class MyIter2(Iterator[T], Generic[T]): ...
 
 
-iter1 = MyIter1()
-iter2 = MyIter2()
+def test_my_iter(m1: MyIter1[int], m2: MyIter2[int]):
+    assert_type(next(m1), int)
+    assert_type(next(m2), int)
+
 
 K = TypeVar("K")
 V = TypeVar("V")
@@ -100,21 +147,15 @@ V = TypeVar("V")
 class MyMap1(Mapping[K, V], Generic[K, V]): ...
 
 
-my_map1 = MyMap1()
-
-
 class MyMap2(Mapping[K, V], Generic[V, K]): ...
 
 
-my_map2 = MyMap2()
-
-
 def test_my_map(m1: MyMap1[str, int], m2: MyMap2[int, str]):
-    a = m1["key"]  # int
-    b = m2["key"]  # int
+    assert_type(m1["key"], int)
+    assert_type(m2["key"], int)
 
-    m1[0]  # Type error
-    m2[0]  # Type error
+    m1[0]  # E
+    m2[0]  # E
 
 
 # > You can use multiple inheritance with ``Generic``
@@ -128,9 +169,6 @@ class LinkedList(Sized, Generic[T]): ...
 class MyMapping(Iterable[tuple[K, V]], Container[tuple[K, V]], Generic[K, V]): ...
 
 
-my_mapping = MyMapping()
-
-
 # > Subclassing a generic class without specifying type parameters assumes
 # > ``Any`` for each position.  In the following example, ``MyIterable``
 # > is not generic but implicitly inherits from ``Iterable[Any]``::
@@ -141,7 +179,7 @@ class MyIterableAny(Iterable):  # Same as Iterable[Any]
 
 
 def test_my_iterable_any(m: MyIterableAny):
-    iter(m)  # Iterator[Any]
+    assert_type(iter(m), Iterator[Any])
 
 
 # > Generic metaclasses are not supported
@@ -150,11 +188,5 @@ def test_my_iterable_any(m: MyIterableAny):
 class GenericMeta(type, Generic[T]): ...
 
 
-generic_meta = GenericMeta()
-
-
-class GenericMetaInstance(metaclass=GenericMeta[T]):  # Type error
+class GenericMetaInstance(metaclass=GenericMeta[T]):  # E
     ...
-
-
-generic_meta_instance = GenericMetaInstance()

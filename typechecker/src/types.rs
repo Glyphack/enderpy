@@ -29,9 +29,6 @@ pub enum PythonType {
     Optional(Box<PythonType>),
     Never,
     TypeVar(TypeVar),
-
-    /// Represents a type error that occurred during type evaluation.
-    Error(TypeEvalError),
 }
 
 impl PythonType {
@@ -193,11 +190,6 @@ impl Display for LiteralValue {
     }
 }
 
-#[derive(Debug, Clone, Eq, PartialEq)]
-pub struct TypeEvalError {
-    pub message: String,
-}
-
 impl Display for PythonType {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         let type_str = match self {
@@ -250,7 +242,6 @@ impl Display for PythonType {
                 return write!(f, "TypeVar[{}, {}]", type_var.name, bounds);
             }
             PythonType::Optional(optional) => return write!(f, "Optional[{optional:}]"),
-            PythonType::Error(error) => return write!(f, "Error[{}]", error.message),
         };
 
         write!(f, "{}", type_str)

@@ -37,19 +37,10 @@ impl TypeChecker {
         self.visit_stmt(statement);
     }
 
-    fn infer_expr_type(&mut self, expr: &Expression, emit_error: bool) -> PythonType {
+    fn infer_expr_type(&mut self, expr: &Expression) -> PythonType {
         let t = match self.type_evaluator.get_type(expr, None, None) {
             Ok(t) => t,
-            Err(e) => {
-                if emit_error {
-                    self.make_error(
-                        e.to_string().as_str(),
-                        expr.get_node().start,
-                        expr.get_node().end,
-                    );
-                }
-                PythonType::Unknown
-            }
+            Err(e) => PythonType::Unknown,
         };
         self.types.insert(Interval {
             start: expr.get_node().start,
@@ -68,7 +59,7 @@ impl TypeChecker {
                 &self.type_evaluator.symbol_table,
                 Some(self.type_evaluator.symbol_table.current_scope_id),
             )
-            .unwrap();
+            .unwrap_or(PythonType::Unknown);
         self.types.insert(Interval {
             start,
             stop,
@@ -127,7 +118,7 @@ impl TraversalVisitor for TypeChecker {
     }
 
     fn visit_expr(&mut self, e: &Expression) {
-        self.infer_expr_type(e, true);
+        self.infer_expr_type(e);
         match e {
             Expression::Constant(c) => self.visit_constant(c),
             Expression::List(l) => self.visit_list(l),
@@ -159,7 +150,11 @@ impl TraversalVisitor for TypeChecker {
         }
     }
 
-    fn visit_import(&mut self, _i: &Import) {}
+    fn visit_import(&mut self, _i: &Import) {
+        for name in _i.names.iter() {
+            self.infer_name_type(&name.name, name.node.start, name.node.end);
+        }
+    }
 
     fn visit_import_from(&mut self, _i: &ImportFrom) {
         for alias in _i.names.iter() {
@@ -259,6 +254,12 @@ impl TraversalVisitor for TypeChecker {
         self.type_evaluator.symbol_table.set_scope(f.node.start);
         for stmt in &f.body {
             self.visit_stmt(stmt);
+        }
+        for (arg, _index) in f.args.args.iter().zip(0..) {
+            if let Some(annotation) = &arg.annotation {
+                self.infer_expr_type(annotation);
+            }
+            self.infer_name_type(&arg.arg, arg.node.start, arg.node.end)
         }
         self.type_evaluator.symbol_table.revert_scope();
     }
@@ -393,8 +394,8 @@ impl TraversalVisitor for TypeChecker {
     }
 
     fn visit_bin_op(&mut self, b: &BinOp) {
-        let l_type = self.infer_expr_type(&b.left, true);
-        let r_type = self.infer_expr_type(&b.right, true);
+        let l_type = self.infer_expr_type(&b.left);
+        let r_type = self.infer_expr_type(&b.right);
     }
 
     fn visit_named_expr(&mut self, _n: &NamedExpression) {
@@ -458,7 +459,7 @@ impl TraversalVisitor for TypeChecker {
     }
 
     fn visit_attribute(&mut self, a: &Attribute) {
-        self.infer_expr_type(&a.value, true);
+        self.infer_expr_type(&a.value);
     }
 
     fn visit_subscript(&mut self, _s: &Subscript) {
@@ -479,7 +480,7 @@ impl TraversalVisitor for TypeChecker {
     }
 
     fn visit_call(&mut self, c: &Call) {
-        self.infer_expr_type(&c.func, false);
+        self.infer_expr_type(&c.func);
         for arg in &c.args {
             self.visit_expr(arg);
         }
@@ -532,7 +533,7 @@ impl TraversalVisitor for TypeChecker {
         if let Some(value) = &_a.value {
             self.visit_expr(value);
         }
-        self.infer_expr_type(&_a.target, false);
+        self.infer_expr_type(&_a.target);
     }
 
     fn visit_aug_assign(&mut self, _a: &AugAssign) {

@@ -361,6 +361,7 @@ impl TraversalVisitor for SemanticAnalyzer {
             None => ImportResult::not_found(),
         };
         for alias in &_i.names {
+            // TODO: make import * special to look into the other symbol table
             let declaration_path = DeclarationPath::new(
                 self.file.path(),
                 alias.node,

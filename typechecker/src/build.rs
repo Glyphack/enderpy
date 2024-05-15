@@ -209,6 +209,7 @@ fn resolve_file_imports(
     cached_imports: &HashMap<ImportModuleDescriptor, ImportResult>,
 ) -> HashMap<ImportModuleDescriptor, ImportResult> {
     let mut imports = HashMap::new();
+    debug!("resolving imports for file {:?}", file.path());
     for import in file.imports.iter() {
         let import_descriptions = match import {
             ImportKinds::Import(i) => i

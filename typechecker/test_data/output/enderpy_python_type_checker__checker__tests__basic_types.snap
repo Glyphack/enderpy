@@ -61,6 +61,8 @@ Line 13: def func(params: List[int]) -> Dict[int, int]:
 
 Expr types in the line --->:
         def func => (function) func
+        params: List[int] => (class) builtins.list[(class) int]
+        List[int] => (class) builtins.list[TypeVar[_T, ]]
         Dict => (class) builtins.dict[TypeVar[_KT, ], TypeVar[_VT, ]]
         Dict[int, int] => (class) builtins.dict[TypeVar[_KT, ], TypeVar[_VT, ]]
         int => (class) int
@@ -96,6 +98,9 @@ Line 20:     def __init__(self, x: int):
 
 Expr types in the line --->:
         def __init__ => (function) __init__
+        self => Unknown
+        x: int => (class) int
+        int => (class) int
 
 ---
 Line 21:         print(self.cls_attribute)
@@ -130,6 +135,9 @@ Line 25:     def add(self, value: int) -> None:
 
 Expr types in the line --->:
         def add => (function) add
+        self => Unknown
+        value: int => (class) int
+        int => (class) int
         None => None
 
 ---
@@ -145,6 +153,7 @@ Line 28:     def get_attr(self) -> Set[int]:
 
 Expr types in the line --->:
         def get_attr => (function) get_attr
+        self => Unknown
         Set => (class) set
         Set[int] => (class) set
         int => (class) int
@@ -161,6 +170,7 @@ Line 31:     def get_x(self) -> float:
 
 Expr types in the line --->:
         def get_x => (function) get_x
+        self => Unknown
         float => (class) float
 
 ---
