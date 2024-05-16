@@ -40,11 +40,20 @@ impl TypeChecker {
     fn infer_expr_type(&mut self, expr: &Expression) -> PythonType {
         let t = match self.type_evaluator.get_type(expr, None, None) {
             Ok(t) => t,
-            Err(e) => PythonType::Unknown,
+            Err(e) => {
+                log::error!("type evaluator error: {} for expr {expr:?}", e);
+                PythonType::Unknown
+            }
+        };
+
+        let start = if expr.get_node().start > 0 {
+            expr.get_node().start - 1
+        } else {
+            expr.get_node().start
         };
         self.types.insert(Interval {
-            start: expr.get_node().start,
-            stop: expr.get_node().end,
+            start,
+            stop: expr.get_node().end + 1,
             val: t.clone(),
         });
         t
