@@ -1,5 +1,5 @@
 use std::{
-    fs,
+    fs, io,
     path::{Path, PathBuf},
 };
 
@@ -40,13 +40,26 @@ fn symbols(path: &Path) -> Result<()> {
 }
 
 fn get_python_executable() -> Result<PathBuf> {
-    let output = std::process::Command::new("python")
-        .arg("-c")
-        .arg("import sys; print(sys.executable)")
-        .output()
-        .into_diagnostic()?;
-    let path = String::from_utf8(output.stdout).into_diagnostic()?;
-    Ok(PathBuf::from(path))
+    let possible_executables = ["python3", "python"];
+    for executable_name in possible_executables {
+        let res = std::process::Command::new(executable_name)
+            .arg("-c")
+            .arg("import sys; print(sys.executable)")
+            .output();
+        match res {
+            Ok(output) => {
+                let path = String::from_utf8(output.stdout).into_diagnostic()?;
+                return Ok(PathBuf::from(path));
+            }
+            Err(e) => {
+                if e.kind() != io::ErrorKind::NotFound {
+                    bail!("Unknown error when looking for python executable: {e}");
+                }
+            }
+        }
+    }
+
+    bail!("Failed to find Python executable.");
 }
 
 fn get_typeshed_path() -> Result<PathBuf> {
