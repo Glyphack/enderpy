@@ -48,7 +48,11 @@ fn get_python_executable() -> Result<PathBuf> {
             .output();
         match res {
             Ok(output) => {
-                let path = String::from_utf8(output.stdout).into_diagnostic()?;
+                let mut path = String::from_utf8(output.stdout).into_diagnostic()?;
+                // Like calling trim but I didn't want to re-allocate the str slice
+                while path.ends_with("\n") || path.ends_with("\r") {
+                    path.pop();
+                }
                 return Ok(PathBuf::from(path));
             }
             Err(e) => {
