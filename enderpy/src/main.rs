@@ -144,3 +144,21 @@ fn check(path: &Path) -> Result<()> {
 fn watch() -> Result<()> {
     todo!()
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::get_python_executable;
+
+    #[test]
+    fn test_get_python_successfully() {
+        let executable = get_python_executable().expect("No python executable found!");
+        // Makes sure the python executable is working, without relying on a specific filename
+        assert!(executable.is_file());
+        let output = std::process::Command::new(executable)
+            .arg("-c")
+            .arg("print('Working')")
+            .output()
+            .unwrap();
+        assert_eq!(String::from_utf8(output.stdout).unwrap().trim(), "Working");
+    }
+}
