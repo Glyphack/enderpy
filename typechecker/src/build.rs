@@ -309,4 +309,8 @@ mod tests {
         test_symbols_variables,
         "test_data/inputs/symbol_table/variables.py"
     );
+    symbol_table_test!(
+        test_symbols_import_star,
+        "test_data/inputs/import_star_test/a.py"
+    );
 }

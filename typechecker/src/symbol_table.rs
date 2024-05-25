@@ -20,6 +20,7 @@ pub struct SymbolTable {
 
     pub file_path: PathBuf,
     pub scope_starts: Lapper<u32, u32>,
+    pub star_imports: Vec<ImportResult>,
 }
 
 impl SymbolTable {
@@ -38,6 +39,7 @@ impl SymbolTable {
             prev_scope_id: None,
             file_path: file_path.to_path_buf(),
             scope_starts: Lapper::new(vec![global_scope_interval]),
+            star_imports: vec![],
         }
     }
 
@@ -557,6 +559,9 @@ impl SymbolTableNode {
 
 impl Display for SymbolTable {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        if !self.star_imports.is_empty() {
+            writeln!(f, "{:?}", self.star_imports)?;
+        }
         let mut sorted_scopes = self.scopes.iter().collect::<Vec<&SymbolTableScope>>();
         sorted_scopes.sort_by(|a, b| a.name.cmp(&b.name));
 
