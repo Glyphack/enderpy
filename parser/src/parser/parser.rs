@@ -1469,8 +1469,9 @@ impl Parser {
                 }
             }
         } else if self.at(Kind::Mul) {
-            aliases.push(self.parse_alias("*".to_string(), self.start_node()));
-            self.bump(Kind::Mul);
+            let node = self.start_node();
+            self.bump_any();
+            aliases.push(self.parse_alias("*".to_string(), node));
         } else {
             return Err(self.unexpected_token_new(
                import_node,
