@@ -136,7 +136,11 @@ impl BuildManager {
             return String::from("");
         };
 
-        let type_info = &checker.types.find(hovered_offset, hovered_offset).last();
+        let hovered_offset_start = hovered_offset.saturating_sub(1);
+        let type_info = &checker
+            .types
+            .find(hovered_offset_start, hovered_offset + 1)
+            .last();
         let type_str = if let Some(type_info) = type_info {
             &type_info.val
         } else {

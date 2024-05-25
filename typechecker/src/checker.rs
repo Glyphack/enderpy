@@ -46,14 +46,9 @@ impl TypeChecker {
             }
         };
 
-        let start = if expr.get_node().start > 0 {
-            expr.get_node().start - 1
-        } else {
-            expr.get_node().start
-        };
         self.types.insert(Interval {
-            start,
-            stop: expr.get_node().end + 1,
+            start: expr.get_node().start,
+            stop: expr.get_node().end,
             val: t.clone(),
         });
         t
