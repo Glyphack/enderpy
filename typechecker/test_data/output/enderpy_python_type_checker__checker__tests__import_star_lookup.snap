@@ -1,0 +1,19 @@
+---
+source: typechecker/src/checker.rs
+description: "1: from .b import *\n2: \n3: print(in_b)\n"
+expression: result
+---
+Line 1: from .b import *
+
+Expr types in the line --->:
+        * => Unknown
+
+---
+Line 3: print(in_b)
+
+Expr types in the line --->:
+        print => (function) print
+        print(in_b) => None
+        in_b => (class) int
+
+---

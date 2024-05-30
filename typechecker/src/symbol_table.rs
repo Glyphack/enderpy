@@ -521,6 +521,7 @@ pub struct TypeAlias {
     pub type_alias_node: ast::TypeAlias,
 }
 
+#[derive(Clone, Debug)]
 pub struct LookupSymbolRequest<'a> {
     pub name: &'a str,
     pub scope: Option<u32>,

@@ -444,9 +444,33 @@ impl TypeEvaluator {
             name,
             symbol_table.file_path,
         );
-        let result = match symbol_table.lookup_in_scope(lookup_request) {
+        let result = match symbol_table.lookup_in_scope(lookup_request.clone()) {
             Some(symbol) => self.get_symbol_node_type(symbol),
-            None => bail!("name {name} is not defined"),
+            None => {
+                // Check if there's any import * and try to find the symbol in those files
+                let mut found = None;
+                for star_import in symbol_table.star_imports.iter() {
+                    for resolved in star_import.resolved_paths.iter() {
+                        let star_import_sym_table = self.get_symbol_table_of(resolved);
+                        let Some(sym_table) = star_import_sym_table else {
+                            continue;
+                        };
+                        let res = sym_table.lookup_in_scope(LookupSymbolRequest {
+                            name,
+                            // Look in global scope of the other file
+                            scope: Some(0),
+                        });
+                        if res.is_some() {
+                            found = res;
+                            break;
+                        }
+                    }
+                }
+                match found {
+                    Some(s) => self.get_symbol_node_type(s),
+                    None => bail!("name {name} is not defined"),
+                }
+            }
         };
         result
     }
