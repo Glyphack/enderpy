@@ -6,6 +6,7 @@ expression: result
 Line 1: from typing import Dict, Set, List
 
 Expr types in the line --->:
+        typing  => Module
         Dict => (class) builtins.dict[TypeVar[_KT, ], TypeVar[_VT, ]]
         Set => (class) set
         List => (class) builtins.list[TypeVar[_T, ]]

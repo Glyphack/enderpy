@@ -16,6 +16,7 @@ use super::{
     types::{CallableType, LiteralValue, PythonType},
 };
 use crate::{
+    ruff_python_import_resolver::import_result::ImportResult,
     semantic_analyzer::get_member_access_info,
     symbol_table::{self, Class, Declaration, LookupSymbolRequest, SymbolTable, SymbolTableNode},
     types::{ClassType, TypeVar},
@@ -306,6 +307,15 @@ impl TypeEvaluator {
                             }
                         }
                     }
+                    PythonType::Module(module) => {
+                        todo!();
+                        let module_sym_table =
+                            self.get_symbol_table_of(&module.module_path).unwrap();
+                        let typ = self
+                            .infer_type_from_symbol_table(&a.attr, None, module_sym_table, Some(0))
+                            .unwrap();
+                        Ok(typ)
+                    }
                     _ => Ok(PythonType::Unknown),
                 }
             }
@@ -444,35 +454,12 @@ impl TypeEvaluator {
             name,
             symbol_table.file_path,
         );
-        let result = match symbol_table.lookup_in_scope(lookup_request.clone()) {
-            Some(symbol) => self.get_symbol_node_type(symbol),
-            None => {
-                // Check if there's any import * and try to find the symbol in those files
-                let mut found = None;
-                for star_import in symbol_table.star_imports.iter() {
-                    for resolved in star_import.resolved_paths.iter() {
-                        let star_import_sym_table = self.get_symbol_table_of(resolved);
-                        let Some(sym_table) = star_import_sym_table else {
-                            continue;
-                        };
-                        let res = sym_table.lookup_in_scope(LookupSymbolRequest {
-                            name,
-                            // Look in global scope of the other file
-                            scope: Some(0),
-                        });
-                        if res.is_some() {
-                            found = res;
-                            break;
-                        }
-                    }
-                }
-                match found {
-                    Some(s) => self.get_symbol_node_type(s),
-                    None => bail!("name {name} is not defined"),
-                }
-            }
-        };
-        result
+        let result =
+            match self.lookup_in_table_and_star_imports(symbol_table, lookup_request.clone()) {
+                Some(s) => s,
+                None => bail!("name {name} is not defined"),
+            };
+        self.get_symbol_node_type(result)
     }
 
     /// Get the type of a symbol node based on declarations
@@ -561,10 +548,35 @@ impl TypeEvaluator {
                 }
             }
             Declaration::Alias(a) => {
-                let resolved = self.resolve_alias(a, symbol_table);
-                match resolved {
-                    Some(node) => self.get_symbol_node_type(node),
-                    None => Ok(PythonType::Unknown),
+                log::debug!("evaluating alias {:?}", a);
+                // when symbol is an alias that is named to that symbol return Module type
+                // e.g. from . import path as _path
+                // then type of _path is Module(path)
+                match &a.symbol_name {
+                    Some(name) => {
+                        let resolved = self.resolve_alias(name, &a.import_result, symbol_table);
+                        match resolved {
+                            Some(node) => self.get_symbol_node_type(node),
+                            None => Ok(PythonType::Unknown),
+                        }
+                    }
+                    None => {
+                        let mut found_module: Option<PythonType> = None;
+                        for resolved_path in a.import_result.resolved_paths.iter() {
+                            let Some(sym_table_alias_pointing_to) =
+                                self.get_symbol_table_of(resolved_path)
+                            else {
+                                break;
+                            };
+                            found_module = Some(PythonType::Module(crate::types::ModuleRef {
+                                module_path: sym_table_alias_pointing_to.file_path.clone(),
+                            }));
+                        }
+                        match found_module {
+                            Some(s) => Ok(s),
+                            None => Ok(PythonType::Unknown),
+                        }
+                    }
                 }
             }
             Declaration::TypeParameter(_) => Ok(PythonType::Unknown),
@@ -990,25 +1002,18 @@ impl TypeEvaluator {
         false
     }
 
-    // Follows Alias declaration and resolves it to a class declaration
+    // Follows Alias declaration and resolves it to another symbol node
     // It searches through imported symbol tables for the module alias imports
-    // and resolves the alias to the class declaration
-    // TODO: refactor all aliases and not only classes
     fn resolve_alias(
         &self,
-        a: &symbol_table::Alias,
+        // a: &symbol_table::Alias,
+        imported_symbol_name: &str,
+        import_result: &ImportResult,
         alias_symbol_table: &SymbolTable,
     ) -> Option<&symbol_table::SymbolTableNode> {
-        log::debug!("resolving alias: {:?}", a);
-        let class_name = match a.symbol_name {
-            Some(ref name) => name.clone(),
-            None => panic!("Alias {:?} has no symbol name", a.import_node),
-        };
-
-        for resolved_path in a.import_result.resolved_paths.iter() {
+        for resolved_path in import_result.resolved_paths.iter() {
             log::debug!("checking path {:?}", resolved_path);
-            // TODO: This is a hack to resolve Iterator alias in sys/__init__.pyi
-            let symbol_table_with_alias_def = if class_name == "Iterator" {
+            let symbol_table_with_alias_def = if imported_symbol_name == "Iterator" {
                 self.imported_symbol_tables
                     .iter()
                     .find(|symbol_table| symbol_table.file_path.ends_with("stdlib/typing.pyi"))
@@ -1025,14 +1030,46 @@ impl TypeEvaluator {
             // then it's cyclic and do not resolve
             if alias_symbol_table.file_path.as_path() == resolved_path {
                 log::debug!("alias resolution skipped");
-                return None;
+                continue;
             }
 
             let resolved_symbol =
                 symbol_table_with_alias_def?.lookup_in_scope(LookupSymbolRequest {
-                    name: &class_name,
+                    name: imported_symbol_name,
                     scope: None,
                 });
+
+            log::debug!("symbols {:?}", symbol_table_with_alias_def?.global_scope());
+
+            if resolved_symbol.is_some() {
+                log::debug!("alias resolved to {:?}", resolved_symbol);
+                return resolved_symbol;
+            }
+        }
+
+        for (_, implicit_import) in import_result.implicit_imports.iter() {
+            let resolved_path = &implicit_import.path;
+            log::debug!("checking path {:?}", resolved_path);
+            // TODO: This is a hack to resolve Iterator alias in sys/__init__.pyi
+            let symbol_table_with_alias_def = if imported_symbol_name == "Iterator" {
+                self.imported_symbol_tables
+                    .iter()
+                    .find(|symbol_table| symbol_table.file_path.ends_with("stdlib/typing.pyi"))
+            } else {
+                self.get_symbol_table_of(resolved_path)
+            };
+
+            if symbol_table_with_alias_def.is_none() {
+                panic!("Symbol table not found for alias: {:?}", resolved_path);
+            }
+
+            let resolved_symbol = self.lookup_in_table_and_star_imports(
+                symbol_table_with_alias_def?,
+                LookupSymbolRequest {
+                    name: imported_symbol_name,
+                    scope: None,
+                },
+            );
 
             log::debug!("symbols {:?}", symbol_table_with_alias_def?.global_scope());
 
@@ -1079,5 +1116,39 @@ impl TypeEvaluator {
         args: &[Expression],
     ) -> PythonType {
         f_type.return_type.clone()
+    }
+
+    fn lookup_in_table_and_star_imports<'a>(
+        &'a self,
+        symbol_table: &'a SymbolTable,
+        lookup_request: LookupSymbolRequest,
+    ) -> Option<&SymbolTableNode> {
+        let find_in_current_symbol_table = symbol_table.lookup_in_scope(lookup_request.clone());
+        if find_in_current_symbol_table.is_some() {
+            return find_in_current_symbol_table;
+        }
+
+        log::debug!(
+            "did not find symbol {} in symbol table, checking star imports",
+            lookup_request.name
+        );
+        // Check if there's any import * and try to find the symbol in those files
+        let mut found = None;
+        for star_import in symbol_table.star_imports.iter() {
+            log::debug!("checking star imports {:?}", star_import);
+            for resolved in star_import.resolved_paths.iter() {
+                log::debug!("checking path {:?}", resolved);
+                let star_import_sym_table = self.get_symbol_table_of(resolved);
+                let Some(sym_table) = star_import_sym_table else {
+                    panic!("symbol table of star import not found at {:?}", resolved);
+                };
+                let res = sym_table.lookup_in_scope(lookup_request.clone());
+                if res.is_some() {
+                    found = res;
+                    break;
+                }
+            }
+        }
+        found
     }
 }

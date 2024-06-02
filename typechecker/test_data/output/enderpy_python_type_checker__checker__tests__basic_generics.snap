@@ -16,18 +16,21 @@ Tests for basic usage of generics.
 Line 5: from __future__ import annotations
 
 Expr types in the line --->:
+        __future__  => Module
         annotations => (class) _Feature
 
 ---
 Line 7: from collections.abc import Sequence
 
 Expr types in the line --->:
+        collections.abc  => Module
         Sequence => Unknown
 
 ---
 Line 8: from typing import Any, Generic, TypeVar, assert_type
 
 Expr types in the line --->:
+        typing  => Module
         Any => (class) object
         Generic => (class) Generic
         TypeVar => TypeVar[, ]
@@ -281,12 +284,14 @@ Expr types in the line --->:
 Line 79: from logging import Logger
 
 Expr types in the line --->:
+        logging  => Module
         Logger => (class) Logger
 
 ---
 Line 80: from collections.abc import Iterable
 
 Expr types in the line --->:
+        collections.abc  => Module
         Iterable => Unknown
 
 ---
@@ -486,6 +491,7 @@ Expr types in the line --->:
 Line 127: from collections.abc import Iterator, Mapping
 
 Expr types in the line --->:
+        collections.abc  => Module
         Iterator => (class) typing.Iterator[TypeVar[_T_co, ]]
         Mapping => Unknown
 
@@ -648,6 +654,7 @@ Expr types in the line --->:
 Line 161: from collections.abc import Sized, Container
 
 Expr types in the line --->:
+        collections.abc  => Module
         Sized => Unknown
         Container => Unknown
 

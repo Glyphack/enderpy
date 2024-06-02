@@ -1,8 +1,11 @@
+use std::path::PathBuf;
+
 use ast::{Expression, Statement};
 use enderpy_python_parser as parser;
 use enderpy_python_parser::ast::{self, *};
 
 use super::{type_evaluator::TypeEvaluator, types::PythonType};
+use crate::types::ModuleRef;
 use crate::{
     ast_visitor::TraversalVisitor, diagnostic::CharacterSpan, file::EnderpyFile,
     symbol_table::SymbolTable,
@@ -164,6 +167,17 @@ impl TraversalVisitor for TypeChecker {
         for alias in _i.names.iter() {
             self.infer_name_type(&alias.name, alias.node.start, alias.node.end)
         }
+
+        // Just to show type module when modules are hovered in imports.
+        let start = _i.node.start + 5;
+        let stop = start + _i.module.len() as u32 + 1;
+        self.types.insert(Interval {
+            start,
+            stop,
+            val: PythonType::Module(ModuleRef {
+                module_path: PathBuf::new(),
+            }),
+        });
     }
 
     fn visit_if(&mut self, i: &parser::ast::If) {

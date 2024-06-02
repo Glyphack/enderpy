@@ -511,6 +511,9 @@ pub struct Alias {
     /// Name of the imported symbol in case of ImportFrom
     /// e.g. From bar import baz -> baz is the symbol name
     pub symbol_name: Option<String>,
+    /// Name of imported module in case of Import
+    /// e.g. import os.path -> os.path is the module name
+    pub module_name: Option<String>,
     /// The result of the import
     pub import_result: ImportResult,
 }

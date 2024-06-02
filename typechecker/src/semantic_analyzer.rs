@@ -346,7 +346,8 @@ impl TraversalVisitor for SemanticAnalyzer {
                 declaration_path,
                 import_from_node: None,
                 import_node: Some(i.clone()),
-                symbol_name: Some(alias.name()),
+                symbol_name: None,
+                module_name: Some(alias.name()),
                 import_result,
             });
 
@@ -377,6 +378,7 @@ impl TraversalVisitor for SemanticAnalyzer {
                 import_from_node: Some(_i.clone()),
                 import_node: None,
                 symbol_name: Some(alias.name()),
+                module_name: None,
                 import_result: module_import_result.clone(),
             });
 

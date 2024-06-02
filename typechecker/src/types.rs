@@ -1,5 +1,6 @@
 use is_macro::Is;
 use std::fmt::Display;
+use std::path::PathBuf;
 
 use enderpy_python_parser::ast;
 
@@ -22,6 +23,7 @@ pub enum PythonType {
     /// In type inference the values are not assumed to be literals unless they
     /// are explicitly declared as such.
     KnownValue(KnownValue),
+    Module(ModuleRef),
     /// Union type
     MultiValue(Vec<PythonType>),
     Callable(Box<CallableType>),
@@ -190,11 +192,17 @@ impl Display for LiteralValue {
     }
 }
 
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub struct ModuleRef {
+    pub module_path: PathBuf,
+}
+
 impl Display for PythonType {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         let type_str = match self {
             PythonType::None => "None",
             PythonType::Any => "Any",
+            PythonType::Module(_) => "Module",
             PythonType::Unknown => "Unknown",
             PythonType::Callable(callable_type) => {
                 let fmt = format!("(function) {}", callable_type.name.as_str());
