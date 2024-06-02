@@ -7,6 +7,7 @@ use serde::Deserialize;
 #[allow(unused)]
 pub struct Settings {
     pub typeshed_path: PathBuf,
+    pub python_executable: Option<PathBuf>,
 }
 
 impl Settings {
@@ -20,10 +21,18 @@ impl Settings {
         s.try_deserialize()
     }
 
+    pub fn from_typeshed(typeshed_path: PathBuf) -> Self {
+        Settings {
+            typeshed_path,
+            python_executable: None,
+        }
+    }
+
     pub fn test_settings() -> Self {
         let file_dir = env::current_dir().unwrap();
         Settings {
             typeshed_path: file_dir.parent().unwrap().join("typeshed"),
+            python_executable: None,
         }
     }
 }

@@ -77,6 +77,10 @@ impl BuildManager {
                 let module = EnderpyFile::new(path, true);
                 self.modules.insert(module.path(), module);
             }
+            for (_, implicit_import) in imported_module.1.implicit_imports.iter() {
+                let module = EnderpyFile::new(&implicit_import.path, true);
+                self.modules.insert(module.path(), module);
+            }
         }
         log::debug!("Imports resolved");
         for mut module in self.modules.iter_mut() {
@@ -196,6 +200,17 @@ impl BuildManager {
                             }
                         };
                         let e = EnderpyFile::new(resolved_path, true);
+                        files_to_resolve.push(e);
+                    }
+
+                    for (_, implicit_import) in resolved.implicit_imports.iter() {
+                        let source = match std::fs::read_to_string(&implicit_import.path) {
+                            Ok(source) => source,
+                            Err(e) => {
+                                panic!("cannot read implicit import");
+                            }
+                        };
+                        let e = EnderpyFile::new(&implicit_import.path, true);
                         files_to_resolve.push(e);
                     }
                 }

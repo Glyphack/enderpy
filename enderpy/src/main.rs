@@ -1,5 +1,5 @@
 use std::{
-    fs,
+    fs, io,
     path::{Path, PathBuf},
 };
 
@@ -25,7 +25,7 @@ fn main() -> Result<()> {
 fn symbols(path: &Path) -> Result<()> {
     let dir_of_path = path.parent().unwrap();
     let typeshed_path = get_typeshed_path()?;
-    let settings = Settings { typeshed_path };
+    let settings = Settings::from_typeshed(typeshed_path);
     let manager = BuildManager::new(settings);
 
     let root = find_project_root(dir_of_path);
@@ -40,13 +40,30 @@ fn symbols(path: &Path) -> Result<()> {
 }
 
 fn get_python_executable() -> Result<PathBuf> {
-    let output = std::process::Command::new("python")
-        .arg("-c")
-        .arg("import sys; print(sys.executable)")
-        .output()
-        .into_diagnostic()?;
-    let path = String::from_utf8(output.stdout).into_diagnostic()?;
-    Ok(PathBuf::from(path))
+    let possible_executables = ["python3", "python"];
+    for executable_name in possible_executables {
+        let res = std::process::Command::new(executable_name)
+            .arg("-c")
+            .arg("import sys; print(sys.executable)")
+            .output();
+        match res {
+            Ok(output) => {
+                let mut path = String::from_utf8(output.stdout).into_diagnostic()?;
+                // Like calling trim but I didn't want to re-allocate the str slice
+                while path.ends_with("\n") || path.ends_with("\r") {
+                    path.pop();
+                }
+                return Ok(PathBuf::from(path));
+            }
+            Err(e) => {
+                if e.kind() != io::ErrorKind::NotFound {
+                    bail!("Unknown error when looking for python executable: {e}");
+                }
+            }
+        }
+    }
+
+    bail!("Failed to find Python executable.");
 }
 
 fn get_typeshed_path() -> Result<PathBuf> {
@@ -100,9 +117,12 @@ fn check(path: &Path) -> Result<()> {
         bail!("Path must be a file");
     }
     let root = find_project_root(path);
-    let _python_executable = Some(get_python_executable()?);
+    let python_executable = Some(get_python_executable()?);
     let typeshed_path = get_typeshed_path()?;
-    let settings = Settings { typeshed_path };
+    let settings = Settings {
+        typeshed_path,
+        python_executable,
+    };
     let build_manager = BuildManager::new(settings);
     build_manager.build(root);
     build_manager.build_one(root, path);
@@ -123,4 +143,22 @@ fn check(path: &Path) -> Result<()> {
 
 fn watch() -> Result<()> {
     todo!()
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::get_python_executable;
+
+    #[test]
+    fn test_get_python_successfully() {
+        let executable = get_python_executable().expect("No python executable found!");
+        // Makes sure the python executable is working, without relying on a specific filename
+        assert!(executable.is_file());
+        let output = std::process::Command::new(executable)
+            .arg("-c")
+            .arg("print('Working')")
+            .output()
+            .unwrap();
+        assert_eq!(String::from_utf8(output.stdout).unwrap().trim(), "Working");
+    }
 }

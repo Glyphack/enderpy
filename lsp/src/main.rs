@@ -143,7 +143,7 @@ async fn main() {
         .parent()
         .unwrap()
         .join("typeshed");
-    let settings = Settings { typeshed_path };
+    let settings = Settings::from_typeshed(typeshed_path);
     let manager = BuildManager::new(settings);
     let (service, socket) = LspService::new(|client| Backend { client, manager });
     Server::new(stdin, stdout, socket).serve(service).await;
