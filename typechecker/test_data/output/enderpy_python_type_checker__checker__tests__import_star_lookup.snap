@@ -1,6 +1,6 @@
 ---
 source: typechecker/src/checker.rs
-description: "1: from .b import *\n2: import os\n3: \n4: print(in_b)\n"
+description: "1: from .b import *\n2: import os\n3: \n4: print(in_b)\n5: \n6: os.path\n7: os.path.dirname(\"\")\n"
 expression: result
 ---
 Line 1: from .b import *
@@ -22,5 +22,20 @@ Expr types in the line --->:
         print => (function) print
         print(in_b) => None
         in_b => (class) int
+
+---
+Line 6: os.path
+
+Expr types in the line --->:
+        os => Module
+        os.path => Module
+
+---
+Line 7: os.path.dirname("")
+
+Expr types in the line --->:
+        os.path.dirname => (function) dirname
+        os.path.dirname("") => TypeVar[AnyStr, (class) str, (class) builtins.bytes[(class) int]]
+        "" => (class) str
 
 ---
