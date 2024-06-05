@@ -60,7 +60,7 @@ impl TypeChecker {
     fn infer_name_type(&mut self, name: &str, start: u32, stop: u32) {
         let name_type = self
             .type_evaluator
-            .infer_type_from_symbol_table(
+            .get_name_type(
                 name,
                 None,
                 &self.type_evaluator.symbol_table,
