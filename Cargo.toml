@@ -16,7 +16,9 @@ log = { version = "0.4.17" }
 serde = { version = "1.0.152", features = ["derive"] }
 miette = { version = "7.2.0", features = ["fancy"] }
 insta = { version = "1.38.0", features = ["filters", "glob"] }
+codspeed-criterion-compat = "2.6.0"
 thiserror = "1.0.48"
+criterion = "0.5.1"
 
 [profile.dev.package.insta]
 opt-level = 3

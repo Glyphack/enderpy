@@ -21,4 +21,10 @@ thiserror = "1.0.40"
 is-macro = "0.3.5"
 
 [dev-dependencies]
+codspeed-criterion-compat = "2.6.0"
+criterion.workspace = true
 insta.workspace = true
+
+[[bench]]
+name = "parser_benchmark"
+harness = false
