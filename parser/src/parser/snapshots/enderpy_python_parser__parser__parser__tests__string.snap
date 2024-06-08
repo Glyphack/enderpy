@@ -1,11 +1,11 @@
 ---
 source: parser/src/parser/parser.rs
-description: "x = 'simple text\\n'\n\nraw = r'raw_text\\n'\n\ny = \"\"\"multi\"\"\"\n\n# TODO: enable with better error handling in parser\n# raw_err = r'ss\n"
+description: "x = \"simple text\\n\"\n\nraw = r\"raw_text\\n\"\n\ny = \"\"\"multi\"\"\"\n\n# TODO: enable with better error handling in parser\n# raw_err = r'ss\n\nf\"{self.__class__.__name__}({self._display()!r})\"\n\nf\"{num:0.0f}{unit}\"\n\n# f\"some words {a+b:.3f} more words {c+d=} final words\"\n"
 ---
 Module {
     node: Node {
         start: 0,
-        end: 128,
+        end: 257,
     },
     body: [
         AssignStatement(
@@ -91,6 +91,183 @@ Module {
                     },
                 ),
             },
+        ),
+        ExpressionStatement(
+            JoinedStr(
+                JoinedStr {
+                    node: Node {
+                        start: 129,
+                        end: 178,
+                    },
+                    values: [
+                        FormattedValue(
+                            FormattedValue {
+                                node: Node {
+                                    start: 131,
+                                    end: 156,
+                                },
+                                value: Attribute(
+                                    Attribute {
+                                        node: Node {
+                                            start: 132,
+                                            end: 155,
+                                        },
+                                        value: Attribute(
+                                            Attribute {
+                                                node: Node {
+                                                    start: 132,
+                                                    end: 146,
+                                                },
+                                                value: Name(
+                                                    Name {
+                                                        node: Node {
+                                                            start: 132,
+                                                            end: 136,
+                                                        },
+                                                        id: "self",
+                                                    },
+                                                ),
+                                                attr: "__class__",
+                                            },
+                                        ),
+                                        attr: "__name__",
+                                    },
+                                ),
+                                conversion: -1,
+                                format_spec: None,
+                            },
+                        ),
+                        Constant(
+                            Constant {
+                                node: Node {
+                                    start: 156,
+                                    end: 157,
+                                },
+                                value: "(",
+                            },
+                        ),
+                        FormattedValue(
+                            FormattedValue {
+                                node: Node {
+                                    start: 157,
+                                    end: 176,
+                                },
+                                value: Call(
+                                    Call {
+                                        node: Node {
+                                            start: 158,
+                                            end: 173,
+                                        },
+                                        func: Attribute(
+                                            Attribute {
+                                                node: Node {
+                                                    start: 158,
+                                                    end: 171,
+                                                },
+                                                value: Name(
+                                                    Name {
+                                                        node: Node {
+                                                            start: 158,
+                                                            end: 162,
+                                                        },
+                                                        id: "self",
+                                                    },
+                                                ),
+                                                attr: "_display",
+                                            },
+                                        ),
+                                        args: [],
+                                        keywords: [],
+                                        starargs: None,
+                                        kwargs: None,
+                                    },
+                                ),
+                                conversion: 114,
+                                format_spec: None,
+                            },
+                        ),
+                        Constant(
+                            Constant {
+                                node: Node {
+                                    start: 176,
+                                    end: 177,
+                                },
+                                value: ")",
+                            },
+                        ),
+                    ],
+                },
+            ),
+        ),
+        ExpressionStatement(
+            JoinedStr(
+                JoinedStr {
+                    node: Node {
+                        start: 180,
+                        end: 199,
+                    },
+                    values: [
+                        FormattedValue(
+                            FormattedValue {
+                                node: Node {
+                                    start: 182,
+                                    end: 192,
+                                },
+                                value: Name(
+                                    Name {
+                                        node: Node {
+                                            start: 183,
+                                            end: 186,
+                                        },
+                                        id: "num",
+                                    },
+                                ),
+                                conversion: -1,
+                                format_spec: Some(
+                                    JoinedStr(
+                                        JoinedStr {
+                                            node: Node {
+                                                start: 186,
+                                                end: 191,
+                                            },
+                                            values: [
+                                                Constant(
+                                                    Constant {
+                                                        node: Node {
+                                                            start: 187,
+                                                            end: 191,
+                                                        },
+                                                        value: "0.0f",
+                                                    },
+                                                ),
+                                            ],
+                                        },
+                                    ),
+                                ),
+                            },
+                        ),
+                        FormattedValue(
+                            FormattedValue {
+                                node: Node {
+                                    start: 192,
+                                    end: 198,
+                                },
+                                value: Name(
+                                    Name {
+                                        node: Node {
+                                            start: 193,
+                                            end: 197,
+                                        },
+                                        id: "unit",
+                                    },
+                                ),
+                                conversion: -1,
+                                format_spec: None,
+                            },
+                        ),
+                    ],
+                },
+            ),
         ),
     ],
 }

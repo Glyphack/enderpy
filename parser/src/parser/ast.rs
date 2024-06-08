@@ -502,7 +502,7 @@ pub struct YieldFrom {
 #[derive(Debug, Clone)]
 pub struct Starred {
     pub node: Node,
-    pub value: Box<Expression>,
+    pub value: Expression,
 }
 
 // https://docs.python.org/3/library/ast.html#ast.GeneratorExp
@@ -568,9 +568,9 @@ pub struct Subscript {
 #[derive(Debug, Clone)]
 pub struct Slice {
     pub node: Node,
-    pub lower: Option<Box<Expression>>,
-    pub upper: Option<Box<Expression>>,
-    pub step: Option<Box<Expression>>,
+    pub lower: Option<Expression>,
+    pub upper: Option<Expression>,
+    pub step: Option<Expression>,
 }
 
 // https://docs.python.org/3/library/ast.html#ast.Call
@@ -687,9 +687,9 @@ pub struct IfExp {
 #[derive(Debug, Clone)]
 pub struct FormattedValue {
     pub node: Node,
-    pub value: Box<Expression>,
-    pub conversion: Option<i32>,
-    pub format_spec: Option<Box<Expression>>,
+    pub value: Expression,
+    pub conversion: i32,
+    pub format_spec: Option<Expression>,
 }
 
 // https://docs.python.org/3/library/ast.html#ast.JoinedStr

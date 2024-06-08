@@ -19,7 +19,7 @@ Module {
                         Constant(
                             Constant {
                                 node: Node {
-                                    start: 0,
+                                    start: 2,
                                     end: 3,
                                 },
                                 value: "a",

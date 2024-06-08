@@ -1,11 +1,11 @@
 ---
 source: parser/src/parser/parser.rs
-description: "indices = list_of_key_stats[0::2]\n\nvalues = list_of_key_stats[1::2]\n\na[b]\n\na[b:c]\n\na[b:c:d]\n\na[b, c, d]\n\na[b, c: d, e]\n\na[::]\n\na[b, c:d:e, f]\n\na[::d,]\n"
+description: "indices = list_of_key_stats[0::2]\n\nvalues = list_of_key_stats[1::2]\n\na[b]\n\na[::]\na[::step]\na[::step,]\n\na[:upper]\na[:6]\na[:upper:]\na[:upper:step]\n\na[lower:]\na[lower:upper]\na[lower:upper:]\na[lower:upper:step]\na[lower::]\n\n\na[b, c, d]\n\na[b, c:d, e]\n\n\na[b, c:d:e, f]\n"
 ---
 Module {
     node: Node {
         start: 0,
-        end: 151,
+        end: 262,
     },
     body: [
         AssignStatement(
@@ -43,7 +43,7 @@ Module {
                         slice: Slice(
                             Slice {
                                 node: Node {
-                                    start: 29,
+                                    start: 28,
                                     end: 32,
                                 },
                                 lower: Some(
@@ -110,7 +110,7 @@ Module {
                         slice: Slice(
                             Slice {
                                 node: Node {
-                                    start: 63,
+                                    start: 62,
                                     end: 66,
                                 },
                                 lower: Some(
@@ -175,7 +175,7 @@ Module {
                 Subscript {
                     node: Node {
                         start: 75,
-                        end: 81,
+                        end: 80,
                     },
                     value: Name(
                         Name {
@@ -189,28 +189,48 @@ Module {
                     slice: Slice(
                         Slice {
                             node: Node {
-                                start: 78,
-                                end: 80,
+                                start: 77,
+                                end: 79,
                             },
-                            lower: Some(
-                                Name(
-                                    Name {
-                                        node: Node {
-                                            start: 77,
-                                            end: 78,
-                                        },
-                                        id: "b",
-                                    },
-                                ),
-                            ),
+                            lower: None,
+                            upper: None,
+                            step: None,
+                        },
+                    ),
+                },
+            ),
+        ),
+        ExpressionStatement(
+            Subscript(
+                Subscript {
+                    node: Node {
+                        start: 81,
+                        end: 90,
+                    },
+                    value: Name(
+                        Name {
+                            node: Node {
+                                start: 81,
+                                end: 82,
+                            },
+                            id: "a",
+                        },
+                    ),
+                    slice: Slice(
+                        Slice {
+                            node: Node {
+                                start: 83,
+                                end: 89,
+                            },
+                            lower: None,
                             upper: Some(
                                 Name(
                                     Name {
                                         node: Node {
-                                            start: 79,
-                                            end: 80,
+                                            start: 85,
+                                            end: 89,
                                         },
-                                        id: "c",
+                                        id: "step",
                                     },
                                 ),
                             ),
@@ -224,14 +244,14 @@ Module {
             Subscript(
                 Subscript {
                     node: Node {
-                        start: 83,
-                        end: 91,
+                        start: 91,
+                        end: 101,
                     },
                     value: Name(
                         Name {
                             node: Node {
-                                start: 83,
-                                end: 84,
+                                start: 91,
+                                end: 92,
                             },
                             id: "a",
                         },
@@ -239,39 +259,59 @@ Module {
                     slice: Slice(
                         Slice {
                             node: Node {
-                                start: 86,
-                                end: 90,
+                                start: 93,
+                                end: 99,
                             },
-                            lower: Some(
-                                Name(
-                                    Name {
-                                        node: Node {
-                                            start: 85,
-                                            end: 86,
-                                        },
-                                        id: "b",
-                                    },
-                                ),
-                            ),
+                            lower: None,
                             upper: Some(
                                 Name(
                                     Name {
                                         node: Node {
-                                            start: 87,
-                                            end: 88,
+                                            start: 95,
+                                            end: 99,
                                         },
-                                        id: "c",
+                                        id: "step",
                                     },
                                 ),
                             ),
+                            step: None,
+                        },
+                    ),
+                },
+            ),
+        ),
+        ExpressionStatement(
+            Subscript(
+                Subscript {
+                    node: Node {
+                        start: 103,
+                        end: 112,
+                    },
+                    value: Name(
+                        Name {
+                            node: Node {
+                                start: 103,
+                                end: 104,
+                            },
+                            id: "a",
+                        },
+                    ),
+                    slice: Slice(
+                        Slice {
+                            node: Node {
+                                start: 105,
+                                end: 111,
+                            },
+                            lower: None,
+                            upper: None,
                             step: Some(
                                 Name(
                                     Name {
                                         node: Node {
-                                            start: 89,
-                                            end: 90,
+                                            start: 106,
+                                            end: 111,
                                         },
-                                        id: "d",
+                                        id: "upper",
                                     },
                                 ),
                             ),
@@ -284,14 +324,384 @@ Module {
             Subscript(
                 Subscript {
                     node: Node {
-                        start: 93,
-                        end: 103,
+                        start: 113,
+                        end: 118,
                     },
                     value: Name(
                         Name {
                             node: Node {
-                                start: 93,
-                                end: 94,
+                                start: 113,
+                                end: 114,
+                            },
+                            id: "a",
+                        },
+                    ),
+                    slice: Slice(
+                        Slice {
+                            node: Node {
+                                start: 115,
+                                end: 117,
+                            },
+                            lower: None,
+                            upper: None,
+                            step: Some(
+                                Constant(
+                                    Constant {
+                                        node: Node {
+                                            start: 116,
+                                            end: 117,
+                                        },
+                                        value: 6,
+                                    },
+                                ),
+                            ),
+                        },
+                    ),
+                },
+            ),
+        ),
+        ExpressionStatement(
+            Subscript(
+                Subscript {
+                    node: Node {
+                        start: 119,
+                        end: 129,
+                    },
+                    value: Name(
+                        Name {
+                            node: Node {
+                                start: 119,
+                                end: 120,
+                            },
+                            id: "a",
+                        },
+                    ),
+                    slice: Slice(
+                        Slice {
+                            node: Node {
+                                start: 121,
+                                end: 128,
+                            },
+                            lower: None,
+                            upper: Some(
+                                Name(
+                                    Name {
+                                        node: Node {
+                                            start: 122,
+                                            end: 127,
+                                        },
+                                        id: "upper",
+                                    },
+                                ),
+                            ),
+                            step: None,
+                        },
+                    ),
+                },
+            ),
+        ),
+        ExpressionStatement(
+            Subscript(
+                Subscript {
+                    node: Node {
+                        start: 130,
+                        end: 144,
+                    },
+                    value: Name(
+                        Name {
+                            node: Node {
+                                start: 130,
+                                end: 131,
+                            },
+                            id: "a",
+                        },
+                    ),
+                    slice: Slice(
+                        Slice {
+                            node: Node {
+                                start: 132,
+                                end: 143,
+                            },
+                            lower: None,
+                            upper: Some(
+                                Name(
+                                    Name {
+                                        node: Node {
+                                            start: 133,
+                                            end: 138,
+                                        },
+                                        id: "upper",
+                                    },
+                                ),
+                            ),
+                            step: Some(
+                                Name(
+                                    Name {
+                                        node: Node {
+                                            start: 139,
+                                            end: 143,
+                                        },
+                                        id: "step",
+                                    },
+                                ),
+                            ),
+                        },
+                    ),
+                },
+            ),
+        ),
+        ExpressionStatement(
+            Subscript(
+                Subscript {
+                    node: Node {
+                        start: 146,
+                        end: 155,
+                    },
+                    value: Name(
+                        Name {
+                            node: Node {
+                                start: 146,
+                                end: 147,
+                            },
+                            id: "a",
+                        },
+                    ),
+                    slice: Slice(
+                        Slice {
+                            node: Node {
+                                start: 148,
+                                end: 154,
+                            },
+                            lower: Some(
+                                Name(
+                                    Name {
+                                        node: Node {
+                                            start: 148,
+                                            end: 153,
+                                        },
+                                        id: "lower",
+                                    },
+                                ),
+                            ),
+                            upper: None,
+                            step: None,
+                        },
+                    ),
+                },
+            ),
+        ),
+        ExpressionStatement(
+            Subscript(
+                Subscript {
+                    node: Node {
+                        start: 156,
+                        end: 170,
+                    },
+                    value: Name(
+                        Name {
+                            node: Node {
+                                start: 156,
+                                end: 157,
+                            },
+                            id: "a",
+                        },
+                    ),
+                    slice: Slice(
+                        Slice {
+                            node: Node {
+                                start: 158,
+                                end: 169,
+                            },
+                            lower: Some(
+                                Name(
+                                    Name {
+                                        node: Node {
+                                            start: 158,
+                                            end: 163,
+                                        },
+                                        id: "lower",
+                                    },
+                                ),
+                            ),
+                            upper: Some(
+                                Name(
+                                    Name {
+                                        node: Node {
+                                            start: 164,
+                                            end: 169,
+                                        },
+                                        id: "upper",
+                                    },
+                                ),
+                            ),
+                            step: None,
+                        },
+                    ),
+                },
+            ),
+        ),
+        ExpressionStatement(
+            Subscript(
+                Subscript {
+                    node: Node {
+                        start: 171,
+                        end: 186,
+                    },
+                    value: Name(
+                        Name {
+                            node: Node {
+                                start: 171,
+                                end: 172,
+                            },
+                            id: "a",
+                        },
+                    ),
+                    slice: Slice(
+                        Slice {
+                            node: Node {
+                                start: 173,
+                                end: 185,
+                            },
+                            lower: Some(
+                                Name(
+                                    Name {
+                                        node: Node {
+                                            start: 173,
+                                            end: 178,
+                                        },
+                                        id: "lower",
+                                    },
+                                ),
+                            ),
+                            upper: None,
+                            step: Some(
+                                Name(
+                                    Name {
+                                        node: Node {
+                                            start: 179,
+                                            end: 184,
+                                        },
+                                        id: "upper",
+                                    },
+                                ),
+                            ),
+                        },
+                    ),
+                },
+            ),
+        ),
+        ExpressionStatement(
+            Subscript(
+                Subscript {
+                    node: Node {
+                        start: 187,
+                        end: 206,
+                    },
+                    value: Name(
+                        Name {
+                            node: Node {
+                                start: 187,
+                                end: 188,
+                            },
+                            id: "a",
+                        },
+                    ),
+                    slice: Slice(
+                        Slice {
+                            node: Node {
+                                start: 189,
+                                end: 205,
+                            },
+                            lower: Some(
+                                Name(
+                                    Name {
+                                        node: Node {
+                                            start: 189,
+                                            end: 194,
+                                        },
+                                        id: "lower",
+                                    },
+                                ),
+                            ),
+                            upper: Some(
+                                Name(
+                                    Name {
+                                        node: Node {
+                                            start: 195,
+                                            end: 200,
+                                        },
+                                        id: "upper",
+                                    },
+                                ),
+                            ),
+                            step: Some(
+                                Name(
+                                    Name {
+                                        node: Node {
+                                            start: 201,
+                                            end: 205,
+                                        },
+                                        id: "step",
+                                    },
+                                ),
+                            ),
+                        },
+                    ),
+                },
+            ),
+        ),
+        ExpressionStatement(
+            Subscript(
+                Subscript {
+                    node: Node {
+                        start: 207,
+                        end: 217,
+                    },
+                    value: Name(
+                        Name {
+                            node: Node {
+                                start: 207,
+                                end: 208,
+                            },
+                            id: "a",
+                        },
+                    ),
+                    slice: Slice(
+                        Slice {
+                            node: Node {
+                                start: 209,
+                                end: 216,
+                            },
+                            lower: Some(
+                                Name(
+                                    Name {
+                                        node: Node {
+                                            start: 209,
+                                            end: 214,
+                                        },
+                                        id: "lower",
+                                    },
+                                ),
+                            ),
+                            upper: None,
+                            step: None,
+                        },
+                    ),
+                },
+            ),
+        ),
+        ExpressionStatement(
+            Subscript(
+                Subscript {
+                    node: Node {
+                        start: 220,
+                        end: 230,
+                    },
+                    value: Name(
+                        Name {
+                            node: Node {
+                                start: 220,
+                                end: 221,
                             },
                             id: "a",
                         },
@@ -299,15 +709,15 @@ Module {
                     slice: Tuple(
                         Tuple {
                             node: Node {
-                                start: 95,
-                                end: 103,
+                                start: 222,
+                                end: 230,
                             },
                             elements: [
                                 Name(
                                     Name {
                                         node: Node {
-                                            start: 95,
-                                            end: 96,
+                                            start: 222,
+                                            end: 223,
                                         },
                                         id: "b",
                                     },
@@ -315,8 +725,8 @@ Module {
                                 Name(
                                     Name {
                                         node: Node {
-                                            start: 98,
-                                            end: 99,
+                                            start: 225,
+                                            end: 226,
                                         },
                                         id: "c",
                                     },
@@ -324,8 +734,8 @@ Module {
                                 Name(
                                     Name {
                                         node: Node {
-                                            start: 101,
-                                            end: 102,
+                                            start: 228,
+                                            end: 229,
                                         },
                                         id: "d",
                                     },
@@ -340,14 +750,14 @@ Module {
             Subscript(
                 Subscript {
                     node: Node {
-                        start: 105,
-                        end: 118,
+                        start: 232,
+                        end: 244,
                     },
                     value: Name(
                         Name {
                             node: Node {
-                                start: 105,
-                                end: 106,
+                                start: 232,
+                                end: 233,
                             },
                             id: "a",
                         },
@@ -355,15 +765,15 @@ Module {
                     slice: Tuple(
                         Tuple {
                             node: Node {
-                                start: 107,
-                                end: 118,
+                                start: 234,
+                                end: 244,
                             },
                             elements: [
                                 Name(
                                     Name {
                                         node: Node {
-                                            start: 107,
-                                            end: 108,
+                                            start: 234,
+                                            end: 235,
                                         },
                                         id: "b",
                                     },
@@ -371,15 +781,15 @@ Module {
                                 Slice(
                                     Slice {
                                         node: Node {
-                                            start: 111,
-                                            end: 114,
+                                            start: 237,
+                                            end: 240,
                                         },
                                         lower: Some(
                                             Name(
                                                 Name {
                                                     node: Node {
-                                                        start: 110,
-                                                        end: 111,
+                                                        start: 237,
+                                                        end: 238,
                                                     },
                                                     id: "c",
                                                 },
@@ -389,8 +799,8 @@ Module {
                                             Name(
                                                 Name {
                                                     node: Node {
-                                                        start: 113,
-                                                        end: 114,
+                                                        start: 239,
+                                                        end: 240,
                                                     },
                                                     id: "d",
                                                 },
@@ -402,8 +812,8 @@ Module {
                                 Name(
                                     Name {
                                         node: Node {
-                                            start: 116,
-                                            end: 117,
+                                            start: 242,
+                                            end: 243,
                                         },
                                         id: "e",
                                     },
@@ -418,44 +828,14 @@ Module {
             Subscript(
                 Subscript {
                     node: Node {
-                        start: 120,
-                        end: 125,
+                        start: 247,
+                        end: 261,
                     },
                     value: Name(
                         Name {
                             node: Node {
-                                start: 120,
-                                end: 121,
-                            },
-                            id: "a",
-                        },
-                    ),
-                    slice: Slice(
-                        Slice {
-                            node: Node {
-                                start: 122,
-                                end: 124,
-                            },
-                            lower: None,
-                            upper: None,
-                            step: None,
-                        },
-                    ),
-                },
-            ),
-        ),
-        ExpressionStatement(
-            Subscript(
-                Subscript {
-                    node: Node {
-                        start: 127,
-                        end: 141,
-                    },
-                    value: Name(
-                        Name {
-                            node: Node {
-                                start: 127,
-                                end: 128,
+                                start: 247,
+                                end: 248,
                             },
                             id: "a",
                         },
@@ -463,15 +843,15 @@ Module {
                     slice: Tuple(
                         Tuple {
                             node: Node {
-                                start: 129,
-                                end: 141,
+                                start: 249,
+                                end: 261,
                             },
                             elements: [
                                 Name(
                                     Name {
                                         node: Node {
-                                            start: 129,
-                                            end: 130,
+                                            start: 249,
+                                            end: 250,
                                         },
                                         id: "b",
                                     },
@@ -479,15 +859,15 @@ Module {
                                 Slice(
                                     Slice {
                                         node: Node {
-                                            start: 133,
-                                            end: 137,
+                                            start: 252,
+                                            end: 257,
                                         },
                                         lower: Some(
                                             Name(
                                                 Name {
                                                     node: Node {
-                                                        start: 132,
-                                                        end: 133,
+                                                        start: 252,
+                                                        end: 253,
                                                     },
                                                     id: "c",
                                                 },
@@ -497,8 +877,8 @@ Module {
                                             Name(
                                                 Name {
                                                     node: Node {
-                                                        start: 134,
-                                                        end: 135,
+                                                        start: 254,
+                                                        end: 255,
                                                     },
                                                     id: "d",
                                                 },
@@ -508,8 +888,8 @@ Module {
                                             Name(
                                                 Name {
                                                     node: Node {
-                                                        start: 136,
-                                                        end: 137,
+                                                        start: 256,
+                                                        end: 257,
                                                     },
                                                     id: "e",
                                                 },
@@ -520,53 +900,13 @@ Module {
                                 Name(
                                     Name {
                                         node: Node {
-                                            start: 139,
-                                            end: 140,
+                                            start: 259,
+                                            end: 260,
                                         },
                                         id: "f",
                                     },
                                 ),
                             ],
-                        },
-                    ),
-                },
-            ),
-        ),
-        ExpressionStatement(
-            Subscript(
-                Subscript {
-                    node: Node {
-                        start: 143,
-                        end: 150,
-                    },
-                    value: Name(
-                        Name {
-                            node: Node {
-                                start: 143,
-                                end: 144,
-                            },
-                            id: "a",
-                        },
-                    ),
-                    slice: Slice(
-                        Slice {
-                            node: Node {
-                                start: 145,
-                                end: 148,
-                            },
-                            lower: None,
-                            upper: Some(
-                                Name(
-                                    Name {
-                                        node: Node {
-                                            start: 147,
-                                            end: 148,
-                                        },
-                                        id: "d",
-                                    },
-                                ),
-                            ),
-                            step: None,
                         },
                     ),
                 },

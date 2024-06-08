@@ -19,19 +19,29 @@ Module {
                         Constant(
                             Constant {
                                 node: Node {
-                                    start: 0,
+                                    start: 2,
                                     end: 4,
                                 },
                                 value: "a_",
                             },
                         ),
-                        Constant(
-                            Constant {
+                        FormattedValue(
+                            FormattedValue {
                                 node: Node {
-                                    start: 5,
-                                    end: 6,
+                                    start: 4,
+                                    end: 7,
                                 },
-                                value: 1,
+                                value: Constant(
+                                    Constant {
+                                        node: Node {
+                                            start: 5,
+                                            end: 6,
+                                        },
+                                        value: 1,
+                                    },
+                                ),
+                                conversion: -1,
+                                format_spec: None,
                             },
                         ),
                         Constant(
