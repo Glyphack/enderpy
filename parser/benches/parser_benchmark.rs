@@ -1,4 +1,4 @@
-use codspeed_criterion_compat::{criterion_group, criterion_main, Criterion};
+use codspeed_criterion_compat::{criterion_group, criterion_main, BenchmarkId, Criterion};
 use enderpy_python_parser::*;
 use reqwest::blocking::Client;
 use std::fs::read_to_string;
@@ -27,19 +27,34 @@ fn create_test_cases() -> Vec<String> {
             "pydantic_types.py",
             "https://raw.githubusercontent.com/pydantic/pydantic/83b3c49e99ceb4599d9286a3d793cea44ac36d4b/pydantic/types.py",
         ),
+        try_download("dataset.py", "https://raw.githubusercontent.com/DHI/mikeio/b7d26418f4db2909b0aa965253dbe83194d7bb5b/tests/test_dataset.py")
     ]
 }
 
-pub fn criterion_benchmark(c: &mut Criterion) {
+pub fn benchmark_parser(c: &mut Criterion) {
     let tests = create_test_cases();
-    let path = tests.last().unwrap();
-    let source = read_to_string(path).expect("cannot read file");
-    let mut parser = Parser::new(source, path.to_string());
+    let mut group = c.benchmark_group("parser");
 
-    c.bench_function("parse pydantic", |b| b.iter(|| parser.parse().unwrap()));
+    for path in tests.iter() {
+        let source = read_to_string(path).expect("cannot read file");
 
-    remove_file(path).expect("cannot delete file");
+        group.bench_with_input(
+            BenchmarkId::from_parameter(path.to_string()),
+            &source,
+            |b, source| {
+                b.iter(|| {
+                    let mut parser = Parser::new(source.to_string(), path.to_string());
+                    parser.parse().unwrap();
+
+                    0
+                });
+            },
+        );
+
+        // remove_file(path).expect("cannot delete file");
+    }
+    group.finish()
 }
 
-criterion_group!(benches, criterion_benchmark);
+criterion_group!(benches, benchmark_parser);
 criterion_main!(benches);
