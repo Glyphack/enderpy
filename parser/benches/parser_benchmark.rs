@@ -1,12 +1,10 @@
-use codspeed_criterion_compat::{black_box, criterion_group, criterion_main, Criterion};
+use codspeed_criterion_compat::{criterion_group, criterion_main, Criterion};
 use enderpy_python_parser::*;
 use reqwest::blocking::Client;
 use std::fs::read_to_string;
 use std::fs::remove_file;
 use std::fs::File;
 use std::io::copy;
-use std::io::Write;
-use std::path::Path;
 
 fn try_download(path: &str, url: &str) -> String {
     let client = Client::new();
@@ -38,7 +36,7 @@ pub fn criterion_benchmark(c: &mut Criterion) {
     let source = read_to_string(path).expect("cannot read file");
     let mut parser = Parser::new(source, path.to_string());
 
-    c.bench_function("parse pydantic", |b| b.iter(|| parser.parse()));
+    c.bench_function("parse pydantic", |b| b.iter(|| parser.parse().unwrap()));
 
     remove_file(path).expect("cannot delete file");
 }
