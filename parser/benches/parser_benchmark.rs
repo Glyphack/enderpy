@@ -1,15 +1,46 @@
 use codspeed_criterion_compat::{black_box, criterion_group, criterion_main, Criterion};
+use enderpy_python_parser::*;
+use reqwest::blocking::Client;
+use std::fs::read_to_string;
+use std::fs::remove_file;
+use std::fs::File;
+use std::io::copy;
+use std::io::Write;
+use std::path::Path;
 
-fn fibonacci(n: u64) -> u64 {
-    match n {
-        0 => 1,
-        1 => 1,
-        n => fibonacci(n - 1) + fibonacci(n - 2),
+fn try_download(path: &str, url: &str) -> String {
+    let client = Client::new();
+    let mut response = client.get(url).send().unwrap();
+
+    if response.status().is_success() {
+        let mut dest = File::create(path).unwrap();
+        copy(&mut response, &mut dest).unwrap();
+        println!("Downloaded file to {:?}", path);
+    } else {
+        println!("Failed to download file: {}", response.status());
     }
+
+    path.to_string()
+}
+
+fn create_test_cases() -> Vec<String> {
+    vec![
+        try_download(
+            "pydantic_types.py",
+            "https://raw.githubusercontent.com/pydantic/pydantic/83b3c49e99ceb4599d9286a3d793cea44ac36d4b/pydantic/types.py",
+        ),
+    ]
 }
 
 pub fn criterion_benchmark(c: &mut Criterion) {
-    c.bench_function("fib 20", |b| b.iter(|| fibonacci(black_box(20))));
+    let tests = create_test_cases();
+    let path = tests.last().unwrap();
+    let source = read_to_string(path).expect("cannot read file");
+    let mut parser = Parser::new(source, path.to_string());
+
+    c.bench_function("parse pydantic", |b| b.iter(|| parser.parse()));
+
+    remove_file(path).expect("cannot delete file");
 }
 
 criterion_group!(benches, criterion_benchmark);

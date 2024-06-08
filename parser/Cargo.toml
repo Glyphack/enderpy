@@ -24,6 +24,8 @@ is-macro = "0.3.5"
 codspeed-criterion-compat = "2.6.0"
 criterion.workspace = true
 insta.workspace = true
+reqwest = { version= "0.12.4", features = ["blocking"] }
+tokio.workspace = true
 
 [[bench]]
 name = "parser_benchmark"

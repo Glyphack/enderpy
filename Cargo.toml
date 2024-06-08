@@ -19,6 +19,7 @@ insta = { version = "1.38.0", features = ["filters", "glob"] }
 codspeed-criterion-compat = "2.6.0"
 thiserror = "1.0.48"
 criterion = "0.5.1"
+tokio = { version = "1", features = ["full"] }
 
 [profile.dev.package.insta]
 opt-level = 3
