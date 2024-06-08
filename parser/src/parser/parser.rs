@@ -1,4 +1,9 @@
-use std::{panic, vec};
+use core::panic;
+/// Some functions in this file have misleading names.
+/// For example star expressions are defined slightly differently in python grammar and references.
+/// So there might be duplicates of both. Try to migrate the wrong names to how they are called in:
+/// https://docs.python.org/3/reference/grammar.html
+use std::vec;
 
 use miette::Result;
 
@@ -194,7 +199,11 @@ impl Parser {
         if !self.at(kind) {
             let found = &self.cur_token;
             let file = &self.path;
-            panic!("Expected {:?} but found {:?} {file}", kind, found);
+            let line = &self.get_offset_line_number(found.start);
+            panic!(
+                "Expected {:?} but found {:?} {file} line: {line:}",
+                kind, found
+            );
         }
         self.bump_any();
         Ok(())
@@ -1667,7 +1676,7 @@ impl Parser {
                 let expr = self.parse_or_expr()?;
                 Expression::Starred(Box::new(Starred {
                     node: self.finish_node(node),
-                    value: Box::new(expr),
+                    value: expr,
                 }))
             } else {
                 self.parse_expression()?
@@ -1809,7 +1818,7 @@ impl Parser {
             }
             Kind::Mul => Expression::Starred(Box::new(Starred {
                 node: self.finish_node(node),
-                value: Box::new(self.parse_target()?),
+                value: self.parse_target()?,
             })),
             _ => panic!("invalid target"),
         };
@@ -2016,7 +2025,7 @@ impl Parser {
             }
             return Ok(Expression::Starred(Box::new(Starred {
                 node: self.finish_node(node),
-                value: Box::new(expr),
+                value: expr,
             })));
         }
         self.parse_named_expression()
@@ -2289,7 +2298,7 @@ impl Parser {
                     self.bump(Kind::Mul);
                     let star_arg = Expression::Starred(Box::new(Starred {
                         node: self.finish_node(star_arg_node),
-                        value: Box::new(self.parse_expression()?),
+                        value: self.parse_expression()?,
                     }));
                     positional_args.push(star_arg);
                 } else if self.at(Kind::Pow) {
@@ -2363,7 +2372,7 @@ impl Parser {
                 self.bump(Kind::Mul);
                 let star_arg = Expression::Starred(Box::new(Starred {
                     node: self.finish_node(star_arg_node),
-                    value: Box::new(self.parse_expression()?),
+                    value: self.parse_expression()?,
                 }));
                 positional_args.push(star_arg);
             } else if self.at(Kind::Pow) {
@@ -2415,8 +2424,9 @@ impl Parser {
         value: Expression,
     ) -> Result<Expression, ParsingError> {
         let mut expr = Ok(value);
+        // To handle cases like a[1][2]...
         while self.eat(Kind::LeftBrace) {
-            let slice = self.parse_slice_list()?;
+            let slice = self.parse_slices()?;
             expr = Ok(Expression::Subscript(Box::new(Subscript {
                 node: self.finish_node(node),
                 value: expr?,
@@ -2543,6 +2553,16 @@ impl Parser {
         })))
     }
 
+    fn parse_starred_expression_real(&mut self) -> Result<Expression, ParsingError> {
+        let node = self.start_node();
+        self.expect(Kind::Mul);
+        let expr = self.parse_expression()?;
+        Ok(Expression::Starred(Box::new(Starred {
+            node: self.finish_node(node),
+            value: expr,
+        })))
+    }
+
     // https://docs.python.org/3/reference/expressions.html#expression-lists
     fn parse_starred_expression(
         &mut self,
@@ -2574,21 +2594,16 @@ impl Parser {
 
     // https://docs.python.org/3/reference/expressions.html#slicings
     // Closing will be consumed by this function
-    fn parse_slice_list(&mut self) -> Result<Expression, ParsingError> {
+    fn parse_slices(&mut self) -> Result<Expression, ParsingError> {
         let node = self.start_node();
-        let mut elements = vec![];
-        // TODO: This EOF check should not be here.
-        while !self.at(Kind::Eof) && !self.at(Kind::RightBrace) {
-            if self.at(Kind::Colon) {
-                elements.push(self.parse_proper_slice(None)?);
-            } else {
-                let expr = self.parse_expression()?;
-                if self.at(Kind::Colon) {
-                    elements.push(self.parse_proper_slice(Some(expr))?);
-                } else {
-                    elements.push(expr);
-                }
+
+        let mut elements: Vec<Expression> = vec![];
+        while !self.at(Kind::RightBrace) {
+            if self.at(Kind::Mul) {
+                elements.push(self.parse_starred_expression_real()?);
+                continue;
             }
+            elements.push(self.parse_slice()?);
             if !self.eat(Kind::Comma) {
                 break;
             }
@@ -2603,44 +2618,149 @@ impl Parser {
         })))
     }
 
-    // https://docs.python.org/3/reference/expressions.html#slicings
-    fn parse_proper_slice(
-        &mut self,
-        lower: Option<Expression>,
-    ) -> Result<Expression, ParsingError> {
+    fn parse_slice(&mut self) -> Result<Expression, ParsingError> {
         let node = self.start_node();
+        let named_expression_or_expression = if self.eat(Kind::Colon) {
+            None
+        } else {
+            Some(self.parse_named_expression()?)
+        };
 
-        let slice_lower = if let Some(lower) = lower {
-            Some(Box::new(lower))
-        } else if self.eat(Kind::Colon) {
-            None
-        } else {
-            Some(Box::new(self.parse_expression()?))
-        };
-        let upper = if self.eat(Kind::Colon) {
-            if self.at(Kind::RightBrace) || self.at(Kind::Colon) {
-                None
-            } else {
-                Some(Box::new(self.parse_expression()?))
+        match named_expression_or_expression {
+            // [expr
+            Some(n) => {
+                // [expr ,|]
+                if self.at(Kind::RightBrace) || self.at(Kind::Comma) {
+                    return Ok(n);
+                // [expr:
+                } else {
+                    self.expect(Kind::Colon);
+                    // [expr::
+                    if self.eat(Kind::Colon) {
+                        // [expr:: end
+                        if self.at(Kind::RightBrace) || self.at(Kind::Comma) {
+                            return Ok(Expression::Slice(Box::new(Slice {
+                                node: self.finish_node(node),
+                                lower: Some(n),
+                                upper: None,
+                                step: None,
+                            })));
+                            // [expr::expr end
+                        } else {
+                            let step = Some(self.parse_expression()?);
+                            return Ok(Expression::Slice(Box::new(Slice {
+                                node: self.finish_node(node),
+                                lower: Some(n),
+                                upper: None,
+                                step,
+                            })));
+                        }
+
+                    // [expr: ,|] end
+                    } else if self.at(Kind::RightBrace) || self.at(Kind::Comma) {
+                        return Ok(Expression::Slice(Box::new(Slice {
+                            node: self.finish_node(node),
+                            lower: Some(n),
+                            upper: None,
+                            step: None,
+                        })));
+                    // [expr:expr
+                    } else {
+                        let upper_or_step = Some(self.parse_expression()?);
+                        // [expr:expr:
+                        if self.eat(Kind::Colon) {
+                            // [expr:expr:] end
+                            if self.at(Kind::RightBrace) || self.at(Kind::Comma) {
+                                return Ok(Expression::Slice(Box::new(Slice {
+                                    node: self.finish_node(node),
+                                    lower: Some(n),
+                                    upper: None,
+                                    step: upper_or_step,
+                                })));
+                                // [expr:expr:expr] end
+                            } else {
+                                let step = Some(self.parse_expression()?);
+                                return Ok(Expression::Slice(Box::new(Slice {
+                                    node: self.finish_node(node),
+                                    lower: Some(n),
+                                    upper: upper_or_step,
+                                    step,
+                                })));
+                            }
+                        // [expr:expr
+                        } else {
+                            return Ok(Expression::Slice(Box::new(Slice {
+                                node: self.finish_node(node),
+                                lower: Some(n),
+                                upper: upper_or_step,
+                                step: None,
+                            })));
+                        }
+                    }
+                }
             }
-        } else {
-            None
-        };
-        let step = if self.eat(Kind::Colon) {
-            if self.at(Kind::RightBrace) {
-                None
-            } else {
-                Some(Box::new(self.parse_expression()?))
+            // [:
+            None => {
+                // [: ,|]
+                if self.at(Kind::RightBrace) || self.at(Kind::Comma) {
+                    return Ok(Expression::Slice(Box::new(Slice {
+                        node: self.finish_node(node),
+                        lower: None,
+                        upper: None,
+                        step: None,
+                    })));
+                // [::
+                } else if self.eat(Kind::Colon) {
+                    // [::] || [::,
+                    if self.at(Kind::RightBrace) || self.at(Kind::Comma) {
+                        return Ok(Expression::Slice(Box::new(Slice {
+                            node: self.finish_node(node),
+                            lower: None,
+                            upper: None,
+                            step: None,
+                        })));
+                    // [::expr
+                    } else {
+                        let upper = Some(self.parse_expression()?);
+                        return Ok(Expression::Slice(Box::new(Slice {
+                            node: self.finish_node(node),
+                            lower: None,
+                            upper,
+                            step: None,
+                        })));
+                    }
+                // [:expr
+                } else {
+                    let first = Some(self.parse_expression()?);
+                    // [:expr:
+                    if self.eat(Kind::Colon) {
+                        // [:expr:] end
+                        if self.at(Kind::RightBrace) || self.at(Kind::Comma) {
+                            return Ok(Expression::Slice(Box::new(Slice {
+                                node: self.finish_node(node),
+                                lower: None,
+                                upper: first,
+                                step: None,
+                            })));
+                        }
+                        // [:expr:expr
+                        let step = Some(self.parse_expression()?);
+                        return Ok(Expression::Slice(Box::new(Slice {
+                            node: self.finish_node(node),
+                            lower: None,
+                            upper: first,
+                            step,
+                        })));
+                    }
+                    return Ok(Expression::Slice(Box::new(Slice {
+                        node: self.finish_node(node),
+                        lower: None,
+                        upper: None,
+                        step: first,
+                    })));
+                }
             }
-        } else {
-            None
-        };
-        Ok(Expression::Slice(Box::new(Slice {
-            node: self.finish_node(node),
-            lower: slice_lower,
-            upper,
-            step,
-        })))
+        }
     }
 
     fn map_to_atom(&mut self, start: Node, token: Token) -> Result<Expression, ParsingError> {
@@ -2965,7 +3085,30 @@ impl Parser {
                 }
                 Kind::LeftBracket => {
                     self.bump(Kind::LeftBracket);
-                    expressions.push(self.parse_expressions()?);
+                    let expr = self.parse_expressions()?;
+                    let conversion = if self.at(Kind::Identifier) {
+                        let conversion = match self.cur_token().value.as_str().unwrap().as_str() {
+                            "!s" => 115,
+                            "!r" => 114,
+                            "!a" => 97,
+                            _ => panic!("should not happen"),
+                        };
+                        self.bump_any();
+                        conversion
+                    } else {
+                        -1
+                    };
+
+                    let formatted_value = Expression::FormattedValue(Box::new(FormattedValue {
+                        node,
+                        value: expr,
+                        conversion,
+                        // TODO: imlpement
+                        format_spec: None,
+                    }));
+
+                    expressions.push(formatted_value);
+
                     self.expect(Kind::RightBracket)?;
                 }
                 _ => {

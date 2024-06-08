@@ -4,16 +4,25 @@ values = list_of_key_stats[1::2]
 
 a[b]
 
-a[b:c]
+a[::]
+a[::step]
+a[::step,]
 
-a[b:c:d]
+a[:upper]
+a[:6]
+a[:upper:]
+a[:upper:step]
+
+a[lower:]
+a[lower:upper]
+a[lower:upper:]
+a[lower:upper:step]
+a[lower::]
+
 
 a[b, c, d]
 
-a[b, c: d, e]
+a[b, c:d, e]
 
-a[::]
 
 a[b, c:d:e, f]
-
-a[::d,]

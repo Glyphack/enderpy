@@ -25,13 +25,23 @@ Module {
                                 value: "hello_",
                             },
                         ),
-                        Name(
-                            Name {
+                        FormattedValue(
+                            FormattedValue {
                                 node: Node {
-                                    start: 9,
-                                    end: 10,
+                                    start: 0,
+                                    end: 0,
                                 },
-                                id: "a",
+                                value: Name(
+                                    Name {
+                                        node: Node {
+                                            start: 9,
+                                            end: 10,
+                                        },
+                                        id: "a",
+                                    },
+                                ),
+                                conversion: -1,
+                                format_spec: None,
                             },
                         ),
                         Constant(
@@ -43,13 +53,23 @@ Module {
                                 value: " ",
                             },
                         ),
-                        Name(
-                            Name {
+                        FormattedValue(
+                            FormattedValue {
                                 node: Node {
-                                    start: 13,
-                                    end: 14,
+                                    start: 0,
+                                    end: 0,
                                 },
-                                id: "b",
+                                value: Name(
+                                    Name {
+                                        node: Node {
+                                            start: 13,
+                                            end: 14,
+                                        },
+                                        id: "b",
+                                    },
+                                ),
+                                conversion: -1,
+                                format_spec: None,
                             },
                         ),
                         Constant(
@@ -61,13 +81,23 @@ Module {
                                 value: " ",
                             },
                         ),
-                        Name(
-                            Name {
+                        FormattedValue(
+                            FormattedValue {
                                 node: Node {
-                                    start: 17,
-                                    end: 18,
+                                    start: 0,
+                                    end: 0,
                                 },
-                                id: "c",
+                                value: Name(
+                                    Name {
+                                        node: Node {
+                                            start: 17,
+                                            end: 18,
+                                        },
+                                        id: "c",
+                                    },
+                                ),
+                                conversion: -1,
+                                format_spec: None,
                             },
                         ),
                     ],

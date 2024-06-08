@@ -25,13 +25,23 @@ Module {
                                 value: "a_",
                             },
                         ),
-                        Constant(
-                            Constant {
+                        FormattedValue(
+                            FormattedValue {
                                 node: Node {
-                                    start: 5,
-                                    end: 6,
+                                    start: 0,
+                                    end: 0,
                                 },
-                                value: 1,
+                                value: Constant(
+                                    Constant {
+                                        node: Node {
+                                            start: 5,
+                                            end: 6,
+                                        },
+                                        value: 1,
+                                    },
+                                ),
+                                conversion: -1,
+                                format_spec: None,
                             },
                         ),
                         Constant(

@@ -620,13 +620,23 @@ Module {
                                                                                 value: "Received 503 Service Unavailable on ",
                                                                             },
                                                                         ),
-                                                                        Name(
-                                                                            Name {
+                                                                        FormattedValue(
+                                                                            FormattedValue {
                                                                                 node: Node {
-                                                                                    start: 604,
-                                                                                    end: 612,
+                                                                                    start: 565,
+                                                                                    end: 0,
                                                                                 },
-                                                                                id: "date_obj",
+                                                                                value: Name(
+                                                                                    Name {
+                                                                                        node: Node {
+                                                                                            start: 604,
+                                                                                            end: 612,
+                                                                                        },
+                                                                                        id: "date_obj",
+                                                                                    },
+                                                                                ),
+                                                                                conversion: -1,
+                                                                                format_spec: None,
                                                                             },
                                                                         ),
                                                                         Constant(
@@ -858,13 +868,23 @@ Module {
                                                                                 value: "Successfully fetched trade details on ",
                                                                             },
                                                                         ),
-                                                                        Name(
-                                                                            Name {
+                                                                        FormattedValue(
+                                                                            FormattedValue {
                                                                                 node: Node {
-                                                                                    start: 883,
-                                                                                    end: 891,
+                                                                                    start: 842,
+                                                                                    end: 0,
                                                                                 },
-                                                                                id: "date_obj",
+                                                                                value: Name(
+                                                                                    Name {
+                                                                                        node: Node {
+                                                                                            start: 883,
+                                                                                            end: 891,
+                                                                                        },
+                                                                                        id: "date_obj",
+                                                                                    },
+                                                                                ),
+                                                                                conversion: -1,
+                                                                                format_spec: None,
                                                                             },
                                                                         ),
                                                                         Constant(
@@ -1077,13 +1097,23 @@ Module {
                                                                 value: "Request failed for ",
                                                             },
                                                         ),
-                                                        Name(
-                                                            Name {
+                                                        FormattedValue(
+                                                            FormattedValue {
                                                                 node: Node {
-                                                                    start: 1079,
-                                                                    end: 1087,
+                                                                    start: 1057,
+                                                                    end: 0,
                                                                 },
-                                                                id: "date_obj",
+                                                                value: Name(
+                                                                    Name {
+                                                                        node: Node {
+                                                                            start: 1079,
+                                                                            end: 1087,
+                                                                        },
+                                                                        id: "date_obj",
+                                                                    },
+                                                                ),
+                                                                conversion: -1,
+                                                                format_spec: None,
                                                             },
                                                         ),
                                                         Constant(
