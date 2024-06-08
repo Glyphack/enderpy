@@ -29,7 +29,7 @@ Module {
                             FormattedValue {
                                 node: Node {
                                     start: 4,
-                                    end: 0,
+                                    end: 7,
                                 },
                                 value: Constant(
                                     Constant {

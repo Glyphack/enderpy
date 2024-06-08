@@ -624,7 +624,7 @@ Module {
                                                                             FormattedValue {
                                                                                 node: Node {
                                                                                     start: 603,
-                                                                                    end: 0,
+                                                                                    end: 613,
                                                                                 },
                                                                                 value: Name(
                                                                                     Name {
@@ -872,7 +872,7 @@ Module {
                                                                             FormattedValue {
                                                                                 node: Node {
                                                                                     start: 882,
-                                                                                    end: 0,
+                                                                                    end: 892,
                                                                                 },
                                                                                 value: Name(
                                                                                     Name {
@@ -1101,7 +1101,7 @@ Module {
                                                             FormattedValue {
                                                                 node: Node {
                                                                     start: 1078,
-                                                                    end: 0,
+                                                                    end: 1088,
                                                                 },
                                                                 value: Name(
                                                                     Name {

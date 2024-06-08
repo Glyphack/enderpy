@@ -3202,13 +3202,14 @@ impl Parser {
             -1
         };
 
+        let format_spec_node = self.start_node();
         let format_spec = if self.eat(Kind::Colon) {
             let mut specs = vec![];
             while matches!(self.cur_kind(), Kind::FStringMiddle | Kind::LeftBracket) {
                 specs.push(self.parse_fstring_middle()?);
             }
             Some(Expression::JoinedStr(Box::new(JoinedStr {
-                node,
+                node: self.finish_node(format_spec_node),
                 values: specs,
             })))
         } else {
@@ -3217,7 +3218,7 @@ impl Parser {
 
         self.expect(Kind::RightBracket)?;
         Ok(Expression::FormattedValue(Box::new(FormattedValue {
-            node,
+            node: self.finish_node(node),
             value: expr,
             conversion,
             format_spec,

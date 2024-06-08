@@ -135,9 +135,6 @@ impl Lexer {
             if self.peek() == Some('}') && self.double_peek() != Some('}') {
                 self.next();
                 self.inside_fstring_bracket -= 1;
-                // if self.fstring_format_spec_stack > 1 {
-                //     self.fstring_format_spec_stack -= 1;
-                // }
                 return Some(Kind::RightBracket);
             }
             if self.peek() == Some(':') {
