@@ -28,6 +28,7 @@ pub struct Lexer {
     // Each time we see a right bracket we decrement this
     // This is used to match brackets in fstrings
     inside_fstring_bracket: i8,
+    fstring_format_spec_stack: u8,
 
     // TODO: Hacky way to handle emitting multiple de indents
     next_token_is_dedent: u8,
@@ -46,6 +47,7 @@ impl Lexer {
             nesting: 0,
             fstring_stack: vec![],
             inside_fstring_bracket: 0,
+            fstring_format_spec_stack: 0,
             next_token_is_dedent: 0,
             line_starts: vec![],
         }
@@ -106,6 +108,7 @@ impl Lexer {
         let fstring_stack = self.fstring_stack.clone();
         let start_of_line = self.start_of_line;
         let inside_fstring_bracket = self.inside_fstring_bracket;
+        let is_fstring_format_spec = self.fstring_format_spec_stack;
         let next_token_is_dedent = self.next_token_is_dedent;
         let token = self.next_token();
         self.current = current;
@@ -114,16 +117,31 @@ impl Lexer {
         self.fstring_stack = fstring_stack;
         self.start_of_line = start_of_line;
         self.inside_fstring_bracket = inside_fstring_bracket;
+        self.fstring_format_spec_stack = is_fstring_format_spec;
         self.next_token_is_dedent = next_token_is_dedent;
         token
     }
 
     pub fn next_fstring_token(&mut self) -> Option<Kind> {
+        if self.fstring_format_spec_stack > 0 {
+            while self.peek() != Some('}') && self.peek() != Some('{') && self.peek() != Some('\n')
+            {
+                self.next();
+            }
+            self.fstring_format_spec_stack -= 1;
+            return Some(Kind::FStringMiddle);
+        }
         if self.inside_fstring_bracket > 0 {
             if self.peek() == Some('}') && self.double_peek() != Some('}') {
                 self.next();
                 self.inside_fstring_bracket -= 1;
+                // if self.fstring_format_spec_stack > 1 {
+                //     self.fstring_format_spec_stack -= 1;
+                // }
                 return Some(Kind::RightBracket);
+            }
+            if self.peek() == Some(':') {
+                self.fstring_format_spec_stack += 1;
             }
             // if we are inside a bracket return none
             // and let the other tokens be matched
@@ -200,7 +218,7 @@ impl Lexer {
                 return Ok(indent_kind);
             }
         }
-        if !self.fstring_stack.is_empty() {
+        if !self.fstring_stack.is_empty() || self.fstring_format_spec_stack > 0 {
             if let Some(kind) = self.next_fstring_token() {
                 return Ok(kind);
             }

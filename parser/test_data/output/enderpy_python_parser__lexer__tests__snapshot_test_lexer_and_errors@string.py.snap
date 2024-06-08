@@ -1,6 +1,6 @@
 ---
 source: parser/src/lexer/mod.rs
-description: "x = \"simple text\\n\"\n\nraw = r\"raw_text\\n\"\n\ny = \"\"\"multi\"\"\"\n\n# TODO: enable with better error handling in parser\n# raw_err = r'ss\n\nf\"{self.__class__.__name__}({self._display()!r})\"\n"
+description: "x = \"simple text\\n\"\n\nraw = r\"raw_text\\n\"\n\ny = \"\"\"multi\"\"\"\n\n# TODO: enable with better error handling in parser\n# raw_err = r'ss\n\nf\"{self.__class__.__name__}({self._display()!r})\"\n\nf\"{num:0.0f}{unit}\"\n\n# f\"some words {a+b:.3f} more words {c+d=} final words\"\n"
 input_file: parser/test_data/inputs/string.py
 ---
 0,1: Identifier   (Str("x"))
@@ -43,3 +43,18 @@ input_file: parser/test_data/inputs/string.py
 176,177: FstringMiddle   (Str(")"))
 177,178: FStringEnd   (Str("\""))
 178,179: NewLine   (None)
+179,180: NewLine   (None)
+180,182: FStringStart   (Str("f\""))
+182,183: {   (None)
+183,186: Identifier   (Str("num"))
+186,187: :   (None)
+187,191: FstringMiddle   (Str("0.0f"))
+191,192: }   (None)
+192,193: {   (None)
+193,197: Identifier   (Str("unit"))
+197,198: }   (None)
+198,199: FStringEnd   (Str("\""))
+199,200: NewLine   (None)
+200,201: NewLine   (None)
+201,256: Comment   (Str("# f\"some words {a+b:.3f} more words {c+d=} final words\""))
+256,257: NewLine   (None)

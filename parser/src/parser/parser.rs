@@ -3074,51 +3074,7 @@ impl Parser {
     fn parse_fstring(&mut self, node: Node) -> Result<Vec<Expression>, ParsingError> {
         let mut expressions = vec![];
         while self.cur_kind() != Kind::FStringEnd {
-            match self.cur_kind() {
-                Kind::FStringMiddle => {
-                    let str_val = self.cur_token().value.to_string().clone();
-                    self.bump(Kind::FStringMiddle);
-                    expressions.push(Expression::Constant(Box::new(Constant {
-                        node: self.finish_node(node),
-                        value: ConstantValue::Str(str_val),
-                    })));
-                }
-                Kind::LeftBracket => {
-                    self.bump(Kind::LeftBracket);
-                    let expr = self.parse_expressions()?;
-                    let conversion = if self.at(Kind::Identifier) {
-                        let conversion = match self.cur_token().value.as_str().unwrap().as_str() {
-                            "!s" => 115,
-                            "!r" => 114,
-                            "!a" => 97,
-                            _ => panic!("should not happen"),
-                        };
-                        self.bump_any();
-                        conversion
-                    } else {
-                        -1
-                    };
-
-                    let formatted_value = Expression::FormattedValue(Box::new(FormattedValue {
-                        node,
-                        value: expr,
-                        conversion,
-                        // TODO: imlpement
-                        format_spec: None,
-                    }));
-
-                    expressions.push(formatted_value);
-
-                    self.expect(Kind::RightBracket)?;
-                }
-                _ => {
-                    panic!();
-                    // return Err(self
-                    //     .unepxted_token(self.finish_node(node), self.cur_kind())
-                    //     .err()
-                    //     .unwrap());
-                }
-            }
+            expressions.push(self.parse_fstring_middle()?)
         }
         self.bump(Kind::FStringEnd);
         Ok(expressions)
@@ -3216,6 +3172,74 @@ impl Parser {
             type_params,
             value: Box::new(value),
         }))
+    }
+
+    fn parse_fstring_replacement_field(&mut self) -> Result<Expression, ParsingError> {
+        let node = self.start_node();
+        self.bump(Kind::LeftBracket);
+
+        let expr = if self.at(Kind::Yield) {
+            self.parse_yield_expression()?
+        } else {
+            self.parse_expressions()?
+        };
+
+        if self.eat(Kind::Assign) {
+            // Conversion also 114
+            todo!("must add the expression string to constants");
+        }
+
+        let conversion = if self.at(Kind::Identifier) {
+            let conversion = match self.cur_token().value.as_str().unwrap().as_str() {
+                "!s" => 115,
+                "!r" => 114,
+                "!a" => 97,
+                _ => panic!("should not happen"),
+            };
+            self.bump_any();
+            conversion
+        } else {
+            -1
+        };
+
+        let format_spec = if self.eat(Kind::Colon) {
+            let mut specs = vec![];
+            while matches!(self.cur_kind(), Kind::FStringMiddle | Kind::LeftBracket) {
+                specs.push(self.parse_fstring_middle()?);
+            }
+            Some(Expression::JoinedStr(Box::new(JoinedStr {
+                node,
+                values: specs,
+            })))
+        } else {
+            None
+        };
+
+        self.expect(Kind::RightBracket)?;
+        Ok(Expression::FormattedValue(Box::new(FormattedValue {
+            node,
+            value: expr,
+            conversion,
+            format_spec,
+        })))
+    }
+
+    fn parse_fstring_middle(&mut self) -> Result<Expression, ParsingError> {
+        let node = self.start_node();
+        match self.cur_kind() {
+            Kind::FStringMiddle => {
+                let str_val = self.cur_token().value.to_string().clone();
+                self.bump(Kind::FStringMiddle);
+                Ok(Expression::Constant(Box::new(Constant {
+                    node: self.finish_node(node),
+                    value: ConstantValue::Str(str_val),
+                })))
+            }
+            Kind::LeftBracket => self.parse_fstring_replacement_field(),
+            _ => {
+                panic!("kind is {}", self.cur_token());
+            }
+        }
     }
 }
 
