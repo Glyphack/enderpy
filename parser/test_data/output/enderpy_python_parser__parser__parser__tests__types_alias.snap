@@ -1,0 +1,88 @@
+---
+source: parser/src/parser/parser.rs
+description: "type Alias1 = int\ntype Alias2 = str\ntype Alias3 = float\n\ntype AliasToAnotherAlias = Alias1\n"
+---
+Module {
+    node: Node {
+        start: 0,
+        end: 91,
+    },
+    body: [
+        TypeAlias(
+            TypeAlias {
+                node: Node {
+                    start: 0,
+                    end: 17,
+                },
+                name: "Alias1",
+                type_params: [],
+                value: Name(
+                    Name {
+                        node: Node {
+                            start: 14,
+                            end: 17,
+                        },
+                        id: "int",
+                    },
+                ),
+            },
+        ),
+        TypeAlias(
+            TypeAlias {
+                node: Node {
+                    start: 18,
+                    end: 35,
+                },
+                name: "Alias2",
+                type_params: [],
+                value: Name(
+                    Name {
+                        node: Node {
+                            start: 32,
+                            end: 35,
+                        },
+                        id: "str",
+                    },
+                ),
+            },
+        ),
+        TypeAlias(
+            TypeAlias {
+                node: Node {
+                    start: 36,
+                    end: 55,
+                },
+                name: "Alias3",
+                type_params: [],
+                value: Name(
+                    Name {
+                        node: Node {
+                            start: 50,
+                            end: 55,
+                        },
+                        id: "float",
+                    },
+                ),
+            },
+        ),
+        TypeAlias(
+            TypeAlias {
+                node: Node {
+                    start: 57,
+                    end: 90,
+                },
+                name: "AliasToAnotherAlias",
+                type_params: [],
+                value: Name(
+                    Name {
+                        node: Node {
+                            start: 84,
+                            end: 90,
+                        },
+                        id: "Alias1",
+                    },
+                ),
+            },
+        ),
+    ],
+}

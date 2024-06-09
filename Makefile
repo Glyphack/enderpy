@@ -32,3 +32,12 @@ lint:
 .PHONY: lint-fix
 lint-fix:
 	@cargo clippy --all --all-features --tests --fix
+
+
+.PHONY: bench-save
+bench-save:
+	@cargo bench -p enderpy_benchmark -- --save-baseline=main
+
+.PHONY: bench
+bench:
+	@cargo bench -p enderpy_benchmark -- --baseline=main

@@ -12,7 +12,7 @@ use crate::{
     error::ParsingError,
     lexer::Lexer,
     parser::{ast::*, extract_string_inside},
-    token::{Kind, Token},
+    token::{Kind, Token, TokenValue},
 };
 
 #[allow(unused)]
@@ -254,7 +254,7 @@ impl<'a> Parser<'a> {
             Kind::Nonlocal => self.parse_nonlocal_statement(),
             _ => {
                 if self.cur_kind() == Kind::Identifier
-                    && self.cur_token().value.to_string() == "type"
+                    && self.cur_token().value == TokenValue::Type
                     && self.peek_kind()? == Kind::Identifier
                 {
                     self.parse_type_alias_statement()
@@ -302,7 +302,7 @@ impl<'a> Parser<'a> {
             Kind::Class => self.parse_class_definition(vec![], None),
             // match is a soft keyword
             // https://docs.python.org/3/reference/lexical_analysis.html#soft-keywords
-            Kind::Identifier if self.cur_token().value.to_string() == "match" => {
+            Kind::Identifier if self.cur_token().value == TokenValue::Match => {
                 self.parse_match_statement()
             }
             Kind::Async => {
@@ -3844,4 +3844,5 @@ except *Exception as e:
     parser_test!(with, "test_data/inputs/with.py");
     parser_test!(newlines, "test_data/inputs/newlines.py");
     parser_test!(comments, "test_data/inputs/comments.py");
+    parser_test!(types_alias, "test_data/inputs/type_alias.py");
 }

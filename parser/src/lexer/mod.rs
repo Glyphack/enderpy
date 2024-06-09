@@ -88,8 +88,7 @@ impl<'a> Lexer<'a> {
         if kind == Kind::WhiteSpace {
             return self.next_token();
         }
-        let raw_value = self.extract_raw_token_value(start);
-        let value = self.parse_token_value(kind, raw_value);
+        let value = self.parse_token_value(kind, start);
         let end = self.current;
 
         Token {
@@ -547,10 +546,6 @@ impl<'a> Lexer<'a> {
         Ok(None)
     }
 
-    fn extract_raw_token_value(&mut self, start: u32) -> String {
-        self.source[start as usize..self.current as usize].to_string()
-    }
-
     fn next(&mut self) -> Option<char> {
         let c = self.peek();
         if let Some(c) = c {
@@ -866,7 +861,8 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    fn parse_token_value(&mut self, kind: Kind, kind_value: String) -> TokenValue {
+    fn parse_token_value(&mut self, kind: Kind, start: u32) -> TokenValue {
+        let kind_value = &self.source[start as usize..self.current as usize];
         use std::cmp::Ordering;
         match kind {
             Kind::Integer
@@ -877,8 +873,12 @@ impl<'a> Lexer<'a> {
             | Kind::ExponentFloat
             | Kind::ImaginaryInteger
             | Kind::ImaginaryExponentFloat
-            | Kind::ImaginaryPointFloat => TokenValue::Number(kind_value),
-            Kind::Identifier => TokenValue::Str(kind_value),
+            | Kind::ImaginaryPointFloat => TokenValue::Number(kind_value.to_string()),
+            Kind::Identifier => match kind_value {
+                "type" => TokenValue::Type,
+                "match" => TokenValue::Match,
+                _ => TokenValue::Str(kind_value.to_string()),
+            },
             Kind::StringLiteral
             | Kind::FStringStart
             | Kind::FStringMiddle
@@ -887,7 +887,7 @@ impl<'a> Lexer<'a> {
             | Kind::RawFStringStart
             | Kind::Bytes
             | Kind::Unicode
-            | Kind::Comment => TokenValue::Str(kind_value),
+            | Kind::Comment => TokenValue::Str(kind_value.to_string()),
             Kind::Dedent => {
                 let mut spaces_count = 0;
                 for c in kind_value.chars() {
@@ -927,7 +927,7 @@ impl<'a> Lexer<'a> {
                 TokenValue::Indent(de_indents.into())
             }
             Kind::Indent => TokenValue::Indent(1),
-            Kind::Error => TokenValue::Str(kind_value),
+            Kind::Error => TokenValue::Str(kind_value.to_string()),
             _ => TokenValue::None,
         }
     }

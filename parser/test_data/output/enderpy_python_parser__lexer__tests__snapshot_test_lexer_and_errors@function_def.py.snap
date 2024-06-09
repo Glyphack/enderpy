@@ -411,7 +411,7 @@ input_file: parser/test_data/inputs/function_def.py
 916,917: :   (None)
 918,923: Identifier   (Str("tuple"))
 923,924: [   (None)
-924,928: Identifier   (Str("type"))
+924,928: Identifier   (Type)
 928,929: [   (None)
 929,932: Identifier   (Str("Any"))
 932,933: ]   (None)
