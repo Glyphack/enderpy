@@ -299,7 +299,7 @@ impl Parser {
             Kind::With => self.parse_with_statement(),
             Kind::Def => self.parse_function_definition(vec![]),
             Kind::MatrixMul => self.parse_decorated_function_def_or_class_def(),
-            Kind::Class => self.parse_class_definition(vec![]),
+            Kind::Class => self.parse_class_definition(vec![], None),
             // match is a soft keyword
             // https://docs.python.org/3/reference/lexical_analysis.html#soft-keywords
             Kind::Identifier if self.cur_token().value.to_string() == "match" => {
@@ -660,6 +660,7 @@ impl Parser {
     }
 
     fn parse_decorated_function_def_or_class_def(&mut self) -> Result<Statement, ParsingError> {
+        let node = self.start_node();
         let mut decorators = vec![];
         while self.eat(Kind::MatrixMul) {
             let name = self.parse_named_expression()?;
@@ -670,18 +671,20 @@ impl Parser {
         if self.at(Kind::Def) || self.at(Kind::Async) {
             self.parse_function_definition(decorators)
         } else {
-            self.parse_class_definition(decorators)
+            self.parse_class_definition(decorators, Some(node))
         }
     }
 
     fn parse_class_definition(
         &mut self,
         decorators: Vec<Expression>,
+        node: Option<Node>,
     ) -> Result<Statement, ParsingError> {
-        // TODO: node excludes decorators
-        // later we can extract the node for first decorator
-        // and start the node from there
-        let node = self.start_node();
+        let node = if let Some(node) = node {
+            node
+        } else {
+            self.start_node()
+        };
         self.expect(Kind::Class)?;
         let name = self.cur_token().value.to_string();
         self.expect(Kind::Identifier)?;

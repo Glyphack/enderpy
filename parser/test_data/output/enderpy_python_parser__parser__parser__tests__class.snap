@@ -217,7 +217,7 @@ Module {
         ClassDef(
             ClassDef {
                 node: Node {
-                    start: 115,
+                    start: 108,
                     end: 129,
                 },
                 name: "a",
