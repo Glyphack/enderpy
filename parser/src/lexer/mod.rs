@@ -6,9 +6,9 @@ use crate::{
 };
 
 #[derive(Debug, Clone)]
-pub struct Lexer {
+pub struct Lexer<'a> {
     /// The source code
-    source: String,
+    source: &'a str,
     /// The current position in the source code
     current: u32,
     current_line: u16,
@@ -36,10 +36,10 @@ pub struct Lexer {
     pub line_starts: Vec<u32>,
 }
 
-impl Lexer {
-    pub fn new(source: &str) -> Self {
+impl<'a> Lexer<'a> {
+    pub fn new(source: &'a str) -> Self {
         Self {
-            source: source.to_string(),
+            source,
             current: 0,
             current_line: 1,
             start_of_line: true,
@@ -57,10 +57,11 @@ impl Lexer {
         let mut tokens = vec![];
         loop {
             let token = self.next_token();
-            tokens.push(token.clone());
             if token.kind == Kind::Eof {
+                tokens.push(token);
                 break;
             }
+            tokens.push(token);
         }
         tokens
     }
@@ -88,8 +89,7 @@ impl Lexer {
         if kind == Kind::WhiteSpace {
             return self.next_token();
         }
-        let raw_value = self.extract_raw_token_value(start);
-        let value = self.parse_token_value(kind, raw_value);
+        let value = self.parse_token_value(kind, start);
         let end = self.current;
 
         Token {
@@ -547,10 +547,6 @@ impl Lexer {
         Ok(None)
     }
 
-    fn extract_raw_token_value(&mut self, start: u32) -> String {
-        self.source[start as usize..self.current as usize].to_string()
-    }
-
     fn next(&mut self) -> Option<char> {
         let c = self.peek();
         if let Some(c) = c {
@@ -866,7 +862,8 @@ impl Lexer {
         }
     }
 
-    fn parse_token_value(&mut self, kind: Kind, kind_value: String) -> TokenValue {
+    fn parse_token_value(&mut self, kind: Kind, start: u32) -> TokenValue {
+        let kind_value = &self.source[start as usize..self.current as usize];
         use std::cmp::Ordering;
         match kind {
             Kind::Integer
@@ -877,8 +874,12 @@ impl Lexer {
             | Kind::ExponentFloat
             | Kind::ImaginaryInteger
             | Kind::ImaginaryExponentFloat
-            | Kind::ImaginaryPointFloat => TokenValue::Number(kind_value),
-            Kind::Identifier => TokenValue::Str(kind_value),
+            | Kind::ImaginaryPointFloat => TokenValue::Number(kind_value.to_string()),
+            Kind::Identifier => match kind_value {
+                "type" => TokenValue::Type,
+                "match" => TokenValue::Match,
+                _ => TokenValue::Str(kind_value.to_string()),
+            },
             Kind::StringLiteral
             | Kind::FStringStart
             | Kind::FStringMiddle
@@ -887,7 +888,7 @@ impl Lexer {
             | Kind::RawFStringStart
             | Kind::Bytes
             | Kind::Unicode
-            | Kind::Comment => TokenValue::Str(kind_value),
+            | Kind::Comment => TokenValue::Str(kind_value.to_string()),
             Kind::Dedent => {
                 let mut spaces_count = 0;
                 for c in kind_value.chars() {
@@ -927,7 +928,7 @@ impl Lexer {
                 TokenValue::Indent(de_indents.into())
             }
             Kind::Indent => TokenValue::Indent(1),
-            Kind::Error => TokenValue::Str(kind_value),
+            Kind::Error => TokenValue::Str(kind_value.to_string()),
             _ => TokenValue::None,
         }
     }

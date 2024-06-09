@@ -377,6 +377,9 @@ pub enum TokenValue {
     Number(String),
     Str(String),
     Indent(usize),
+    // Soft keywords are special values
+    Type,
+    Match,
 }
 
 impl Display for TokenValue {
@@ -386,6 +389,8 @@ impl Display for TokenValue {
             TokenValue::Number(n) => write!(f, "{}", n),
             TokenValue::Str(s) => write!(f, "{}", s),
             TokenValue::Indent(i) => write!(f, "{}", i),
+            TokenValue::Type => write!(f, "type"),
+            TokenValue::Match => write!(f, "match"),
         }
     }
 }
@@ -397,6 +402,8 @@ impl From<TokenValue> for &str {
             TokenValue::Number(_) => "Number",
             TokenValue::Str(_) => "Str",
             TokenValue::Indent(_) => "Indent",
+            TokenValue::Type => "type",
+            TokenValue::Match => "match",
         }
     }
 }

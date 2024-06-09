@@ -93,7 +93,7 @@ impl TypeEvaluator {
             }
             ast::Expression::Call(call) => {
                 let called_name = &call.func;
-                let f_type = self.get_type(&called_name, Some(symbol_table), None)?;
+                let f_type = self.get_type(called_name, Some(symbol_table), None)?;
                 if let PythonType::Callable(c) = &f_type {
                     let return_type = self.get_return_type_of_callable(c, &call.args);
                     Ok(return_type)

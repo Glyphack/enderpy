@@ -12,15 +12,15 @@ use crate::{
     error::ParsingError,
     lexer::Lexer,
     parser::{ast::*, extract_string_inside},
-    token::{Kind, Token},
+    token::{Kind, Token, TokenValue},
 };
 
 #[allow(unused)]
 #[derive(Debug, Clone)]
-pub struct Parser {
+pub struct Parser<'a> {
     pub identifiers_start_offset: Vec<(u32, u32, String)>,
-    source: String,
-    lexer: Lexer,
+    pub source: &'a str,
+    lexer: Lexer<'a>,
     cur_token: Token,
     prev_token_end: u32,
     // This var keeps track of how many levels deep we are in a list, tuple or set
@@ -31,16 +31,16 @@ pub struct Parser {
     nested_expression_list: u32,
     curr_line_string: String,
     curr_line_number: u16,
-    path: String,
+    path: &'a str,
 }
 
 #[allow(unused)]
-impl Parser {
+impl<'a> Parser<'a> {
     pub fn line_starts(&self) -> Vec<u32> {
         self.lexer.line_starts.clone()
     }
-    pub fn new(source: String, path: String) -> Self {
-        let mut lexer = Lexer::new(&source);
+    pub fn new(source: &'a str, path: &'a str) -> Self {
+        let mut lexer = Lexer::new(source);
         let cur_token = lexer.next_token();
 
         let mut nested_expression_list = 0;
@@ -254,7 +254,7 @@ impl Parser {
             Kind::Nonlocal => self.parse_nonlocal_statement(),
             _ => {
                 if self.cur_kind() == Kind::Identifier
-                    && self.cur_token().value.to_string() == "type"
+                    && self.cur_token().value == TokenValue::Type
                     && self.peek_kind()? == Kind::Identifier
                 {
                     self.parse_type_alias_statement()
@@ -297,17 +297,24 @@ impl Parser {
             Kind::For => self.parse_for_statement(),
             Kind::Try => self.parse_try_statement(),
             Kind::With => self.parse_with_statement(),
-            Kind::Def => self.parse_function_definition(vec![]),
+            Kind::Def => {
+                let node = self.start_node();
+                self.bump_any();
+                self.parse_function_definition(node, vec![], false)
+            }
             Kind::MatrixMul => self.parse_decorated_function_def_or_class_def(),
             Kind::Class => self.parse_class_definition(vec![], None),
             // match is a soft keyword
             // https://docs.python.org/3/reference/lexical_analysis.html#soft-keywords
-            Kind::Identifier if self.cur_token().value.to_string() == "match" => {
+            Kind::Identifier if self.cur_token().value == TokenValue::Match => {
                 self.parse_match_statement()
             }
             Kind::Async => {
                 if matches!(self.peek_kind(), Ok(Kind::Def)) {
-                    self.parse_function_definition(vec![])
+                    let node = self.start_node();
+                    self.bump_any();
+                    self.bump_any();
+                    self.parse_function_definition(node, vec![], true)
                 } else if matches!(self.peek_kind(), Ok(Kind::For)) {
                     self.parse_for_statement()
                 } else if matches!(self.peek_kind(), Ok(Kind::With)) {
@@ -606,14 +613,10 @@ impl Parser {
 
     fn parse_function_definition(
         &mut self,
+        node: Node,
         decorators: Vec<Expression>,
+        is_async: bool,
     ) -> Result<Statement, ParsingError> {
-        // TODO: node excludes decorators
-        // later we can extract the node for first decorator
-        // and start the node from there
-        let node = self.start_node();
-        let is_async = self.eat(Kind::Async);
-        self.expect(Kind::Def)?;
         let name = self.cur_token().value.to_string();
         self.expect(Kind::Identifier)?;
         let type_params = if self.at(Kind::LeftBrace) {
@@ -667,11 +670,17 @@ impl Parser {
             decorators.push(name);
             self.consume_whitespace_and_comments();
         }
-
-        if self.at(Kind::Def) || self.at(Kind::Async) {
-            self.parse_function_definition(decorators)
-        } else {
-            self.parse_class_definition(decorators, Some(node))
+        match self.cur_kind() {
+            Kind::Def => {
+                self.bump_any();
+                self.parse_function_definition(node, decorators, false)
+            }
+            Kind::Async => {
+                self.bump_any();
+                self.expect(Kind::Def);
+                self.parse_function_definition(node, decorators, true)
+            }
+            _ => self.parse_class_definition(decorators, Some(node)),
         }
     }
 
@@ -935,7 +944,7 @@ impl Parser {
     }
 
     fn parse_capture_or_wildcard_pattern(&mut self) -> Result<MatchPattern, ParsingError> {
-        let capture_value = self.cur_token().value.to_string().clone();
+        let capture_value = self.cur_token().value.to_string();
         let node = self.start_node();
         self.expect(Kind::Identifier)?;
         // TODO: should also accept as?
@@ -973,7 +982,7 @@ impl Parser {
     // in contrast to attribute parsing in primary expression
     fn parse_attr(&mut self) -> Result<Expression, ParsingError> {
         let node = self.start_node();
-        let value = self.cur_token().value.to_string().clone();
+        let value = self.cur_token().value.to_string();
         let mut expr = Ok(Expression::Name(Box::new(Name {
             node: self.finish_node(node),
             id: value,
@@ -1011,7 +1020,7 @@ impl Parser {
                 break;
             }
             if self.eat(Kind::Pow) {
-                rest = Some(self.cur_token().value.to_string().clone());
+                rest = Some(self.cur_token().value.to_string());
                 self.bump(Kind::Identifier);
                 // consume the trailing comma
                 self.bump(Kind::Comma);
@@ -1068,7 +1077,7 @@ impl Parser {
 
             if self.at(Kind::Identifier) && matches!(self.peek_kind(), Ok(Kind::Assign)) {
                 seen_keyword_pattern = true;
-                kwd_attrs.push(self.cur_token().value.to_string().clone());
+                kwd_attrs.push(self.cur_token().value.to_string());
                 self.bump(Kind::Identifier);
                 self.bump(Kind::Assign);
                 kwd_patterns.push(self.parse_pattern()?);
@@ -2460,7 +2469,170 @@ impl Parser {
         } else if self.cur_kind().is_atom() {
             // value must be cloned to be assigned to the node
             let atom_is_string = self.cur_kind().is_string();
-            let mut expr = self.map_to_atom(node, self.cur_token().clone())?;
+            let start = self.start_node();
+            let mut expr = match self.cur_kind() {
+                Kind::Identifier => {
+                    let val = self.cur_token().value.to_string();
+                    self.bump_any();
+                    Expression::Name(Box::new(Name {
+                        node: self.finish_node(start),
+                        id: val,
+                    }))
+                }
+                Kind::Integer => {
+                    let val = self.cur_token().value.to_string();
+                    self.bump_any();
+                    Expression::Constant(Box::new(Constant {
+                        node: self.finish_node(start),
+                        value: ConstantValue::Int(val),
+                    }))
+                }
+                Kind::None => {
+                    self.bump_any();
+                    Expression::Constant(Box::new(Constant {
+                        node: self.finish_node(start),
+                        value: ConstantValue::None,
+                    }))
+                }
+                Kind::True => {
+                    self.bump_any();
+                    Expression::Constant(Box::new(Constant {
+                        node: self.finish_node(start),
+                        value: ConstantValue::Bool(true),
+                    }))
+                }
+                Kind::False => {
+                    self.bump_any();
+                    Expression::Constant(Box::new(Constant {
+                        node: self.finish_node(start),
+                        value: ConstantValue::Bool(false),
+                    }))
+                }
+                Kind::ImaginaryInteger => {
+                    let val = self.cur_token().value.to_string();
+                    self.bump_any();
+                    Expression::Constant(Box::new(Constant {
+                        node: self.finish_node(start),
+                        value: ConstantValue::Complex {
+                            real: "0".to_string(),
+                            imaginary: val,
+                        },
+                    }))
+                }
+                Kind::Bytes => {
+                    let val = &self.cur_token().value;
+                    let bytes_val = extract_string_inside(
+                        val.to_string()
+                            .strip_prefix('b')
+                            .expect("bytes literal must start with b")
+                            .to_string(),
+                    )
+                    .into_bytes();
+                    self.bump_any();
+                    Expression::Constant(Box::new(Constant {
+                        node: self.finish_node(start),
+                        value: ConstantValue::Bytes(bytes_val),
+                    }))
+                }
+                Kind::StringLiteral => {
+                    let val = &self.cur_token().value;
+                    let string_val = extract_string_inside(val.to_string());
+                    self.bump_any();
+                    Expression::Constant(Box::new(Constant {
+                        node: self.finish_node(start),
+                        value: ConstantValue::Str(string_val),
+                    }))
+                }
+
+                Kind::RawBytes => {
+                    let val = &self.cur_token().value;
+                    // rb or br appear in the beginning of raw bytes
+                    let bytes_val =
+                        extract_string_inside(val.to_string().chars().skip(2).collect::<String>())
+                            .into_bytes();
+                    self.bump_any();
+                    Expression::Constant(Box::new(Constant {
+                        node: self.finish_node(start),
+                        value: ConstantValue::Bytes(bytes_val),
+                    }))
+                }
+                Kind::FStringStart => {
+                    self.bump_any();
+                    let fstring = self.parse_fstring(start)?;
+                    Expression::JoinedStr(Box::new(JoinedStr {
+                        node: self.finish_node(start),
+                        values: fstring,
+                    }))
+                }
+                Kind::PointFloat => {
+                    let val = self.cur_token().value.to_string();
+                    self.bump_any();
+                    Expression::Constant(Box::new(Constant {
+                        node: self.finish_node(start),
+                        value: ConstantValue::Float(val),
+                    }))
+                }
+                Kind::ExponentFloat => {
+                    let val = self.cur_token().value.to_string();
+                    self.bump_any();
+                    Expression::Constant(Box::new(Constant {
+                        node: self.finish_node(start),
+                        value: ConstantValue::Float(val),
+                    }))
+                }
+                Kind::ImaginaryPointFloat => {
+                    let val = self.cur_token().value.to_string();
+                    self.bump_any();
+                    Expression::Constant(Box::new(Constant {
+                        node: self.finish_node(start),
+                        value: ConstantValue::Complex {
+                            real: "0".to_string(),
+                            imaginary: val,
+                        },
+                    }))
+                }
+                Kind::ImaginaryExponentFloat => {
+                    let val = self.cur_token().value.to_string();
+                    self.bump_any();
+                    Expression::Constant(Box::new(Constant {
+                        node: self.finish_node(start),
+                        value: ConstantValue::Complex {
+                            real: "0".to_string(),
+                            imaginary: val,
+                        },
+                    }))
+                }
+                Kind::Ellipsis => {
+                    self.bump_any();
+                    Expression::Constant(Box::new(Constant {
+                        node: self.finish_node(start),
+                        value: ConstantValue::Ellipsis,
+                    }))
+                }
+                // TODO: is there something for octal and Hexadecimal?
+                Kind::Octal => {
+                    let val = self.cur_token().value.to_string();
+                    self.bump_any();
+                    Expression::Constant(Box::new(Constant {
+                        node: self.finish_node(start),
+                        value: ConstantValue::Int(val),
+                    }))
+                }
+                Kind::Hexadecimal => {
+                    let val = self.cur_token().value.to_string();
+                    self.bump_any();
+                    Expression::Constant(Box::new(Constant {
+                        node: self.finish_node(start),
+                        value: ConstantValue::Int(val),
+                    }))
+                }
+                _ => {
+                    let line = self.get_offset_line_number(start.start);
+                    let kind = self.cur_kind();
+                    let value = self.cur_token().value.to_string();
+                    panic!("token {kind:?} {value:?} {start:?} is not atom");
+                }
+            };
 
             // If the current token is a string, we need to check if there are more strings
             // and concat them
@@ -2468,7 +2640,173 @@ impl Parser {
             if atom_is_string {
                 loop {
                     if self.cur_kind().is_string() {
-                        let next_str = self.map_to_atom(node, self.cur_token().clone())?;
+                        // TODO: duplicate code
+                        let start = self.start_node();
+                        let next_str = match self.cur_kind() {
+                            Kind::Identifier => {
+                                let val = self.cur_token().value.to_string();
+                                self.bump_any();
+                                Expression::Name(Box::new(Name {
+                                    node: self.finish_node(start),
+                                    id: val,
+                                }))
+                            }
+                            Kind::Integer => {
+                                let val = self.cur_token().value.to_string();
+                                self.bump_any();
+                                Expression::Constant(Box::new(Constant {
+                                    node: self.finish_node(start),
+                                    value: ConstantValue::Int(val),
+                                }))
+                            }
+                            Kind::None => {
+                                self.bump_any();
+                                Expression::Constant(Box::new(Constant {
+                                    node: self.finish_node(start),
+                                    value: ConstantValue::None,
+                                }))
+                            }
+                            Kind::True => {
+                                self.bump_any();
+                                Expression::Constant(Box::new(Constant {
+                                    node: self.finish_node(start),
+                                    value: ConstantValue::Bool(true),
+                                }))
+                            }
+                            Kind::False => {
+                                self.bump_any();
+                                Expression::Constant(Box::new(Constant {
+                                    node: self.finish_node(start),
+                                    value: ConstantValue::Bool(false),
+                                }))
+                            }
+                            Kind::ImaginaryInteger => {
+                                let val = self.cur_token().value.to_string();
+                                self.bump_any();
+                                Expression::Constant(Box::new(Constant {
+                                    node: self.finish_node(start),
+                                    value: ConstantValue::Complex {
+                                        real: "0".to_string(),
+                                        imaginary: val,
+                                    },
+                                }))
+                            }
+                            Kind::Bytes => {
+                                let val = &self.cur_token().value;
+                                let bytes_val = extract_string_inside(
+                                    val.to_string()
+                                        .strip_prefix('b')
+                                        .expect("bytes literal must start with b")
+                                        .to_string(),
+                                )
+                                .into_bytes();
+                                self.bump_any();
+                                Expression::Constant(Box::new(Constant {
+                                    node: self.finish_node(start),
+                                    value: ConstantValue::Bytes(bytes_val),
+                                }))
+                            }
+                            Kind::StringLiteral => {
+                                let val = &self.cur_token().value;
+                                let string_val = extract_string_inside(val.to_string());
+                                self.bump_any();
+                                Expression::Constant(Box::new(Constant {
+                                    node: self.finish_node(start),
+                                    value: ConstantValue::Str(string_val),
+                                }))
+                            }
+
+                            Kind::RawBytes => {
+                                let val = &self.cur_token().value;
+                                // rb or br appear in the beginning of raw bytes
+                                let bytes_val = extract_string_inside(
+                                    val.to_string().chars().skip(2).collect::<String>(),
+                                )
+                                .into_bytes();
+                                self.bump_any();
+                                Expression::Constant(Box::new(Constant {
+                                    node: self.finish_node(start),
+                                    value: ConstantValue::Bytes(bytes_val),
+                                }))
+                            }
+                            Kind::FStringStart => {
+                                self.bump_any();
+                                let fstring = self.parse_fstring(start)?;
+                                Expression::JoinedStr(Box::new(JoinedStr {
+                                    node: self.finish_node(start),
+                                    values: fstring,
+                                }))
+                            }
+                            Kind::PointFloat => {
+                                let val = self.cur_token().value.to_string();
+                                self.bump_any();
+                                Expression::Constant(Box::new(Constant {
+                                    node: self.finish_node(start),
+                                    value: ConstantValue::Float(val),
+                                }))
+                            }
+                            Kind::ExponentFloat => {
+                                let val = self.cur_token().value.to_string();
+                                self.bump_any();
+                                Expression::Constant(Box::new(Constant {
+                                    node: self.finish_node(start),
+                                    value: ConstantValue::Float(val),
+                                }))
+                            }
+                            Kind::ImaginaryPointFloat => {
+                                let val = self.cur_token().value.to_string();
+                                self.bump_any();
+                                Expression::Constant(Box::new(Constant {
+                                    node: self.finish_node(start),
+                                    value: ConstantValue::Complex {
+                                        real: "0".to_string(),
+                                        imaginary: val,
+                                    },
+                                }))
+                            }
+                            Kind::ImaginaryExponentFloat => {
+                                let val = self.cur_token().value.to_string();
+                                self.bump_any();
+                                Expression::Constant(Box::new(Constant {
+                                    node: self.finish_node(start),
+                                    value: ConstantValue::Complex {
+                                        real: "0".to_string(),
+                                        imaginary: val,
+                                    },
+                                }))
+                            }
+                            Kind::Ellipsis => {
+                                self.bump_any();
+                                Expression::Constant(Box::new(Constant {
+                                    node: self.finish_node(start),
+                                    value: ConstantValue::Ellipsis,
+                                }))
+                            }
+                            // TODO: is there something for octal and Hexadecimal?
+                            Kind::Octal => {
+                                let val = self.cur_token().value.to_string();
+                                self.bump_any();
+                                Expression::Constant(Box::new(Constant {
+                                    node: self.finish_node(start),
+                                    value: ConstantValue::Int(val),
+                                }))
+                            }
+                            Kind::Hexadecimal => {
+                                let val = self.cur_token().value.to_string();
+                                self.bump_any();
+                                Expression::Constant(Box::new(Constant {
+                                    node: self.finish_node(start),
+                                    value: ConstantValue::Int(val),
+                                }))
+                            }
+                            _ => {
+                                let line = self.get_offset_line_number(start.start);
+                                let kind = self.cur_kind();
+                                let value = self.cur_token().value.to_string();
+                                panic!("token {kind:?} {value:?} {start:?} is not atom");
+                            }
+                        };
+
                         expr = concat_string_exprs(expr, next_str)?;
                     } else if self.eat(Kind::WhiteSpace) {
                         continue;
@@ -2634,7 +2972,7 @@ impl Parser {
             Some(n) => {
                 // [expr ,|]
                 if self.at(Kind::RightBrace) || self.at(Kind::Comma) {
-                    return Ok(n);
+                    Ok(n)
                 // [expr:
                 } else {
                     self.expect(Kind::Colon);
@@ -2642,21 +2980,21 @@ impl Parser {
                     if self.eat(Kind::Colon) {
                         // [expr:: end
                         if self.at(Kind::RightBrace) || self.at(Kind::Comma) {
-                            return Ok(Expression::Slice(Box::new(Slice {
+                            Ok(Expression::Slice(Box::new(Slice {
                                 node: self.finish_node(node),
                                 lower: Some(n),
                                 upper: None,
                                 step: None,
-                            })));
+                            })))
                             // [expr::expr end
                         } else {
                             let step = Some(self.parse_expression()?);
-                            return Ok(Expression::Slice(Box::new(Slice {
+                            Ok(Expression::Slice(Box::new(Slice {
                                 node: self.finish_node(node),
                                 lower: Some(n),
                                 upper: None,
                                 step,
-                            })));
+                            })))
                         }
 
                     // [expr: ,|] end
@@ -2706,12 +3044,12 @@ impl Parser {
             None => {
                 // [: ,|]
                 if self.at(Kind::RightBrace) || self.at(Kind::Comma) {
-                    return Ok(Expression::Slice(Box::new(Slice {
+                    Ok(Expression::Slice(Box::new(Slice {
                         node: self.finish_node(node),
                         lower: None,
                         upper: None,
                         step: None,
-                    })));
+                    })))
                 // [::
                 } else if self.eat(Kind::Colon) {
                     // [::] || [::,
@@ -2766,121 +3104,15 @@ impl Parser {
         }
     }
 
-    fn map_to_atom(&mut self, start: Node, token: Token) -> Result<Expression, ParsingError> {
-        let kind = token.kind;
-        let value = &token.value;
-        // The token we just consumed
-        self.bump_any();
-        let atom = match kind {
-            Kind::Identifier => Expression::Name(Box::new(Name {
-                node: self.finish_node(start),
-                id: value.to_string(),
-            })),
-            Kind::Integer => Expression::Constant(Box::new(Constant {
-                node: self.finish_node(start),
-                value: ConstantValue::Int(value.to_string()),
-            })),
-            Kind::None => Expression::Constant(Box::new(Constant {
-                node: self.finish_node(start),
-                value: ConstantValue::None,
-            })),
-            Kind::True => Expression::Constant(Box::new(Constant {
-                node: self.finish_node(start),
-                value: ConstantValue::Bool(true),
-            })),
-            Kind::False => Expression::Constant(Box::new(Constant {
-                node: self.finish_node(start),
-                value: ConstantValue::Bool(false),
-            })),
-            Kind::ImaginaryInteger => Expression::Constant(Box::new(Constant {
-                node: self.finish_node(start),
-                value: ConstantValue::Complex {
-                    real: "0".to_string(),
-                    imaginary: value.to_string(),
-                },
-            })),
-            Kind::Bytes => {
-                let bytes_val = extract_string_inside(
-                    value
-                        .to_string()
-                        .strip_prefix('b')
-                        .expect("bytes literal must start with b")
-                        .to_string(),
-                )
-                .into_bytes();
-                Expression::Constant(Box::new(Constant {
-                    node: self.finish_node(start),
-                    value: ConstantValue::Bytes(bytes_val),
-                }))
-            }
-            Kind::StringLiteral => {
-                let string_val = extract_string_inside(value.to_string());
-                Expression::Constant(Box::new(Constant {
-                    node: self.finish_node(start),
-                    value: ConstantValue::Str(string_val),
-                }))
-            }
-
-            Kind::RawBytes => {
-                // rb or br appear in the beginning of raw bytes
-                let bytes_val =
-                    extract_string_inside(value.to_string().chars().skip(2).collect::<String>())
-                        .into_bytes();
-                Expression::Constant(Box::new(Constant {
-                    node: self.finish_node(start),
-                    value: ConstantValue::Bytes(bytes_val),
-                }))
-            }
-            Kind::FStringStart => {
-                let fstring = self.parse_fstring(start)?;
-                Expression::JoinedStr(Box::new(JoinedStr {
-                    node: self.finish_node(start),
-                    values: fstring,
-                }))
-            }
-            Kind::PointFloat => Expression::Constant(Box::new(Constant {
-                node: self.finish_node(start),
-                value: ConstantValue::Float(value.to_string()),
-            })),
-            Kind::ExponentFloat => Expression::Constant(Box::new(Constant {
-                node: self.finish_node(start),
-                value: ConstantValue::Float(value.to_string()),
-            })),
-            Kind::ImaginaryPointFloat => Expression::Constant(Box::new(Constant {
-                node: self.finish_node(start),
-                value: ConstantValue::Complex {
-                    real: "0".to_string(),
-                    imaginary: value.to_string(),
-                },
-            })),
-            Kind::ImaginaryExponentFloat => Expression::Constant(Box::new(Constant {
-                node: self.finish_node(start),
-                value: ConstantValue::Complex {
-                    real: "0".to_string(),
-                    imaginary: value.to_string(),
-                },
-            })),
-            Kind::Ellipsis => Expression::Constant(Box::new(Constant {
-                node: self.finish_node(start),
-                value: ConstantValue::Ellipsis,
-            })),
-            // TODO: is there something for octal and Hexadecimal?
-            Kind::Octal => Expression::Constant(Box::new(Constant {
-                node: self.finish_node(start),
-                value: ConstantValue::Int(value.to_string()),
-            })),
-            Kind::Hexadecimal => Expression::Constant(Box::new(Constant {
-                node: self.finish_node(start),
-                value: ConstantValue::Int(value.to_string()),
-            })),
-            _ => {
-                // return Err(self.unepxted_token(start, self.cur_kind()).err().unwrap());
-                let line = self.get_offset_line_number(start.start);
-                panic!("token {kind:?} {value:?} {start:?} is not atom");
-            }
-        };
-        Ok(atom)
-    }
+    // fn parse_constant(
+    //     &mut self,
+    //     start: Node,
+    //     kind: Kind,
+    //     value: &TokenValue,
+    // ) -> Result<Expression, ParsingError> {
+    //     };
+    //     Ok(atom)
+    // }
 
     fn parse_comp_operator(&mut self) -> Result<ComparisonOperator, ParsingError> {
         let node = self.start_node();
@@ -3193,7 +3425,7 @@ impl Parser {
         }
 
         let conversion = if self.at(Kind::Identifier) {
-            let conversion = match self.cur_token().value.as_str().unwrap().as_str() {
+            let conversion = match self.cur_token().value.to_string().as_str() {
                 "!s" => 115,
                 "!r" => 114,
                 "!a" => 97,
@@ -3232,7 +3464,7 @@ impl Parser {
         let node = self.start_node();
         match self.cur_kind() {
             Kind::FStringMiddle => {
-                let str_val = self.cur_token().value.to_string().clone();
+                let str_val = self.cur_token().value.to_string();
                 self.bump(Kind::FStringMiddle);
                 Ok(Expression::Constant(Box::new(Constant {
                     node: self.finish_node(node),
@@ -3290,7 +3522,7 @@ mod tests {
             "a |= 1",
             // annotated assignment
         ] {
-            let mut parser = Parser::new(test_case.to_string(), String::from(""));
+            let mut parser = Parser::new(test_case, "");
             let program = parser.parse().expect("parsing failed");
 
             insta::with_settings!({
@@ -3306,7 +3538,7 @@ mod tests {
     #[test]
     fn test_parse_assert_stmt() {
         for test_case in &["assert a", "assert a, b", "assert True, 'fancy message'"] {
-            let mut parser = Parser::new(test_case.to_string(), String::from(""));
+            let mut parser = Parser::new(test_case, "");
             let program = parser.parse().expect("parsing failed");
 
             insta::with_settings!({
@@ -3322,7 +3554,7 @@ mod tests {
     #[test]
     fn test_pass_stmt() {
         for test_case in &["pass", "pass ", "pass\n"] {
-            let mut parser = Parser::new(test_case.to_string(), String::from(""));
+            let mut parser = Parser::new(test_case, "");
             let program = parser.parse().expect("parsing failed");
 
             insta::with_settings!({
@@ -3338,7 +3570,7 @@ mod tests {
     #[test]
     fn test_parse_del_stmt() {
         for test_case in &["del a", "del a, b", "del a, b, "] {
-            let mut parser = Parser::new(test_case.to_string(), String::from(""));
+            let mut parser = Parser::new(test_case, "");
             let program = parser.parse().expect("parsing failed");
 
             insta::with_settings!({
@@ -3354,7 +3586,7 @@ mod tests {
     #[test]
     fn parse_yield_statement() {
         for test_case in &["yield", "yield a", "yield a, b", "yield a, b, "] {
-            let mut parser = Parser::new(test_case.to_string(), String::from(""));
+            let mut parser = Parser::new(test_case, "");
             let program = parser.parse().expect("parsing failed");
 
             insta::with_settings!({
@@ -3370,7 +3602,7 @@ mod tests {
     #[test]
     fn test_raise_statement() {
         for test_case in &["raise", "raise a", "raise a from c"] {
-            let mut parser = Parser::new(test_case.to_string(), String::from(""));
+            let mut parser = Parser::new(test_case, "");
             let program = parser.parse().expect("parsing failed");
 
             insta::with_settings!({
@@ -3386,7 +3618,7 @@ mod tests {
     #[test]
     fn test_parse_break_continue() {
         for test_case in &["break", "continue"] {
-            let mut parser = Parser::new(test_case.to_string(), String::from(""));
+            let mut parser = Parser::new(test_case, "");
             let program = parser.parse().expect("parsing failed");
 
             insta::with_settings!({
@@ -3402,7 +3634,7 @@ mod tests {
     #[test]
     fn test_parse_bool_op() {
         for test_case in &["a or b", "a and b", "a or b or c", "a and b or c"] {
-            let mut parser = Parser::new(test_case.to_string(), String::from(""));
+            let mut parser = Parser::new(test_case, "");
             let program = parser.parse().expect("parsing failed");
 
             insta::with_settings!({
@@ -3418,7 +3650,7 @@ mod tests {
     #[test]
     fn test_parse_unary_op() {
         for test_case in &["not a", "+ a", "~ a", "-a"] {
-            let mut parser = Parser::new(test_case.to_string(), String::from(""));
+            let mut parser = Parser::new(test_case, "");
             let program = parser.parse().expect("parsing failed");
 
             insta::with_settings!({
@@ -3435,7 +3667,7 @@ mod tests {
     fn test_named_expression() {
         {
             let test_case = &"(a := b)";
-            let mut parser = Parser::new(test_case.to_string(), String::from(""));
+            let mut parser = Parser::new(test_case, "");
             let program = parser.parse().expect("parsing failed");
 
             insta::with_settings!({
@@ -3463,7 +3695,7 @@ mod tests {
 )",
             "(a, b, c,)",
         ] {
-            let mut parser = Parser::new(test_case.to_string(), String::from(""));
+            let mut parser = Parser::new(test_case, "");
             let program = parser.parse().expect("parsing failed");
 
             insta::with_settings!({
@@ -3479,7 +3711,7 @@ mod tests {
     #[test]
     fn test_yield_expression() {
         for test_case in &["yield", "yield a", "yield from a"] {
-            let mut parser = Parser::new(test_case.to_string(), String::from(""));
+            let mut parser = Parser::new(test_case, "");
             let program = parser.parse().expect("parsing failed");
 
             insta::with_settings!({
@@ -3496,7 +3728,7 @@ mod tests {
     fn test_starred() {
         {
             let test_case = &"(*a)";
-            let mut parser = Parser::new(test_case.to_string(), String::from(""));
+            let mut parser = Parser::new(test_case, "");
             let program = parser.parse().expect("parsing failed");
 
             insta::with_settings!({
@@ -3513,7 +3745,7 @@ mod tests {
     fn test_await_expression() {
         {
             let test_case = &"await a";
-            let mut parser = Parser::new(test_case.to_string(), String::from(""));
+            let mut parser = Parser::new(test_case, "");
             let program = parser.parse().expect("parsing failed");
 
             insta::with_settings!({
@@ -3529,7 +3761,7 @@ mod tests {
     #[test]
     fn test_attribute_ref() {
         for test_case in &["a.b", "a.b.c", "a.b_c", "a.b.c.d"] {
-            let mut parser = Parser::new(test_case.to_string(), String::from(""));
+            let mut parser = Parser::new(test_case, "");
             let program = parser.parse().expect("parsing failed");
 
             insta::with_settings!({
@@ -3554,7 +3786,7 @@ mod tests {
             "func(a, b=c, d=e, *f, **g)",
             "func(a,)",
         ] {
-            let mut parser = Parser::new(test_case.to_string(), String::from(""));
+            let mut parser = Parser::new(test_case, "");
             let program = parser.parse().expect("parsing failed");
 
             insta::with_settings!({
@@ -3580,7 +3812,7 @@ mod tests {
             "lambda a=1 : a",
             "lambda a=1 : a,",
         ] {
-            let mut parser = Parser::new(test_case.to_string(), String::from(""));
+            let mut parser = Parser::new(test_case, "");
             let program = parser.parse().expect("parsing failed");
 
             insta::with_settings!({
@@ -3597,7 +3829,7 @@ mod tests {
     fn test_conditional_expression() {
         {
             let test_case = &"a if b else c if d else e";
-            let mut parser = Parser::new(test_case.to_string(), String::from(""));
+            let mut parser = Parser::new(test_case, "");
             let program = parser.parse().expect("parsing failed");
 
             insta::with_settings!({
@@ -3631,7 +3863,7 @@ mod tests {
             "'d' f'a' 'b'",
             "f'a_{1}' 'b' ",
         ] {
-            let mut parser = Parser::new(test_case.to_string(), String::from(""));
+            let mut parser = Parser::new(test_case, "");
             let program = parser.parse().expect("parsing failed");
 
             insta::with_settings!({
@@ -3654,7 +3886,7 @@ mod tests {
             // unsupported
             // "f'hello_{f'''{a}'''}'",
         ] {
-            let mut parser = Parser::new(test_case.to_string(), String::from(""));
+            let mut parser = Parser::new(test_case, "");
             let program = parser.parse().expect("parsing failed");
 
             insta::with_settings!({
@@ -3682,7 +3914,7 @@ mod tests {
             "a not in b",
             "a < b < c",
         ] {
-            let mut parser = Parser::new(test_case.to_string(), String::from(""));
+            let mut parser = Parser::new(test_case, "");
             let program = parser.parse().expect("parsing failed");
 
             insta::with_settings!({
@@ -3707,7 +3939,7 @@ else:
         b = 1
 ",
         ] {
-            let mut parser = Parser::new(test_case.to_string(), String::from(""));
+            let mut parser = Parser::new(test_case, "");
             let program = parser.parse().expect("parsing failed");
 
             insta::with_settings!({
@@ -3755,7 +3987,7 @@ except *Exception as e:
     pass
 ",
         ] {
-            let mut parser = Parser::new(test_case.to_string(), String::from(""));
+            let mut parser = Parser::new(test_case, "");
             let program = parser.parse().expect("parsing failed");
 
             insta::with_settings!({
@@ -3777,7 +4009,7 @@ except *Exception as e:
             "a = ...",
             "... + 1",
         ] {
-            let mut parser = Parser::new(test_case.to_string(), String::from(""));
+            let mut parser = Parser::new(test_case, "");
             let program = parser.parse().expect("parsing failed");
 
             insta::with_settings!({
@@ -3796,8 +4028,8 @@ except *Exception as e:
             fn $test_name() {
                 let test_case = fs::read_to_string($test_file).unwrap();
                 let mut parser = Parser::new(
-                    test_case.clone(),
-                    String::from($test_file),
+                    &test_case,
+                    $test_file,
                 );
                 let program = parser.parse().expect("parsing failed");
                 let snapshot = format!("{program:#?}");
@@ -3844,4 +4076,5 @@ except *Exception as e:
     parser_test!(with, "test_data/inputs/with.py");
     parser_test!(newlines, "test_data/inputs/newlines.py");
     parser_test!(comments, "test_data/inputs/comments.py");
+    parser_test!(types_alias, "test_data/inputs/type_alias.py");
 }
