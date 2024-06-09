@@ -403,7 +403,7 @@ impl TraversalVisitor for SemanticAnalyzer {
     }
 
     fn visit_for(&mut self, f: &parser::ast::For) {
-        self.create_variable_declaration_symbol(&f.target, Some(*f.iter.clone()), None);
+        self.create_variable_declaration_symbol(&f.target, Some(f.iter.clone()), None);
         for stmt in &f.body {
             self.visit_stmt(stmt);
         }
@@ -514,13 +514,17 @@ impl TraversalVisitor for SemanticAnalyzer {
         let mut return_statements = vec![];
         let mut yield_statements = vec![];
         let mut raise_statements = vec![];
-        for stmt in &f.body {
+        for stmt in f.body.iter() {
             self.visit_stmt(stmt);
-            match &stmt {
-                parser::ast::Statement::Raise(r) => raise_statements.push(r.clone()),
-                parser::ast::Statement::Return(r) => return_statements.push(r.clone()),
-                parser::ast::Statement::ExpressionStatement(parser::ast::Expression::Yield(y)) => {
-                    yield_statements.push(*y.clone())
+            match stmt {
+                parser::ast::Statement::Raise(r) => raise_statements.push(*r.clone()),
+                parser::ast::Statement::Return(r) => return_statements.push(*r.clone()),
+                parser::ast::Statement::ExpressionStatement(e) => {
+                    let Some(yield_expr) = e.as_yield_expr() else {
+                        continue;
+                    };
+
+                    yield_statements.push(*yield_expr.clone())
                 }
                 _ => (),
             }
