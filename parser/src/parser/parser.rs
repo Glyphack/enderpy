@@ -3292,6 +3292,7 @@ mod tests {
 
             insta::with_settings!({
                     description => test_case.to_string(), // the template source code
+                        snapshot_path => "../../test_data/output/",
                     omit_expression => true // do not include the default expression
                 }, {
                     assert_debug_snapshot!(program);
@@ -3307,6 +3308,7 @@ mod tests {
 
             insta::with_settings!({
                     description => test_case.to_string(), // the template source code
+                        snapshot_path => "../../test_data/output/",
                     omit_expression => true // do not include the default expression
                 }, {
                     assert_debug_snapshot!(program);
@@ -3322,6 +3324,7 @@ mod tests {
 
             insta::with_settings!({
                     description => test_case.to_string(), // the template source code
+                        snapshot_path => "../../test_data/output/",
                     omit_expression => true // do not include the default expression
                 }, {
                     assert_debug_snapshot!(program);
@@ -3337,6 +3340,7 @@ mod tests {
 
             insta::with_settings!({
                     description => test_case.to_string(), // the template source code
+                        snapshot_path => "../../test_data/output/",
                     omit_expression => true // do not include the default expression
                 }, {
                     assert_debug_snapshot!(program);
@@ -3352,6 +3356,7 @@ mod tests {
 
             insta::with_settings!({
                     description => test_case.to_string(), // the template source code
+                        snapshot_path => "../../test_data/output/",
                     omit_expression => true // do not include the default expression
                 }, {
                     assert_debug_snapshot!(program);
@@ -3367,6 +3372,7 @@ mod tests {
 
             insta::with_settings!({
                     description => test_case.to_string(), // the template source code
+                        snapshot_path => "../../test_data/output/",
                     omit_expression => true // do not include the default expression
                 }, {
                     assert_debug_snapshot!(program);
@@ -3382,6 +3388,7 @@ mod tests {
 
             insta::with_settings!({
                     description => test_case.to_string(), // the template source code
+                        snapshot_path => "../../test_data/output/",
                     omit_expression => true // do not include the default expression
                 }, {
                     assert_debug_snapshot!(program);
@@ -3397,6 +3404,7 @@ mod tests {
 
             insta::with_settings!({
                     description => test_case.to_string(), // the template source code
+                        snapshot_path => "../../test_data/output/",
                     omit_expression => true // do not include the default expression
                 }, {
                     assert_debug_snapshot!(program);
@@ -3412,6 +3420,7 @@ mod tests {
 
             insta::with_settings!({
                     description => test_case.to_string(), // the template source code
+                        snapshot_path => "../../test_data/output/",
                     omit_expression => true // do not include the default expression
                 }, {
                     assert_debug_snapshot!(program);
@@ -3428,6 +3437,7 @@ mod tests {
 
             insta::with_settings!({
                     description => test_case.to_string(), // the template source code
+                        snapshot_path => "../../test_data/output/",
                     omit_expression => true // do not include the default expression
                 }, {
                     assert_debug_snapshot!(program);
@@ -3455,6 +3465,7 @@ mod tests {
 
             insta::with_settings!({
                     description => test_case.to_string(), // the template source code
+                        snapshot_path => "../../test_data/output/",
                     omit_expression => true // do not include the default expression
                 }, {
                     assert_debug_snapshot!(program);
@@ -3470,6 +3481,7 @@ mod tests {
 
             insta::with_settings!({
                     description => test_case.to_string(), // the template source code
+                        snapshot_path => "../../test_data/output/",
                     omit_expression => true // do not include the default expression
                 }, {
                     assert_debug_snapshot!(program);
@@ -3486,6 +3498,7 @@ mod tests {
 
             insta::with_settings!({
                     description => test_case.to_string(), // the template source code
+                        snapshot_path => "../../test_data/output/",
                     omit_expression => true // do not include the default expression
                 }, {
                     assert_debug_snapshot!(program);
@@ -3502,6 +3515,7 @@ mod tests {
 
             insta::with_settings!({
                     description => test_case.to_string(), // the template source code
+                        snapshot_path => "../../test_data/output/",
                     omit_expression => true // do not include the default expression
                 }, {
                     assert_debug_snapshot!(program);
@@ -3517,6 +3531,7 @@ mod tests {
 
             insta::with_settings!({
                     description => test_case.to_string(), // the template source code
+                        snapshot_path => "../../test_data/output/",
                     omit_expression => true // do not include the default expression
                 }, {
                     assert_debug_snapshot!(program);
@@ -3541,6 +3556,7 @@ mod tests {
 
             insta::with_settings!({
                     description => test_case.to_string(), // the template source code
+                        snapshot_path => "../../test_data/output/",
                     omit_expression => true // do not include the default expression
                 }, {
                     assert_debug_snapshot!(program);
@@ -3566,6 +3582,7 @@ mod tests {
 
             insta::with_settings!({
                     description => test_case.to_string(), // the template source code
+                        snapshot_path => "../../test_data/output/",
                     omit_expression => true // do not include the default expression
                 }, {
                     assert_debug_snapshot!(program);
@@ -3582,6 +3599,7 @@ mod tests {
 
             insta::with_settings!({
                     description => test_case.to_string(), // the template source code
+                        snapshot_path => "../../test_data/output/",
                     omit_expression => true // do not include the default expression
                 }, {
                     assert_debug_snapshot!(program);
@@ -3615,6 +3633,7 @@ mod tests {
 
             insta::with_settings!({
                     description => test_case.to_string(), // the template source code
+                        snapshot_path => "../../test_data/output/",
                     omit_expression => true // do not include the default expression
                 }, {
                     assert_debug_snapshot!(program);
@@ -3637,6 +3656,7 @@ mod tests {
 
             insta::with_settings!({
                     description => test_case.to_string(), // the template source code
+                        snapshot_path => "../../test_data/output/",
                     omit_expression => true // do not include the default expression
                 }, {
                     assert_debug_snapshot!(program);
@@ -3664,6 +3684,7 @@ mod tests {
 
             insta::with_settings!({
                 description => test_case.to_string(), // the template source code
+                        snapshot_path => "../../test_data/output/",
                 omit_expression => true // do not include the default expression
             }, {
                 assert_debug_snapshot!(program);
@@ -3688,6 +3709,7 @@ else:
 
             insta::with_settings!({
                     description => test_case.to_string(), // the template source code
+                        snapshot_path => "../../test_data/output/",
                     omit_expression => true // do not include the default expression
                 }, {
                     assert_debug_snapshot!(program);
@@ -3735,6 +3757,7 @@ except *Exception as e:
 
             insta::with_settings!({
                     description => test_case.to_string(), // the template source code
+                        snapshot_path => "../../test_data/output/",
                     omit_expression => true // do not include the default expression
                 }, {
                     assert_debug_snapshot!(program);
@@ -3756,6 +3779,7 @@ except *Exception as e:
 
             insta::with_settings!({
                     description => test_case.to_string(), // the template source code
+                    snapshot_path => "../../test_data/output/",
                     omit_expression => true // do not include the default expression
                 }, {
                     assert_debug_snapshot!(program);
@@ -3774,9 +3798,11 @@ except *Exception as e:
                 );
                 let program = parser.parse().expect("parsing failed");
                 let snapshot = format!("{program:#?}");
+
                 insta::with_settings!({
                         description => test_case.clone(),
-                        omit_expression => true
+                        omit_expression => true,
+                        snapshot_path => "../../test_data/output/"
                     }, {
                         assert_snapshot!(snapshot);
                 });
