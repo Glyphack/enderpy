@@ -28,7 +28,7 @@ Module {
                         Constant(
                             Constant {
                                 node: Node {
-                                    start: 0,
+                                    start: 5,
                                     end: 8,
                                 },
                                 value: "b",
@@ -37,7 +37,7 @@ Module {
                         Constant(
                             Constant {
                                 node: Node {
-                                    start: 0,
+                                    start: 9,
                                     end: 12,
                                 },
                                 value: "c",
