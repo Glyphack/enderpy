@@ -57,10 +57,11 @@ impl<'a> Lexer<'a> {
         let mut tokens = vec![];
         loop {
             let token = self.next_token();
-            tokens.push(token.clone());
             if token.kind == Kind::Eof {
+                tokens.push(token);
                 break;
             }
+            tokens.push(token);
         }
         tokens
     }
