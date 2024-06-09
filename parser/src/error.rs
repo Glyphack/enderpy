@@ -18,7 +18,7 @@ pub enum ParsingError {
     },
 }
 
-impl From<Parser> for ParsingError {
+impl From<Parser<'_>> for ParsingError {
     fn from(err: Parser) -> Self {
         let token = err.cur_token();
         ParsingError::InvalidSyntax {
@@ -30,7 +30,7 @@ impl From<Parser> for ParsingError {
     }
 }
 
-impl From<&mut Parser> for ParsingError {
+impl From<&mut Parser<'_>> for ParsingError {
     fn from(err: &mut Parser) -> Self {
         let token = err.cur_token();
         ParsingError::InvalidSyntax {

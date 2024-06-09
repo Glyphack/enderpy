@@ -50,7 +50,7 @@ fn get_python_executable() -> Result<PathBuf> {
             Ok(output) => {
                 let mut path = String::from_utf8(output.stdout).into_diagnostic()?;
                 // Like calling trim but I didn't want to re-allocate the str slice
-                while path.ends_with("\n") || path.ends_with("\r") {
+                while path.ends_with('\n') || path.ends_with('\r') {
                     path.pop();
                 }
                 return Ok(PathBuf::from(path));
@@ -106,7 +106,7 @@ fn tokenize(file: &PathBuf) -> Result<()> {
 fn parse(file: &PathBuf) -> Result<()> {
     let source = fs::read_to_string(file).into_diagnostic()?;
     let file_path = file.to_str().unwrap_or("");
-    let mut parser = Parser::new(source, file_path.into());
+    let mut parser = Parser::new(&source, file_path);
     let ast = parser.parse();
     println!("{:#?}", ast);
     Ok(())

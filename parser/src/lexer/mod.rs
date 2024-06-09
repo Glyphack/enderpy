@@ -6,9 +6,9 @@ use crate::{
 };
 
 #[derive(Debug, Clone)]
-pub struct Lexer {
+pub struct Lexer<'a> {
     /// The source code
-    source: String,
+    source: &'a str,
     /// The current position in the source code
     current: u32,
     current_line: u16,
@@ -36,10 +36,10 @@ pub struct Lexer {
     pub line_starts: Vec<u32>,
 }
 
-impl Lexer {
-    pub fn new(source: &str) -> Self {
+impl<'a> Lexer<'a> {
+    pub fn new(source: &'a str) -> Self {
         Self {
-            source: source.to_string(),
+            source,
             current: 0,
             current_line: 1,
             start_of_line: true,

@@ -11,7 +11,7 @@ repository = { workspace = true }
 license = { workspace = true }
 
 [dependencies]
-codspeed-criterion-compat = { workspace = true, default-features = false, optional = true}
+codspeed-criterion-compat = { workspace = true, optional = true}
 criterion.workspace = true
 reqwest = { version= "0.12.4", features = ["blocking"] }
 tokio.workspace = true

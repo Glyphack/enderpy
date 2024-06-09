@@ -28,7 +28,6 @@ pub enum ImportKinds {
 /// and methods to perform semantic analysis and type check on them
 #[derive(Clone, Debug)]
 pub struct EnderpyFile {
-    pub source: String,
     pub module: String,
     // if this source is found by following an import
     pub followed: bool,
@@ -37,30 +36,32 @@ pub struct EnderpyFile {
     pub imports: Vec<ImportKinds>,
     // All high level statements inside the file
     pub body: Vec<Statement>,
-    pub parser: Parser,
+    pub source: String,
+    pub offset_line_number: Vec<u32>,
     // Available after populating
     pub symbol_table: Option<SymbolTable>,
     pub type_checker: Option<TypeChecker>,
 }
 
-impl EnderpyFile {
+impl<'a> EnderpyFile {
     pub fn new(path: &Path, followed: bool) -> Self {
         let source =
             std::fs::read_to_string(path).unwrap_or_else(|_| panic!("cannot read file {path:?}"));
         let module = get_module_name(path);
-        let mut parser = Parser::new(source.clone(), path.to_str().unwrap().to_string());
+        let mut parser = Parser::new(&source, path.to_str().unwrap());
         let tree = parser.parse().expect("parsing {path:?} failed");
+        let offset_line_number = parser.line_starts();
 
         let mut file = Self {
             imports: vec![],
             body: vec![],
             symbol_table: None,
             type_checker: None,
-            parser,
+            source,
+            offset_line_number,
             followed,
             module,
             path: path.to_path_buf(),
-            source,
         };
 
         for stmt in &tree.body {
@@ -82,13 +83,9 @@ impl EnderpyFile {
         self.path.to_str().unwrap().to_string()
     }
 
-    pub fn source(&self) -> String {
-        self.source.clone()
-    }
-
     /// Return source of the line number
     pub fn get_line_content(&self, line: usize) -> String {
-        let line_starts = self.parser.line_starts();
+        let line_starts = &self.offset_line_number;
         let line_start_offset = line_starts[line] as usize;
         let line_end_offset = if line == line_starts.len() {
             self.source.len()
@@ -99,7 +96,7 @@ impl EnderpyFile {
     }
 
     pub fn get_position(&self, pos: u32) -> Position {
-        let line_starts = self.parser.line_starts();
+        let line_starts = &self.offset_line_number;
         let line_number = match line_starts.binary_search(&pos) {
             Ok(index) => index,
             Err(index) => {
@@ -155,7 +152,7 @@ impl EnderpyFile {
     }
 }
 
-impl TraversalVisitor for EnderpyFile {
+impl<'a> TraversalVisitor for EnderpyFile {
     fn visit_stmt(&mut self, s: &Statement) {
         match s {
             Statement::ExpressionStatement(e) => self.visit_expr(e),

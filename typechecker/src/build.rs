@@ -129,8 +129,8 @@ impl BuildManager {
     pub fn get_hover_information(&self, path: &Path, line: u32, column: u32) -> String {
         let module = self.get_state(path);
         let symbol_table = module.get_symbol_table();
-        let hovered_offset = module.parser.line_starts()[line as usize] + column;
-        let line_number = match module.parser.line_starts().binary_search(&hovered_offset) {
+        let hovered_offset = module.offset_line_number[line as usize] + column;
+        let line_number = match module.offset_line_number.binary_search(&hovered_offset) {
             Ok(index) => index,
             Err(index) => index - 1,
         };
