@@ -268,7 +268,7 @@ Module {
         FunctionDef(
             FunctionDef {
                 node: Node {
-                    start: 110,
+                    start: 103,
                     end: 124,
                 },
                 name: "a",
@@ -314,7 +314,7 @@ Module {
         FunctionDef(
             FunctionDef {
                 node: Node {
-                    start: 132,
+                    start: 125,
                     end: 188,
                 },
                 name: "f",

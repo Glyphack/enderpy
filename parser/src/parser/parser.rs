@@ -297,7 +297,11 @@ impl<'a> Parser<'a> {
             Kind::For => self.parse_for_statement(),
             Kind::Try => self.parse_try_statement(),
             Kind::With => self.parse_with_statement(),
-            Kind::Def => self.parse_function_definition(vec![]),
+            Kind::Def => {
+                let node = self.start_node();
+                self.bump_any();
+                self.parse_function_definition(node, vec![], false)
+            }
             Kind::MatrixMul => self.parse_decorated_function_def_or_class_def(),
             Kind::Class => self.parse_class_definition(vec![], None),
             // match is a soft keyword
@@ -307,7 +311,10 @@ impl<'a> Parser<'a> {
             }
             Kind::Async => {
                 if matches!(self.peek_kind(), Ok(Kind::Def)) {
-                    self.parse_function_definition(vec![])
+                    let node = self.start_node();
+                    self.bump_any();
+                    self.bump_any();
+                    self.parse_function_definition(node, vec![], true)
                 } else if matches!(self.peek_kind(), Ok(Kind::For)) {
                     self.parse_for_statement()
                 } else if matches!(self.peek_kind(), Ok(Kind::With)) {
@@ -606,14 +613,10 @@ impl<'a> Parser<'a> {
 
     fn parse_function_definition(
         &mut self,
+        node: Node,
         decorators: Vec<Expression>,
+        is_async: bool,
     ) -> Result<Statement, ParsingError> {
-        // TODO: node excludes decorators
-        // later we can extract the node for first decorator
-        // and start the node from there
-        let node = self.start_node();
-        let is_async = self.eat(Kind::Async);
-        self.expect(Kind::Def)?;
         let name = self.cur_token().value.to_string();
         self.expect(Kind::Identifier)?;
         let type_params = if self.at(Kind::LeftBrace) {
@@ -667,11 +670,17 @@ impl<'a> Parser<'a> {
             decorators.push(name);
             self.consume_whitespace_and_comments();
         }
-
-        if self.at(Kind::Def) || self.at(Kind::Async) {
-            self.parse_function_definition(decorators)
-        } else {
-            self.parse_class_definition(decorators, Some(node))
+        match self.cur_kind() {
+            Kind::Def => {
+                self.bump_any();
+                self.parse_function_definition(node, decorators, false)
+            }
+            Kind::Async => {
+                self.bump_any();
+                self.expect(Kind::Def);
+                self.parse_function_definition(node, decorators, true)
+            }
+            _ => self.parse_class_definition(decorators, Some(node)),
         }
     }
 
