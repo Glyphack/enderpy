@@ -1,5 +1,5 @@
 [workspace]
-members = ["parser", "enderpy", "typechecker", "lsp"]
+members = ["parser", "enderpy", "typechecker", "lsp", "benchmark"]
 resolver = "2"
 
 [workspace.package]

@@ -27,6 +27,5 @@ insta.workspace = true
 reqwest = { version= "0.12.4", features = ["blocking"] }
 tokio.workspace = true
 
-[[bench]]
-name = "parser_benchmark"
-harness = false
+[lib]
+bench = false

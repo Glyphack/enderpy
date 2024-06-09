@@ -1,10 +1,19 @@
-use codspeed_criterion_compat::{criterion_group, criterion_main, BenchmarkId, Criterion};
 use enderpy_python_parser::*;
 use reqwest::blocking::Client;
 use std::fs::read_to_string;
 use std::fs::remove_file;
 use std::fs::File;
 use std::io::copy;
+
+// Use criterion locally and codspeed on CI.
+#[cfg(not(codspeed))]
+pub use criterion::*;
+
+#[cfg(not(codspeed))]
+pub type BenchmarkGroup<'a> = criterion::BenchmarkGroup<'a, measurement::WallTime>;
+
+#[cfg(codspeed)]
+pub use codspeed_criterion_compat::*;
 
 fn try_download(path: &str, url: &str) -> String {
     let client = Client::new();
@@ -51,7 +60,7 @@ pub fn benchmark_parser(c: &mut Criterion) {
             },
         );
 
-        // remove_file(path).expect("cannot delete file");
+        remove_file(path).expect("cannot delete file");
     }
     group.finish()
 }
