@@ -242,9 +242,9 @@ impl Parser {
             Kind::Del => self.parse_del_statement(),
             Kind::Return => self.parse_return_statement(),
             // https://docs.python.org/3/reference/simple_stmts.html#the-yield-statement
-            Kind::Yield => Ok(Statement::ExpressionStatement(
+            Kind::Yield => Ok(Statement::ExpressionStatement(Box::new(
                 self.parse_yield_expression()?,
-            )),
+            ))),
             Kind::Raise => self.parse_raise_statement(),
             Kind::Break => self.parse_break_statement(),
             Kind::Continue => self.parse_continue_statement(),
@@ -343,14 +343,14 @@ impl Parser {
     fn parse_if_statement(&mut self) -> Result<Statement, ParsingError> {
         let node = self.start_node();
         self.expect(Kind::If)?;
-        let test = Box::new(self.parse_named_expression()?);
+        let test = self.parse_named_expression()?;
         self.expect(Kind::Colon)?;
         let body = self.parse_suite()?;
         let mut orelse: Option<If> = None;
         while self.at(Kind::Elif) {
             let elif_node = self.start_node();
             self.bump(Kind::Elif);
-            let elif_test = Box::new(self.parse_named_expression()?);
+            let elif_test = self.parse_named_expression()?;
             self.expect(Kind::Colon)?;
             let body = self.parse_suite()?;
             let if_value = If {
@@ -360,7 +360,7 @@ impl Parser {
                 orelse: vec![],
             };
             if let Some(val) = &mut orelse {
-                val.update_orelse(vec![Statement::IfStatement(if_value)]);
+                val.update_orelse(vec![Statement::IfStatement(Box::new(if_value))]);
             } else {
                 orelse = Some(if_value);
             }
@@ -380,7 +380,7 @@ impl Parser {
         // if we had any else or elif statements, we need to wrap them in a vec
         // otherwise we just return an empty vec as the else block of the if statement
         let or_else_vec = if let Some(val) = orelse {
-            vec![Statement::IfStatement(val)]
+            vec![Statement::IfStatement(Box::new(val))]
         } else {
             match single_else_body {
                 Some(val) => val,
@@ -388,18 +388,18 @@ impl Parser {
             }
         };
 
-        Ok(Statement::IfStatement(If {
+        Ok(Statement::IfStatement(Box::new(If {
             node: self.finish_node(node),
             test,
             body,
             orelse: or_else_vec,
-        }))
+        })))
     }
 
     fn parse_while_statement(&mut self) -> Result<Statement, ParsingError> {
         let node = self.start_node();
         self.bump(Kind::While);
-        let test = Box::new(self.parse_named_expression()?);
+        let test = self.parse_named_expression()?;
         self.expect(Kind::Colon)?;
         let body = self.parse_suite()?;
         let orelse = if self.at(Kind::Else) {
@@ -410,19 +410,19 @@ impl Parser {
             vec![]
         };
 
-        Ok(Statement::WhileStatement(While {
+        Ok(Statement::WhileStatement(Box::new(While {
             node: self.finish_node(node),
             test,
             body,
             orelse,
-        }))
+        })))
     }
 
     fn parse_for_statement(&mut self) -> Result<Statement, ParsingError> {
         let node = self.start_node();
         let is_async = self.eat(Kind::Async);
         self.bump(Kind::For);
-        let target = Box::new(self.parse_target_list()?);
+        let target = self.parse_target_list()?;
         self.expect(Kind::In)?;
         // TODO: I think this would not work for:
         // for a in [1, 2, 3]:
@@ -431,11 +431,11 @@ impl Parser {
             0 => {
                 return Err(self.unexpected_token_new(node, vec![], "Expected expression"));
             }
-            1 => Box::new(iter_list.into_iter().next().unwrap()),
-            _ => Box::new(Expression::Tuple(Box::new(Tuple {
+            1 => iter_list.into_iter().next().unwrap(),
+            _ => Expression::Tuple(Box::new(Tuple {
                 node: self.finish_node(node),
                 elements: iter_list,
-            }))),
+            })),
         };
 
         self.expect(Kind::Colon)?;
@@ -448,21 +448,21 @@ impl Parser {
         };
 
         if is_async {
-            Ok(Statement::AsyncForStatement(AsyncFor {
+            Ok(Statement::AsyncForStatement(Box::new(AsyncFor {
                 node: self.finish_node(node),
                 target,
                 iter,
                 body,
                 orelse,
-            }))
+            })))
         } else {
-            Ok(Statement::ForStatement(For {
+            Ok(Statement::ForStatement(Box::new(For {
                 node: self.finish_node(node),
                 target,
                 iter,
                 body,
                 orelse,
-            }))
+            })))
         }
     }
 
@@ -475,17 +475,17 @@ impl Parser {
         let body = self.parse_suite()?;
 
         if is_async {
-            Ok(Statement::AsyncWithStatement(AsyncWith {
+            Ok(Statement::AsyncWithStatement(Box::new(AsyncWith {
                 node: self.finish_node(node),
                 items,
                 body,
-            }))
+            })))
         } else {
-            Ok(Statement::WithStatement(With {
+            Ok(Statement::WithStatement(Box::new(With {
                 node: self.finish_node(node),
                 items,
                 body,
-            }))
+            })))
         }
     }
 
@@ -510,9 +510,9 @@ impl Parser {
 
     fn parse_with_item(&mut self) -> Result<WithItem, ParsingError> {
         let node = self.start_node();
-        let context_expr = Box::new(self.parse_expression()?);
+        let context_expr = self.parse_expression()?;
         let optional_vars = if self.eat(Kind::As) {
-            Some(Box::new(self.parse_target()?))
+            Some(self.parse_target()?)
         } else {
             None
         };
@@ -553,21 +553,21 @@ impl Parser {
         };
 
         if is_try_star {
-            Ok(Statement::TryStarStatement(TryStar {
+            Ok(Statement::TryStarStatement(Box::new(TryStar {
                 node: self.finish_node(node),
                 body,
                 handlers,
                 orelse,
                 finalbody,
-            }))
+            })))
         } else {
-            Ok(Statement::TryStatement(Try {
+            Ok(Statement::TryStatement(Box::new(Try {
                 node: self.finish_node(node),
                 body,
                 handlers,
                 orelse,
                 finalbody,
-            }))
+            })))
         }
     }
 
@@ -578,7 +578,7 @@ impl Parser {
             self.bump(Kind::Except);
             self.bump(Kind::Mul);
             let typ = if !self.at(Kind::Colon) {
-                Some(Box::new(self.parse_expression()?))
+                Some(self.parse_expression()?)
             } else {
                 None
             };
@@ -626,7 +626,7 @@ impl Parser {
         self.expect(Kind::RightParen)?;
 
         let return_type = if self.eat(Kind::Arrow) {
-            Some(Box::new(self.parse_expression()?))
+            Some(self.parse_expression()?)
         } else {
             None
         };
@@ -634,7 +634,7 @@ impl Parser {
         self.expect(Kind::Colon)?;
         let body = self.parse_suite()?;
         if is_async {
-            Ok(Statement::AsyncFunctionDef(AsyncFunctionDef {
+            Ok(Statement::AsyncFunctionDef(Box::new(AsyncFunctionDef {
                 node: self.finish_node(node),
                 name,
                 args,
@@ -643,9 +643,9 @@ impl Parser {
                 returns: return_type,
                 type_comment: None,
                 type_params,
-            }))
+            })))
         } else {
-            Ok(Statement::FunctionDef(FunctionDef {
+            Ok(Statement::FunctionDef(Box::new(FunctionDef {
                 node: self.finish_node(node),
                 name,
                 args,
@@ -655,7 +655,7 @@ impl Parser {
                 // TODO: type comment
                 type_comment: None,
                 type_params,
-            }))
+            })))
         }
     }
 
@@ -700,7 +700,7 @@ impl Parser {
         self.expect(Kind::Colon)?;
         let body = self.parse_suite()?;
 
-        Ok(Statement::ClassDef(ClassDef {
+        Ok(Statement::ClassDef(Box::new(ClassDef {
             node: self.finish_node(node),
             name,
             bases,
@@ -708,7 +708,7 @@ impl Parser {
             body,
             decorator_list: decorators,
             type_params,
-        }))
+        })))
     }
 
     // https://peps.python.org/pep-0622/#appendix-a-full-grammar
@@ -717,18 +717,18 @@ impl Parser {
         // This identifier is match word
         // match is a soft keyword
         self.bump(Kind::Identifier);
-        let subject = Box::new(self.parse_subject()?);
+        let subject = self.parse_subject()?;
         self.expect(Kind::Colon)?;
         self.expect(Kind::NewLine)?;
         self.expect(Kind::Indent)?;
         let cases = self.parse_cases()?;
         self.expect_any(vec![Kind::Dedent, Kind::Eof])?;
 
-        Ok(Statement::Match(Match {
+        Ok(Statement::Match(Box::new(Match {
             node: self.finish_node(node),
             subject,
             cases,
-        }))
+        })))
     }
 
     // This is inaccuracy, but I don't know how
@@ -778,9 +778,9 @@ impl Parser {
 
             // This identifier is case word
             self.expect(Kind::Identifier)?;
-            let pattern = Box::new(self.parse_patterns()?);
+            let pattern = self.parse_patterns()?;
             let guard = if self.at(Kind::If) {
-                Some(Box::new(self.parse_guard()?))
+                Some(self.parse_guard()?)
             } else {
                 None
             };
@@ -822,11 +822,11 @@ impl Parser {
             let node = self.start_node();
             let name = Some(self.cur_token().value.to_string());
             self.bump(Kind::As);
-            Ok(MatchPattern::MatchAs(MatchAs {
+            Ok(MatchPattern::MatchAs(Box::new(MatchAs {
                 node: self.finish_node(node),
-                pattern: Some(Box::new(or_pattern)),
+                pattern: Some(or_pattern),
                 name,
-            }))
+            })))
         } else {
             Ok(or_pattern)
         }
@@ -924,7 +924,7 @@ impl Parser {
     // https://docs.python.org/3/reference/compound_stmts.html#literal-patterns
     fn parse_literal_pattern(&mut self) -> Result<MatchPattern, ParsingError> {
         let node = self.start_node();
-        let value = Box::new(self.parse_binary_arithmetic_operation()?);
+        let value = self.parse_binary_arithmetic_operation()?;
         Ok(MatchPattern::MatchValue(MatchValue {
             node: self.finish_node(node),
             value,
@@ -938,17 +938,17 @@ impl Parser {
         // TODO: should also accept as?
 
         if capture_value == "_" {
-            Ok(MatchPattern::MatchAs(MatchAs {
+            Ok(MatchPattern::MatchAs(Box::new(MatchAs {
                 node: self.finish_node(node),
                 name: None,
                 pattern: None,
-            }))
+            })))
         } else {
-            Ok(MatchPattern::MatchAs(MatchAs {
+            Ok(MatchPattern::MatchAs(Box::new(MatchAs {
                 node: self.finish_node(node),
                 name: Some(capture_value),
                 pattern: None,
-            }))
+            })))
         }
     }
 
@@ -962,7 +962,7 @@ impl Parser {
     ) -> Result<MatchPattern, ParsingError> {
         Ok(MatchPattern::MatchValue(MatchValue {
             node: self.finish_node(node),
-            value: Box::new(value),
+            value,
         }))
     }
 
@@ -981,7 +981,7 @@ impl Parser {
             self.expect(Kind::Identifier)?;
             expr = Ok(Expression::Attribute(Box::new(Attribute {
                 node: self.finish_node(node),
-                value: Box::new(expr?),
+                value: expr?,
                 attr: attr_val,
             })));
         }
@@ -1052,7 +1052,7 @@ impl Parser {
         class_name: Expression,
     ) -> Result<MatchPattern, ParsingError> {
         let node = self.start_node();
-        let class = Box::new(class_name);
+        let class = class_name;
         self.expect(Kind::LeftParen)?;
         let mut patterns = vec![];
         let mut kwd_attrs = vec![];
@@ -1151,7 +1151,7 @@ impl Parser {
         } else if self.at(Kind::Colon) {
             self.parse_ann_assign_statement(node, lhs)
         } else {
-            Ok(Statement::ExpressionStatement(lhs))
+            Ok(Statement::ExpressionStatement(Box::new(lhs)))
         }
     }
 
@@ -1211,10 +1211,10 @@ impl Parser {
             Expression::Tuple(tuple) => tuple.elements,
             _ => vec![expr],
         };
-        Ok(Statement::Delete(Delete {
+        Ok(Statement::Delete(Box::new(Delete {
             node: self.finish_node(node),
             targets: expr,
-        }))
+        })))
     }
 
     fn parse_assignment_statement(
@@ -1236,11 +1236,11 @@ impl Parser {
                 break rhs;
             }
         };
-        Ok(Statement::AssignStatement(Assign {
+        Ok(Statement::AssignStatement(Box::new(Assign {
             node: self.finish_node(start),
             targets,
             value,
-        }))
+        })))
     }
 
     fn parse_aug_assignment_statement(
@@ -1251,12 +1251,12 @@ impl Parser {
     ) -> Result<Statement, ParsingError> {
         let value = self.parse_assignment_value()?;
 
-        Ok(Statement::AugAssignStatement(AugAssign {
+        Ok(Statement::AugAssignStatement(Box::new(AugAssign {
             node: self.finish_node(start),
             target: lhs,
             op,
             value,
-        }))
+        })))
     }
 
     fn parse_ann_assign_statement(
@@ -1271,14 +1271,14 @@ impl Parser {
         } else {
             None
         };
-        Ok(Statement::AnnAssignStatement(AnnAssign {
+        Ok(Statement::AnnAssignStatement(Box::new(AnnAssign {
             node: self.finish_node(start),
             target: lhs,
             annotation,
             value,
             // TODO: implement simple
             simple: true,
-        }))
+        })))
     }
 
     // The value is either expression list or yield expression
@@ -1320,19 +1320,19 @@ impl Parser {
             None
         };
 
-        Ok(Statement::Assert(Assert {
+        Ok(Statement::Assert(Box::new(Assert {
             node: self.finish_node(node),
             test,
             msg,
-        }))
+        })))
     }
 
     fn parse_pass_statement(&mut self) -> Result<Statement, ParsingError> {
         let node = self.start_node();
         self.bump(Kind::Pass);
-        Ok(Statement::Pass(Pass {
+        Ok(Statement::Pass(Box::new(Pass {
             node: self.finish_node(node),
-        }))
+        })))
     }
 
     fn parse_return_statement(&mut self) -> Result<Statement, ParsingError> {
@@ -1343,10 +1343,10 @@ impl Parser {
         } else {
             Some(self.parse_expression_list()?)
         };
-        Ok(Statement::Return(Return {
+        Ok(Statement::Return(Box::new(Return {
             node: self.finish_node(node),
             value,
-        }))
+        })))
     }
 
     // https://docs.python.org/3/reference/simple_stmts.html#the-raise-statement
@@ -1363,29 +1363,29 @@ impl Parser {
         } else {
             None
         };
-        Ok(Statement::Raise(Raise {
+        Ok(Statement::Raise(Box::new(Raise {
             node: self.finish_node(node),
             exc,
             cause,
-        }))
+        })))
     }
 
     // https://docs.python.org/3/reference/simple_stmts.html#the-break-statement
     fn parse_break_statement(&mut self) -> Result<Statement, ParsingError> {
         let node = self.start_node();
         self.bump(Kind::Break);
-        Ok(Statement::Break(Break {
+        Ok(Statement::Break(Box::new(Break {
             node: self.finish_node(node),
-        }))
+        })))
     }
 
     // https://docs.python.org/3/reference/simple_stmts.html#the-continue-statement
     fn parse_continue_statement(&mut self) -> Result<Statement, ParsingError> {
         let node = self.start_node();
         self.bump(Kind::Continue);
-        Ok(Statement::Continue(Continue {
+        Ok(Statement::Continue(Box::new(Continue {
             node: self.finish_node(node),
-        }))
+        })))
     }
 
     // https://docs.python.org/3/reference/simple_stmts.html#the-global-statement
@@ -1401,10 +1401,10 @@ impl Parser {
                 break;
             }
         }
-        Ok(Statement::Global(Global {
+        Ok(Statement::Global(Box::new(Global {
             node: self.finish_node(node),
             names,
-        }))
+        })))
     }
 
     // https://docs.python.org/3/reference/simple_stmts.html#the-nonlocal-statement
@@ -1420,10 +1420,10 @@ impl Parser {
                 break;
             }
         }
-        Ok(Statement::Nonlocal(Nonlocal {
+        Ok(Statement::Nonlocal(Box::new(Nonlocal {
             node: self.finish_node(node),
             names,
-        }))
+        })))
     }
 
     // https://docs.python.org/3/reference/simple_stmts.html#the-import-statement
@@ -1441,10 +1441,10 @@ impl Parser {
                 break;
             }
         }
-        Ok(Statement::Import(Import {
+        Ok(Statement::Import(Box::new(Import {
             node: self.finish_node(node),
             names: aliases,
-        }))
+        })))
     }
 
     // https://docs.python.org/3/reference/simple_stmts.html#the-from-import-statement
@@ -1488,12 +1488,12 @@ impl Parser {
                "Use * for importing everything or use () to specify names to import or specify the name you want to import"
            ));
         }
-        Ok(Statement::ImportFrom(ImportFrom {
+        Ok(Statement::ImportFrom(Box::new(ImportFrom {
             node: self.finish_node(import_node),
             module,
             names: aliases,
             level,
-        }))
+        })))
     }
 
     fn parse_alias(&mut self, name: String, node: Node) -> Alias {
@@ -1575,9 +1575,9 @@ impl Parser {
             let or_else = self.parse_expression()?;
             return Ok(Expression::IfExp(Box::new(IfExp {
                 node: self.start_node(),
-                test: Box::new(test),
-                body: Box::new(or_test?),
-                orelse: Box::new(or_else),
+                test,
+                body: or_test?,
+                orelse: or_else,
             })));
         }
 
@@ -1597,11 +1597,11 @@ impl Parser {
                 let value = self.parse_expression()?;
                 return Ok(Expression::NamedExpr(Box::new(NamedExpression {
                     node: self.finish_node(node),
-                    target: Box::new(Expression::Name(Box::new(Name {
+                    target: Expression::Name(Box::new(Name {
                         node: identifier_node,
                         id: identifier,
-                    }))),
-                    value: Box::new(value),
+                    })),
+                    value,
                 })));
             }
             return Ok(Expression::Name(Box::new(Name {
@@ -1635,7 +1635,7 @@ impl Parser {
             self.expect(Kind::RightBrace)?;
             return Ok(Expression::ListComp(Box::new(ListComp {
                 node: self.finish_node(node),
-                element: Box::new(first_elm),
+                element: first_elm,
                 generators,
             })));
         }
@@ -1687,7 +1687,7 @@ impl Parser {
             self.expect(Kind::RightParen)?;
             return Ok(Expression::Generator(Box::new(Generator {
                 node: self.finish_node(node),
-                element: Box::new(first_expr),
+                element: first_expr,
                 generators,
             })));
         }
@@ -1723,8 +1723,8 @@ impl Parser {
             };
             generators.push(Comprehension {
                 node: self.finish_node(node),
-                target: Box::new(target),
-                iter: Box::new(iter),
+                target,
+                iter,
                 ifs,
                 is_async,
             });
@@ -1885,7 +1885,7 @@ impl Parser {
             self.expect(Kind::RightBracket)?;
             return Ok(Expression::SetComp(Box::new(SetComp {
                 node: self.finish_node(node),
-                element: Box::new(first_elm),
+                element: first_elm,
                 generators,
             })));
         }
@@ -1917,8 +1917,8 @@ impl Parser {
             self.expect(Kind::RightBracket)?;
             Ok(Expression::DictComp(Box::new(DictComp {
                 node: self.finish_node(node),
-                key: Box::new(key),
-                value: Box::new(first_value),
+                key,
+                value: first_value,
                 generators,
             })))
         } else {
@@ -2051,7 +2051,7 @@ impl Parser {
             return Ok(Expression::Lambda(Box::new(Lambda {
                 node: self.finish_node(node),
                 args: params_list,
-                body: Box::new(expr),
+                body: expr,
             })));
         }
         self.parse_conditional_expression()
@@ -2097,7 +2097,7 @@ impl Parser {
             return Ok(Expression::UnaryOp(Box::new(UnaryOperation {
                 node: self.finish_node(node),
                 op: UnaryOperator::Not,
-                operand: Box::new(operand),
+                operand,
             })));
         }
         self.parse_comparison()
@@ -2117,7 +2117,7 @@ impl Parser {
         if !ops.is_empty() {
             return Ok(Expression::Compare(Box::new(Compare {
                 node: self.finish_node(node),
-                left: Box::new(or_expr),
+                left: or_expr,
                 ops,
                 comparators,
             })));
@@ -2136,8 +2136,8 @@ impl Parser {
             lhs = Expression::BinOp(Box::new(BinOp {
                 node: self.finish_node(node),
                 op: BinaryOperator::BitOr,
-                left: Box::new(lhs),
-                right: Box::new(rhs),
+                left: lhs,
+                right: rhs,
             }));
         }
         Ok(lhs)
@@ -2152,8 +2152,8 @@ impl Parser {
             and_expr = Expression::BinOp(Box::new(BinOp {
                 node: self.finish_node(node),
                 op: BinaryOperator::BitXor,
-                left: Box::new(and_expr),
-                right: Box::new(rhs),
+                left: and_expr,
+                right: rhs,
             }));
         }
         Ok(and_expr)
@@ -2169,8 +2169,8 @@ impl Parser {
             shift_expr = Expression::BinOp(Box::new(BinOp {
                 node: self.finish_node(node),
                 op: BinaryOperator::BitAnd,
-                left: Box::new(shift_expr),
-                right: Box::new(rhs),
+                left: shift_expr,
+                right: rhs,
             }));
         }
         Ok(shift_expr)
@@ -2191,8 +2191,8 @@ impl Parser {
             arith_expr = Expression::BinOp(Box::new(BinOp {
                 node: self.finish_node(node),
                 op,
-                left: Box::new(arith_expr),
-                right: Box::new(lhs),
+                left: arith_expr,
+                right: lhs,
             }));
         }
         Ok(arith_expr)
@@ -2208,8 +2208,8 @@ impl Parser {
             lhs = Expression::BinOp(Box::new(BinOp {
                 node: self.finish_node(node),
                 op,
-                left: Box::new(lhs),
-                right: Box::new(rhs),
+                left: lhs,
+                right: rhs,
             }));
         }
         Ok(lhs)
@@ -2225,7 +2225,7 @@ impl Parser {
             return Ok(Expression::UnaryOp(Box::new(UnaryOperation {
                 node: self.finish_node(node),
                 op,
-                operand: Box::new(operand),
+                operand,
             })));
         }
         self.parse_power_expression()
@@ -2239,7 +2239,7 @@ impl Parser {
             let value = self.parse_primary(None)?;
             Ok(Expression::Await(Box::new(Await {
                 node: self.finish_node(node),
-                value: Box::new(value),
+                value,
             })))
         } else {
             self.parse_primary(None)
@@ -2249,8 +2249,8 @@ impl Parser {
             return Ok(Expression::BinOp(Box::new(BinOp {
                 node: self.finish_node(node),
                 op: BinaryOperator::Pow,
-                left: Box::new(base?),
-                right: Box::new(exponent),
+                left: base?,
+                right: exponent,
             })));
         }
 
@@ -2332,7 +2332,7 @@ impl Parser {
                     start: atom_or_primary.get_node().start,
                     end: self.finish_node(call_node).end,
                 },
-                func: Box::new(atom_or_primary),
+                func: atom_or_primary,
                 args: positional_args,
                 keywords: keyword_args,
                 starargs: None,
@@ -2411,7 +2411,7 @@ impl Parser {
             self.expect(Kind::Identifier)?;
             expr = Ok(Expression::Attribute(Box::new(Attribute {
                 node: self.finish_node(node),
-                value: Box::new(expr?),
+                value: expr?,
                 attr: attr_val,
             })));
         }
@@ -2513,7 +2513,7 @@ impl Parser {
             let value = self.parse_expression()?;
             return Ok(Expression::YieldFrom(Box::new(YieldFrom {
                 node: self.finish_node(yield_node),
-                value: Box::new(value),
+                value,
             })));
         }
         if self.eat(Kind::NewLine) || self.at(Kind::Eof) {
@@ -2523,7 +2523,7 @@ impl Parser {
             })));
         }
         let value = match self.parse_expression_list() {
-            Ok(expr) => Some(Box::new(expr)),
+            Ok(expr) => Some(expr),
             _ => None,
         };
         Ok(Expression::Yield(Box::new(Yield {
@@ -3166,12 +3166,12 @@ impl Parser {
         };
         self.expect(Kind::Assign)?;
         let value = self.parse_expression()?;
-        Ok(Statement::TypeAlias(TypeAlias {
+        Ok(Statement::TypeAlias(Box::new(TypeAlias {
             node: self.finish_node(node),
             name,
             type_params,
-            value: Box::new(value),
-        }))
+            value,
+        })))
     }
 
     fn parse_fstring_replacement_field(&mut self) -> Result<Expression, ParsingError> {

@@ -56,34 +56,34 @@ pub struct Module {
 // Use box to reduce the enum size
 #[derive(Debug, Clone)]
 pub enum Statement {
-    AssignStatement(Assign),
-    AnnAssignStatement(AnnAssign),
-    AugAssignStatement(AugAssign),
-    ExpressionStatement(Expression),
-    Assert(Assert),
-    Pass(Pass),
-    Delete(Delete),
-    Return(Return),
-    Raise(Raise),
-    Break(Break),
-    Continue(Continue),
-    Import(Import),
-    ImportFrom(ImportFrom),
-    Global(Global),
-    Nonlocal(Nonlocal),
-    IfStatement(If),
-    WhileStatement(While),
-    ForStatement(For),
-    AsyncForStatement(AsyncFor),
-    WithStatement(With),
-    AsyncWithStatement(AsyncWith),
-    TryStatement(Try),
-    TryStarStatement(TryStar),
-    FunctionDef(FunctionDef),
-    AsyncFunctionDef(AsyncFunctionDef),
-    ClassDef(ClassDef),
-    Match(Match),
-    TypeAlias(TypeAlias),
+    AssignStatement(Box<Assign>),
+    AnnAssignStatement(Box<AnnAssign>),
+    AugAssignStatement(Box<AugAssign>),
+    ExpressionStatement(Box<Expression>),
+    Assert(Box<Assert>),
+    Pass(Box<Pass>),
+    Delete(Box<Delete>),
+    Return(Box<Return>),
+    Raise(Box<Raise>),
+    Break(Box<Break>),
+    Continue(Box<Continue>),
+    Import(Box<Import>),
+    ImportFrom(Box<ImportFrom>),
+    Global(Box<Global>),
+    Nonlocal(Box<Nonlocal>),
+    IfStatement(Box<If>),
+    WhileStatement(Box<While>),
+    ForStatement(Box<For>),
+    AsyncForStatement(Box<AsyncFor>),
+    WithStatement(Box<With>),
+    AsyncWithStatement(Box<AsyncWith>),
+    TryStatement(Box<Try>),
+    TryStarStatement(Box<TryStar>),
+    FunctionDef(Box<FunctionDef>),
+    AsyncFunctionDef(Box<AsyncFunctionDef>),
+    ClassDef(Box<ClassDef>),
+    Match(Box<Match>),
+    TypeAlias(Box<TypeAlias>),
 }
 
 impl GetNode for Statement {
@@ -417,7 +417,7 @@ pub enum BooleanOperator {
 pub struct UnaryOperation {
     pub node: Node,
     pub op: UnaryOperator,
-    pub operand: Box<Expression>,
+    pub operand: Expression,
 }
 
 #[derive(Debug, Clone)]
@@ -433,8 +433,8 @@ pub enum UnaryOperator {
 pub struct BinOp {
     pub node: Node,
     pub op: BinaryOperator,
-    pub left: Box<Expression>,
-    pub right: Box<Expression>,
+    pub left: Expression,
+    pub right: Expression,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -480,22 +480,22 @@ impl std::fmt::Display for BinaryOperator {
 #[derive(Debug, Clone)]
 pub struct NamedExpression {
     pub node: Node,
-    pub target: Box<Expression>,
-    pub value: Box<Expression>,
+    pub target: Expression,
+    pub value: Expression,
 }
 
 // https://docs.python.org/3/library/ast.html#ast.Yield
 #[derive(Debug, Clone)]
 pub struct Yield {
     pub node: Node,
-    pub value: Option<Box<Expression>>,
+    pub value: Option<Expression>,
 }
 
 // https://docs.python.org/3/library/ast.html#ast.YieldFrom
 #[derive(Debug, Clone)]
 pub struct YieldFrom {
     pub node: Node,
-    pub value: Box<Expression>,
+    pub value: Expression,
 }
 
 // https://docs.python.org/3/library/ast.html#ast.Starred
@@ -509,29 +509,29 @@ pub struct Starred {
 #[derive(Debug, Clone)]
 pub struct Generator {
     pub node: Node,
-    pub element: Box<Expression>,
+    pub element: Expression,
     pub generators: Vec<Comprehension>,
 }
 
 #[derive(Debug, Clone)]
 pub struct ListComp {
     pub node: Node,
-    pub element: Box<Expression>,
+    pub element: Expression,
     pub generators: Vec<Comprehension>,
 }
 
 #[derive(Debug, Clone)]
 pub struct SetComp {
     pub node: Node,
-    pub element: Box<Expression>,
+    pub element: Expression,
     pub generators: Vec<Comprehension>,
 }
 
 #[derive(Debug, Clone)]
 pub struct DictComp {
     pub node: Node,
-    pub key: Box<Expression>,
-    pub value: Box<Expression>,
+    pub key: Expression,
+    pub value: Expression,
     pub generators: Vec<Comprehension>,
 }
 
@@ -539,8 +539,8 @@ pub struct DictComp {
 #[derive(Debug, Clone)]
 pub struct Comprehension {
     pub node: Node,
-    pub target: Box<Expression>,
-    pub iter: Box<Expression>,
+    pub target: Expression,
+    pub iter: Expression,
     pub ifs: Vec<Expression>,
     pub is_async: bool,
 }
@@ -550,7 +550,7 @@ pub struct Comprehension {
 pub struct Attribute {
     pub node: Node,
     /// The x in x.y
-    pub value: Box<Expression>,
+    pub value: Expression,
     /// The y in x.y
     pub attr: String,
 }
@@ -577,11 +577,11 @@ pub struct Slice {
 #[derive(Debug, Clone)]
 pub struct Call {
     pub node: Node,
-    pub func: Box<Expression>,
+    pub func: Expression,
     pub args: Vec<Expression>,
     pub keywords: Vec<Keyword>,
-    pub starargs: Option<Box<Expression>>,
-    pub kwargs: Option<Box<Expression>>,
+    pub starargs: Option<Expression>,
+    pub kwargs: Option<Expression>,
 }
 
 #[derive(Debug, Clone)]
@@ -595,14 +595,14 @@ pub struct Keyword {
 #[derive(Debug, Clone)]
 pub struct Await {
     pub node: Node,
-    pub value: Box<Expression>,
+    pub value: Expression,
 }
 
 // https://docs.python.org/3/library/ast.html#ast.Compare
 #[derive(Debug, Clone)]
 pub struct Compare {
     pub node: Node,
-    pub left: Box<Expression>,
+    pub left: Expression,
     pub ops: Vec<ComparisonOperator>,
     pub comparators: Vec<Expression>,
 }
@@ -626,7 +626,7 @@ pub enum ComparisonOperator {
 pub struct Lambda {
     pub node: Node,
     pub args: Arguments,
-    pub body: Box<Expression>,
+    pub body: Expression,
 }
 
 // https://docs.python.org/3/library/ast.html#ast.arguments
@@ -678,9 +678,9 @@ pub struct Arg {
 #[derive(Debug, Clone)]
 pub struct IfExp {
     pub node: Node,
-    pub test: Box<Expression>,
-    pub body: Box<Expression>,
-    pub orelse: Box<Expression>,
+    pub test: Expression,
+    pub body: Expression,
+    pub orelse: Expression,
 }
 
 // https://docs.python.org/3/library/ast.html#ast.FormattedValue
@@ -703,7 +703,7 @@ pub struct JoinedStr {
 #[derive(Debug, Clone)]
 pub struct If {
     pub node: Node,
-    pub test: Box<Expression>,
+    pub test: Expression,
     pub body: Vec<Statement>,
     pub orelse: Vec<Statement>,
 }
@@ -718,7 +718,7 @@ impl If {
 #[derive(Debug, Clone)]
 pub struct While {
     pub node: Node,
-    pub test: Box<Expression>,
+    pub test: Expression,
     pub body: Vec<Statement>,
     pub orelse: Vec<Statement>,
 }
@@ -727,8 +727,8 @@ pub struct While {
 #[derive(Debug, Clone)]
 pub struct For {
     pub node: Node,
-    pub target: Box<Expression>,
-    pub iter: Box<Expression>,
+    pub target: Expression,
+    pub iter: Expression,
     pub body: Vec<Statement>,
     pub orelse: Vec<Statement>,
 }
@@ -737,8 +737,8 @@ pub struct For {
 #[derive(Debug, Clone)]
 pub struct AsyncFor {
     pub node: Node,
-    pub target: Box<Expression>,
-    pub iter: Box<Expression>,
+    pub target: Expression,
+    pub iter: Expression,
     pub body: Vec<Statement>,
     pub orelse: Vec<Statement>,
 }
@@ -764,8 +764,8 @@ pub struct AsyncWith {
 #[derive(Debug, Clone)]
 pub struct WithItem {
     pub node: Node,
-    pub context_expr: Box<Expression>,
-    pub optional_vars: Option<Box<Expression>>,
+    pub context_expr: Expression,
+    pub optional_vars: Option<Expression>,
 }
 
 // https://docs.python.org/3/library/ast.html#ast.Try
@@ -792,7 +792,7 @@ pub struct TryStar {
 #[derive(Debug, Clone)]
 pub struct ExceptHandler {
     pub node: Node,
-    pub typ: Option<Box<Expression>>,
+    pub typ: Option<Expression>,
     pub name: Option<String>,
     pub body: Vec<Statement>,
 }
@@ -805,7 +805,7 @@ pub struct FunctionDef {
     pub args: Arguments,
     pub body: Vec<Statement>,
     pub decorator_list: Vec<Expression>,
-    pub returns: Option<Box<Expression>>,
+    pub returns: Option<Expression>,
     pub type_comment: Option<String>,
     pub type_params: Vec<TypeParam>,
 }
@@ -818,7 +818,7 @@ pub struct AsyncFunctionDef {
     pub args: Arguments,
     pub body: Vec<Statement>,
     pub decorator_list: Vec<Expression>,
-    pub returns: Option<Box<Expression>>,
+    pub returns: Option<Expression>,
     pub type_comment: Option<String>,
     pub type_params: Vec<TypeParam>,
 }
@@ -854,7 +854,7 @@ pub struct ClassDef {
 #[derive(Debug, Clone)]
 pub struct Match {
     pub node: Node,
-    pub subject: Box<Expression>,
+    pub subject: Expression,
     pub cases: Vec<MatchCase>,
 }
 
@@ -862,19 +862,19 @@ pub struct Match {
 #[derive(Debug, Clone)]
 pub struct MatchCase {
     pub node: Node,
-    pub pattern: Box<MatchPattern>,
-    pub guard: Option<Box<Expression>>,
+    pub pattern: MatchPattern,
+    pub guard: Option<Expression>,
     pub body: Vec<Statement>,
 }
 
 #[derive(Debug, Clone)]
 pub enum MatchPattern {
     MatchValue(MatchValue),
-    MatchSingleton(Box<Expression>),
+    MatchSingleton(Expression),
     MatchSequence(Vec<MatchPattern>),
-    MatchStar(Box<Expression>),
+    MatchStar(Expression),
     MatchMapping(MatchMapping),
-    MatchAs(MatchAs),
+    MatchAs(Box<MatchAs>),
     MatchClass(MatchClass),
     MatchOr(Vec<MatchPattern>),
 }
@@ -882,14 +882,14 @@ pub enum MatchPattern {
 #[derive(Debug, Clone)]
 pub struct MatchValue {
     pub node: Node,
-    pub value: Box<Expression>,
+    pub value: Expression,
 }
 
 #[derive(Debug, Clone)]
 pub struct MatchAs {
     pub node: Node,
     pub name: Option<String>,
-    pub pattern: Option<Box<MatchPattern>>,
+    pub pattern: Option<MatchPattern>,
 }
 
 #[derive(Debug, Clone)]
@@ -903,7 +903,7 @@ pub struct MatchMapping {
 #[derive(Debug, Clone)]
 pub struct MatchClass {
     pub node: Node,
-    pub cls: Box<Expression>,
+    pub cls: Expression,
     pub patterns: Vec<MatchPattern>,
     pub kwd_attrs: Vec<String>,
     pub kwd_patterns: Vec<MatchPattern>,
@@ -965,5 +965,14 @@ pub struct TypeAlias {
     pub node: Node,
     pub name: String,
     pub type_params: Vec<TypeParam>,
-    pub value: Box<Expression>,
+    pub value: Expression,
+}
+
+#[cfg(target_pointer_width = "64")]
+#[test]
+fn no_bloat_enum_sizes() {
+    use crate::ast::*;
+    use std::mem::size_of;
+    assert_eq!(size_of::<Statement>(), 16);
+    assert_eq!(size_of::<Expression>(), 16);
 }

@@ -16,12 +16,9 @@ use super::{
     types::{CallableType, LiteralValue, PythonType},
 };
 use crate::{
-    ruff_python_import_resolver::import_result::{self, ImportResult},
+    ruff_python_import_resolver::import_result::ImportResult,
     semantic_analyzer::get_member_access_info,
-    symbol_table::{
-        self, Class, Declaration, LookupSymbolRequest, SymbolTable, SymbolTableNode,
-        SymbolTableType,
-    },
+    symbol_table::{self, Class, Declaration, LookupSymbolRequest, SymbolTable, SymbolTableNode},
     types::{ClassType, TypeVar},
 };
 
@@ -95,7 +92,7 @@ impl TypeEvaluator {
                 self.get_name_type(&n.id, Some(n.node.start), symbol_table, symbol_table_scope)
             }
             ast::Expression::Call(call) => {
-                let called_name = *call.func.clone();
+                let called_name = &call.func;
                 let f_type = self.get_type(&called_name, Some(symbol_table), None)?;
                 if let PythonType::Callable(c) = &f_type {
                     let return_type = self.get_return_type_of_callable(c, &call.args);
@@ -214,8 +211,10 @@ impl TypeEvaluator {
                 todo!()
             }
             ast::Expression::YieldFrom(yf) => {
-                let yield_type = match *yf.value.clone() {
-                    ast::Expression::List(l) => self.get_sequence_type_from_elements(&l.elements),
+                let yield_type = match &yf.value {
+                    ast::Expression::List(ref l) => {
+                        self.get_sequence_type_from_elements(&l.elements)
+                    }
                     _ => panic!("TODO: infer type from yield from"),
                 };
                 todo!()
@@ -824,31 +823,31 @@ impl TypeEvaluator {
         let mut union_parameters = vec![];
         let mut current_expr = b.left.clone();
 
-        while let Expression::BinOp(inner_binop) = *current_expr.clone() {
+        while let Expression::BinOp(ref inner_binop) = current_expr {
             if let ast::BinaryOperator::BitOr = inner_binop.op {
-                union_parameters.push(*inner_binop.right.clone());
-                current_expr = inner_binop.left;
+                union_parameters.push(inner_binop.right.clone());
+                current_expr = inner_binop.left.clone();
             } else {
-                union_parameters.push(*current_expr.clone());
+                union_parameters.push(current_expr.clone());
                 break;
             }
         }
 
-        union_parameters.push(*current_expr.clone());
+        union_parameters.push(current_expr.clone());
 
         current_expr.clone_from(&b.right);
 
-        while let Expression::BinOp(inner_binop) = *current_expr.clone() {
+        while let Expression::BinOp(ref inner_binop) = current_expr {
             if let ast::BinaryOperator::BitOr = inner_binop.op {
-                union_parameters.push(*inner_binop.right.clone());
-                current_expr = inner_binop.left;
+                union_parameters.push(inner_binop.right.clone());
+                current_expr = inner_binop.left.clone();
             } else {
-                union_parameters.push(*current_expr.clone());
+                union_parameters.push(current_expr.clone());
                 break;
             }
         }
 
-        union_parameters.push(*current_expr.clone());
+        union_parameters.push(current_expr);
         union_parameters
     }
 
@@ -949,11 +948,11 @@ impl TypeEvaluator {
             }
             // Only can be enum values
             Expression::Attribute(a) => {
-                let value = match *a.value.clone() {
-                    Expression::Name(n) => n.id,
+                let value = match &a.value {
+                    Expression::Name(n) => &n.id,
                     _ => panic!("Literal type with attribute value can only be a name"),
                 };
-                LiteralValue::Str(value)
+                LiteralValue::Str(value.to_string())
             }
             Expression::Subscript(s) => {
                 match &s.value {
