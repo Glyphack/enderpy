@@ -26,3 +26,10 @@ opt-level = 3
 
 [profile.dev.package.similar]
 opt-level = 3
+
+[profile.release]
+lto = "fat"
+opt-level = 3
+# panic = "abort"
+
+
