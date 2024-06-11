@@ -36,7 +36,8 @@ fn create_test_cases() -> Vec<String> {
             "pydantic_types.py",
             "https://raw.githubusercontent.com/pydantic/pydantic/83b3c49e99ceb4599d9286a3d793cea44ac36d4b/pydantic/types.py",
         ),
-        try_download("dataset.py", "https://raw.githubusercontent.com/DHI/mikeio/b7d26418f4db2909b0aa965253dbe83194d7bb5b/tests/test_dataset.py")
+        try_download("dataset.py", "https://raw.githubusercontent.com/DHI/mikeio/b7d26418f4db2909b0aa965253dbe83194d7bb5b/tests/test_dataset.py"),
+        try_download("mypy_checker.py", "https://raw.githubusercontent.com/python/mypy/415d49f25b6315cf1b7a04046a942246a033498d/mypy/checker.py")
     ]
 }
 
