@@ -4,6 +4,7 @@ use std::fs::read_to_string;
 use std::fs::remove_file;
 use std::fs::File;
 use std::io::copy;
+use std::time::Duration;
 
 // Use criterion locally and codspeed on CI.
 #[cfg(not(codspeed))]
@@ -66,5 +67,16 @@ pub fn benchmark_parser(c: &mut Criterion) {
     group.finish()
 }
 
-criterion_group!(benches, benchmark_parser);
+fn get_config() -> Criterion {
+    Criterion::default()
+        .sample_size(100)
+        .measurement_time(Duration::from_secs(10))
+        .warm_up_time(Duration::from_secs(3))
+}
+
+criterion_group! {
+    name = benches;
+    config = get_config();
+    targets = benchmark_parser
+}
 criterion_main!(benches);
