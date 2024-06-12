@@ -28,7 +28,7 @@ pub struct Lexer<'a> {
     // Each time we see a left bracket we increment this
     // Each time we see a right bracket we decrement this
     // This is used to match brackets in fstrings
-    inside_fstring_bracket: i8,
+    inside_fstring_bracket: u8,
     fstring_format_spec_stack: u8,
 
     // TODO: Hacky way to handle emitting multiple de indents
