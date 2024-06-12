@@ -1,11 +1,11 @@
 ---
 source: parser/src/parser/parser.rs
-description: "(a for a in b)\n\n(a for a in b if c)\n\n(a for a in b if c if d)\n\n(a for a in b for c in d)\n\n(ord(c) for line in file for c in line)\n\n(x*y for x in range(10) for y in range(10) if x*y > 10)\n"
+description: "(a for a in b)\n\n(a for a in b if c)\n\n(a for a in b if c if d)\n\n(a for a in b for c in d)\n\n(ord(c) for line in file for c in line)\n\n(x*y for x in range(10) for y in range(10) if x*y > 10)\n\nhas_explicit_annotation = isinstance(fdef.type, CallableType) and any(\n    not is_unannotated_any(t) for t in fdef.type.arg_types + [fdef.type.ret_type]\n)\n"
 ---
 Module {
     node: Node {
         start: 0,
-        end: 187,
+        end: 343,
     },
     body: [
         ExpressionStatement(
@@ -223,7 +223,7 @@ Module {
                         },
                         Comprehension {
                             node: Node {
-                                start: 77,
+                                start: 66,
                                 end: 87,
                             },
                             target: Name(
@@ -318,7 +318,7 @@ Module {
                         },
                         Comprehension {
                             node: Node {
-                                start: 115,
+                                start: 98,
                                 end: 128,
                             },
                             target: Name(
@@ -431,7 +431,7 @@ Module {
                         },
                         Comprehension {
                             node: Node {
-                                start: 155,
+                                start: 136,
                                 end: 185,
                             },
                             target: Name(
@@ -530,6 +530,247 @@ Module {
                     ],
                 },
             ),
+        ),
+        AssignStatement(
+            Assign {
+                node: Node {
+                    start: 188,
+                    end: 342,
+                },
+                targets: [
+                    Name(
+                        Name {
+                            node: Node {
+                                start: 188,
+                                end: 211,
+                            },
+                            id: "has_explicit_annotation",
+                        },
+                    ),
+                ],
+                value: BoolOp(
+                    BoolOperation {
+                        node: Node {
+                            start: 214,
+                            end: 342,
+                        },
+                        op: And,
+                        values: [
+                            Call(
+                                Call {
+                                    node: Node {
+                                        start: 214,
+                                        end: 249,
+                                    },
+                                    func: Name(
+                                        Name {
+                                            node: Node {
+                                                start: 214,
+                                                end: 224,
+                                            },
+                                            id: "isinstance",
+                                        },
+                                    ),
+                                    args: [
+                                        Attribute(
+                                            Attribute {
+                                                node: Node {
+                                                    start: 225,
+                                                    end: 234,
+                                                },
+                                                value: Name(
+                                                    Name {
+                                                        node: Node {
+                                                            start: 225,
+                                                            end: 229,
+                                                        },
+                                                        id: "fdef",
+                                                    },
+                                                ),
+                                                attr: "type",
+                                            },
+                                        ),
+                                        Name(
+                                            Name {
+                                                node: Node {
+                                                    start: 236,
+                                                    end: 248,
+                                                },
+                                                id: "CallableType",
+                                            },
+                                        ),
+                                    ],
+                                    keywords: [],
+                                    starargs: None,
+                                    kwargs: None,
+                                },
+                            ),
+                            Call(
+                                Call {
+                                    node: Node {
+                                        start: 254,
+                                        end: 0,
+                                    },
+                                    func: Name(
+                                        Name {
+                                            node: Node {
+                                                start: 254,
+                                                end: 257,
+                                            },
+                                            id: "any",
+                                        },
+                                    ),
+                                    args: [
+                                        Generator(
+                                            Generator {
+                                                node: Node {
+                                                    start: 254,
+                                                    end: 341,
+                                                },
+                                                element: UnaryOp(
+                                                    UnaryOperation {
+                                                        node: Node {
+                                                            start: 263,
+                                                            end: 288,
+                                                        },
+                                                        op: Not,
+                                                        operand: Call(
+                                                            Call {
+                                                                node: Node {
+                                                                    start: 267,
+                                                                    end: 288,
+                                                                },
+                                                                func: Name(
+                                                                    Name {
+                                                                        node: Node {
+                                                                            start: 267,
+                                                                            end: 285,
+                                                                        },
+                                                                        id: "is_unannotated_any",
+                                                                    },
+                                                                ),
+                                                                args: [
+                                                                    Name(
+                                                                        Name {
+                                                                            node: Node {
+                                                                                start: 286,
+                                                                                end: 287,
+                                                                            },
+                                                                            id: "t",
+                                                                        },
+                                                                    ),
+                                                                ],
+                                                                keywords: [],
+                                                                starargs: None,
+                                                                kwargs: None,
+                                                            },
+                                                        ),
+                                                    },
+                                                ),
+                                                generators: [
+                                                    Comprehension {
+                                                        node: Node {
+                                                            start: 289,
+                                                            end: 341,
+                                                        },
+                                                        target: Name(
+                                                            Name {
+                                                                node: Node {
+                                                                    start: 293,
+                                                                    end: 294,
+                                                                },
+                                                                id: "t",
+                                                            },
+                                                        ),
+                                                        iter: BinOp(
+                                                            BinOp {
+                                                                node: Node {
+                                                                    start: 298,
+                                                                    end: 341,
+                                                                },
+                                                                op: Add,
+                                                                left: Attribute(
+                                                                    Attribute {
+                                                                        node: Node {
+                                                                            start: 298,
+                                                                            end: 317,
+                                                                        },
+                                                                        value: Attribute(
+                                                                            Attribute {
+                                                                                node: Node {
+                                                                                    start: 298,
+                                                                                    end: 307,
+                                                                                },
+                                                                                value: Name(
+                                                                                    Name {
+                                                                                        node: Node {
+                                                                                            start: 298,
+                                                                                            end: 302,
+                                                                                        },
+                                                                                        id: "fdef",
+                                                                                    },
+                                                                                ),
+                                                                                attr: "type",
+                                                                            },
+                                                                        ),
+                                                                        attr: "arg_types",
+                                                                    },
+                                                                ),
+                                                                right: List(
+                                                                    List {
+                                                                        node: Node {
+                                                                            start: 320,
+                                                                            end: 341,
+                                                                        },
+                                                                        elements: [
+                                                                            Attribute(
+                                                                                Attribute {
+                                                                                    node: Node {
+                                                                                        start: 321,
+                                                                                        end: 339,
+                                                                                    },
+                                                                                    value: Attribute(
+                                                                                        Attribute {
+                                                                                            node: Node {
+                                                                                                start: 321,
+                                                                                                end: 330,
+                                                                                            },
+                                                                                            value: Name(
+                                                                                                Name {
+                                                                                                    node: Node {
+                                                                                                        start: 321,
+                                                                                                        end: 325,
+                                                                                                    },
+                                                                                                    id: "fdef",
+                                                                                                },
+                                                                                            ),
+                                                                                            attr: "type",
+                                                                                        },
+                                                                                    ),
+                                                                                    attr: "ret_type",
+                                                                                },
+                                                                            ),
+                                                                        ],
+                                                                    },
+                                                                ),
+                                                            },
+                                                        ),
+                                                        ifs: [],
+                                                        is_async: false,
+                                                    },
+                                                ],
+                                            },
+                                        ),
+                                    ],
+                                    keywords: [],
+                                    starargs: None,
+                                    kwargs: None,
+                                },
+                            ),
+                        ],
+                    },
+                ),
+            },
         ),
     ],
 }

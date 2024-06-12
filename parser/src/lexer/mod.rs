@@ -18,10 +18,11 @@ pub struct Lexer<'a> {
     /// the first element is always 0
     /// because the first line is always at indentation level 0
     indent_stack: Vec<usize>,
-    nesting: i8,
+    nesting: u8,
     // This stack means we are in a fstring that started with
     // character at the top of the stack
-    fstring_stack: Vec<String>,
+    // Nesting level the fstring started and the quoting that started it.
+    fstring_stack: Vec<(u8, String)>,
     // This is a counter used to keep track of how many
     // brackets we are inside
     // Each time we see a left bracket we increment this
@@ -122,6 +123,7 @@ impl<'a> Lexer<'a> {
         token
     }
 
+    // https://peps.python.org/pep-0701/#how-to-produce-these-new-tokens
     pub fn next_fstring_token(&mut self) -> Option<Kind> {
         if self.fstring_format_spec_stack > 0 {
             while self.peek() != Some('}') && self.peek() != Some('{') && self.peek() != Some('\n')
@@ -134,10 +136,11 @@ impl<'a> Lexer<'a> {
         if self.inside_fstring_bracket > 0 {
             if self.peek() == Some('}') && self.double_peek() != Some('}') {
                 self.next();
+                // self.nesting -= 1;
                 self.inside_fstring_bracket -= 1;
                 return Some(Kind::RightBracket);
             }
-            if self.peek() == Some(':') {
+            if self.peek() == Some(':') && self.nesting == self.fstring_stack.last().unwrap().0 {
                 self.fstring_format_spec_stack += 1;
             }
             // if we are inside a bracket return none
@@ -146,12 +149,13 @@ impl<'a> Lexer<'a> {
         }
         let mut consumed_str_in_fstring = String::new();
         while let Some(curr) = self.next() {
-            let str_finisher = self.fstring_stack.last().unwrap();
+            let (_, str_finisher) = self.fstring_stack.last().unwrap();
             if curr == '{' {
                 if let Some('{') = self.peek() {
                     consumed_str_in_fstring.push(curr);
                     consumed_str_in_fstring.push('{');
                     self.double_next();
+                    self.nesting += 2;
                     continue;
                 }
 
@@ -488,7 +492,7 @@ impl<'a> Lexer<'a> {
                     Some(str_start @ '"') | Some(str_start @ '\'') => {
                         self.double_next();
                         let fstring_start = self.create_f_string_start(str_start);
-                        self.fstring_stack.push(fstring_start);
+                        self.fstring_stack.push((self.nesting, fstring_start));
                         return Ok(Some(Kind::RawFStringStart));
                     }
                     _ => {}
@@ -521,7 +525,7 @@ impl<'a> Lexer<'a> {
                     Some(str_start @ '"') | Some(str_start @ '\'') => {
                         self.double_next();
                         let fstring_start = self.create_f_string_start(str_start);
-                        self.fstring_stack.push(fstring_start);
+                        self.fstring_stack.push((self.nesting, fstring_start));
                         return Ok(Some(Kind::RawFStringStart));
                     }
                     _ => {}
@@ -529,7 +533,7 @@ impl<'a> Lexer<'a> {
                 Some(str_start @ '"') | Some(str_start @ '\'') => {
                     self.next();
                     let fstring_start = self.create_f_string_start(str_start);
-                    self.fstring_stack.push(fstring_start);
+                    self.fstring_stack.push((self.nesting, fstring_start));
                     return Ok(Some(Kind::FStringStart));
                 }
                 _ => {}

@@ -1,11 +1,11 @@
 ---
 source: parser/src/parser/parser.rs
-description: "x = \"simple text\\n\"\n\nraw = r\"raw_text\\n\"\n\ny = \"\"\"multi\"\"\"\n\n# TODO: enable with better error handling in parser\n# raw_err = r'ss\n\nf\"{self.__class__.__name__}({self._display()!r})\"\n\nf\"{num:0.0f}{unit}\"\n\n# f\"some words {a+b:.3f} more words {c+d=} final words\"\n"
+description: "x = \"simple text\\n\"\n\nraw = r\"raw_text\\n\"\n\ny = \"\"\"multi\"\"\"\n\n# TODO: enable with better error handling in parser\n# raw_err = r'ss\n\nf\"{self.__class__.__name__}({self._display()!r})\"\n\nf\"{num:0.0f}{unit}\"\n\n# f\"some words {a+b:.3f} more words {c+d=} final words\"\n\nf\"tuple argument {name[12:]}\"\n"
 ---
 Module {
     node: Node {
         start: 0,
-        end: 257,
+        end: 288,
     },
     body: [
         AssignStatement(
@@ -259,6 +259,75 @@ Module {
                                             end: 197,
                                         },
                                         id: "unit",
+                                    },
+                                ),
+                                conversion: -1,
+                                format_spec: None,
+                            },
+                        ),
+                    ],
+                },
+            ),
+        ),
+        ExpressionStatement(
+            JoinedStr(
+                JoinedStr {
+                    node: Node {
+                        start: 258,
+                        end: 287,
+                    },
+                    values: [
+                        Constant(
+                            Constant {
+                                node: Node {
+                                    start: 260,
+                                    end: 275,
+                                },
+                                value: "tuple argument ",
+                            },
+                        ),
+                        FormattedValue(
+                            FormattedValue {
+                                node: Node {
+                                    start: 275,
+                                    end: 286,
+                                },
+                                value: Subscript(
+                                    Subscript {
+                                        node: Node {
+                                            start: 276,
+                                            end: 285,
+                                        },
+                                        value: Name(
+                                            Name {
+                                                node: Node {
+                                                    start: 276,
+                                                    end: 280,
+                                                },
+                                                id: "name",
+                                            },
+                                        ),
+                                        slice: Slice(
+                                            Slice {
+                                                node: Node {
+                                                    start: 281,
+                                                    end: 284,
+                                                },
+                                                lower: Some(
+                                                    Constant(
+                                                        Constant {
+                                                            node: Node {
+                                                                start: 281,
+                                                                end: 283,
+                                                            },
+                                                            value: 12,
+                                                        },
+                                                    ),
+                                                ),
+                                                upper: None,
+                                                step: None,
+                                            },
+                                        ),
                                     },
                                 ),
                                 conversion: -1,

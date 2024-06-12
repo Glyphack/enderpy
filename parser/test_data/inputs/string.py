@@ -12,3 +12,5 @@ f"{self.__class__.__name__}({self._display()!r})"
 f"{num:0.0f}{unit}"
 
 # f"some words {a+b:.3f} more words {c+d=} final words"
+
+f"tuple argument {name[12:]}"

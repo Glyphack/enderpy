@@ -616,7 +616,7 @@ Module {
                         },
                         Comprehension {
                             node: Node {
-                                start: 385,
+                                start: 374,
                                 end: 395,
                             },
                             target: Name(
@@ -699,7 +699,7 @@ Module {
                         },
                         Comprehension {
                             node: Node {
-                                start: 417,
+                                start: 401,
                                 end: 427,
                             },
                             target: Name(

@@ -343,7 +343,7 @@ impl<'a> Parser<'a> {
         while self.eat(Kind::WhiteSpace) || self.eat(Kind::Comment) {}
 
         if !matches!(self.cur_kind(), Kind::NewLine | Kind::SemiColon | Kind::Eof) {
-            panic!("Statement does not end in new line or semicolon");
+            panic!("Statement does not end in new line or semicolon {:?}", stmt);
         }
     }
 
@@ -1712,11 +1712,11 @@ impl<'a> Parser<'a> {
     // https://docs.python.org/3/reference/expressions.html#displays-for-lists-sets-and-dictionaries
     fn parse_comp_for(&mut self) -> Result<Vec<Comprehension>, ParsingError> {
         // if current token is async
+        let node = self.start_node();
         let is_async = self.eat(Kind::Async);
 
         let mut generators = vec![];
         loop {
-            let node = self.start_node();
             self.expect(Kind::For)?;
             let target = self.parse_target_list()?;
             self.expect(Kind::In)?;
@@ -2337,19 +2337,41 @@ impl<'a> Parser<'a> {
             }
 
             self.bump(Kind::Comma);
-            self.expect(Kind::RightParen)?;
+            if self.at(Kind::Async) || self.at(Kind::For) {
+                let comprehension = self.parse_comp_for()?;
+                let arg = Expression::Generator(Box::new(Generator {
+                    node: self.finish_node(node),
+                    element: positional_args
+                        .into_iter()
+                        .next()
+                        .expect("generator passed to function does not have an element"),
+                    generators: comprehension,
+                }));
+                self.expect(Kind::RightParen)?;
 
-            Ok(Expression::Call(Box::new(Call {
-                node: Node {
-                    start: atom_or_primary.get_node().start,
-                    end: self.finish_node(call_node).end,
-                },
-                func: atom_or_primary,
-                args: positional_args,
-                keywords: keyword_args,
-                starargs: None,
-                kwargs: None,
-            })))
+                Ok(Expression::Call(Box::new(Call {
+                    node,
+                    func: atom_or_primary,
+                    args: vec![arg],
+                    keywords: vec![],
+                    starargs: None,
+                    kwargs: None,
+                })))
+            } else {
+                self.expect(Kind::RightParen)?;
+
+                Ok(Expression::Call(Box::new(Call {
+                    node: Node {
+                        start: atom_or_primary.get_node().start,
+                        end: self.finish_node(call_node).end,
+                    },
+                    func: atom_or_primary,
+                    args: positional_args,
+                    keywords: keyword_args,
+                    starargs: None,
+                    kwargs: None,
+                })))
+            }
         } else {
             Ok(atom_or_primary)
         };
@@ -2857,7 +2879,7 @@ impl<'a> Parser<'a> {
                 value,
             })));
         }
-        if self.eat(Kind::NewLine) || self.at(Kind::Eof) {
+        if self.at(Kind::NewLine) || self.at(Kind::Eof) {
             return Ok(Expression::Yield(Box::new(Yield {
                 node: self.finish_node(yield_node),
                 value: None,
