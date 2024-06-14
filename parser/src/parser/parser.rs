@@ -285,7 +285,7 @@ impl<'a> Parser<'a> {
             }
         }?;
 
-        self.err_if_statement_not_ending_in_new_line_or_semicolon(stmt.get_node(), stmt.clone());
+        self.err_if_statement_not_ending_in_new_line_or_semicolon(stmt.get_node(), &stmt);
 
         Ok(stmt)
     }
@@ -338,7 +338,7 @@ impl<'a> Parser<'a> {
     fn err_if_statement_not_ending_in_new_line_or_semicolon(
         &mut self,
         node: Node,
-        stmt: Statement,
+        stmt: &Statement,
     ) {
         while self.eat(Kind::WhiteSpace) || self.eat(Kind::Comment) {}
 
