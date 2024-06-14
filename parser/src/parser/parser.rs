@@ -30,7 +30,6 @@ pub struct Parser<'a> {
     // see a closing bracket.
     nested_expression_list: u32,
     curr_line_string: String,
-    curr_line_number: u16,
     path: &'a str,
 }
 
@@ -64,7 +63,6 @@ impl<'a> Parser<'a> {
             nested_expression_list,
             curr_line_string: String::new(),
             path,
-            curr_line_number: 1,
             identifiers_start_offset: identifiers_offset,
         }
     }
@@ -104,10 +102,6 @@ impl<'a> Parser<'a> {
 
     pub(crate) fn cur_token(&self) -> &Token {
         &self.cur_token
-    }
-
-    pub(crate) fn curr_line_string(&self) -> String {
-        self.curr_line_string.clone()
     }
 
     fn cur_kind(&self) -> Kind {
@@ -159,13 +153,6 @@ impl<'a> Parser<'a> {
         if token.kind == Kind::Identifier {
             self.identifiers_start_offset
                 .push((token.start, token.end, token.value.to_string()));
-        }
-        if self.at(Kind::NewLine) {
-            self.curr_line_string.clear();
-            self.curr_line_number += 1;
-        } else {
-            self.curr_line_string
-                .push_str(&self.source[self.prev_token_end as usize..self.cur_token.end as usize]);
         }
 
         match token.kind {

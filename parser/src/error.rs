@@ -9,8 +9,6 @@ pub enum ParsingError {
     #[diagnostic(code(parser::invalid_syntax))]
     InvalidSyntax {
         msg: String,
-        #[source_code]
-        input: String,
         #[help]
         advice: String,
         #[label("span")]
@@ -23,7 +21,6 @@ impl From<Parser<'_>> for ParsingError {
         let token = err.cur_token();
         ParsingError::InvalidSyntax {
             msg: token.value.to_string(),
-            input: err.curr_line_string(),
             advice: String::default(),
             span: err.get_span_on_line(token.start, token.end),
         }
@@ -35,7 +32,6 @@ impl From<&mut Parser<'_>> for ParsingError {
         let token = err.cur_token();
         ParsingError::InvalidSyntax {
             msg: token.value.to_string(),
-            input: err.curr_line_string(),
             advice: String::default(),
             span: err.get_span_on_line(token.start, token.end),
         }
