@@ -1,11 +1,11 @@
 ---
 source: parser/src/parser/parser.rs
-description: "x = \"simple text\\n\"\n\nraw = r\"raw_text\\n\"\n\ny = \"\"\"multi\"\"\"\n\n# TODO: enable with better error handling in parser\n# raw_err = r'ss\n\nf\"{self.__class__.__name__}({self._display()!r})\"\n\nf\"{num:0.0f}{unit}\"\n\n# f\"some words {a+b:.3f} more words {c+d=} final words\"\n\nf\"tuple argument {name[12:]}\"\n"
+description: "x = \"simple text\\n\"\n\nraw = r\"raw_text\\n\"\n\ny = \"\"\"multi\"\"\"\n\n# TODO: enable with better error handling in parser\n# raw_err = r'ss\n\nf\"{self.__class__.__name__}({self._display()!r})\"\n\nf\"{num:0.0f}{unit}\"\n\n# f\"some words {a+b:.3f} more words {c+d=} final words\"\n\nf\"tuple argument {name[12:]}\"\n\n# f\"{f\"{f\"{f\"{f\"{f\"{1+1}\"}\"}\"}\"}\"}\"\n\n# f\"\"\"{f'''{f'{f\"{1+1}\"}'}'''}\"\"\"\n"
 ---
 Module {
     node: Node {
         start: 0,
-        end: 288,
+        end: 360,
     },
     body: [
         AssignStatement(

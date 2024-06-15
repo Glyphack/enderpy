@@ -1,6 +1,6 @@
 ---
 source: parser/src/lexer/mod.rs
-description: "x = \"simple text\\n\"\n\nraw = r\"raw_text\\n\"\n\ny = \"\"\"multi\"\"\"\n\n# TODO: enable with better error handling in parser\n# raw_err = r'ss\n\nf\"{self.__class__.__name__}({self._display()!r})\"\n\nf\"{num:0.0f}{unit}\"\n\n# f\"some words {a+b:.3f} more words {c+d=} final words\"\n\nf\"tuple argument {name[12:]}\"\n"
+description: "x = \"simple text\\n\"\n\nraw = r\"raw_text\\n\"\n\ny = \"\"\"multi\"\"\"\n\n# TODO: enable with better error handling in parser\n# raw_err = r'ss\n\nf\"{self.__class__.__name__}({self._display()!r})\"\n\nf\"{num:0.0f}{unit}\"\n\n# f\"some words {a+b:.3f} more words {c+d=} final words\"\n\nf\"tuple argument {name[12:]}\"\n\n# f\"{f\"{f\"{f\"{f\"{f\"{1+1}\"}\"}\"}\"}\"}\"\n\n# f\"\"\"{f'''{f'{f\"{1+1}\"}'}'''}\"\"\"\n"
 input_file: parser/test_data/inputs/string.py
 ---
 0,1: Identifier   (Str("x"))
@@ -70,3 +70,9 @@ input_file: parser/test_data/inputs/string.py
 285,286: }   (None)
 286,287: FStringEnd   (Str("\""))
 287,288: NewLine   (None)
+288,289: NewLine   (None)
+289,324: Comment   (Str("# f\"{f\"{f\"{f\"{f\"{f\"{1+1}\"}\"}\"}\"}\"}\""))
+324,325: NewLine   (None)
+325,326: NewLine   (None)
+326,359: Comment   (Str("# f\"\"\"{f'''{f'{f\"{1+1}\"}'}'''}\"\"\""))
+359,360: NewLine   (None)
