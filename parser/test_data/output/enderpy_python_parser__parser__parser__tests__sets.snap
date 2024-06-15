@@ -567,7 +567,7 @@ Module {
                         },
                         Comprehension {
                             node: Node {
-                                start: 187,
+                                start: 168,
                                 end: 205,
                             },
                             target: Name(
@@ -684,7 +684,7 @@ Module {
                         },
                         Comprehension {
                             node: Node {
-                                start: 230,
+                                start: 211,
                                 end: 249,
                             },
                             target: Name(
@@ -801,7 +801,7 @@ Module {
                         },
                         Comprehension {
                             node: Node {
-                                start: 274,
+                                start: 255,
                                 end: 293,
                             },
                             target: Name(
@@ -937,7 +937,7 @@ Module {
                         },
                         Comprehension {
                             node: Node {
-                                start: 327,
+                                start: 308,
                                 end: 346,
                             },
                             target: Name(

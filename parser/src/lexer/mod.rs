@@ -18,22 +18,24 @@ pub struct Lexer<'a> {
     /// the first element is always 0
     /// because the first line is always at indentation level 0
     indent_stack: Vec<usize>,
-    nesting: i8,
+    nesting: u8,
     // This stack means we are in a fstring that started with
     // character at the top of the stack
-    fstring_stack: Vec<String>,
+    // Nesting level the fstring started and the quoting that started it.
+    fstring_stack: Vec<(u8, String)>,
     // This is a counter used to keep track of how many
     // brackets we are inside
     // Each time we see a left bracket we increment this
     // Each time we see a right bracket we decrement this
     // This is used to match brackets in fstrings
-    inside_fstring_bracket: i8,
+    inside_fstring_bracket: u8,
     fstring_format_spec_stack: u8,
 
     // TODO: Hacky way to handle emitting multiple de indents
     next_token_is_dedent: u8,
     /// Array of all line starts offsets. Starts from line 0
     pub line_starts: Vec<u32>,
+    peak_mode: bool,
 }
 
 impl<'a> Lexer<'a> {
@@ -50,6 +52,7 @@ impl<'a> Lexer<'a> {
             fstring_format_spec_stack: 0,
             next_token_is_dedent: 0,
             line_starts: vec![],
+            peak_mode: false,
         }
     }
 
@@ -105,16 +108,16 @@ impl<'a> Lexer<'a> {
         let current = self.current;
         let current_line = self.current_line;
         let nesting = self.nesting;
-        let fstring_stack = self.fstring_stack.clone();
         let start_of_line = self.start_of_line;
         let inside_fstring_bracket = self.inside_fstring_bracket;
         let is_fstring_format_spec = self.fstring_format_spec_stack;
         let next_token_is_dedent = self.next_token_is_dedent;
+        self.peak_mode = true;
         let token = self.next_token();
+        self.peak_mode = false;
         self.current = current;
         self.current_line = current_line;
         self.nesting = nesting;
-        self.fstring_stack = fstring_stack;
         self.start_of_line = start_of_line;
         self.inside_fstring_bracket = inside_fstring_bracket;
         self.fstring_format_spec_stack = is_fstring_format_spec;
@@ -122,6 +125,7 @@ impl<'a> Lexer<'a> {
         token
     }
 
+    // https://peps.python.org/pep-0701/#how-to-produce-these-new-tokens
     pub fn next_fstring_token(&mut self) -> Option<Kind> {
         if self.fstring_format_spec_stack > 0 {
             while self.peek() != Some('}') && self.peek() != Some('{') && self.peek() != Some('\n')
@@ -134,10 +138,11 @@ impl<'a> Lexer<'a> {
         if self.inside_fstring_bracket > 0 {
             if self.peek() == Some('}') && self.double_peek() != Some('}') {
                 self.next();
+                // self.nesting -= 1;
                 self.inside_fstring_bracket -= 1;
                 return Some(Kind::RightBracket);
             }
-            if self.peek() == Some(':') {
+            if self.peek() == Some(':') && self.nesting == self.fstring_stack.last().unwrap().0 {
                 self.fstring_format_spec_stack += 1;
             }
             // if we are inside a bracket return none
@@ -146,12 +151,13 @@ impl<'a> Lexer<'a> {
         }
         let mut consumed_str_in_fstring = String::new();
         while let Some(curr) = self.next() {
-            let str_finisher = self.fstring_stack.last().unwrap();
+            let (_, str_finisher) = self.fstring_stack.last().unwrap();
             if curr == '{' {
                 if let Some('{') = self.peek() {
                     consumed_str_in_fstring.push(curr);
                     consumed_str_in_fstring.push('{');
                     self.double_next();
+                    self.nesting += 2;
                     continue;
                 }
 
@@ -161,7 +167,9 @@ impl<'a> Lexer<'a> {
             match str_finisher.len() {
                 1 => {
                     if curr == str_finisher.chars().next().unwrap() {
-                        self.fstring_stack.pop();
+                        if !self.peak_mode {
+                            self.fstring_stack.pop();
+                        }
                         return Some(Kind::FStringEnd);
                     }
                 }
@@ -170,7 +178,9 @@ impl<'a> Lexer<'a> {
                         && self.peek() == Some(str_finisher.chars().nth(1).unwrap())
                         && self.double_peek() == Some(str_finisher.chars().nth(2).unwrap())
                     {
-                        self.fstring_stack.pop();
+                        if !self.peak_mode {
+                            self.fstring_stack.pop();
+                        }
                         self.double_next();
                         return Some(Kind::FStringEnd);
                     }
@@ -488,7 +498,9 @@ impl<'a> Lexer<'a> {
                     Some(str_start @ '"') | Some(str_start @ '\'') => {
                         self.double_next();
                         let fstring_start = self.create_f_string_start(str_start);
-                        self.fstring_stack.push(fstring_start);
+                        if !self.peak_mode {
+                            self.fstring_stack.push((self.nesting, fstring_start));
+                        }
                         return Ok(Some(Kind::RawFStringStart));
                     }
                     _ => {}
@@ -521,7 +533,9 @@ impl<'a> Lexer<'a> {
                     Some(str_start @ '"') | Some(str_start @ '\'') => {
                         self.double_next();
                         let fstring_start = self.create_f_string_start(str_start);
-                        self.fstring_stack.push(fstring_start);
+                        if !self.peak_mode {
+                            self.fstring_stack.push((self.nesting, fstring_start));
+                        }
                         return Ok(Some(Kind::RawFStringStart));
                     }
                     _ => {}
@@ -529,7 +543,9 @@ impl<'a> Lexer<'a> {
                 Some(str_start @ '"') | Some(str_start @ '\'') => {
                     self.next();
                     let fstring_start = self.create_f_string_start(str_start);
-                    self.fstring_stack.push(fstring_start);
+                    if !self.peak_mode {
+                        self.fstring_stack.push((self.nesting, fstring_start));
+                    }
                     return Ok(Some(Kind::FStringStart));
                 }
                 _ => {}

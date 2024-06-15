@@ -4,6 +4,7 @@ use std::fs::read_to_string;
 use std::fs::remove_file;
 use std::fs::File;
 use std::io::copy;
+use std::time::Duration;
 
 // Use criterion locally and codspeed on CI.
 #[cfg(not(codspeed))]
@@ -36,7 +37,8 @@ fn create_test_cases() -> Vec<String> {
             "pydantic_types.py",
             "https://raw.githubusercontent.com/pydantic/pydantic/83b3c49e99ceb4599d9286a3d793cea44ac36d4b/pydantic/types.py",
         ),
-        try_download("dataset.py", "https://raw.githubusercontent.com/DHI/mikeio/b7d26418f4db2909b0aa965253dbe83194d7bb5b/tests/test_dataset.py")
+        try_download("dataset.py", "https://raw.githubusercontent.com/DHI/mikeio/b7d26418f4db2909b0aa965253dbe83194d7bb5b/tests/test_dataset.py"),
+        try_download("mypy_checker.py", "https://raw.githubusercontent.com/python/mypy/415d49f25b6315cf1b7a04046a942246a033498d/mypy/checker.py")
     ]
 }
 
@@ -65,5 +67,16 @@ pub fn benchmark_parser(c: &mut Criterion) {
     group.finish()
 }
 
-criterion_group!(benches, benchmark_parser);
+fn get_config() -> Criterion {
+    Criterion::default()
+        .sample_size(100)
+        .measurement_time(Duration::from_secs(10))
+        .warm_up_time(Duration::from_secs(3))
+}
+
+criterion_group! {
+    name = benches;
+    config = get_config();
+    targets = benchmark_parser
+}
 criterion_main!(benches);

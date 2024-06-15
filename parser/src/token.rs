@@ -1,3 +1,4 @@
+use core::panic;
 use std::fmt::Display;
 
 #[derive(Debug, Clone)]
@@ -380,6 +381,18 @@ pub enum TokenValue {
     // Soft keywords are special values
     Type,
     Match,
+}
+
+impl TokenValue {
+    pub fn take_string(&mut self) -> String {
+        match self {
+            TokenValue::Str(s) => std::mem::take(s),
+            TokenValue::Number(s) => std::mem::take(s),
+            _ => {
+                panic!("not a str")
+            }
+        }
+    }
 }
 
 impl Display for TokenValue {

@@ -30,7 +30,6 @@ pub struct Parser<'a> {
     // see a closing bracket.
     nested_expression_list: u32,
     curr_line_string: String,
-    curr_line_number: u16,
     path: &'a str,
 }
 
@@ -64,7 +63,6 @@ impl<'a> Parser<'a> {
             nested_expression_list,
             curr_line_string: String::new(),
             path,
-            curr_line_number: 1,
             identifiers_start_offset: identifiers_offset,
         }
     }
@@ -104,10 +102,6 @@ impl<'a> Parser<'a> {
 
     pub(crate) fn cur_token(&self) -> &Token {
         &self.cur_token
-    }
-
-    pub(crate) fn curr_line_string(&self) -> String {
-        self.curr_line_string.clone()
     }
 
     fn cur_kind(&self) -> Kind {
@@ -159,13 +153,6 @@ impl<'a> Parser<'a> {
         if token.kind == Kind::Identifier {
             self.identifiers_start_offset
                 .push((token.start, token.end, token.value.to_string()));
-        }
-        if self.at(Kind::NewLine) {
-            self.curr_line_string.clear();
-            self.curr_line_number += 1;
-        } else {
-            self.curr_line_string
-                .push_str(&self.source[self.prev_token_end as usize..self.cur_token.end as usize]);
         }
 
         match token.kind {
@@ -285,7 +272,7 @@ impl<'a> Parser<'a> {
             }
         }?;
 
-        self.err_if_statement_not_ending_in_new_line_or_semicolon(stmt.get_node(), stmt.clone());
+        self.err_if_statement_not_ending_in_new_line_or_semicolon(stmt.get_node(), &stmt);
 
         Ok(stmt)
     }
@@ -338,12 +325,12 @@ impl<'a> Parser<'a> {
     fn err_if_statement_not_ending_in_new_line_or_semicolon(
         &mut self,
         node: Node,
-        stmt: Statement,
+        stmt: &Statement,
     ) {
         while self.eat(Kind::WhiteSpace) || self.eat(Kind::Comment) {}
 
         if !matches!(self.cur_kind(), Kind::NewLine | Kind::SemiColon | Kind::Eof) {
-            panic!("Statement does not end in new line or semicolon");
+            panic!("Statement does not end in new line or semicolon {:?}", stmt);
         }
     }
 
@@ -982,10 +969,10 @@ impl<'a> Parser<'a> {
     // in contrast to attribute parsing in primary expression
     fn parse_attr(&mut self) -> Result<Expression, ParsingError> {
         let node = self.start_node();
-        let value = self.cur_token().value.to_string();
+        let id = self.cur_token.value.take_string();
         let mut expr = Ok(Expression::Name(Box::new(Name {
             node: self.finish_node(node),
-            id: value,
+            id,
         })));
         self.expect(Kind::Identifier);
         while self.eat(Kind::Dot) {
@@ -1712,11 +1699,11 @@ impl<'a> Parser<'a> {
     // https://docs.python.org/3/reference/expressions.html#displays-for-lists-sets-and-dictionaries
     fn parse_comp_for(&mut self) -> Result<Vec<Comprehension>, ParsingError> {
         // if current token is async
+        let node = self.start_node();
         let is_async = self.eat(Kind::Async);
 
         let mut generators = vec![];
         loop {
-            let node = self.start_node();
             self.expect(Kind::For)?;
             let target = self.parse_target_list()?;
             self.expect(Kind::In)?;
@@ -2337,19 +2324,41 @@ impl<'a> Parser<'a> {
             }
 
             self.bump(Kind::Comma);
-            self.expect(Kind::RightParen)?;
+            if self.at(Kind::Async) || self.at(Kind::For) {
+                let comprehension = self.parse_comp_for()?;
+                let arg = Expression::Generator(Box::new(Generator {
+                    node: self.finish_node(node),
+                    element: positional_args
+                        .into_iter()
+                        .next()
+                        .expect("generator passed to function does not have an element"),
+                    generators: comprehension,
+                }));
+                self.expect(Kind::RightParen)?;
 
-            Ok(Expression::Call(Box::new(Call {
-                node: Node {
-                    start: atom_or_primary.get_node().start,
-                    end: self.finish_node(call_node).end,
-                },
-                func: atom_or_primary,
-                args: positional_args,
-                keywords: keyword_args,
-                starargs: None,
-                kwargs: None,
-            })))
+                Ok(Expression::Call(Box::new(Call {
+                    node,
+                    func: atom_or_primary,
+                    args: vec![arg],
+                    keywords: vec![],
+                    starargs: None,
+                    kwargs: None,
+                })))
+            } else {
+                self.expect(Kind::RightParen)?;
+
+                Ok(Expression::Call(Box::new(Call {
+                    node: Node {
+                        start: atom_or_primary.get_node().start,
+                        end: self.finish_node(call_node).end,
+                    },
+                    func: atom_or_primary,
+                    args: positional_args,
+                    keywords: keyword_args,
+                    starargs: None,
+                    kwargs: None,
+                })))
+            }
         } else {
             Ok(atom_or_primary)
         };
@@ -2472,7 +2481,7 @@ impl<'a> Parser<'a> {
             let start = self.start_node();
             let mut expr = match self.cur_kind() {
                 Kind::Identifier => {
-                    let val = self.cur_token().value.to_string();
+                    let val = self.cur_token.value.take_string();
                     self.bump_any();
                     Expression::Name(Box::new(Name {
                         node: self.finish_node(start),
@@ -2480,7 +2489,7 @@ impl<'a> Parser<'a> {
                     }))
                 }
                 Kind::Integer => {
-                    let val = self.cur_token().value.to_string();
+                    let val = self.cur_token.value.take_string();
                     self.bump_any();
                     Expression::Constant(Box::new(Constant {
                         node: self.finish_node(start),
@@ -2509,7 +2518,7 @@ impl<'a> Parser<'a> {
                     }))
                 }
                 Kind::ImaginaryInteger => {
-                    let val = self.cur_token().value.to_string();
+                    let val = self.cur_token.value.take_string();
                     self.bump_any();
                     Expression::Constant(Box::new(Constant {
                         node: self.finish_node(start),
@@ -2520,7 +2529,7 @@ impl<'a> Parser<'a> {
                     }))
                 }
                 Kind::Bytes => {
-                    let val = &self.cur_token().value;
+                    let val = self.cur_token.value.take_string();
                     let bytes_val = extract_string_inside(
                         val.to_string()
                             .strip_prefix('b')
@@ -2535,7 +2544,7 @@ impl<'a> Parser<'a> {
                     }))
                 }
                 Kind::StringLiteral => {
-                    let val = &self.cur_token().value;
+                    let val = self.cur_token.value.take_string();
                     let string_val = extract_string_inside(val.to_string());
                     self.bump_any();
                     Expression::Constant(Box::new(Constant {
@@ -2545,7 +2554,7 @@ impl<'a> Parser<'a> {
                 }
 
                 Kind::RawBytes => {
-                    let val = &self.cur_token().value;
+                    let val = self.cur_token.value.take_string();
                     // rb or br appear in the beginning of raw bytes
                     let bytes_val =
                         extract_string_inside(val.to_string().chars().skip(2).collect::<String>())
@@ -2565,7 +2574,7 @@ impl<'a> Parser<'a> {
                     }))
                 }
                 Kind::PointFloat => {
-                    let val = self.cur_token().value.to_string();
+                    let val = self.cur_token.value.take_string();
                     self.bump_any();
                     Expression::Constant(Box::new(Constant {
                         node: self.finish_node(start),
@@ -2573,7 +2582,7 @@ impl<'a> Parser<'a> {
                     }))
                 }
                 Kind::ExponentFloat => {
-                    let val = self.cur_token().value.to_string();
+                    let val = self.cur_token.value.take_string();
                     self.bump_any();
                     Expression::Constant(Box::new(Constant {
                         node: self.finish_node(start),
@@ -2581,7 +2590,7 @@ impl<'a> Parser<'a> {
                     }))
                 }
                 Kind::ImaginaryPointFloat => {
-                    let val = self.cur_token().value.to_string();
+                    let val = self.cur_token.value.take_string();
                     self.bump_any();
                     Expression::Constant(Box::new(Constant {
                         node: self.finish_node(start),
@@ -2592,7 +2601,7 @@ impl<'a> Parser<'a> {
                     }))
                 }
                 Kind::ImaginaryExponentFloat => {
-                    let val = self.cur_token().value.to_string();
+                    let val = self.cur_token.value.take_string();
                     self.bump_any();
                     Expression::Constant(Box::new(Constant {
                         node: self.finish_node(start),
@@ -2611,7 +2620,7 @@ impl<'a> Parser<'a> {
                 }
                 // TODO: is there something for octal and Hexadecimal?
                 Kind::Octal => {
-                    let val = self.cur_token().value.to_string();
+                    let val = self.cur_token.value.take_string();
                     self.bump_any();
                     Expression::Constant(Box::new(Constant {
                         node: self.finish_node(start),
@@ -2619,7 +2628,7 @@ impl<'a> Parser<'a> {
                     }))
                 }
                 Kind::Hexadecimal => {
-                    let val = self.cur_token().value.to_string();
+                    let val = self.cur_token.value.take_string();
                     self.bump_any();
                     Expression::Constant(Box::new(Constant {
                         node: self.finish_node(start),
@@ -2857,7 +2866,7 @@ impl<'a> Parser<'a> {
                 value,
             })));
         }
-        if self.eat(Kind::NewLine) || self.at(Kind::Eof) {
+        if self.at(Kind::NewLine) || self.at(Kind::Eof) {
             return Ok(Expression::Yield(Box::new(Yield {
                 node: self.finish_node(yield_node),
                 value: None,
