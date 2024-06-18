@@ -29,9 +29,9 @@ pub struct Lexer<'a> {
     // Each time we see a right bracket we decrement this
     // This is used to match brackets in fstrings
     inside_fstring_bracket: u8,
-    fstring_format_spec_stack: u8,
-
-    // TODO: Hacky way to handle emitting multiple de indents
+    fstring_format_specifier_mode: u8,
+    fstring_tokenization_stack: Vec<(u8, String)>,
+    // When not zero lexer is in de indent mode
     next_token_is_dedent: u8,
     /// Array of all line starts offsets. Starts from line 0
     pub line_starts: Vec<u32>,
@@ -49,7 +49,8 @@ impl<'a> Lexer<'a> {
             nesting: 0,
             fstring_stack: vec![],
             inside_fstring_bracket: 0,
-            fstring_format_spec_stack: 0,
+            fstring_format_specifier_mode: 0,
+            fstring_tokenization_stack: vec![],
             next_token_is_dedent: 0,
             line_starts: vec![],
             peak_mode: false,
@@ -110,7 +111,7 @@ impl<'a> Lexer<'a> {
         let nesting = self.nesting;
         let start_of_line = self.start_of_line;
         let inside_fstring_bracket = self.inside_fstring_bracket;
-        let is_fstring_format_spec = self.fstring_format_spec_stack;
+        let is_fstring_format_spec = self.fstring_format_specifier_mode;
         let next_token_is_dedent = self.next_token_is_dedent;
         self.peak_mode = true;
         let token = self.next_token();
@@ -120,30 +121,30 @@ impl<'a> Lexer<'a> {
         self.nesting = nesting;
         self.start_of_line = start_of_line;
         self.inside_fstring_bracket = inside_fstring_bracket;
-        self.fstring_format_spec_stack = is_fstring_format_spec;
+        self.fstring_format_specifier_mode = is_fstring_format_spec;
         self.next_token_is_dedent = next_token_is_dedent;
         token
     }
 
     // https://peps.python.org/pep-0701/#how-to-produce-these-new-tokens
     pub fn next_fstring_token(&mut self) -> Option<Kind> {
-        if self.fstring_format_spec_stack > 0 {
+        if self.fstring_format_specifier_mode > 0 {
             while self.peek() != Some('}') && self.peek() != Some('{') && self.peek() != Some('\n')
             {
                 self.next();
             }
-            self.fstring_format_spec_stack -= 1;
+            self.fstring_format_specifier_mode -= 1;
             return Some(Kind::FStringMiddle);
         }
         if self.inside_fstring_bracket > 0 {
+            println!("{}", self.inside_fstring_bracket);
             if self.peek() == Some('}') && self.double_peek() != Some('}') {
                 self.next();
-                // self.nesting -= 1;
                 self.inside_fstring_bracket -= 1;
                 return Some(Kind::RightBracket);
             }
             if self.peek() == Some(':') && self.nesting == self.fstring_stack.last().unwrap().0 {
-                self.fstring_format_spec_stack += 1;
+                self.fstring_format_specifier_mode += 1;
             }
             // if we are inside a bracket return none
             // and let the other tokens be matched
@@ -192,10 +193,8 @@ impl<'a> Lexer<'a> {
             if peeked_char == '{' && self.double_peek() != Some('{') {
                 return Some(Kind::FStringMiddle);
             }
-            // if last consumed_str_in_fstring is a backslash
-            if consumed_str_in_fstring.ends_with('\\') {
-                consumed_str_in_fstring.push(curr);
-                continue;
+            if peeked_char == '}' && self.double_peek() != Some('}') {
+                return Some(Kind::RightBrace);
             }
             match str_finisher.len() {
                 1 => {
@@ -225,7 +224,7 @@ impl<'a> Lexer<'a> {
                 return Ok(indent_kind);
             }
         }
-        if !self.fstring_stack.is_empty() || self.fstring_format_spec_stack > 0 {
+        if !self.fstring_stack.is_empty() || self.fstring_format_specifier_mode > 0 {
             if let Some(kind) = self.next_fstring_token() {
                 return Ok(kind);
             }
