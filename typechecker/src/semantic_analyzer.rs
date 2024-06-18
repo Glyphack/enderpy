@@ -707,7 +707,7 @@ impl TraversalVisitor for SemanticAnalyzer {
     fn visit_assign(&mut self, assign: &parser::ast::Assign) {
         let value = &assign.value;
         if assign.targets.len() > 1 {
-            panic!("multiple assignment not supported");
+            todo!("multiple assignment not supported");
         }
         let target = assign
             .targets

@@ -10,20 +10,18 @@
 
 Enderpy is a code completion engine, static type checker & language server for python.
 
-🏗️The project is under active development. There are breaking changes and it's not consider ready to use unless you want to contribute to it and have fun.
+🏗️The project is under active development. There are breaking changes, and it's not considered ready to use unless you want to contribute to it and have fun.
 
 </div>
 
 ## Why Do I Need It?
 
-it provides developers with faster autocompletion and fast feedback loop when writing Python.
+it provides developers with fast autocompletion and fast feedback loop when writing Python.
 
 ## Goals
 
-The primary goal of this project is providing instant feedback as you type.
 [Ruff](https://github.com/charliermarsh/ruff) showed that there is a value
 in providing faster implementation of static checkers.
-That's why I'm continuing this path.
 
 This project aims to build the components needed to achieve the goal of
 providing fast autocompletion and type checking, including:
@@ -33,29 +31,22 @@ providing fast autocompletion and type checking, including:
 - Python language server protocol implementation
 - CLI for parsing & analysis of Python programs
 
-## Installation
+## Development Setup
+
+Clone the repository
 
 ```
-cargo install enderpy_lsp
+git submodule init
+git submodule update
+cargo build
 ```
 
-Then install the editor client. Currently supported editors are:
+The above test should run without any issues.
+
+Then use the [editor client](#open-in-editor). Currently, supported editors are:
 
 - [ ] neovim
 - [x] vscode
-
-
-## Building From Source
-
-For building Rust components all you need to do is:
-
-```
-cargo run enderpy tokenize
-```
-
-For using the language client like VS VS Code, you can open the project in VS Code and use the `Run & Debug` tab to run the extention from source.
-For more information read:
-<https://code.visualstudio.com/api/language-extensions/language-server-extension-guide>
 
 ## Contributing
 
@@ -63,13 +54,13 @@ If you are here then you want to write some rust code, let's get to it.
 You can [ send me a message ](discordapp.com/users/glyphack) for discussions/help.
 
 You can use [these learning](https://glyphack.com/blog/compiler-resources/) resources
-to learn about each component.
+to learn about each part of project.
 
 The following will be a brief introduction into the project and how it works.
 But it's always better to consult the code to see what exactly is going on.
 
 
-### Developing Extension
+### Open In Editor
 
 1. Open vscode
 2. Navigate to Run and Debug tab
