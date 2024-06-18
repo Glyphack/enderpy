@@ -31,7 +31,7 @@ fn try_download(path: &str, url: &str) -> String {
     path.to_string()
 }
 
-fn create_test_cases() -> Vec<String> {
+pub fn create_test_cases() -> Vec<String> {
     vec![
         try_download(
             "pydantic_types.py",
