@@ -12,6 +12,8 @@ Enderpy is a code completion engine, static type checker & language server for p
 
 🏗️The project is under active development. There are breaking changes, and it's not considered ready to use unless you want to contribute to it and have fun.
 
+https://github.com/Glyphack/enderpy/assets/20788334/c18720be-7a27-4cdb-a27c-5018597ba0cf
+
 </div>
 
 ## Why Do I Need It?
