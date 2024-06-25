@@ -1,11 +1,11 @@
 ---
 source: parser/src/parser/parser.rs
-description: "x = \"simple text\\n\"\n\nraw = r\"raw_text\\n\"\n\ny = \"\"\"multi\"\"\"\n\n# TODO: enable with better error handling in parser\n# raw_err = r'ss\n\nf\"{self.__class__.__name__}({self._display()!r})\"\n\nf\"{num:0.0f}{unit}\"\n\n# f\"some words {a+b:.3f} more words {c+d=} final words\"\n\nf\"tuple argument {name[12:]}\"\n\n# f\"{f\"{f\"{f\"{f\"{f\"{1+1}\"}\"}\"}\"}\"}\"\n\n# f\"\"\"{f'''{f'{f\"{1+1}\"}'}'''}\"\"\"\n"
+description: "x = \"simple text\\n\"\n\nraw = r\"raw_text\\n\"\n\ny = \"\"\"multi\"\"\"\n\nf\"{self.__class__.__name__}({self._display()!r})\"\n\nf\"{num:0.0f}{unit}\"\n\nf\"tuple argument {name[12:]}\"\n\nf\"some words {a+b:.3f} more words {c+d=} final words\"\n\nf\"{f\"{f\"{f\"{f\"{f\"{1+1}\"}\"}\"}\"}\"}\"\n\nf\"\"\"{f'''{f'{f\"{1+1}\"}'}'''}\"\"\"\n"
 ---
 Module {
     node: Node {
         start: 0,
-        end: 360,
+        end: 284,
     },
     body: [
         AssignStatement(
@@ -96,33 +96,33 @@ Module {
             JoinedStr(
                 JoinedStr {
                     node: Node {
-                        start: 129,
-                        end: 178,
+                        start: 59,
+                        end: 108,
                     },
                     values: [
                         FormattedValue(
                             FormattedValue {
                                 node: Node {
-                                    start: 131,
-                                    end: 156,
+                                    start: 61,
+                                    end: 86,
                                 },
                                 value: Attribute(
                                     Attribute {
                                         node: Node {
-                                            start: 132,
-                                            end: 155,
+                                            start: 62,
+                                            end: 85,
                                         },
                                         value: Attribute(
                                             Attribute {
                                                 node: Node {
-                                                    start: 132,
-                                                    end: 146,
+                                                    start: 62,
+                                                    end: 76,
                                                 },
                                                 value: Name(
                                                     Name {
                                                         node: Node {
-                                                            start: 132,
-                                                            end: 136,
+                                                            start: 62,
+                                                            end: 66,
                                                         },
                                                         id: "self",
                                                     },
@@ -140,8 +140,8 @@ Module {
                         Constant(
                             Constant {
                                 node: Node {
-                                    start: 156,
-                                    end: 157,
+                                    start: 86,
+                                    end: 87,
                                 },
                                 value: "(",
                             },
@@ -149,26 +149,26 @@ Module {
                         FormattedValue(
                             FormattedValue {
                                 node: Node {
-                                    start: 157,
-                                    end: 176,
+                                    start: 87,
+                                    end: 106,
                                 },
                                 value: Call(
                                     Call {
                                         node: Node {
-                                            start: 158,
-                                            end: 173,
+                                            start: 88,
+                                            end: 103,
                                         },
                                         func: Attribute(
                                             Attribute {
                                                 node: Node {
-                                                    start: 158,
-                                                    end: 171,
+                                                    start: 88,
+                                                    end: 101,
                                                 },
                                                 value: Name(
                                                     Name {
                                                         node: Node {
-                                                            start: 158,
-                                                            end: 162,
+                                                            start: 88,
+                                                            end: 92,
                                                         },
                                                         id: "self",
                                                     },
@@ -189,8 +189,8 @@ Module {
                         Constant(
                             Constant {
                                 node: Node {
-                                    start: 176,
-                                    end: 177,
+                                    start: 106,
+                                    end: 107,
                                 },
                                 value: ")",
                             },
@@ -203,21 +203,21 @@ Module {
             JoinedStr(
                 JoinedStr {
                     node: Node {
-                        start: 180,
-                        end: 199,
+                        start: 110,
+                        end: 129,
                     },
                     values: [
                         FormattedValue(
                             FormattedValue {
                                 node: Node {
-                                    start: 182,
-                                    end: 192,
+                                    start: 112,
+                                    end: 122,
                                 },
                                 value: Name(
                                     Name {
                                         node: Node {
-                                            start: 183,
-                                            end: 186,
+                                            start: 113,
+                                            end: 116,
                                         },
                                         id: "num",
                                     },
@@ -227,15 +227,15 @@ Module {
                                     JoinedStr(
                                         JoinedStr {
                                             node: Node {
-                                                start: 186,
-                                                end: 191,
+                                                start: 116,
+                                                end: 121,
                                             },
                                             values: [
                                                 Constant(
                                                     Constant {
                                                         node: Node {
-                                                            start: 187,
-                                                            end: 191,
+                                                            start: 117,
+                                                            end: 121,
                                                         },
                                                         value: "0.0f",
                                                     },
@@ -249,14 +249,14 @@ Module {
                         FormattedValue(
                             FormattedValue {
                                 node: Node {
-                                    start: 192,
-                                    end: 198,
+                                    start: 122,
+                                    end: 128,
                                 },
                                 value: Name(
                                     Name {
                                         node: Node {
-                                            start: 193,
-                                            end: 197,
+                                            start: 123,
+                                            end: 127,
                                         },
                                         id: "unit",
                                     },
@@ -273,15 +273,15 @@ Module {
             JoinedStr(
                 JoinedStr {
                     node: Node {
-                        start: 258,
-                        end: 287,
+                        start: 131,
+                        end: 160,
                     },
                     values: [
                         Constant(
                             Constant {
                                 node: Node {
-                                    start: 260,
-                                    end: 275,
+                                    start: 133,
+                                    end: 148,
                                 },
                                 value: "tuple argument ",
                             },
@@ -289,20 +289,20 @@ Module {
                         FormattedValue(
                             FormattedValue {
                                 node: Node {
-                                    start: 275,
-                                    end: 286,
+                                    start: 148,
+                                    end: 159,
                                 },
                                 value: Subscript(
                                     Subscript {
                                         node: Node {
-                                            start: 276,
-                                            end: 285,
+                                            start: 149,
+                                            end: 158,
                                         },
                                         value: Name(
                                             Name {
                                                 node: Node {
-                                                    start: 276,
-                                                    end: 280,
+                                                    start: 149,
+                                                    end: 153,
                                                 },
                                                 id: "name",
                                             },
@@ -310,15 +310,15 @@ Module {
                                         slice: Slice(
                                             Slice {
                                                 node: Node {
-                                                    start: 281,
-                                                    end: 284,
+                                                    start: 154,
+                                                    end: 157,
                                                 },
                                                 lower: Some(
                                                     Constant(
                                                         Constant {
                                                             node: Node {
-                                                                start: 281,
-                                                                end: 283,
+                                                                start: 154,
+                                                                end: 156,
                                                             },
                                                             value: 12,
                                                         },
@@ -328,6 +328,397 @@ Module {
                                                 step: None,
                                             },
                                         ),
+                                    },
+                                ),
+                                conversion: -1,
+                                format_spec: None,
+                            },
+                        ),
+                    ],
+                },
+            ),
+        ),
+        ExpressionStatement(
+            JoinedStr(
+                JoinedStr {
+                    node: Node {
+                        start: 162,
+                        end: 215,
+                    },
+                    values: [
+                        Constant(
+                            Constant {
+                                node: Node {
+                                    start: 164,
+                                    end: 175,
+                                },
+                                value: "some words ",
+                            },
+                        ),
+                        FormattedValue(
+                            FormattedValue {
+                                node: Node {
+                                    start: 175,
+                                    end: 184,
+                                },
+                                value: BinOp(
+                                    BinOp {
+                                        node: Node {
+                                            start: 176,
+                                            end: 179,
+                                        },
+                                        op: Add,
+                                        left: Name(
+                                            Name {
+                                                node: Node {
+                                                    start: 176,
+                                                    end: 177,
+                                                },
+                                                id: "a",
+                                            },
+                                        ),
+                                        right: Name(
+                                            Name {
+                                                node: Node {
+                                                    start: 178,
+                                                    end: 179,
+                                                },
+                                                id: "b",
+                                            },
+                                        ),
+                                    },
+                                ),
+                                conversion: -1,
+                                format_spec: Some(
+                                    JoinedStr(
+                                        JoinedStr {
+                                            node: Node {
+                                                start: 179,
+                                                end: 183,
+                                            },
+                                            values: [
+                                                Constant(
+                                                    Constant {
+                                                        node: Node {
+                                                            start: 180,
+                                                            end: 183,
+                                                        },
+                                                        value: ".3f",
+                                                    },
+                                                ),
+                                            ],
+                                        },
+                                    ),
+                                ),
+                            },
+                        ),
+                        Constant(
+                            Constant {
+                                node: Node {
+                                    start: 184,
+                                    end: 196,
+                                },
+                                value: " more words ",
+                            },
+                        ),
+                        FormattedValue(
+                            FormattedValue {
+                                node: Node {
+                                    start: 196,
+                                    end: 202,
+                                },
+                                value: BinOp(
+                                    BinOp {
+                                        node: Node {
+                                            start: 197,
+                                            end: 200,
+                                        },
+                                        op: Add,
+                                        left: Name(
+                                            Name {
+                                                node: Node {
+                                                    start: 197,
+                                                    end: 198,
+                                                },
+                                                id: "c",
+                                            },
+                                        ),
+                                        right: Name(
+                                            Name {
+                                                node: Node {
+                                                    start: 199,
+                                                    end: 200,
+                                                },
+                                                id: "d",
+                                            },
+                                        ),
+                                    },
+                                ),
+                                conversion: 114,
+                                format_spec: None,
+                            },
+                        ),
+                        Constant(
+                            Constant {
+                                node: Node {
+                                    start: 202,
+                                    end: 214,
+                                },
+                                value: " final words",
+                            },
+                        ),
+                    ],
+                },
+            ),
+        ),
+        ExpressionStatement(
+            JoinedStr(
+                JoinedStr {
+                    node: Node {
+                        start: 217,
+                        end: 250,
+                    },
+                    values: [
+                        FormattedValue(
+                            FormattedValue {
+                                node: Node {
+                                    start: 219,
+                                    end: 249,
+                                },
+                                value: JoinedStr(
+                                    JoinedStr {
+                                        node: Node {
+                                            start: 220,
+                                            end: 248,
+                                        },
+                                        values: [
+                                            FormattedValue(
+                                                FormattedValue {
+                                                    node: Node {
+                                                        start: 222,
+                                                        end: 247,
+                                                    },
+                                                    value: JoinedStr(
+                                                        JoinedStr {
+                                                            node: Node {
+                                                                start: 223,
+                                                                end: 246,
+                                                            },
+                                                            values: [
+                                                                FormattedValue(
+                                                                    FormattedValue {
+                                                                        node: Node {
+                                                                            start: 225,
+                                                                            end: 245,
+                                                                        },
+                                                                        value: JoinedStr(
+                                                                            JoinedStr {
+                                                                                node: Node {
+                                                                                    start: 226,
+                                                                                    end: 244,
+                                                                                },
+                                                                                values: [
+                                                                                    FormattedValue(
+                                                                                        FormattedValue {
+                                                                                            node: Node {
+                                                                                                start: 228,
+                                                                                                end: 243,
+                                                                                            },
+                                                                                            value: JoinedStr(
+                                                                                                JoinedStr {
+                                                                                                    node: Node {
+                                                                                                        start: 229,
+                                                                                                        end: 242,
+                                                                                                    },
+                                                                                                    values: [
+                                                                                                        FormattedValue(
+                                                                                                            FormattedValue {
+                                                                                                                node: Node {
+                                                                                                                    start: 231,
+                                                                                                                    end: 241,
+                                                                                                                },
+                                                                                                                value: JoinedStr(
+                                                                                                                    JoinedStr {
+                                                                                                                        node: Node {
+                                                                                                                            start: 232,
+                                                                                                                            end: 240,
+                                                                                                                        },
+                                                                                                                        values: [
+                                                                                                                            FormattedValue(
+                                                                                                                                FormattedValue {
+                                                                                                                                    node: Node {
+                                                                                                                                        start: 234,
+                                                                                                                                        end: 239,
+                                                                                                                                    },
+                                                                                                                                    value: BinOp(
+                                                                                                                                        BinOp {
+                                                                                                                                            node: Node {
+                                                                                                                                                start: 235,
+                                                                                                                                                end: 238,
+                                                                                                                                            },
+                                                                                                                                            op: Add,
+                                                                                                                                            left: Constant(
+                                                                                                                                                Constant {
+                                                                                                                                                    node: Node {
+                                                                                                                                                        start: 235,
+                                                                                                                                                        end: 236,
+                                                                                                                                                    },
+                                                                                                                                                    value: 1,
+                                                                                                                                                },
+                                                                                                                                            ),
+                                                                                                                                            right: Constant(
+                                                                                                                                                Constant {
+                                                                                                                                                    node: Node {
+                                                                                                                                                        start: 237,
+                                                                                                                                                        end: 238,
+                                                                                                                                                    },
+                                                                                                                                                    value: 1,
+                                                                                                                                                },
+                                                                                                                                            ),
+                                                                                                                                        },
+                                                                                                                                    ),
+                                                                                                                                    conversion: -1,
+                                                                                                                                    format_spec: None,
+                                                                                                                                },
+                                                                                                                            ),
+                                                                                                                        ],
+                                                                                                                    },
+                                                                                                                ),
+                                                                                                                conversion: -1,
+                                                                                                                format_spec: None,
+                                                                                                            },
+                                                                                                        ),
+                                                                                                    ],
+                                                                                                },
+                                                                                            ),
+                                                                                            conversion: -1,
+                                                                                            format_spec: None,
+                                                                                        },
+                                                                                    ),
+                                                                                ],
+                                                                            },
+                                                                        ),
+                                                                        conversion: -1,
+                                                                        format_spec: None,
+                                                                    },
+                                                                ),
+                                                            ],
+                                                        },
+                                                    ),
+                                                    conversion: -1,
+                                                    format_spec: None,
+                                                },
+                                            ),
+                                        ],
+                                    },
+                                ),
+                                conversion: -1,
+                                format_spec: None,
+                            },
+                        ),
+                    ],
+                },
+            ),
+        ),
+        ExpressionStatement(
+            JoinedStr(
+                JoinedStr {
+                    node: Node {
+                        start: 252,
+                        end: 283,
+                    },
+                    values: [
+                        FormattedValue(
+                            FormattedValue {
+                                node: Node {
+                                    start: 256,
+                                    end: 280,
+                                },
+                                value: JoinedStr(
+                                    JoinedStr {
+                                        node: Node {
+                                            start: 257,
+                                            end: 279,
+                                        },
+                                        values: [
+                                            FormattedValue(
+                                                FormattedValue {
+                                                    node: Node {
+                                                        start: 261,
+                                                        end: 276,
+                                                    },
+                                                    value: JoinedStr(
+                                                        JoinedStr {
+                                                            node: Node {
+                                                                start: 262,
+                                                                end: 275,
+                                                            },
+                                                            values: [
+                                                                FormattedValue(
+                                                                    FormattedValue {
+                                                                        node: Node {
+                                                                            start: 264,
+                                                                            end: 274,
+                                                                        },
+                                                                        value: JoinedStr(
+                                                                            JoinedStr {
+                                                                                node: Node {
+                                                                                    start: 265,
+                                                                                    end: 273,
+                                                                                },
+                                                                                values: [
+                                                                                    FormattedValue(
+                                                                                        FormattedValue {
+                                                                                            node: Node {
+                                                                                                start: 267,
+                                                                                                end: 272,
+                                                                                            },
+                                                                                            value: BinOp(
+                                                                                                BinOp {
+                                                                                                    node: Node {
+                                                                                                        start: 268,
+                                                                                                        end: 271,
+                                                                                                    },
+                                                                                                    op: Add,
+                                                                                                    left: Constant(
+                                                                                                        Constant {
+                                                                                                            node: Node {
+                                                                                                                start: 268,
+                                                                                                                end: 269,
+                                                                                                            },
+                                                                                                            value: 1,
+                                                                                                        },
+                                                                                                    ),
+                                                                                                    right: Constant(
+                                                                                                        Constant {
+                                                                                                            node: Node {
+                                                                                                                start: 270,
+                                                                                                                end: 271,
+                                                                                                            },
+                                                                                                            value: 1,
+                                                                                                        },
+                                                                                                    ),
+                                                                                                },
+                                                                                            ),
+                                                                                            conversion: -1,
+                                                                                            format_spec: None,
+                                                                                        },
+                                                                                    ),
+                                                                                ],
+                                                                            },
+                                                                        ),
+                                                                        conversion: -1,
+                                                                        format_spec: None,
+                                                                    },
+                                                                ),
+                                                            ],
+                                                        },
+                                                    ),
+                                                    conversion: -1,
+                                                    format_spec: None,
+                                                },
+                                            ),
+                                        ],
                                     },
                                 ),
                                 conversion: -1,

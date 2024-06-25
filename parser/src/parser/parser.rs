@@ -3428,24 +3428,19 @@ impl<'a> Parser<'a> {
             self.parse_expressions()?
         };
 
+        let mut conversion = -1;
         if self.eat(Kind::Assign) {
-            // Conversion also 114
-            todo!("must add the expression string to constants");
+            conversion = 114;
         }
-
-        let conversion = if self.at(Kind::Identifier) {
-            let conversion = match self.cur_token().value.to_string().as_str() {
+        if self.at(Kind::Identifier) {
+            conversion = match self.cur_token.value.take_string().as_str() {
                 "!s" => 115,
                 "!r" => 114,
                 "!a" => 97,
                 _ => panic!("should not happen"),
             };
             self.bump_any();
-            conversion
-        } else {
-            -1
-        };
-
+        }
         let format_spec_node = self.start_node();
         let format_spec = if self.eat(Kind::Colon) {
             let mut specs = vec![];

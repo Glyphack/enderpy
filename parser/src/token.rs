@@ -1,7 +1,7 @@
 use core::panic;
 use std::fmt::Display;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Token {
     pub kind: Kind,
     // Value might be deleted in the future
