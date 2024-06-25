@@ -140,7 +140,6 @@ impl<'a> Lexer<'a> {
         let current_line = self.current_line;
         let nesting = self.nesting;
         let start_of_line = self.start_of_line;
-        let tokenization_mode = self.tokenization_mode_stack.clone();
         let indent = self.indent_stack.clone();
         let next_token_is_dedent = self.next_token_is_dedent;
         self.peak_mode = true;
@@ -151,7 +150,6 @@ impl<'a> Lexer<'a> {
         self.current_line = current_line;
         self.nesting = nesting;
         self.start_of_line = start_of_line;
-        self.tokenization_mode_stack = tokenization_mode;
         self.next_token_is_dedent = next_token_is_dedent;
         token
     }
@@ -170,12 +168,16 @@ impl<'a> Lexer<'a> {
             }
             if peeked_char == Some('{') && peeked_char != double_peek {
                 if read_chars {
-                    self.tokenization_mode_stack
-                        .push(TokenizationMode::PythonWithinFstring(self.nesting + 1));
+                    if !self.peak_mode {
+                        self.tokenization_mode_stack
+                            .push(TokenizationMode::PythonWithinFstring(self.nesting + 1));
+                    }
                     return Kind::FStringMiddle;
                 } else {
-                    self.tokenization_mode_stack
-                        .push(TokenizationMode::PythonWithinFstring(self.nesting + 1));
+                    if !self.peak_mode {
+                        self.tokenization_mode_stack
+                            .push(TokenizationMode::PythonWithinFstring(self.nesting + 1));
+                    }
                     self.next();
                     return Kind::LeftBracket;
                 }
@@ -277,9 +279,8 @@ impl<'a> Lexer<'a> {
                     }
                     if read_chars > 0 {
                         return Ok(Kind::FStringMiddle);
-                    } else {
+                    } else if !self.peak_mode {
                         self.tokenization_mode_stack.pop();
-                        return self.next_kind();
                     }
                 }
                 _ => (),
@@ -397,7 +398,7 @@ impl<'a> Lexer<'a> {
                         if let Some(TokenizationMode::PythonWithinFstring(i)) =
                             self.tokenization_mode_stack.last()
                         {
-                            if self.nesting == *i {
+                            if self.nesting == *i && !self.peak_mode {
                                 self.tokenization_mode_stack
                                     .push(TokenizationMode::FstringFormatSpecifier);
                             }
@@ -431,7 +432,9 @@ impl<'a> Lexer<'a> {
                     if self.peek() != Some('}') {
                         if let Some(mode) = self.tokenization_mode_stack.last() {
                             if matches!(mode, TokenizationMode::PythonWithinFstring(_)) {
-                                self.tokenization_mode_stack.pop();
+                                if !self.peak_mode {
+                                    self.tokenization_mode_stack.pop();
+                                }
                                 return Ok(Kind::RightBracket);
                             }
                         }
