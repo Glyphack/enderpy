@@ -140,12 +140,10 @@ impl<'a> Lexer<'a> {
         let current_line = self.current_line;
         let nesting = self.nesting;
         let start_of_line = self.start_of_line;
-        let indent = self.indent_stack.clone();
         let next_token_is_dedent = self.next_token_is_dedent;
         self.peak_mode = true;
         let token = self.next_token();
         self.peak_mode = false;
-        self.indent_stack = indent;
         self.current = current;
         self.current_line = current_line;
         self.nesting = nesting;
@@ -951,7 +949,9 @@ impl<'a> Lexer<'a> {
                 // Returning whitespace to ignore these spaces
                 Ordering::Equal => Ok(Some(Kind::WhiteSpace)),
                 Ordering::Greater => {
-                    self.indent_stack.push(spaces_count);
+                    if !self.peak_mode {
+                        self.indent_stack.push(spaces_count);
+                    }
                     Ok(Some(Kind::Indent))
                 }
             }
@@ -1003,6 +1003,13 @@ impl<'a> Lexer<'a> {
                     }
                 }
                 let mut de_indents = 0;
+                // TODO: This is not correct. But since we don't use the value inside parser it's
+                // it's okay to do.
+                // The reason for doing this is that we don't want to modify the indent_stack in
+                // the peak mode which alters lexer state.
+                if self.peak_mode {
+                    return TokenValue::Indent(0);
+                }
                 while let Some(top) = self.indent_stack.last() {
                     match top.cmp(&spaces_count) {
                         Ordering::Greater => {
