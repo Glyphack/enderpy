@@ -5,9 +5,36 @@ use crate::{
     token::{Kind, Token, TokenValue},
 };
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
+enum StringQuotation {
+    Single,
+    Double,
+    TripleSingle,
+    TripleDouble,
+}
+
+impl StringQuotation {
+    pub fn new(quote: char, count: u8) -> Self {
+        if quote == '\'' {
+            match count {
+                1 => return Self::Single,
+                3 => return Self::TripleSingle,
+                _ => panic!("Invalid quotation string: {}", quote),
+            }
+        } else if quote == '"' {
+            match count {
+                1 => return Self::Double,
+                3 => return Self::TripleDouble,
+                _ => panic!("Invalid quotation string: {}", quote),
+            }
+        }
+        panic!("Invalid quotation string: {}", quote);
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
 enum TokenizationMode {
-    Fstring((u8, String)),
+    Fstring((u8, StringQuotation)),
     FstringFormatSpecifier,
     PythonWithinFstring(u8),
 }
@@ -130,18 +157,18 @@ impl<'a> Lexer<'a> {
     }
 
     // https://peps.python.org/pep-0701/#how-to-produce-these-new-tokens
-    pub fn next_fstring_token(&mut self, str_finisher: String, _fstring_nesting: u8) -> Kind {
-        let mut read_chars = 0;
+    fn next_fstring_token(&mut self, str_finisher: StringQuotation, _fstring_nesting: u8) -> Kind {
+        let mut read_chars = false;
         loop {
             let peeked_char = self.peek();
             if peeked_char == Some('{') && self.double_peek() == Some('{') {
                 self.next();
                 self.next();
-                read_chars += 2;
+                read_chars = true;
                 continue;
             }
             if peeked_char == Some('{') && self.double_peek() != Some('{') {
-                if read_chars > 0 {
+                if read_chars {
                     self.tokenization_mode_stack
                         .push(TokenizationMode::PythonWithinFstring(self.nesting + 1));
                     return Kind::FStringMiddle;
@@ -156,30 +183,14 @@ impl<'a> Lexer<'a> {
             let Some(curr) = self.next() else {
                 panic!("eof while parsing fstring")
             };
-            read_chars += 1;
+            read_chars = true;
 
-            // If f string is finished
-            if read_chars > 0 {
-                match str_finisher.len() {
-                    1 => {
-                        if self.peek() == Some(str_finisher.chars().next().unwrap()) {
-                            return Kind::FStringMiddle;
-                        }
+            match str_finisher {
+                StringQuotation::Single => {
+                    if self.peek() == Some('\'') {
+                        return Kind::FStringMiddle;
                     }
-                    3 => {
-                        if self.peek() == Some(str_finisher.chars().next().unwrap())
-                            && self.double_peek() == Some(str_finisher.chars().nth(1).unwrap())
-                            && self.triple_peek() == Some(str_finisher.chars().nth(2).unwrap())
-                        {
-                            return Kind::FStringMiddle;
-                        }
-                    }
-                    _ => {}
-                }
-            }
-            match str_finisher.len() {
-                1 => {
-                    if curr == str_finisher.chars().next().unwrap() {
+                    if curr == '\'' {
                         if !self.peak_mode {
                             let last = self.tokenization_mode_stack.pop();
                             assert!(matches!(last, Some(TokenizationMode::Fstring(_))))
@@ -187,10 +198,29 @@ impl<'a> Lexer<'a> {
                         return Kind::FStringEnd;
                     }
                 }
-                3 => {
-                    if curr == str_finisher.chars().next().unwrap()
-                        && self.peek() == Some(str_finisher.chars().nth(1).unwrap())
-                        && self.double_peek() == Some(str_finisher.chars().nth(2).unwrap())
+                StringQuotation::Double => {
+                    if self.peek() == Some('"') {
+                        return Kind::FStringMiddle;
+                    }
+                    if curr == '"' {
+                        if !self.peak_mode {
+                            let last = self.tokenization_mode_stack.pop();
+                            assert!(matches!(last, Some(TokenizationMode::Fstring(_))))
+                        }
+                        return Kind::FStringEnd;
+                    }
+                }
+                StringQuotation::TripleSingle => {
+                    if self.peek() == Some('\'')
+                        && self.peek() == self.double_peek()
+                        && self.peek() == self.triple_peek()
+                    {
+                        return Kind::FStringMiddle;
+                    }
+
+                    if curr == '\''
+                        && self.peek() == Some(curr)
+                        && self.peek() == self.double_peek()
                     {
                         if !self.peak_mode {
                             let last = self.tokenization_mode_stack.pop();
@@ -200,7 +230,23 @@ impl<'a> Lexer<'a> {
                         return Kind::FStringEnd;
                     }
                 }
-                _ => {}
+                StringQuotation::TripleDouble => {
+                    if self.peek() == Some('\"')
+                        && self.peek() == self.double_peek()
+                        && self.peek() == self.triple_peek()
+                    {
+                        return Kind::FStringMiddle;
+                    }
+                    if curr == '"' && self.peek() == Some(curr) && self.peek() == self.double_peek()
+                    {
+                        if !self.peak_mode {
+                            let last = self.tokenization_mode_stack.pop();
+                            assert!(matches!(last, Some(TokenizationMode::Fstring(_))))
+                        }
+                        self.double_next();
+                        return Kind::FStringEnd;
+                    }
+                }
             }
         }
     }
@@ -217,7 +263,7 @@ impl<'a> Lexer<'a> {
         if let Some(mode) = self.tokenization_mode_stack.last() {
             match mode {
                 TokenizationMode::Fstring((fstring_nesting, fstrin_ending)) => {
-                    return Ok(self.next_fstring_token(fstrin_ending.clone(), *fstring_nesting))
+                    return Ok(self.next_fstring_token(*fstrin_ending, *fstring_nesting))
                 }
                 TokenizationMode::FstringFormatSpecifier => {
                     let mut read_chars = 0;
@@ -517,10 +563,13 @@ impl<'a> Lexer<'a> {
                 Some('f') | Some('F') => match self.double_peek() {
                     Some(str_start @ '"') | Some(str_start @ '\'') => {
                         self.double_next();
-                        let fstring_start = self.create_f_string_start(str_start);
+                        let fstring_start = self.f_string_quote_count(str_start);
                         if !self.peak_mode {
                             self.tokenization_mode_stack
-                                .push(TokenizationMode::Fstring((self.nesting, fstring_start)));
+                                .push(TokenizationMode::Fstring((
+                                    self.nesting,
+                                    StringQuotation::new(str_start, fstring_start),
+                                )));
                         }
                         return Ok(Some(Kind::RawFStringStart));
                     }
@@ -553,10 +602,13 @@ impl<'a> Lexer<'a> {
                 Some('r') | Some('R') => match self.double_peek() {
                     Some(str_start @ '"') | Some(str_start @ '\'') => {
                         self.double_next();
-                        let fstring_start = self.create_f_string_start(str_start);
+                        let fstring_start = self.f_string_quote_count(str_start);
                         if !self.peak_mode {
                             self.tokenization_mode_stack
-                                .push(TokenizationMode::Fstring((self.nesting, fstring_start)));
+                                .push(TokenizationMode::Fstring((
+                                    self.nesting,
+                                    StringQuotation::new(str_start, fstring_start),
+                                )));
                         }
                         return Ok(Some(Kind::RawFStringStart));
                     }
@@ -564,10 +616,13 @@ impl<'a> Lexer<'a> {
                 },
                 Some(str_start @ '"') | Some(str_start @ '\'') => {
                     self.next();
-                    let fstring_start = self.create_f_string_start(str_start);
+                    let fstring_start = self.f_string_quote_count(str_start);
                     if !self.peak_mode {
                         self.tokenization_mode_stack
-                            .push(TokenizationMode::Fstring((self.nesting, fstring_start)));
+                            .push(TokenizationMode::Fstring((
+                                self.nesting,
+                                StringQuotation::new(str_start, fstring_start),
+                            )));
                     }
                     return Ok(Some(Kind::FStringStart));
                 }
@@ -972,14 +1027,13 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    fn create_f_string_start(&mut self, str_start: char) -> String {
-        let mut start_of_fstring = String::from(str_start);
+    fn f_string_quote_count(&mut self, str_start: char) -> u8 {
+        let mut count = 1;
         if self.peek() == Some(str_start) && self.double_peek() == Some(str_start) {
-            start_of_fstring.push(str_start);
-            start_of_fstring.push(str_start);
+            count = 3;
             self.double_next();
         }
-        start_of_fstring
+        count
     }
 }
 
