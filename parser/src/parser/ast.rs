@@ -326,6 +326,7 @@ impl GetNode for Expression {
 pub struct Name {
     pub node: Node,
     pub id: String,
+    pub parenthesized: bool,
 }
 
 #[derive(Clone, Debug, PartialEq)]
