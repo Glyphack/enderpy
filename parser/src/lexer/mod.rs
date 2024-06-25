@@ -161,13 +161,14 @@ impl<'a> Lexer<'a> {
         let mut read_chars = false;
         loop {
             let peeked_char = self.peek();
-            if peeked_char == Some('{') && self.double_peek() == Some('{') {
+            let double_peek = self.double_peek();
+            if peeked_char == Some('{') && peeked_char == double_peek {
                 self.next();
                 self.next();
                 read_chars = true;
                 continue;
             }
-            if peeked_char == Some('{') && self.double_peek() != Some('{') {
+            if peeked_char == Some('{') && peeked_char != double_peek {
                 if read_chars {
                     self.tokenization_mode_stack
                         .push(TokenizationMode::PythonWithinFstring(self.nesting + 1));

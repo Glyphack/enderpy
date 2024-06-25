@@ -3963,33 +3963,33 @@ else:
     pass
 except:
     pass",
-            //             "try:
-            //                 pass
-            // except Exception:
-            //                 pass",
-            //             "try:
-            //                 pass
-            // except Exception as e:
-            //                 pass",
-            //             "try:
-            //                 pass
-            // except Exception as e:
-            //                 pass
-            // else:
-            //                 pass",
-            //             "try:
-            //                 pass
-            // except Exception as e:
-            //                 pass
-            // else:
-            //                 pass
-            // finally:
-            //                 pass",
-            //             "try:
-            //     pass
-            // except *Exception as e:
-            //     pass
-            // ",
+            "try:
+                pass
+except Exception:
+                pass",
+            "try:
+                pass
+except Exception as e:
+                pass",
+            "try:
+                pass
+except Exception as e:
+                pass
+else:
+                pass",
+            "try:
+                pass
+except Exception as e:
+                pass
+else:
+                pass
+finally:
+                pass",
+            "try:
+    pass
+except *Exception as e:
+    pass
+",
         ] {
             let mut parser = Parser::new(test_case, "");
             let program = parser.parse().expect("parsing failed");
