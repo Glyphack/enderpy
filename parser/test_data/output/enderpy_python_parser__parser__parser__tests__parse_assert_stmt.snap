@@ -21,6 +21,7 @@ Module {
                             end: 8,
                         },
                         id: "a",
+                        parenthesized: false,
                     },
                 ),
                 msg: None,

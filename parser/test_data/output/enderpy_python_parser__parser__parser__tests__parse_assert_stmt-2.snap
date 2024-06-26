@@ -21,6 +21,7 @@ Module {
                             end: 8,
                         },
                         id: "a",
+                        parenthesized: false,
                     },
                 ),
                 msg: Some(
@@ -31,6 +32,7 @@ Module {
                                 end: 11,
                             },
                             id: "b",
+                            parenthesized: false,
                         },
                     ),
                 ),

@@ -23,6 +23,7 @@ Module {
                                     end: 3,
                                 },
                                 id: "a",
+                                parenthesized: false,
                             },
                         ),
                         Name(
@@ -32,6 +33,7 @@ Module {
                                     end: 6,
                                 },
                                 id: "b",
+                                parenthesized: false,
                             },
                         ),
                         Name(
@@ -41,6 +43,7 @@ Module {
                                     end: 9,
                                 },
                                 id: "c",
+                                parenthesized: false,
                             },
                         ),
                     ],
@@ -69,6 +72,7 @@ Module {
                                                 end: 14,
                                             },
                                             id: "a",
+                                            parenthesized: false,
                                         },
                                     ),
                                     Name(
@@ -78,6 +82,7 @@ Module {
                                                 end: 17,
                                             },
                                             id: "b",
+                                            parenthesized: false,
                                         },
                                     ),
                                     Name(
@@ -87,6 +92,7 @@ Module {
                                                 end: 20,
                                             },
                                             id: "c",
+                                            parenthesized: false,
                                         },
                                     ),
                                 ],
@@ -118,6 +124,7 @@ Module {
                                                 end: 27,
                                             },
                                             id: "a",
+                                            parenthesized: false,
                                         },
                                     ),
                                     Name(
@@ -127,6 +134,7 @@ Module {
                                                 end: 30,
                                             },
                                             id: "b",
+                                            parenthesized: false,
                                         },
                                     ),
                                     Name(
@@ -136,6 +144,7 @@ Module {
                                                 end: 33,
                                             },
                                             id: "c",
+                                            parenthesized: false,
                                         },
                                     ),
                                 ],
@@ -167,6 +176,7 @@ Module {
                                                 end: 39,
                                             },
                                             id: "a",
+                                            parenthesized: false,
                                         },
                                     ),
                                     Name(
@@ -176,6 +186,7 @@ Module {
                                                 end: 42,
                                             },
                                             id: "b",
+                                            parenthesized: false,
                                         },
                                     ),
                                     Name(
@@ -185,6 +196,7 @@ Module {
                                                 end: 49,
                                             },
                                             id: "c",
+                                            parenthesized: false,
                                         },
                                     ),
                                 ],
@@ -216,6 +228,7 @@ Module {
                                                 end: 55,
                                             },
                                             id: "a",
+                                            parenthesized: false,
                                         },
                                     ),
                                 ],
@@ -240,6 +253,7 @@ Module {
                                     end: 63,
                                 },
                                 id: "a",
+                                parenthesized: false,
                             },
                         ),
                         Name(
@@ -249,6 +263,7 @@ Module {
                                     end: 66,
                                 },
                                 id: "b",
+                                parenthesized: false,
                             },
                         ),
                         Name(
@@ -258,6 +273,7 @@ Module {
                                     end: 69,
                                 },
                                 id: "c",
+                                parenthesized: false,
                             },
                         ),
                     ],
@@ -278,6 +294,7 @@ Module {
                                 end: 84,
                             },
                             id: "month_names",
+                            parenthesized: false,
                         },
                     ),
                 ],
@@ -415,6 +432,7 @@ Module {
                                 end: 310,
                             },
                             id: "a",
+                            parenthesized: false,
                         },
                     ),
                     generators: [
@@ -430,6 +448,7 @@ Module {
                                         end: 316,
                                     },
                                     id: "a",
+                                    parenthesized: false,
                                 },
                             ),
                             iter: Name(
@@ -439,6 +458,7 @@ Module {
                                         end: 321,
                                     },
                                     id: "b",
+                                    parenthesized: false,
                                 },
                             ),
                             ifs: [],
@@ -462,6 +482,7 @@ Module {
                                 end: 326,
                             },
                             id: "a",
+                            parenthesized: false,
                         },
                     ),
                     generators: [
@@ -477,6 +498,7 @@ Module {
                                         end: 332,
                                     },
                                     id: "a",
+                                    parenthesized: false,
                                 },
                             ),
                             iter: Name(
@@ -486,6 +508,7 @@ Module {
                                         end: 337,
                                     },
                                     id: "b",
+                                    parenthesized: false,
                                 },
                             ),
                             ifs: [
@@ -496,6 +519,7 @@ Module {
                                             end: 342,
                                         },
                                         id: "c",
+                                        parenthesized: false,
                                     },
                                 ),
                             ],
@@ -519,6 +543,7 @@ Module {
                                 end: 347,
                             },
                             id: "a",
+                            parenthesized: false,
                         },
                     ),
                     generators: [
@@ -534,6 +559,7 @@ Module {
                                         end: 353,
                                     },
                                     id: "a",
+                                    parenthesized: false,
                                 },
                             ),
                             iter: Name(
@@ -543,6 +569,7 @@ Module {
                                         end: 358,
                                     },
                                     id: "b",
+                                    parenthesized: false,
                                 },
                             ),
                             ifs: [
@@ -553,6 +580,7 @@ Module {
                                             end: 363,
                                         },
                                         id: "c",
+                                        parenthesized: false,
                                     },
                                 ),
                                 Name(
@@ -562,6 +590,7 @@ Module {
                                             end: 368,
                                         },
                                         id: "d",
+                                        parenthesized: false,
                                     },
                                 ),
                             ],
@@ -585,6 +614,7 @@ Module {
                                 end: 373,
                             },
                             id: "a",
+                            parenthesized: false,
                         },
                     ),
                     generators: [
@@ -600,6 +630,7 @@ Module {
                                         end: 379,
                                     },
                                     id: "a",
+                                    parenthesized: false,
                                 },
                             ),
                             iter: Name(
@@ -609,6 +640,7 @@ Module {
                                         end: 384,
                                     },
                                     id: "b",
+                                    parenthesized: false,
                                 },
                             ),
                             ifs: [],
@@ -626,6 +658,7 @@ Module {
                                         end: 390,
                                     },
                                     id: "c",
+                                    parenthesized: false,
                                 },
                             ),
                             iter: Name(
@@ -635,6 +668,7 @@ Module {
                                         end: 395,
                                     },
                                     id: "d",
+                                    parenthesized: false,
                                 },
                             ),
                             ifs: [],
@@ -658,6 +692,7 @@ Module {
                                 end: 400,
                             },
                             id: "a",
+                            parenthesized: false,
                         },
                     ),
                     generators: [
@@ -673,6 +708,7 @@ Module {
                                         end: 406,
                                     },
                                     id: "a",
+                                    parenthesized: false,
                                 },
                             ),
                             iter: Name(
@@ -682,6 +718,7 @@ Module {
                                         end: 411,
                                     },
                                     id: "b",
+                                    parenthesized: false,
                                 },
                             ),
                             ifs: [
@@ -692,6 +729,7 @@ Module {
                                             end: 416,
                                         },
                                         id: "c",
+                                        parenthesized: false,
                                     },
                                 ),
                             ],
@@ -709,6 +747,7 @@ Module {
                                         end: 422,
                                     },
                                     id: "d",
+                                    parenthesized: false,
                                 },
                             ),
                             iter: Name(
@@ -718,6 +757,7 @@ Module {
                                         end: 427,
                                     },
                                     id: "e",
+                                    parenthesized: false,
                                 },
                             ),
                             ifs: [],

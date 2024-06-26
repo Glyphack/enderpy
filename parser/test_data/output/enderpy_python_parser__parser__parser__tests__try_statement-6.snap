@@ -38,6 +38,7 @@ Module {
                                         end: 31,
                                     },
                                     id: "Exception",
+                                    parenthesized: false,
                                 },
                             ),
                         ),

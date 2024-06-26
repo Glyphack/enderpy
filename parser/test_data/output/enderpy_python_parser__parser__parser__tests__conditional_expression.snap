@@ -22,6 +22,7 @@ Module {
                                 end: 6,
                             },
                             id: "b",
+                            parenthesized: false,
                         },
                     ),
                     body: Name(
@@ -31,6 +32,7 @@ Module {
                                 end: 1,
                             },
                             id: "a",
+                            parenthesized: false,
                         },
                     ),
                     orelse: IfExp(
@@ -46,6 +48,7 @@ Module {
                                         end: 18,
                                     },
                                     id: "d",
+                                    parenthesized: false,
                                 },
                             ),
                             body: Name(
@@ -55,6 +58,7 @@ Module {
                                         end: 13,
                                     },
                                     id: "c",
+                                    parenthesized: false,
                                 },
                             ),
                             orelse: Name(
@@ -64,6 +68,7 @@ Module {
                                         end: 25,
                                     },
                                     id: "e",
+                                    parenthesized: false,
                                 },
                             ),
                         },

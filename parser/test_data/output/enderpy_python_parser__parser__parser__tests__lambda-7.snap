@@ -73,6 +73,7 @@ Module {
                                 end: 23,
                             },
                             id: "a",
+                            parenthesized: false,
                         },
                     ),
                 },

@@ -22,6 +22,7 @@ Module {
                                 end: 1,
                             },
                             id: "a",
+                            parenthesized: false,
                         },
                     ),
                     args: [
@@ -32,6 +33,7 @@ Module {
                                     end: 3,
                                 },
                                 id: "b",
+                                parenthesized: false,
                             },
                         ),
                     ],

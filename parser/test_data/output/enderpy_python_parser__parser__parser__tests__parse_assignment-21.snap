@@ -21,6 +21,7 @@ Module {
                             end: 1,
                         },
                         id: "a",
+                        parenthesized: false,
                     },
                 ),
                 op: FloorDiv,

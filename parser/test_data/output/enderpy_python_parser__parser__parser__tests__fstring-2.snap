@@ -38,6 +38,7 @@ Module {
                                             end: 10,
                                         },
                                         id: "a",
+                                        parenthesized: false,
                                     },
                                 ),
                                 conversion: -1,

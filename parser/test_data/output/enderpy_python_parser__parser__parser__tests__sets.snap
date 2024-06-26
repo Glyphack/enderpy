@@ -23,6 +23,7 @@ Module {
                                     end: 2,
                                 },
                                 id: "a",
+                                parenthesized: false,
                             },
                         ),
                         Name(
@@ -32,6 +33,7 @@ Module {
                                     end: 5,
                                 },
                                 id: "b",
+                                parenthesized: false,
                             },
                         ),
                         Name(
@@ -41,6 +43,7 @@ Module {
                                     end: 8,
                                 },
                                 id: "c",
+                                parenthesized: false,
                             },
                         ),
                     ],
@@ -62,6 +65,7 @@ Module {
                                     end: 13,
                                 },
                                 id: "a",
+                                parenthesized: false,
                             },
                         ),
                         Name(
@@ -71,6 +75,7 @@ Module {
                                     end: 16,
                                 },
                                 id: "b",
+                                parenthesized: false,
                             },
                         ),
                         Name(
@@ -80,6 +85,7 @@ Module {
                                     end: 19,
                                 },
                                 id: "c",
+                                parenthesized: false,
                             },
                         ),
                     ],
@@ -101,6 +107,7 @@ Module {
                                     end: 25,
                                 },
                                 id: "a",
+                                parenthesized: false,
                             },
                         ),
                         Name(
@@ -110,6 +117,7 @@ Module {
                                     end: 28,
                                 },
                                 id: "b",
+                                parenthesized: false,
                             },
                         ),
                         Name(
@@ -119,6 +127,7 @@ Module {
                                     end: 31,
                                 },
                                 id: "c",
+                                parenthesized: false,
                             },
                         ),
                     ],
@@ -140,6 +149,7 @@ Module {
                                     end: 36,
                                 },
                                 id: "a",
+                                parenthesized: false,
                             },
                         ),
                         Name(
@@ -149,6 +159,7 @@ Module {
                                     end: 39,
                                 },
                                 id: "b",
+                                parenthesized: false,
                             },
                         ),
                         Name(
@@ -158,6 +169,7 @@ Module {
                                     end: 46,
                                 },
                                 id: "c",
+                                parenthesized: false,
                             },
                         ),
                     ],
@@ -179,6 +191,7 @@ Module {
                                     end: 51,
                                 },
                                 id: "a",
+                                parenthesized: false,
                             },
                         ),
                     ],
@@ -200,6 +213,7 @@ Module {
                                     end: 58,
                                 },
                                 id: "a",
+                                parenthesized: false,
                             },
                         ),
                         Name(
@@ -209,6 +223,7 @@ Module {
                                     end: 61,
                                 },
                                 id: "b",
+                                parenthesized: false,
                             },
                         ),
                         Name(
@@ -218,6 +233,7 @@ Module {
                                     end: 64,
                                 },
                                 id: "c",
+                                parenthesized: false,
                             },
                         ),
                     ],
@@ -238,6 +254,7 @@ Module {
                                 end: 70,
                             },
                             id: "a",
+                            parenthesized: false,
                         },
                     ),
                     generators: [
@@ -253,6 +270,7 @@ Module {
                                         end: 76,
                                     },
                                     id: "a",
+                                    parenthesized: false,
                                 },
                             ),
                             iter: Call(
@@ -268,6 +286,7 @@ Module {
                                                 end: 85,
                                             },
                                             id: "range",
+                                            parenthesized: false,
                                         },
                                     ),
                                     args: [
@@ -307,6 +326,7 @@ Module {
                                 end: 94,
                             },
                             id: "a",
+                            parenthesized: false,
                         },
                     ),
                     generators: [
@@ -322,6 +342,7 @@ Module {
                                         end: 100,
                                     },
                                     id: "a",
+                                    parenthesized: false,
                                 },
                             ),
                             iter: Call(
@@ -337,6 +358,7 @@ Module {
                                                 end: 109,
                                             },
                                             id: "range",
+                                            parenthesized: false,
                                         },
                                     ),
                                     args: [
@@ -376,6 +398,7 @@ Module {
                                 end: 119,
                             },
                             id: "a",
+                            parenthesized: false,
                         },
                     ),
                     generators: [
@@ -391,6 +414,7 @@ Module {
                                         end: 125,
                                     },
                                     id: "a",
+                                    parenthesized: false,
                                 },
                             ),
                             iter: Call(
@@ -406,6 +430,7 @@ Module {
                                                 end: 134,
                                             },
                                             id: "range",
+                                            parenthesized: false,
                                         },
                                     ),
                                     args: [
@@ -445,6 +470,7 @@ Module {
                                 end: 143,
                             },
                             id: "a",
+                            parenthesized: false,
                         },
                     ),
                     generators: [
@@ -460,6 +486,7 @@ Module {
                                         end: 149,
                                     },
                                     id: "a",
+                                    parenthesized: false,
                                 },
                             ),
                             iter: Call(
@@ -475,6 +502,7 @@ Module {
                                                 end: 158,
                                             },
                                             id: "range",
+                                            parenthesized: false,
                                         },
                                     ),
                                     args: [
@@ -514,6 +542,7 @@ Module {
                                 end: 167,
                             },
                             id: "a",
+                            parenthesized: false,
                         },
                     ),
                     generators: [
@@ -529,6 +558,7 @@ Module {
                                         end: 173,
                                     },
                                     id: "a",
+                                    parenthesized: false,
                                 },
                             ),
                             iter: Call(
@@ -544,6 +574,7 @@ Module {
                                                 end: 182,
                                             },
                                             id: "range",
+                                            parenthesized: false,
                                         },
                                     ),
                                     args: [
@@ -577,6 +608,7 @@ Module {
                                         end: 192,
                                     },
                                     id: "b",
+                                    parenthesized: false,
                                 },
                             ),
                             iter: Call(
@@ -592,6 +624,7 @@ Module {
                                                 end: 201,
                                             },
                                             id: "range",
+                                            parenthesized: false,
                                         },
                                     ),
                                     args: [
@@ -631,6 +664,7 @@ Module {
                                 end: 210,
                             },
                             id: "a",
+                            parenthesized: false,
                         },
                     ),
                     generators: [
@@ -646,6 +680,7 @@ Module {
                                         end: 216,
                                     },
                                     id: "a",
+                                    parenthesized: false,
                                 },
                             ),
                             iter: Call(
@@ -661,6 +696,7 @@ Module {
                                                 end: 225,
                                             },
                                             id: "range",
+                                            parenthesized: false,
                                         },
                                     ),
                                     args: [
@@ -694,6 +730,7 @@ Module {
                                         end: 235,
                                     },
                                     id: "b",
+                                    parenthesized: false,
                                 },
                             ),
                             iter: Call(
@@ -709,6 +746,7 @@ Module {
                                                 end: 244,
                                             },
                                             id: "range",
+                                            parenthesized: false,
                                         },
                                     ),
                                     args: [
@@ -748,6 +786,7 @@ Module {
                                 end: 254,
                             },
                             id: "a",
+                            parenthesized: false,
                         },
                     ),
                     generators: [
@@ -763,6 +802,7 @@ Module {
                                         end: 260,
                                     },
                                     id: "a",
+                                    parenthesized: false,
                                 },
                             ),
                             iter: Call(
@@ -778,6 +818,7 @@ Module {
                                                 end: 269,
                                             },
                                             id: "range",
+                                            parenthesized: false,
                                         },
                                     ),
                                     args: [
@@ -811,6 +852,7 @@ Module {
                                         end: 279,
                                     },
                                     id: "b",
+                                    parenthesized: false,
                                 },
                             ),
                             iter: Call(
@@ -826,6 +868,7 @@ Module {
                                                 end: 288,
                                             },
                                             id: "range",
+                                            parenthesized: false,
                                         },
                                     ),
                                     args: [
@@ -872,6 +915,7 @@ Module {
                                             end: 304,
                                         },
                                         id: "a",
+                                        parenthesized: false,
                                     },
                                 ),
                                 Name(
@@ -881,6 +925,7 @@ Module {
                                             end: 306,
                                         },
                                         id: "b",
+                                        parenthesized: false,
                                     },
                                 ),
                             ],
@@ -899,6 +944,7 @@ Module {
                                         end: 313,
                                     },
                                     id: "a",
+                                    parenthesized: false,
                                 },
                             ),
                             iter: Call(
@@ -914,6 +960,7 @@ Module {
                                                 end: 322,
                                             },
                                             id: "range",
+                                            parenthesized: false,
                                         },
                                     ),
                                     args: [
@@ -947,6 +994,7 @@ Module {
                                         end: 332,
                                     },
                                     id: "b",
+                                    parenthesized: false,
                                 },
                             ),
                             iter: Call(
@@ -962,6 +1010,7 @@ Module {
                                                 end: 341,
                                             },
                                             id: "range",
+                                            parenthesized: false,
                                         },
                                     ),
                                     args: [

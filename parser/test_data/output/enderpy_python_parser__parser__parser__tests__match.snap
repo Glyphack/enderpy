@@ -21,6 +21,7 @@ Module {
                             end: 7,
                         },
                         id: "a",
+                        parenthesized: false,
                     },
                 ),
                 cases: [
@@ -74,6 +75,7 @@ Module {
                             end: 42,
                         },
                         id: "a",
+                        parenthesized: false,
                     },
                 ),
                 cases: [
@@ -154,6 +156,7 @@ Module {
                                     end: 81,
                                 },
                                 id: "a",
+                                parenthesized: false,
                             },
                         ),
                         attr: "b",
@@ -210,6 +213,7 @@ Module {
                             end: 118,
                         },
                         id: "a",
+                        parenthesized: false,
                     },
                 ),
                 cases: [
@@ -435,6 +439,7 @@ Module {
                             end: 291,
                         },
                         id: "a",
+                        parenthesized: false,
                     },
                 ),
                 cases: [
@@ -462,6 +467,7 @@ Module {
                                                     end: 301,
                                                 },
                                                 id: "a",
+                                                parenthesized: false,
                                             },
                                         ),
                                         attr: "b",
@@ -526,6 +532,7 @@ Module {
                             end: 353,
                         },
                         id: "a",
+                        parenthesized: false,
                     },
                 ),
                 cases: [
@@ -688,6 +695,7 @@ Module {
                             end: 461,
                         },
                         id: "x",
+                        parenthesized: false,
                     },
                 ),
                 cases: [
@@ -709,6 +717,7 @@ Module {
                                             end: 471,
                                         },
                                         id: "Point2D",
+                                        parenthesized: false,
                                     },
                                 ),
                                 patterns: [
@@ -781,6 +790,7 @@ Module {
                                             end: 508,
                                         },
                                         id: "Point3D",
+                                        parenthesized: false,
                                     },
                                 ),
                                 patterns: [],
@@ -872,6 +882,7 @@ Module {
                             end: 554,
                         },
                         id: "x",
+                        parenthesized: false,
                     },
                 ),
                 cases: [

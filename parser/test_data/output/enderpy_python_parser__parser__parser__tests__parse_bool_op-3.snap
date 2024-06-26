@@ -24,6 +24,7 @@ Module {
                                     end: 1,
                                 },
                                 id: "a",
+                                parenthesized: false,
                             },
                         ),
                         BoolOp(
@@ -41,6 +42,7 @@ Module {
                                                 end: 6,
                                             },
                                             id: "b",
+                                            parenthesized: false,
                                         },
                                     ),
                                     Name(
@@ -50,6 +52,7 @@ Module {
                                                 end: 11,
                                             },
                                             id: "c",
+                                            parenthesized: false,
                                         },
                                     ),
                                 ],

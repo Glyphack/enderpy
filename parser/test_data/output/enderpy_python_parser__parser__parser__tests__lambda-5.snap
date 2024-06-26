@@ -53,6 +53,7 @@ Module {
                                 end: 15,
                             },
                             id: "a",
+                            parenthesized: false,
                         },
                     ),
                 },

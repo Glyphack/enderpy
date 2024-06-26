@@ -21,6 +21,7 @@ Module {
                             end: 4,
                         },
                         id: "a",
+                        parenthesized: false,
                     },
                 ),
                 body: [
@@ -49,6 +50,7 @@ Module {
                             end: 20,
                         },
                         id: "a",
+                        parenthesized: false,
                     },
                 ),
                 body: [
@@ -77,6 +79,7 @@ Module {
                             end: 37,
                         },
                         id: "a",
+                        parenthesized: false,
                     },
                 ),
                 body: [
@@ -105,6 +108,7 @@ Module {
                             end: 49,
                         },
                         id: "a",
+                        parenthesized: false,
                     },
                 ),
                 body: [
@@ -147,6 +151,7 @@ Module {
                                     end: 70,
                                 },
                                 id: "a",
+                                parenthesized: false,
                             },
                         ),
                         ops: [
@@ -160,6 +165,7 @@ Module {
                                         end: 75,
                                     },
                                     id: "b",
+                                    parenthesized: false,
                                 },
                             ),
                         ],
@@ -197,6 +203,7 @@ Module {
                                     end: 99,
                                 },
                                 id: "a",
+                                parenthesized: false,
                             },
                         ),
                         ops: [
@@ -210,6 +217,7 @@ Module {
                                         end: 104,
                                     },
                                     id: "b",
+                                    parenthesized: false,
                                 },
                             ),
                         ],
@@ -245,6 +253,7 @@ Module {
                                                 end: 133,
                                             },
                                             id: "a",
+                                            parenthesized: false,
                                         },
                                     ),
                                     ops: [
@@ -258,6 +267,7 @@ Module {
                                                     end: 138,
                                                 },
                                                 id: "c",
+                                                parenthesized: false,
                                             },
                                         ),
                                     ],
@@ -298,6 +308,7 @@ Module {
                                     end: 166,
                                 },
                                 id: "a",
+                                parenthesized: false,
                             },
                         ),
                         ops: [
@@ -311,6 +322,7 @@ Module {
                                         end: 171,
                                     },
                                     id: "b",
+                                    parenthesized: false,
                                 },
                             ),
                         ],
@@ -346,6 +358,7 @@ Module {
                                                 end: 200,
                                             },
                                             id: "a",
+                                            parenthesized: false,
                                         },
                                     ),
                                     ops: [
@@ -359,6 +372,7 @@ Module {
                                                     end: 205,
                                                 },
                                                 id: "c",
+                                                parenthesized: false,
                                             },
                                         ),
                                     ],
@@ -402,6 +416,7 @@ Module {
                             end: 261,
                         },
                         id: "a",
+                        parenthesized: false,
                     },
                 ),
                 body: [
@@ -419,6 +434,7 @@ Module {
                                             end: 268,
                                         },
                                         id: "a",
+                                        parenthesized: false,
                                     },
                                 ),
                             ],
@@ -450,6 +466,7 @@ Module {
                             end: 277,
                         },
                         id: "a",
+                        parenthesized: false,
                     },
                 ),
                 body: [
@@ -467,6 +484,7 @@ Module {
                                             end: 284,
                                         },
                                         id: "b",
+                                        parenthesized: false,
                                     },
                                 ),
                             ],
@@ -504,6 +522,7 @@ Module {
                                     end: 297,
                                 },
                                 id: "self",
+                                parenthesized: false,
                             },
                         ),
                         attr: "adjust",
@@ -540,6 +559,7 @@ Module {
                                                         end: 332,
                                                     },
                                                     id: "print",
+                                                    parenthesized: false,
                                                 },
                                             ),
                                             args: [
@@ -575,6 +595,7 @@ Module {
                                                         end: 417,
                                                     },
                                                     id: "print",
+                                                    parenthesized: false,
                                                 },
                                             ),
                                             args: [
@@ -613,6 +634,7 @@ Module {
                                             end: 451,
                                         },
                                         id: "print",
+                                        parenthesized: false,
                                     },
                                 ),
                                 args: [

@@ -21,6 +21,7 @@ Module {
                             end: 5,
                         },
                         id: "a",
+                        parenthesized: false,
                     },
                 ),
                 iter: Name(
@@ -30,6 +31,7 @@ Module {
                             end: 10,
                         },
                         id: "b",
+                        parenthesized: false,
                     },
                 ),
                 body: [
@@ -58,6 +60,7 @@ Module {
                             end: 23,
                         },
                         id: "a",
+                        parenthesized: false,
                     },
                 ),
                 iter: Name(
@@ -67,6 +70,7 @@ Module {
                             end: 28,
                         },
                         id: "b",
+                        parenthesized: false,
                     },
                 ),
                 body: [
@@ -95,6 +99,7 @@ Module {
                             end: 45,
                         },
                         id: "a",
+                        parenthesized: false,
                     },
                 ),
                 iter: Call(
@@ -110,6 +115,7 @@ Module {
                                     end: 54,
                                 },
                                 id: "range",
+                                parenthesized: false,
                             },
                         ),
                         args: [
@@ -143,6 +149,7 @@ Module {
                                             end: 65,
                                         },
                                         id: "a",
+                                        parenthesized: false,
                                     },
                                 ),
                             ],
@@ -173,6 +180,7 @@ Module {
                                             end: 81,
                                         },
                                         id: "b",
+                                        parenthesized: false,
                                     },
                                 ),
                             ],
@@ -203,6 +211,7 @@ Module {
                             end: 92,
                         },
                         id: "a",
+                        parenthesized: false,
                     },
                 ),
                 iter: Tuple(
@@ -225,6 +234,7 @@ Module {
                                                 end: 101,
                                             },
                                             id: "range",
+                                            parenthesized: false,
                                         },
                                     ),
                                     args: [
@@ -256,6 +266,7 @@ Module {
                                                 end: 112,
                                             },
                                             id: "range",
+                                            parenthesized: false,
                                         },
                                     ),
                                     args: [
@@ -292,6 +303,7 @@ Module {
                                             end: 123,
                                         },
                                         id: "a",
+                                        parenthesized: false,
                                     },
                                 ),
                             ],
@@ -323,6 +335,7 @@ Module {
                             end: 140,
                         },
                         id: "a",
+                        parenthesized: false,
                     },
                 ),
                 iter: Name(
@@ -332,6 +345,7 @@ Module {
                             end: 145,
                         },
                         id: "b",
+                        parenthesized: false,
                     },
                 ),
                 body: [
@@ -360,6 +374,7 @@ Module {
                             end: 164,
                         },
                         id: "a",
+                        parenthesized: false,
                     },
                 ),
                 iter: Name(
@@ -369,6 +384,7 @@ Module {
                             end: 169,
                         },
                         id: "b",
+                        parenthesized: false,
                     },
                 ),
                 body: [
