@@ -1,18 +1,18 @@
 ---
 source: parser/src/parser/parser.rs
-description: "for a in b: pass\n\nfor a in b:\n    pass\n\nfor a in range(10):\n    a = 1\nelse:\n    b = 1\n\nfor a in range(10), range(10):\n    a = 1\n\nasync for a in b: pass\n\nasync for a in b:\n    pass\n"
+description: "for a in b:\n    pass\n\nfor a in b:\n    pass\n\nfor a in range(10):\n    a = 1\nelse:\n    b = 1\n\nfor a in range(10), range(10):\n    a = 1\n\nasync for a in b:\n    pass\n\nasync for a in b:\n    pass\n\nfor a in [1, 2, 3]:\n    pass\n"
 ---
 Module {
     node: Node {
         start: 0,
-        end: 180,
+        end: 218,
     },
     body: [
         ForStatement(
             For {
                 node: Node {
                     start: 0,
-                    end: 17,
+                    end: 22,
                 },
                 target: Name(
                     Name {
@@ -38,8 +38,8 @@ Module {
                     Pass(
                         Pass {
                             node: Node {
-                                start: 12,
-                                end: 16,
+                                start: 16,
+                                end: 20,
                             },
                         },
                     ),
@@ -50,14 +50,14 @@ Module {
         ForStatement(
             For {
                 node: Node {
-                    start: 18,
-                    end: 40,
+                    start: 22,
+                    end: 44,
                 },
                 target: Name(
                     Name {
                         node: Node {
-                            start: 22,
-                            end: 23,
+                            start: 26,
+                            end: 27,
                         },
                         id: "a",
                         parenthesized: false,
@@ -66,8 +66,8 @@ Module {
                 iter: Name(
                     Name {
                         node: Node {
-                            start: 27,
-                            end: 28,
+                            start: 31,
+                            end: 32,
                         },
                         id: "b",
                         parenthesized: false,
@@ -77,8 +77,8 @@ Module {
                     Pass(
                         Pass {
                             node: Node {
-                                start: 34,
-                                end: 38,
+                                start: 38,
+                                end: 42,
                             },
                         },
                     ),
@@ -89,14 +89,14 @@ Module {
         ForStatement(
             For {
                 node: Node {
-                    start: 40,
-                    end: 87,
+                    start: 44,
+                    end: 91,
                 },
                 target: Name(
                     Name {
                         node: Node {
-                            start: 44,
-                            end: 45,
+                            start: 48,
+                            end: 49,
                         },
                         id: "a",
                         parenthesized: false,
@@ -105,14 +105,14 @@ Module {
                 iter: Call(
                     Call {
                         node: Node {
-                            start: 49,
-                            end: 58,
+                            start: 53,
+                            end: 62,
                         },
                         func: Name(
                             Name {
                                 node: Node {
-                                    start: 49,
-                                    end: 54,
+                                    start: 53,
+                                    end: 58,
                                 },
                                 id: "range",
                                 parenthesized: false,
@@ -122,8 +122,8 @@ Module {
                             Constant(
                                 Constant {
                                     node: Node {
-                                        start: 55,
-                                        end: 57,
+                                        start: 59,
+                                        end: 61,
                                     },
                                     value: 10,
                                 },
@@ -138,15 +138,15 @@ Module {
                     AssignStatement(
                         Assign {
                             node: Node {
-                                start: 64,
-                                end: 69,
+                                start: 68,
+                                end: 73,
                             },
                             targets: [
                                 Name(
                                     Name {
                                         node: Node {
-                                            start: 64,
-                                            end: 65,
+                                            start: 68,
+                                            end: 69,
                                         },
                                         id: "a",
                                         parenthesized: false,
@@ -156,8 +156,8 @@ Module {
                             value: Constant(
                                 Constant {
                                     node: Node {
-                                        start: 68,
-                                        end: 69,
+                                        start: 72,
+                                        end: 73,
                                     },
                                     value: 1,
                                 },
@@ -169,15 +169,15 @@ Module {
                     AssignStatement(
                         Assign {
                             node: Node {
-                                start: 80,
-                                end: 85,
+                                start: 84,
+                                end: 89,
                             },
                             targets: [
                                 Name(
                                     Name {
                                         node: Node {
-                                            start: 80,
-                                            end: 81,
+                                            start: 84,
+                                            end: 85,
                                         },
                                         id: "b",
                                         parenthesized: false,
@@ -187,8 +187,8 @@ Module {
                             value: Constant(
                                 Constant {
                                     node: Node {
-                                        start: 84,
-                                        end: 85,
+                                        start: 88,
+                                        end: 89,
                                     },
                                     value: 1,
                                 },
@@ -201,14 +201,14 @@ Module {
         ForStatement(
             For {
                 node: Node {
-                    start: 87,
-                    end: 129,
+                    start: 91,
+                    end: 133,
                 },
                 target: Name(
                     Name {
                         node: Node {
-                            start: 91,
-                            end: 92,
+                            start: 95,
+                            end: 96,
                         },
                         id: "a",
                         parenthesized: false,
@@ -217,21 +217,21 @@ Module {
                 iter: Tuple(
                     Tuple {
                         node: Node {
-                            start: 87,
-                            end: 116,
+                            start: 91,
+                            end: 120,
                         },
                         elements: [
                             Call(
                                 Call {
                                     node: Node {
-                                        start: 96,
-                                        end: 105,
+                                        start: 100,
+                                        end: 109,
                                     },
                                     func: Name(
                                         Name {
                                             node: Node {
-                                                start: 96,
-                                                end: 101,
+                                                start: 100,
+                                                end: 105,
                                             },
                                             id: "range",
                                             parenthesized: false,
@@ -241,8 +241,8 @@ Module {
                                         Constant(
                                             Constant {
                                                 node: Node {
-                                                    start: 102,
-                                                    end: 104,
+                                                    start: 106,
+                                                    end: 108,
                                                 },
                                                 value: 10,
                                             },
@@ -256,14 +256,14 @@ Module {
                             Call(
                                 Call {
                                     node: Node {
-                                        start: 107,
-                                        end: 116,
+                                        start: 111,
+                                        end: 120,
                                     },
                                     func: Name(
                                         Name {
                                             node: Node {
-                                                start: 107,
-                                                end: 112,
+                                                start: 111,
+                                                end: 116,
                                             },
                                             id: "range",
                                             parenthesized: false,
@@ -273,8 +273,8 @@ Module {
                                         Constant(
                                             Constant {
                                                 node: Node {
-                                                    start: 113,
-                                                    end: 115,
+                                                    start: 117,
+                                                    end: 119,
                                                 },
                                                 value: 10,
                                             },
@@ -292,15 +292,15 @@ Module {
                     AssignStatement(
                         Assign {
                             node: Node {
-                                start: 122,
-                                end: 127,
+                                start: 126,
+                                end: 131,
                             },
                             targets: [
                                 Name(
                                     Name {
                                         node: Node {
-                                            start: 122,
-                                            end: 123,
+                                            start: 126,
+                                            end: 127,
                                         },
                                         id: "a",
                                         parenthesized: false,
@@ -310,8 +310,8 @@ Module {
                             value: Constant(
                                 Constant {
                                     node: Node {
-                                        start: 126,
-                                        end: 127,
+                                        start: 130,
+                                        end: 131,
                                     },
                                     value: 1,
                                 },
@@ -325,14 +325,14 @@ Module {
         AsyncForStatement(
             AsyncFor {
                 node: Node {
-                    start: 129,
-                    end: 152,
+                    start: 133,
+                    end: 161,
                 },
                 target: Name(
                     Name {
                         node: Node {
-                            start: 139,
-                            end: 140,
+                            start: 143,
+                            end: 144,
                         },
                         id: "a",
                         parenthesized: false,
@@ -341,8 +341,8 @@ Module {
                 iter: Name(
                     Name {
                         node: Node {
-                            start: 144,
-                            end: 145,
+                            start: 148,
+                            end: 149,
                         },
                         id: "b",
                         parenthesized: false,
@@ -352,8 +352,8 @@ Module {
                     Pass(
                         Pass {
                             node: Node {
-                                start: 147,
-                                end: 151,
+                                start: 155,
+                                end: 159,
                             },
                         },
                     ),
@@ -364,14 +364,14 @@ Module {
         AsyncForStatement(
             AsyncFor {
                 node: Node {
-                    start: 153,
-                    end: 180,
+                    start: 161,
+                    end: 189,
                 },
                 target: Name(
                     Name {
                         node: Node {
-                            start: 163,
-                            end: 164,
+                            start: 171,
+                            end: 172,
                         },
                         id: "a",
                         parenthesized: false,
@@ -380,8 +380,8 @@ Module {
                 iter: Name(
                     Name {
                         node: Node {
-                            start: 168,
-                            end: 169,
+                            start: 176,
+                            end: 177,
                         },
                         id: "b",
                         parenthesized: false,
@@ -391,8 +391,73 @@ Module {
                     Pass(
                         Pass {
                             node: Node {
-                                start: 175,
-                                end: 179,
+                                start: 183,
+                                end: 187,
+                            },
+                        },
+                    ),
+                ],
+                orelse: [],
+            },
+        ),
+        ForStatement(
+            For {
+                node: Node {
+                    start: 189,
+                    end: 218,
+                },
+                target: Name(
+                    Name {
+                        node: Node {
+                            start: 193,
+                            end: 194,
+                        },
+                        id: "a",
+                    },
+                ),
+                iter: List(
+                    List {
+                        node: Node {
+                            start: 198,
+                            end: 207,
+                        },
+                        elements: [
+                            Constant(
+                                Constant {
+                                    node: Node {
+                                        start: 199,
+                                        end: 200,
+                                    },
+                                    value: 1,
+                                },
+                            ),
+                            Constant(
+                                Constant {
+                                    node: Node {
+                                        start: 202,
+                                        end: 203,
+                                    },
+                                    value: 2,
+                                },
+                            ),
+                            Constant(
+                                Constant {
+                                    node: Node {
+                                        start: 205,
+                                        end: 206,
+                                    },
+                                    value: 3,
+                                },
+                            ),
+                        ],
+                    },
+                ),
+                body: [
+                    Pass(
+                        Pass {
+                            node: Node {
+                                start: 213,
+                                end: 217,
                             },
                         },
                     ),

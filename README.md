@@ -47,7 +47,7 @@ The above test should run without any issues.
 
 Then use the [editor client](#open-in-editor). Currently, supported editors are:
 
-- [ ] neovim
+- [x] neovim
 - [x] vscode
 
 ## Contributing
@@ -64,12 +64,32 @@ But it's always better to consult the code to see what exactly is going on.
 
 ### Open In Editor
 
+#### vscode
+
 1. Open vscode
 2. Navigate to Run and Debug tab
 3. Select "Launch Client" and run the app
 
 By default the extension uses `enderpy-lsp` command to run the language server.
 To change it set the `SERVER_PATH` env variable to custom executable.
+
+#### neovim
+
+Add the following snippet to your `init.lua` file.
+
+```lua
+-- Replace this ↓ with the actual path to your copy of the repository.
+local enderpy_path = "/path/to/enderpy"
+vim.api.nvim_create_autocmd("FileType", {
+  pattern = "python",
+  callback = function()
+    vim.lsp.start({
+      name = "enderpy",
+      cmd = {enderpy_path .. "/target/debug/enderpy-lsp"},
+    })
+  end,
+})
+```
 
 ### Core Concepts
 

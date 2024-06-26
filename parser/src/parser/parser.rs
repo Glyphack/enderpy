@@ -1,4 +1,5 @@
 use core::panic;
+
 /// Some functions in this file have misleading names.
 /// For example star expressions are defined slightly differently in python grammar and references.
 /// So there might be duplicates of both. Try to migrate the wrong names to how they are called in:
@@ -418,8 +419,6 @@ impl<'a> Parser<'a> {
         self.bump(Kind::For);
         let target = self.parse_target_list()?;
         self.expect(Kind::In)?;
-        // TODO: I think this would not work for:
-        // for a in [1, 2, 3]:
         let iter_list = self.parse_starred_list(Kind::Colon)?;
         let iter = match iter_list.len() {
             0 => {
@@ -854,7 +853,6 @@ impl<'a> Parser<'a> {
             Kind::LeftBracket => self.parse_mapping_pattern(),
             Kind::Identifier => {
                 if matches!(self.peek_kind(), Ok(Kind::Dot)) {
-                    // TODO: use a way to reuse node from value expression
                     let node = self.start_node();
                     let value = self.parse_attr()?;
                     if self.at(Kind::LeftParen) {
@@ -1767,7 +1765,6 @@ impl<'a> Parser<'a> {
         let mut targets = vec![];
         let target = match self.cur_kind() {
             Kind::Identifier => match self.peek_kind() {
-                // TODO: atom cannot be all the atoms like string, number
                 Ok(Kind::LeftBrace) => {
                     let atom = self.parse_atom()?;
                     self.parse_subscript(node, atom)?
@@ -2481,9 +2478,8 @@ impl<'a> Parser<'a> {
             return tuple_or_named_expr;
         } else if self.at(Kind::Identifier) {
             return self.parse_identifier();
-            // TODO: is atom is duplicate check. Maybe inline the function
-            // panic when it cannot be mapped to atom
-        } else if self.cur_kind().is_atom() {
+        // Try to map to one of atoms like: number, string, ...
+        } else {
             // value must be cloned to be assigned to the node
             let atom_is_string = self.cur_kind().is_string();
             let start = self.start_node();
@@ -2848,9 +2844,6 @@ impl<'a> Parser<'a> {
             }
 
             return Ok(expr);
-        } else {
-            // return Err(self.unepxted_token(node, self.cur_kind()).err().unwrap());
-            panic!();
         }
     }
 
@@ -3448,24 +3441,19 @@ impl<'a> Parser<'a> {
             self.parse_expressions()?
         };
 
+        let mut conversion = -1;
         if self.eat(Kind::Assign) {
-            // Conversion also 114
-            todo!("must add the expression string to constants");
+            conversion = 114;
         }
-
-        let conversion = if self.at(Kind::Identifier) {
-            let conversion = match self.cur_token().value.to_string().as_str() {
+        if self.at(Kind::Identifier) {
+            conversion = match self.cur_token.value.take_string().as_str() {
                 "!s" => 115,
                 "!r" => 114,
                 "!a" => 97,
                 _ => panic!("should not happen"),
             };
             self.bump_any();
-            conversion
-        } else {
-            -1
-        };
-
+        }
         let format_spec_node = self.start_node();
         let format_spec = if self.eat(Kind::Colon) {
             let mut specs = vec![];
@@ -3878,8 +3866,6 @@ mod tests {
             "b'a' b'b'",
             "'a'   'b'",
             "r'a' 'b'",
-            // TODO(parser): enable after error handling
-            // "b'a' 'b'",
             "('a'
             'b')",
             "('a'

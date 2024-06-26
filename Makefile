@@ -1,3 +1,5 @@
+RUSTFLAGS="-Dwarnings"
+
 .PHONY: all
 all: test check format-check lint
 

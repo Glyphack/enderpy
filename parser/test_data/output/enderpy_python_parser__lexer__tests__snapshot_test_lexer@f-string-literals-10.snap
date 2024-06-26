@@ -1,0 +1,14 @@
+---
+source: parser/src/lexer/mod.rs
+description: "f'hello_{f'''{a}'''}'"
+---
+0,2: FStringStart   (Str("f'"))
+2,8: FstringMiddle   (Str("hello_"))
+8,9: {   (None)
+9,13: FStringStart   (Str("f'''"))
+13,14: {   (None)
+14,15: Identifier   (Str("a"))
+15,16: }   (None)
+16,19: FStringEnd   (Str("'''"))
+19,20: }   (None)
+20,21: FStringEnd   (Str("'"))
