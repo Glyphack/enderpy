@@ -383,6 +383,7 @@ Module {
                                                     end: 177,
                                                 },
                                                 id: "a",
+                                                parenthesized: false,
                                             },
                                         ),
                                         right: Name(
@@ -392,6 +393,7 @@ Module {
                                                     end: 179,
                                                 },
                                                 id: "b",
+                                                parenthesized: false,
                                             },
                                         ),
                                     },
@@ -449,6 +451,7 @@ Module {
                                                     end: 198,
                                                 },
                                                 id: "c",
+                                                parenthesized: false,
                                             },
                                         ),
                                         right: Name(
@@ -458,6 +461,7 @@ Module {
                                                     end: 200,
                                                 },
                                                 id: "d",
+                                                parenthesized: false,
                                             },
                                         ),
                                     },

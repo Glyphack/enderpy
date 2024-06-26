@@ -413,6 +413,7 @@ Module {
                             end: 194,
                         },
                         id: "a",
+                        parenthesized: false,
                     },
                 ),
                 iter: List(
