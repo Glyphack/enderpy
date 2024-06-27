@@ -13,3 +13,8 @@ f: tuple[int, int] = e
 g: tuple[int,
          int] = 1, 2
 
+(h): int = 1
+
+(
+    i
+): int = 1

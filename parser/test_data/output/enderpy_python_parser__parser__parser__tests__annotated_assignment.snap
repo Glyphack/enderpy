@@ -1,11 +1,11 @@
 ---
 source: parser/src/parser/parser.rs
-description: "a: int = 1\n\nb: tuple[int, int] = 1, 2\n\nc: tuple[str, int] = \"1\", 2, \n\nd: tuple[int, int] = b\n\ne: tuple[int, int]\n\nf: tuple[int, int] = e\n\ng: tuple[int,\n         int] = 1, 2\n\n"
+description: "a: int = 1\n\nb: tuple[int, int] = 1, 2\n\nc: tuple[str, int] = \"1\", 2, \n\nd: tuple[int, int] = b\n\ne: tuple[int, int]\n\nf: tuple[int, int] = e\n\ng: tuple[int,\n         int] = 1, 2\n\n(h): int = 1\n\n(\n    i\n): int = 1\n"
 ---
 Module {
     node: Node {
         start: 0,
-        end: 174,
+        end: 207,
     },
     body: [
         AnnAssignStatement(
@@ -535,6 +535,82 @@ Module {
                     ),
                 ),
                 simple: true,
+            },
+        ),
+        AnnAssignStatement(
+            AnnAssign {
+                node: Node {
+                    start: 174,
+                    end: 186,
+                },
+                target: Name(
+                    Name {
+                        node: Node {
+                            start: 175,
+                            end: 176,
+                        },
+                        id: "h",
+                    },
+                ),
+                annotation: Name(
+                    Name {
+                        node: Node {
+                            start: 179,
+                            end: 182,
+                        },
+                        id: "int",
+                    },
+                ),
+                value: Some(
+                    Constant(
+                        Constant {
+                            node: Node {
+                                start: 185,
+                                end: 186,
+                            },
+                            value: 1,
+                        },
+                    ),
+                ),
+                simple: false,
+            },
+        ),
+        AnnAssignStatement(
+            AnnAssign {
+                node: Node {
+                    start: 188,
+                    end: 206,
+                },
+                target: Name(
+                    Name {
+                        node: Node {
+                            start: 194,
+                            end: 196,
+                        },
+                        id: "i",
+                    },
+                ),
+                annotation: Name(
+                    Name {
+                        node: Node {
+                            start: 199,
+                            end: 202,
+                        },
+                        id: "int",
+                    },
+                ),
+                value: Some(
+                    Constant(
+                        Constant {
+                            node: Node {
+                                start: 205,
+                                end: 206,
+                            },
+                            value: 1,
+                        },
+                    ),
+                ),
+                simple: false,
             },
         ),
     ],

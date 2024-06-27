@@ -971,6 +971,7 @@ impl<'a> Parser<'a> {
         let mut expr = Ok(Expression::Name(Box::new(Name {
             node: self.finish_node(node),
             id,
+            parenthesized: false,
         })));
         self.expect(Kind::Identifier);
         while self.eat(Kind::Dot) {
@@ -1268,13 +1269,17 @@ impl<'a> Parser<'a> {
         } else {
             None
         };
+        let simple = if let Expression::Name(name) = &lhs {
+            !name.parenthesized
+        } else {
+            false
+        };
         Ok(Statement::AnnAssignStatement(Box::new(AnnAssign {
             node: self.finish_node(start),
             target: lhs,
             annotation,
             value,
-            // TODO: implement simple
-            simple: true,
+            simple,
         })))
     }
 
@@ -1597,6 +1602,7 @@ impl<'a> Parser<'a> {
                     target: Expression::Name(Box::new(Name {
                         node: identifier_node,
                         id: identifier,
+                        parenthesized: false,
                     })),
                     value,
                 })));
@@ -1604,6 +1610,7 @@ impl<'a> Parser<'a> {
             return Ok(Expression::Name(Box::new(Name {
                 node: identifier_node,
                 id: identifier,
+                parenthesized: false,
             })));
         }
 
@@ -1775,6 +1782,7 @@ impl<'a> Parser<'a> {
                     return Ok(Expression::Name(Box::new(Name {
                         node: identifier_node,
                         id: identifier,
+                        parenthesized: false,
                     })));
                 }
             },
@@ -2482,6 +2490,7 @@ impl<'a> Parser<'a> {
                     Expression::Name(Box::new(Name {
                         node: self.finish_node(start),
                         id: val,
+                        parenthesized: false,
                     }))
                 }
                 Kind::Integer => {
@@ -2654,6 +2663,7 @@ impl<'a> Parser<'a> {
                                 Expression::Name(Box::new(Name {
                                     node: self.finish_node(start),
                                     id: val,
+                                    parenthesized: false,
                                 }))
                             }
                             Kind::Integer => {
@@ -2844,6 +2854,7 @@ impl<'a> Parser<'a> {
         Ok(Expression::Name(Box::new(Name {
             node: self.finish_node(node),
             id: value,
+            parenthesized: false,
         })))
     }
 
@@ -2927,7 +2938,16 @@ impl<'a> Parser<'a> {
             seen_comma = true;
         }
         if elements.len() == 1 && !seen_comma {
-            return Ok(elements.pop().unwrap());
+            let expr = elements.pop().unwrap();
+            if let Expression::Name(name) = expr {
+                return Ok(Expression::Name(Box::new(Name {
+                    node: name.node,
+                    id: name.id,
+                    parenthesized: true,
+                })));
+            } else {
+                return Ok(expr);
+            }
         }
         Ok(Expression::Tuple(Box::new(Tuple {
             node: self.finish_node(node),
