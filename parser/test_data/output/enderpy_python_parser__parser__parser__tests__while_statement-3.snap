@@ -21,7 +21,6 @@ Module {
                             end: 7,
                         },
                         id: "a",
-                        parenthesized: false,
                     },
                 ),
                 body: [
@@ -39,7 +38,6 @@ Module {
                                             end: 18,
                                         },
                                         id: "a",
-                                        parenthesized: false,
                                     },
                                 ),
                             ],
@@ -70,7 +68,6 @@ Module {
                                             end: 38,
                                         },
                                         id: "b",
-                                        parenthesized: false,
                                     },
                                 ),
                             ],

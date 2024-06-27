@@ -32,7 +32,6 @@ Module {
                                                 end: 1,
                                             },
                                             id: "a",
-                                            parenthesized: false,
                                         },
                                     ),
                                     Name(
@@ -42,7 +41,6 @@ Module {
                                                 end: 7,
                                             },
                                             id: "b",
-                                            parenthesized: false,
                                         },
                                     ),
                                 ],
@@ -55,7 +53,6 @@ Module {
                                     end: 12,
                                 },
                                 id: "c",
-                                parenthesized: false,
                             },
                         ),
                     ],

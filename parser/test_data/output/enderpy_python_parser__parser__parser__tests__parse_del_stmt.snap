@@ -22,7 +22,6 @@ Module {
                                 end: 5,
                             },
                             id: "a",
-                            parenthesized: false,
                         },
                     ),
                 ],

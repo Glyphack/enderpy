@@ -35,7 +35,6 @@ Module {
                                 end: 9,
                             },
                             id: "a",
-                            parenthesized: false,
                         },
                     ),
                 },

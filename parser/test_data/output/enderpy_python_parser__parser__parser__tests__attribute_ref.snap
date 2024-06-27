@@ -22,7 +22,6 @@ Module {
                                 end: 1,
                             },
                             id: "a",
-                            parenthesized: false,
                         },
                     ),
                     attr: "b",

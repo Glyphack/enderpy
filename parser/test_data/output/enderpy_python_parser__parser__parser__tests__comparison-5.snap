@@ -22,7 +22,6 @@ Module {
                                 end: 1,
                             },
                             id: "a",
-                            parenthesized: false,
                         },
                     ),
                     ops: [
@@ -36,7 +35,6 @@ Module {
                                     end: 6,
                                 },
                                 id: "b",
-                                parenthesized: false,
                             },
                         ),
                     ],

@@ -22,7 +22,6 @@ Module {
                                 end: 2,
                             },
                             id: "a",
-                            parenthesized: false,
                         },
                     ),
                     generators: [
@@ -38,7 +37,6 @@ Module {
                                         end: 8,
                                     },
                                     id: "a",
-                                    parenthesized: false,
                                 },
                             ),
                             iter: Name(
@@ -48,7 +46,6 @@ Module {
                                         end: 13,
                                     },
                                     id: "b",
-                                    parenthesized: false,
                                 },
                             ),
                             ifs: [],
@@ -72,7 +69,6 @@ Module {
                                 end: 18,
                             },
                             id: "a",
-                            parenthesized: false,
                         },
                     ),
                     generators: [
@@ -88,7 +84,6 @@ Module {
                                         end: 24,
                                     },
                                     id: "a",
-                                    parenthesized: false,
                                 },
                             ),
                             iter: Name(
@@ -98,7 +93,6 @@ Module {
                                         end: 29,
                                     },
                                     id: "b",
-                                    parenthesized: false,
                                 },
                             ),
                             ifs: [
@@ -109,7 +103,6 @@ Module {
                                             end: 34,
                                         },
                                         id: "c",
-                                        parenthesized: false,
                                     },
                                 ),
                             ],
@@ -133,7 +126,6 @@ Module {
                                 end: 39,
                             },
                             id: "a",
-                            parenthesized: false,
                         },
                     ),
                     generators: [
@@ -149,7 +141,6 @@ Module {
                                         end: 45,
                                     },
                                     id: "a",
-                                    parenthesized: false,
                                 },
                             ),
                             iter: Name(
@@ -159,7 +150,6 @@ Module {
                                         end: 50,
                                     },
                                     id: "b",
-                                    parenthesized: false,
                                 },
                             ),
                             ifs: [
@@ -170,7 +160,6 @@ Module {
                                             end: 55,
                                         },
                                         id: "c",
-                                        parenthesized: false,
                                     },
                                 ),
                                 Name(
@@ -180,7 +169,6 @@ Module {
                                             end: 60,
                                         },
                                         id: "d",
-                                        parenthesized: false,
                                     },
                                 ),
                             ],
@@ -204,7 +192,6 @@ Module {
                                 end: 65,
                             },
                             id: "a",
-                            parenthesized: false,
                         },
                     ),
                     generators: [
@@ -220,7 +207,6 @@ Module {
                                         end: 71,
                                     },
                                     id: "a",
-                                    parenthesized: false,
                                 },
                             ),
                             iter: Name(
@@ -230,7 +216,6 @@ Module {
                                         end: 76,
                                     },
                                     id: "b",
-                                    parenthesized: false,
                                 },
                             ),
                             ifs: [],
@@ -248,7 +233,6 @@ Module {
                                         end: 82,
                                     },
                                     id: "c",
-                                    parenthesized: false,
                                 },
                             ),
                             iter: Name(
@@ -258,7 +242,6 @@ Module {
                                         end: 87,
                                     },
                                     id: "d",
-                                    parenthesized: false,
                                 },
                             ),
                             ifs: [],
@@ -288,7 +271,6 @@ Module {
                                         end: 94,
                                     },
                                     id: "ord",
-                                    parenthesized: false,
                                 },
                             ),
                             args: [
@@ -299,7 +281,6 @@ Module {
                                             end: 96,
                                         },
                                         id: "c",
-                                        parenthesized: false,
                                     },
                                 ),
                             ],
@@ -321,7 +302,6 @@ Module {
                                         end: 106,
                                     },
                                     id: "line",
-                                    parenthesized: false,
                                 },
                             ),
                             iter: Name(
@@ -331,7 +311,6 @@ Module {
                                         end: 114,
                                     },
                                     id: "file",
-                                    parenthesized: false,
                                 },
                             ),
                             ifs: [],
@@ -349,7 +328,6 @@ Module {
                                         end: 120,
                                     },
                                     id: "c",
-                                    parenthesized: false,
                                 },
                             ),
                             iter: Name(
@@ -359,7 +337,6 @@ Module {
                                         end: 128,
                                     },
                                     id: "line",
-                                    parenthesized: false,
                                 },
                             ),
                             ifs: [],
@@ -390,7 +367,6 @@ Module {
                                         end: 133,
                                     },
                                     id: "x",
-                                    parenthesized: false,
                                 },
                             ),
                             right: Name(
@@ -400,7 +376,6 @@ Module {
                                         end: 135,
                                     },
                                     id: "y",
-                                    parenthesized: false,
                                 },
                             ),
                         },
@@ -418,7 +393,6 @@ Module {
                                         end: 141,
                                     },
                                     id: "x",
-                                    parenthesized: false,
                                 },
                             ),
                             iter: Call(
@@ -434,7 +408,6 @@ Module {
                                                 end: 150,
                                             },
                                             id: "range",
-                                            parenthesized: false,
                                         },
                                     ),
                                     args: [
@@ -468,7 +441,6 @@ Module {
                                         end: 160,
                                     },
                                     id: "y",
-                                    parenthesized: false,
                                 },
                             ),
                             iter: Call(
@@ -484,7 +456,6 @@ Module {
                                                 end: 169,
                                             },
                                             id: "range",
-                                            parenthesized: false,
                                         },
                                     ),
                                     args: [
@@ -524,7 +495,6 @@ Module {
                                                             end: 178,
                                                         },
                                                         id: "x",
-                                                        parenthesized: false,
                                                     },
                                                 ),
                                                 right: Name(
@@ -534,7 +504,6 @@ Module {
                                                             end: 180,
                                                         },
                                                         id: "y",
-                                                        parenthesized: false,
                                                     },
                                                 ),
                                             },
@@ -576,7 +545,6 @@ Module {
                                 end: 211,
                             },
                             id: "has_explicit_annotation",
-                            parenthesized: false,
                         },
                     ),
                 ],
@@ -601,7 +569,6 @@ Module {
                                                 end: 224,
                                             },
                                             id: "isinstance",
-                                            parenthesized: false,
                                         },
                                     ),
                                     args: [
@@ -618,7 +585,6 @@ Module {
                                                             end: 229,
                                                         },
                                                         id: "fdef",
-                                                        parenthesized: false,
                                                     },
                                                 ),
                                                 attr: "type",
@@ -631,7 +597,6 @@ Module {
                                                     end: 248,
                                                 },
                                                 id: "CallableType",
-                                                parenthesized: false,
                                             },
                                         ),
                                     ],
@@ -653,7 +618,6 @@ Module {
                                                 end: 257,
                                             },
                                             id: "any",
-                                            parenthesized: false,
                                         },
                                     ),
                                     args: [
@@ -683,7 +647,6 @@ Module {
                                                                             end: 285,
                                                                         },
                                                                         id: "is_unannotated_any",
-                                                                        parenthesized: false,
                                                                     },
                                                                 ),
                                                                 args: [
@@ -694,7 +657,6 @@ Module {
                                                                                 end: 287,
                                                                             },
                                                                             id: "t",
-                                                                            parenthesized: false,
                                                                         },
                                                                     ),
                                                                 ],
@@ -718,7 +680,6 @@ Module {
                                                                     end: 294,
                                                                 },
                                                                 id: "t",
-                                                                parenthesized: false,
                                                             },
                                                         ),
                                                         iter: BinOp(
@@ -747,7 +708,6 @@ Module {
                                                                                             end: 302,
                                                                                         },
                                                                                         id: "fdef",
-                                                                                        parenthesized: false,
                                                                                     },
                                                                                 ),
                                                                                 attr: "type",
@@ -782,7 +742,6 @@ Module {
                                                                                                         end: 325,
                                                                                                     },
                                                                                                     id: "fdef",
-                                                                                                    parenthesized: false,
                                                                                                 },
                                                                                             ),
                                                                                             attr: "type",

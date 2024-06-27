@@ -44,7 +44,6 @@ Module {
                                 end: 11,
                             },
                             id: "a",
-                            parenthesized: false,
                         },
                     ),
                 },

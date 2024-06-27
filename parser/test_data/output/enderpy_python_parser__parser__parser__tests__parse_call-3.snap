@@ -22,7 +22,6 @@ Module {
                                 end: 1,
                             },
                             id: "a",
-                            parenthesized: false,
                         },
                     ),
                     args: [
@@ -33,7 +32,6 @@ Module {
                                     end: 3,
                                 },
                                 id: "b",
-                                parenthesized: false,
                             },
                         ),
                         Name(
@@ -43,7 +41,6 @@ Module {
                                     end: 6,
                                 },
                                 id: "c",
-                                parenthesized: false,
                             },
                         ),
                     ],
