@@ -18,9 +18,9 @@ use crate::{
 };
 
 #[allow(unused)]
-pub struct SemanticAnalyzer {
+pub struct SemanticAnalyzer<'a> {
     pub symbol_table: SymbolTable,
-    file: EnderpyFile,
+    file: EnderpyFile<'a>,
     /// Map of module name to import result
     /// The imports inside the file are resolved by this map and
     /// no other imports are resolved
@@ -36,8 +36,11 @@ pub struct SemanticAnalyzer {
 }
 
 #[allow(unused)]
-impl SemanticAnalyzer {
-    pub fn new(file: EnderpyFile, imports: HashMap<ImportModuleDescriptor, ImportResult>) -> Self {
+impl<'a> SemanticAnalyzer<'a> {
+    pub fn new(
+        file: EnderpyFile<'a>,
+        imports: HashMap<ImportModuleDescriptor, ImportResult>,
+    ) -> Self {
         let symbols = SymbolTable::new(&file.path);
         let is_pyi = file.path().ends_with(".pyi");
         SemanticAnalyzer {
@@ -263,7 +266,7 @@ impl SemanticAnalyzer {
     }
 }
 
-impl TraversalVisitor for SemanticAnalyzer {
+impl<'a> TraversalVisitor for SemanticAnalyzer<'a> {
     fn visit_stmt(&mut self, s: &parser::ast::Statement) {
         match s {
             parser::ast::Statement::ExpressionStatement(e) => self.visit_expr(e),
