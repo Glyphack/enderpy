@@ -1,13 +1,15 @@
 use core::panic;
 use std::path::Path;
+use std::sync::atomic::AtomicUsize;
 use std::{collections::HashMap, path::PathBuf};
 
+use dashmap::DashMap;
 use enderpy_python_parser as parser;
 use enderpy_python_parser::ast::*;
 use parser::{ast, Parser};
+use std::sync::atomic::Ordering;
 
 use crate::checker::TypeChecker;
-use crate::get_module_name;
 use crate::{
     ast_visitor::TraversalVisitor,
     diagnostic::Position,
@@ -17,6 +19,7 @@ use crate::{
     semantic_analyzer::SemanticAnalyzer,
     symbol_table::SymbolTable,
 };
+use crate::{get_module_name, symbol_table};
 
 #[derive(Clone, Debug)]
 pub enum ImportKinds<'a> {
@@ -28,37 +31,39 @@ pub enum ImportKinds<'a> {
 /// and methods to perform semantic analysis and type check on them
 #[derive(Clone, Debug)]
 pub struct EnderpyFile<'a> {
+    pub id: symbol_table::Id,
     pub module: String,
     // if this source is found by following an import
     pub followed: bool,
     pub path: PathBuf,
     pub source: String,
     pub offset_line_number: Vec<u32>,
-    // Available after populating
-    pub symbol_table: Option<SymbolTable>,
-    pub type_checker: Option<TypeChecker>,
-    tree: ast::Module,
+    pub tree: ast::Module,
     dummy: &'a str,
+}
+static COUNTER: AtomicUsize = AtomicUsize::new(1);
+
+fn get_id() -> u32 {
+    COUNTER.fetch_add(1, Ordering::SeqCst) as u32
 }
 
 impl<'a> EnderpyFile<'a> {
-    pub fn new(path: &Path, followed: bool) -> Self {
+    pub fn new(path: PathBuf, followed: bool) -> Self {
         let source =
-            std::fs::read_to_string(path).unwrap_or_else(|_| panic!("cannot read file {path:?}"));
-        let module = get_module_name(path);
+            std::fs::read_to_string(&path).unwrap_or_else(|_| panic!("cannot read file {path:?}"));
+        let module = get_module_name(&path);
         let mut parser = Parser::new(&source, path.to_str().unwrap());
         let tree = parser.parse().expect("parsing {path:?} failed");
         let offset_line_number = parser.line_starts();
 
         Self {
-            symbol_table: None,
-            type_checker: None,
+            id: symbol_table::Id(get_id()),
             source,
             offset_line_number,
             followed,
             module,
             tree,
-            path: path.to_path_buf(),
+            path,
             dummy: "sdfsd",
         }
     }
@@ -118,37 +123,14 @@ impl<'a> EnderpyFile<'a> {
     pub fn populate_symbol_table(
         &mut self,
         imports: &HashMap<ImportModuleDescriptor, ImportResult>,
-    ) {
-        let mut sem_anal = SemanticAnalyzer::new(self.clone(), imports.clone());
+    ) -> SymbolTable {
+        let mut sem_anal = SemanticAnalyzer::new(self, imports);
         for stmt in &self.tree.body {
             sem_anal.visit_stmt(stmt)
         }
         let mut sym_table = sem_anal.symbol_table;
         sym_table.current_scope_id = 0;
-        self.symbol_table = Some(sym_table);
-    }
-
-    pub fn type_check(&mut self, symbol_tables: Vec<SymbolTable>) {
-        let mut checker = TypeChecker::new(self.clone(), symbol_tables);
-        for stmt in &self.tree.body {
-            checker.type_check(stmt);
-        }
-        self.type_checker = Some(checker);
-    }
-
-    pub fn get_checker(&self) -> TypeChecker {
-        self.type_checker.clone().unwrap_or_else(|| {
-            panic!(
-                "Accessing type checker on {:?} before type check",
-                self.path_str()
-            )
-        })
-    }
-
-    pub fn get_symbol_table(&self) -> SymbolTable {
-        self.symbol_table
-            .clone()
-            .expect("Accessing symbol table before initialize")
+        sym_table
     }
 }
 

@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, path::Path};
 
 use enderpy_python_parser as parser;
 use enderpy_python_parser::ast::Expression;
@@ -20,7 +20,6 @@ use crate::{
 #[allow(unused)]
 pub struct SemanticAnalyzer<'a> {
     pub symbol_table: SymbolTable,
-    file: EnderpyFile<'a>,
     /// Map of module name to import result
     /// The imports inside the file are resolved by this map and
     /// no other imports are resolved
@@ -28,27 +27,19 @@ pub struct SemanticAnalyzer<'a> {
     /// if we have a file with the following imports this is how we use the map
     /// import os -> imports.get("os")
     /// from os import path -> imports.get("os")
-    pub imports: HashMap<ImportModuleDescriptor, ImportResult>,
-    // TODO: Replace errors with another type
-    errors: Vec<String>,
-
-    is_pyi: bool,
+    pub imports: &'a HashMap<ImportModuleDescriptor, ImportResult>,
 }
 
 #[allow(unused)]
 impl<'a> SemanticAnalyzer<'a> {
     pub fn new(
-        file: EnderpyFile<'a>,
-        imports: HashMap<ImportModuleDescriptor, ImportResult>,
+        file: &'a EnderpyFile<'a>,
+        imports: &'a HashMap<ImportModuleDescriptor, ImportResult>,
     ) -> Self {
-        let symbols = SymbolTable::new(&file.path);
-        let is_pyi = file.path().ends_with(".pyi");
+        let symbols = SymbolTable::new(&file.path, file.id);
         SemanticAnalyzer {
             symbol_table: symbols,
-            file,
             imports,
-            errors: vec![],
-            is_pyi,
         }
     }
 
@@ -77,7 +68,7 @@ impl<'a> SemanticAnalyzer<'a> {
         match target {
             Expression::Name(n) => {
                 let declaration_path = DeclarationPath::new(
-                    self.file.path(),
+                    self.symbol_table.id,
                     target.get_node(),
                     self.symbol_table.current_scope_id,
                 );
@@ -114,7 +105,7 @@ impl<'a> SemanticAnalyzer<'a> {
 
                 if self.function_assigns_attribute(&self.symbol_table) {
                     let declaration_path = DeclarationPath::new(
-                        self.file.path(),
+                        self.symbol_table.id,
                         a.node,
                         self.symbol_table.current_scope_id,
                     );
@@ -136,7 +127,7 @@ impl<'a> SemanticAnalyzer<'a> {
         let defaults_len = args.defaults.len();
         for (pos_only, index) in args.posonlyargs.iter().zip(0..args.posonlyargs.len()) {
             let declaration_path = DeclarationPath::new(
-                self.file.path(),
+                self.symbol_table.id,
                 pos_only.node,
                 self.symbol_table.current_scope_id,
             );
@@ -160,7 +151,7 @@ impl<'a> SemanticAnalyzer<'a> {
 
         for (arg, index) in args.args.iter().zip(0..) {
             let declaration_path = DeclarationPath::new(
-                self.file.path(),
+                self.symbol_table.id,
                 arg.node,
                 self.symbol_table.current_scope_id,
             );
@@ -188,7 +179,7 @@ impl<'a> SemanticAnalyzer<'a> {
 
         for arg in args.kwonlyargs.iter() {
             let declaration_path = DeclarationPath::new(
-                self.file.path(),
+                self.symbol_table.id,
                 arg.node,
                 self.symbol_table.current_scope_id,
             );
@@ -207,7 +198,7 @@ impl<'a> SemanticAnalyzer<'a> {
 
         if let Some(ref arg) = args.vararg {
             let declaration_path = DeclarationPath::new(
-                self.file.path(),
+                self.symbol_table.id,
                 arg.node,
                 self.symbol_table.current_scope_id,
             );
@@ -226,7 +217,7 @@ impl<'a> SemanticAnalyzer<'a> {
 
         if let Some(ref arg) = args.kwarg {
             let declaration_path = DeclarationPath::new(
-                self.file.path(),
+                self.symbol_table.id,
                 arg.node,
                 self.symbol_table.current_scope_id,
             );
@@ -340,7 +331,7 @@ impl<'a> TraversalVisitor for SemanticAnalyzer<'a> {
             };
             // TODO: Report unresolved import if import_result is None
             let declaration_path = DeclarationPath::new(
-                self.file.path(),
+                self.symbol_table.id,
                 alias.node,
                 self.symbol_table.current_scope_id,
             );
@@ -372,7 +363,7 @@ impl<'a> TraversalVisitor for SemanticAnalyzer<'a> {
                 continue;
             }
             let declaration_path = DeclarationPath::new(
-                self.file.path(),
+                self.symbol_table.id,
                 alias.node,
                 self.symbol_table.current_scope_id,
             );
@@ -483,15 +474,18 @@ impl<'a> TraversalVisitor for SemanticAnalyzer<'a> {
     }
 
     fn visit_function_def(&mut self, f: &parser::ast::FunctionDef) {
-        let declaration_path =
-            DeclarationPath::new(self.file.path(), f.node, self.symbol_table.current_scope_id);
+        let declaration_path = DeclarationPath::new(
+            self.symbol_table.id,
+            f.node,
+            self.symbol_table.current_scope_id,
+        );
         if !f.type_params.is_empty() {
             // TODO
             // Push a PEP 695 scope
             // https://www.python.org/dev/peps/pep-0695/
             // for type_parameter in &f.type_params {
             //     let declaration_path = DeclarationPath {
-            //         module_name: self.file.path(),
+            //         module_name: self.symbol_table.id,
             //         node: type_parameter.get_node(),
             //     };
             //     let flags = SymbolFlags::empty();
@@ -535,7 +529,7 @@ impl<'a> TraversalVisitor for SemanticAnalyzer<'a> {
 
         for type_parameter in &f.type_params {
             let declaration_path = DeclarationPath::new(
-                self.file.path(),
+                self.symbol_table.id,
                 type_parameter.get_node(),
                 self.symbol_table.current_scope_id,
             );
@@ -566,8 +560,11 @@ impl<'a> TraversalVisitor for SemanticAnalyzer<'a> {
     }
 
     fn visit_type_alias(&mut self, t: &parser::ast::TypeAlias) {
-        let declaration_path =
-            DeclarationPath::new(self.file.path(), t.node, self.symbol_table.current_scope_id);
+        let declaration_path = DeclarationPath::new(
+            self.symbol_table.id,
+            t.node,
+            self.symbol_table.current_scope_id,
+        );
         let flags = SymbolFlags::empty();
         self.create_symbol(
             t.name.clone(),
@@ -599,7 +596,7 @@ impl<'a> TraversalVisitor for SemanticAnalyzer<'a> {
 
         for type_parameter in &c.type_params {
             let declaration_path = DeclarationPath::new(
-                self.file.path(),
+                self.symbol_table.id,
                 type_parameter.get_node(),
                 self.symbol_table.current_scope_id,
             );
@@ -613,22 +610,31 @@ impl<'a> TraversalVisitor for SemanticAnalyzer<'a> {
                 flags,
             );
         }
-        let mut methods = vec![];
-
         for stmt in &c.body {
-            if let parser::ast::Statement::FunctionDef(f) = stmt {
-                // TODO: Maybe define these methods in the symbol table at this point?
-                methods.push(f.name.clone());
-            }
             self.visit_stmt(stmt);
         }
 
+        let class_body_scope_id = self.symbol_table.current_scope_id;
+
         self.symbol_table.exit_scope();
 
-        let class_declaration_path =
-            DeclarationPath::new(self.file.path(), c.node, self.symbol_table.current_scope_id);
-        let class_declaration =
-            Declaration::Class(Class::new(c.clone(), methods, class_declaration_path));
+        let class_declaration_path = DeclarationPath::new(
+            self.symbol_table.id,
+            c.node,
+            self.symbol_table.current_scope_id,
+        );
+        let class_declaration = Declaration::Class(Class::new(
+            self.symbol_table
+                .file_path
+                .file_stem()
+                .unwrap()
+                .to_str()
+                .unwrap()
+                .to_string(),
+            c.clone(),
+            class_declaration_path,
+            class_body_scope_id,
+        ));
         let flags = SymbolFlags::empty();
         self.create_symbol(c.name.clone(), class_declaration, flags);
     }

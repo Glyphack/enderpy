@@ -2,14 +2,14 @@ use core::panic;
 use std::{
     collections::HashMap,
     path::{Path, PathBuf},
-    usize,
 };
 
-use dashmap::{DashMap, DashSet};
+use dashmap::DashMap;
 use env_logger::Builder;
-use log::{debug, warn};
+use log::debug;
 
 use crate::{
+    checker::TypeChecker,
     diagnostic::Diagnostic,
     file::{EnderpyFile, ImportKinds},
     ruff_python_import_resolver::{
@@ -17,6 +17,7 @@ use crate::{
         import_result::ImportResult, module_descriptor::ImportModuleDescriptor, resolver,
     },
     settings::Settings,
+    symbol_table::{Id, SymbolTable},
     types::PythonType,
 };
 
@@ -24,6 +25,8 @@ use crate::{
 pub struct BuildManager<'a> {
     pub modules: DashMap<PathBuf, EnderpyFile<'a>>,
     pub diagnostics: DashMap<PathBuf, Vec<Diagnostic>>,
+    pub symbol_tables: DashMap<Id, SymbolTable>,
+    pub module_ids: DashMap<PathBuf, Id>,
     pub settings: Settings,
     import_config: Config,
     host: ruff_python_resolver::host::StaticHost,
@@ -50,6 +53,8 @@ impl<'a> BuildManager<'a> {
             modules,
             settings,
             diagnostics: DashMap::new(),
+            symbol_tables: DashMap::new(),
+            module_ids: DashMap::new(),
             import_config,
             host,
         }
@@ -75,15 +80,16 @@ impl<'a> BuildManager<'a> {
     // this only prepares necessary python files.
     pub fn build(&self, root: &Path) {
         let builtins_file = self.settings.typeshed_path.join("stdlib/builtins.pyi");
-        let builtins = EnderpyFile::new(&builtins_file, true);
-        let initial_files = vec![builtins];
+        let builtins = EnderpyFile::new(builtins_file, true);
         let (imports, mut new_modules) =
-            gather_files(initial_files, root, &self.import_config, &self.host);
+            gather_files(vec![builtins], root, &self.import_config, &self.host);
         log::debug!("Imports resolved");
         for mut module in new_modules.iter_mut() {
-            module.populate_symbol_table(&imports);
+            let sym_table = module.populate_symbol_table(&imports);
+            self.symbol_tables.insert(sym_table.id, sym_table);
         }
         for module in new_modules {
+            self.module_ids.insert(module.path(), module.id);
             self.modules.insert(module.path(), module);
         }
         log::debug!("Prebuild finished");
@@ -92,14 +98,16 @@ impl<'a> BuildManager<'a> {
     // Resolves imports and adds file and its imports to modules
     pub fn build_one(&self, root: &Path, file: &Path) {
         debug!("building {file:?}");
-        let enderpy_file = EnderpyFile::new(file, false);
+        let enderpy_file = EnderpyFile::new(file.to_path_buf(), false);
         let (imports, mut new_modules) =
             gather_files(vec![enderpy_file], root, &self.import_config, &self.host);
         log::debug!("Imports resolved");
         for mut module in new_modules.iter_mut() {
-            module.populate_symbol_table(&imports);
+            let sym_table = module.populate_symbol_table(&imports);
+            self.symbol_tables.insert(module.id, sym_table);
         }
         for module in new_modules {
+            self.module_ids.insert(module.path(), module.id);
             self.modules.insert(module.path(), module);
         }
         log::debug!("Symbol tables populated");
@@ -107,29 +115,38 @@ impl<'a> BuildManager<'a> {
 
     // Performs type checking passes over the code
     // This step happens after the binding phase
-    pub fn type_check(&self, path: &Path) {
+    pub fn type_check(&self, path: &Path) -> TypeChecker {
         let mut module_to_check = self.get_state(path);
-        // TODO: This is a hack to get all the symbol tables so we can resolve imports
-        let mut all_symbol_tables = Vec::new();
-        for module in self.modules.iter() {
-            all_symbol_tables.push(module.value().get_symbol_table());
+        let mut symbol_tables_vec = vec![];
+        for symbol_table in self.symbol_tables.iter() {
+            symbol_tables_vec.push(symbol_table.value().clone());
         }
-        module_to_check.type_check(all_symbol_tables);
-        self.modules.insert(path.to_path_buf(), module_to_check);
+        let mut checker = TypeChecker::new(self.get_symbol_table(path), symbol_tables_vec);
+        for stmt in module_to_check.tree.body.iter() {
+            checker.type_check(stmt);
+        }
+        return checker;
+    }
+
+    pub fn get_symbol_table(&self, path: &Path) -> SymbolTable {
+        let module_id = self.module_ids.get(path).expect("incorrect ID");
+        let symbol_table = self.symbol_tables.get(module_id.value());
+
+        return symbol_table
+            .expect("symbol table not found")
+            .value()
+            .clone();
     }
 
     pub fn get_hover_information(&self, path: &Path, line: u32, column: u32) -> String {
+        return "".to_string();
         let module = self.get_state(path);
-        let symbol_table = module.get_symbol_table();
+        let checker = self.type_check(path);
+        let symbol_table = self.get_symbol_table(path);
         let hovered_offset = module.offset_line_number[line as usize] + column;
         let line_number = match module.offset_line_number.binary_search(&hovered_offset) {
             Ok(index) => index,
             Err(index) => index - 1,
-        };
-
-        let Some(checker) = module.type_checker else {
-            warn!("type checker not ran yet");
-            return String::from("");
         };
 
         let hovered_offset_start = hovered_offset.saturating_sub(1);
@@ -184,13 +201,13 @@ fn gather_files<'a>(
             if resolved.is_import_found {
                 for resolved_path in resolved.resolved_paths.iter() {
                     if !initial_files.iter().any(|m| m.path == *resolved_path) {
-                        let e = EnderpyFile::new(resolved_path, true);
+                        let e = EnderpyFile::new(resolved_path.clone(), true);
                         initial_files.push(e);
                     }
                 }
 
                 for (_, implicit_import) in resolved.implicit_imports.iter() {
-                    let e = EnderpyFile::new(&implicit_import.path, true);
+                    let e = EnderpyFile::new(implicit_import.path.clone(), true);
                     initial_files.push(e);
                 }
             }
@@ -261,9 +278,9 @@ mod tests {
                 manager.build(root);
                 manager.build_one(root, &path);
 
-                let module = manager.get_state(PathBuf::from($test_file).as_path());
+                let symbol_table = manager.get_symbol_table(&path);
 
-                let result = format!("{}", module.get_symbol_table());
+                let result = format!("{}", symbol_table);
                 let mut settings = insta::Settings::clone_current();
                 settings.set_snapshot_path("../test_data/output/");
                 settings.set_description(content);

@@ -219,11 +219,7 @@ impl Display for PythonType {
                 let fmt = if args_str.is_empty() {
                     format!("(class) {}", class_type.details.name.clone())
                 } else {
-                    format!(
-                        "(class) {}[{}]",
-                        class_type.details.get_qualname(),
-                        args_str
-                    )
+                    format!("(class) {}[{}]", class_type.details.qual_name, args_str)
                 };
                 return write!(f, "{}", fmt);
             }
