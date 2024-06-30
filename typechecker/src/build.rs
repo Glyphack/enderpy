@@ -36,10 +36,7 @@ impl<'a> BuildManager<'a> {
             .format_timestamp(None)
             .try_init();
 
-        let builtins_file = settings.typeshed_path.join("stdlib/builtins.pyi");
-        let builtins = EnderpyFile::new(&builtins_file, true);
         let mut modules = DashMap::new();
-        modules.insert(builtins.path(), builtins);
 
         BuildManager {
             errors: DashSet::new(),
@@ -68,23 +65,17 @@ impl<'a> BuildManager<'a> {
     // Entry point to analyze the program
     // this only prepares necessary python files.
     pub fn build(&self, root: &Path) {
-        let imports = self.gather_files(
-            self.modules.iter().map(|f| f.value().clone()).collect(),
-            root,
-        );
-        for imported_module in imports.iter() {
-            for path in imported_module.1.resolved_paths.iter() {
-                let module = EnderpyFile::new(path, true);
-                self.modules.insert(module.path(), module);
-            }
-            for (_, implicit_import) in imported_module.1.implicit_imports.iter() {
-                let module = EnderpyFile::new(&implicit_import.path, true);
-                self.modules.insert(module.path(), module);
-            }
-        }
+        let builtins_file = self.settings.typeshed_path.join("stdlib/builtins.pyi");
+        let builtins = EnderpyFile::new(&builtins_file, true);
+        let initial_files = vec![builtins];
+        let (imports, mut new_modules) =
+            gather_files(initial_files, root, self.settings.typeshed_path.clone());
         log::debug!("Imports resolved");
-        for mut module in self.modules.iter_mut() {
+        for mut module in new_modules.iter_mut() {
             module.populate_symbol_table(imports.clone());
+        }
+        for module in new_modules {
+            self.modules.insert(module.path(), module);
         }
         log::debug!("Prebuild finished");
     }
@@ -93,22 +84,17 @@ impl<'a> BuildManager<'a> {
     pub fn build_one(&self, root: &Path, file: &Path) {
         debug!("building {file:?}");
         let enderpy_file = EnderpyFile::new(file, false);
-        self.modules
-            .insert(enderpy_file.path(), enderpy_file.clone());
-        let imports = self.gather_files(vec![enderpy_file], root);
-        for imported_module in imports.iter() {
-            for path in imported_module.1.resolved_paths.iter() {
-                if !path.is_file() {
-                    continue;
-                }
-                let module = EnderpyFile::new(path, true);
-                self.modules.insert(module.path(), module);
-            }
+        let (imports, mut new_modules) = gather_files(
+            vec![enderpy_file],
+            root,
+            self.settings.typeshed_path.clone(),
+        );
+        log::debug!("Imports resolved");
+        for mut module in new_modules.iter_mut() {
+            module.populate_symbol_table(imports.clone());
         }
-        for mut module in self.modules.iter_mut() {
-            if module.symbol_table.is_none() {
-                module.populate_symbol_table(imports.clone());
-            }
+        for module in new_modules {
+            self.modules.insert(module.path(), module);
         }
         log::debug!("Symbol tables populated");
     }
@@ -153,75 +139,71 @@ impl<'a> BuildManager<'a> {
 
         format!("{type_str:}")
     }
+}
 
-    // Given a list of files, this function will resolve the imports in the files
-    // and add them to the modules.
-    fn gather_files(
-        &self,
-        initial_files: Vec<EnderpyFile<'a>>,
-        root: &Path,
-    ) -> HashMap<ImportModuleDescriptor, ImportResult> {
-        let execution_environment = &execution_environment::ExecutionEnvironment {
-            root: root.to_path_buf(),
-            python_version: ruff_python_resolver::python_version::PythonVersion::Py312,
-            python_platform: ruff_python_resolver::python_platform::PythonPlatform::Darwin,
-            extra_paths: vec![],
-        };
-        let import_config = &Config {
-            typeshed_path: Some(self.settings.typeshed_path.clone()),
-            stub_path: None,
-            venv_path: None,
-            venv: None,
-        };
-        let host = &ruff_python_resolver::host::StaticHost::new(vec![]);
+fn gather_files<'a>(
+    mut initial_files: Vec<EnderpyFile<'a>>,
+    root: &Path,
+    typeshed_path: PathBuf,
+) -> (
+    HashMap<ImportModuleDescriptor, ImportResult>,
+    Vec<EnderpyFile<'a>>,
+) {
+    let execution_environment = &execution_environment::ExecutionEnvironment {
+        root: root.to_path_buf(),
+        python_version: ruff_python_resolver::python_version::PythonVersion::Py312,
+        python_platform: ruff_python_resolver::python_platform::PythonPlatform::Darwin,
+        extra_paths: vec![],
+    };
+    let import_config = &Config {
+        typeshed_path: Some(typeshed_path.clone()),
+        stub_path: None,
+        venv_path: None,
+        venv: None,
+    };
+    let host = &ruff_python_resolver::host::StaticHost::new(vec![]);
+    let mut new_modules = Vec::with_capacity(initial_files.len() * 5);
+    let mut import_results = HashMap::new();
 
-        let mut files_to_resolve: Vec<EnderpyFile> = vec![];
-        files_to_resolve.extend(initial_files);
-        let mut import_results = HashMap::new();
-        while let Some(source) = files_to_resolve.pop() {
-            let resolved_imports = resolve_file_imports(
-                source.clone(),
-                execution_environment,
-                import_config,
-                host,
-                &import_results,
-            );
-            // check if the resolved_imports are not in the current files and add them to
-            // the new imports
-            for (import_desc, resolved) in resolved_imports {
-                import_results.insert(import_desc, resolved.clone());
-                if resolved.is_import_found {
-                    for resolved_path in resolved.resolved_paths.iter() {
-                        let source = match std::fs::read_to_string(resolved_path) {
-                            Ok(source) => source,
-                            Err(e) => {
-                                log::warn!("cannot read file: {}", e);
-                                continue;
-                            }
-                        };
+    let cache: &mut HashMap<PathBuf, HashMap<ImportModuleDescriptor, ImportResult>> =
+        &mut HashMap::new();
+
+    while let Some(module) = initial_files.pop() {
+        if cache.get(&module.path).is_some() {
+            continue;
+        }
+        let resolved_imports = resolve_file_imports(
+            &module,
+            execution_environment,
+            import_config,
+            host,
+            &import_results,
+        );
+        new_modules.push(module);
+        for (import_desc, resolved) in resolved_imports {
+            if resolved.is_import_found {
+                for resolved_path in resolved.resolved_paths.iter() {
+                    if !initial_files.iter().any(|m| m.path == *resolved_path) {
                         let e = EnderpyFile::new(resolved_path, true);
-                        files_to_resolve.push(e);
-                    }
-
-                    for (_, implicit_import) in resolved.implicit_imports.iter() {
-                        let source = match std::fs::read_to_string(&implicit_import.path) {
-                            Ok(source) => source,
-                            Err(e) => {
-                                panic!("cannot read implicit import");
-                            }
-                        };
-                        let e = EnderpyFile::new(&implicit_import.path, true);
-                        files_to_resolve.push(e);
+                        initial_files.push(e);
                     }
                 }
+
+                for (_, implicit_import) in resolved.implicit_imports.iter() {
+                    let e = EnderpyFile::new(&implicit_import.path, true);
+                    initial_files.push(e);
+                }
             }
+            import_results.insert(import_desc, resolved);
         }
-        import_results
     }
+
+    new_modules.extend(initial_files);
+    (import_results, new_modules)
 }
 
 fn resolve_file_imports(
-    file: EnderpyFile<'_>,
+    file: &EnderpyFile<'_>,
     execution_environment: &ruff_python_resolver::execution_environment::ExecutionEnvironment,
     import_config: &ruff_python_resolver::config::Config,
     host: &ruff_python_resolver::host::StaticHost,
@@ -245,7 +227,7 @@ fn resolve_file_imports(
             let resolved = match cached_imports.contains_key(&import_desc) {
                 true => continue,
                 false => resolver::resolve_import(
-                    file.path().as_path(),
+                    &file.path(),
                     execution_environment,
                     &import_desc,
                     import_config,
@@ -258,7 +240,7 @@ fn resolve_file_imports(
                 log::warn!("{}", error);
                 continue;
             }
-            imports.insert(import_desc, resolved.clone());
+            imports.insert(import_desc, resolved);
         }
     }
     imports
