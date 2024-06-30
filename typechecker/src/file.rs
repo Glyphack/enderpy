@@ -117,7 +117,7 @@ impl<'a> EnderpyFile<'a> {
     /// entry point to fill up the symbol table from the global definitions
     pub fn populate_symbol_table(
         &mut self,
-        imports: HashMap<ImportModuleDescriptor, ImportResult>,
+        imports: &HashMap<ImportModuleDescriptor, ImportResult>,
     ) {
         let mut sem_anal = SemanticAnalyzer::new(self.clone(), imports.clone());
         for stmt in &self.tree.body {

@@ -22,10 +22,11 @@ use crate::{
 
 #[derive(Debug)]
 pub struct BuildManager<'a> {
-    pub errors: DashSet<Diagnostic>,
     pub modules: DashMap<PathBuf, EnderpyFile<'a>>,
     pub diagnostics: DashMap<PathBuf, Vec<Diagnostic>>,
     pub settings: Settings,
+    import_config: Config,
+    host: ruff_python_resolver::host::StaticHost,
 }
 #[allow(unused)]
 impl<'a> BuildManager<'a> {
@@ -37,12 +38,20 @@ impl<'a> BuildManager<'a> {
             .try_init();
 
         let mut modules = DashMap::new();
+        let import_config = Config {
+            typeshed_path: Some(settings.typeshed_path.clone()),
+            stub_path: None,
+            venv_path: None,
+            venv: None,
+        };
+        let host = ruff_python_resolver::host::StaticHost::new(vec![]);
 
         BuildManager {
-            errors: DashSet::new(),
             modules,
             settings,
             diagnostics: DashMap::new(),
+            import_config,
+            host,
         }
     }
 
@@ -69,10 +78,10 @@ impl<'a> BuildManager<'a> {
         let builtins = EnderpyFile::new(&builtins_file, true);
         let initial_files = vec![builtins];
         let (imports, mut new_modules) =
-            gather_files(initial_files, root, self.settings.typeshed_path.clone());
+            gather_files(initial_files, root, &self.import_config, &self.host);
         log::debug!("Imports resolved");
         for mut module in new_modules.iter_mut() {
-            module.populate_symbol_table(imports.clone());
+            module.populate_symbol_table(&imports);
         }
         for module in new_modules {
             self.modules.insert(module.path(), module);
@@ -84,14 +93,11 @@ impl<'a> BuildManager<'a> {
     pub fn build_one(&self, root: &Path, file: &Path) {
         debug!("building {file:?}");
         let enderpy_file = EnderpyFile::new(file, false);
-        let (imports, mut new_modules) = gather_files(
-            vec![enderpy_file],
-            root,
-            self.settings.typeshed_path.clone(),
-        );
+        let (imports, mut new_modules) =
+            gather_files(vec![enderpy_file], root, &self.import_config, &self.host);
         log::debug!("Imports resolved");
         for mut module in new_modules.iter_mut() {
-            module.populate_symbol_table(imports.clone());
+            module.populate_symbol_table(&imports);
         }
         for module in new_modules {
             self.modules.insert(module.path(), module);
@@ -144,7 +150,8 @@ impl<'a> BuildManager<'a> {
 fn gather_files<'a>(
     mut initial_files: Vec<EnderpyFile<'a>>,
     root: &Path,
-    typeshed_path: PathBuf,
+    import_config: &ruff_python_resolver::config::Config,
+    host: &ruff_python_resolver::host::StaticHost,
 ) -> (
     HashMap<ImportModuleDescriptor, ImportResult>,
     Vec<EnderpyFile<'a>>,
@@ -155,13 +162,6 @@ fn gather_files<'a>(
         python_platform: ruff_python_resolver::python_platform::PythonPlatform::Darwin,
         extra_paths: vec![],
     };
-    let import_config = &Config {
-        typeshed_path: Some(typeshed_path.clone()),
-        stub_path: None,
-        venv_path: None,
-        venv: None,
-    };
-    let host = &ruff_python_resolver::host::StaticHost::new(vec![]);
     let mut new_modules = Vec::with_capacity(initial_files.len() * 5);
     let mut import_results = HashMap::new();
 
