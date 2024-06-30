@@ -18,7 +18,9 @@ use super::{
 use crate::{
     ruff_python_import_resolver::import_result::ImportResult,
     semantic_analyzer::get_member_access_info,
-    symbol_table::{self, Class, Declaration, LookupSymbolRequest, SymbolTable, SymbolTableNode},
+    symbol_table::{
+        self, Class, Declaration, Id, LookupSymbolRequest, SymbolTable, SymbolTableNode,
+    },
     types::{ClassType, TypeVar},
 };
 
@@ -300,7 +302,7 @@ impl TypeEvaluator {
                         match symbol_table_node {
                             Some(node) => self.get_symbol_type(node),
                             None => {
-                                bail!("Attribute does not exist");
+                                panic!("Attribute {:?} does not exist on {:?}", &a.attr, c);
                             }
                         }
                     }
@@ -456,10 +458,7 @@ impl TypeEvaluator {
         log::debug!("get_symbol_node_type: {symbol:}");
         let decl = symbol.last_declaration();
         let decl_scope = decl.declaration_path().scope_id;
-        let Some(symbol_table) = self.get_symbol_table_of(&decl.declaration_path().module_name)
-        else {
-            panic!("Symbol table not found for this symbol node: {:?}", symbol);
-        };
+        let symbol_table = decl.get_symbol_table(&self.imported_symbol_tables);
         let result = match decl {
             Declaration::Variable(v) => {
                 if let Some(type_annotation) = &v.type_annotation {
@@ -473,8 +472,11 @@ impl TypeEvaluator {
                         .as_name()
                         .is_some_and(|name| name.id == SPECIAL_FORM)
                     {
-                        let class_symbol =
-                            Class::new_special(symbol.name.to_string(), v.declaration_path.clone());
+                        let class_symbol = Class::new_special(
+                            symbol.name.clone(),
+                            v.declaration_path.clone(),
+                            decl_scope,
+                        );
                         Ok(PythonType::Class(ClassType::new(class_symbol, vec![])))
                     } else {
                         Ok(var_type)
@@ -609,7 +611,7 @@ impl TypeEvaluator {
         decl_scope: u32,
     ) -> Result<PythonType> {
         // TODO: typevar itself is a class but the rhs is typevar type
-        if class_symbol.get_qualname() == "typing.TypeVar" {
+        if class_symbol.qual_name == "typing.TypeVar" {
             Ok(PythonType::TypeVar(TypeVar {
                 name: "".to_string(),
                 bounds: vec![],
@@ -1084,19 +1086,10 @@ impl TypeEvaluator {
         let symbol_table = self
             .imported_symbol_tables
             .iter()
-            .find(|symbol_table| {
-                symbol_table
-                    .file_path
-                    .ends_with(&c.details.declaration_path.module_name)
-            })
-            .unwrap_or_else(|| {
-                panic!(
-                    "Declaration path not found: {:?}",
-                    c.details.declaration_path,
-                )
-            });
+            .find(|symbol_table| symbol_table.id == c.details.declaration_path.symbol_table_id)
+            .expect("Declaration path not found: {c:?}");
         symbol_table
-            .get_scope(&c.details.declaration_path.node)
+            .get_scope_by_id(c.details.class_scope_id)
             .unwrap_or_else(|| panic!("Scope not found for: {:?}", c.details.declaration_path))
     }
 

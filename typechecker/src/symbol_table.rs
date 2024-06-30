@@ -9,6 +9,9 @@ use enderpy_python_parser::ast::{self, ClassDef, FunctionDef, Node};
 
 use crate::ruff_python_import_resolver::import_result::ImportResult;
 
+#[derive(Debug, Clone, PartialEq, Eq, Copy, Hash)]
+pub struct Id(pub u32);
+
 #[derive(Debug, Clone)]
 pub struct SymbolTable {
     // Sub tables are scopes inside the current scope
@@ -21,10 +24,11 @@ pub struct SymbolTable {
     pub file_path: PathBuf,
     pub scope_starts: Lapper<u32, u32>,
     pub star_imports: Vec<ImportResult>,
+    pub id: Id,
 }
 
 impl SymbolTable {
-    pub fn new(file_path: &Path) -> Self {
+    pub fn new(file_path: &Path, id: Id) -> Self {
         let file_len = fs::read_to_string(file_path)
             .expect("Could not read the file")
             .len() as u32;
@@ -40,6 +44,7 @@ impl SymbolTable {
             file_path: file_path.to_path_buf(),
             scope_starts: Lapper::new(vec![global_scope_interval]),
             star_imports: vec![],
+            id,
         }
     }
 
@@ -170,12 +175,6 @@ impl SymbolTable {
         }
     }
 
-    pub fn get_scope(&self, node: &Node) -> Option<&SymbolTableScope> {
-        self.scopes
-            .iter()
-            .find(|scope| scope.start_pos == node.start)
-    }
-
     pub fn revert_scope(&mut self) {
         self.current_scope_id = self.prev_scope_id.expect("no previous scope");
     }
@@ -224,10 +223,6 @@ impl SymbolTable {
         } else {
             scope.symbols.insert(symbol_node.name.clone(), symbol_node);
         }
-    }
-
-    pub fn is_pyi(&self) -> bool {
-        self.file_path.extension().unwrap() == "pyi"
     }
 
     /// Looks up an attribute in the current scope and its parents
@@ -332,16 +327,16 @@ impl Display for SymbolTableNode {
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct DeclarationPath {
-    pub module_name: PathBuf,
+    pub symbol_table_id: Id,
     pub node: Node,
     /// The scope id that this declaration is in
     pub scope_id: u32,
 }
 
 impl DeclarationPath {
-    pub fn new(module_name: PathBuf, node: Node, scope_id: u32) -> Self {
+    pub fn new(symbol_table_id: Id, node: Node, scope_id: u32) -> Self {
         DeclarationPath {
-            module_name,
+            symbol_table_id,
             node,
             scope_id,
         }
@@ -384,13 +379,11 @@ impl Declaration {
         }
     }
 
-    pub fn is_in_typeshed(&self) -> bool {
-        self.declaration_path().module_name.components().any(|c| {
-            c.as_os_str()
-                .to_str()
-                .map(|s| s.starts_with("typeshed"))
-                .unwrap_or(false)
-        })
+    pub fn get_symbol_table<'a>(&self, symbol_tables: &'a [SymbolTable]) -> &'a SymbolTable {
+        let symbol_table = symbol_tables
+            .iter()
+            .find(|symbol_table| symbol_table.id == self.declaration_path().symbol_table_id);
+        symbol_table.expect("Symbol table not found for this symbol node: {self:?}")
     }
 }
 
@@ -436,54 +429,50 @@ impl Function {
 pub struct Class {
     pub name: String,
     pub declaration_path: DeclarationPath,
-    // Method names, can be used to look up the function in the symbol table
-    // of the class
-    pub methods: Vec<String>,
     // Special classes are classes that are _SpecialForm in typeshed.
     // These classes have their behavior defined in PEPs so we need to handle them differently
     pub special: bool,
     /// Special classes have a generic class node. So this node is null for special classes
     pub class_node: Option<ClassDef>,
+    pub class_scope_id: u32,
+    pub qual_name: String,
 }
 
 impl Class {
     pub fn new(
+        mut module_name: String,
         class_node: ast::ClassDef,
-        methods: Vec<String>,
         declaration_path: DeclarationPath,
+        class_scope_id: u32,
     ) -> Self {
+        module_name.push('.');
+        let qual_name = module_name + &class_node.name;
         Class {
             name: class_node.name.clone(),
             declaration_path,
-            methods,
             special: false,
+            qual_name,
             class_node: Some(class_node),
+            class_scope_id,
         }
     }
 
     /// Class node refers to SpecialForm in typeshed
     /// TODO: needs improvements mostly set the correct values
-    pub fn new_special(name: String, declaration_path: DeclarationPath) -> Self {
+    pub fn new_special(
+        name: String,
+        declaration_path: DeclarationPath,
+        class_scope_id: u32,
+    ) -> Self {
+        let qual_name = "builtins.".to_owned() + &name;
         Class {
             name,
             declaration_path,
-            methods: vec![],
             special: true,
             class_node: None,
+            class_scope_id,
+            qual_name,
         }
-    }
-
-    pub fn get_qualname(&self) -> String {
-        let scope = self.declaration_path.module_name.clone();
-        let mut qualname = scope
-            .file_stem()
-            .expect("file name should not be empty")
-            .to_str()
-            .expect("file name is not valid utf-8")
-            .to_string();
-        qualname.push('.');
-        qualname.push_str(&self.name);
-        qualname
     }
 }
 

@@ -19,6 +19,7 @@ pub trait Host {
 }
 
 /// A host that exposes a fixed set of search paths.
+#[derive(Debug)]
 pub struct StaticHost {
     search_paths: Vec<PathBuf>,
 }

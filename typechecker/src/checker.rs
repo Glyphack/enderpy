@@ -27,11 +27,10 @@ pub struct TypeCheckError {
 
 #[allow(unused)]
 impl TypeChecker {
-    pub fn new(module: EnderpyFile, symbol_tables: Vec<SymbolTable>) -> Self {
-        let mut symbol_table = module.get_symbol_table();
+    pub fn new(symbol_table: SymbolTable, symbol_tables: Vec<SymbolTable>) -> Self {
         TypeChecker {
             errors: vec![],
-            type_evaluator: TypeEvaluator::new(symbol_table.clone(), symbol_tables.clone()),
+            type_evaluator: TypeEvaluator::new(symbol_table, symbol_tables),
             types: Lapper::new(vec![]),
         }
     }
@@ -616,10 +615,8 @@ mod tests {
         let root = &PathBuf::from("");
         manager.build(root);
         manager.build_one(root, &path);
-        manager.type_check(&path);
+        let checker = manager.type_check(&path);
         let module = manager.get_state(&path);
-
-        let checker = module.get_checker();
 
         let result = checker.types;
 

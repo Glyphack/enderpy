@@ -1,5 +1,6 @@
 use std::path::PathBuf;
 
+#[derive(Debug)]
 pub struct Config {
     /// Path to use for typeshed definitions.
     pub typeshed_path: Option<PathBuf>,
