@@ -21,14 +21,14 @@ use crate::{
 };
 
 #[derive(Debug)]
-pub struct BuildManager {
+pub struct BuildManager<'a> {
     pub errors: DashSet<Diagnostic>,
-    pub modules: DashMap<PathBuf, EnderpyFile>,
+    pub modules: DashMap<PathBuf, EnderpyFile<'a>>,
     pub diagnostics: DashMap<PathBuf, Vec<Diagnostic>>,
     pub settings: Settings,
 }
 #[allow(unused)]
-impl BuildManager {
+impl<'a> BuildManager<'a> {
     pub fn new(settings: Settings) -> Self {
         let mut builder = Builder::new();
         builder
@@ -49,7 +49,7 @@ impl BuildManager {
         }
     }
 
-    pub fn get_state(&self, path: &Path) -> EnderpyFile {
+    pub fn get_state(&self, path: &Path) -> EnderpyFile<'a> {
         let result = self.modules.get(path);
         match result {
             None => {
@@ -158,7 +158,7 @@ impl BuildManager {
     // and add them to the modules.
     fn gather_files(
         &self,
-        initial_files: Vec<EnderpyFile>,
+        initial_files: Vec<EnderpyFile<'a>>,
         root: &Path,
     ) -> HashMap<ImportModuleDescriptor, ImportResult> {
         let execution_environment = &execution_environment::ExecutionEnvironment {
@@ -221,7 +221,7 @@ impl BuildManager {
 }
 
 fn resolve_file_imports(
-    file: EnderpyFile,
+    file: EnderpyFile<'_>,
     execution_environment: &ruff_python_resolver::execution_environment::ExecutionEnvironment,
     import_config: &ruff_python_resolver::config::Config,
     host: &ruff_python_resolver::host::StaticHost,
@@ -229,7 +229,7 @@ fn resolve_file_imports(
 ) -> HashMap<ImportModuleDescriptor, ImportResult> {
     let mut imports = HashMap::new();
     debug!("resolving imports for file {:?}", file.path());
-    for import in file.imports.iter() {
+    for import in file.get_imports().iter() {
         let import_descriptions = match import {
             ImportKinds::Import(i) => i
                 .names
@@ -237,7 +237,7 @@ fn resolve_file_imports(
                 .map(ruff_python_resolver::module_descriptor::ImportModuleDescriptor::from)
                 .collect::<Vec<ImportModuleDescriptor>>(),
             ImportKinds::ImportFrom(i) => {
-                vec![ruff_python_resolver::module_descriptor::ImportModuleDescriptor::from(i)]
+                vec![ruff_python_resolver::module_descriptor::ImportModuleDescriptor::from(*i)]
             }
         };
 
