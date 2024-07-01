@@ -322,11 +322,20 @@ impl GetNode for Expression {
 }
 
 // https://docs.python.org/3/reference/expressions.html#atom-identifiers
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct Name {
     pub node: Node,
     pub id: String,
     pub parenthesized: bool,
+}
+
+impl fmt::Debug for Name {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("Name")
+            .field("node", &self.node)
+            .field("id", &self.id)
+            .finish()
+    }
 }
 
 #[derive(Clone, Debug, PartialEq)]

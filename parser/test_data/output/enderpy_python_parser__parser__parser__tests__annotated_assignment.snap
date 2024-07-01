@@ -578,7 +578,6 @@ Module {
                             end: 176,
                         },
                         id: "h",
-                        parenthesized: true,
                     },
                 ),
                 annotation: Name(
@@ -588,7 +587,6 @@ Module {
                             end: 182,
                         },
                         id: "int",
-                        parenthesized: false,
                     },
                 ),
                 value: Some(
@@ -618,7 +616,6 @@ Module {
                             end: 196,
                         },
                         id: "i",
-                        parenthesized: true,
                     },
                 ),
                 annotation: Name(
@@ -628,7 +625,6 @@ Module {
                             end: 202,
                         },
                         id: "int",
-                        parenthesized: false,
                     },
                 ),
                 value: Some(
