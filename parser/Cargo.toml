@@ -13,12 +13,14 @@ readme = "../README.md"
 
 [dependencies]
 serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
 tracing = "0.1"
 tracing-subscriber = "0.3"
 unicode-id-start = "1.0.3"
 miette = { version = "5.6.0", features = ["fancy"] }
 thiserror = "1.0.40"
 is-macro = "0.3.5"
+which = "6.0.1"
 
 [dev-dependencies]
 codspeed-criterion-compat.workspace = true
@@ -26,6 +28,8 @@ criterion.workspace = true
 insta.workspace = true
 reqwest = { version= "0.12.4", features = ["blocking"] }
 tokio.workspace = true
+tabled = "0.15"
+terminal_size = "0.3"
 
 [lib]
 bench = false
