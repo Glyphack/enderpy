@@ -599,15 +599,8 @@ impl<'a> TypeEvaluator<'a> {
                         for resolved_path in import_result.resolved_paths.iter() {
                             log::debug!("checking path {:?}", resolved_path);
                             let symbol_table_with_alias_def = {
-                                if name == "Iterator" {
-                                    // TODO: typing symbol table
-                                    let typing_path = PathBuf::from_str("/Users/glyphack/Programming/enderpy/typeshed/stdlib/typing.pyi").unwrap();
-                                    let id = self.ids.get(&typing_path).unwrap();
-                                    self.imported_symbol_tables.get(&id).expect("no typing")
-                                } else {
-                                    let id = self.ids.get(resolved_path).unwrap();
-                                    self.imported_symbol_tables.get(&id).unwrap()
-                                }
+                                let id = self.ids.get(resolved_path).unwrap();
+                                self.imported_symbol_tables.get(&id).unwrap()
                             };
 
                             // sys/__init__.pyi imports sys itself don't know why

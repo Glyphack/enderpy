@@ -1,4 +1,3 @@
-use core::panic;
 use std::{
     collections::HashMap,
     path::{Path, PathBuf},
@@ -23,7 +22,7 @@ use crate::{
 
 #[derive(Debug)]
 pub struct BuildManager<'a> {
-    pub modules: DashMap<PathBuf, EnderpyFile<'a>>,
+    pub modules: DashMap<Id, EnderpyFile<'a>>,
     pub diagnostics: DashMap<PathBuf, Vec<Diagnostic>>,
     pub symbol_tables: DashMap<Id, SymbolTable>,
     pub module_ids: DashMap<PathBuf, Id>,
@@ -61,19 +60,9 @@ impl<'a> BuildManager<'a> {
     }
 
     pub fn get_state(&self, path: &Path) -> EnderpyFile<'a> {
-        let result = self.modules.get(path);
-        match result {
-            None => {
-                let available: Vec<PathBuf> = self
-                    .modules
-                    .clone()
-                    .into_iter()
-                    .map(|f| f.0.clone())
-                    .collect();
-                panic!("Not found, available {available:?}")
-            }
-            Some(x) => x.value().clone(),
-        }
+        let id = self.module_ids.get(path).expect("path not found");
+        let result = self.modules.get(&id).unwrap();
+        return result.value().clone();
     }
 
     // Entry point to analyze the program
@@ -89,8 +78,8 @@ impl<'a> BuildManager<'a> {
             self.symbol_tables.insert(sym_table.id, sym_table);
         }
         for module in new_modules {
-            self.module_ids.insert(module.path(), module.id);
-            self.modules.insert(module.path(), module);
+            self.module_ids.insert(module.path.to_path_buf(), module.id);
+            self.modules.insert(module.id, module);
         }
         log::debug!("Prebuild finished");
     }
@@ -107,8 +96,8 @@ impl<'a> BuildManager<'a> {
             self.symbol_tables.insert(module.id, sym_table);
         }
         for module in new_modules {
-            self.module_ids.insert(module.path(), module.id);
-            self.modules.insert(module.path(), module);
+            self.module_ids.insert(module.path.to_path_buf(), module.id);
+            self.modules.insert(module.id, module);
         }
         log::debug!("Symbol tables populated");
     }
@@ -125,7 +114,7 @@ impl<'a> BuildManager<'a> {
         for stmt in module_to_check.tree.body.iter() {
             checker.type_check(stmt);
         }
-        return checker;
+        checker
     }
 
     pub fn get_symbol_table(&self, path: &Path) -> SymbolTable {
@@ -197,16 +186,16 @@ fn gather_files<'a>(
             &import_results,
         );
         new_modules.push(module);
-        for (import_desc, resolved) in resolved_imports {
+        for (import_desc, mut resolved) in resolved_imports {
             if resolved.is_import_found {
-                for resolved_path in resolved.resolved_paths.iter() {
+                for resolved_path in resolved.resolved_paths.iter_mut() {
                     if !initial_files.iter().any(|m| m.path == *resolved_path) {
                         let e = EnderpyFile::new(resolved_path.clone(), true);
                         initial_files.push(e);
                     }
                 }
 
-                for (_, implicit_import) in resolved.implicit_imports.iter() {
+                for (_, implicit_import) in resolved.implicit_imports.iter_mut() {
                     let e = EnderpyFile::new(implicit_import.path.clone(), true);
                     initial_files.push(e);
                 }
@@ -227,7 +216,7 @@ fn resolve_file_imports(
     cached_imports: &HashMap<ImportModuleDescriptor, ImportResult>,
 ) -> HashMap<ImportModuleDescriptor, ImportResult> {
     let mut imports = HashMap::new();
-    debug!("resolving imports for file {:?}", file.path());
+    debug!("resolving imports for file {:?}", file.path);
     for import in file.get_imports().iter() {
         let import_descriptions = match import {
             ImportKinds::Import(i) => i
@@ -244,7 +233,7 @@ fn resolve_file_imports(
             let resolved = match cached_imports.contains_key(&import_desc) {
                 true => continue,
                 false => resolver::resolve_import(
-                    &file.path(),
+                    &file.path,
                     execution_environment,
                     &import_desc,
                     import_config,

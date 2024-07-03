@@ -1,4 +1,4 @@
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 use enderpy_python_type_checker::{build::BuildManager, find_project_root, settings::Settings};
 use env_logger::Builder;
@@ -12,10 +12,10 @@ struct Backend<'a> {
 }
 
 impl<'a> Backend<'a> {
-    fn build(&self, path: &Path) {
-        let root = find_project_root(path);
-        self.manager.build_one(root, path);
-        self.manager.type_check(path);
+    fn build(&self, path: PathBuf) {
+        let root = find_project_root(&path);
+        self.manager.build_one(root, &path);
+        self.manager.type_check(&path);
     }
 }
 
@@ -54,7 +54,7 @@ impl LanguageServer for Backend<'static> {
         let uri = params.text_document.uri;
         let path = uri.to_file_path();
         if let Ok(path) = path {
-            self.build(&path);
+            self.build(path);
         }
     }
 
@@ -65,7 +65,7 @@ impl LanguageServer for Backend<'static> {
         let uri = params.text_document.uri;
         let path = uri.to_file_path();
         if let Ok(path) = path {
-            self.build(&path);
+            self.build(path);
         }
     }
 
@@ -76,7 +76,7 @@ impl LanguageServer for Backend<'static> {
         let uri = params.text_document.uri;
         let path = uri.to_file_path();
         if let Ok(path) = path {
-            self.build(&path);
+            self.build(path);
         }
     }
 
