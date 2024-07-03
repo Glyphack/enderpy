@@ -56,8 +56,13 @@ impl<'a> EnderpyFile<'a> {
         let tree = parser.parse().expect("parsing {path:?} failed");
         let offset_line_number = parser.line_starts();
 
+        let id = if path.ends_with("builtins.pyi") {
+            symbol_table::Id(0)
+        } else {
+            symbol_table::Id(get_id())
+        };
         Self {
-            id: symbol_table::Id(get_id()),
+            id,
             source,
             offset_line_number,
             followed,

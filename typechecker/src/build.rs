@@ -117,11 +117,11 @@ impl<'a> BuildManager<'a> {
     // This step happens after the binding phase
     pub fn type_check(&self, path: &Path) -> TypeChecker {
         let mut module_to_check = self.get_state(path);
-        let mut symbol_tables_vec = vec![];
-        for symbol_table in self.symbol_tables.iter() {
-            symbol_tables_vec.push(symbol_table.value().clone());
-        }
-        let mut checker = TypeChecker::new(self.get_symbol_table(path), symbol_tables_vec);
+        let mut checker = TypeChecker::new(
+            self.get_symbol_table(path),
+            &self.symbol_tables,
+            &self.module_ids,
+        );
         for stmt in module_to_check.tree.body.iter() {
             checker.type_check(stmt);
         }

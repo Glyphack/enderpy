@@ -16,7 +16,7 @@ pub struct Id(pub u32);
 pub struct SymbolTable {
     // Sub tables are scopes inside the current scope
     // after building symbol table is finished this only contains the most outer scope
-    scopes: Vec<SymbolTableScope>,
+    pub scopes: Vec<SymbolTableScope>,
 
     prev_scope_id: Option<u32>,
     pub current_scope_id: u32,
@@ -133,7 +133,10 @@ impl SymbolTable {
     /// search for symbol in that scope
     /// if not found search in parent scope continue until found or no parent scope.
     /// returns the symbol and the scope id where it was found
-    pub fn lookup_in_scope(&self, lookup_request: LookupSymbolRequest) -> Option<&SymbolTableNode> {
+    pub fn lookup_in_scope(
+        &self,
+        lookup_request: &LookupSymbolRequest,
+    ) -> Option<&SymbolTableNode> {
         let mut scope = match lookup_request.scope {
             Some(scope_id) => self.get_scope_by_id(scope_id).expect("no scope found"),
             None => self.current_scope(),
@@ -227,13 +230,9 @@ impl SymbolTable {
 
     /// Looks up an attribute in the current scope and its parents
     /// Attributes must have symbol flags CLASS_MEMBER or INSTANCE_MEMBER
-    pub(crate) fn lookup_attribute<'a>(
-        &'a self,
-        attr: &str,
-        scope: &'a SymbolTableScope,
-    ) -> Option<&SymbolTableNode> {
-        if let Some(symbol) = scope.symbols.get(attr) {
-            return Some(symbol);
+    pub(crate) fn lookup_attribute(&self, attr: &str, scope_id: u32) -> Option<&SymbolTableNode> {
+        if let Some(scope) = self.get_scope_by_id(scope_id) {
+            return scope.symbols.get(attr);
         }
         None
     }
@@ -379,12 +378,12 @@ impl Declaration {
         }
     }
 
-    pub fn get_symbol_table<'a>(&self, symbol_tables: &'a [SymbolTable]) -> &'a SymbolTable {
-        let symbol_table = symbol_tables
-            .iter()
-            .find(|symbol_table| symbol_table.id == self.declaration_path().symbol_table_id);
-        symbol_table.expect("Symbol table not found for this symbol node: {self:?}")
-    }
+    // pub fn get_symbol_table<'a>(&self, symbol_tables: &'a [SymbolTable]) -> &'a SymbolTable {
+    //     let symbol_table = symbol_tables
+    //         .iter()
+    //         .find(|symbol_table| symbol_table.id == self.declaration_path().symbol_table_id);
+    //     symbol_table.expect("Symbol table not found for this symbol node: {self:?}")
+    // }
 }
 
 #[derive(Debug, Clone)]

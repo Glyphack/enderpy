@@ -1,10 +1,12 @@
 use std::path::PathBuf;
 
 use ast::{Expression, Statement};
+use dashmap::DashMap;
 use enderpy_python_parser as parser;
 use enderpy_python_parser::ast::{self, *};
 
 use super::{type_evaluator::TypeEvaluator, types::PythonType};
+use crate::symbol_table::Id;
 use crate::types::ModuleRef;
 use crate::{
     ast_visitor::TraversalVisitor, diagnostic::CharacterSpan, file::EnderpyFile,
@@ -13,10 +15,10 @@ use crate::{
 use rust_lapper::{Interval, Lapper};
 
 #[derive(Clone, Debug)]
-pub struct TypeChecker {
+pub struct TypeChecker<'a> {
     pub errors: Vec<TypeCheckError>,
     pub types: Lapper<u32, PythonType>,
-    type_evaluator: TypeEvaluator,
+    type_evaluator: TypeEvaluator<'a>,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -26,11 +28,15 @@ pub struct TypeCheckError {
 }
 
 #[allow(unused)]
-impl TypeChecker {
-    pub fn new(symbol_table: SymbolTable, symbol_tables: Vec<SymbolTable>) -> Self {
+impl<'a> TypeChecker<'a> {
+    pub fn new(
+        symbol_table: SymbolTable,
+        symbol_tables: &'a DashMap<Id, SymbolTable>,
+        ids: &'a DashMap<PathBuf, Id>,
+    ) -> Self {
         TypeChecker {
             errors: vec![],
-            type_evaluator: TypeEvaluator::new(symbol_table, symbol_tables),
+            type_evaluator: TypeEvaluator::new(symbol_table, symbol_tables, ids),
             types: Lapper::new(vec![]),
         }
     }
@@ -88,7 +94,7 @@ impl TypeChecker {
     }
 }
 #[allow(unused)]
-impl TraversalVisitor for TypeChecker {
+impl<'a> TraversalVisitor for TypeChecker<'a> {
     fn visit_stmt(&mut self, s: &Statement) {
         // map all statements and call visit
         match s {
