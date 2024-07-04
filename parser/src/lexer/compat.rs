@@ -551,11 +551,13 @@ def",
             table_builder.push_record(row);
         }
         let mut table = table_builder.build();
-        let (TerminalWidth(width), _) = terminal_size().expect("Unable to determine terminal size.");
-        table
-            .with(Style::modern())
-            .with(Width::wrap(width as usize).keep_words().priority::<PriorityMax>())
-            .with(Width::increase(width as usize));
+        table.with(Style::modern());
+        // If run in a terminal, don't expand table beyond terminal width.
+        if let Some((TerminalWidth(width), _)) = terminal_size() {
+            table
+                .with(Width::wrap(width as usize).keep_words().priority::<PriorityMax>())
+                .with(Width::increase(width as usize));
+        }
         panic!("enderpy tokens do not match Python tokens.\n{}\n{} token mismatches found", table, num_mismatches);
     }
 
