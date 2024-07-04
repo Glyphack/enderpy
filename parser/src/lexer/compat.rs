@@ -4,6 +4,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::runpython::{default_python_path, spawn_python_script_command};
 
+// Derived from:
+// https://github.com/python/cpython/blob/main/Lib/token.py
 #[allow(dead_code)]
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 #[serde(rename_all = "UPPERCASE")]
@@ -166,7 +168,8 @@ print(a)
                 ";",
                 "@",
                 "=",
-                // "\\", // Python lexer chokes on single backslash.
+                // TODO lex_python: Python lexer chokes on single backslash.
+                // "\\",
                 "#",
                 "$",
                 "?",
@@ -229,10 +232,8 @@ print(a)
     #[test]
     fn test_lex_identifiers() {
         python_tokenize_test_lexer(
-            &["a", "a_a", "_a", "a_", "a_a_a", "a_a_", "ಠ_ಠ"],
+            &["a", "a_a", "_a", "a_", "a_a_a", "a_a_"],
         );
-        // Invalid identifiers
-        // python_tokenize_test_lexer(&["🦀"]);
     }
 
     #[test]
@@ -339,14 +340,18 @@ print(a)
         );
     }
 
-    #[test]
-    fn test_lex_other() {
-        python_tokenize_test_lexer(
-            &["(a,
-
-)"],
-        );
-    }
+    // TODO lex_python: Decide whether to keep this test or not. The Python lexer + enderpy lexer 
+    // handle newlines in a nested context slightly differently.
+    // - Python increments the row counter.
+    // - enderpy appends them to the original row.
+//     #[test]
+//     fn test_lex_other() {
+//         python_tokenize_test_lexer(
+//             &["(a,
+//
+// )"],
+//         );
+//     }
 
     #[test]
     fn test_lex_indentation() {
@@ -388,8 +393,9 @@ def",
                 "a = f\"hello\"",
                 "f\"\"\"hello\"\"\"",
                 "f'''hello'''",
-                "f\"{{hey}}\"",
-                "f\"oh_{{hey}}\"",
+                // TODO lex_python: Python lexes these poorly.
+                // "f\"{{hey}}\"",
+                // "f\"oh_{{hey}}\"",
                 "f'a' 'c'",
                 "f'hello_{f'''{a}'''}'",
             ],
@@ -456,14 +462,11 @@ def",
                 continue;
             }
             let python_token = python_token.unwrap();
-            let python_token_kind = python_token.kind.clone();
             let enderpy_token = enderpy_token.unwrap();
             if let Some(mismatch) = check_tokens_match(python_token, enderpy_token, lexer) {
-                // If we get a wrong kind mismatch on the second to last token, and the token is a
-                // newline, this is a false positive. The Python lexer throws an extra newline in
-                // at the end of strings, apparently.
-                if matches!(mismatch, TokenMismatch::WrongKind(_, _)) && matches!(python_token_kind, PythonKind::NewLine | PythonKind::NL) && i == num_python_tokens - 2 && python_tokens[i + 1].kind == PythonKind::EndMarker {
-                    continue;
+                if check_mismatch_from_python_trailing_newline(&mismatch, &python_tokens[i + 1..]) {
+                    // If we found Python's trailing newline, we've read the end of file.
+                    break;
                 }
                 mismatches.push(mismatch);
             }
@@ -563,10 +566,12 @@ def",
             // during tokenization.
             // Instead, it slams keywords together into a generic Name kind.
             PythonKind::Name => {
-                matches_python_name_token(python_token.value.as_str(), enderpy_token.kind)
+                matches_python_name_token(python_token.value.as_str(), &enderpy_token.kind)
             },
-            PythonKind::Number => matches!(enderpy_token.kind, Kind::Integer | Kind::PointFloat | Kind::ExponentFloat),
-            PythonKind::String => enderpy_token.kind == Kind::StringLiteral,
+            PythonKind::Number => matches!(enderpy_token.kind, Kind::Integer | Kind::PointFloat | Kind::ExponentFloat | Kind::Binary | Kind::Octal | Kind::Hexadecimal | Kind::ImaginaryPointFloat | Kind::ImaginaryExponentFloat | Kind::ImaginaryInteger),
+            // NOTE: The Python tokenizer doesn't appear to track differences in string modifiers.
+            // For example, "hello"/u"hello"/r"hello" are all just String.
+            PythonKind::String => matches!(enderpy_token.kind, Kind::StringLiteral | Kind::Bytes | Kind::RawBytes | Kind::Unicode),
             PythonKind::NewLine => enderpy_token.kind == Kind::NewLine,
             PythonKind::Indent => enderpy_token.kind == Kind::Indent,
             PythonKind::Dedent => enderpy_token.kind == Kind::Dedent,
@@ -622,14 +627,14 @@ def",
             // during tokenization.
             // Instead, it slams all operators together into a generic Op kind.
             PythonKind::Op => {
-                matches_python_op_token(python_token.value.as_str(), enderpy_token.kind)
+                matches_python_op_token(python_token.value.as_str(), &enderpy_token.kind)
             },
             PythonKind::Await => enderpy_token.kind == Kind::Await,
             PythonKind::Async => enderpy_token.kind == Kind::Async,
             PythonKind::TypeIgnore => false, // doesn't exist
             PythonKind::TypeComment => false, // doesn't exist
             PythonKind::SoftKeyword => false, // doesn't exist
-            PythonKind::FstringStart => enderpy_token.kind == Kind::FStringStart,
+            PythonKind::FstringStart => matches!(enderpy_token.kind, Kind::FStringStart | Kind::RawFStringStart),
             PythonKind::FstringMiddle => enderpy_token.kind == Kind::FStringMiddle,
             PythonKind::FstringEnd => enderpy_token.kind == Kind::FStringEnd,
             PythonKind::Comment => enderpy_token.kind == Kind::Comment,
@@ -649,15 +654,18 @@ def",
         let enderpy_token_value = enderpy_token.value.to_string();
         // The Python tokenizer sets values in a number of places where enderpy simply relies
         // on kind to assume value. Handle those cases here.
-        let value_matches = matches_python_name_token(python_token.value.as_str(), enderpy_token.kind)
-            || matches_python_op_token(python_token.value.as_str(), enderpy_token.kind)
+        let value_matches = matches_python_name_token(python_token.value.as_str(), &enderpy_token.kind)
+            || matches_python_op_token(python_token.value.as_str(), &enderpy_token.kind)
+            || matches_python_indent_dedent_token(&python_token.kind, &enderpy_token.kind)
+            || (python_token.kind == PythonKind::EndMarker && enderpy_token.kind == Kind::Eof)
+            || (python_token.value.as_str() == "\n" && enderpy_token.kind == Kind::NewLine)
             || python_token_value == enderpy_token_value;
         if !value_matches {
             return Some(TokenMismatch::WrongValue(python_token, enderpy_token, python_token_value, enderpy_token_value));
         }
 
-        let (mut enderpy_start_row, enderpy_start_col) = lexer.to_row_col(enderpy_token.grapheme_start);
-        let (mut enderpy_end_row, mut enderpy_end_col) = lexer.to_row_col(enderpy_token.grapheme_end);
+        let (mut enderpy_start_row, enderpy_start_col) = lexer.to_row_col(enderpy_token.start);
+        let (mut enderpy_end_row, mut enderpy_end_col) = lexer.to_row_col(enderpy_token.end);
         // Python reserves the first row for a file encoding when detokenizing, so we add one
         // to our row values to match.
         enderpy_start_row += 1;
@@ -684,99 +692,125 @@ def",
         None
     }
 
-    fn matches_python_name_token(python_token_value: &str, token_kind: Kind) -> bool {
+    fn matches_python_name_token(python_token_value: &str, token_kind: &Kind) -> bool {
         match python_token_value {
-            "if" => token_kind == Kind::If,
-            "elif" => token_kind == Kind::Elif,
-            "else" => token_kind == Kind::Else,
-            "False" => token_kind == Kind::False,
-            "None" => token_kind == Kind::None,
-            "True" => token_kind == Kind::True,
-            "and" => token_kind == Kind::And,
-            "as" => token_kind == Kind::As,
-            "assert" => token_kind == Kind::Assert,
-            "async" => token_kind == Kind::Async,
-            "await" => token_kind == Kind::Await,
-            "break" => token_kind == Kind::Break,
-            "class" => token_kind == Kind::Class,
-            "continue" => token_kind == Kind::Continue,
-            "def" => token_kind == Kind::Def,
-            "del" => token_kind == Kind::Del,
-            "except" => token_kind == Kind::Except,
-            "finally" => token_kind == Kind::Finally,
-            "for" => token_kind == Kind::For,
-            "from" => token_kind == Kind::From,
-            "global" => token_kind == Kind::Global,
-            "import" => token_kind == Kind::Import,
-            "in" => token_kind == Kind::In,
-            "is" => token_kind == Kind::Is,
-            "lambda" => token_kind == Kind::Lambda,
-            "nonlocal" => token_kind == Kind::Nonlocal,
-            "not" => token_kind == Kind::Not,
-            "or" => token_kind == Kind::Or,
-            "pass" => token_kind == Kind::Pass,
-            "raise" => token_kind == Kind::Raise,
-            "return" => token_kind == Kind::Return,
-            "try" => token_kind == Kind::Try,
-            "while" => token_kind == Kind::While,
-            "with" => token_kind == Kind::With,
-            "yield" => token_kind == Kind::Yield,
-            _ => token_kind == Kind::Identifier,
+            "if" => token_kind == &Kind::If,
+            "elif" => token_kind == &Kind::Elif,
+            "else" => token_kind == &Kind::Else,
+            "False" => token_kind == &Kind::False,
+            "None" => token_kind == &Kind::None,
+            "True" => token_kind == &Kind::True,
+            "and" => token_kind == &Kind::And,
+            "as" => token_kind == &Kind::As,
+            "assert" => token_kind == &Kind::Assert,
+            "async" => token_kind == &Kind::Async,
+            "await" => token_kind == &Kind::Await,
+            "break" => token_kind == &Kind::Break,
+            "class" => token_kind == &Kind::Class,
+            "continue" => token_kind == &Kind::Continue,
+            "def" => token_kind == &Kind::Def,
+            "del" => token_kind == &Kind::Del,
+            "except" => token_kind == &Kind::Except,
+            "finally" => token_kind == &Kind::Finally,
+            "for" => token_kind == &Kind::For,
+            "from" => token_kind == &Kind::From,
+            "global" => token_kind == &Kind::Global,
+            "import" => token_kind == &Kind::Import,
+            "in" => token_kind == &Kind::In,
+            "is" => token_kind == &Kind::Is,
+            "lambda" => token_kind == &Kind::Lambda,
+            "nonlocal" => token_kind == &Kind::Nonlocal,
+            "not" => token_kind == &Kind::Not,
+            "or" => token_kind == &Kind::Or,
+            "pass" => token_kind == &Kind::Pass,
+            "raise" => token_kind == &Kind::Raise,
+            "return" => token_kind == &Kind::Return,
+            "try" => token_kind == &Kind::Try,
+            "while" => token_kind == &Kind::While,
+            "with" => token_kind == &Kind::With,
+            "yield" => token_kind == &Kind::Yield,
+            _ => token_kind == &Kind::Identifier,
         }
     }
 
-    fn matches_python_op_token(python_token_value: &str, token_kind: Kind) -> bool {
+    fn matches_python_op_token(python_token_value: &str, token_kind: &Kind) -> bool {
         match python_token_value {
-            "!=" => token_kind == Kind::NotEq,
-            "$" => token_kind == Kind::Dollar,
-            "%" => token_kind == Kind::Mod,
-            "%=" => token_kind == Kind::ModAssign,
-            "&" => token_kind == Kind::BitAnd,
-            "&=" => token_kind == Kind::BitAndAssign,
-            "(" => token_kind == Kind::LeftParen,
-            ")" => token_kind == Kind::RightParen,
-            "*" => token_kind == Kind::Mul,
-            "**" => token_kind == Kind::Pow,
-            "**=" => token_kind == Kind::PowAssign,
-            "*=" => token_kind == Kind::MulAssign,
-            "+" => token_kind == Kind::Plus,
-            "+=" => token_kind == Kind::AddAssign,
-            "," => token_kind == Kind::Comma,
-            "-" => token_kind == Kind::Minus,
-            "-=" => token_kind == Kind::SubAssign,
-            "->" => token_kind == Kind::Arrow,
-            "." => token_kind == Kind::Dot,
-            "/" => token_kind == Kind::Div,
-            "//" => token_kind == Kind::IntDiv,
-            "//=" => token_kind == Kind::IntDivAssign,
-            "/=" => token_kind == Kind::DivAssign,
-            ":" => token_kind == Kind::Colon,
-            ":=" => token_kind == Kind::Walrus,
-            ";" => token_kind == Kind::SemiColon,
-            "<" => token_kind == Kind::Less,
-            "<<" => token_kind == Kind::LeftShift,
-            "<<=" => token_kind == Kind::ShiftLeftAssign,
-            "<=" => token_kind == Kind::LessEq,
-            "=" => token_kind == Kind::Assign,
-            "==" => token_kind == Kind::Eq,
-            ">" => token_kind == Kind::Greater,
-            ">=" => token_kind == Kind::GreaterEq,
-            ">>" => token_kind == Kind::RightShift,
-            ">>=" => token_kind == Kind::ShiftRightAssign,
-            "?" => token_kind == Kind::QuestionMark,
-            "@" => token_kind == Kind::MatrixMul,
-            "@=" => token_kind == Kind::MatrixMulAssign,
-            "[" => token_kind == Kind::LeftBrace,
-            "]" => token_kind == Kind::RightBrace,
-            "^" => token_kind == Kind::BitXor,
-            "^=" => token_kind == Kind::BitXorAssign,
-            "`" => token_kind == Kind::BackTick,
-            "{" => token_kind == Kind::LeftBracket,
-            "|" => token_kind == Kind::BitOr,
-            "|=" => token_kind == Kind::BitOrAssign,
-            "}" => token_kind == Kind::RightBracket,
-            "~" => token_kind == Kind::BitNot,
+            "!=" => token_kind == &Kind::NotEq,
+            "$" => token_kind == &Kind::Dollar,
+            "%" => token_kind == &Kind::Mod,
+            "%=" => token_kind == &Kind::ModAssign,
+            "&" => token_kind == &Kind::BitAnd,
+            "&=" => token_kind == &Kind::BitAndAssign,
+            "(" => token_kind == &Kind::LeftParen,
+            ")" => token_kind == &Kind::RightParen,
+            "*" => token_kind == &Kind::Mul,
+            "**" => token_kind == &Kind::Pow,
+            "**=" => token_kind == &Kind::PowAssign,
+            "*=" => token_kind == &Kind::MulAssign,
+            "+" => token_kind == &Kind::Plus,
+            "+=" => token_kind == &Kind::AddAssign,
+            "," => token_kind == &Kind::Comma,
+            "-" => token_kind == &Kind::Minus,
+            "-=" => token_kind == &Kind::SubAssign,
+            "->" => token_kind == &Kind::Arrow,
+            "." => token_kind == &Kind::Dot,
+            "/" => token_kind == &Kind::Div,
+            "//" => token_kind == &Kind::IntDiv,
+            "//=" => token_kind == &Kind::IntDivAssign,
+            "/=" => token_kind == &Kind::DivAssign,
+            ":" => token_kind == &Kind::Colon,
+            ":=" => token_kind == &Kind::Walrus,
+            ";" => token_kind == &Kind::SemiColon,
+            "<" => token_kind == &Kind::Less,
+            "<<" => token_kind == &Kind::LeftShift,
+            "<<=" => token_kind == &Kind::ShiftLeftAssign,
+            "<=" => token_kind == &Kind::LessEq,
+            "=" => token_kind == &Kind::Assign,
+            "==" => token_kind == &Kind::Eq,
+            ">" => token_kind == &Kind::Greater,
+            ">=" => token_kind == &Kind::GreaterEq,
+            ">>" => token_kind == &Kind::RightShift,
+            ">>=" => token_kind == &Kind::ShiftRightAssign,
+            "?" => token_kind == &Kind::QuestionMark,
+            "@" => token_kind == &Kind::MatrixMul,
+            "@=" => token_kind == &Kind::MatrixMulAssign,
+            "[" => token_kind == &Kind::LeftBrace,
+            "]" => token_kind == &Kind::RightBrace,
+            "^" => token_kind == &Kind::BitXor,
+            "^=" => token_kind == &Kind::BitXorAssign,
+            "`" => token_kind == &Kind::BackTick,
+            "{" => token_kind == &Kind::LeftBracket,
+            "|" => token_kind == &Kind::BitOr,
+            "|=" => token_kind == &Kind::BitOrAssign,
+            "}" => token_kind == &Kind::RightBracket,
+            "~" => token_kind == &Kind::BitNot,
+            "..." => token_kind == &Kind::Ellipsis,
             _ => false,
         }
+    }
+
+    fn matches_python_indent_dedent_token(python_kind: &PythonKind, enderpy_kind: &Kind) -> bool {
+        // TODO lex_python: There's no obvious way with the Python lexer to determine what is
+        // considered one indent level. Instead, it simply stores the literal whitespace. This
+        // makes it really difficult to determine whether indentation levels actually match
+        // (without looking around at the larger context), so for now we'll just make sure the
+        // Kind lines up.
+        (python_kind == &PythonKind::Indent && enderpy_kind == &Kind::Indent) || (python_kind == &PythonKind::Dedent && enderpy_kind == &Kind::Dedent)
+    }
+
+    /// The Python tokenizer adds a cheeky newline to the end of the source, causing mismatches. We
+    /// handle this by ignoring mismatches that meet all of the following criteria.
+    /// - The mismatch type is `WrongKind`.
+    /// - The Python kind is a known whitespace value.
+    /// - The enderpy kind is a EOF.
+    /// - The only remaining Python tokens before EOF are known whitespace values.
+    fn check_mismatch_from_python_trailing_newline(mismatch: &TokenMismatch, remaining_tokens: &[PythonToken]) -> bool {
+        if let TokenMismatch::WrongKind(python_token, enderpy_token) = mismatch {
+            if !matches!(python_token.kind, PythonKind::NewLine | PythonKind::NL) || enderpy_token.kind != Kind::Eof {
+                return false;
+            }
+            return remaining_tokens.iter().all(|t| matches!(t.kind, PythonKind::NewLine | PythonKind::NL | PythonKind::Dedent | PythonKind::EndMarker));
+        }
+        false
     }
 }

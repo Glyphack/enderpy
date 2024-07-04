@@ -1,7 +1,6 @@
 pub mod compat;
 
 use unicode_id_start::{is_id_continue, is_id_start};
-use unicode_width::UnicodeWidthChar;
 
 use crate::{
     error::LexError,
@@ -49,9 +48,6 @@ pub struct Lexer<'a> {
     /// The current position in the source code
     current: u32,
     current_line: u16,
-    /// The current position by grapheme clusters.
-    /// This is the character offset from the user perspective.
-    current_grapheme: u32,
     /// Keeps track of whether the lexer is at the start of a line
     start_of_line: bool,
     /// keeps track of the indentation level
@@ -73,7 +69,6 @@ impl<'a> Lexer<'a> {
             source,
             current: 0,
             current_line: 1,
-            current_grapheme: 0,
             start_of_line: true,
             indent_stack: vec![0],
             nesting: 0,
@@ -105,13 +100,10 @@ impl<'a> Lexer<'a> {
                 value: TokenValue::None,
                 start: self.current,
                 end: self.current,
-                grapheme_start: self.current_grapheme,
-                grapheme_end: self.current_grapheme,
             };
         }
 
         let start = self.current;
-        let grapheme_start = self.current_grapheme;
         let kind = match self.next_kind() {
             Ok(kind) => kind,
             Err(e) => {
@@ -135,15 +127,12 @@ impl<'a> Lexer<'a> {
 
         let value = self.parse_token_value(kind, start);
         let end = self.current;
-        let grapheme_end = self.current_grapheme;
 
         Token {
             kind,
             value,
             start,
             end,
-            grapheme_start,
-            grapheme_end,
         }
     }
 
@@ -660,7 +649,6 @@ impl<'a> Lexer<'a> {
         let c = self.peek();
         if let Some(c) = c {
             self.current += c.len_utf8() as u32;
-            self.current_grapheme += UnicodeWidthChar::width_cjk(c).unwrap() as u32;
         }
         c
     }
