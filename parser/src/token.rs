@@ -8,6 +8,8 @@ pub struct Token {
     pub value: TokenValue,
     pub start: u32,
     pub end: u32,
+    pub grapheme_start: u32,
+    pub grapheme_end: u32,
 }
 
 impl Display for Token {
