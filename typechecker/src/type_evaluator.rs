@@ -611,14 +611,36 @@ impl<'a> TypeEvaluator<'a> {
                                 continue;
                             }
 
-                            let Some(resolved_symbol) = symbol_table_with_alias_def
-                                .lookup_in_scope(&LookupSymbolRequest { name, scope: None })
-                            else {
-                                continue;
+                            let lookup = &LookupSymbolRequest { name, scope: None };
+                            if let Some(current_symbol_lookup) =
+                                symbol_table_with_alias_def.lookup_in_scope(lookup)
+                            {
+                                log::debug!("alias resolved to {:?}", current_symbol_lookup);
+                                return self.get_symbol_type(current_symbol_lookup);
                             };
 
-                            log::debug!("alias resolved to {:?}", resolved_symbol);
-                            return self.get_symbol_type(resolved_symbol);
+                            for star_import in symbol_table.star_imports.iter() {
+                                log::debug!("checking star imports {:?}", star_import);
+                                for resolved in star_import.resolved_paths.iter() {
+                                    log::debug!("checking path {:?}", resolved);
+                                    let id = self.ids.get(resolved).expect("module not found");
+                                    let star_import_sym_table =
+                                        self.imported_symbol_tables.get(&id);
+                                    let Some(sym_table) = star_import_sym_table else {
+                                        panic!(
+                                            "symbol table of star import not found at {:?}",
+                                            resolved
+                                        );
+                                    };
+                                    let res = sym_table.lookup_in_scope(lookup);
+                                    match res {
+                                        Some(res) => {
+                                            return self.get_symbol_type(res);
+                                        }
+                                        None => continue,
+                                    };
+                                }
+                            }
                         }
 
                         for (_, implicit_import) in import_result.implicit_imports.iter() {
