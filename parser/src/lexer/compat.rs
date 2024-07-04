@@ -141,7 +141,6 @@ print(a)
 
     fn python_tokenize_test_lexer(inputs: &[&str]) {
         for test_input in inputs.iter() {
-            println!("{}", test_input);
             let mut lexer = Lexer::new(test_input);
             let tokens = lexer.lex();
             let python_tokens = lex_python_source(test_input).unwrap();
@@ -167,7 +166,7 @@ print(a)
                 ";",
                 "@",
                 "=",
-                "\\",
+                // "\\", // Python lexer chokes on single backslash.
                 "#",
                 "$",
                 "?",
@@ -463,7 +462,7 @@ def",
                 // If we get a wrong kind mismatch on the second to last token, and the token is a
                 // newline, this is a false positive. The Python lexer throws an extra newline in
                 // at the end of strings, apparently.
-                if matches!(mismatch, TokenMismatch::WrongKind(_, _)) && matches!(python_token_kind, PythonKind::NewLine) && i == num_python_tokens - 2 && python_tokens[i + 1].kind == PythonKind::EndMarker {
+                if matches!(mismatch, TokenMismatch::WrongKind(_, _)) && matches!(python_token_kind, PythonKind::NewLine | PythonKind::NL) && i == num_python_tokens - 2 && python_tokens[i + 1].kind == PythonKind::EndMarker {
                     continue;
                 }
                 mismatches.push(mismatch);
@@ -710,6 +709,41 @@ def",
             "." => token_kind == Kind::Dot,
             "," => token_kind == Kind::Comma,
             "@" => token_kind == Kind::MatrixMul,
+            "$" => token_kind == Kind::Dollar,
+            "?" => token_kind == Kind::QuestionMark,
+            "`" => token_kind == Kind::BackTick,
+            "->" => token_kind == Kind::Arrow,
+            "-=" => token_kind == Kind::SubAssign,
+            "*=" => token_kind == Kind::MulAssign,
+            "/=" => token_kind == Kind::DivAssign,
+            "%=" => token_kind == Kind::ModAssign,
+            "@=" => token_kind == Kind::MatrixMulAssign,
+            "&=" => token_kind == Kind::BitAndAssign,
+            "|=" => token_kind == Kind::BitOrAssign,
+            "^=" => token_kind == Kind::BitXorAssign,
+            "//=" => token_kind == Kind::IntDivAssign,
+            "<<=" => token_kind == Kind::ShiftLeftAssign,
+            ">>=" => token_kind == Kind::ShiftRightAssign,
+            "**=" => token_kind == Kind::PowAssign,
+            "**" => token_kind == Kind::Pow,
+            "//" => token_kind == Kind::IntDiv,
+            ">>" => token_kind == Kind::RightShift,
+            "<<" => token_kind == Kind::LeftShift,
+            "-" => token_kind == Kind::Minus,
+            "*" => token_kind == Kind::Mul,
+            "/" => token_kind == Kind::Div,
+            "%" => token_kind == Kind::Mod,
+            "&" => token_kind == Kind::BitAnd,
+            "|" => token_kind == Kind::BitOr,
+            "^" => token_kind == Kind::BitXor,
+            "~" => token_kind == Kind::BitNot,
+            ":=" => token_kind == Kind::Walrus,
+            "<" => token_kind == Kind::Less,
+            ">" => token_kind == Kind::Greater,
+            "<=" => token_kind == Kind::LessEq,
+            ">=" => token_kind == Kind::GreaterEq,
+            "==" => token_kind == Kind::Eq,
+            "!=" => token_kind == Kind::NotEq,
             _ => false,
         }
     }
