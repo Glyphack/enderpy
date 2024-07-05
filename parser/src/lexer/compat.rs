@@ -472,10 +472,7 @@ def",
 
         let mut table_builder = Builder::default();
         // Add the table header.
-        let mut header = vec!["Python token", "Enderpy token", "Failure"];
-        if include_source {
-            header.push("Source");
-        }
+        let header = vec!["Python token", "Enderpy token", "Failure"];
         table_builder.push_record(header);
         // Add the table rows. Each row represents a lexer token mismatch.
         let num_mismatches = mismatches.len();
