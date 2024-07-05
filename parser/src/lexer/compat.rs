@@ -423,7 +423,6 @@ def",
     ) {
         let num_python_tokens = python_tokens.len();
         let num_enderpy_tokens = enderpy_tokens.len();
-        // let last_index = std::cmp::max(num_python_tokens, num_enderpy_tokens) - 1;
         let mut mismatches: Vec<TokenMismatch> = vec![];
         let mut python_index = 0;
         let mut enderpy_index = 0;
@@ -453,8 +452,9 @@ def",
                     } else if is_python_fstring_mismatch(
                         &mismatch,
                         &enderpy_tokens[enderpy_index + 1..],
-                        &mut enderpy_index,
+                        &mut enderpy_index, // <-- `enderpy_index` may be updated
                     ) {
+                        // Nothing, but don't add the mismatch.
                     } else {
                         mismatches.push(mismatch);
                     }
@@ -881,6 +881,7 @@ def",
         false
     }
 
+    /// Python 3.11 and earlier tokenizes fstrings as just.. strings.
     fn is_python_fstring_mismatch(
         mismatch: &TokenMismatch,
         remaining_tokens: &[Token],
