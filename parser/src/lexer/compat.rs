@@ -317,10 +317,10 @@ print(a)
         python_tokenize_test_lexer(&["import a", "import a.b", "import a.b.c", "import a from b"]);
     }
 
-    // TODO lex_python: Decide whether to keep this test or not. The Python lexer + enderpy lexer
+    // TODO lex_python: Decide whether to keep this test or not. The Python lexer + Enderpy lexer
     // handle newlines in a nested context slightly differently.
     // - Python increments the row counter.
-    // - enderpy appends them to the original row.
+    // - Enderpy appends them to the original row.
     //     #[test]
     //     fn test_lex_other() {
     //         python_tokenize_test_lexer(
@@ -487,7 +487,7 @@ def",
                 }
                 TokenMismatch::WrongKind(python_token, enderpy_token) => {
                     let message = format!(
-                        "Wrong token kind.\nExpected: {:?}\nActual: {:?}",
+                        "Wrong token kind.\nPython: {:?}\nEnderpy: {:?}",
                         python_token.kind, enderpy_token.kind
                     );
                     (Some(python_token), Some(enderpy_token), message)
@@ -501,7 +501,7 @@ def",
                     Some(python_token),
                     Some(enderpy_token),
                     format!(
-                        "Wrong token value.\nExpected: {:?}\nActual: {:?}",
+                        "Wrong token value.\nPython: {:?}\nEnderpy: {:?}",
                         expected_value, actual_value
                     ),
                 ),
@@ -516,7 +516,7 @@ def",
                     Some(python_token),
                     Some(enderpy_token),
                     format!(
-                        "Wrong token start/end offset.\nExpected: {:?} - {:?}\nActual: {:?} - {:?}",
+                        "Wrong token start/end offset.\nPython: {:?} - {:?}\nEnderpy: {:?} - {:?}",
                         expected_start, expected_end, actual_start, actual_end,
                     ),
                 ),
@@ -550,9 +550,6 @@ def",
                     message,
                 ]);
             }
-            if include_source {
-                row.push(lexer.source.to_string());
-            }
             table_builder.push_record(row);
         }
         let mut table = table_builder.build();
@@ -567,9 +564,14 @@ def",
                 )
                 .with(Width::increase(width as usize));
         }
+        let formatted_source = if include_source {
+            format!("\nSource:\n{}", lexer.source)
+        } else {
+            "".to_string()
+        };
         panic!(
-            "enderpy tokens do not match Python tokens.\n{}\n{} token mismatches found",
-            table, num_mismatches
+            "Enderpy tokens do not match Python tokens.{}\n{}\n{} token mismatches found",
+            formatted_source, table, num_mismatches
         );
     }
 
@@ -695,7 +697,7 @@ def",
 
         let python_token_value = python_token.value.clone();
         let enderpy_token_value = enderpy_token.value.to_string();
-        // The Python tokenizer sets values in a number of places where enderpy simply relies
+        // The Python tokenizer sets values in a number of places where Enderpy simply relies
         // on kind to assume value. Handle those cases here.
         let value_matches =
             matches_python_name_token(python_token.value.as_str(), &enderpy_token.kind)
@@ -856,7 +858,7 @@ def",
     /// handle this by ignoring mismatches that meet all of the following criteria.
     /// - The mismatch type is `WrongKind`.
     /// - The Python kind is a known whitespace value.
-    /// - The enderpy kind is a EOF.
+    /// - The Enderpy kind is a EOF.
     /// - The only remaining Python tokens before EOF are known whitespace values.
     fn is_python_trailing_newline_mismatch(
         mismatch: &TokenMismatch,
