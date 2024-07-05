@@ -397,7 +397,8 @@ def",
                 // "f\"{{hey}}\"",
                 // "f\"oh_{{hey}}\"",
                 "f'a' 'c'",
-                "f'hello_{f'''{a}'''}'",
+                // TODO lex_python: Python 3.11 chokes on this input.
+                // "f'hello_{f'''{a}'''}'",
             ],
         );
 
@@ -444,32 +445,38 @@ def",
     fn assert_tokens_eq(python_tokens: Vec<PythonToken>, enderpy_tokens: Vec<Token>, lexer: &Lexer) {
         let num_python_tokens = python_tokens.len();
         let num_enderpy_tokens = enderpy_tokens.len();
-        let last_index = std::cmp::max(num_python_tokens, num_enderpy_tokens) - 1;
+        // let last_index = std::cmp::max(num_python_tokens, num_enderpy_tokens) - 1;
         let mut mismatches: Vec<TokenMismatch> = vec![];
-        for i in 0..last_index {
-            let python_token = if i > num_python_tokens - 1 {
+        let mut python_index = 0;
+        let mut enderpy_index = 0;
+        while python_index < num_python_tokens || enderpy_index < num_enderpy_tokens {
+            let python_token = if python_index > num_python_tokens - 1 {
                 None
             } else {
-                Some(python_tokens[i].clone())
+                Some(python_tokens[python_index].clone())
             };
-            let enderpy_token = if i > num_enderpy_tokens - 1 {
+            let enderpy_token = if enderpy_index > num_enderpy_tokens - 1 {
                 None
             } else {
-                Some(enderpy_tokens[i].clone())
+                Some(enderpy_tokens[enderpy_index].clone())
             };
             if python_token.is_none() || enderpy_token.is_none() {
                 mismatches.push(TokenMismatch::MissingToken(python_token, enderpy_token));
-                continue;
-            }
-            let python_token = python_token.unwrap();
-            let enderpy_token = enderpy_token.unwrap();
-            if let Some(mismatch) = check_tokens_match(python_token, enderpy_token, lexer) {
-                if check_mismatch_from_python_trailing_newline(&mismatch, &python_tokens[i + 1..]) {
-                    // If we found Python's trailing newline, we've read the end of file.
-                    break;
+            } else {
+                let python_token = python_token.unwrap();
+                let enderpy_token = enderpy_token.unwrap();
+                if let Some(mismatch) = check_tokens_match(python_token, enderpy_token, lexer) {
+                    if is_python_trailing_newline_mismatch(&mismatch, &python_tokens[python_index + 1..]) {
+                        // If we found Python's trailing newline, we've read the end of file.
+                        break;
+                    } else if is_python_fstring_mismatch(&mismatch, &enderpy_tokens[enderpy_index + 1..], &mut enderpy_index) {
+                    } else {
+                        mismatches.push(mismatch);
+                    }
                 }
-                mismatches.push(mismatch);
             }
+            python_index += 1;
+            enderpy_index += 1;
         }
         if mismatches.is_empty() {
             return;
@@ -643,7 +650,15 @@ def",
             // In Python, this represents a line break within a single statement. We don't
             // currently make this distinction.
             PythonKind::NL => enderpy_token.kind == Kind::NewLine,
-            PythonKind::ErrorToken => enderpy_token.kind == Kind::Error,
+            PythonKind::ErrorToken => {
+                match python_token.value.as_str() {
+                    // Python 3.11 chokes on these tokens.
+                    "$" => enderpy_token.kind == Kind::Dollar,
+                    "?" => enderpy_token.kind == Kind::QuestionMark,
+                    "`" => enderpy_token.kind == Kind::BackTick,
+                    _ => enderpy_token.kind == Kind::Error,
+                }
+            },
             PythonKind::Encoding => false, // doesn't exist
             PythonKind::NTokens => false, // doesn't exist,
             PythonKind::NTOffset => false, // doesn't exist
@@ -806,12 +821,30 @@ def",
     /// - The Python kind is a known whitespace value.
     /// - The enderpy kind is a EOF.
     /// - The only remaining Python tokens before EOF are known whitespace values.
-    fn check_mismatch_from_python_trailing_newline(mismatch: &TokenMismatch, remaining_tokens: &[PythonToken]) -> bool {
+    fn is_python_trailing_newline_mismatch(mismatch: &TokenMismatch, remaining_tokens: &[PythonToken]) -> bool {
         if let TokenMismatch::WrongKind(python_token, enderpy_token) = mismatch {
             if !matches!(python_token.kind, PythonKind::NewLine | PythonKind::NL) || enderpy_token.kind != Kind::Eof {
                 return false;
             }
             return remaining_tokens.iter().all(|t| matches!(t.kind, PythonKind::NewLine | PythonKind::NL | PythonKind::Dedent | PythonKind::EndMarker));
+        }
+        false
+    }
+
+    fn is_python_fstring_mismatch(mismatch: &TokenMismatch, remaining_tokens: &[Token], enderpy_index: &mut usize) -> bool {
+        if let TokenMismatch::WrongKind(python_token, enderpy_token) = mismatch {
+            if !matches!(enderpy_token.kind, Kind::FStringStart | Kind::RawFStringStart) || python_token.kind != PythonKind::String {
+                return false;
+            }
+            let mut num_skipped = 0;
+            for token in remaining_tokens {
+                num_skipped += 1;
+                if matches!(token.kind, Kind::FStringEnd | Kind::Eof) {
+                    break;
+                }
+            }
+            *enderpy_index += num_skipped;
+            return true;
         }
         false
     }
