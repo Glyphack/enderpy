@@ -1,10 +1,17 @@
-use std::process::{Child, Command, Stdio};
-use std::path::{Path, PathBuf};
 use miette::{bail, IntoDiagnostic, Result, WrapErr};
+use std::path::{Path, PathBuf};
+use std::process::{Child, Command, Stdio};
 use which::which;
 
-pub fn spawn_python_script_command<S, P>(script_path: S, args: Vec<&str>, python_path: P) -> Result<Child>
-where S: AsRef<Path>, P: AsRef<Path> {
+pub fn spawn_python_script_command<S, P>(
+    script_path: S,
+    args: Vec<&str>,
+    python_path: P,
+) -> Result<Child>
+where
+    S: AsRef<Path>,
+    P: AsRef<Path>,
+{
     let script_path = if script_path.as_ref().is_relative() {
         let enderpy_dir = enderpy_root_path()?;
         enderpy_dir.join(script_path)

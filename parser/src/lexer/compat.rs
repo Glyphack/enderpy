@@ -1,6 +1,6 @@
-use std::io::Write;
 use miette::{bail, IntoDiagnostic, Result};
 use serde::{Deserialize, Serialize};
+use std::io::Write;
 
 use crate::runpython::{default_python_path, spawn_python_script_command};
 
@@ -113,21 +113,22 @@ fn lex_python_source(source: &str) -> Result<Vec<PythonToken>> {
     }
     // Get process stdout and parse result.
     let output = process.wait_with_output().into_diagnostic()?;
-    let python_tokens: Vec<PythonToken> = serde_json::from_str(String::from_utf8_lossy(&output.stdout).as_ref()).into_diagnostic()?;
+    let python_tokens: Vec<PythonToken> =
+        serde_json::from_str(String::from_utf8_lossy(&output.stdout).as_ref()).into_diagnostic()?;
     Ok(python_tokens)
 }
 
 #[cfg(test)]
 mod tests {
+    use super::{lex_python_source, PythonKind, PythonToken};
+    use crate::token::Kind;
+    use crate::{lexer::Lexer, token::Token};
     use tabled::{
         builder::Builder,
-        settings::{Style, Width},
         settings::peaker::PriorityMax,
+        settings::{Style, Width},
     };
     use terminal_size::{terminal_size, Width as TerminalWidth};
-    use crate::{lexer::Lexer, token::Token};
-    use crate::token::Kind;
-    use super::{lex_python_source, PythonToken, PythonKind};
 
     #[test]
     fn test_simple_compat() {
@@ -152,111 +153,99 @@ print(a)
 
     #[test]
     fn test_lex_operators() {
-        python_tokenize_test_lexer(
-            &[
-                "1+2",
-                "a+b",
-                "a + b",
-                "+=2",
-                "xX = 2",
-                "if else elif",
-                "()",
-                "[]",
-                "{}:",
-                ".",
-                ",",
-                ";",
-                "@",
-                "=",
-                // TODO lex_python: Python lexer chokes on single backslash.
-                // "\\",
-                "#",
-                "$",
-                "?",
-                "`",
-                "->",
-                "+=",
-                "-=",
-                "*=",
-                "/=",
-                "%=",
-                "@=",
-                "&=",
-                "|=",
-                "^=",
-                "//=",
-                "<<=",
-                ">>=",
-                "**=",
-                "**",
-                "//",
-                "<<",
-                ">>",
-                "+",
-                "-",
-                "*",
-                "**",
-                "/",
-                "//",
-                "%",
-                "@",
-                "<<",
-                ">>",
-                "&",
-                "|",
-                "^",
-                "~",
-                ":=",
-                "<",
-                ">",
-                "<=",
-                ">=",
-                "==",
-                "!=",
-            ],
-        );
+        python_tokenize_test_lexer(&[
+            "1+2",
+            "a+b",
+            "a + b",
+            "+=2",
+            "xX = 2",
+            "if else elif",
+            "()",
+            "[]",
+            "{}:",
+            ".",
+            ",",
+            ";",
+            "@",
+            "=",
+            // TODO lex_python: Python lexer chokes on single backslash.
+            // "\\",
+            "#",
+            "$",
+            "?",
+            "`",
+            "->",
+            "+=",
+            "-=",
+            "*=",
+            "/=",
+            "%=",
+            "@=",
+            "&=",
+            "|=",
+            "^=",
+            "//=",
+            "<<=",
+            ">>=",
+            "**=",
+            "**",
+            "//",
+            "<<",
+            ">>",
+            "+",
+            "-",
+            "*",
+            "**",
+            "/",
+            "//",
+            "%",
+            "@",
+            "<<",
+            ">>",
+            "&",
+            "|",
+            "^",
+            "~",
+            ":=",
+            "<",
+            ">",
+            "<=",
+            ">=",
+            "==",
+            "!=",
+        ]);
     }
 
     #[test]
     fn test_lex_keywords() {
-        python_tokenize_test_lexer(
-            &[
-                "False None True and as assert async await",
-                "break class continue def del elif else except",
-                "finally for from global if import in is lambda",
-                "nonlocal not or pass raise return try while with yield",
-            ],
-        );
+        python_tokenize_test_lexer(&[
+            "False None True and as assert async await",
+            "break class continue def del elif else except",
+            "finally for from global if import in is lambda",
+            "nonlocal not or pass raise return try while with yield",
+        ]);
     }
 
     #[test]
     fn test_lex_identifiers() {
-        python_tokenize_test_lexer(
-            &["a", "a_a", "_a", "a_", "a_a_a", "a_a_"],
-        );
+        python_tokenize_test_lexer(&["a", "a_a", "_a", "a_", "a_a_a", "a_a_"]);
     }
 
     #[test]
     fn test_lex_literals() {
         // Binary
-        python_tokenize_test_lexer(
-            &[
-                "0b0", "0b1", "0b10", "0b11", "0b100", "0b101", "0b110", "0b111",
-            ],
-        );
+        python_tokenize_test_lexer(&[
+            "0b0", "0b1", "0b10", "0b11", "0b100", "0b101", "0b110", "0b111",
+        ]);
 
         // Octal
-        python_tokenize_test_lexer(
-            &["0o0", "0o1", "0o2", "0o3", "0o4", "0o5", "0o6", "0o7"],
-        );
+        python_tokenize_test_lexer(&["0o0", "0o1", "0o2", "0o3", "0o4", "0o5", "0o6", "0o7"]);
 
         // Hexadecimal
-        python_tokenize_test_lexer(
-            &[
-                "0x0", "0x1", "0x2", "0x3", "0x4", "0x5", "0x6", "0x7", "0x8", "0x9", "0xa", "0xb",
-                "0xc", "0xd", "0xe", "0xf", "0xA", "0xB", "0xC", "0xD", "0xE", "0xF",
-            ],
-        );
+        python_tokenize_test_lexer(&[
+            "0x0", "0x1", "0x2", "0x3", "0x4", "0x5", "0x6", "0x7", "0x8", "0x9", "0xa", "0xb",
+            "0xc", "0xd", "0xe", "0xf", "0xA", "0xB", "0xC", "0xD", "0xE", "0xF",
+        ]);
 
         // Point float
         python_tokenize_test_lexer(&["0.0 0.1 00.0 00.1 0.1j 0.01J"]);
@@ -268,181 +257,170 @@ print(a)
         python_tokenize_test_lexer(&["11 33 1j 1_000_000j"]);
 
         // Strings
-        python_tokenize_test_lexer(
-            &[
-                "\"hello\"  ",
-                "\"world\"",
-                "\"\"",
-                "a = \"hello\"",
-                "'hello'",
-                "\"\"\"hello\"\"\"",
-                "'''hello'''",
-            ],
-        );
+        python_tokenize_test_lexer(&[
+            "\"hello\"  ",
+            "\"world\"",
+            "\"\"",
+            "a = \"hello\"",
+            "'hello'",
+            "\"\"\"hello\"\"\"",
+            "'''hello'''",
+        ]);
 
         // Bytes
-        python_tokenize_test_lexer(
-            &[
-                "b\"hello\"",
-                "b\"world\"",
-                "b\"\"",
-                "a = b\"hello\"",
-                "b'hello'",
-                "b\"\"\"hello\"\"\"",
-                "b'''hello'''",
-            ],
-        );
+        python_tokenize_test_lexer(&[
+            "b\"hello\"",
+            "b\"world\"",
+            "b\"\"",
+            "a = b\"hello\"",
+            "b'hello'",
+            "b\"\"\"hello\"\"\"",
+            "b'''hello'''",
+        ]);
 
         // Raw strings
-        python_tokenize_test_lexer(
-            &[
-                "r\"hello\"",
-                "r\"world\"",
-                "r\"\"",
-                "a = r\"hello\"",
-                "r'hello'",
-                "r\"\"\"hello\"\"\"",
-                "r'''hello'''",
-            ],
-        );
+        python_tokenize_test_lexer(&[
+            "r\"hello\"",
+            "r\"world\"",
+            "r\"\"",
+            "a = r\"hello\"",
+            "r'hello'",
+            "r\"\"\"hello\"\"\"",
+            "r'''hello'''",
+        ]);
 
         // Raw bytes
-        python_tokenize_test_lexer(
-            &[
-                "rb\"hello\"",
-                "rb\"world\"",
-                "rb\"\"",
-                "a = rb\"hello\"",
-                "rb'hello'",
-                "rb\"\"\"hello\"\"\"",
-                "rb'''hello'''",
-            ],
-        );
+        python_tokenize_test_lexer(&[
+            "rb\"hello\"",
+            "rb\"world\"",
+            "rb\"\"",
+            "a = rb\"hello\"",
+            "rb'hello'",
+            "rb\"\"\"hello\"\"\"",
+            "rb'''hello'''",
+        ]);
 
         // Unicode strings
-        python_tokenize_test_lexer(
-            &[
-                "u\"hello\"",
-                "u\"world\"",
-                "u\"\"",
-                "a = u\"hello\"",
-                "u'hello'",
-                "u\"\"\"hello\"\"\"",
-                "u'''hello'''",
-            ],
-        );
+        python_tokenize_test_lexer(&[
+            "u\"hello\"",
+            "u\"world\"",
+            "u\"\"",
+            "a = u\"hello\"",
+            "u'hello'",
+            "u\"\"\"hello\"\"\"",
+            "u'''hello'''",
+        ]);
     }
 
     #[test]
     fn test_lex_imports() {
-        python_tokenize_test_lexer(
-            &["import a", "import a.b", "import a.b.c", "import a from b"],
-        );
+        python_tokenize_test_lexer(&["import a", "import a.b", "import a.b.c", "import a from b"]);
     }
 
-    // TODO lex_python: Decide whether to keep this test or not. The Python lexer + enderpy lexer 
+    // TODO lex_python: Decide whether to keep this test or not. The Python lexer + enderpy lexer
     // handle newlines in a nested context slightly differently.
     // - Python increments the row counter.
     // - enderpy appends them to the original row.
-//     #[test]
-//     fn test_lex_other() {
-//         python_tokenize_test_lexer(
-//             &["(a,
-//
-// )"],
-//         );
-//     }
+    //     #[test]
+    //     fn test_lex_other() {
+    //         python_tokenize_test_lexer(
+    //             &["(a,
+    //
+    // )"],
+    //         );
+    //     }
 
     #[test]
     fn test_lex_indentation() {
-        python_tokenize_test_lexer(
-            &[
-                "if True:
+        python_tokenize_test_lexer(&[
+            "if True:
             pass\n",
-                "if True:
+            "if True:
     pass
 else:
     pass",
-                "if True:
+            "if True:
     if True:
         pass
 def",
-                "def f(x):
+            "def f(x):
     y = z
 
     print(y)
 ",
-                "if a:
+            "if a:
 
     f = c
 
     # Path: test_local.py
 ",
-            ],
-        );
+        ]);
     }
 
     #[test]
     fn test_lex_fstring() {
-        python_tokenize_test_lexer(
-            &[
-                "f\"hello\"",
-                "f'hello_{var}'",
-                "f\"world\"",
-                "f\"\"",
-                "a = f\"hello\"",
-                "f\"\"\"hello\"\"\"",
-                "f'''hello'''",
-                // TODO lex_python: Python lexes these poorly.
-                // "f\"{{hey}}\"",
-                // "f\"oh_{{hey}}\"",
-                "f'a' 'c'",
-                // TODO lex_python: Python 3.11 chokes on this input.
-                // "f'hello_{f'''{a}'''}'",
-            ],
-        );
+        python_tokenize_test_lexer(&[
+            "f\"hello\"",
+            "f'hello_{var}'",
+            "f\"world\"",
+            "f\"\"",
+            "a = f\"hello\"",
+            "f\"\"\"hello\"\"\"",
+            "f'''hello'''",
+            // TODO lex_python: Python lexes these poorly.
+            // "f\"{{hey}}\"",
+            // "f\"oh_{{hey}}\"",
+            "f'a' 'c'",
+            // TODO lex_python: Python 3.11 chokes on this input.
+            // "f'hello_{f'''{a}'''}'",
+        ]);
 
         // Raw F-strings
-        python_tokenize_test_lexer(
-            &[
-                "rf\"hello\"",
-                "rf\"world\"",
-                "rf\"\"",
-                "a = rf\"hello\"",
-                "rf'hello_{var}'",
-                "rf\"\"\"hello\"\"\"",
-                "rf'''hello'''",
-            ],
-        );
+        python_tokenize_test_lexer(&[
+            "rf\"hello\"",
+            "rf\"world\"",
+            "rf\"\"",
+            "a = rf\"hello\"",
+            "rf'hello_{var}'",
+            "rf\"\"\"hello\"\"\"",
+            "rf'''hello'''",
+        ]);
     }
 
     #[test]
     fn test_lex_ellipsis() {
-        python_tokenize_test_lexer(
-            &[
-                "...",
-                "def a():
+        python_tokenize_test_lexer(&[
+            "...",
+            "def a():
     ...",
-            ],
-        );
+        ]);
     }
 
     #[test]
     #[should_panic]
     fn test_lex_unterminated_string_double_quotes() {
-        python_tokenize_test_lexer(
-            &["\"hello", "'hello", "'''hello''", "'''hello'"],
-        );
+        python_tokenize_test_lexer(&["\"hello", "'hello", "'''hello''", "'''hello'"]);
     }
 
     enum TokenMismatch {
         MissingToken(Option<PythonToken>, Option<Token>),
         WrongKind(PythonToken, Token),
         WrongValue(PythonToken, Token, String, String),
-        WrongStartEnd(PythonToken, Token, (u32, u32), (u32, u32), (u32, u32), (u32, u32)),
+        WrongStartEnd(
+            PythonToken,
+            Token,
+            (u32, u32),
+            (u32, u32),
+            (u32, u32),
+            (u32, u32),
+        ),
     }
 
-    fn assert_tokens_eq(python_tokens: Vec<PythonToken>, enderpy_tokens: Vec<Token>, lexer: &Lexer) {
+    fn assert_tokens_eq(
+        python_tokens: Vec<PythonToken>,
+        enderpy_tokens: Vec<Token>,
+        lexer: &Lexer,
+    ) {
         let num_python_tokens = python_tokens.len();
         let num_enderpy_tokens = enderpy_tokens.len();
         // let last_index = std::cmp::max(num_python_tokens, num_enderpy_tokens) - 1;
@@ -466,10 +444,17 @@ def",
                 let python_token = python_token.unwrap();
                 let enderpy_token = enderpy_token.unwrap();
                 if let Some(mismatch) = check_tokens_match(python_token, enderpy_token, lexer) {
-                    if is_python_trailing_newline_mismatch(&mismatch, &python_tokens[python_index + 1..]) {
+                    if is_python_trailing_newline_mismatch(
+                        &mismatch,
+                        &python_tokens[python_index + 1..],
+                    ) {
                         // If we found Python's trailing newline, we've read the end of file.
                         break;
-                    } else if is_python_fstring_mismatch(&mismatch, &enderpy_tokens[enderpy_index + 1..], &mut enderpy_index) {
+                    } else if is_python_fstring_mismatch(
+                        &mismatch,
+                        &enderpy_tokens[enderpy_index + 1..],
+                        &mut enderpy_index,
+                    ) {
                     } else {
                         mismatches.push(mismatch);
                     }
@@ -499,38 +484,50 @@ def",
             let (python_token, enderpy_token, message) = match mismatch {
                 TokenMismatch::MissingToken(python_token, enderpy_token) => {
                     (python_token, enderpy_token, "Missing token".to_string())
-                },
+                }
                 TokenMismatch::WrongKind(python_token, enderpy_token) => {
-                    let message = format!("Wrong token kind.\nExpected: {:?}\nActual: {:?}", python_token.kind, enderpy_token.kind);
-                    (
-                        Some(python_token),
-                        Some(enderpy_token),
-                        message,
-                    )
-                },
-                TokenMismatch::WrongValue(python_token, enderpy_token, expected_value, actual_value) => {
-                    (Some(python_token), Some(enderpy_token), format!("Wrong token value.\nExpected: {:?}\nActual: {:?}", expected_value, actual_value))
-                },
-                TokenMismatch::WrongStartEnd(python_token, enderpy_token, expected_start, expected_end, actual_start, actual_end) => {
-                    (
-                        Some(python_token),
-                        Some(enderpy_token),
-                        format!(
-                            "Wrong token start/end offset.\nExpected: {:?} - {:?}\nActual: {:?} - {:?}",
-                            expected_start,
-                            expected_end,
-                            actual_start,
-                            actual_end,
-                        ),
-                    )
-                },
+                    let message = format!(
+                        "Wrong token kind.\nExpected: {:?}\nActual: {:?}",
+                        python_token.kind, enderpy_token.kind
+                    );
+                    (Some(python_token), Some(enderpy_token), message)
+                }
+                TokenMismatch::WrongValue(
+                    python_token,
+                    enderpy_token,
+                    expected_value,
+                    actual_value,
+                ) => (
+                    Some(python_token),
+                    Some(enderpy_token),
+                    format!(
+                        "Wrong token value.\nExpected: {:?}\nActual: {:?}",
+                        expected_value, actual_value
+                    ),
+                ),
+                TokenMismatch::WrongStartEnd(
+                    python_token,
+                    enderpy_token,
+                    expected_start,
+                    expected_end,
+                    actual_start,
+                    actual_end,
+                ) => (
+                    Some(python_token),
+                    Some(enderpy_token),
+                    format!(
+                        "Wrong token start/end offset.\nExpected: {:?} - {:?}\nActual: {:?} - {:?}",
+                        expected_start, expected_end, actual_start, actual_end,
+                    ),
+                ),
             };
             if include_all_tokens {
                 row.extend_from_slice(&[
                     python_tokens
                         .iter()
                         .map(|token| {
-                            let is_this_token =  python_token.as_ref().is_some_and(|tok| tok == token);
+                            let is_this_token =
+                                python_token.as_ref().is_some_and(|tok| tok == token);
                             format!("{}{:?}", if is_this_token { "→ " } else { "" }, token)
                         })
                         .collect::<Vec<String>>()
@@ -538,7 +535,8 @@ def",
                     enderpy_tokens
                         .iter()
                         .map(|token| {
-                            let is_this_token = enderpy_token.as_ref().is_some_and(|tok| tok == token);
+                            let is_this_token =
+                                enderpy_token.as_ref().is_some_and(|tok| tok == token);
                             format!("{}{:?}", if is_this_token { "→ " } else { "" }, token)
                         })
                         .collect::<Vec<String>>()
@@ -562,13 +560,24 @@ def",
         // If run in a terminal, don't expand table beyond terminal width.
         if let Some((TerminalWidth(width), _)) = terminal_size() {
             table
-                .with(Width::wrap(width as usize).keep_words().priority::<PriorityMax>())
+                .with(
+                    Width::wrap(width as usize)
+                        .keep_words()
+                        .priority::<PriorityMax>(),
+                )
                 .with(Width::increase(width as usize));
         }
-        panic!("enderpy tokens do not match Python tokens.\n{}\n{} token mismatches found", table, num_mismatches);
+        panic!(
+            "enderpy tokens do not match Python tokens.\n{}\n{} token mismatches found",
+            table, num_mismatches
+        );
     }
 
-    fn check_tokens_match(python_token: PythonToken, enderpy_token: Token, lexer: &Lexer) -> Option<TokenMismatch> {
+    fn check_tokens_match(
+        python_token: PythonToken,
+        enderpy_token: Token,
+        lexer: &Lexer,
+    ) -> Option<TokenMismatch> {
         let kind_matches = match python_token.kind {
             PythonKind::EndMarker => enderpy_token.kind == Kind::Eof,
             // For some reason, Python maintains a kind for these tokens but doesn't use them
@@ -576,11 +585,25 @@ def",
             // Instead, it slams keywords together into a generic Name kind.
             PythonKind::Name => {
                 matches_python_name_token(python_token.value.as_str(), &enderpy_token.kind)
-            },
-            PythonKind::Number => matches!(enderpy_token.kind, Kind::Integer | Kind::PointFloat | Kind::ExponentFloat | Kind::Binary | Kind::Octal | Kind::Hexadecimal | Kind::ImaginaryPointFloat | Kind::ImaginaryExponentFloat | Kind::ImaginaryInteger),
+            }
+            PythonKind::Number => matches!(
+                enderpy_token.kind,
+                Kind::Integer
+                    | Kind::PointFloat
+                    | Kind::ExponentFloat
+                    | Kind::Binary
+                    | Kind::Octal
+                    | Kind::Hexadecimal
+                    | Kind::ImaginaryPointFloat
+                    | Kind::ImaginaryExponentFloat
+                    | Kind::ImaginaryInteger
+            ),
             // NOTE: The Python tokenizer doesn't appear to track differences in string modifiers.
             // For example, "hello"/u"hello"/r"hello" are all just String.
-            PythonKind::String => matches!(enderpy_token.kind, Kind::StringLiteral | Kind::Bytes | Kind::RawBytes | Kind::Unicode),
+            PythonKind::String => matches!(
+                enderpy_token.kind,
+                Kind::StringLiteral | Kind::Bytes | Kind::RawBytes | Kind::Unicode
+            ),
             PythonKind::NewLine => enderpy_token.kind == Kind::NewLine,
             PythonKind::Indent => enderpy_token.kind == Kind::Indent,
             PythonKind::Dedent => enderpy_token.kind == Kind::Dedent,
@@ -630,20 +653,23 @@ def",
             PythonKind::AtEqual => enderpy_token.kind == Kind::MatrixMulAssign,
             PythonKind::RArrow => enderpy_token.kind == Kind::Arrow,
             PythonKind::Ellipsis => enderpy_token.kind == Kind::Ellipsis,
-            PythonKind::ColonEqual => enderpy_token.kind == Kind:: Walrus,
+            PythonKind::ColonEqual => enderpy_token.kind == Kind::Walrus,
             PythonKind::Exclamation => false, // doesn't exist
             // For some reason, Python maintains a kind for these tokens but doesn't use them
             // during tokenization.
             // Instead, it slams all operators together into a generic Op kind.
             PythonKind::Op => {
                 matches_python_op_token(python_token.value.as_str(), &enderpy_token.kind)
-            },
+            }
             PythonKind::Await => enderpy_token.kind == Kind::Await,
             PythonKind::Async => enderpy_token.kind == Kind::Async,
-            PythonKind::TypeIgnore => false, // doesn't exist
+            PythonKind::TypeIgnore => false,  // doesn't exist
             PythonKind::TypeComment => false, // doesn't exist
             PythonKind::SoftKeyword => false, // doesn't exist
-            PythonKind::FstringStart => matches!(enderpy_token.kind, Kind::FStringStart | Kind::RawFStringStart),
+            PythonKind::FstringStart => matches!(
+                enderpy_token.kind,
+                Kind::FStringStart | Kind::RawFStringStart
+            ),
             PythonKind::FstringMiddle => enderpy_token.kind == Kind::FStringMiddle,
             PythonKind::FstringEnd => enderpy_token.kind == Kind::FStringEnd,
             PythonKind::Comment => enderpy_token.kind == Kind::Comment,
@@ -658,9 +684,9 @@ def",
                     "`" => enderpy_token.kind == Kind::BackTick,
                     _ => enderpy_token.kind == Kind::Error,
                 }
-            },
+            }
             PythonKind::Encoding => false, // doesn't exist
-            PythonKind::NTokens => false, // doesn't exist,
+            PythonKind::NTokens => false,  // doesn't exist,
             PythonKind::NTOffset => false, // doesn't exist
         };
         if !kind_matches {
@@ -671,14 +697,20 @@ def",
         let enderpy_token_value = enderpy_token.value.to_string();
         // The Python tokenizer sets values in a number of places where enderpy simply relies
         // on kind to assume value. Handle those cases here.
-        let value_matches = matches_python_name_token(python_token.value.as_str(), &enderpy_token.kind)
-            || matches_python_op_token(python_token.value.as_str(), &enderpy_token.kind)
-            || matches_python_indent_dedent_token(&python_token.kind, &enderpy_token.kind)
-            || (python_token.kind == PythonKind::EndMarker && enderpy_token.kind == Kind::Eof)
-            || (python_token.value.as_str() == "\n" && enderpy_token.kind == Kind::NewLine)
-            || python_token_value == enderpy_token_value;
+        let value_matches =
+            matches_python_name_token(python_token.value.as_str(), &enderpy_token.kind)
+                || matches_python_op_token(python_token.value.as_str(), &enderpy_token.kind)
+                || matches_python_indent_dedent_token(&python_token.kind, &enderpy_token.kind)
+                || (python_token.kind == PythonKind::EndMarker && enderpy_token.kind == Kind::Eof)
+                || (python_token.value.as_str() == "\n" && enderpy_token.kind == Kind::NewLine)
+                || python_token_value == enderpy_token_value;
         if !value_matches {
-            return Some(TokenMismatch::WrongValue(python_token, enderpy_token, python_token_value, enderpy_token_value));
+            return Some(TokenMismatch::WrongValue(
+                python_token,
+                enderpy_token,
+                python_token_value,
+                enderpy_token_value,
+            ));
         }
 
         let (mut enderpy_start_row, enderpy_start_col) = lexer.to_row_col(enderpy_token.start);
@@ -696,7 +728,11 @@ def",
         }
         let python_token_start = python_token.start;
         let python_token_end = python_token.end;
-        if enderpy_start_row != python_token_start.0 || enderpy_start_col != python_token_start.1 || enderpy_end_row != python_token_end.0 || enderpy_end_col != python_token_end.1 {
+        if enderpy_start_row != python_token_start.0
+            || enderpy_start_col != python_token_start.1
+            || enderpy_end_row != python_token_end.0
+            || enderpy_end_col != python_token_end.1
+        {
             return Some(TokenMismatch::WrongStartEnd(
                 python_token,
                 enderpy_token,
@@ -812,7 +848,8 @@ def",
         // makes it really difficult to determine whether indentation levels actually match
         // (without looking around at the larger context), so for now we'll just make sure the
         // Kind lines up.
-        (python_kind == &PythonKind::Indent && enderpy_kind == &Kind::Indent) || (python_kind == &PythonKind::Dedent && enderpy_kind == &Kind::Dedent)
+        (python_kind == &PythonKind::Indent && enderpy_kind == &Kind::Indent)
+            || (python_kind == &PythonKind::Dedent && enderpy_kind == &Kind::Dedent)
     }
 
     /// The Python tokenizer adds a cheeky newline to the end of the source, causing mismatches. We
@@ -821,19 +858,40 @@ def",
     /// - The Python kind is a known whitespace value.
     /// - The enderpy kind is a EOF.
     /// - The only remaining Python tokens before EOF are known whitespace values.
-    fn is_python_trailing_newline_mismatch(mismatch: &TokenMismatch, remaining_tokens: &[PythonToken]) -> bool {
+    fn is_python_trailing_newline_mismatch(
+        mismatch: &TokenMismatch,
+        remaining_tokens: &[PythonToken],
+    ) -> bool {
         if let TokenMismatch::WrongKind(python_token, enderpy_token) = mismatch {
-            if !matches!(python_token.kind, PythonKind::NewLine | PythonKind::NL) || enderpy_token.kind != Kind::Eof {
+            if !matches!(python_token.kind, PythonKind::NewLine | PythonKind::NL)
+                || enderpy_token.kind != Kind::Eof
+            {
                 return false;
             }
-            return remaining_tokens.iter().all(|t| matches!(t.kind, PythonKind::NewLine | PythonKind::NL | PythonKind::Dedent | PythonKind::EndMarker));
+            return remaining_tokens.iter().all(|t| {
+                matches!(
+                    t.kind,
+                    PythonKind::NewLine
+                        | PythonKind::NL
+                        | PythonKind::Dedent
+                        | PythonKind::EndMarker
+                )
+            });
         }
         false
     }
 
-    fn is_python_fstring_mismatch(mismatch: &TokenMismatch, remaining_tokens: &[Token], enderpy_index: &mut usize) -> bool {
+    fn is_python_fstring_mismatch(
+        mismatch: &TokenMismatch,
+        remaining_tokens: &[Token],
+        enderpy_index: &mut usize,
+    ) -> bool {
         if let TokenMismatch::WrongKind(python_token, enderpy_token) = mismatch {
-            if !matches!(enderpy_token.kind, Kind::FStringStart | Kind::RawFStringStart) || python_token.kind != PythonKind::String {
+            if !matches!(
+                enderpy_token.kind,
+                Kind::FStringStart | Kind::RawFStringStart
+            ) || python_token.kind != PythonKind::String
+            {
                 return false;
             }
             let mut num_skipped = 0;

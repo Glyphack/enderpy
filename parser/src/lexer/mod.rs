@@ -1050,11 +1050,10 @@ impl<'a> Lexer<'a> {
     }
 
     fn to_row_col(&self, source_offset: u32) -> (u32, u32) {
-        let (line_row, line_offset) =
-            match self.line_starts.binary_search(&source_offset) {
-                Ok(idx) => (idx, self.line_starts[idx]),
-                Err(idx) => (idx - 1, self.line_starts[idx - 1]),
-            };
+        let (line_row, line_offset) = match self.line_starts.binary_search(&source_offset) {
+            Ok(idx) => (idx, self.line_starts[idx]),
+            Err(idx) => (idx - 1, self.line_starts[idx - 1]),
+        };
         let line_column = source_offset - line_offset;
         (u32::try_from(line_row).unwrap(), line_column)
     }
