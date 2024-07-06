@@ -24,7 +24,7 @@ Line 7: from collections.abc import Sequence
 
 Expr types in the line --->:
         collections.abc  => Module
-        Sequence => Unknown
+        Sequence => (class) typing.Sequence[TypeVar[_T_co, ]]
 
 ---
 Line 8: from typing import Any, Generic, TypeVar, assert_type
@@ -50,16 +50,16 @@ Line 16: def first(l: Sequence[T]) -> T:
 
 Expr types in the line --->:
         def first => (function) first
-        l: Sequence[T] => Unknown
-        Sequence[T] => Unknown
+        l: Sequence[T] => (class) typing.Sequence[TypeVar[T, ]]
+        Sequence[T] => (class) typing.Sequence[TypeVar[_T_co, ]]
         T => TypeVar[T, ]
 
 ---
 Line 17:     return l[0]
 
 Expr types in the line --->:
-        l => Unknown
-        l[0] => Unknown
+        l => (class) typing.Sequence[TypeVar[T, ]]
+        l[0] => (class) typing.Sequence[TypeVar[T, ]]
         0 => (class) int
 
 ---
@@ -67,10 +67,10 @@ Line 20: def test_first(seq_int: Sequence[int], seq_str: Sequence[str]) -> None:
 
 Expr types in the line --->:
         def test_first => (function) test_first
-        seq_int: Sequence[int] => Unknown
-        Sequence[int] => Unknown
-        seq_str: Sequence[str] => Unknown
-        Sequence[str] => Unknown
+        seq_int: Sequence[int] => (class) typing.Sequence[(class) int]
+        Sequence[int] => (class) typing.Sequence[TypeVar[_T_co, ]]
+        seq_str: Sequence[str] => (class) typing.Sequence[(class) str]
+        Sequence[str] => (class) typing.Sequence[TypeVar[_T_co, ]]
         None => None
 
 ---
@@ -81,7 +81,7 @@ Expr types in the line --->:
         assert_type(first(seq_int), int) => TypeVar[_T, ]
         first => (function) first
         first(seq_int) => TypeVar[T, ]
-        seq_int => Unknown
+        seq_int => (class) typing.Sequence[(class) int]
         int => (class) int
 
 ---
@@ -92,7 +92,7 @@ Expr types in the line --->:
         assert_type(first(seq_str), str) => TypeVar[_T, ]
         first => (function) first
         first(seq_str) => TypeVar[T, ]
-        seq_str => Unknown
+        seq_str => (class) typing.Sequence[(class) str]
         str => (class) str
 
 ---
@@ -292,7 +292,7 @@ Line 80: from collections.abc import Iterable
 
 Expr types in the line --->:
         collections.abc  => Module
-        Iterable => Unknown
+        Iterable => (class) typing.Iterable[TypeVar[_T_co, ]]
 
 ---
 Line 83: class LoggedVar(Generic[T]):
@@ -421,8 +421,8 @@ Line 101: def zero_all_vars(vars: Iterable[LoggedVar[int]]) -> None:
 
 Expr types in the line --->:
         def zero_all_vars => (function) zero_all_vars
-        vars: Iterable[LoggedVar[int]] => Unknown
-        Iterable[LoggedVar[int]] => Unknown
+        vars: Iterable[LoggedVar[int]] => (class) typing.Iterable[(class) basic_generics.LoggedVar[(class) int]]
+        Iterable[LoggedVar[int]] => (class) typing.Iterable[TypeVar[_T_co, ]]
         None => None
 
 ---
@@ -493,7 +493,7 @@ Line 127: from collections.abc import Iterator, Mapping
 Expr types in the line --->:
         collections.abc  => Module
         Iterator => (class) typing.Iterator[TypeVar[_T_co, ]]
-        Mapping => Unknown
+        Mapping => (class) typing.Mapping[TypeVar[_KT, ], TypeVar[_KT, ], TypeVar[_VT_co, ]]
 
 ---
 Line 130: class MyIter1(Iterator[T]): ...
@@ -572,9 +572,9 @@ Expr types in the line --->:
 Line 145: class MyMap1(Mapping[K, V], Generic[K, V]): ...
 
 Expr types in the line --->:
-        class MyMap1 => (class) basic_generics.MyMap1[TypeVar[K, ], TypeVar[V, ]]
-        Mapping => Unknown
-        Mapping[K, V] => Unknown
+        class MyMap1 => (class) basic_generics.MyMap1[TypeVar[K, ], TypeVar[V, ], TypeVar[K, ], TypeVar[V, ]]
+        Mapping => (class) typing.Mapping[TypeVar[_KT, ], TypeVar[_KT, ], TypeVar[_VT_co, ]]
+        Mapping[K, V] => (class) typing.Mapping[TypeVar[_KT, ], TypeVar[_KT, ], TypeVar[_VT_co, ]]
         K => TypeVar[K, ]
         K, V] => (class) builtins.tuple[Unknown]
         V => TypeVar[V, ]
@@ -589,9 +589,9 @@ Expr types in the line --->:
 Line 148: class MyMap2(Mapping[K, V], Generic[V, K]): ...
 
 Expr types in the line --->:
-        class MyMap2 => (class) basic_generics.MyMap2[TypeVar[V, ], TypeVar[K, ]]
-        Mapping => Unknown
-        Mapping[K, V] => Unknown
+        class MyMap2 => (class) basic_generics.MyMap2[TypeVar[K, ], TypeVar[V, ], TypeVar[V, ], TypeVar[K, ]]
+        Mapping => (class) typing.Mapping[TypeVar[_KT, ], TypeVar[_KT, ], TypeVar[_VT_co, ]]
+        Mapping[K, V] => (class) typing.Mapping[TypeVar[_KT, ], TypeVar[_KT, ], TypeVar[_VT_co, ]]
         K => TypeVar[K, ]
         K, V] => (class) builtins.tuple[Unknown]
         V => TypeVar[V, ]
@@ -608,9 +608,9 @@ Line 151: def test_my_map(m1: MyMap1[str, int], m2: MyMap2[int, str]):
 Expr types in the line --->:
         def test_my_map => (function) test_my_map
         m1: MyMap1[str, int] => (class) basic_generics.MyMap1[Unknown]
-        MyMap1[str, int] => (class) basic_generics.MyMap1[TypeVar[K, ], TypeVar[V, ]]
+        MyMap1[str, int] => (class) basic_generics.MyMap1[TypeVar[K, ], TypeVar[V, ], TypeVar[K, ], TypeVar[V, ]]
         m2: MyMap2[int, str] => (class) basic_generics.MyMap2[Unknown]
-        MyMap2[int, str] => (class) basic_generics.MyMap2[TypeVar[V, ], TypeVar[K, ]]
+        MyMap2[int, str] => (class) basic_generics.MyMap2[TypeVar[K, ], TypeVar[V, ], TypeVar[V, ], TypeVar[K, ]]
 
 ---
 Line 152:     assert_type(m1["key"], int)
@@ -674,8 +674,8 @@ Line 167: class MyMapping(Iterable[tuple[K, V]], Container[tuple[K, V]], Generic
 
 Expr types in the line --->:
         class MyMapping => (class) basic_generics.MyMapping[TypeVar[K, ], TypeVar[V, ]]
-        Iterable => Unknown
-        Iterable[tuple[K, V]] => Unknown
+        Iterable => (class) typing.Iterable[TypeVar[_T_co, ]]
+        Iterable[tuple[K, V]] => (class) typing.Iterable[TypeVar[_T_co, ]]
         tuple => (class) builtins.tuple[TypeVar[_T_co, ]]
         tuple[K, V] => (class) builtins.tuple[TypeVar[_T_co, ]]
         K => TypeVar[K, ]
@@ -699,8 +699,8 @@ Expr types in the line --->:
 Line 175: class MyIterableAny(Iterable):  # Same as Iterable[Any]
 
 Expr types in the line --->:
-        class MyIterableAny => (class) MyIterableAny
-        Iterable => Unknown
+        class MyIterableAny => (class) basic_generics.MyIterableAny[TypeVar[_T_co, ]]
+        Iterable => (class) typing.Iterable[TypeVar[_T_co, ]]
 
 ---
 Line 176:     ...
@@ -713,8 +713,8 @@ Line 179: def test_my_iterable_any(m: MyIterableAny):
 
 Expr types in the line --->:
         def test_my_iterable_any => (function) test_my_iterable_any
-        m: MyIterableAny => (class) MyIterableAny
-        MyIterableAny => (class) MyIterableAny
+        m: MyIterableAny => (class) basic_generics.MyIterableAny[TypeVar[_T_co, ]]
+        MyIterableAny => (class) basic_generics.MyIterableAny[TypeVar[_T_co, ]]
 
 ---
 Line 180:     assert_type(iter(m), Iterator[Any])
@@ -724,7 +724,7 @@ Expr types in the line --->:
         assert_type(iter(m), Iterator[Any]) => TypeVar[_T, ]
         iter => (function) iter
         iter(m) => TypeVar[_SupportsNextT, ]
-        m => (class) MyIterableAny
+        m => (class) basic_generics.MyIterableAny[TypeVar[_T_co, ]]
         Iterator => (class) typing.Iterator[TypeVar[_T_co, ]]
         Iterator[Any] => (class) typing.Iterator[TypeVar[_T_co, ]]
         Any => (class) object

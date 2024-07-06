@@ -164,6 +164,10 @@ impl ImplicitImports {
     pub fn iter(&self) -> impl Iterator<Item = (&String, &ImplicitImport)> {
         self.0.iter()
     }
+
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = (&String, &mut ImplicitImport)> {
+        self.0.iter_mut()
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

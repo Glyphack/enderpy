@@ -32,9 +32,7 @@ fn symbols(path: &Path) -> Result<()> {
     manager.build(root);
     manager.build_one(root, path);
 
-    let module = manager.get_state(path);
-    println!("{}", module.module_name());
-    println!("{}", module.get_symbol_table());
+    println!("{}", manager.get_symbol_table(path));
 
     Ok(())
 }
@@ -132,9 +130,14 @@ fn check(path: &Path) -> Result<()> {
         println!("zero errors");
     }
 
-    for (path, errors) in build_manager.diagnostics {
-        for err in errors {
-            println!("{:#?}: line {}: {}", path, err.range.start.line, err.body);
+    for diag in build_manager.diagnostics.iter() {
+        for err in diag.value() {
+            println!(
+                "{:#?}: line {}: {}",
+                diag.key(),
+                err.range.start.line,
+                err.body
+            );
         }
     }
 
