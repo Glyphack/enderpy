@@ -1,4 +1,4 @@
-use std::{collections::HashMap, path::Path};
+use std::{collections::HashMap, path::Path, sync::Arc};
 
 use enderpy_python_parser as parser;
 use enderpy_python_parser::ast::Expression;
@@ -257,8 +257,8 @@ impl<'a> SemanticAnalyzer<'a> {
     }
 }
 
-impl<'a> TraversalVisitor for SemanticAnalyzer<'a> {
-    fn visit_stmt(&mut self, s: &parser::ast::Statement) {
+impl<'a> SemanticAnalyzer<'a> {
+    pub fn visit_stmt(&mut self, s: &parser::ast::Statement) {
         match s {
             parser::ast::Statement::ExpressionStatement(e) => self.visit_expr(e),
             parser::ast::Statement::Import(i) => self.visit_import(i),
@@ -586,7 +586,7 @@ impl<'a> TraversalVisitor for SemanticAnalyzer<'a> {
         self.symbol_table.exit_scope();
     }
 
-    fn visit_class_def(&mut self, c: &parser::ast::ClassDef) {
+    fn visit_class_def(&mut self, c: &Arc<parser::ast::ClassDef>) {
         self.symbol_table.push_scope(SymbolTableScope::new(
             SymbolTableType::Class(c.clone()),
             c.name.clone(),
@@ -631,7 +631,7 @@ impl<'a> TraversalVisitor for SemanticAnalyzer<'a> {
                 .to_str()
                 .unwrap()
                 .to_string(),
-            c.clone(),
+            Arc::clone(c),
             class_declaration_path,
             class_body_scope_id,
         ));

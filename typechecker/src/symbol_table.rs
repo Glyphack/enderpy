@@ -3,6 +3,7 @@ use rust_lapper::{Interval, Lapper};
 
 use std::fs;
 use std::path::Path;
+use std::sync::Arc;
 use std::{collections::HashMap, fmt::Display, path::PathBuf};
 
 use enderpy_python_parser::ast::{self, ClassDef, FunctionDef, Node};
@@ -290,7 +291,7 @@ pub enum SymbolTableType {
     /// BUILTIN scope is used for builtins like len, print, etc.
     BUILTIN,
     Module,
-    Class(ClassDef),
+    Class(Arc<ClassDef>),
     Function(FunctionDef),
 }
 
@@ -432,7 +433,7 @@ pub struct Class {
     // These classes have their behavior defined in PEPs so we need to handle them differently
     pub special: bool,
     /// Special classes have a generic class node. So this node is null for special classes
-    pub class_node: Option<ClassDef>,
+    pub class_node: Option<Arc<ClassDef>>,
     pub class_scope_id: u32,
     pub qual_name: String,
 }
@@ -440,7 +441,7 @@ pub struct Class {
 impl Class {
     pub fn new(
         mut module_name: String,
-        class_node: ast::ClassDef,
+        class_node: Arc<ast::ClassDef>,
         declaration_path: DeclarationPath,
         class_scope_id: u32,
     ) -> Self {
