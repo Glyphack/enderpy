@@ -3494,6 +3494,10 @@ impl<'a> Parser<'a> {
             }
         }
     }
+
+    pub fn to_row_col(&self, source_offset: u32) -> (u32, u32) {
+        self.lexer.to_row_col(source_offset)
+    }
 }
 
 #[cfg(test)]
