@@ -238,18 +238,8 @@ impl<'a> SemanticAnalyzer<'a> {
     /// Returns true if the current function assigns an attribute to an object
     /// Functions like __init__ and __new__ are considered to assign attributes
     fn function_assigns_attribute(&self, symbol_table: &SymbolTable) -> bool {
-        if let Some(FunctionDef {
-            node,
-            name: fname,
-            args,
-            body,
-            decorator_list,
-            returns,
-            type_comment,
-            type_params,
-        }) = symbol_table.current_scope().kind.as_function()
-        {
-            if fname == "__init__" || fname == "__new__" {
+        if let Some(function_def) = symbol_table.current_scope().kind.as_function() {
+            if function_def.name == "__init__" || function_def.name == "__new__" {
                 return true;
             }
         }
@@ -473,7 +463,7 @@ impl<'a> SemanticAnalyzer<'a> {
         }
     }
 
-    fn visit_function_def(&mut self, f: &parser::ast::FunctionDef) {
+    fn visit_function_def(&mut self, f: &Arc<parser::ast::FunctionDef>) {
         let declaration_path = DeclarationPath::new(
             self.symbol_table.id,
             f.node,
@@ -500,7 +490,7 @@ impl<'a> SemanticAnalyzer<'a> {
             // }
         }
         self.symbol_table.push_scope(SymbolTableScope::new(
-            crate::symbol_table::SymbolTableType::Function(f.clone()),
+            crate::symbol_table::SymbolTableType::Function(Arc::clone(f)),
             f.name.clone(),
             f.node.start,
             self.symbol_table.current_scope_id,
@@ -578,7 +568,7 @@ impl<'a> SemanticAnalyzer<'a> {
 
     fn visit_async_function_def(&mut self, _f: &parser::ast::AsyncFunctionDef) {
         self.symbol_table.push_scope(SymbolTableScope::new(
-            SymbolTableType::Function(_f.to_function_def()),
+            SymbolTableType::Function(Arc::new(_f.to_function_def())),
             _f.name.clone(),
             _f.node.start,
             self.symbol_table.current_scope_id,
@@ -777,17 +767,12 @@ pub fn get_member_access_info(
     let value_name = &name.id;
 
     let current_scope = symbol_table.current_scope();
-    let FunctionDef {
-        args,
-        decorator_list,
-        ..
-    } = current_scope.kind.as_function()?;
-
+    let function_def = current_scope.kind.as_function()?;
     let parent_scope = symbol_table.parent_scope(symbol_table.current_scope())?;
 
     let enclosing_class = parent_scope.kind.as_class()?;
 
-    let first_arg = args.args.first()?;
+    let first_arg = function_def.args.args.first()?;
 
     let is_value_equal_to_first_arg = value_name == first_arg.arg.as_str();
 
@@ -797,7 +782,7 @@ pub fn get_member_access_info(
 
     // Check if one of the decorators is a classmethod or staticmethod
     let mut is_class_member = false;
-    for decorator in decorator_list {
+    for decorator in function_def.decorator_list.iter() {
         if let parser::ast::Expression::Call(call) = decorator {
             if let Some(name) = call.func.as_name() {
                 if name.id == "classmethod" {

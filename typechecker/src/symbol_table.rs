@@ -292,7 +292,7 @@ pub enum SymbolTableType {
     BUILTIN,
     Module,
     Class(Arc<ClassDef>),
-    Function(FunctionDef),
+    Function(Arc<FunctionDef>),
 }
 
 bitflags! {
@@ -398,7 +398,7 @@ pub struct Variable {
 #[derive(Debug, Clone)]
 pub struct Function {
     pub declaration_path: DeclarationPath,
-    pub function_node: ast::FunctionDef,
+    pub function_node: Arc<ast::FunctionDef>,
     pub is_method: bool,
     pub is_generator: bool,
     /// return statements that are reachable in the top level function body

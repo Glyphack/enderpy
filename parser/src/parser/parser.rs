@@ -634,7 +634,7 @@ impl<'a> Parser<'a> {
                 type_params,
             })))
         } else {
-            Ok(Statement::FunctionDef(Box::new(FunctionDef {
+            Ok(Statement::FunctionDef(Arc::new(FunctionDef {
                 node: self.finish_node(node),
                 name,
                 args,
