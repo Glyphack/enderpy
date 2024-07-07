@@ -1,15 +1,12 @@
 use core::panic;
-use std::path::Path;
 use std::sync::atomic::AtomicUsize;
 use std::{collections::HashMap, path::PathBuf};
 
-use dashmap::DashMap;
 use enderpy_python_parser as parser;
 use enderpy_python_parser::ast::*;
 use parser::{ast, Parser};
 use std::sync::atomic::Ordering;
 
-use crate::checker::TypeChecker;
 use crate::{
     ast_visitor::TraversalVisitor,
     diagnostic::Position,

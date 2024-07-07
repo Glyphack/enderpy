@@ -2,7 +2,7 @@
 #![allow(unused_variables)]
 
 use core::panic;
-use std::{path::PathBuf, str::FromStr};
+use std::path::PathBuf;
 
 use dashmap::DashMap;
 use enderpy_python_parser as parser;

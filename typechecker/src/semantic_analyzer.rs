@@ -1,9 +1,9 @@
-use std::{collections::HashMap, path::Path, sync::Arc};
+use std::{collections::HashMap, sync::Arc};
 
 use enderpy_python_parser as parser;
 use enderpy_python_parser::ast::Expression;
 
-use parser::ast::{FunctionDef, GetNode, Name, Statement};
+use parser::ast::{GetNode, Name, Statement};
 
 use crate::{
     ast_visitor::TraversalVisitor,
