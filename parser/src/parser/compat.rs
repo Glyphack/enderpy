@@ -972,10 +972,10 @@ print(b)
 "#;
         let enderpy_ast = parse_enderpy_source(source).unwrap();
         let mut python_ast = parse_python_source(source).unwrap();
-        assert_ast_eq(&mut python_ast, &enderpy_ast);
+        assert_ast_eq(&mut python_ast, &enderpy_ast, source);
     }
 
-    fn assert_ast_eq(python_ast: &mut Value, enderpy_ast: &Value) {
+    fn assert_ast_eq(python_ast: &mut Value, enderpy_ast: &Value, source: &str) {
         if let Err(message) = assert_json_matches_no_panic(
             &python_ast,
             &enderpy_ast,
@@ -999,9 +999,15 @@ print(b)
                     )
                     .with(Width::increase(width as usize));
             }
+            let include_source = std::env::var("INCLUDE_SOURCE").is_ok();
+            let formatted_source = if include_source {
+                format!("\nSource:\n{}", source)
+            } else {
+                "".to_string()
+            };
             panic!(
-                "Enderpy AST does not match Python AST.\n{}\n{}",
-                table, message
+                "Enderpy AST does not match Python AST.\n{}{}\n{}",
+                formatted_source, table, message
             );
         }
     }
