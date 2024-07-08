@@ -1,13 +1,13 @@
 use std::io::Write;
 use std::convert::From;
+use std::str::FromStr;
 use miette::{bail, IntoDiagnostic, Result};
+use serde_json::Number;
 use serde_json::{json, Value};
 
 use crate::Parser;
 use crate::ast::*;
 use crate::runpython::{default_python_path, spawn_python_script_command};
-
-// type Parser = dyn Fn(u32) -> (u32, u32);
 
 fn parse_python_source(source: &str) -> Result<Value> {
     let mut process = spawn_python_script_command(
@@ -24,8 +24,29 @@ fn parse_python_source(source: &str) -> Result<Value> {
     }
     // Get process stdout and parse result.
     let output = process.wait_with_output().into_diagnostic()?;
-    let ast: Value = serde_json::from_str(String::from_utf8_lossy(&output.stdout).as_ref()).into_diagnostic()?;
+    let mut ast = serde_json::from_str(String::from_utf8_lossy(&output.stdout).as_ref()).into_diagnostic()?;
+    remove_unimplemented_attributes(&mut ast);
     Ok(ast)
+}
+
+fn remove_unimplemented_attributes(value: &mut Value) {
+    match value {
+        Value::Object(map) => {
+            // TODO ast_python: Adjust these ignored values as Enderpy adds support.
+            map.retain(|key, _| !matches!(key.as_str(), "ctx" | "type_ignores" | "kind"));
+            for (_, v) in map.iter_mut() {
+                remove_unimplemented_attributes(v);
+            }
+        },
+        Value::Array(vec) => {
+            for v in vec.iter_mut() {
+                remove_unimplemented_attributes(v);
+            }
+        },
+        _ => {
+            // Nothing to do for other value types.
+        },
+    };
 }
 
 fn parse_enderpy_source(source: &str) -> Result<Value> {
@@ -60,9 +81,9 @@ macro_rules! json_python_compat_node {
             let (start_row, start_col) = $parser.to_row_col($instance.node.start);
             let (end_row, end_col) = $parser.to_row_col($instance.node.end);
             node["_type"] = json!($name);
-            node["lineno"] = json!(start_row);
+            node["lineno"] = json!(start_row + 1);
             node["col_offset"] = json!(start_col);
-            node["end_lineno"] = json!(end_row);
+            node["end_lineno"] = json!(end_row + 1);
             node["end_col_offset"] = json!(end_col);
             node
         }
@@ -118,6 +139,7 @@ impl AsPythonCompat for Assign {
         json_python_compat_node!("Assign", self, parser, {
             "targets": self.targets.iter().map(|expr| expr.as_python_compat(parser)).collect::<Vec<_>>(),
             "value": self.value.as_python_compat(parser),
+            "type_comment": json!(null),
         })
     }
 }
@@ -317,8 +339,8 @@ impl AsPythonCompat for ConstantValue {
             ConstantValue::Str(v) => json!(v),
             ConstantValue::Bytes(v) => json!(v),
             ConstantValue::Tuple(v) => json!(v.iter().map(|cons| cons.as_python_compat(parser)).collect::<Vec<_>>()),
-            ConstantValue::Int(v) => json!(v),
-            ConstantValue::Float(v) => json!(v),
+            ConstantValue::Int(v) => Value::Number(Number::from_str(v).unwrap()),
+            ConstantValue::Float(v) => Value::Number(Number::from_str(v).unwrap()),
             ConstantValue::Complex { real, imaginary } => json!({"real": real, "imaginary": imaginary}),
         }
     }
@@ -327,7 +349,7 @@ impl AsPythonCompat for ConstantValue {
 impl AsPythonCompat for List {
     fn as_python_compat(&self, parser: &Parser) -> Value {
         json_python_compat_node!("List", self, parser, {
-            "elements": self.elements.iter().map(|expr| expr.as_python_compat(parser)).collect::<Vec<_>>(),
+            "elts": self.elements.iter().map(|expr| expr.as_python_compat(parser)).collect::<Vec<_>>(),
         })
     }
 }
@@ -536,13 +558,27 @@ impl AsPythonCompat for Slice {
 
 impl AsPythonCompat for Call {
     fn as_python_compat(&self, parser: &Parser) -> Value {
-        json_python_compat_node!("Call", self, parser, {
+        let mut node = json_python_compat_node!("Call", self, parser, {
             "func": self.func.as_python_compat(parser),
             "args": self.args.iter().map(|expr| expr.as_python_compat(parser)).collect::<Vec<_>>(),
             "keywords": self.keywords.iter().map(|kw| kw.as_python_compat(parser)).collect::<Vec<_>>(),
-            "starargs": self.starargs.as_python_compat(parser),
-            "kwargs": self.kwargs.as_python_compat(parser),
-        })
+        });
+        if let Some(expr) = &self.starargs {
+            node["starargs"] = expr.as_python_compat(parser);
+        }
+        if let Some(expr) = &self.kwargs {
+            node["kwargs"] = expr.as_python_compat(parser);
+        }
+        // NOTE: Python wraps print calls in an extra Expr node.
+        // Don't ask me why the parser does this.
+        if let Expression::Name(name) = &self.func {
+            if matches!(name.id.as_str(), "print") {
+                return json_python_compat_node!("Expr", self, parser, {
+                    "value": node,
+                })
+            }
+        }
+        node
     }
 }
 
@@ -601,7 +637,9 @@ impl AsPythonCompat for Lambda {
 
 impl AsPythonCompat for crate::ast::Arguments {
     fn as_python_compat(&self, parser: &Parser) -> Value {
-        json_python_compat_node!("Arguments", self, parser, {
+        // NOTE: Arguments is kinda weird in Python. Feels like legacy support.
+        json!({
+            "_type": "arguments",
             "posonlyargs": self.posonlyargs.iter().map(|arg| arg.as_python_compat(parser)).collect::<Vec<_>>(),
             "args": self.args.iter().map(|arg| arg.as_python_compat(parser)).collect::<Vec<_>>(),
             "vararg": self.vararg.as_python_compat(parser),
@@ -615,9 +653,12 @@ impl AsPythonCompat for crate::ast::Arguments {
 
 impl AsPythonCompat for Arg {
     fn as_python_compat(&self, parser: &Parser) -> Value {
-        json_python_compat_node!("Arg", self, parser, {
+        // NOTE: Python doesn't use TitleCase for Arg. 🤦
+        json_python_compat_node!("arg", self, parser, {
             "arg": self.arg,
             "annotation": self.annotation.as_python_compat(parser),
+            // TODO ast_python: Support for type_comment in arg.
+            "type_comment": json!(null),
         })
     }
 }
@@ -911,23 +952,57 @@ impl AsPythonCompat for TypeAlias {
 
 #[cfg(test)]
 mod tests {
+    use assert_json_diff::assert_json_matches_no_panic;
     use serde_json::Value;
-    // use miette::{bail, IntoDiagnostic, Result};
-
-    use super::parse_enderpy_source;
-    use super::parse_python_source;
+    use tabled::{
+        builder::Builder,
+        settings::peaker::PriorityMax,
+        settings::{Style, Width},
+    };
+    use terminal_size::{terminal_size, Width as TerminalWidth};
+    use super::{parse_enderpy_source, parse_python_source};
 
     #[test]
     fn test_simple_compat() {
         let source = r#"
-a: int = 1
-print(a)
+def x(a: int) -> int:
+    return 1 + 1
+b = x(1)
+print(b)
 "#;
         let enderpy_ast = parse_enderpy_source(source).unwrap();
-        let python_ast = parse_python_source(source).unwrap();
-        assert_ast_eq(python_ast, enderpy_ast);
+        let mut python_ast = parse_python_source(source).unwrap();
+        assert_ast_eq(&mut python_ast, &enderpy_ast);
     }
 
-    fn assert_ast_eq(python_ast: Value, enderpy_ast: Value) {
+    fn assert_ast_eq(python_ast: &mut Value, enderpy_ast: &Value) {
+        if let Err(message) = assert_json_matches_no_panic(
+            &python_ast,
+            &enderpy_ast,
+            assert_json_diff::Config::new(assert_json_diff::CompareMode::Strict),
+        ) {
+            let mut table_builder = Builder::default();
+            table_builder.push_record(["Python AST", "Enderpy AST"]);
+            table_builder.push_record([
+                serde_json::to_string_pretty(&python_ast).unwrap(),
+                serde_json::to_string_pretty(&enderpy_ast).unwrap(),
+            ]);
+            let mut table = table_builder.build();
+            table.with(Style::modern());
+            // If run in a terminal, don't expand table beyond terminal width.
+            if let Some((TerminalWidth(width), _)) = terminal_size() {
+                table
+                    .with(
+                        Width::wrap(width as usize)
+                            .keep_words()
+                            .priority::<PriorityMax>(),
+                    )
+                    .with(Width::increase(width as usize));
+            }
+            panic!(
+                "Enderpy AST does not match Python AST.\n{}\n{}",
+                table, message
+            );
+        }
     }
 }
