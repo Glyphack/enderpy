@@ -479,12 +479,10 @@ impl<'a> TypeEvaluator<'a> {
         // Check if there's any import * and try to find the symbol in those files
         for star_import in symbol_table.star_imports.iter() {
             log::debug!("checking star imports {:?}", star_import);
-            for resolved in star_import.resolved_paths.iter() {
-                log::debug!("checking path {:?}", resolved);
-                let id = self.ids.get(resolved).expect("module not found");
-                let star_import_sym_table = self.imported_symbol_tables.get(&id);
+            for id in star_import.resolved_ids.iter() {
+                let star_import_sym_table = self.imported_symbol_tables.get(id);
                 let Some(sym_table) = star_import_sym_table else {
-                    panic!("symbol table of star import not found at {:?}", resolved);
+                    panic!("symbol table of star import not found at {:?}", id);
                 };
                 let res = sym_table.lookup_in_scope(&lookup_request);
                 match res {
@@ -595,18 +593,17 @@ impl<'a> TypeEvaluator<'a> {
                 match &a.symbol_name {
                     Some(name) => {
                         log::debug!("finding alias with name {name:?}");
-                        let import_result = &a.import_result;
-                        for resolved_path in import_result.resolved_paths.iter() {
-                            log::debug!("checking path {:?}", resolved_path);
-                            let symbol_table_with_alias_def = {
-                                let id = self.ids.get(resolved_path).unwrap();
-                                self.imported_symbol_tables.get(&id).unwrap()
-                            };
+                        let import_result =
+                            a.import_result.clone().expect("import result not found");
+                        for id in import_result.resolved_ids.iter() {
+                            log::debug!("checking path {:?}", id);
+                            let symbol_table_with_alias_def =
+                                { self.imported_symbol_tables.get(id).unwrap() };
 
                             // sys/__init__.pyi imports sys itself don't know why
                             // If the resolved path is same as current symbol file path
                             // then it's cyclic and do not resolve
-                            if symbol_table.file_path.as_path() == resolved_path {
+                            if symbol_table.id == *id {
                                 log::debug!("alias resolution skipped");
                                 continue;
                             }
@@ -621,16 +618,11 @@ impl<'a> TypeEvaluator<'a> {
 
                             for star_import in symbol_table.star_imports.iter() {
                                 log::debug!("checking star imports {:?}", star_import);
-                                for resolved in star_import.resolved_paths.iter() {
-                                    log::debug!("checking path {:?}", resolved);
-                                    let id = self.ids.get(resolved).expect("module not found");
-                                    let star_import_sym_table =
-                                        self.imported_symbol_tables.get(&id);
+                                for id in star_import.resolved_ids.iter() {
+                                    log::debug!("checking path {:?}", id);
+                                    let star_import_sym_table = self.imported_symbol_tables.get(id);
                                     let Some(sym_table) = star_import_sym_table else {
-                                        panic!(
-                                            "symbol table of star import not found at {:?}",
-                                            resolved
-                                        );
+                                        panic!("symbol table of star import not found at {:?}", id);
                                     };
                                     let res = sym_table.lookup_in_scope(lookup);
                                     match res {
@@ -643,14 +635,12 @@ impl<'a> TypeEvaluator<'a> {
                             }
                         }
 
-                        for (_, implicit_import) in import_result.implicit_imports.iter() {
-                            let resolved_path = &implicit_import.path;
-                            log::debug!("checking path {:?}", resolved_path);
-                            let id = self.ids.get(resolved_path).unwrap();
+                        for id in import_result.resolved_ids.iter() {
+                            log::debug!("checking path {:?}", id);
                             let Some(symbol_table_with_alias_def) =
-                                self.imported_symbol_tables.get(&id)
+                                self.imported_symbol_tables.get(id)
                             else {
-                                panic!("Symbol table not found for alias: {:?}", resolved_path);
+                                panic!("Symbol table not found for alias: {:?}", id);
                             };
                             // let Some(symbol_table_with_alias_def) = self.get_symbol_table_of(resolved_path) else {
                             //     panic!("Symbol table not found for alias: {:?}", resolved_path);
@@ -672,16 +662,11 @@ impl<'a> TypeEvaluator<'a> {
                             // Check if there's any import * and try to find the symbol in those files
                             for star_import in symbol_table.star_imports.iter() {
                                 log::debug!("checking star imports {:?}", star_import);
-                                for resolved in star_import.resolved_paths.iter() {
-                                    log::debug!("checking path {:?}", resolved);
-                                    let id = self.ids.get(resolved).unwrap();
-                                    let star_import_sym_table =
-                                        self.imported_symbol_tables.get(&id);
+                                for id in star_import.resolved_ids.iter() {
+                                    log::debug!("checking path {:?}", id);
+                                    let star_import_sym_table = self.imported_symbol_tables.get(id);
                                     let Some(sym_table) = star_import_sym_table else {
-                                        panic!(
-                                            "symbol table of star import not found at {:?}",
-                                            resolved
-                                        );
+                                        panic!("symbol table of star import not found at {:?}", id);
                                     };
                                     let res = sym_table.lookup_in_scope(&lookup_request);
                                     match res {
@@ -696,26 +681,21 @@ impl<'a> TypeEvaluator<'a> {
                         }
                         log::debug!("import not found checking if it's a module");
                         let mut res = Ok(PythonType::Unknown);
-                        for (_, implicit_import) in a.import_result.implicit_imports.iter() {
-                            let resolved_path = &implicit_import.path;
-                            let Some(file_stem) = resolved_path.file_stem() else {
-                                continue;
-                            };
-                            if name == file_stem.to_str().unwrap() {
-                                res = Ok(PythonType::Module(crate::types::ModuleRef {
-                                    module_path: resolved_path.to_path_buf(),
-                                }))
-                            }
+                        for id in import_result.resolved_ids.iter() {
+                            // TODO: use ID for module path
+                            res = Ok(PythonType::Module(crate::types::ModuleRef {
+                                module_path: PathBuf::new(),
+                            }))
                         }
 
                         res
                     }
                     None => {
                         let mut found_module: Option<PythonType> = None;
-                        for resolved_path in a.import_result.resolved_paths.iter() {
-                            let id = self.ids.get(resolved_path).unwrap();
+                        let import_result = a.import_result.clone().expect("todo");
+                        for id in import_result.resolved_ids.iter() {
                             let Some(sym_table_alias_pointing_to) =
-                                self.imported_symbol_tables.get(&id)
+                                self.imported_symbol_tables.get(id)
                             else {
                                 break;
                             };

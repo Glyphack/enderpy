@@ -1,6 +1,7 @@
 use std::{
-    collections::HashMap,
+    collections::{HashMap, HashSet},
     path::{Path, PathBuf},
+    sync::Arc,
 };
 
 use dashmap::DashMap;
@@ -153,15 +154,20 @@ impl<'a> BuildManager<'a> {
     }
 }
 
+#[derive(Debug, Clone)]
+pub struct ResolvedImport {
+    pub resolved_ids: Vec<Id>,
+    pub result: ImportResult,
+}
+
+pub type ResolvedImports = HashMap<ImportModuleDescriptor, Arc<ResolvedImport>>;
+
 fn gather_files<'a>(
     mut initial_files: Vec<EnderpyFile<'a>>,
     root: &Path,
     import_config: &ruff_python_resolver::config::Config,
     host: &ruff_python_resolver::host::StaticHost,
-) -> (
-    HashMap<ImportModuleDescriptor, ImportResult>,
-    Vec<EnderpyFile<'a>>,
-) {
+) -> (ResolvedImports, Vec<EnderpyFile<'a>>) {
     let execution_environment = &execution_environment::ExecutionEnvironment {
         root: root.to_path_buf(),
         python_version: ruff_python_resolver::python_version::PythonVersion::Py312,
@@ -171,11 +177,10 @@ fn gather_files<'a>(
     let mut new_modules = Vec::with_capacity(initial_files.len() * 5);
     let mut import_results = HashMap::new();
 
-    let cache: &mut HashMap<PathBuf, HashMap<ImportModuleDescriptor, ImportResult>> =
-        &mut HashMap::new();
+    let seen: &mut HashSet<PathBuf> = &mut HashSet::new();
 
     while let Some(module) = initial_files.pop() {
-        if cache.get(&module.path).is_some() {
+        if seen.get(module.path.as_path()).is_some() {
             continue;
         }
         let resolved_imports = resolve_file_imports(
@@ -183,24 +188,33 @@ fn gather_files<'a>(
             execution_environment,
             import_config,
             host,
-            &import_results,
+            // &import_results,
         );
+        seen.insert(module.path.clone());
         new_modules.push(module);
         for (import_desc, mut resolved) in resolved_imports {
-            if resolved.is_import_found {
-                for resolved_path in resolved.resolved_paths.iter_mut() {
-                    if !initial_files.iter().any(|m| m.path == *resolved_path) {
-                        let e = EnderpyFile::new(resolved_path.clone(), true);
-                        initial_files.push(e);
-                    }
-                }
-
-                for (_, implicit_import) in resolved.implicit_imports.iter_mut() {
-                    let e = EnderpyFile::new(implicit_import.path.clone(), true);
-                    initial_files.push(e);
-                }
+            if !resolved.is_import_found {
+                continue;
             }
-            import_results.insert(import_desc, resolved);
+            let mut resolved_ids = Vec::with_capacity(resolved.resolved_paths.len());
+            for resolved_path in resolved.resolved_paths.iter_mut() {
+                let e = EnderpyFile::new(std::mem::take(resolved_path), true);
+                resolved_ids.push(e.id);
+                initial_files.push(e);
+            }
+
+            for (_, implicit_import) in resolved.implicit_imports.iter_mut() {
+                let path_mut = &mut implicit_import.path;
+                let e = EnderpyFile::new(std::mem::take(path_mut), true);
+                initial_files.push(e);
+            }
+            import_results.insert(
+                import_desc,
+                Arc::new(ResolvedImport {
+                    resolved_ids,
+                    result: resolved,
+                }),
+            );
         }
     }
 
@@ -213,7 +227,6 @@ fn resolve_file_imports(
     execution_environment: &ruff_python_resolver::execution_environment::ExecutionEnvironment,
     import_config: &ruff_python_resolver::config::Config,
     host: &ruff_python_resolver::host::StaticHost,
-    cached_imports: &HashMap<ImportModuleDescriptor, ImportResult>,
 ) -> HashMap<ImportModuleDescriptor, ImportResult> {
     let mut imports = HashMap::new();
     debug!("resolving imports for file {:?}", file.path);
@@ -230,7 +243,7 @@ fn resolve_file_imports(
         };
 
         for import_desc in import_descriptions {
-            let resolved = match cached_imports.contains_key(&import_desc) {
+            let resolved = match false {
                 true => continue,
                 false => resolver::resolve_import(
                     &file.path,

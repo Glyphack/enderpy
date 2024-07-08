@@ -8,7 +8,7 @@ use std::{collections::HashMap, fmt::Display, path::PathBuf};
 
 use enderpy_python_parser::ast::{self, ClassDef, FunctionDef, Node};
 
-use crate::ruff_python_import_resolver::import_result::ImportResult;
+use crate::build::{ResolvedImport, ResolvedImports};
 
 #[derive(Debug, Clone, PartialEq, Eq, Copy, Hash)]
 pub struct Id(pub u32);
@@ -24,7 +24,7 @@ pub struct SymbolTable {
 
     pub file_path: PathBuf,
     pub scope_starts: Lapper<u32, u32>,
-    pub star_imports: Vec<ImportResult>,
+    pub star_imports: Vec<Arc<ResolvedImport>>,
     pub id: Id,
 }
 
@@ -504,7 +504,7 @@ pub struct Alias {
     /// e.g. import os.path -> os.path is the module name
     pub module_name: Option<String>,
     /// The result of the import
-    pub import_result: ImportResult,
+    pub import_result: Option<Arc<ResolvedImport>>,
 }
 
 #[derive(Debug, Clone)]

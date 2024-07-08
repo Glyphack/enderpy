@@ -7,6 +7,7 @@ use parser::ast::{GetNode, Name, Statement};
 
 use crate::{
     ast_visitor::TraversalVisitor,
+    build::ResolvedImports,
     file::EnderpyFile,
     ruff_python_import_resolver::{
         import_result::ImportResult, module_descriptor::ImportModuleDescriptor,
@@ -27,15 +28,12 @@ pub struct SemanticAnalyzer<'a> {
     /// if we have a file with the following imports this is how we use the map
     /// import os -> imports.get("os")
     /// from os import path -> imports.get("os")
-    pub imports: &'a HashMap<ImportModuleDescriptor, ImportResult>,
+    pub imports: &'a ResolvedImports,
 }
 
 #[allow(unused)]
 impl<'a> SemanticAnalyzer<'a> {
-    pub fn new(
-        file: &'a EnderpyFile<'a>,
-        imports: &'a HashMap<ImportModuleDescriptor, ImportResult>,
-    ) -> Self {
+    pub fn new(file: &'a EnderpyFile<'a>, imports: &'a ResolvedImports) -> Self {
         let symbols = SymbolTable::new(&file.path, file.id);
         SemanticAnalyzer {
             symbol_table: symbols,
@@ -315,10 +313,10 @@ impl<'a> SemanticAnalyzer<'a> {
 
     fn visit_import(&mut self, i: &parser::ast::Import) {
         for alias in &i.names {
-            let import_result = match self.imports.get(&ImportModuleDescriptor::from(alias)) {
-                Some(result) => result.clone(),
-                None => ImportResult::not_found(),
-            };
+            let import_result = self
+                .imports
+                .get(&ImportModuleDescriptor::from(alias))
+                .cloned();
             // TODO: Report unresolved import if import_result is None
             let declaration_path = DeclarationPath::new(
                 self.symbol_table.id,
@@ -341,15 +339,14 @@ impl<'a> SemanticAnalyzer<'a> {
     }
 
     fn visit_import_from(&mut self, _i: &parser::ast::ImportFrom) {
-        let module_import_result = match self.imports.get(&ImportModuleDescriptor::from(_i)) {
-            Some(result) => result.clone(),
-            None => ImportResult::not_found(),
-        };
+        let module_import_result = self.imports.get(&ImportModuleDescriptor::from(_i));
         for alias in &_i.names {
             if alias.name == "*" {
-                self.symbol_table
-                    .star_imports
-                    .push(module_import_result.clone());
+                if let Some(module_import_result) = module_import_result {
+                    self.symbol_table
+                        .star_imports
+                        .push(module_import_result.clone());
+                }
                 continue;
             }
             let declaration_path = DeclarationPath::new(
@@ -363,7 +360,7 @@ impl<'a> SemanticAnalyzer<'a> {
                 import_node: None,
                 symbol_name: Some(alias.name.clone()),
                 module_name: None,
-                import_result: module_import_result.clone(),
+                import_result: module_import_result.cloned(),
             });
 
             let flags = SymbolFlags::empty();

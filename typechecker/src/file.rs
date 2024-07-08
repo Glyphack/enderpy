@@ -1,21 +1,14 @@
 use core::panic;
+use std::path::PathBuf;
 use std::sync::atomic::AtomicUsize;
-use std::{collections::HashMap, path::PathBuf};
 
 use enderpy_python_parser as parser;
 use enderpy_python_parser::ast::*;
 use parser::{ast, Parser};
 use std::sync::atomic::Ordering;
 
-use crate::{
-    ast_visitor::TraversalVisitor,
-    diagnostic::Position,
-    ruff_python_import_resolver::{
-        import_result::ImportResult, module_descriptor::ImportModuleDescriptor,
-    },
-    semantic_analyzer::SemanticAnalyzer,
-    symbol_table::SymbolTable,
-};
+use crate::build::ResolvedImports;
+use crate::{diagnostic::Position, semantic_analyzer::SemanticAnalyzer, symbol_table::SymbolTable};
 use crate::{get_module_name, symbol_table};
 
 #[derive(Clone, Debug)]
@@ -122,10 +115,7 @@ impl<'a> EnderpyFile<'a> {
     }
 
     /// entry point to fill up the symbol table from the global definitions
-    pub fn populate_symbol_table(
-        &mut self,
-        imports: &HashMap<ImportModuleDescriptor, ImportResult>,
-    ) -> SymbolTable {
+    pub fn populate_symbol_table(&mut self, imports: &ResolvedImports) -> SymbolTable {
         let mut sem_anal = SemanticAnalyzer::new(self, imports);
         for stmt in &self.tree.body {
             sem_anal.visit_stmt(stmt)

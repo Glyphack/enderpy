@@ -3,7 +3,7 @@ source: typechecker/src/build.rs
 description: "import variables\nimport import_test\n\nfrom variables import a\nfrom variables import *\n\nimport os.path\n\nfrom os import *\n\nfrom os.path import join\n"
 expression: result
 ---
-[ImportResult { is_relative: false, is_import_found: true, is_partly_resolved: false, is_namespace_package: false, is_init_file_present: false, is_stub_package: false, import_type: Local, resolved_paths: ["test_data[TYPESHED]/stdlib/os") }]
+[ResolvedImport { resolved_ids: [Id(6297)], result: ImportResult { is_relative: false, is_import_found: true, is_partly_resolved: false, is_namespace_package: false, is_init_file_present: false, is_stub_package: false, import_type: Local, resolved_paths: [""], search_path: Some("test_data[TYPESHED]/stdlib/os") } }]
 Symbols in global
 a - declaration: Alias - properties: SymbolFlags(0x0)
 - Declarations:
