@@ -101,6 +101,10 @@ impl<'a> Parser<'a> {
         Node::new(node.start, self.prev_token_end)
     }
 
+    fn finish_node_chomped(&self, node: Node) -> Node {
+        Node::new(node.start, self.prev_token_end - 1)
+    }
+
     pub(crate) fn cur_token(&self) -> &Token {
         &self.cur_token
     }
@@ -624,7 +628,7 @@ impl<'a> Parser<'a> {
         let body = self.parse_suite()?;
         if is_async {
             Ok(Statement::AsyncFunctionDef(Box::new(AsyncFunctionDef {
-                node: self.finish_node(node),
+                node: self.finish_node_chomped(node),
                 name,
                 args,
                 body,
@@ -635,7 +639,7 @@ impl<'a> Parser<'a> {
             })))
         } else {
             Ok(Statement::FunctionDef(Box::new(FunctionDef {
-                node: self.finish_node(node),
+                node: self.finish_node_chomped(node),
                 name,
                 args,
                 body,
