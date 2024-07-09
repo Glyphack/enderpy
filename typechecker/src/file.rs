@@ -31,9 +31,9 @@ pub struct EnderpyFile<'a> {
     pub tree: ast::Module,
     dummy: &'a str,
 }
-static COUNTER: AtomicUsize = AtomicUsize::new(1);
 
 fn get_id() -> u32 {
+    static COUNTER: AtomicUsize = AtomicUsize::new(1);
     COUNTER.fetch_add(1, Ordering::SeqCst) as u32
 }
 

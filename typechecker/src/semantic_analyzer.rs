@@ -317,7 +317,6 @@ impl<'a> SemanticAnalyzer<'a> {
                 .imports
                 .get(&ImportModuleDescriptor::from(alias))
                 .cloned();
-            // TODO: Report unresolved import if import_result is None
             let declaration_path = DeclarationPath::new(
                 self.symbol_table.id,
                 alias.node,

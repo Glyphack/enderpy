@@ -8,7 +8,7 @@ use std::{collections::HashMap, fmt::Display, path::PathBuf};
 
 use enderpy_python_parser::ast::{self, ClassDef, FunctionDef, Node};
 
-use crate::build::{ResolvedImport, ResolvedImports};
+use crate::build::ResolvedImport;
 
 #[derive(Debug, Clone, PartialEq, Eq, Copy, Hash)]
 pub struct Id(pub u32);
@@ -378,13 +378,6 @@ impl Declaration {
             Declaration::TypeAlias(t) => &t.declaration_path,
         }
     }
-
-    // pub fn get_symbol_table<'a>(&self, symbol_tables: &'a [SymbolTable]) -> &'a SymbolTable {
-    //     let symbol_table = symbol_tables
-    //         .iter()
-    //         .find(|symbol_table| symbol_table.id == self.declaration_path().symbol_table_id);
-    //     symbol_table.expect("Symbol table not found for this symbol node: {self:?}")
-    // }
 }
 
 #[derive(Debug, Clone)]

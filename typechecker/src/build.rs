@@ -76,7 +76,7 @@ impl<'a> BuildManager<'a> {
         log::debug!("Imports resolved");
         for mut module in new_modules.iter_mut() {
             let sym_table = module.populate_symbol_table(&imports);
-            self.symbol_tables.insert(sym_table.id, sym_table);
+            self.symbol_tables.insert(module.id, sym_table);
         }
         for module in new_modules {
             self.module_ids.insert(module.path.to_path_buf(), module.id);
@@ -107,6 +107,7 @@ impl<'a> BuildManager<'a> {
     // This step happens after the binding phase
     pub fn type_check(&self, path: &Path) -> TypeChecker {
         let mut module_to_check = self.get_state(path);
+
         let mut checker = TypeChecker::new(
             self.get_symbol_table(path),
             &self.symbol_tables,
@@ -157,7 +158,7 @@ impl<'a> BuildManager<'a> {
 #[derive(Debug, Clone)]
 pub struct ResolvedImport {
     pub resolved_ids: Vec<Id>,
-    pub result: ImportResult,
+    result: ImportResult,
 }
 
 pub type ResolvedImports = HashMap<ImportModuleDescriptor, Arc<ResolvedImport>>;
@@ -176,13 +177,13 @@ fn gather_files<'a>(
     };
     let mut new_modules = Vec::with_capacity(initial_files.len() * 5);
     let mut import_results = HashMap::new();
-
-    let seen: &mut HashSet<PathBuf> = &mut HashSet::new();
+    let mut seen = HashSet::new();
 
     while let Some(module) = initial_files.pop() {
-        if seen.get(module.path.as_path()).is_some() {
+        if seen.contains(module.path.as_path()) {
             continue;
         }
+        seen.insert(module.path.clone());
         let resolved_imports = resolve_file_imports(
             &module,
             execution_environment,
@@ -190,7 +191,6 @@ fn gather_files<'a>(
             host,
             // &import_results,
         );
-        seen.insert(module.path.clone());
         new_modules.push(module);
         for (import_desc, mut resolved) in resolved_imports {
             if !resolved.is_import_found {
@@ -198,12 +198,26 @@ fn gather_files<'a>(
             }
             let mut resolved_ids = Vec::with_capacity(resolved.resolved_paths.len());
             for resolved_path in resolved.resolved_paths.iter_mut() {
-                let e = EnderpyFile::new(std::mem::take(resolved_path), true);
-                resolved_ids.push(e.id);
-                initial_files.push(e);
+                if let Some(found) = new_modules.iter().find(|m| m.path == *resolved_path) {
+                    resolved_ids.push(found.id);
+                } else if let Some(found) = initial_files.iter().find(|m| m.path == *resolved_path)
+                {
+                    resolved_ids.push(found.id);
+                } else {
+                    let e = EnderpyFile::new(std::mem::take(resolved_path), true);
+                    resolved_ids.push(e.id);
+                    // println!("id of {:?}: {:?}", e.path, e.id);
+                    initial_files.push(e);
+                }
             }
+            // println!("{:?}", resolved_ids);
 
             for (_, implicit_import) in resolved.implicit_imports.iter_mut() {
+                if new_modules.iter().any(|m| m.path == implicit_import.path)
+                    || initial_files.iter().any(|m| m.path == implicit_import.path)
+                {
+                    continue;
+                }
                 let path_mut = &mut implicit_import.path;
                 let e = EnderpyFile::new(std::mem::take(path_mut), true);
                 initial_files.push(e);
@@ -219,6 +233,17 @@ fn gather_files<'a>(
     }
 
     new_modules.extend(initial_files);
+
+    for import in import_results.iter() {
+        for resolved in import.1.resolved_ids.iter() {
+            if !new_modules.iter().any(|m| m.id == *resolved) {
+                for module in new_modules.iter() {
+                    println!("{:?} - {:?}", module.path, module.id);
+                }
+                panic!("symbol table not found {resolved:?}");
+            }
+        }
+    }
     (import_results, new_modules)
 }
 
@@ -292,6 +317,7 @@ mod tests {
                     r"module_name: .*.typechecker.test_data.inputs.symbol_table..*.py",
                     "module_name: [REDACTED]",
                 );
+                settings.add_filter(r"Id\(\d+\)", "Id(REDACTED)");
                 settings.add_filter(r"\(id: .*\)", "(id: [REDACTED])");
                 settings.bind(|| {
                     insta::assert_snapshot!(result);

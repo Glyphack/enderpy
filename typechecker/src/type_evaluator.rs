@@ -597,8 +597,14 @@ impl<'a> TypeEvaluator<'a> {
                             a.import_result.clone().expect("import result not found");
                         for id in import_result.resolved_ids.iter() {
                             log::debug!("checking path {:?}", id);
-                            let symbol_table_with_alias_def =
-                                { self.imported_symbol_tables.get(id).unwrap() };
+                            let Some(symbol_table_with_alias_def) =
+                                self.imported_symbol_tables.get(id)
+                            else {
+                                panic!(
+                                    " symbol table id {:?} with not found in import {:?}",
+                                    id, import_result
+                                );
+                            };
 
                             // sys/__init__.pyi imports sys itself don't know why
                             // If the resolved path is same as current symbol file path
@@ -642,9 +648,6 @@ impl<'a> TypeEvaluator<'a> {
                             else {
                                 panic!("Symbol table not found for alias: {:?}", id);
                             };
-                            // let Some(symbol_table_with_alias_def) = self.get_symbol_table_of(resolved_path) else {
-                            //     panic!("Symbol table not found for alias: {:?}", resolved_path);
-                            // };
 
                             let lookup_request = LookupSymbolRequest { name, scope: None };
                             let find_in_current_symbol_table =
