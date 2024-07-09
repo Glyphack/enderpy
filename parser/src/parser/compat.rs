@@ -102,7 +102,17 @@ impl AsPythonCompat for Module {
 impl AsPythonCompat for Statement {
     fn as_python_compat(&self, parser: &Parser) -> Value {
         match self {
-            Statement::ExpressionStatement(e) => e.as_python_compat(parser),
+            Statement::ExpressionStatement(e) => {
+                let expr = e.as_python_compat(parser);
+                json!({
+                    "_type": "Expr",
+                    "lineno": expr["lineno"],
+                    "col_offset": expr["col_offset"],
+                    "end_lineno": expr["end_lineno"],
+                    "end_col_offset": expr["end_col_offset"],
+                    "value": expr,
+                })
+            },
             Statement::Import(i) => i.as_python_compat(parser),
             Statement::ImportFrom(i) => i.as_python_compat(parser),
             Statement::AssignStatement(a) => a.as_python_compat(parser),
@@ -139,6 +149,7 @@ impl AsPythonCompat for Assign {
         json_python_compat_node!("Assign", self, parser, {
             "targets": self.targets.iter().map(|expr| expr.as_python_compat(parser)).collect::<Vec<_>>(),
             "value": self.value.as_python_compat(parser),
+            // TODO ast_python: Support for type_comment.
             "type_comment": json!(null),
         })
     }
@@ -341,7 +352,7 @@ impl AsPythonCompat for ConstantValue {
             ConstantValue::Tuple(v) => json!(v.iter().map(|cons| cons.as_python_compat(parser)).collect::<Vec<_>>()),
             ConstantValue::Int(v) => Value::Number(Number::from_str(v).unwrap()),
             ConstantValue::Float(v) => Value::Number(Number::from_str(v).unwrap()),
-            ConstantValue::Complex { real, imaginary } => json!({"real": real, "imaginary": imaginary}),
+            ConstantValue::Complex { real: _real, imaginary } => json!(imaginary),
         }
     }
 }
@@ -357,7 +368,9 @@ impl AsPythonCompat for List {
 impl AsPythonCompat for Tuple {
     fn as_python_compat(&self, parser: &Parser) -> Value {
         json_python_compat_node!("Tuple", self, parser, {
-            "elements": self.elements.iter().map(|expr| expr.as_python_compat(parser)).collect::<Vec<_>>(),
+            // Yes, these are repeated.
+            "dims": self.elements.iter().map(|expr| expr.as_python_compat(parser)).collect::<Vec<_>>(),
+            "elts": self.elements.iter().map(|expr| expr.as_python_compat(parser)).collect::<Vec<_>>(),
         })
     }
 }
@@ -381,7 +394,7 @@ impl AsPythonCompat for Set {
 
 impl AsPythonCompat for BoolOperation {
     fn as_python_compat(&self, parser: &Parser) -> Value {
-        json_python_compat_node!("BoolOperation", self, parser, {
+        json_python_compat_node!("BoolOp", self, parser, {
             "op": self.op.as_python_compat(parser),
             "values": self.values.iter().map(|expr| expr.as_python_compat(parser)).collect::<Vec<_>>(),
         })
@@ -399,7 +412,7 @@ impl AsPythonCompat for BooleanOperator {
 
 impl AsPythonCompat for UnaryOperation {
     fn as_python_compat(&self, parser: &Parser) -> Value {
-        json_python_compat_node!("UnaryOperation", self, parser, {
+        json_python_compat_node!("UnaryOp", self, parser, {
             "op": self.op.as_python_compat(parser),
             "operand": self.operand.as_python_compat(parser),
         })
@@ -466,7 +479,7 @@ impl AsPythonCompat for Yield {
 
 impl AsPythonCompat for YieldFrom {
     fn as_python_compat(&self, parser: &Parser) -> Value {
-        json_python_compat_node!("YieldForm", self, parser, {
+        json_python_compat_node!("YieldFrom", self, parser, {
             "value": self.value.as_python_compat(parser),
         })
     }
@@ -569,22 +582,13 @@ impl AsPythonCompat for Call {
         if let Some(expr) = &self.kwargs {
             node["kwargs"] = expr.as_python_compat(parser);
         }
-        // NOTE: Python wraps print calls in an extra Expr node.
-        // Don't ask me why the parser does this.
-        if let Expression::Name(name) = &self.func {
-            if matches!(name.id.as_str(), "print") {
-                return json_python_compat_node!("Expr", self, parser, {
-                    "value": node,
-                })
-            }
-        }
         node
     }
 }
 
 impl AsPythonCompat for Keyword {
     fn as_python_compat(&self, parser: &Parser) -> Value {
-        json_python_compat_node!("Keyword", self, parser, {
+        json_python_compat_node!("keyword", self, parser, {
             "arg": self.arg.as_ref().map_or(json!(null), |s| json!(s)),
             "value": self.value.as_python_compat(parser),
         })
@@ -601,7 +605,7 @@ impl AsPythonCompat for Await {
 
 impl AsPythonCompat for Compare {
     fn as_python_compat(&self, parser: &Parser) -> Value {
-        json_python_compat_node!("Compar", self, parser, {
+        json_python_compat_node!("Compare", self, parser, {
             "left": self.left.as_python_compat(parser),
             "ops": self.ops.iter().map(|op| op.as_python_compat(parser)).collect::<Vec<_>>(),
             "comparators": self.comparators.iter().map(|op| op.as_python_compat(parser)).collect::<Vec<_>>(),
@@ -657,7 +661,7 @@ impl AsPythonCompat for Arg {
         json_python_compat_node!("arg", self, parser, {
             "arg": self.arg,
             "annotation": self.annotation.as_python_compat(parser),
-            // TODO ast_python: Support for type_comment in arg.
+            // TODO ast_python: Support for type_comment.
             "type_comment": json!(null),
         })
     }
@@ -971,11 +975,345 @@ b = x(1)
 print(b)
 "#;
         let enderpy_ast = parse_enderpy_source(source).unwrap();
-        let mut python_ast = parse_python_source(source).unwrap();
-        assert_ast_eq(&mut python_ast, &enderpy_ast, source);
+        let python_ast = parse_python_source(source).unwrap();
+        assert_ast_eq(&python_ast, &enderpy_ast, source);
     }
 
-    fn assert_ast_eq(python_ast: &mut Value, enderpy_ast: &Value, source: &str) {
+    fn python_parser_test_ast(inputs: &[&str]) {
+        for test_input in inputs.iter() {
+            let enderpy_ast = parse_enderpy_source(test_input).unwrap();
+            let python_ast = parse_python_source(test_input).unwrap();
+            assert_ast_eq(&python_ast, &enderpy_ast, test_input);
+        }
+    }
+
+    #[test]
+    fn test_parse_assignment() {
+        python_parser_test_ast(&[
+            "a = 1",
+            "a = None",
+            "a = True",
+            "a = False",
+            "a = 1j",
+            // TODO ast_python: Python does not evaluate bytes.
+            // "a = b'1'",
+            // "a = rb'1'",
+            // "a = br'1'",
+            "a = \"a\"",
+            "a = '''a'''",
+            "a = \"\"\"a\"\"\"",
+            "a = 'a'",
+            "a = 1, 2",
+            "a = 1, 2, ",
+            "a = b = 1",
+            "a,b = c,d = 1,2",
+            // augmented assignment
+            "a += 1",
+            "a -= 1",
+            "a *= 1",
+            "a /= 1",
+            "a //= 1",
+            "a %= 1",
+            "a **= 1",
+            "a <<= 1",
+            "a >>= 1",
+            "a &= 1",
+            "a ^= 1",
+            "a |= 1",
+            // annotated assignment
+        ]);
+    }
+
+    #[test]
+    fn test_parse_assert_stmt() {
+        python_parser_test_ast(&["assert a", "assert a, b", "assert True, 'fancy message'"]);
+    }
+
+    #[test]
+    fn test_pass_stmt() {
+        python_parser_test_ast(&["pass", "pass ", "pass\n"]);
+    }
+
+    #[test]
+    fn test_parse_del_stmt() {
+        python_parser_test_ast(&["del a", "del a, b", "del a, b, "]);
+    }
+
+    #[test]
+    fn parse_yield_statement() {
+        python_parser_test_ast(&["yield", "yield a", "yield a, b", "yield a, b, "]);
+    }
+
+    #[test]
+    fn test_raise_statement() {
+        python_parser_test_ast(&["raise", "raise a", "raise a from c"]);
+    }
+
+    #[test]
+    fn test_parse_break_continue() {
+        python_parser_test_ast(&["break", "continue"]);
+    }
+
+    #[test]
+    fn test_parse_bool_op() {
+        python_parser_test_ast(&[
+            "a or b",
+            "a and b",
+            // TODO ast_python: Python parses this as a BoolOp with 3 values.
+            // i.e. {"op": "or", "values": ["a", "b", "c"]}
+            // Enderpy parses this as a nested set of BoolOps. 
+            // i.e. {"op": "or", "values": ["a", {"op": "or", "values": ["b", "c"]}]}
+            // I'm not sure which is correct.
+            "a and b or c",
+        ]);
+    }
+
+    #[test]
+    fn test_parse_unary_op() {
+        python_parser_test_ast(&["not a", "+ a", "~ a", "-a"]);
+    }
+
+    #[test]
+    fn test_named_expression() {
+        // TODO ast_python: Enderpy chokes on this.
+        // python_parser_test_ast(&["(a := b)"]);
+    }
+
+    #[test]
+    fn test_tuple() {
+        python_parser_test_ast(&[
+            "(a, b, c)",
+            // TODO ast_python: Enderpy doesn't handle newlines within a nested context.
+            // "(a,
+            // b, c)",
+            // "(a
+            // , b, c)",
+            // "(a,
+            // b,
+            //     c)",
+//             "(a,
+// )",
+            "(a, b, c,)",
+        ]);
+    }
+
+    #[test]
+    fn test_yield_expression() {
+        python_parser_test_ast(&["yield", "yield a", "yield from a"]);
+    }
+
+    #[test]
+    fn test_starred() {
+        // TODO ast_python: Enderpy chokes on this.
+        // python_parser_test_ast(&["(*a)"]);
+    }
+
+    #[test]
+    fn test_await_expression() {
+        python_parser_test_ast(&["await a"]);
+    }
+
+    #[test]
+    fn test_attribute_ref() {
+        python_parser_test_ast(&["a.b", "a.b.c", "a.b_c", "a.b.c.d"]);
+    }
+
+    #[test]
+    fn parse_call() {
+        python_parser_test_ast(&[
+            "a()",
+            "a(b)",
+            "a(b, c)",
+            "func(b=c)",
+            "func(a, b=c, d=e)",
+            "func(a, b=c, d=e, *f)",
+            "func(a, b=c, d=e, *f, **g)",
+            "func(a,)",
+        ]);
+    }
+
+    #[test]
+    fn test_lambda() {
+        python_parser_test_ast(&[
+            "lambda: a",
+            "lambda a: a",
+            "lambda a, b: a",
+            "lambda a, b, c: a",
+            "lambda a, *b: a",
+            "lambda a, *b, c: a",
+            "lambda a, *b, c, **d: a",
+            "lambda a=1 : a",
+            "lambda a=1 : a,",
+        ]);
+    }
+
+    #[test]
+    fn test_conditional_expression() {
+        python_parser_test_ast(&["a if b else c if d else e"]);
+    }
+
+    #[test]
+    fn test_string_literal_concatenation() {
+        python_parser_test_ast(&[
+            "'a' 'b'",
+            // TODO ast_python: Python evaluates this as "ab".
+            // "b'a' b'b'",
+            "'a'   'b'",
+            // TODO ast_python: Enderpy evaluates this as 'r"a"b'. This seems wrong.
+            // "r'a' 'b'",
+            // TODO ast_python: Enderpy doesn't handle newlines within a nested context.
+            // "('a'
+            // 'b')",
+            // "('a'
+            // 'b', 'c')",
+//             "('a'
+//                 'b'
+// 'c')",
+            // TODO ast_python: Python evaluates this as "ac". Enderpy creates 2 constants.
+            // "f'a' 'c'",
+            // TODO ast_python: Python evaluates this as "abc". Enderpy creates 3 constants.
+            // "f'a' 'b' 'c'",
+            // TODO ast_python: Python evaluates this as "dab". Enderpy creates 3 constants.
+            // "'d' f'a' 'b'",
+            "f'a_{1}' 'b' ",
+        ]);
+    }
+
+    #[test]
+    fn test_fstring() {
+        python_parser_test_ast(&[
+            "f'a'",
+            "f'hello_{a}'",
+            "f'hello_{a} {b}'",
+            "f'hello_{a} {b} {c}'",
+            // unsupported
+            // "f'hello_{f'''{a}'''}'",
+        ]);
+    }
+
+    #[test]
+    fn test_comparison() {
+        python_parser_test_ast(&[
+            "a == b",
+            "a != b",
+            "a > b",
+            "a < b",
+            "a >= b",
+            "a <= b",
+            "a is b",
+            "a is not b",
+            "a in b",
+            "a not in b",
+            "a < b < c",
+        ]);
+    }
+
+    #[test]
+    fn test_while_statement() {
+        python_parser_test_ast(&[
+            "while a: pass",
+            "while a:
+    pass",
+            "while a:
+        a = 1
+else:
+        b = 1
+",
+        ]);
+    }
+
+    #[test]
+    fn test_try_statement() {
+        python_parser_test_ast(&[
+            "try:
+    pass
+except:
+    pass",
+            "try:
+                pass
+except Exception:
+                pass",
+            "try:
+                pass
+except Exception as e:
+                pass",
+            "try:
+                pass
+except Exception as e:
+                pass
+else:
+                pass",
+            "try:
+                pass
+except Exception as e:
+                pass
+else:
+                pass
+finally:
+                pass",
+            "try:
+    pass
+except *Exception as e:
+    pass
+",
+        ]);
+    }
+
+    #[test]
+    fn test_ellipsis_statement() {
+        python_parser_test_ast(&[
+            "def a(): ...",
+            "def a():
+    ...",
+            "a = ...",
+            "... + 1",
+        ]);
+    }
+
+    macro_rules! parser_test {
+        ($test_name:ident, $test_file:expr) => {
+            #[test]
+            fn $test_name() {
+                let test_case = std::fs::read_to_string($test_file).unwrap();
+                python_parser_test_ast(&[test_case.as_str()]);
+            }
+        }
+
+    }
+
+    // parser_test!(test_functions, "test_data/inputs/functions.py");
+    // parser_test!(test_if, "test_data/inputs/if.py");
+    // parser_test!(test_indentation, "test_data/inputs/indentation.py");
+    // parser_test!(
+    //     test_separate_statements,
+    //     "test_data/inputs/separate_statements.py"
+    // );
+    // parser_test!(test_try, "test_data/inputs/try.py");
+    // parser_test!(
+    //     annotated_assignment,
+    //     "test_data/inputs/annotated_assignment.py"
+    // );
+    // parser_test!(binary_op, "test_data/inputs/binary_op.py");
+    // parser_test!(class, "test_data/inputs/class.py");
+    // parser_test!(dict, "test_data/inputs/dict.py");
+    // parser_test!(test_for, "test_data/inputs/for.py");
+    // parser_test!(from_import, "test_data/inputs/from_import.py");
+    // parser_test!(function_def, "test_data/inputs/function_def.py");
+    // parser_test!(
+    //     generator_expressions,
+    //     "test_data/inputs/generator_expressions.py"
+    // );
+    // parser_test!(lists, "test_data/inputs/lists.py");
+    // parser_test!(test_match, "test_data/inputs/match.py");
+    // parser_test!(sets, "test_data/inputs/sets.py");
+    // parser_test!(string, "test_data/inputs/string.py");
+    // parser_test!(subscript, "test_data/inputs/subscript.py");
+    // parser_test!(with, "test_data/inputs/with.py");
+    // parser_test!(newlines, "test_data/inputs/newlines.py");
+    // parser_test!(comments, "test_data/inputs/comments.py");
+    // parser_test!(types_alias, "test_data/inputs/type_alias.py");
+
+    fn assert_ast_eq(python_ast: &Value, enderpy_ast: &Value, source: &str) {
         if let Err(message) = assert_json_matches_no_panic(
             &python_ast,
             &enderpy_ast,
@@ -1001,7 +1339,7 @@ print(b)
             }
             let include_source = std::env::var("INCLUDE_SOURCE").is_ok();
             let formatted_source = if include_source {
-                format!("\nSource:\n{}", source)
+                format!("\nSource:\n{}\n", source)
             } else {
                 "".to_string()
             };
