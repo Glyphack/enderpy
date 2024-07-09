@@ -36,7 +36,7 @@ impl<'a> BuildManager<'a> {
     pub fn new(settings: Settings) -> Self {
         let mut builder = Builder::new();
         builder
-            .filter(None, log::LevelFilter::Info)
+            .filter(None, log::LevelFilter::Debug)
             .format_timestamp(None)
             .try_init();
 
@@ -130,7 +130,6 @@ impl<'a> BuildManager<'a> {
     }
 
     pub fn get_hover_information(&self, path: &Path, line: u32, column: u32) -> String {
-        return "".to_string();
         let module = self.get_state(path);
         let checker = self.type_check(path);
         let symbol_table = self.get_symbol_table(path);
@@ -158,7 +157,7 @@ impl<'a> BuildManager<'a> {
 #[derive(Debug, Clone)]
 pub struct ResolvedImport {
     pub resolved_ids: Vec<Id>,
-    result: ImportResult,
+    pub result: ImportResult,
 }
 
 pub type ResolvedImports = HashMap<ImportModuleDescriptor, Arc<ResolvedImport>>;
@@ -206,11 +205,9 @@ fn gather_files<'a>(
                 } else {
                     let e = EnderpyFile::new(std::mem::take(resolved_path), true);
                     resolved_ids.push(e.id);
-                    // println!("id of {:?}: {:?}", e.path, e.id);
                     initial_files.push(e);
                 }
             }
-            // println!("{:?}", resolved_ids);
 
             for (_, implicit_import) in resolved.implicit_imports.iter_mut() {
                 if new_modules.iter().any(|m| m.path == implicit_import.path)
@@ -268,6 +265,7 @@ fn resolve_file_imports(
         };
 
         for import_desc in import_descriptions {
+            // TODO: Cache non relative imports
             let resolved = match false {
                 true => continue,
                 false => resolver::resolve_import(

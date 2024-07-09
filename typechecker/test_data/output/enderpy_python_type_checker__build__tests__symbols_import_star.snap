@@ -3,7 +3,7 @@ source: typechecker/src/build.rs
 description: "from .b import *\nimport os\n\nprint(in_b)\n\nos.path\nos.path.dirname(\"\")\n"
 expression: result
 ---
-[ResolvedImport { resolved_ids: [Id(6309)], result: ImportResult { is_relative: true, is_import_found: true, is_partly_resolved: false, is_namespace_package: false, is_init_file_present: false, is_stub_package: false, import_type: Local, resolved_paths: [""], search_path: Some("test_data/inputs/import_star_test"), is_stub_file: false, is_native_lib: false, is_stdlib_typeshed_file: false, is_third_party_typeshed_file: false, is_local_typings_file: false, implicit_imports: ImplicitImports({}), filtered_implicit_imports: ImplicitImports({}), non_stub_import_result: None, py_typed_info: None, package_directory: None } }]
+[ResolvedImport { resolved_ids: [Id(REDACTED)], result: ImportResult { is_relative: true, is_import_found: true, is_partly_resolved: false, is_namespace_package: false, is_init_file_present: false, is_stub_package: false, import_type: Local, resolved_paths: [""], search_path: Some("test_data/inputs/import_star_test"), is_stub_file: false, is_native_lib: false, is_stdlib_typeshed_file: false, is_third_party_typeshed_file: false, is_local_typings_file: false, implicit_imports: ImplicitImports({}), filtered_implicit_imports: ImplicitImports({}), non_stub_import_result: None, py_typed_info: None, package_directory: None } }]
 Symbols in global
 os - declaration: Alias - properties: SymbolFlags(0x0)
 - Declarations:

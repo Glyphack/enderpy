@@ -655,15 +655,15 @@ Line 161: from collections.abc import Sized, Container
 
 Expr types in the line --->:
         collections.abc  => Module
-        Sized => Unknown
-        Container => Unknown
+        Sized => (class) Sized
+        Container => (class) typing.Container[TypeVar[_T_co, ]]
 
 ---
 Line 164: class LinkedList(Sized, Generic[T]): ...
 
 Expr types in the line --->:
         class LinkedList => (class) basic_generics.LinkedList[TypeVar[T, ]]
-        Sized => Unknown
+        Sized => (class) Sized
         Generic => (class) Generic
         Generic[T] => (class) Generic
         T => TypeVar[T, ]
@@ -681,8 +681,8 @@ Expr types in the line --->:
         K => TypeVar[K, ]
         K, V] => (class) builtins.tuple[Unknown]
         V => TypeVar[V, ]
-        Container => Unknown
-        Container[tuple[K, V]] => Unknown
+        Container => (class) typing.Container[TypeVar[_T_co, ]]
+        Container[tuple[K, V]] => (class) typing.Container[TypeVar[_T_co, ]]
         tuple => (class) builtins.tuple[TypeVar[_T_co, ]]
         tuple[K, V] => (class) builtins.tuple[TypeVar[_T_co, ]]
         K => TypeVar[K, ]

@@ -622,7 +622,7 @@ impl<'a> TypeEvaluator<'a> {
                                 return self.get_symbol_type(current_symbol_lookup);
                             };
 
-                            for star_import in symbol_table.star_imports.iter() {
+                            for star_import in symbol_table_with_alias_def.star_imports.iter() {
                                 log::debug!("checking star imports {:?}", star_import);
                                 for id in star_import.resolved_ids.iter() {
                                     log::debug!("checking path {:?}", id);
@@ -641,51 +641,52 @@ impl<'a> TypeEvaluator<'a> {
                             }
                         }
 
-                        for id in import_result.resolved_ids.iter() {
-                            log::debug!("checking path {:?}", id);
-                            let Some(symbol_table_with_alias_def) =
-                                self.imported_symbol_tables.get(id)
-                            else {
-                                panic!("Symbol table not found for alias: {:?}", id);
-                            };
-
-                            let lookup_request = LookupSymbolRequest { name, scope: None };
-                            let find_in_current_symbol_table =
-                                symbol_table_with_alias_def.lookup_in_scope(&lookup_request);
-
-                            if let Some(res) = find_in_current_symbol_table {
-                                log::debug!("alias resolved to {:?}", res);
-                                return self.get_symbol_type(res);
-                            };
-
-                            log::debug!(
-                                "did not find symbol {} in symbol table, checking star imports",
-                                lookup_request.name
-                            );
-                            // Check if there's any import * and try to find the symbol in those files
-                            for star_import in symbol_table.star_imports.iter() {
-                                log::debug!("checking star imports {:?}", star_import);
-                                for id in star_import.resolved_ids.iter() {
-                                    log::debug!("checking path {:?}", id);
-                                    let star_import_sym_table = self.imported_symbol_tables.get(id);
-                                    let Some(sym_table) = star_import_sym_table else {
-                                        panic!("symbol table of star import not found at {:?}", id);
-                                    };
-                                    let res = sym_table.lookup_in_scope(&lookup_request);
-                                    match res {
-                                        Some(res) => {
-                                            log::debug!("alias resolved to {:?}", res);
-                                            return self.get_symbol_type(res);
-                                        }
-                                        None => continue,
-                                    };
-                                }
-                            }
-                        }
+                        // TODO: Do we need to use implicit imports too?
+                        // for id in import_result.resolved_ids.iter() {
+                        //     log::debug!("checking path {:?}", id);
+                        //     let Some(symbol_table_with_alias_def) =
+                        //         self.imported_symbol_tables.get(id)
+                        //     else {
+                        //         panic!("Symbol table not found for alias: {:?}", id);
+                        //     };
+                        //
+                        //     let lookup_request = LookupSymbolRequest { name, scope: None };
+                        //     let find_in_current_symbol_table =
+                        //         symbol_table_with_alias_def.lookup_in_scope(&lookup_request);
+                        //
+                        //     if let Some(res) = find_in_current_symbol_table {
+                        //         log::debug!("alias resolved to {:?}", res);
+                        //         return self.get_symbol_type(res);
+                        //     };
+                        //
+                        //     log::debug!(
+                        //         "did not find symbol {} in symbol table, checking star imports",
+                        //         lookup_request.name
+                        //     );
+                        //     // Check if there's any import * and try to find the symbol in those files
+                        //     for star_import in symbol_table.star_imports.iter() {
+                        //         log::debug!("checking star imports {:?}", star_import);
+                        //         for id in star_import.resolved_ids.iter() {
+                        //             log::debug!("checking path {:?}", id);
+                        //             let star_import_sym_table = self.imported_symbol_tables.get(id);
+                        //             let Some(sym_table) = star_import_sym_table else {
+                        //                 panic!("symbol table of star import not found at {:?}", id);
+                        //             };
+                        //             let res = sym_table.lookup_in_scope(&lookup_request);
+                        //             match res {
+                        //                 Some(res) => {
+                        //                     log::debug!("alias resolved to {:?}", res);
+                        //                     return self.get_symbol_type(res);
+                        //                 }
+                        //                 None => continue,
+                        //             };
+                        //         }
+                        //     }
+                        // }
                         log::debug!("import not found checking if it's a module");
+                        log::debug!("implicit imports {:?}", import_result.result);
                         let mut res = Ok(PythonType::Unknown);
                         for id in import_result.resolved_ids.iter() {
-                            // TODO: use ID for module path
                             res = Ok(PythonType::Module(crate::types::ModuleRef {
                                 module_path: PathBuf::new(),
                             }))
