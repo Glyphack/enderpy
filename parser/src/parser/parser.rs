@@ -24,6 +24,7 @@ pub struct Parser<'a> {
     lexer: Lexer<'a>,
     cur_token: Token,
     prev_token_end: u32,
+    prev_token_was_whitespace: bool,
     // This var keeps track of how many levels deep we are in a list, tuple or set
     // expression. This is used to determine if we should parse comma separated
     // expressions as tuple or not.
@@ -61,6 +62,7 @@ impl<'a> Parser<'a> {
             lexer,
             cur_token,
             prev_token_end,
+            prev_token_was_whitespace: false,
             nested_expression_list,
             curr_line_string: String::new(),
             path,
@@ -102,7 +104,12 @@ impl<'a> Parser<'a> {
     }
 
     fn finish_node_chomped(&self, node: Node) -> Node {
-        Node::new(node.start, self.prev_token_end - 1)
+        let end = if self.prev_token_was_whitespace {
+            self.prev_token_end - 1
+        } else {
+            self.prev_token_end
+        };
+        Node::new(node.start, end)
     }
 
     pub(crate) fn cur_token(&self) -> &Token {
@@ -171,6 +178,7 @@ impl<'a> Parser<'a> {
         }
 
         self.prev_token_end = self.cur_token.end;
+        self.prev_token_was_whitespace = matches!(self.cur_token.kind, Kind::NewLine | Kind::Dedent);
         self.cur_token = token;
         if matches!(self.cur_kind(), Kind::Comment | Kind::NL) {
             self.advance();
@@ -407,7 +415,7 @@ impl<'a> Parser<'a> {
         };
 
         Ok(Statement::WhileStatement(Box::new(While {
-            node: self.finish_node(node),
+            node: self.finish_node_chomped(node),
             test,
             body,
             orelse,
@@ -548,7 +556,7 @@ impl<'a> Parser<'a> {
 
         if is_try_star {
             Ok(Statement::TryStarStatement(Box::new(TryStar {
-                node: self.finish_node(node),
+                node: self.finish_node_chomped(node),
                 body,
                 handlers,
                 orelse,
@@ -588,7 +596,7 @@ impl<'a> Parser<'a> {
             let body = self.parse_suite()?;
 
             handlers.push(ExceptHandler {
-                node: self.finish_node(node),
+                node: self.finish_node_chomped(node),
                 typ,
                 name,
                 body,
@@ -1569,13 +1577,14 @@ impl<'a> Parser<'a> {
 
     // https://docs.python.org/3/reference/expressions.html#conditional-expressions
     fn parse_conditional_expression(&mut self) -> Result<Expression, ParsingError> {
+        let node = self.start_node();
         let or_test = self.parse_or_test();
         if self.eat(Kind::If) {
             let test = self.parse_or_test()?;
             self.expect(Kind::Else)?;
             let or_else = self.parse_expression()?;
             return Ok(Expression::IfExp(Box::new(IfExp {
-                node: self.start_node(),
+                node: self.finish_node(node),
                 test,
                 body: or_test?,
                 orelse: or_else,
@@ -1696,7 +1705,6 @@ impl<'a> Parser<'a> {
         }
 
         let expr = self.parse_starred_expression(node, first_expr)?;
-        self.expect(Kind::RightParen)?;
         Ok(expr)
     }
 
@@ -2299,19 +2307,21 @@ impl<'a> Parser<'a> {
                 } else if self.at(Kind::Mul) {
                     let star_arg_node = self.start_node();
                     self.bump(Kind::Mul);
+                    let expr = self.parse_expression()?;
                     let star_arg = Expression::Starred(Box::new(Starred {
                         node: self.finish_node(star_arg_node),
-                        value: self.parse_expression()?,
+                        value: expr,
                     }));
                     positional_args.push(star_arg);
                 } else if self.at(Kind::Pow) {
                     let kwarg_node = self.start_node();
                     self.bump(Kind::Pow);
                     seen_keyword = true;
+                    let expr = self.parse_expression()?;
                     let kwarg = Keyword {
                         node: self.finish_node(kwarg_node),
                         arg: None,
-                        value: self.parse_expression()?,
+                        value: expr,
                     };
                     keyword_args.push(kwarg);
                 } else {
@@ -2948,6 +2958,7 @@ impl<'a> Parser<'a> {
                 return Ok(expr);
             }
         }
+        self.expect(Kind::RightParen)?;
         Ok(Expression::Tuple(Box::new(Tuple {
             node: self.finish_node(node),
             elements,
@@ -3311,6 +3322,7 @@ impl<'a> Parser<'a> {
         } else {
             None
         };
+        let arg_node = self.finish_node(node);
         let default = if self.eat(Kind::Assign) {
             Some(self.parse_expression()?)
         } else {
@@ -3318,7 +3330,7 @@ impl<'a> Parser<'a> {
         };
         Ok((
             Arg {
-                node: self.finish_node(node),
+                node: arg_node,
                 arg,
                 annotation,
             },
