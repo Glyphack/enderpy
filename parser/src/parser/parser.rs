@@ -2285,7 +2285,7 @@ impl<'a> Parser<'a> {
             self.parse_attribute_ref(node, atom_or_primary)
         } else if self.at(Kind::LeftBrace) {
             // https://docs.python.org/3/reference/expressions.html#slicings
-            self.parse_subscript(node, atom_or_primary)
+            self.parse_subscript(atom_or_primary.get_node(), atom_or_primary)
         } else if self.eat(Kind::LeftParen) {
             // parse call
             // https://docs.python.org/3/reference/expressions.html#calls
