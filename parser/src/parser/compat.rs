@@ -742,6 +742,8 @@ impl AsPythonCompat for With {
         json_python_compat_node!("With", self, parser, {
             "items": self.items.iter().map(|wi| wi.as_python_compat(parser)).collect::<Vec<_>>(),
             "body": self.body.iter().map(|stmt| stmt.as_python_compat(parser)).collect::<Vec<_>>(),
+            // TODO ast_python: Support for type_comment.
+            "type_comment": json!(null),
         })
     }
 }
@@ -757,7 +759,8 @@ impl AsPythonCompat for AsyncWith {
 
 impl AsPythonCompat for WithItem {
     fn as_python_compat(&self, parser: &Parser) -> Value {
-        json_python_compat_node!("WithItem", self, parser, {
+        json!({
+            "_type": "withitem",
             "context_expr": self.context_expr.as_python_compat(parser),
             "optional_vars": self.optional_vars.as_python_compat(parser),
         })
@@ -1281,7 +1284,7 @@ except *Exception as e:
 
     }
 
-    // parser_test!(test_functions, "test_data/inputs/functions.py");
+    parser_test!(test_functions, "test_data/inputs/functions.py");
     // parser_test!(test_if, "test_data/inputs/if.py");
     // parser_test!(test_indentation, "test_data/inputs/indentation.py");
     // parser_test!(
@@ -1314,11 +1317,27 @@ except *Exception as e:
     // parser_test!(types_alias, "test_data/inputs/type_alias.py");
 
     fn assert_ast_eq(python_ast: &Value, enderpy_ast: &Value, source: &str) {
-        if let Err(message) = assert_json_matches_no_panic(
+        let include_source = std::env::var("INCLUDE_SOURCE").is_ok();
+        let side_by_side = std::env::var("SIDE_BY_SIDE").is_ok();
+
+        let formatted_source = if include_source {
+            format!("\nSource:\n{}\n", source)
+        } else {
+            "".to_string()
+        };
+        if !side_by_side {
+            pretty_assertions::assert_eq!(
+                &python_ast,
+                &enderpy_ast,
+                "Enderpy AST does not match Python AST.\n{}\x1b[31mPython AST\x1b[0m / \x1b[32mEnderpy AST\x1b[0m",
+                formatted_source,
+            );
+        } else if let Err(message) = assert_json_matches_no_panic(
             &python_ast,
             &enderpy_ast,
             assert_json_diff::Config::new(assert_json_diff::CompareMode::Strict),
         ) {
+
             let mut table_builder = Builder::default();
             table_builder.push_record(["Python AST", "Enderpy AST"]);
             table_builder.push_record([
@@ -1337,12 +1356,6 @@ except *Exception as e:
                     )
                     .with(Width::increase(width as usize));
             }
-            let include_source = std::env::var("INCLUDE_SOURCE").is_ok();
-            let formatted_source = if include_source {
-                format!("\nSource:\n{}\n", source)
-            } else {
-                "".to_string()
-            };
             panic!(
                 "Enderpy AST does not match Python AST.\n{}{}\n{}",
                 formatted_source, table, message
