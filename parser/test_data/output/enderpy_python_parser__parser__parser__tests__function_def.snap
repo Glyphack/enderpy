@@ -12,7 +12,7 @@ Module {
             FunctionDef {
                 node: Node {
                     start: 0,
-                    end: 14,
+                    end: 13,
                 },
                 name: "a",
                 args: Arguments {
@@ -48,7 +48,7 @@ Module {
             FunctionDef {
                 node: Node {
                     start: 15,
-                    end: 34,
+                    end: 32,
                 },
                 name: "a",
                 args: Arguments {
@@ -84,7 +84,7 @@ Module {
             FunctionDef {
                 node: Node {
                     start: 34,
-                    end: 55,
+                    end: 54,
                 },
                 name: "a",
                 args: Arguments {
@@ -145,7 +145,7 @@ Module {
             FunctionDef {
                 node: Node {
                     start: 56,
-                    end: 80,
+                    end: 79,
                 },
                 name: "a",
                 args: Arguments {
@@ -208,7 +208,7 @@ Module {
             FunctionDef {
                 node: Node {
                     start: 81,
-                    end: 102,
+                    end: 101,
                 },
                 name: "a",
                 args: Arguments {
@@ -269,7 +269,7 @@ Module {
             FunctionDef {
                 node: Node {
                     start: 103,
-                    end: 124,
+                    end: 123,
                 },
                 name: "a",
                 args: Arguments {
@@ -315,7 +315,7 @@ Module {
             FunctionDef {
                 node: Node {
                     start: 125,
-                    end: 188,
+                    end: 187,
                 },
                 name: "f",
                 args: Arguments {
@@ -346,7 +346,7 @@ Module {
                         Arg {
                             node: Node {
                                 start: 155,
-                                end: 158,
+                                end: 156,
                             },
                             arg: "b",
                             annotation: None,
@@ -354,7 +354,7 @@ Module {
                         Arg {
                             node: Node {
                                 start: 160,
-                                end: 163,
+                                end: 161,
                             },
                             arg: "c",
                             annotation: None,
@@ -382,7 +382,7 @@ Module {
                         Arg {
                             node: Node {
                                 start: 172,
-                                end: 175,
+                                end: 173,
                             },
                             arg: "f",
                             annotation: None,
@@ -463,7 +463,7 @@ Module {
             FunctionDef {
                 node: Node {
                     start: 189,
-                    end: 214,
+                    end: 213,
                 },
                 name: "func",
                 args: Arguments {
@@ -509,7 +509,7 @@ Module {
             AsyncFunctionDef {
                 node: Node {
                     start: 215,
-                    end: 235,
+                    end: 234,
                 },
                 name: "a",
                 args: Arguments {
@@ -545,7 +545,7 @@ Module {
             AsyncFunctionDef {
                 node: Node {
                     start: 236,
-                    end: 261,
+                    end: 259,
                 },
                 name: "a",
                 args: Arguments {
@@ -581,7 +581,7 @@ Module {
             AsyncFunctionDef {
                 node: Node {
                     start: 261,
-                    end: 288,
+                    end: 287,
                 },
                 name: "a",
                 args: Arguments {
@@ -642,7 +642,7 @@ Module {
             FunctionDef {
                 node: Node {
                     start: 289,
-                    end: 306,
+                    end: 305,
                 },
                 name: "a",
                 args: Arguments {
@@ -689,7 +689,7 @@ Module {
             FunctionDef {
                 node: Node {
                     start: 307,
-                    end: 327,
+                    end: 326,
                 },
                 name: "a",
                 args: Arguments {
@@ -746,7 +746,7 @@ Module {
             FunctionDef {
                 node: Node {
                     start: 328,
-                    end: 348,
+                    end: 347,
                 },
                 name: "a",
                 args: Arguments {
@@ -803,7 +803,7 @@ Module {
             FunctionDef {
                 node: Node {
                     start: 349,
-                    end: 375,
+                    end: 374,
                 },
                 name: "a",
                 args: Arguments {
@@ -880,7 +880,7 @@ Module {
             FunctionDef {
                 node: Node {
                     start: 376,
-                    end: 394,
+                    end: 393,
                 },
                 name: "a",
                 args: Arguments {
@@ -926,7 +926,7 @@ Module {
             FunctionDef {
                 node: Node {
                     start: 395,
-                    end: 416,
+                    end: 415,
                 },
                 name: "a",
                 args: Arguments {
@@ -982,7 +982,7 @@ Module {
             FunctionDef {
                 node: Node {
                     start: 417,
-                    end: 441,
+                    end: 440,
                 },
                 name: "a",
                 args: Arguments {
@@ -1048,7 +1048,7 @@ Module {
             FunctionDef {
                 node: Node {
                     start: 442,
-                    end: 472,
+                    end: 471,
                 },
                 name: "a",
                 args: Arguments {
@@ -1134,7 +1134,7 @@ Module {
             FunctionDef {
                 node: Node {
                     start: 473,
-                    end: 492,
+                    end: 491,
                 },
                 name: "a",
                 args: Arguments {
@@ -1180,7 +1180,7 @@ Module {
             FunctionDef {
                 node: Node {
                     start: 493,
-                    end: 515,
+                    end: 514,
                 },
                 name: "a",
                 args: Arguments {
@@ -1236,7 +1236,7 @@ Module {
             FunctionDef {
                 node: Node {
                     start: 516,
-                    end: 541,
+                    end: 540,
                 },
                 name: "a",
                 args: Arguments {
@@ -1302,7 +1302,7 @@ Module {
             FunctionDef {
                 node: Node {
                     start: 542,
-                    end: 573,
+                    end: 572,
                 },
                 name: "a",
                 args: Arguments {
@@ -1388,7 +1388,7 @@ Module {
             FunctionDef {
                 node: Node {
                     start: 574,
-                    end: 600,
+                    end: 599,
                 },
                 name: "a",
                 args: Arguments {
@@ -1453,7 +1453,7 @@ Module {
             FunctionDef {
                 node: Node {
                     start: 601,
-                    end: 630,
+                    end: 629,
                 },
                 name: "a",
                 args: Arguments {
@@ -1528,7 +1528,7 @@ Module {
             FunctionDef {
                 node: Node {
                     start: 631,
-                    end: 1013,
+                    end: 1012,
                 },
                 name: "dataclass_transform",
                 args: Arguments {
@@ -1543,7 +1543,7 @@ Module {
                         Arg {
                             node: Node {
                                 start: 667,
-                                end: 690,
+                                end: 683,
                             },
                             arg: "eq_default",
                             annotation: Some(
@@ -1561,7 +1561,7 @@ Module {
                         Arg {
                             node: Node {
                                 start: 696,
-                                end: 723,
+                                end: 715,
                             },
                             arg: "order_default",
                             annotation: Some(
@@ -1579,7 +1579,7 @@ Module {
                         Arg {
                             node: Node {
                                 start: 729,
-                                end: 758,
+                                end: 750,
                             },
                             arg: "kw_only_default",
                             annotation: Some(
@@ -1597,7 +1597,7 @@ Module {
                         Arg {
                             node: Node {
                                 start: 764,
-                                end: 792,
+                                end: 784,
                             },
                             arg: "frozen_default",
                             annotation: Some(
@@ -1615,7 +1615,7 @@ Module {
                         Arg {
                             node: Node {
                                 start: 900,
-                                end: 965,
+                                end: 960,
                             },
                             arg: "field_specifiers",
                             annotation: Some(

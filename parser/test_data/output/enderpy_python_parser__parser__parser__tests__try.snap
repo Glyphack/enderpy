@@ -87,14 +87,14 @@ Module {
                     ExceptHandler {
                         node: Node {
                             start: 135,
-                            end: 190,
+                            end: 189,
                         },
                         typ: Some(
                             Tuple(
                                 Tuple {
                                     node: Node {
                                         start: 142,
-                                        end: 165,
+                                        end: 166,
                                     },
                                     elements: [
                                         Name(
@@ -235,14 +235,14 @@ Module {
                     ExceptHandler {
                         node: Node {
                             start: 233,
-                            end: 287,
+                            end: 286,
                         },
                         typ: Some(
                             Tuple(
                                 Tuple {
                                     node: Node {
                                         start: 240,
-                                        end: 263,
+                                        end: 264,
                                     },
                                     elements: [
                                         Name(
@@ -371,7 +371,7 @@ Module {
                     ExceptHandler {
                         node: Node {
                             start: 339,
-                            end: 382,
+                            end: 379,
                         },
                         typ: Some(
                             Name(
@@ -432,7 +432,7 @@ Module {
                         AsyncWith {
                             node: Node {
                                 start: 391,
-                                end: 914,
+                                end: 913,
                             },
                             items: [
                                 WithItem {
@@ -535,7 +535,7 @@ Module {
                                     If {
                                         node: Node {
                                             start: 483,
-                                            end: 914,
+                                            end: 913,
                                         },
                                         test: Compare(
                                             Compare {
@@ -1003,14 +1003,14 @@ Module {
                     ExceptHandler {
                         node: Node {
                             start: 914,
-                            end: 1078,
+                            end: 1077,
                         },
                         typ: Some(
                             Tuple(
                                 Tuple {
                                     node: Node {
                                         start: 921,
-                                        end: 963,
+                                        end: 964,
                                     },
                                     elements: [
                                         Attribute(

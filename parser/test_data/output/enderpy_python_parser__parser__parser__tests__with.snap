@@ -12,7 +12,7 @@ Module {
             With {
                 node: Node {
                     start: 0,
-                    end: 13,
+                    end: 12,
                 },
                 items: [
                     WithItem {
@@ -48,7 +48,7 @@ Module {
             With {
                 node: Node {
                     start: 14,
-                    end: 32,
+                    end: 31,
                 },
                 items: [
                     WithItem {
@@ -94,7 +94,7 @@ Module {
             With {
                 node: Node {
                     start: 33,
-                    end: 59,
+                    end: 58,
                 },
                 items: [
                     WithItem {
@@ -166,7 +166,7 @@ Module {
             With {
                 node: Node {
                     start: 60,
-                    end: 88,
+                    end: 87,
                 },
                 items: [
                     WithItem {
@@ -238,7 +238,7 @@ Module {
             AsyncWith {
                 node: Node {
                     start: 89,
-                    end: 113,
+                    end: 112,
                 },
                 items: [
                     WithItem {
@@ -284,7 +284,7 @@ Module {
             AsyncWith {
                 node: Node {
                     start: 114,
-                    end: 151,
+                    end: 149,
                 },
                 items: [
                     WithItem {
@@ -356,7 +356,7 @@ Module {
             AsyncWith {
                 node: Node {
                     start: 151,
-                    end: 200,
+                    end: 199,
                 },
                 items: [
                     WithItem {
