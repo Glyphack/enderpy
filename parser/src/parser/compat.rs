@@ -971,14 +971,12 @@ mod tests {
 
     #[test]
     fn test_simple_compat() {
-
         let source = r#"
 def x(a: int) -> int:
     return 1 + 1
 b = x(1)
 print(b)
 "#;
-
         let enderpy_ast = parse_enderpy_source(source).unwrap();
         let python_ast = parse_python_source(source).unwrap();
         assert_ast_eq(&python_ast, &enderpy_ast, source);
@@ -1122,6 +1120,11 @@ print(b)
     fn test_attribute_ref() {
         python_parser_test_ast(&["a.b", "a.b.c", "a.b_c", "a.b.c.d"]);
     }
+    #[test]
+    fn test_subscript() {
+        python_parser_test_ast(&["a[1]", "a.b[1]"]);
+    }
+
 
     #[test]
     fn parse_call() {
@@ -1283,7 +1286,6 @@ except *Exception as e:
                 python_parser_test_ast(&[test_case.as_str()]);
             }
         }
-
     }
 
     // parser_test!(test_functions, "test_data/inputs/functions.py");
