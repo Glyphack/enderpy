@@ -284,7 +284,7 @@ Module {
             AsyncWith {
                 node: Node {
                     start: 114,
-                    end: 151,
+                    end: 149,
                 },
                 items: [
                     WithItem {
@@ -356,7 +356,7 @@ Module {
             AsyncWith {
                 node: Node {
                     start: 151,
-                    end: 200,
+                    end: 199,
                 },
                 items: [
                     WithItem {

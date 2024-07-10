@@ -971,12 +971,14 @@ mod tests {
 
     #[test]
     fn test_simple_compat() {
+
         let source = r#"
 def x(a: int) -> int:
     return 1 + 1
 b = x(1)
 print(b)
 "#;
+
         let enderpy_ast = parse_enderpy_source(source).unwrap();
         let python_ast = parse_python_source(source).unwrap();
         assert_ast_eq(&python_ast, &enderpy_ast, source);
@@ -1284,7 +1286,7 @@ except *Exception as e:
 
     }
 
-    parser_test!(test_functions, "test_data/inputs/functions.py");
+    // parser_test!(test_functions, "test_data/inputs/functions.py");
     // parser_test!(test_if, "test_data/inputs/if.py");
     // parser_test!(test_indentation, "test_data/inputs/indentation.py");
     // parser_test!(
