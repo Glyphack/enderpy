@@ -24,7 +24,7 @@ pub struct Parser<'a> {
     lexer: Lexer<'a>,
     cur_token: Token,
     prev_token_end: u32,
-    prev_token_was_whitespace: bool,
+    prev_nonwhitespace_token_end: u32,
     // This var keeps track of how many levels deep we are in a list, tuple or set
     // expression. This is used to determine if we should parse comma separated
     // expressions as tuple or not.
@@ -62,7 +62,7 @@ impl<'a> Parser<'a> {
             lexer,
             cur_token,
             prev_token_end,
-            prev_token_was_whitespace: false,
+            prev_nonwhitespace_token_end: prev_token_end,
             nested_expression_list,
             curr_line_string: String::new(),
             path,
@@ -104,12 +104,7 @@ impl<'a> Parser<'a> {
     }
 
     fn finish_node_chomped(&self, node: Node) -> Node {
-        let end = if self.prev_token_was_whitespace {
-            self.prev_token_end - 1
-        } else {
-            self.prev_token_end
-        };
-        Node::new(node.start, end)
+        Node::new(node.start, self.prev_nonwhitespace_token_end)
     }
 
     pub(crate) fn cur_token(&self) -> &Token {
@@ -178,7 +173,9 @@ impl<'a> Parser<'a> {
         }
 
         self.prev_token_end = self.cur_token.end;
-        self.prev_token_was_whitespace = matches!(self.cur_token.kind, Kind::NewLine | Kind::Dedent);
+        if !matches!(self.cur_token.kind, Kind::WhiteSpace | Kind::NewLine | Kind::Dedent) {
+            self.prev_nonwhitespace_token_end = self.prev_token_end;
+        }
         self.cur_token = token;
         if self.cur_kind() == Kind::Comment {
             self.advance();
@@ -481,13 +478,13 @@ impl<'a> Parser<'a> {
 
         if is_async {
             Ok(Statement::AsyncWithStatement(Box::new(AsyncWith {
-                node: self.finish_node(node),
+                node: self.finish_node_chomped(node),
                 items,
                 body,
             })))
         } else {
             Ok(Statement::WithStatement(Box::new(With {
-                node: self.finish_node(node),
+                node: self.finish_node_chomped(node),
                 items,
                 body,
             })))
