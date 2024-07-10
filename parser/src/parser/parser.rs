@@ -390,7 +390,7 @@ impl<'a> Parser<'a> {
         };
 
         Ok(Statement::IfStatement(Box::new(If {
-            node: self.finish_node(node),
+            node: self.finish_node_chomped(node),
             test,
             body,
             orelse: or_else_vec,
