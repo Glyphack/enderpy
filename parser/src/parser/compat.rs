@@ -641,7 +641,6 @@ impl AsPythonCompat for Lambda {
 
 impl AsPythonCompat for crate::ast::Arguments {
     fn as_python_compat(&self, parser: &Parser) -> Value {
-        // NOTE: Arguments is kinda weird in Python. Feels like legacy support.
         json!({
             "_type": "arguments",
             "posonlyargs": self.posonlyargs.iter().map(|arg| arg.as_python_compat(parser)).collect::<Vec<_>>(),
@@ -657,7 +656,6 @@ impl AsPythonCompat for crate::ast::Arguments {
 
 impl AsPythonCompat for Arg {
     fn as_python_compat(&self, parser: &Parser) -> Value {
-        // NOTE: Python doesn't use TitleCase for Arg. 🤦
         json_python_compat_node!("arg", self, parser, {
             "arg": self.arg,
             "annotation": self.annotation.as_python_compat(parser),
@@ -1067,6 +1065,7 @@ print(b)
             // Enderpy parses this as a nested set of BoolOps. 
             // i.e. {"op": "or", "values": ["a", {"op": "or", "values": ["b", "c"]}]}
             // I'm not sure which is correct.
+            // "a or b or c",
             "a and b or c",
         ]);
     }
