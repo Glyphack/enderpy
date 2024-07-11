@@ -317,18 +317,14 @@ print(a)
         python_tokenize_test_lexer(&["import a", "import a.b", "import a.b.c", "import a from b"]);
     }
 
-    // TODO lex_python: Decide whether to keep this test or not. The Python lexer + Enderpy lexer
-    // handle newlines in a nested context slightly differently.
-    // - Python increments the row counter.
-    // - Enderpy appends them to the original row.
-    //     #[test]
-    //     fn test_lex_other() {
-    //         python_tokenize_test_lexer(
-    //             &["(a,
-    //
-    // )"],
-    //         );
-    //     }
+    #[test]
+    fn test_lex_other() {
+        python_tokenize_test_lexer(
+            &["(a,
+
+)"],
+        );
+    }
 
     #[test]
     fn test_lex_indentation() {
