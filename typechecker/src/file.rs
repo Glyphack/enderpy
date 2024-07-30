@@ -1,24 +1,15 @@
 use core::panic;
-use std::path::Path;
+use std::path::PathBuf;
 use std::sync::atomic::AtomicUsize;
-use std::{collections::HashMap, path::PathBuf};
+use std::sync::Arc;
 
-use dashmap::DashMap;
 use enderpy_python_parser as parser;
 use enderpy_python_parser::ast::*;
 use parser::{ast, Parser};
 use std::sync::atomic::Ordering;
 
-use crate::checker::TypeChecker;
-use crate::{
-    ast_visitor::TraversalVisitor,
-    diagnostic::Position,
-    ruff_python_import_resolver::{
-        import_result::ImportResult, module_descriptor::ImportModuleDescriptor,
-    },
-    semantic_analyzer::SemanticAnalyzer,
-    symbol_table::SymbolTable,
-};
+use crate::build::ResolvedImports;
+use crate::{diagnostic::Position, semantic_analyzer::SemanticAnalyzer, symbol_table::SymbolTable};
 use crate::{get_module_name, symbol_table};
 
 #[derive(Clone, Debug)]
@@ -35,15 +26,30 @@ pub struct EnderpyFile<'a> {
     pub module: String,
     // if this source is found by following an import
     pub followed: bool,
-    pub path: PathBuf,
+    pub path: Arc<PathBuf>,
     pub source: String,
     pub offset_line_number: Vec<u32>,
     pub tree: ast::Module,
     dummy: &'a str,
 }
-static COUNTER: AtomicUsize = AtomicUsize::new(1);
+
+impl<'a> Eq for EnderpyFile<'a> {}
+
+impl<'a> PartialEq for EnderpyFile<'a> {
+    fn eq(&self, other: &Self) -> bool {
+        self.id == other.id && self.path == other.path
+    }
+}
+
+impl<'a> std::hash::Hash for EnderpyFile<'a> {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.id.hash(state);
+        self.path.hash(state);
+    }
+}
 
 fn get_id() -> u32 {
+    static COUNTER: AtomicUsize = AtomicUsize::new(1);
     COUNTER.fetch_add(1, Ordering::SeqCst) as u32
 }
 
@@ -68,7 +74,7 @@ impl<'a> EnderpyFile<'a> {
             followed,
             module,
             tree,
-            path,
+            path: Arc::new(path),
             dummy: "sdfsd",
         }
     }
@@ -125,10 +131,7 @@ impl<'a> EnderpyFile<'a> {
     }
 
     /// entry point to fill up the symbol table from the global definitions
-    pub fn populate_symbol_table(
-        &mut self,
-        imports: &HashMap<ImportModuleDescriptor, ImportResult>,
-    ) -> SymbolTable {
+    pub fn populate_symbol_table(&mut self, imports: &ResolvedImports) -> SymbolTable {
         let mut sem_anal = SemanticAnalyzer::new(self, imports);
         for stmt in &self.tree.body {
             sem_anal.visit_stmt(stmt)

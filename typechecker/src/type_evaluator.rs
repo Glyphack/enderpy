@@ -2,7 +2,7 @@
 #![allow(unused_variables)]
 
 use core::panic;
-use std::{path::PathBuf, str::FromStr};
+use std::path::PathBuf;
 
 use dashmap::DashMap;
 use enderpy_python_parser as parser;
@@ -19,7 +19,7 @@ use super::{
 use crate::{
     semantic_analyzer::get_member_access_info,
     symbol_table::{Class, Declaration, Id, LookupSymbolRequest, SymbolTable, SymbolTableNode},
-    types::{ClassType, TypeVar},
+    types::{ClassType, ModuleRef, TypeVar},
 };
 
 const LITERAL_TYPE_PARAMETER_MSG: &str = "Type arguments for 'Literal' must be None, a literal value (int, bool, str, or bytes), or an enum value";
@@ -328,8 +328,9 @@ impl<'a> TypeEvaluator<'a> {
                         }
                     }
                     PythonType::Module(module) => {
-                        let id = self.ids.get(&module.module_path).unwrap();
-                        let module_sym_table = self.imported_symbol_tables.get(&id).unwrap();
+                        log::debug!("module: {:?}", module);
+                        let module_sym_table =
+                            self.imported_symbol_tables.get(&module.module_id).unwrap();
                         self.get_name_type(&a.attr, None, &module_sym_table, Some(0))
                     }
                     _ => Ok(PythonType::Unknown),
@@ -359,7 +360,7 @@ impl<'a> TypeEvaluator<'a> {
 
     // This function tries to find the python type from an annotation expression
     // If the annotation is invalid it returns unknown type
-    pub fn get_type_from_annotation(
+    pub fn get_annotation_type(
         &self,
         type_annotation: &ast::Expression,
         symbol_table: &SymbolTable,
@@ -410,18 +411,15 @@ impl<'a> TypeEvaluator<'a> {
                                     self.handle_union_type(union_parameters.to_vec())
                                 }
                                 "Optional" => {
-                                    let inner_value = self.get_type_from_annotation(
-                                        &s.slice,
-                                        symbol_table,
-                                        scope_id,
-                                    );
+                                    let inner_value =
+                                        self.get_annotation_type(&s.slice, symbol_table, scope_id);
                                     PythonType::Optional(Box::new(inner_value))
                                 }
                                 _ => PythonType::Any,
                             };
                         }
                         let type_parameters =
-                            vec![self.get_type_from_annotation(&s.slice, symbol_table, None)];
+                            vec![self.get_annotation_type(&s.slice, symbol_table, None)];
                         PythonType::Class(ClassType {
                             details: class_type.details.clone(),
                             type_parameters,
@@ -479,12 +477,10 @@ impl<'a> TypeEvaluator<'a> {
         // Check if there's any import * and try to find the symbol in those files
         for star_import in symbol_table.star_imports.iter() {
             log::debug!("checking star imports {:?}", star_import);
-            for resolved in star_import.resolved_paths.iter() {
-                log::debug!("checking path {:?}", resolved);
-                let id = self.ids.get(resolved).expect("module not found");
-                let star_import_sym_table = self.imported_symbol_tables.get(&id);
+            for id in star_import.resolved_ids.iter() {
+                let star_import_sym_table = self.imported_symbol_tables.get(id);
                 let Some(sym_table) = star_import_sym_table else {
-                    panic!("symbol table of star import not found at {:?}", resolved);
+                    panic!("symbol table of star import not found at {:?}", id);
                 };
                 let res = sym_table.lookup_in_scope(&lookup_request);
                 match res {
@@ -511,11 +507,8 @@ impl<'a> TypeEvaluator<'a> {
         let result = match decl {
             Declaration::Variable(v) => {
                 if let Some(type_annotation) = &v.type_annotation {
-                    let var_type = self.get_type_from_annotation(
-                        type_annotation,
-                        symbol_table,
-                        Some(decl_scope),
-                    );
+                    let var_type =
+                        self.get_annotation_type(type_annotation, symbol_table, Some(decl_scope));
 
                     if type_annotation
                         .as_name()
@@ -556,15 +549,14 @@ impl<'a> TypeEvaluator<'a> {
                 }
             }
             Declaration::Function(f) => {
-                let annotated_return_type = if let Some(ref type_annotation) =
-                    f.function_node.returns
-                {
-                    self.get_type_from_annotation(type_annotation, symbol_table, Some(decl_scope))
-                } else {
-                    // TODO: infer return type of function disabled because of recursive types
-                    // self.infer_function_return_type(f)
-                    PythonType::Any
-                };
+                let annotated_return_type =
+                    if let Some(ref type_annotation) = f.function_node.returns {
+                        self.get_annotation_type(type_annotation, symbol_table, Some(decl_scope))
+                    } else {
+                        // TODO: infer return type of function disabled because of recursive types
+                        // self.infer_function_return_type(f)
+                        PythonType::Any
+                    };
 
                 let arguments = f.function_node.args.clone();
                 let name = f.function_node.name.clone();
@@ -577,11 +569,7 @@ impl<'a> TypeEvaluator<'a> {
             }
             Declaration::Parameter(p) => {
                 if let Some(type_annotation) = &p.type_annotation {
-                    Ok(self.get_type_from_annotation(
-                        type_annotation,
-                        symbol_table,
-                        Some(decl_scope),
-                    ))
+                    Ok(self.get_annotation_type(type_annotation, symbol_table, Some(decl_scope)))
                 } else {
                     // TODO: Implement self and cls parameter types
                     Ok(PythonType::Unknown)
@@ -595,19 +583,41 @@ impl<'a> TypeEvaluator<'a> {
                 match &a.symbol_name {
                     Some(name) => {
                         log::debug!("finding alias with name {name:?}");
-                        let import_result = &a.import_result;
-                        for resolved_path in import_result.resolved_paths.iter() {
-                            log::debug!("checking path {:?}", resolved_path);
-                            let symbol_table_with_alias_def = {
-                                let id = self.ids.get(resolved_path).unwrap();
-                                self.imported_symbol_tables.get(&id).unwrap()
+                        let import_result =
+                            a.import_result.clone().expect("import result not found");
+                        log::debug!("import result {:?}", import_result);
+                        for id in import_result.resolved_ids.iter() {
+                            log::debug!("checking path {:?}", id);
+                            let Some(symbol_table_with_alias_def) =
+                                self.imported_symbol_tables.get(id)
+                            else {
+                                panic!(
+                                    " symbol table id {:?} with not found in import {:?}",
+                                    id, import_result
+                                );
+                            };
+
+                            if let Some(symbol_table_file_name) =
+                                symbol_table_with_alias_def.file_path.file_stem()
+                            {
+                                if symbol_table_file_name
+                                    .to_str()
+                                    .is_some_and(|s| s == name.as_str())
+                                {
+                                    return Ok(PythonType::Module(ModuleRef {
+                                        module_id: symbol_table_with_alias_def.id,
+                                    }));
+                                }
                             };
 
                             // sys/__init__.pyi imports sys itself don't know why
                             // If the resolved path is same as current symbol file path
                             // then it's cyclic and do not resolve
-                            if symbol_table.file_path.as_path() == resolved_path {
-                                log::debug!("alias resolution skipped");
+                            if symbol_table.id == *id {
+                                log::debug!(
+                                    "alias resolution skipped the import {:?}",
+                                    import_result
+                                );
                                 continue;
                             }
 
@@ -619,18 +629,13 @@ impl<'a> TypeEvaluator<'a> {
                                 return self.get_symbol_type(current_symbol_lookup);
                             };
 
-                            for star_import in symbol_table.star_imports.iter() {
+                            for star_import in symbol_table_with_alias_def.star_imports.iter() {
                                 log::debug!("checking star imports {:?}", star_import);
-                                for resolved in star_import.resolved_paths.iter() {
-                                    log::debug!("checking path {:?}", resolved);
-                                    let id = self.ids.get(resolved).expect("module not found");
-                                    let star_import_sym_table =
-                                        self.imported_symbol_tables.get(&id);
+                                for id in star_import.resolved_ids.iter() {
+                                    log::debug!("checking path {:?}", id);
+                                    let star_import_sym_table = self.imported_symbol_tables.get(id);
                                     let Some(sym_table) = star_import_sym_table else {
-                                        panic!(
-                                            "symbol table of star import not found at {:?}",
-                                            resolved
-                                        );
+                                        panic!("symbol table of star import not found at {:?}", id);
                                     };
                                     let res = sym_table.lookup_in_scope(lookup);
                                     match res {
@@ -643,90 +648,17 @@ impl<'a> TypeEvaluator<'a> {
                             }
                         }
 
-                        for (_, implicit_import) in import_result.implicit_imports.iter() {
-                            let resolved_path = &implicit_import.path;
-                            log::debug!("checking path {:?}", resolved_path);
-                            let id = self.ids.get(resolved_path).unwrap();
-                            let Some(symbol_table_with_alias_def) =
-                                self.imported_symbol_tables.get(&id)
-                            else {
-                                panic!("Symbol table not found for alias: {:?}", resolved_path);
-                            };
-                            // let Some(symbol_table_with_alias_def) = self.get_symbol_table_of(resolved_path) else {
-                            //     panic!("Symbol table not found for alias: {:?}", resolved_path);
-                            // };
-
-                            let lookup_request = LookupSymbolRequest { name, scope: None };
-                            let find_in_current_symbol_table =
-                                symbol_table_with_alias_def.lookup_in_scope(&lookup_request);
-
-                            if let Some(res) = find_in_current_symbol_table {
-                                log::debug!("alias resolved to {:?}", res);
-                                return self.get_symbol_type(res);
-                            };
-
-                            log::debug!(
-                                "did not find symbol {} in symbol table, checking star imports",
-                                lookup_request.name
-                            );
-                            // Check if there's any import * and try to find the symbol in those files
-                            for star_import in symbol_table.star_imports.iter() {
-                                log::debug!("checking star imports {:?}", star_import);
-                                for resolved in star_import.resolved_paths.iter() {
-                                    log::debug!("checking path {:?}", resolved);
-                                    let id = self.ids.get(resolved).unwrap();
-                                    let star_import_sym_table =
-                                        self.imported_symbol_tables.get(&id);
-                                    let Some(sym_table) = star_import_sym_table else {
-                                        panic!(
-                                            "symbol table of star import not found at {:?}",
-                                            resolved
-                                        );
-                                    };
-                                    let res = sym_table.lookup_in_scope(&lookup_request);
-                                    match res {
-                                        Some(res) => {
-                                            log::debug!("alias resolved to {:?}", res);
-                                            return self.get_symbol_type(res);
-                                        }
-                                        None => continue,
-                                    };
-                                }
-                            }
-                        }
-                        log::debug!("import not found checking if it's a module");
-                        let mut res = Ok(PythonType::Unknown);
-                        for (_, implicit_import) in a.import_result.implicit_imports.iter() {
-                            let resolved_path = &implicit_import.path;
-                            let Some(file_stem) = resolved_path.file_stem() else {
-                                continue;
-                            };
-                            if name == file_stem.to_str().unwrap() {
-                                res = Ok(PythonType::Module(crate::types::ModuleRef {
-                                    module_path: resolved_path.to_path_buf(),
-                                }))
-                            }
-                        }
-
-                        res
+                        Ok(PythonType::Unknown)
                     }
                     None => {
-                        let mut found_module: Option<PythonType> = None;
-                        for resolved_path in a.import_result.resolved_paths.iter() {
-                            let id = self.ids.get(resolved_path).unwrap();
-                            let Some(sym_table_alias_pointing_to) =
-                                self.imported_symbol_tables.get(&id)
-                            else {
-                                break;
-                            };
-                            found_module = Some(PythonType::Module(crate::types::ModuleRef {
-                                module_path: sym_table_alias_pointing_to.file_path.clone(),
-                            }));
-                        }
-                        match found_module {
-                            Some(s) => Ok(s),
-                            None => Ok(PythonType::Unknown),
-                        }
+                        let Some(ref resolved_import) = a.import_result else {
+                            return Ok(PythonType::Unknown);
+                        };
+
+                        let module_id = resolved_import.resolved_ids.first().unwrap();
+                        return Ok(PythonType::Module(ModuleRef {
+                            module_id: *module_id,
+                        }));
                     }
                 }
             }
@@ -932,11 +864,7 @@ impl<'a> TypeEvaluator<'a> {
                     return_type: f.function_node.returns.clone().map_or(
                         PythonType::Unknown,
                         |type_annotation| {
-                            self.get_type_from_annotation(
-                                &type_annotation,
-                                bulitins_symbol_table,
-                                None,
-                            )
+                            self.get_annotation_type(&type_annotation, bulitins_symbol_table, None)
                         },
                     ),
                 }))
@@ -988,7 +916,7 @@ impl<'a> TypeEvaluator<'a> {
     fn handle_union_type(&self, expressions: Vec<Expression>) -> PythonType {
         let mut types = vec![];
         for expr in expressions {
-            let t = self.get_type_from_annotation(&expr, &self.symbol_table, None);
+            let t = self.get_annotation_type(&expr, &self.symbol_table, None);
             if self.is_valid_union_parameter(&t) {
                 types.push(t);
             }

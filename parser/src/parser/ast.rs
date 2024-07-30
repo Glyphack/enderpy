@@ -1,5 +1,6 @@
 use is_macro::Is;
 use std::fmt::{self};
+use std::sync::Arc;
 
 use miette::{SourceOffset, SourceSpan};
 
@@ -79,9 +80,9 @@ pub enum Statement {
     AsyncWithStatement(Box<AsyncWith>),
     TryStatement(Box<Try>),
     TryStarStatement(Box<TryStar>),
-    FunctionDef(Box<FunctionDef>),
+    FunctionDef(Arc<FunctionDef>),
     AsyncFunctionDef(Box<AsyncFunctionDef>),
-    ClassDef(Box<ClassDef>),
+    ClassDef(Arc<ClassDef>),
     Match(Box<Match>),
     TypeAlias(Box<TypeAlias>),
 }
