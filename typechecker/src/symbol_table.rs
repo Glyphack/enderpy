@@ -138,6 +138,11 @@ impl SymbolTable {
         &self,
         lookup_request: &LookupSymbolRequest,
     ) -> Option<&SymbolTableNode> {
+        log::debug!(
+            "looking for symbol {:?} in symbol table with scopes: {:?}",
+            lookup_request,
+            self.file_path
+        );
         let mut scope = match lookup_request.scope {
             Some(scope_id) => self.get_scope_by_id(scope_id).expect("no scope found"),
             None => self.current_scope(),
@@ -546,7 +551,10 @@ impl SymbolTableNode {
 impl Display for SymbolTable {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         if !self.star_imports.is_empty() {
-            writeln!(f, "{:?}", self.star_imports)?;
+            writeln!(f, "Star imports:")?;
+            for import in self.star_imports.iter() {
+                writeln!(f, "{:?}", import.resolved_ids)?;
+            }
         }
         let mut sorted_scopes = self.scopes.iter().collect::<Vec<&SymbolTableScope>>();
         sorted_scopes.sort_by(|a, b| a.name.cmp(&b.name));

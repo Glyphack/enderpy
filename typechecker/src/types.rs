@@ -4,7 +4,7 @@ use std::path::PathBuf;
 
 use enderpy_python_parser::ast;
 
-use crate::symbol_table;
+use crate::symbol_table::{self, Id};
 
 #[derive(Debug, Clone, PartialEq, Eq, Is)]
 pub enum PythonType {
@@ -194,7 +194,7 @@ impl Display for LiteralValue {
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct ModuleRef {
-    pub module_path: PathBuf,
+    pub module_id: Id,
 }
 
 impl Display for PythonType {

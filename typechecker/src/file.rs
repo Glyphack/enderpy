@@ -1,6 +1,7 @@
 use core::panic;
 use std::path::PathBuf;
 use std::sync::atomic::AtomicUsize;
+use std::sync::Arc;
 
 use enderpy_python_parser as parser;
 use enderpy_python_parser::ast::*;
@@ -25,11 +26,26 @@ pub struct EnderpyFile<'a> {
     pub module: String,
     // if this source is found by following an import
     pub followed: bool,
-    pub path: PathBuf,
+    pub path: Arc<PathBuf>,
     pub source: String,
     pub offset_line_number: Vec<u32>,
     pub tree: ast::Module,
     dummy: &'a str,
+}
+
+impl<'a> Eq for EnderpyFile<'a> {}
+
+impl<'a> PartialEq for EnderpyFile<'a> {
+    fn eq(&self, other: &Self) -> bool {
+        self.id == other.id && self.path == other.path
+    }
+}
+
+impl<'a> std::hash::Hash for EnderpyFile<'a> {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.id.hash(state);
+        self.path.hash(state);
+    }
 }
 
 fn get_id() -> u32 {
@@ -58,7 +74,7 @@ impl<'a> EnderpyFile<'a> {
             followed,
             module,
             tree,
-            path,
+            path: Arc::new(path),
             dummy: "sdfsd",
         }
     }

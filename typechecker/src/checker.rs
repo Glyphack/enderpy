@@ -176,9 +176,7 @@ impl<'a> TraversalVisitor for TypeChecker<'a> {
         self.types.insert(Interval {
             start,
             stop,
-            val: PythonType::Module(ModuleRef {
-                module_path: PathBuf::new(),
-            }),
+            val: PythonType::Module(ModuleRef { module_id: Id(0) }),
         });
     }
 

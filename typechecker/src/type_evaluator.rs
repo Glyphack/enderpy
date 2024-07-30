@@ -19,7 +19,7 @@ use super::{
 use crate::{
     semantic_analyzer::get_member_access_info,
     symbol_table::{Class, Declaration, Id, LookupSymbolRequest, SymbolTable, SymbolTableNode},
-    types::{ClassType, TypeVar},
+    types::{ClassType, ModuleRef, TypeVar},
 };
 
 const LITERAL_TYPE_PARAMETER_MSG: &str = "Type arguments for 'Literal' must be None, a literal value (int, bool, str, or bytes), or an enum value";
@@ -328,8 +328,9 @@ impl<'a> TypeEvaluator<'a> {
                         }
                     }
                     PythonType::Module(module) => {
-                        let id = self.ids.get(&module.module_path).unwrap();
-                        let module_sym_table = self.imported_symbol_tables.get(&id).unwrap();
+                        log::debug!("module: {:?}", module);
+                        let module_sym_table =
+                            self.imported_symbol_tables.get(&module.module_id).unwrap();
                         self.get_name_type(&a.attr, None, &module_sym_table, Some(0))
                     }
                     _ => Ok(PythonType::Unknown),
@@ -584,6 +585,7 @@ impl<'a> TypeEvaluator<'a> {
                         log::debug!("finding alias with name {name:?}");
                         let import_result =
                             a.import_result.clone().expect("import result not found");
+                        log::debug!("import result {:?}", import_result);
                         for id in import_result.resolved_ids.iter() {
                             log::debug!("checking path {:?}", id);
                             let Some(symbol_table_with_alias_def) =
@@ -595,11 +597,27 @@ impl<'a> TypeEvaluator<'a> {
                                 );
                             };
 
+                            if let Some(symbol_table_file_name) =
+                                symbol_table_with_alias_def.file_path.file_stem()
+                            {
+                                if symbol_table_file_name
+                                    .to_str()
+                                    .is_some_and(|s| s == name.as_str())
+                                {
+                                    return Ok(PythonType::Module(ModuleRef {
+                                        module_id: symbol_table_with_alias_def.id,
+                                    }));
+                                }
+                            };
+
                             // sys/__init__.pyi imports sys itself don't know why
                             // If the resolved path is same as current symbol file path
                             // then it's cyclic and do not resolve
                             if symbol_table.id == *id {
-                                log::debug!("alias resolution skipped");
+                                log::debug!(
+                                    "alias resolution skipped the import {:?}",
+                                    import_result
+                                );
                                 continue;
                             }
 
@@ -632,7 +650,16 @@ impl<'a> TypeEvaluator<'a> {
 
                         Ok(PythonType::Unknown)
                     }
-                    None => Ok(PythonType::Unknown),
+                    None => {
+                        let Some(ref resolved_import) = a.import_result else {
+                            return Ok(PythonType::Unknown);
+                        };
+
+                        let module_id = resolved_import.resolved_ids.first().unwrap();
+                        return Ok(PythonType::Module(ModuleRef {
+                            module_id: *module_id,
+                        }));
+                    }
                 }
             }
             Declaration::TypeParameter(_) => Ok(PythonType::Unknown),
