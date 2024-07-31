@@ -18,7 +18,7 @@ input_file: parser/test_data/inputs/type_alias.py
 48,49: =   (None)
 50,55: Identifier   (Str("float"))
 55,56: NewLine   (None)
-56,57: NewLine   (None)
+56,57: NL   (None)
 57,61: Identifier   (Type)
 62,81: Identifier   (Str("AliasToAnotherAlias"))
 82,83: =   (None)

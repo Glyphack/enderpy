@@ -176,12 +176,6 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn advance_to_next_line_or_semicolon(&mut self) {
-        while !self.eat(Kind::NewLine) && !self.eat(Kind::SemiColon) && !self.at(Kind::Eof) {
-            self.advance();
-        }
-    }
-
     /// Expect a `Kind` or return error
     pub fn expect(&mut self, kind: Kind) -> Result<(), ParsingError> {
         if !self.at(kind) {
@@ -330,7 +324,10 @@ impl<'a> Parser<'a> {
     ) {
         while self.eat(Kind::WhiteSpace) || self.eat(Kind::Comment) {}
 
-        if !matches!(self.cur_kind(), Kind::NewLine | Kind::SemiColon | Kind::Eof) {
+        if !matches!(
+            self.cur_kind(),
+            Kind::NewLine | Kind::NL | Kind::SemiColon | Kind::Eof
+        ) {
             panic!("Statement does not end in new line or semicolon {:?}", stmt);
         }
     }
@@ -1974,7 +1971,7 @@ impl<'a> Parser<'a> {
 
     fn consume_whitespace_and_newline(&mut self) -> bool {
         let mut consumed = false;
-        while matches!(self.cur_kind(), Kind::WhiteSpace | Kind::NewLine) {
+        while matches!(self.cur_kind(), Kind::WhiteSpace | Kind::NewLine | Kind::NL) {
             self.advance();
             consumed = true;
         }

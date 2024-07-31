@@ -61,6 +61,7 @@ pub struct Lexer<'a> {
     /// Array of all line starts offsets. Starts from line 0
     pub line_starts: Vec<u32>,
     peak_mode: bool,
+    prev_token_newline: bool,
 }
 
 impl<'a> Lexer<'a> {
@@ -76,6 +77,7 @@ impl<'a> Lexer<'a> {
             next_token_is_dedent: 0,
             line_starts: vec![],
             peak_mode: false,
+            prev_token_newline: false,
         }
     }
 
@@ -125,6 +127,7 @@ impl<'a> Lexer<'a> {
             return self.next_token();
         }
 
+        self.prev_token_newline = kind == Kind::NewLine;
         let value = self.parse_token_value(kind, start);
         let end = self.current;
 
@@ -143,8 +146,10 @@ impl<'a> Lexer<'a> {
         let nesting = self.nesting;
         let start_of_line = self.start_of_line;
         let next_token_is_dedent = self.next_token_is_dedent;
+        let prev_token_newline = self.prev_token_newline;
         self.peak_mode = true;
         let token = self.next_token();
+        self.prev_token_newline = prev_token_newline;
         self.peak_mode = false;
         self.current = current;
         self.current_line = current_line;
@@ -255,11 +260,13 @@ impl<'a> Lexer<'a> {
     }
 
     fn next_kind(&mut self) -> Result<Kind, LexError> {
-        if self.start_of_line && self.nesting == 0 {
+        if self.start_of_line {
             self.line_starts.push(self.current);
-            if let Some(indent_kind) = self.match_indentation()? {
-                self.start_of_line = false; // WHY!?
-                return Ok(indent_kind);
+            if self.nesting == 0 {
+                if let Some(indent_kind) = self.match_indentation()? {
+                    self.start_of_line = false; // WHY!?
+                    return Ok(indent_kind);
+                }
             }
         }
 
@@ -510,7 +517,11 @@ impl<'a> Lexer<'a> {
                 '\n' | '\r' => {
                     self.current_line += 1;
                     self.start_of_line = true;
-                    return Ok(Kind::NewLine);
+                    if self.nesting == 0 && !self.prev_token_newline {
+                        return Ok(Kind::NewLine);
+                    } else {
+                        return Ok(Kind::NL);
+                    }
                 }
                 c if match_whitespace(c) => return Ok(Kind::WhiteSpace),
                 _ => {}

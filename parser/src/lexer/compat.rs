@@ -98,29 +98,10 @@ pub struct PythonToken {
     end: (u32, u32),
 }
 
-fn lex_python_source(source: &str) -> Result<Vec<PythonToken>> {
-    let mut process = spawn_python_script_command(
-        "parser/lex_python.py",
-        vec!["--stdin", "--output-format", "json"],
-        default_python_path()?,
-    )?;
-
-    // Get process stdin and write the input string.
-    if let Some(mut stdin) = process.stdin.take() {
-        stdin.write_all(source.as_bytes()).into_diagnostic()?;
-    } else {
-        bail!("Failed to open stdin when running `parser/lex_python.py`");
-    }
-    // Get process stdout and parse result.
-    let output = process.wait_with_output().into_diagnostic()?;
-    let python_tokens: Vec<PythonToken> =
-        serde_json::from_str(String::from_utf8_lossy(&output.stdout).as_ref()).into_diagnostic()?;
-    Ok(python_tokens)
-}
-
 #[cfg(test)]
 mod tests {
-    use super::{lex_python_source, PythonKind, PythonToken};
+
+    use super::*;
     use crate::token::Kind;
     use crate::{lexer::Lexer, token::Token};
     use tabled::{
@@ -129,6 +110,27 @@ mod tests {
         settings::{Style, Width},
     };
     use terminal_size::{terminal_size, Width as TerminalWidth};
+
+    fn lex_python_source(source: &str) -> Result<Vec<PythonToken>> {
+        let mut process = spawn_python_script_command(
+            "parser/lex_python.py",
+            vec!["--stdin", "--output-format", "json"],
+            default_python_path()?,
+        )?;
+
+        // Get process stdin and write the input string.
+        if let Some(mut stdin) = process.stdin.take() {
+            stdin.write_all(source.as_bytes()).into_diagnostic()?;
+        } else {
+            bail!("Failed to open stdin when running `parser/lex_python.py`");
+        }
+        // Get process stdout and parse result.
+        let output = process.wait_with_output().into_diagnostic()?;
+        let python_tokens: Vec<PythonToken> =
+            serde_json::from_str(String::from_utf8_lossy(&output.stdout).as_ref())
+                .into_diagnostic()?;
+        Ok(python_tokens)
+    }
 
     #[test]
     fn test_simple_compat() {
@@ -168,8 +170,6 @@ print(a)
             ";",
             "@",
             "=",
-            // TODO lex_python: Python lexer chokes on single backslash.
-            // "\\",
             "#",
             "$",
             "?",
@@ -317,18 +317,12 @@ print(a)
         python_tokenize_test_lexer(&["import a", "import a.b", "import a.b.c", "import a from b"]);
     }
 
-    // TODO lex_python: Decide whether to keep this test or not. The Python lexer + Enderpy lexer
-    // handle newlines in a nested context slightly differently.
-    // - Python increments the row counter.
-    // - Enderpy appends them to the original row.
-    //     #[test]
-    //     fn test_lex_other() {
-    //         python_tokenize_test_lexer(
-    //             &["(a,
-    //
-    // )"],
-    //         );
-    //     }
+    #[test]
+    fn test_lex_other() {
+        python_tokenize_test_lexer(&["(a,
+
+    )"]);
+    }
 
     #[test]
     fn test_lex_indentation() {
@@ -672,9 +666,7 @@ def",
             PythonKind::FstringMiddle => enderpy_token.kind == Kind::FStringMiddle,
             PythonKind::FstringEnd => enderpy_token.kind == Kind::FStringEnd,
             PythonKind::Comment => enderpy_token.kind == Kind::Comment,
-            // In Python, this represents a line break within a single statement. We don't
-            // currently make this distinction.
-            PythonKind::NL => enderpy_token.kind == Kind::NewLine,
+            PythonKind::NL => enderpy_token.kind == Kind::NL,
             PythonKind::ErrorToken => {
                 match python_token.value.as_str() {
                     // Python 3.11 chokes on these tokens.
@@ -701,7 +693,8 @@ def",
                 || matches_python_op_token(python_token.value.as_str(), &enderpy_token.kind)
                 || matches_python_indent_dedent_token(&python_token.kind, &enderpy_token.kind)
                 || (python_token.kind == PythonKind::EndMarker && enderpy_token.kind == Kind::Eof)
-                || (python_token.value.as_str() == "\n" && enderpy_token.kind == Kind::NewLine)
+                || (python_token.value.as_str() == "\n"
+                    && (matches!(enderpy_token.kind, Kind::NewLine | Kind::NL)))
                 || python_token_value == enderpy_token_value;
         if !value_matches {
             return Some(TokenMismatch::WrongValue(

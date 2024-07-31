@@ -14,7 +14,7 @@ description: "def f(x):\n    y = z\n\n    print(y)\n"
 16,17: =   (None)
 18,19: Identifier   (Str("z"))
 19,20: NewLine   (None)
-20,21: NewLine   (None)
+20,21: NL   (None)
 25,30: Identifier   (Str("print"))
 30,31: (   (None)
 31,32: Identifier   (Str("y"))

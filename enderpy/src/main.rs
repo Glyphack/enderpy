@@ -1,5 +1,6 @@
 use std::{
-    fs, io,
+    fs::{self, File},
+    io::{self, Read},
     path::{Path, PathBuf},
 };
 
@@ -14,7 +15,7 @@ mod cli;
 fn main() -> Result<()> {
     let cli = Cli::parse();
     match &cli.command {
-        Commands::Tokenize { file } => tokenize(file),
+        Commands::Tokenize {} => tokenize(),
         Commands::Parse { file } => parse(file),
         Commands::Check { path } => check(path),
         Commands::Watch => watch(),
@@ -70,8 +71,20 @@ fn get_typeshed_path() -> Result<PathBuf> {
     Ok(path.join("typeshed"))
 }
 
-fn tokenize(file: &PathBuf) -> Result<()> {
-    let source = fs::read_to_string(file).into_diagnostic()?;
+fn tokenize() -> Result<()> {
+    let cli = Cli::parse();
+    let mut source = String::new();
+    match cli.file {
+        Some(path) => {
+            File::open(path)
+                .into_diagnostic()?
+                .read_to_string(&mut source)
+                .into_diagnostic()?;
+        }
+        None => {
+            io::stdin().read_to_string(&mut source).into_diagnostic()?;
+        }
+    }
     let mut lexer = Lexer::new(&source);
     let tokens = lexer.lex();
     for token in tokens {
