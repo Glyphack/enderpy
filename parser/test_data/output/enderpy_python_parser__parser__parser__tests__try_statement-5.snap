@@ -28,7 +28,7 @@ Module {
                     ExceptHandler {
                         node: Node {
                             start: 26,
-                            end: 70,
+                            end: 69,
                         },
                         typ: Some(
                             Name(

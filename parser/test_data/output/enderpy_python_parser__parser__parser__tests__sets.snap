@@ -862,7 +862,7 @@ Module {
                         Tuple {
                             node: Node {
                                 start: 302,
-                                end: 306,
+                                end: 307,
                             },
                             elements: [
                                 Name(

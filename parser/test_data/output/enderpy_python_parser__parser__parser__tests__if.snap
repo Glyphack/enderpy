@@ -12,7 +12,7 @@ Module {
             If {
                 node: Node {
                     start: 0,
-                    end: 16,
+                    end: 14,
                 },
                 test: Name(
                     Name {
@@ -40,7 +40,7 @@ Module {
             If {
                 node: Node {
                     start: 16,
-                    end: 33,
+                    end: 31,
                 },
                 test: Name(
                     Name {
@@ -68,7 +68,7 @@ Module {
             If {
                 node: Node {
                     start: 33,
-                    end: 44,
+                    end: 43,
                 },
                 test: Name(
                     Name {
@@ -96,7 +96,7 @@ Module {
             If {
                 node: Node {
                     start: 45,
-                    end: 66,
+                    end: 64,
                 },
                 test: Name(
                     Name {
@@ -132,7 +132,7 @@ Module {
             If {
                 node: Node {
                     start: 66,
-                    end: 95,
+                    end: 93,
                 },
                 test: Compare(
                     Compare {
@@ -182,7 +182,7 @@ Module {
             If {
                 node: Node {
                     start: 95,
-                    end: 162,
+                    end: 160,
                 },
                 test: Compare(
                     Compare {
@@ -283,7 +283,7 @@ Module {
             If {
                 node: Node {
                     start: 162,
-                    end: 257,
+                    end: 254,
                 },
                 test: Compare(
                     Compare {
@@ -393,7 +393,7 @@ Module {
             If {
                 node: Node {
                     start: 257,
-                    end: 273,
+                    end: 272,
                 },
                 test: Name(
                     Name {
@@ -441,7 +441,7 @@ Module {
             If {
                 node: Node {
                     start: 273,
-                    end: 290,
+                    end: 288,
                 },
                 test: Name(
                     Name {
@@ -489,7 +489,7 @@ Module {
             If {
                 node: Node {
                     start: 290,
-                    end: 471,
+                    end: 470,
                 },
                 test: Attribute(
                     Attribute {
@@ -514,7 +514,7 @@ Module {
                         If {
                             node: Node {
                                 start: 310,
-                                end: 436,
+                                end: 435,
                             },
                             test: Constant(
                                 Constant {
