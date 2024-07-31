@@ -1,6 +1,7 @@
 use std::{
-    collections::HashMap,
+    collections::{HashMap, HashSet},
     path::{Path, PathBuf},
+    sync::Arc,
 };
 
 use dashmap::DashMap;
@@ -34,8 +35,14 @@ pub struct BuildManager<'a> {
 impl<'a> BuildManager<'a> {
     pub fn new(settings: Settings) -> Self {
         let mut builder = Builder::new();
+
+        let log_level = match std::env::var("DEBUG") {
+            Ok(_) => log::LevelFilter::Debug,
+            _ => log::LevelFilter::Info,
+        };
+
         builder
-            .filter(None, log::LevelFilter::Info)
+            .filter(None, log_level)
             .format_timestamp(None)
             .try_init();
 
@@ -73,11 +80,9 @@ impl<'a> BuildManager<'a> {
         let (imports, mut new_modules) =
             gather_files(vec![builtins], root, &self.import_config, &self.host);
         log::debug!("Imports resolved");
-        for mut module in new_modules.iter_mut() {
+        for mut module in new_modules {
             let sym_table = module.populate_symbol_table(&imports);
-            self.symbol_tables.insert(sym_table.id, sym_table);
-        }
-        for module in new_modules {
+            self.symbol_tables.insert(module.id, sym_table);
             self.module_ids.insert(module.path.to_path_buf(), module.id);
             self.modules.insert(module.id, module);
         }
@@ -91,11 +96,9 @@ impl<'a> BuildManager<'a> {
         let (imports, mut new_modules) =
             gather_files(vec![enderpy_file], root, &self.import_config, &self.host);
         log::debug!("Imports resolved");
-        for mut module in new_modules.iter_mut() {
+        for mut module in new_modules {
             let sym_table = module.populate_symbol_table(&imports);
             self.symbol_tables.insert(module.id, sym_table);
-        }
-        for module in new_modules {
             self.module_ids.insert(module.path.to_path_buf(), module.id);
             self.modules.insert(module.id, module);
         }
@@ -106,6 +109,7 @@ impl<'a> BuildManager<'a> {
     // This step happens after the binding phase
     pub fn type_check(&self, path: &Path) -> TypeChecker {
         let mut module_to_check = self.get_state(path);
+
         let mut checker = TypeChecker::new(
             self.get_symbol_table(path),
             &self.symbol_tables,
@@ -128,7 +132,6 @@ impl<'a> BuildManager<'a> {
     }
 
     pub fn get_hover_information(&self, path: &Path, line: u32, column: u32) -> String {
-        return "".to_string();
         let module = self.get_state(path);
         let checker = self.type_check(path);
         let symbol_table = self.get_symbol_table(path);
@@ -153,59 +156,101 @@ impl<'a> BuildManager<'a> {
     }
 }
 
+#[derive(Debug, Clone)]
+pub struct ResolvedImport {
+    pub resolved_ids: Vec<Id>,
+    result: ImportResult,
+}
+
+pub type ResolvedImports = HashMap<ImportModuleDescriptor, Arc<ResolvedImport>>;
+
 fn gather_files<'a>(
     mut initial_files: Vec<EnderpyFile<'a>>,
     root: &Path,
     import_config: &ruff_python_resolver::config::Config,
     host: &ruff_python_resolver::host::StaticHost,
-) -> (
-    HashMap<ImportModuleDescriptor, ImportResult>,
-    Vec<EnderpyFile<'a>>,
-) {
+) -> (ResolvedImports, HashSet<EnderpyFile<'a>>) {
     let execution_environment = &execution_environment::ExecutionEnvironment {
         root: root.to_path_buf(),
         python_version: ruff_python_resolver::python_version::PythonVersion::Py312,
         python_platform: ruff_python_resolver::python_platform::PythonPlatform::Darwin,
         extra_paths: vec![],
     };
-    let mut new_modules = Vec::with_capacity(initial_files.len() * 5);
+    let mut path_to_id: HashMap<&Path, Id> = HashMap::with_capacity(initial_files.len() * 5);
+    let mut new_modules = HashSet::with_capacity(initial_files.len() * 5);
     let mut import_results = HashMap::new();
-
-    let cache: &mut HashMap<PathBuf, HashMap<ImportModuleDescriptor, ImportResult>> =
-        &mut HashMap::new();
+    let mut seen = HashSet::new();
 
     while let Some(module) = initial_files.pop() {
-        if cache.get(&module.path).is_some() {
+        if seen.contains(&module.path) {
             continue;
         }
+        seen.insert(module.path.clone());
         let resolved_imports = resolve_file_imports(
             &module,
             execution_environment,
             import_config,
             host,
-            &import_results,
+            // &import_results,
         );
-        new_modules.push(module);
+        new_modules.insert(module);
         for (import_desc, mut resolved) in resolved_imports {
-            if resolved.is_import_found {
-                for resolved_path in resolved.resolved_paths.iter_mut() {
-                    if !initial_files.iter().any(|m| m.path == *resolved_path) {
-                        let e = EnderpyFile::new(resolved_path.clone(), true);
-                        initial_files.push(e);
-                    }
-                }
-
-                for (_, implicit_import) in resolved.implicit_imports.iter_mut() {
-                    let e = EnderpyFile::new(implicit_import.path.clone(), true);
+            if !resolved.is_import_found {
+                continue;
+            }
+            let mut resolved_ids = Vec::with_capacity(resolved.resolved_paths.len());
+            for resolved_path in resolved.resolved_paths.iter_mut() {
+                if let Some(found) = new_modules.iter().find(|m| *m.path == *resolved_path) {
+                    resolved_ids.push(found.id);
+                } else if let Some(found) = initial_files.iter().find(|m| *m.path == *resolved_path)
+                {
+                    resolved_ids.push(found.id);
+                } else {
+                    let e = EnderpyFile::new(std::mem::take(resolved_path), true);
+                    resolved_ids.push(e.id);
                     initial_files.push(e);
                 }
             }
-            import_results.insert(import_desc, resolved);
+
+            // TODO: don't know if the implicit imports should be in the resolved list or not
+            // For imports like from os import path it points to the path.py file which is in the
+            // implicit imports so without this we cannot resolved that.
+            for (_, implicit_import) in resolved.implicit_imports.iter_mut() {
+                let resolved_path = &mut implicit_import.path;
+                if let Some(found) = new_modules.iter().find(|m| *m.path == *resolved_path) {
+                    resolved_ids.push(found.id);
+                } else if let Some(found) = initial_files.iter().find(|m| *m.path == *resolved_path)
+                {
+                    resolved_ids.push(found.id);
+                } else {
+                    let e = EnderpyFile::new(std::mem::take(resolved_path), true);
+                    resolved_ids.push(e.id);
+                    initial_files.push(e);
+                }
+            }
+            import_results.insert(
+                import_desc,
+                Arc::new(ResolvedImport {
+                    resolved_ids,
+                    result: resolved,
+                }),
+            );
         }
     }
 
     new_modules.extend(initial_files);
-    (import_results, new_modules)
+
+    for import in import_results.iter() {
+        for resolved in import.1.resolved_ids.iter() {
+            if !new_modules.iter().any(|m| m.id == *resolved) {
+                for module in new_modules.iter() {
+                    println!("{:?} - {:?}", module.path, module.id);
+                }
+                panic!("symbol table not found {resolved:?}");
+            }
+        }
+    }
+    (import_results, new_modules.into())
 }
 
 fn resolve_file_imports(
@@ -213,7 +258,6 @@ fn resolve_file_imports(
     execution_environment: &ruff_python_resolver::execution_environment::ExecutionEnvironment,
     import_config: &ruff_python_resolver::config::Config,
     host: &ruff_python_resolver::host::StaticHost,
-    cached_imports: &HashMap<ImportModuleDescriptor, ImportResult>,
 ) -> HashMap<ImportModuleDescriptor, ImportResult> {
     let mut imports = HashMap::new();
     debug!("resolving imports for file {:?}", file.path);
@@ -230,7 +274,8 @@ fn resolve_file_imports(
         };
 
         for import_desc in import_descriptions {
-            let resolved = match cached_imports.contains_key(&import_desc) {
+            // TODO: Cache non relative imports
+            let resolved = match false {
                 true => continue,
                 false => resolver::resolve_import(
                     &file.path,
@@ -279,6 +324,7 @@ mod tests {
                     r"module_name: .*.typechecker.test_data.inputs.symbol_table..*.py",
                     "module_name: [REDACTED]",
                 );
+                settings.add_filter(r"Id\(\d+\)", "Id(REDACTED)");
                 settings.add_filter(r"\(id: .*\)", "(id: [REDACTED])");
                 settings.bind(|| {
                     insta::assert_snapshot!(result);
