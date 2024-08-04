@@ -1,8 +1,4 @@
-use miette::{bail, IntoDiagnostic, Result};
 use serde::{Deserialize, Serialize};
-use std::io::Write;
-
-use crate::runpython::{default_python_path, spawn_python_script_command};
 
 // Derived from:
 // https://github.com/python/cpython/blob/main/Lib/token.py
@@ -104,11 +100,15 @@ mod tests {
     use super::*;
     use crate::token::Kind;
     use crate::{lexer::Lexer, token::Token};
+    use miette::{bail, IntoDiagnostic, Result};
+    use std::io::Write;
     use tabled::{
         builder::Builder,
         settings::peaker::PriorityMax,
         settings::{Style, Width},
     };
+
+    use crate::runpython::{default_python_path, spawn_python_script_command};
     use terminal_size::{terminal_size, Width as TerminalWidth};
 
     fn lex_python_source(source: &str) -> Result<Vec<PythonToken>> {
@@ -387,6 +387,17 @@ def",
             "...",
             "def a():
     ...",
+        ]);
+    }
+
+    #[test]
+    fn test_logical_and_physical_lines() {
+        python_tokenize_test_lexer(&[
+            // This case the first line should have physical line
+            "
+a: int = 1
+print(a)
+",
         ]);
     }
 
@@ -705,19 +716,8 @@ def",
             ));
         }
 
-        let (mut enderpy_start_row, enderpy_start_col) = lexer.to_row_col(enderpy_token.start);
-        let (mut enderpy_end_row, mut enderpy_end_col) = lexer.to_row_col(enderpy_token.end);
-        // Python reserves the first row for a file encoding when detokenizing, so we add one
-        // to our row values to match.
-        enderpy_start_row += 1;
-        enderpy_end_row += 1;
-        if enderpy_token.kind == Kind::NewLine {
-            // enderpy has newline tokens span from the end of the first line to the beginning of
-            // the next line.
-            // Python adds the token to the end of the first line.
-            enderpy_end_row = enderpy_start_row;
-            enderpy_end_col = enderpy_start_col + 1;
-        }
+        let (enderpy_start_row, enderpy_start_col, enderpy_end_row, enderpy_end_col) =
+            enderpy_token.get_row_col_position(&lexer.line_starts);
         let python_token_start = python_token.start;
         let python_token_end = python_token.end;
         if enderpy_start_row != python_token_start.0

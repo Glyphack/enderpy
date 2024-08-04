@@ -10,6 +10,41 @@ pub struct Token {
     pub end: u32,
 }
 
+impl Token {
+    pub fn get_row_col_position(&self, line_starts: &[u32]) -> (u32, u32, u32, u32) {
+        let (start_line_num, start_line_offset) = match line_starts.binary_search(&self.start) {
+            Ok(idx) => (idx, line_starts[idx]),
+            Err(idx) => (idx - 1, line_starts[idx - 1]),
+        };
+        let start_line_column = self.start - start_line_offset;
+        // EOF token
+        if self.start == self.end {
+            return (
+                start_line_num as u32 + 1,
+                start_line_column,
+                start_line_num as u32 + 1,
+                start_line_column,
+            );
+        }
+        let (end_line_num, end_line_offset) = match line_starts.binary_search(&self.end) {
+            // Special case: this is a new line token
+            // When end line offset is exactly on line start it means that this is the new line
+            // token end offset. We want to set the new line token line number same for start and
+            // end.
+            Ok(idx) => (idx - 1, line_starts[idx - 1]),
+            Err(idx) => (idx - 1, line_starts[idx - 1]),
+        };
+        let end_line_column = self.end.saturating_sub(end_line_offset);
+
+        (
+            start_line_num as u32 + 1,
+            start_line_column,
+            end_line_num as u32 + 1,
+            end_line_column,
+        )
+    }
+}
+
 impl Display for Token {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let kind: &str = self.kind.into();

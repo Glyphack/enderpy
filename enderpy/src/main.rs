@@ -85,20 +85,13 @@ fn tokenize() -> Result<()> {
             io::stdin().read_to_string(&mut source).into_diagnostic()?;
         }
     }
+    println!("{:?}", source.chars().collect::<Vec<char>>());
     let mut lexer = Lexer::new(&source);
     let tokens = lexer.lex();
+    println!("{:?}", lexer.line_starts);
     for token in tokens {
-        let (start_line_num, start_line_offset) =
-            match lexer.line_starts.binary_search(&token.start) {
-                Ok(idx) => (idx, lexer.line_starts[idx]),
-                Err(idx) => (idx - 1, lexer.line_starts[idx - 1]),
-            };
-        let start_line_column = token.start - start_line_offset;
-        let (end_line_num, end_line_offset) = match lexer.line_starts.binary_search(&token.end) {
-            Ok(idx) => (idx, lexer.line_starts[idx]),
-            Err(idx) => (idx - 1, lexer.line_starts[idx - 1]),
-        };
-        let end_line_column = token.end - end_line_offset;
+        let (start_line_num, start_line_column, end_line_num, end_line_column) =
+            token.get_row_col_position(&lexer.line_starts);
         println!(
             "{}-{}, {}-{}:   {} {} {} {}",
             start_line_num,

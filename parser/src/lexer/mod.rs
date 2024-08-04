@@ -61,7 +61,11 @@ pub struct Lexer<'a> {
     /// Array of all line starts offsets. Starts from line 0
     pub line_starts: Vec<u32>,
     peak_mode: bool,
+
+    /// Previous token was a Newline token
     prev_token_newline: bool,
+    /// Cursor at position after the indentation in line
+    indented: bool,
 }
 
 impl<'a> Lexer<'a> {
@@ -75,9 +79,10 @@ impl<'a> Lexer<'a> {
             nesting: 0,
             tokenization_mode_stack: vec![],
             next_token_is_dedent: 0,
-            line_starts: vec![],
+            line_starts: vec![0],
             peak_mode: false,
-            prev_token_newline: false,
+            prev_token_newline: true,
+            indented: false,
         }
     }
 
@@ -131,6 +136,10 @@ impl<'a> Lexer<'a> {
         let value = self.parse_token_value(kind, start);
         let end = self.current;
 
+        if kind == Kind::NewLine || kind == Kind::NL {
+            self.line_starts.push(self.current);
+        }
+
         Token {
             kind,
             value,
@@ -147,8 +156,10 @@ impl<'a> Lexer<'a> {
         let start_of_line = self.start_of_line;
         let next_token_is_dedent = self.next_token_is_dedent;
         let prev_token_newline = self.prev_token_newline;
+        let indented = self.indented;
         self.peak_mode = true;
         let token = self.next_token();
+        self.indented = indented;
         self.prev_token_newline = prev_token_newline;
         self.peak_mode = false;
         self.current = current;
@@ -261,7 +272,6 @@ impl<'a> Lexer<'a> {
 
     fn next_kind(&mut self) -> Result<Kind, LexError> {
         if self.start_of_line {
-            self.line_starts.push(self.current);
             if self.nesting == 0 {
                 if let Some(indent_kind) = self.match_indentation()? {
                     self.start_of_line = false; // WHY!?
@@ -517,7 +527,7 @@ impl<'a> Lexer<'a> {
                 '\n' | '\r' => {
                     self.current_line += 1;
                     self.start_of_line = true;
-                    if self.nesting == 0 && !self.prev_token_newline {
+                    if self.nesting == 0 && (!self.prev_token_newline) {
                         return Ok(Kind::NewLine);
                     } else {
                         return Ok(Kind::NL);
@@ -1060,7 +1070,11 @@ impl<'a> Lexer<'a> {
         count
     }
 
+    // This function is used in test. Not sure to keep it here or not
+    #[allow(dead_code)]
     fn to_row_col(&self, source_offset: u32) -> (u32, u32) {
+        println!("source_offset: {}", source_offset);
+        println!("line_starts: {:?}", self.line_starts);
         let (line_row, line_offset) = match self.line_starts.binary_search(&source_offset) {
             Ok(idx) => (idx, self.line_starts[idx]),
             Err(idx) => (idx - 1, self.line_starts[idx - 1]),
