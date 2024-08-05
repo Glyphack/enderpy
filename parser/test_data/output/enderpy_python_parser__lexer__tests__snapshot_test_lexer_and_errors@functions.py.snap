@@ -62,7 +62,7 @@ input_file: parser/test_data/inputs/functions.py
 327,339: Identifier   (Str("ticker_index"))
 339,340: NewLine   (None)
 340,341: NL   (None)
-341,342: NewLine   (None)
+341,342: NL   (None)
 342,342: Dedent   (Indent(1))
 342,345: Def   (None)
 346,379: Identifier   (Str("_extract_ticker_client_types_data"))

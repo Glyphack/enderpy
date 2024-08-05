@@ -168,7 +168,7 @@ impl<'a> Parser<'a> {
 
         self.prev_token_end = self.cur_token.end;
         self.cur_token = token;
-        if self.cur_kind() == Kind::Comment {
+        if matches!(self.cur_kind(), Kind::Comment | Kind::NL) {
             self.advance();
         }
         if self.nested_expression_list > 0 {
@@ -4047,7 +4047,7 @@ except *Exception as e:
                 let snapshot = format!("{program:#?}");
 
                 insta::with_settings!({
-                        description => test_case.clone(),
+                        description => format!("test file: {}\n{}", $test_file, test_case.clone()),
                         omit_expression => true,
                         snapshot_path => "../../test_data/output/"
                     }, {

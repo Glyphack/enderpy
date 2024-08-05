@@ -98,7 +98,7 @@ input_file: parser/test_data/inputs/if.py
 250,254: Pass   (None)
 254,255: NewLine   (None)
 255,256: NL   (None)
-256,257: NewLine   (None)
+256,257: NL   (None)
 257,257: Dedent   (Indent(1))
 257,259: If   (None)
 260,261: Identifier   (Str("a"))

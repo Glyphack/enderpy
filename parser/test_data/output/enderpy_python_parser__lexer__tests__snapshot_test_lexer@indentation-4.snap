@@ -14,5 +14,5 @@ description: "if a:\n\n    f = c\n\n    # Path: test_local.py\n"
 16,17: NewLine   (None)
 17,18: NL   (None)
 22,43: Comment   (Str("# Path: test_local.py"))
-43,44: NewLine   (None)
+43,44: NL   (None)
 44,44: Dedent   (Indent(1))

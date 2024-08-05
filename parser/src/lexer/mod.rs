@@ -63,7 +63,7 @@ pub struct Lexer<'a> {
     peak_mode: bool,
 
     /// Previous token was a Newline token
-    prev_token_newline: bool,
+    non_logical_line_state: bool,
     /// Cursor at position after the indentation in line
     indented: bool,
 }
@@ -81,7 +81,7 @@ impl<'a> Lexer<'a> {
             next_token_is_dedent: 0,
             line_starts: vec![0],
             peak_mode: false,
-            prev_token_newline: true,
+            non_logical_line_state: true,
             indented: false,
         }
     }
@@ -132,7 +132,9 @@ impl<'a> Lexer<'a> {
             return self.next_token();
         }
 
-        self.prev_token_newline = kind == Kind::NewLine;
+        if kind != Kind::Comment && kind != Kind::NL {
+            self.non_logical_line_state = kind == Kind::NewLine;
+        }
         let value = self.parse_token_value(kind, start);
         let end = self.current;
 
@@ -155,12 +157,12 @@ impl<'a> Lexer<'a> {
         let nesting = self.nesting;
         let start_of_line = self.start_of_line;
         let next_token_is_dedent = self.next_token_is_dedent;
-        let prev_token_newline = self.prev_token_newline;
+        let prev_token_newline = self.non_logical_line_state;
         let indented = self.indented;
         self.peak_mode = true;
         let token = self.next_token();
         self.indented = indented;
-        self.prev_token_newline = prev_token_newline;
+        self.non_logical_line_state = prev_token_newline;
         self.peak_mode = false;
         self.current = current;
         self.current_line = current_line;
@@ -527,7 +529,7 @@ impl<'a> Lexer<'a> {
                 '\n' | '\r' => {
                     self.current_line += 1;
                     self.start_of_line = true;
-                    if self.nesting == 0 && (!self.prev_token_newline) {
+                    if self.nesting == 0 && (!self.non_logical_line_state) {
                         return Ok(Kind::NewLine);
                     } else {
                         return Ok(Kind::NL);
@@ -1068,19 +1070,6 @@ impl<'a> Lexer<'a> {
             self.double_next();
         }
         count
-    }
-
-    // This function is used in test. Not sure to keep it here or not
-    #[allow(dead_code)]
-    fn to_row_col(&self, source_offset: u32) -> (u32, u32) {
-        println!("source_offset: {}", source_offset);
-        println!("line_starts: {:?}", self.line_starts);
-        let (line_row, line_offset) = match self.line_starts.binary_search(&source_offset) {
-            Ok(idx) => (idx, self.line_starts[idx]),
-            Err(idx) => (idx - 1, self.line_starts[idx - 1]),
-        };
-        let line_column = source_offset - line_offset;
-        (u32::try_from(line_row).unwrap(), line_column)
     }
 }
 
