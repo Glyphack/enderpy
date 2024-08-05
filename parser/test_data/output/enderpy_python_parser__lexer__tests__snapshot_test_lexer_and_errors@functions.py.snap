@@ -280,4 +280,4 @@ input_file: parser/test_data/inputs/functions.py
 1149,1151: Identifier   (Str("df"))
 1151,1152: NewLine   (None)
 1152,1152: Dedent   (Indent(1))
-1152,1153: NewLine   (None)
+1152,1153: NL   (None)

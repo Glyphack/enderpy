@@ -133,7 +133,7 @@ Module {
             FunctionDef {
                 node: Node {
                     start: 145,
-                    end: 283,
+                    end: 299,
                 },
                 name: "bar",
                 args: Arguments {

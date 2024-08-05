@@ -36,4 +36,4 @@ input_file: parser/test_data/inputs/comments.py
 64,65: NL   (None)
 65,65: Dedent   (Indent(1))
 65,94: Comment   (Str("# this is a comment only line"))
-94,95: NewLine   (None)
+94,95: NL   (None)

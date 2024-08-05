@@ -1152,7 +1152,7 @@ impl<'a> Parser<'a> {
 
     // https://docs.python.org/3/reference/compound_stmts.html#grammar-token-python-grammar-suite
     fn parse_suite(&mut self) -> Result<Vec<Statement>, ParsingError> {
-        let stmts = if self.eat(Kind::NewLine) {
+        if self.eat(Kind::NewLine) {
             self.consume_whitespace_and_newline();
             self.expect(Kind::Indent)?;
             let mut stmts = vec![];
@@ -1167,8 +1167,7 @@ impl<'a> Parser<'a> {
         } else {
             let stmt = self.parse_statement_list()?;
             Ok(stmt)
-        };
-        stmts
+        }
     }
 
     // https://docs.python.org/3/reference/compound_stmts.html#grammar-token-python-grammar-statement
@@ -1981,7 +1980,7 @@ impl<'a> Parser<'a> {
         let mut consumed = false;
         while matches!(
             self.cur_kind(),
-            Kind::WhiteSpace | Kind::NewLine | Kind::Comment
+            Kind::WhiteSpace | Kind::NewLine | Kind::Comment | Kind::NL
         ) {
             self.bump(self.cur_kind());
             consumed = true;

@@ -47,6 +47,6 @@ input_file: parser/test_data/inputs/separate_statements.py
 239,240: NL   (None)
 240,240: Dedent   (Indent(1))
 240,283: Comment   (Str("# TODO(parser): enable after error handling"))
-283,284: NewLine   (None)
+283,284: NL   (None)
 284,298: Comment   (Str("# a = 1  b = 2"))
 298,299: NL   (None)

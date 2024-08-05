@@ -671,7 +671,7 @@ Module {
             FunctionDef {
                 node: Node {
                     start: 610,
-                    end: 1152,
+                    end: 1153,
                 },
                 name: "common_process",
                 args: Arguments {

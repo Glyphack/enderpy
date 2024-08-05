@@ -21,7 +21,7 @@ input_file: parser/test_data/inputs/try.py
 96,97: NewLine   (None)
 97,97: Dedent   (Indent(1))
 97,134: Comment   (Str("# when instead of number value is `F`"))
-134,135: NewLine   (None)
+134,135: NL   (None)
 135,141: Except   (None)
 142,143: (   (None)
 143,153: Identifier   (Str("ValueError"))

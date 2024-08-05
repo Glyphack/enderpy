@@ -85,10 +85,8 @@ fn tokenize() -> Result<()> {
             io::stdin().read_to_string(&mut source).into_diagnostic()?;
         }
     }
-    println!("{:?}", source.chars().collect::<Vec<char>>());
     let mut lexer = Lexer::new(&source);
     let tokens = lexer.lex();
-    println!("{:?}", lexer.line_starts);
     for token in tokens {
         let (start_line_num, start_line_column, end_line_num, end_line_column) =
             token.get_row_col_position(&lexer.line_starts);
