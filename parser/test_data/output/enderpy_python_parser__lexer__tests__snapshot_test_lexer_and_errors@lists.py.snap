@@ -3,7 +3,7 @@ source: parser/src/lexer/mod.rs
 description: "\n[a, b, c]\n\n[a,\nb, c],\n\n[a\n, b, c],\n\n[a,\nb,\n    c],\n\n[a,\n],\n\n[a, b, c,]\n\nmonth_names = ['Januari', 'Februari', 'Maart',      # These are the\n   'April',   'Mei',      'June',       # Dutch names\n   'July',    'Augustus', 'September',  # for the months\n   'October', 'November', 'December']   # of the year,\n\n[a for a in b]\n\n[a for a in b if c]\n\n[a for a in b if c if d]\n\n[a for a in b for c in d]\n\n[a for a in b if c for d in e]\n"
 input_file: parser/test_data/inputs/lists.py
 ---
-0,1: NewLine   (None)
+0,1: NL   (None)
 1,2: [   (None)
 2,3: Identifier   (Str("a"))
 3,4: ,   (None)
