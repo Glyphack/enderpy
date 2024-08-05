@@ -1,6 +1,6 @@
 ---
 source: parser/src/parser/parser.rs
-description: "# Test case to check that we return correct error when two python statements are on the same line\n\ndef foo():\n    x = 1; y = 2\n    return x + y\n\ndef bar():\n    # TODO(parser): enable after error handling\n    # x = 1 y = 2\n    return x + y\n\n# TODO(parser): enable after error handling\n# a = 1  b = 2\n"
+description: "test file: test_data/inputs/separate_statements.py\n# Test case to check that we return correct error when two python statements are on the same line\n\ndef foo():\n    x = 1; y = 2\n    return x + y\n\ndef bar():\n    # TODO(parser): enable after error handling\n    # x = 1 y = 2\n    return x + y\n\n# TODO(parser): enable after error handling\n# a = 1  b = 2\n"
 ---
 Module {
     node: Node {
@@ -133,7 +133,7 @@ Module {
             FunctionDef {
                 node: Node {
                     start: 145,
-                    end: 298,
+                    end: 283,
                 },
                 name: "bar",
                 args: Arguments {

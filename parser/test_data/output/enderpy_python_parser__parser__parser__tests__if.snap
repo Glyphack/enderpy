@@ -1,6 +1,6 @@
 ---
 source: parser/src/parser/parser.rs
-description: "if a:\n    pass\n\nif a:\n\n    pass\n\nif a: pass\n\nif a:\n    pass;pass\n\nif a is b:\n            pass\n\nif a is b:\n                pass\nelif a is c:\n                pass\n\nif a is b:\n                pass\nelif a is c:\n                pass\nelse:\n                pass\n\n\nif a:\n    a = 1\nif a:\n    b = 1\n\nif self.adjust:\n    if True:\n        print(\"adjust is True and adjusted_daily_records_csv_path exists\")\n    else:\n        print(\"adjust is True\")\nelse:\n    print(\"adjust is False\")\n"
+description: "test file: test_data/inputs/if.py\nif a:\n    pass\n\nif a:\n\n    pass\n\nif a: pass\n\nif a:\n    pass;pass\n\nif a is b:\n            pass\n\nif a is b:\n                pass\nelif a is c:\n                pass\n\nif a is b:\n                pass\nelif a is c:\n                pass\nelse:\n                pass\n\n\nif a:\n    a = 1\nif a:\n    b = 1\n\nif self.adjust:\n    if True:\n        print(\"adjust is True and adjusted_daily_records_csv_path exists\")\n    else:\n        print(\"adjust is True\")\nelse:\n    print(\"adjust is False\")\n"
 ---
 Module {
     node: Node {
@@ -68,7 +68,7 @@ Module {
             If {
                 node: Node {
                     start: 33,
-                    end: 44,
+                    end: 43,
                 },
                 test: Name(
                     Name {

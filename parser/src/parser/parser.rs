@@ -1168,7 +1168,6 @@ impl<'a> Parser<'a> {
             let stmt = self.parse_statement_list()?;
             Ok(stmt)
         };
-        self.bump(Kind::NewLine);
         stmts
     }
 

@@ -1,6 +1,6 @@
 ---
 source: parser/src/parser/parser.rs
-description: "def a(): pass\n\ndef a():\n    pass\n\ndef a(a, b, c): pass\n\ndef a(a, *b, **c): pass\n\ndef a(a,\nb,\nc): pass\n\n@decor\ndef a(): pass\n\n@decor\ndef f(a: 'annotation', b=1, c=2, *d, e, f=3, **g): pass\n\ndef func() -> None: pass\n\nasync def a(): pass\n\nasync def a():\n    pass\n\nasync def a(a, b, c): pass\n\ndef a[T](): pass\n\ndef a[T, U](): pass\n\ndef a[T: U](): pass\n\ndef a[T: U, V: W](): pass\n\ndef a[*T](): pass\n\ndef a[T, *U](): pass\n\ndef a[T: U, *V](): pass\n\ndef a[T: U, V: W, *X](): pass\n\ndef a[**T](): pass\n\ndef a[T, **U](): pass\n\ndef a[T: U, **V](): pass\n\ndef a[T: U, V: W, **X](): pass\n\ndef a[T, *U, **V](): pass\n\ndef a[T: U, *V, **W](): pass\n\ndef dataclass_transform(\n    *,\n    eq_default: bool = True,\n    order_default: bool = False,\n    kw_only_default: bool = False,\n    frozen_default: bool = False,  # on 3.11, runtime accepts it as part of kwargs\n    # this next annotation cannot be parsed need fix\n    field_specifiers: tuple[type[Any] | Callable[..., Any], ...] = (),\n    **kwargs: Any,\n) -> IdentityFunction: ...\n"
+description: "test file: test_data/inputs/function_def.py\ndef a(): pass\n\ndef a():\n    pass\n\ndef a(a, b, c): pass\n\ndef a(a, *b, **c): pass\n\ndef a(a,\nb,\nc): pass\n\n@decor\ndef a(): pass\n\n@decor\ndef f(a: 'annotation', b=1, c=2, *d, e, f=3, **g): pass\n\ndef func() -> None: pass\n\nasync def a(): pass\n\nasync def a():\n    pass\n\nasync def a(a, b, c): pass\n\ndef a[T](): pass\n\ndef a[T, U](): pass\n\ndef a[T: U](): pass\n\ndef a[T: U, V: W](): pass\n\ndef a[*T](): pass\n\ndef a[T, *U](): pass\n\ndef a[T: U, *V](): pass\n\ndef a[T: U, V: W, *X](): pass\n\ndef a[**T](): pass\n\ndef a[T, **U](): pass\n\ndef a[T: U, **V](): pass\n\ndef a[T: U, V: W, **X](): pass\n\ndef a[T, *U, **V](): pass\n\ndef a[T: U, *V, **W](): pass\n\ndef dataclass_transform(\n    *,\n    eq_default: bool = True,\n    order_default: bool = False,\n    kw_only_default: bool = False,\n    frozen_default: bool = False,  # on 3.11, runtime accepts it as part of kwargs\n    # this next annotation cannot be parsed need fix\n    field_specifiers: tuple[type[Any] | Callable[..., Any], ...] = (),\n    **kwargs: Any,\n) -> IdentityFunction: ...\n"
 ---
 Module {
     node: Node {
@@ -12,7 +12,7 @@ Module {
             FunctionDef {
                 node: Node {
                     start: 0,
-                    end: 14,
+                    end: 13,
                 },
                 name: "a",
                 args: Arguments {
@@ -84,7 +84,7 @@ Module {
             FunctionDef {
                 node: Node {
                     start: 34,
-                    end: 55,
+                    end: 54,
                 },
                 name: "a",
                 args: Arguments {
@@ -145,7 +145,7 @@ Module {
             FunctionDef {
                 node: Node {
                     start: 56,
-                    end: 80,
+                    end: 79,
                 },
                 name: "a",
                 args: Arguments {
@@ -208,7 +208,7 @@ Module {
             FunctionDef {
                 node: Node {
                     start: 81,
-                    end: 102,
+                    end: 101,
                 },
                 name: "a",
                 args: Arguments {
@@ -269,7 +269,7 @@ Module {
             FunctionDef {
                 node: Node {
                     start: 103,
-                    end: 124,
+                    end: 123,
                 },
                 name: "a",
                 args: Arguments {
@@ -315,7 +315,7 @@ Module {
             FunctionDef {
                 node: Node {
                     start: 125,
-                    end: 188,
+                    end: 187,
                 },
                 name: "f",
                 args: Arguments {
@@ -463,7 +463,7 @@ Module {
             FunctionDef {
                 node: Node {
                     start: 189,
-                    end: 214,
+                    end: 213,
                 },
                 name: "func",
                 args: Arguments {
@@ -509,7 +509,7 @@ Module {
             AsyncFunctionDef {
                 node: Node {
                     start: 215,
-                    end: 235,
+                    end: 234,
                 },
                 name: "a",
                 args: Arguments {
@@ -581,7 +581,7 @@ Module {
             AsyncFunctionDef {
                 node: Node {
                     start: 261,
-                    end: 288,
+                    end: 287,
                 },
                 name: "a",
                 args: Arguments {
@@ -642,7 +642,7 @@ Module {
             FunctionDef {
                 node: Node {
                     start: 289,
-                    end: 306,
+                    end: 305,
                 },
                 name: "a",
                 args: Arguments {
@@ -689,7 +689,7 @@ Module {
             FunctionDef {
                 node: Node {
                     start: 307,
-                    end: 327,
+                    end: 326,
                 },
                 name: "a",
                 args: Arguments {
@@ -746,7 +746,7 @@ Module {
             FunctionDef {
                 node: Node {
                     start: 328,
-                    end: 348,
+                    end: 347,
                 },
                 name: "a",
                 args: Arguments {
@@ -803,7 +803,7 @@ Module {
             FunctionDef {
                 node: Node {
                     start: 349,
-                    end: 375,
+                    end: 374,
                 },
                 name: "a",
                 args: Arguments {
@@ -880,7 +880,7 @@ Module {
             FunctionDef {
                 node: Node {
                     start: 376,
-                    end: 394,
+                    end: 393,
                 },
                 name: "a",
                 args: Arguments {
@@ -926,7 +926,7 @@ Module {
             FunctionDef {
                 node: Node {
                     start: 395,
-                    end: 416,
+                    end: 415,
                 },
                 name: "a",
                 args: Arguments {
@@ -982,7 +982,7 @@ Module {
             FunctionDef {
                 node: Node {
                     start: 417,
-                    end: 441,
+                    end: 440,
                 },
                 name: "a",
                 args: Arguments {
@@ -1048,7 +1048,7 @@ Module {
             FunctionDef {
                 node: Node {
                     start: 442,
-                    end: 472,
+                    end: 471,
                 },
                 name: "a",
                 args: Arguments {
@@ -1134,7 +1134,7 @@ Module {
             FunctionDef {
                 node: Node {
                     start: 473,
-                    end: 492,
+                    end: 491,
                 },
                 name: "a",
                 args: Arguments {
@@ -1180,7 +1180,7 @@ Module {
             FunctionDef {
                 node: Node {
                     start: 493,
-                    end: 515,
+                    end: 514,
                 },
                 name: "a",
                 args: Arguments {
@@ -1236,7 +1236,7 @@ Module {
             FunctionDef {
                 node: Node {
                     start: 516,
-                    end: 541,
+                    end: 540,
                 },
                 name: "a",
                 args: Arguments {
@@ -1302,7 +1302,7 @@ Module {
             FunctionDef {
                 node: Node {
                     start: 542,
-                    end: 573,
+                    end: 572,
                 },
                 name: "a",
                 args: Arguments {
@@ -1388,7 +1388,7 @@ Module {
             FunctionDef {
                 node: Node {
                     start: 574,
-                    end: 600,
+                    end: 599,
                 },
                 name: "a",
                 args: Arguments {
@@ -1453,7 +1453,7 @@ Module {
             FunctionDef {
                 node: Node {
                     start: 601,
-                    end: 630,
+                    end: 629,
                 },
                 name: "a",
                 args: Arguments {
@@ -1528,7 +1528,7 @@ Module {
             FunctionDef {
                 node: Node {
                     start: 631,
-                    end: 1013,
+                    end: 1012,
                 },
                 name: "dataclass_transform",
                 args: Arguments {
