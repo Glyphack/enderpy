@@ -5,7 +5,7 @@ use std::sync::Arc;
 
 use enderpy_python_parser as parser;
 use enderpy_python_parser::ast::*;
-use parser::{ast, Parser};
+use parser::{ast, get_row_col_position, Parser};
 use std::sync::atomic::Ordering;
 
 use crate::build::ResolvedImports;
@@ -93,11 +93,11 @@ impl<'a> EnderpyFile<'a> {
     /// Return source of the line number
     pub fn get_line_content(&self, line: usize) -> String {
         let line_starts = &self.offset_line_number;
-        let line_start_offset = line_starts[line] as usize;
+        let line_start_offset = line_starts[line - 1] as usize;
         let line_end_offset = if line == line_starts.len() {
             self.source.len()
         } else {
-            line_starts[line + 1] as usize
+            line_starts[line] as usize
         };
         self.source[line_start_offset..line_end_offset].to_string()
     }
@@ -111,22 +111,12 @@ impl<'a> EnderpyFile<'a> {
         import_collector.imports
     }
 
-    pub fn get_position(&self, pos: u32) -> Position {
-        let line_starts = &self.offset_line_number;
-        let line_number = match line_starts.binary_search(&pos) {
-            Ok(index) => index,
-            Err(index) => {
-                if index == 0 {
-                    index
-                } else {
-                    index - 1
-                }
-            }
-        };
-        let line_start = line_starts[line_number];
+    pub fn get_position(&self, start: u32, end: u32) -> Position {
+        let (start_line_num, start_line_column, end_line_num, end_line_column) =
+            get_row_col_position(start, end, &self.offset_line_number);
         Position {
-            line: line_number as u32,
-            character: (pos - line_start),
+            line: start_line_num,
+            character: (end - start_line_column),
         }
     }
 

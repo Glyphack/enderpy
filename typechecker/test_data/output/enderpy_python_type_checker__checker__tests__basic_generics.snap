@@ -13,21 +13,21 @@ Tests for basic usage of generics.
 """ => (class) str
 
 ---
-Line 5: from __future__ import annotations
+Line 7: from __future__ import annotations
 
 Expr types in the line --->:
         __future__  => Module
         annotations => (class) _Feature
 
 ---
-Line 7: from collections.abc import Sequence
+Line 9: from collections.abc import Sequence
 
 Expr types in the line --->:
         collections.abc  => Module
         Sequence => (class) typing.Sequence[TypeVar[_T_co, ]]
 
 ---
-Line 8: from typing import Any, Generic, TypeVar, assert_type
+Line 10: from typing import Any, Generic, TypeVar, assert_type
 
 Expr types in the line --->:
         typing  => Module
@@ -37,7 +37,7 @@ Expr types in the line --->:
         assert_type => (function) assert_type
 
 ---
-Line 10: T = TypeVar("T")
+Line 12: T = TypeVar("T")
 
 Expr types in the line --->:
         T => TypeVar[T, ]
@@ -46,7 +46,7 @@ Expr types in the line --->:
         "T" => (class) str
 
 ---
-Line 16: def first(l: Sequence[T]) -> T:
+Line 18: def first(l: Sequence[T]) -> T:
 
 Expr types in the line --->:
         def first => (function) first
@@ -55,7 +55,7 @@ Expr types in the line --->:
         T => TypeVar[T, ]
 
 ---
-Line 17:     return l[0]
+Line 19:     return l[0]
 
 Expr types in the line --->:
         l => (class) typing.Sequence[TypeVar[T, ]]
@@ -63,7 +63,7 @@ Expr types in the line --->:
         0 => (class) int
 
 ---
-Line 20: def test_first(seq_int: Sequence[int], seq_str: Sequence[str]) -> None:
+Line 22: def test_first(seq_int: Sequence[int], seq_str: Sequence[str]) -> None:
 
 Expr types in the line --->:
         def test_first => (function) test_first
@@ -74,7 +74,7 @@ Expr types in the line --->:
         None => None
 
 ---
-Line 21:     assert_type(first(seq_int), int)
+Line 23:     assert_type(first(seq_int), int)
 
 Expr types in the line --->:
         assert_type => (function) assert_type
@@ -85,7 +85,7 @@ Expr types in the line --->:
         int => (class) int
 
 ---
-Line 22:     assert_type(first(seq_str), str)
+Line 24:     assert_type(first(seq_str), str)
 
 Expr types in the line --->:
         assert_type => (function) assert_type
@@ -96,7 +96,7 @@ Expr types in the line --->:
         str => (class) str
 
 ---
-Line 28: AnyStr = TypeVar("AnyStr", str, bytes)
+Line 30: AnyStr = TypeVar("AnyStr", str, bytes)
 
 Expr types in the line --->:
         AnyStr => TypeVar[AnyStr, (class) str, (class) builtins.bytes[(class) int]]
@@ -107,7 +107,7 @@ Expr types in the line --->:
         bytes => (class) builtins.bytes[(class) int]
 
 ---
-Line 31: def concat(x: AnyStr, y: AnyStr) -> AnyStr:
+Line 33: def concat(x: AnyStr, y: AnyStr) -> AnyStr:
 
 Expr types in the line --->:
         def concat => (function) concat
@@ -118,7 +118,7 @@ Expr types in the line --->:
         AnyStr => TypeVar[AnyStr, (class) str, (class) builtins.bytes[(class) int]]
 
 ---
-Line 32:     return x + y
+Line 34:     return x + y
 
 Expr types in the line --->:
         x => TypeVar[AnyStr, (class) str, (class) builtins.bytes[(class) int]]
@@ -126,7 +126,7 @@ Expr types in the line --->:
         y => TypeVar[AnyStr, (class) str, (class) builtins.bytes[(class) int]]
 
 ---
-Line 35: def test_concat(s: str, b: bytes, a: Any) -> None:
+Line 38: def test_concat(s: str, b: bytes, a: Any) -> None:
 
 Expr types in the line --->:
         def test_concat => (function) test_concat
@@ -139,7 +139,7 @@ Expr types in the line --->:
         None => None
 
 ---
-Line 36:     concat(s, s)  # OK
+Line 39:     concat(s, s)  # OK
 
 Expr types in the line --->:
         concat => (function) concat
@@ -148,7 +148,7 @@ Expr types in the line --->:
         s => (class) str
 
 ---
-Line 37:     concat(b, b)  # OK
+Line 40:     concat(b, b)  # OK
 
 Expr types in the line --->:
         concat => (function) concat
@@ -157,7 +157,7 @@ Expr types in the line --->:
         b => Unknown
 
 ---
-Line 38:     concat(s, b)  # E
+Line 41:     concat(s, b)  # E
 
 Expr types in the line --->:
         concat => (function) concat
@@ -166,7 +166,7 @@ Expr types in the line --->:
         b => Unknown
 
 ---
-Line 39:     concat(b, s)  # E
+Line 42:     concat(b, s)  # E
 
 Expr types in the line --->:
         concat => (function) concat
@@ -175,7 +175,7 @@ Expr types in the line --->:
         s => (class) str
 
 ---
-Line 41:     concat(s, a)  # OK
+Line 44:     concat(s, a)  # OK
 
 Expr types in the line --->:
         concat => (function) concat
@@ -184,7 +184,7 @@ Expr types in the line --->:
         a => (class) object
 
 ---
-Line 42:     concat(a, b)  # OK
+Line 45:     concat(a, b)  # OK
 
 Expr types in the line --->:
         concat => (function) concat
@@ -193,7 +193,7 @@ Expr types in the line --->:
         b => Unknown
 
 ---
-Line 47: BadConstraint1 = TypeVar("BadConstraint1", str)  # E
+Line 50: BadConstraint1 = TypeVar("BadConstraint1", str)  # E
 
 Expr types in the line --->:
         BadConstraint1 => Unknown
@@ -203,7 +203,7 @@ Expr types in the line --->:
         str => (class) str
 
 ---
-Line 52: class Test(Generic[T]):
+Line 55: class Test(Generic[T]):
 
 Expr types in the line --->:
         class Test => (class) basic_generics.Test[TypeVar[T, ]]
@@ -212,7 +212,7 @@ Expr types in the line --->:
         T => TypeVar[T, ]
 
 ---
-Line 53:     BadConstraint2 = TypeVar("BadConstraint2", str, list[T])  # E
+Line 56:     BadConstraint2 = TypeVar("BadConstraint2", str, list[T])  # E
 
 Expr types in the line --->:
         BadConstraint2 => TypeVar[BadConstraint2, (class) str, (class) builtins.list[TypeVar[_T, ]]]
@@ -225,7 +225,7 @@ Expr types in the line --->:
         T => TypeVar[T, ]
 
 ---
-Line 61: class MyStr(str): ...
+Line 64: class MyStr(str): ...
 
 Expr types in the line --->:
         class MyStr => (class) MyStr
@@ -233,7 +233,7 @@ Expr types in the line --->:
         ... => Any
 
 ---
-Line 64: def test_concat_subtype(s: str, b: bytes, a: Any, m: MyStr) -> None:
+Line 68: def test_concat_subtype(s: str, b: bytes, a: Any, m: MyStr) -> None:
 
 Expr types in the line --->:
         def test_concat_subtype => (function) test_concat_subtype
@@ -248,7 +248,7 @@ Expr types in the line --->:
         None => None
 
 ---
-Line 65:     assert_type(concat(m, m), str)
+Line 69:     assert_type(concat(m, m), str)
 
 Expr types in the line --->:
         assert_type => (function) assert_type
@@ -260,7 +260,7 @@ Expr types in the line --->:
         str => (class) str
 
 ---
-Line 66:     assert_type(concat(m, s), str)
+Line 70:     assert_type(concat(m, s), str)
 
 Expr types in the line --->:
         assert_type => (function) assert_type
@@ -272,7 +272,7 @@ Expr types in the line --->:
         str => (class) str
 
 ---
-Line 67:     concat(m, b)  # E
+Line 71:     concat(m, b)  # E
 
 Expr types in the line --->:
         concat => (function) concat
@@ -281,21 +281,21 @@ Expr types in the line --->:
         b => Unknown
 
 ---
-Line 79: from logging import Logger
+Line 83: from logging import Logger
 
 Expr types in the line --->:
         logging  => Module
         Logger => (class) Logger
 
 ---
-Line 80: from collections.abc import Iterable
+Line 84: from collections.abc import Iterable
 
 Expr types in the line --->:
         collections.abc  => Module
         Iterable => (class) typing.Iterable[TypeVar[_T_co, ]]
 
 ---
-Line 83: class LoggedVar(Generic[T]):
+Line 87: class LoggedVar(Generic[T]):
 
 Expr types in the line --->:
         class LoggedVar => (class) basic_generics.LoggedVar[TypeVar[T, ]]
@@ -304,7 +304,7 @@ Expr types in the line --->:
         T => TypeVar[T, ]
 
 ---
-Line 84:     def __init__(self, value: T, name: str, logger: Logger) -> None:
+Line 88:     def __init__(self, value: T, name: str, logger: Logger) -> None:
 
 Expr types in the line --->:
         def __init__ => (function) __init__
@@ -318,7 +318,7 @@ Expr types in the line --->:
         None => None
 
 ---
-Line 85:         self.name = name
+Line 89:         self.name = name
 
 Expr types in the line --->:
         self => Unknown
@@ -326,7 +326,7 @@ Expr types in the line --->:
         name => (class) str
 
 ---
-Line 86:         self.logger = logger
+Line 91:         self.logger = logger
 
 Expr types in the line --->:
         self => Unknown
@@ -334,7 +334,7 @@ Expr types in the line --->:
         logger => (class) Logger
 
 ---
-Line 87:         self.value = value
+Line 93:         self.value = value
 
 Expr types in the line --->:
         self => Unknown
@@ -342,7 +342,7 @@ Expr types in the line --->:
         value => TypeVar[T, ]
 
 ---
-Line 89:     def set(self, new: T) -> None:
+Line 96:     def set(self, new: T) -> None:
 
 Expr types in the line --->:
         def set => (function) set
@@ -352,7 +352,7 @@ Expr types in the line --->:
         None => None
 
 ---
-Line 90:         self.log("Set " + repr(self.value))
+Line 97:         self.log("Set " + repr(self.value))
 
 Expr types in the line --->:
         self.log => (function) log
@@ -362,7 +362,7 @@ Expr types in the line --->:
         repr(self.value) => (class) str
 
 ---
-Line 91:         self.value = new
+Line 98:         self.value = new
 
 Expr types in the line --->:
         self => Unknown
@@ -370,7 +370,7 @@ Expr types in the line --->:
         new => TypeVar[T, ]
 
 ---
-Line 93:     def get(self) -> T:
+Line 101:     def get(self) -> T:
 
 Expr types in the line --->:
         def get => (function) get
@@ -378,7 +378,7 @@ Expr types in the line --->:
         T => TypeVar[T, ]
 
 ---
-Line 94:         self.log("Get " + repr(self.value))
+Line 102:         self.log("Get " + repr(self.value))
 
 Expr types in the line --->:
         self.log => (function) log
@@ -388,14 +388,14 @@ Expr types in the line --->:
         repr(self.value) => (class) str
 
 ---
-Line 95:         return self.value
+Line 103:         return self.value
 
 Expr types in the line --->:
         self => Unknown
         self.value => TypeVar[T, ]
 
 ---
-Line 97:     def log(self, message: str) -> None:
+Line 105:     def log(self, message: str) -> None:
 
 Expr types in the line --->:
         def log => (function) log
@@ -405,7 +405,7 @@ Expr types in the line --->:
         None => None
 
 ---
-Line 98:         self.logger.info("{}: {}".format(self.name, message))
+Line 106:         self.logger.info("{}: {}".format(self.name, message))
 
 Expr types in the line --->:
         self.logger.info => (function) info
@@ -417,7 +417,7 @@ Expr types in the line --->:
         message => (class) str
 
 ---
-Line 101: def zero_all_vars(vars: Iterable[LoggedVar[int]]) -> None:
+Line 109: def zero_all_vars(vars: Iterable[LoggedVar[int]]) -> None:
 
 Expr types in the line --->:
         def zero_all_vars => (function) zero_all_vars
@@ -426,13 +426,13 @@ Expr types in the line --->:
         None => None
 
 ---
-Line 102:     for var in vars:
+Line 110:     for var in vars:
 
 Expr types in the line --->:
         vars => (function) vars
 
 ---
-Line 103:         var.set(0)
+Line 111:         var.set(0)
 
 Expr types in the line --->:
         var.set => Unknown
@@ -440,7 +440,7 @@ Expr types in the line --->:
         0 => (class) int
 
 ---
-Line 104:         assert_type(var.get(), int)
+Line 112:         assert_type(var.get(), int)
 
 Expr types in the line --->:
         assert_type => (function) assert_type
@@ -450,7 +450,7 @@ Expr types in the line --->:
         int => (class) int
 
 ---
-Line 110: S = TypeVar("S")
+Line 118: S = TypeVar("S")
 
 Expr types in the line --->:
         S => TypeVar[S, ]
@@ -459,7 +459,7 @@ Expr types in the line --->:
         "S" => (class) str
 
 ---
-Line 113: class Pair1(Generic[T, S]): ...
+Line 121: class Pair1(Generic[T, S]): ...
 
 Expr types in the line --->:
         class Pair1 => (class) basic_generics.Pair1[TypeVar[T, ], TypeVar[S, ]]
@@ -471,7 +471,7 @@ Expr types in the line --->:
         ... => Any
 
 ---
-Line 119: class Pair2(Generic[T, T]):  # E
+Line 128: class Pair2(Generic[T, T]):  # E
 
 Expr types in the line --->:
         class Pair2 => (class) basic_generics.Pair2[Unknown]
@@ -482,13 +482,13 @@ Expr types in the line --->:
         T => TypeVar[T, ]
 
 ---
-Line 120:     ...
+Line 129:     ...
 
 Expr types in the line --->:
         ... => Any
 
 ---
-Line 127: from collections.abc import Iterator, Mapping
+Line 137: from collections.abc import Iterator, Mapping
 
 Expr types in the line --->:
         collections.abc  => Module
@@ -496,7 +496,7 @@ Expr types in the line --->:
         Mapping => (class) typing.Mapping[TypeVar[_KT, ], TypeVar[_KT, ], TypeVar[_VT_co, ]]
 
 ---
-Line 130: class MyIter1(Iterator[T]): ...
+Line 140: class MyIter1(Iterator[T]): ...
 
 Expr types in the line --->:
         class MyIter1 => (class) basic_generics.MyIter1[TypeVar[T, ]]
@@ -506,7 +506,7 @@ Expr types in the line --->:
         ... => Any
 
 ---
-Line 133: class MyIter2(Iterator[T], Generic[T]): ...
+Line 144: class MyIter2(Iterator[T], Generic[T]): ...
 
 Expr types in the line --->:
         class MyIter2 => (class) basic_generics.MyIter2[TypeVar[T, ]]
@@ -519,7 +519,7 @@ Expr types in the line --->:
         ... => Any
 
 ---
-Line 136: def test_my_iter(m1: MyIter1[int], m2: MyIter2[int]):
+Line 148: def test_my_iter(m1: MyIter1[int], m2: MyIter2[int]):
 
 Expr types in the line --->:
         def test_my_iter => (function) test_my_iter
@@ -529,7 +529,7 @@ Expr types in the line --->:
         MyIter2[int] => (class) basic_generics.MyIter2[TypeVar[T, ]]
 
 ---
-Line 137:     assert_type(next(m1), int)
+Line 149:     assert_type(next(m1), int)
 
 Expr types in the line --->:
         assert_type => (function) assert_type
@@ -540,7 +540,7 @@ Expr types in the line --->:
         int => (class) int
 
 ---
-Line 138:     assert_type(next(m2), int)
+Line 150:     assert_type(next(m2), int)
 
 Expr types in the line --->:
         assert_type => (function) assert_type
@@ -551,7 +551,7 @@ Expr types in the line --->:
         int => (class) int
 
 ---
-Line 141: K = TypeVar("K")
+Line 153: K = TypeVar("K")
 
 Expr types in the line --->:
         K => TypeVar[K, ]
@@ -560,7 +560,7 @@ Expr types in the line --->:
         "K" => (class) str
 
 ---
-Line 142: V = TypeVar("V")
+Line 154: V = TypeVar("V")
 
 Expr types in the line --->:
         V => TypeVar[V, ]
@@ -569,7 +569,7 @@ Expr types in the line --->:
         "V" => (class) str
 
 ---
-Line 145: class MyMap1(Mapping[K, V], Generic[K, V]): ...
+Line 157: class MyMap1(Mapping[K, V], Generic[K, V]): ...
 
 Expr types in the line --->:
         class MyMap1 => (class) basic_generics.MyMap1[TypeVar[K, ], TypeVar[V, ], TypeVar[K, ], TypeVar[V, ]]
@@ -586,7 +586,7 @@ Expr types in the line --->:
         ... => Any
 
 ---
-Line 148: class MyMap2(Mapping[K, V], Generic[V, K]): ...
+Line 161: class MyMap2(Mapping[K, V], Generic[V, K]): ...
 
 Expr types in the line --->:
         class MyMap2 => (class) basic_generics.MyMap2[TypeVar[K, ], TypeVar[V, ], TypeVar[V, ], TypeVar[K, ]]
@@ -603,7 +603,7 @@ Expr types in the line --->:
         ... => Any
 
 ---
-Line 151: def test_my_map(m1: MyMap1[str, int], m2: MyMap2[int, str]):
+Line 165: def test_my_map(m1: MyMap1[str, int], m2: MyMap2[int, str]):
 
 Expr types in the line --->:
         def test_my_map => (function) test_my_map
@@ -613,7 +613,7 @@ Expr types in the line --->:
         MyMap2[int, str] => (class) basic_generics.MyMap2[TypeVar[K, ], TypeVar[V, ], TypeVar[V, ], TypeVar[K, ]]
 
 ---
-Line 152:     assert_type(m1["key"], int)
+Line 166:     assert_type(m1["key"], int)
 
 Expr types in the line --->:
         assert_type => (function) assert_type
@@ -624,7 +624,7 @@ Expr types in the line --->:
         int => (class) int
 
 ---
-Line 153:     assert_type(m2["key"], int)
+Line 167:     assert_type(m2["key"], int)
 
 Expr types in the line --->:
         assert_type => (function) assert_type
@@ -635,7 +635,7 @@ Expr types in the line --->:
         int => (class) int
 
 ---
-Line 155:     m1[0]  # E
+Line 169:     m1[0]  # E
 
 Expr types in the line --->:
         m1 => (class) basic_generics.MyMap1[Unknown]
@@ -643,7 +643,7 @@ Expr types in the line --->:
         0 => (class) int
 
 ---
-Line 156:     m2[0]  # E
+Line 170:     m2[0]  # E
 
 Expr types in the line --->:
         m2 => (class) basic_generics.MyMap2[Unknown]
@@ -651,7 +651,7 @@ Expr types in the line --->:
         0 => (class) int
 
 ---
-Line 161: from collections.abc import Sized, Container
+Line 175: from collections.abc import Sized, Container
 
 Expr types in the line --->:
         collections.abc  => Module
@@ -659,7 +659,7 @@ Expr types in the line --->:
         Container => (class) typing.Container[TypeVar[_T_co, ]]
 
 ---
-Line 164: class LinkedList(Sized, Generic[T]): ...
+Line 178: class LinkedList(Sized, Generic[T]): ...
 
 Expr types in the line --->:
         class LinkedList => (class) basic_generics.LinkedList[TypeVar[T, ]]
@@ -670,7 +670,7 @@ Expr types in the line --->:
         ... => Any
 
 ---
-Line 167: class MyMapping(Iterable[tuple[K, V]], Container[tuple[K, V]], Generic[K, V]): ...
+Line 182: class MyMapping(Iterable[tuple[K, V]], Container[tuple[K, V]], Generic[K, V]): ...
 
 Expr types in the line --->:
         class MyMapping => (class) basic_generics.MyMapping[TypeVar[K, ], TypeVar[V, ]]
@@ -696,20 +696,20 @@ Expr types in the line --->:
         ... => Any
 
 ---
-Line 175: class MyIterableAny(Iterable):  # Same as Iterable[Any]
+Line 191: class MyIterableAny(Iterable):  # Same as Iterable[Any]
 
 Expr types in the line --->:
         class MyIterableAny => (class) basic_generics.MyIterableAny[TypeVar[_T_co, ]]
         Iterable => (class) typing.Iterable[TypeVar[_T_co, ]]
 
 ---
-Line 176:     ...
+Line 192:     ...
 
 Expr types in the line --->:
         ... => Any
 
 ---
-Line 179: def test_my_iterable_any(m: MyIterableAny):
+Line 196: def test_my_iterable_any(m: MyIterableAny):
 
 Expr types in the line --->:
         def test_my_iterable_any => (function) test_my_iterable_any
@@ -717,7 +717,7 @@ Expr types in the line --->:
         MyIterableAny => (class) basic_generics.MyIterableAny[TypeVar[_T_co, ]]
 
 ---
-Line 180:     assert_type(iter(m), Iterator[Any])
+Line 197:     assert_type(iter(m), Iterator[Any])
 
 Expr types in the line --->:
         assert_type => (function) assert_type
@@ -730,7 +730,7 @@ Expr types in the line --->:
         Any => (class) object
 
 ---
-Line 186: class GenericMeta(type, Generic[T]): ...
+Line 203: class GenericMeta(type, Generic[T]): ...
 
 Expr types in the line --->:
         class GenericMeta => (class) basic_generics.GenericMeta[TypeVar[T, ]]
@@ -741,7 +741,7 @@ Expr types in the line --->:
         ... => Any
 
 ---
-Line 189: class GenericMetaInstance(metaclass=GenericMeta[T]):  # E
+Line 207: class GenericMetaInstance(metaclass=GenericMeta[T]):  # E
 
 Expr types in the line --->:
         class GenericMetaInstance => (class) basic_generics.GenericMetaInstance[TypeVar[T, ]]
@@ -750,7 +750,7 @@ Expr types in the line --->:
         T => TypeVar[T, ]
 
 ---
-Line 190:     ...
+Line 208:     ...
 
 Expr types in the line --->:
         ... => Any

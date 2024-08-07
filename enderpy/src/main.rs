@@ -6,7 +6,7 @@ use std::{
 
 use clap::Parser as ClapParser;
 use cli::{Cli, Commands};
-use enderpy_python_parser::{Lexer, Parser};
+use enderpy_python_parser::{get_row_col_position, Lexer, Parser};
 use enderpy_python_type_checker::{build::BuildManager, find_project_root, settings::Settings};
 use miette::{bail, IntoDiagnostic, Result};
 
@@ -89,7 +89,7 @@ fn tokenize() -> Result<()> {
     let tokens = lexer.lex();
     for token in tokens {
         let (start_line_num, start_line_column, end_line_num, end_line_column) =
-            token.get_row_col_position(&lexer.line_starts);
+            get_row_col_position(token.start, token.end, &lexer.line_starts);
         println!(
             "{}-{}, {}-{}:   {} {} {} {}",
             start_line_num,

@@ -626,12 +626,12 @@ mod tests {
         let mut last_line = None;
 
         for r in result {
-            let pos = module.get_position(r.start);
+            let pos = module.get_position(r.start, r.stop);
             let cur_line = pos.line;
 
             if last_line.is_none() {
                 let line_content = module.get_line_content(cur_line as usize);
-                str.push_str(format!("Line {}: {}", cur_line + 1, line_content).as_str());
+                str.push_str(format!("Line {}: {}", cur_line, line_content).as_str());
                 str.push_str("\nExpr types in the line --->:\n");
                 last_line = Some(cur_line);
             }

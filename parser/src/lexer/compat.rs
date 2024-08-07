@@ -98,6 +98,7 @@ pub struct PythonToken {
 mod tests {
 
     use super::*;
+    use crate::get_row_col_position;
     use crate::token::Kind;
     use crate::{lexer::Lexer, token::Token};
     use miette::{bail, IntoDiagnostic, Result};
@@ -717,7 +718,7 @@ print(a)
         }
 
         let (enderpy_start_row, enderpy_start_col, enderpy_end_row, enderpy_end_col) =
-            enderpy_token.get_row_col_position(&lexer.line_starts);
+            get_row_col_position(enderpy_token.start, enderpy_token.end, &lexer.line_starts);
         let python_token_start = python_token.start;
         let python_token_end = python_token.end;
         if enderpy_start_row != python_token_start.0
