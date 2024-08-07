@@ -26,6 +26,7 @@ impl Display for Token {
 pub enum Kind {
     // Line structure
     NewLine, // \n
+    NL,      // Logical newline
     Indent,  // \t
     Dedent,  // \t
 
@@ -313,6 +314,7 @@ impl From<Kind> for &str {
             Kind::Less => "<",
             Kind::Greater => ">",
             Kind::NewLine => "NewLine",
+            Kind::NL => "NL",
             Kind::Identifier => "Identifier",
             Kind::False => "False",
             Kind::None => "None",

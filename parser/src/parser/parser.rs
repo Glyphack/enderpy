@@ -168,17 +168,11 @@ impl<'a> Parser<'a> {
 
         self.prev_token_end = self.cur_token.end;
         self.cur_token = token;
-        if self.cur_kind() == Kind::Comment {
+        if matches!(self.cur_kind(), Kind::Comment | Kind::NL) {
             self.advance();
         }
         if self.nested_expression_list > 0 {
             self.consume_whitespace_and_newline();
-        }
-    }
-
-    fn advance_to_next_line_or_semicolon(&mut self) {
-        while !self.eat(Kind::NewLine) && !self.eat(Kind::SemiColon) && !self.at(Kind::Eof) {
-            self.advance();
         }
     }
 
@@ -330,7 +324,10 @@ impl<'a> Parser<'a> {
     ) {
         while self.eat(Kind::WhiteSpace) || self.eat(Kind::Comment) {}
 
-        if !matches!(self.cur_kind(), Kind::NewLine | Kind::SemiColon | Kind::Eof) {
+        if !matches!(
+            self.cur_kind(),
+            Kind::NewLine | Kind::NL | Kind::SemiColon | Kind::Eof
+        ) {
             panic!("Statement does not end in new line or semicolon {:?}", stmt);
         }
     }
@@ -1155,7 +1152,7 @@ impl<'a> Parser<'a> {
 
     // https://docs.python.org/3/reference/compound_stmts.html#grammar-token-python-grammar-suite
     fn parse_suite(&mut self) -> Result<Vec<Statement>, ParsingError> {
-        let stmts = if self.eat(Kind::NewLine) {
+        if self.eat(Kind::NewLine) {
             self.consume_whitespace_and_newline();
             self.expect(Kind::Indent)?;
             let mut stmts = vec![];
@@ -1170,9 +1167,7 @@ impl<'a> Parser<'a> {
         } else {
             let stmt = self.parse_statement_list()?;
             Ok(stmt)
-        };
-        self.bump(Kind::NewLine);
-        stmts
+        }
     }
 
     // https://docs.python.org/3/reference/compound_stmts.html#grammar-token-python-grammar-statement
@@ -1974,7 +1969,7 @@ impl<'a> Parser<'a> {
 
     fn consume_whitespace_and_newline(&mut self) -> bool {
         let mut consumed = false;
-        while matches!(self.cur_kind(), Kind::WhiteSpace | Kind::NewLine) {
+        while matches!(self.cur_kind(), Kind::WhiteSpace | Kind::NewLine | Kind::NL) {
             self.advance();
             consumed = true;
         }
@@ -1985,7 +1980,7 @@ impl<'a> Parser<'a> {
         let mut consumed = false;
         while matches!(
             self.cur_kind(),
-            Kind::WhiteSpace | Kind::NewLine | Kind::Comment
+            Kind::WhiteSpace | Kind::NewLine | Kind::Comment | Kind::NL
         ) {
             self.bump(self.cur_kind());
             consumed = true;
@@ -4050,7 +4045,7 @@ except *Exception as e:
                 let snapshot = format!("{program:#?}");
 
                 insta::with_settings!({
-                        description => test_case.clone(),
+                        description => format!("test file: {}\n{}", $test_file, test_case.clone()),
                         omit_expression => true,
                         snapshot_path => "../../test_data/output/"
                     }, {

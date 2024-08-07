@@ -1,6 +1,6 @@
 ---
 source: parser/src/parser/parser.rs
-description: "with a: pass\n\nwith a as b: pass\n\nwith a as b, c as d: pass\n\nwith (a as b, c as d): pass\n\nasync with a as b: pass\n\nasync with a as b, c as d:\n    pass\n\nasync with (\n        a as b, c as d\n):\n    a = 1\n"
+description: "test file: test_data/inputs/with.py\nwith a: pass\n\nwith a as b: pass\n\nwith a as b, c as d: pass\n\nwith (a as b, c as d): pass\n\nasync with a as b: pass\n\nasync with a as b, c as d:\n    pass\n\nasync with (\n        a as b, c as d\n):\n    a = 1\n"
 ---
 Module {
     node: Node {
@@ -12,7 +12,7 @@ Module {
             With {
                 node: Node {
                     start: 0,
-                    end: 13,
+                    end: 12,
                 },
                 items: [
                     WithItem {
@@ -48,7 +48,7 @@ Module {
             With {
                 node: Node {
                     start: 14,
-                    end: 32,
+                    end: 31,
                 },
                 items: [
                     WithItem {
@@ -94,7 +94,7 @@ Module {
             With {
                 node: Node {
                     start: 33,
-                    end: 59,
+                    end: 58,
                 },
                 items: [
                     WithItem {
@@ -166,7 +166,7 @@ Module {
             With {
                 node: Node {
                     start: 60,
-                    end: 88,
+                    end: 87,
                 },
                 items: [
                     WithItem {
@@ -238,7 +238,7 @@ Module {
             AsyncWith {
                 node: Node {
                     start: 89,
-                    end: 113,
+                    end: 112,
                 },
                 items: [
                     WithItem {

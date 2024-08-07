@@ -1,6 +1,6 @@
 ---
 source: parser/src/parser/parser.rs
-description: "_ = (\n    1,\n    2,\n)\n_ = {\n    1,\n    2,\n}\n_ = [\n    1,\n    2,\n]\n\n\ndef hello(\n    a,\n    b,\n): ...\n\n\nclass A(\n    object,\n):\n    pass\n"
+description: "test file: test_data/inputs/newlines.py\n_ = (\n    1,\n    2,\n)\n_ = {\n    1,\n    2,\n}\n_ = [\n    1,\n    2,\n]\n\n\ndef hello(\n    a,\n    b,\n): ...\n\n\nclass A(\n    object,\n):\n    pass\n"
 ---
 Module {
     node: Node {
@@ -153,7 +153,7 @@ Module {
             FunctionDef {
                 node: Node {
                     start: 68,
-                    end: 100,
+                    end: 99,
                 },
                 name: "hello",
                 args: Arguments {

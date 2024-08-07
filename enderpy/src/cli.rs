@@ -8,15 +8,14 @@ use clap::{Parser, Subcommand};
 pub struct Cli {
     #[command(subcommand)]
     pub command: Commands,
+    #[arg(short, long)]
+    pub file: Option<PathBuf>,
 }
 
 #[derive(Subcommand)]
 pub enum Commands {
     /// Print lexer tokens
-    Tokenize {
-        /// Path to source file
-        file: PathBuf,
-    },
+    Tokenize {},
     /// Print abstract syntax tree
     Parse {
         /// Path to source file
