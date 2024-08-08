@@ -8,7 +8,7 @@ Line 1: from typing import Dict, Set, List
 Expr types in the line --->:
         typing  => Module
         Dict => (class) builtins.dict[TypeVar[_KT, ], TypeVar[_VT, ]]
-        Set => (class) set
+        Set => (class) builtins.set[TypeVar[_T, ]]
         List => (class) builtins.list[TypeVar[_T, ]]
 
 ---
@@ -155,8 +155,8 @@ Line 28:     def get_attr(self) -> Set[int]:
 Expr types in the line --->:
         def get_attr => (function) get_attr
         self => Unknown
-        Set => (class) set
-        Set[int] => (class) set
+        Set => (class) builtins.set[TypeVar[_T, ]]
+        Set[int] => (class) builtins.set[TypeVar[_T, ]]
         int => (class) int
 
 ---

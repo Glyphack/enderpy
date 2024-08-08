@@ -1,12 +1,13 @@
-use std::{collections::HashMap, path::Path};
+use std::{collections::HashMap, sync::Arc};
 
 use enderpy_python_parser as parser;
 use enderpy_python_parser::ast::Expression;
 
-use parser::ast::{FunctionDef, GetNode, Name, Statement};
+use parser::ast::{GetNode, Name, Statement};
 
 use crate::{
     ast_visitor::TraversalVisitor,
+    build::ResolvedImports,
     file::EnderpyFile,
     ruff_python_import_resolver::{
         import_result::ImportResult, module_descriptor::ImportModuleDescriptor,
@@ -27,15 +28,12 @@ pub struct SemanticAnalyzer<'a> {
     /// if we have a file with the following imports this is how we use the map
     /// import os -> imports.get("os")
     /// from os import path -> imports.get("os")
-    pub imports: &'a HashMap<ImportModuleDescriptor, ImportResult>,
+    pub imports: &'a ResolvedImports,
 }
 
 #[allow(unused)]
 impl<'a> SemanticAnalyzer<'a> {
-    pub fn new(
-        file: &'a EnderpyFile<'a>,
-        imports: &'a HashMap<ImportModuleDescriptor, ImportResult>,
-    ) -> Self {
+    pub fn new(file: &'a EnderpyFile<'a>, imports: &'a ResolvedImports) -> Self {
         let symbols = SymbolTable::new(&file.path, file.id);
         SemanticAnalyzer {
             symbol_table: symbols,
@@ -238,18 +236,8 @@ impl<'a> SemanticAnalyzer<'a> {
     /// Returns true if the current function assigns an attribute to an object
     /// Functions like __init__ and __new__ are considered to assign attributes
     fn function_assigns_attribute(&self, symbol_table: &SymbolTable) -> bool {
-        if let Some(FunctionDef {
-            node,
-            name: fname,
-            args,
-            body,
-            decorator_list,
-            returns,
-            type_comment,
-            type_params,
-        }) = symbol_table.current_scope().kind.as_function()
-        {
-            if fname == "__init__" || fname == "__new__" {
+        if let Some(function_def) = symbol_table.current_scope().kind.as_function() {
+            if function_def.name == "__init__" || function_def.name == "__new__" {
                 return true;
             }
         }
@@ -257,8 +245,8 @@ impl<'a> SemanticAnalyzer<'a> {
     }
 }
 
-impl<'a> TraversalVisitor for SemanticAnalyzer<'a> {
-    fn visit_stmt(&mut self, s: &parser::ast::Statement) {
+impl<'a> SemanticAnalyzer<'a> {
+    pub fn visit_stmt(&mut self, s: &parser::ast::Statement) {
         match s {
             parser::ast::Statement::ExpressionStatement(e) => self.visit_expr(e),
             parser::ast::Statement::Import(i) => self.visit_import(i),
@@ -325,11 +313,10 @@ impl<'a> TraversalVisitor for SemanticAnalyzer<'a> {
 
     fn visit_import(&mut self, i: &parser::ast::Import) {
         for alias in &i.names {
-            let import_result = match self.imports.get(&ImportModuleDescriptor::from(alias)) {
-                Some(result) => result.clone(),
-                None => ImportResult::not_found(),
-            };
-            // TODO: Report unresolved import if import_result is None
+            let import_result = self
+                .imports
+                .get(&ImportModuleDescriptor::from(alias))
+                .cloned();
             let declaration_path = DeclarationPath::new(
                 self.symbol_table.id,
                 alias.node,
@@ -351,15 +338,14 @@ impl<'a> TraversalVisitor for SemanticAnalyzer<'a> {
     }
 
     fn visit_import_from(&mut self, _i: &parser::ast::ImportFrom) {
-        let module_import_result = match self.imports.get(&ImportModuleDescriptor::from(_i)) {
-            Some(result) => result.clone(),
-            None => ImportResult::not_found(),
-        };
+        let module_import_result = self.imports.get(&ImportModuleDescriptor::from(_i));
         for alias in &_i.names {
             if alias.name == "*" {
-                self.symbol_table
-                    .star_imports
-                    .push(module_import_result.clone());
+                if let Some(module_import_result) = module_import_result {
+                    self.symbol_table
+                        .star_imports
+                        .push(module_import_result.clone());
+                }
                 continue;
             }
             let declaration_path = DeclarationPath::new(
@@ -373,7 +359,7 @@ impl<'a> TraversalVisitor for SemanticAnalyzer<'a> {
                 import_node: None,
                 symbol_name: Some(alias.name.clone()),
                 module_name: None,
-                import_result: module_import_result.clone(),
+                import_result: module_import_result.cloned(),
             });
 
             let flags = SymbolFlags::empty();
@@ -473,7 +459,7 @@ impl<'a> TraversalVisitor for SemanticAnalyzer<'a> {
         }
     }
 
-    fn visit_function_def(&mut self, f: &parser::ast::FunctionDef) {
+    fn visit_function_def(&mut self, f: &Arc<parser::ast::FunctionDef>) {
         let declaration_path = DeclarationPath::new(
             self.symbol_table.id,
             f.node,
@@ -500,7 +486,7 @@ impl<'a> TraversalVisitor for SemanticAnalyzer<'a> {
             // }
         }
         self.symbol_table.push_scope(SymbolTableScope::new(
-            crate::symbol_table::SymbolTableType::Function(f.clone()),
+            crate::symbol_table::SymbolTableType::Function(Arc::clone(f)),
             f.name.clone(),
             f.node.start,
             self.symbol_table.current_scope_id,
@@ -578,7 +564,7 @@ impl<'a> TraversalVisitor for SemanticAnalyzer<'a> {
 
     fn visit_async_function_def(&mut self, _f: &parser::ast::AsyncFunctionDef) {
         self.symbol_table.push_scope(SymbolTableScope::new(
-            SymbolTableType::Function(_f.to_function_def()),
+            SymbolTableType::Function(Arc::new(_f.to_function_def())),
             _f.name.clone(),
             _f.node.start,
             self.symbol_table.current_scope_id,
@@ -586,7 +572,7 @@ impl<'a> TraversalVisitor for SemanticAnalyzer<'a> {
         self.symbol_table.exit_scope();
     }
 
-    fn visit_class_def(&mut self, c: &parser::ast::ClassDef) {
+    fn visit_class_def(&mut self, c: &Arc<parser::ast::ClassDef>) {
         self.symbol_table.push_scope(SymbolTableScope::new(
             SymbolTableType::Class(c.clone()),
             c.name.clone(),
@@ -631,7 +617,7 @@ impl<'a> TraversalVisitor for SemanticAnalyzer<'a> {
                 .to_str()
                 .unwrap()
                 .to_string(),
-            c.clone(),
+            Arc::clone(c),
             class_declaration_path,
             class_body_scope_id,
         ));
@@ -777,17 +763,12 @@ pub fn get_member_access_info(
     let value_name = &name.id;
 
     let current_scope = symbol_table.current_scope();
-    let FunctionDef {
-        args,
-        decorator_list,
-        ..
-    } = current_scope.kind.as_function()?;
-
+    let function_def = current_scope.kind.as_function()?;
     let parent_scope = symbol_table.parent_scope(symbol_table.current_scope())?;
 
     let enclosing_class = parent_scope.kind.as_class()?;
 
-    let first_arg = args.args.first()?;
+    let first_arg = function_def.args.args.first()?;
 
     let is_value_equal_to_first_arg = value_name == first_arg.arg.as_str();
 
@@ -797,7 +778,7 @@ pub fn get_member_access_info(
 
     // Check if one of the decorators is a classmethod or staticmethod
     let mut is_class_member = false;
-    for decorator in decorator_list {
+    for decorator in function_def.decorator_list.iter() {
         if let parser::ast::Expression::Call(call) = decorator {
             if let Some(name) = call.func.as_name() {
                 if name.id == "classmethod" {

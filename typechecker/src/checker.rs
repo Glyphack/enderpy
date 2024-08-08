@@ -8,10 +8,7 @@ use enderpy_python_parser::ast::{self, *};
 use super::{type_evaluator::TypeEvaluator, types::PythonType};
 use crate::symbol_table::Id;
 use crate::types::ModuleRef;
-use crate::{
-    ast_visitor::TraversalVisitor, diagnostic::CharacterSpan, file::EnderpyFile,
-    symbol_table::SymbolTable,
-};
+use crate::{ast_visitor::TraversalVisitor, diagnostic::CharacterSpan, symbol_table::SymbolTable};
 use rust_lapper::{Interval, Lapper};
 
 #[derive(Clone, Debug)]
@@ -179,9 +176,7 @@ impl<'a> TraversalVisitor for TypeChecker<'a> {
         self.types.insert(Interval {
             start,
             stop,
-            val: PythonType::Module(ModuleRef {
-                module_path: PathBuf::new(),
-            }),
+            val: PythonType::Module(ModuleRef { module_id: Id(0) }),
         });
     }
 

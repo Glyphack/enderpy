@@ -3,11 +3,12 @@ use rust_lapper::{Interval, Lapper};
 
 use std::fs;
 use std::path::Path;
+use std::sync::Arc;
 use std::{collections::HashMap, fmt::Display, path::PathBuf};
 
 use enderpy_python_parser::ast::{self, ClassDef, FunctionDef, Node};
 
-use crate::ruff_python_import_resolver::import_result::ImportResult;
+use crate::build::ResolvedImport;
 
 #[derive(Debug, Clone, PartialEq, Eq, Copy, Hash)]
 pub struct Id(pub u32);
@@ -23,7 +24,7 @@ pub struct SymbolTable {
 
     pub file_path: PathBuf,
     pub scope_starts: Lapper<u32, u32>,
-    pub star_imports: Vec<ImportResult>,
+    pub star_imports: Vec<Arc<ResolvedImport>>,
     pub id: Id,
 }
 
@@ -137,6 +138,11 @@ impl SymbolTable {
         &self,
         lookup_request: &LookupSymbolRequest,
     ) -> Option<&SymbolTableNode> {
+        log::debug!(
+            "looking for symbol {:?} in symbol table with scopes: {:?}",
+            lookup_request,
+            self.file_path
+        );
         let mut scope = match lookup_request.scope {
             Some(scope_id) => self.get_scope_by_id(scope_id).expect("no scope found"),
             None => self.current_scope(),
@@ -290,8 +296,8 @@ pub enum SymbolTableType {
     /// BUILTIN scope is used for builtins like len, print, etc.
     BUILTIN,
     Module,
-    Class(ClassDef),
-    Function(FunctionDef),
+    Class(Arc<ClassDef>),
+    Function(Arc<FunctionDef>),
 }
 
 bitflags! {
@@ -377,13 +383,6 @@ impl Declaration {
             Declaration::TypeAlias(t) => &t.declaration_path,
         }
     }
-
-    // pub fn get_symbol_table<'a>(&self, symbol_tables: &'a [SymbolTable]) -> &'a SymbolTable {
-    //     let symbol_table = symbol_tables
-    //         .iter()
-    //         .find(|symbol_table| symbol_table.id == self.declaration_path().symbol_table_id);
-    //     symbol_table.expect("Symbol table not found for this symbol node: {self:?}")
-    // }
 }
 
 #[derive(Debug, Clone)]
@@ -397,7 +396,7 @@ pub struct Variable {
 #[derive(Debug, Clone)]
 pub struct Function {
     pub declaration_path: DeclarationPath,
-    pub function_node: ast::FunctionDef,
+    pub function_node: Arc<ast::FunctionDef>,
     pub is_method: bool,
     pub is_generator: bool,
     /// return statements that are reachable in the top level function body
@@ -432,7 +431,7 @@ pub struct Class {
     // These classes have their behavior defined in PEPs so we need to handle them differently
     pub special: bool,
     /// Special classes have a generic class node. So this node is null for special classes
-    pub class_node: Option<ClassDef>,
+    pub class_node: Option<Arc<ClassDef>>,
     pub class_scope_id: u32,
     pub qual_name: String,
 }
@@ -440,7 +439,7 @@ pub struct Class {
 impl Class {
     pub fn new(
         mut module_name: String,
-        class_node: ast::ClassDef,
+        class_node: Arc<ast::ClassDef>,
         declaration_path: DeclarationPath,
         class_scope_id: u32,
     ) -> Self {
@@ -503,7 +502,7 @@ pub struct Alias {
     /// e.g. import os.path -> os.path is the module name
     pub module_name: Option<String>,
     /// The result of the import
-    pub import_result: ImportResult,
+    pub import_result: Option<Arc<ResolvedImport>>,
 }
 
 #[derive(Debug, Clone)]
@@ -552,7 +551,10 @@ impl SymbolTableNode {
 impl Display for SymbolTable {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         if !self.star_imports.is_empty() {
-            writeln!(f, "{:?}", self.star_imports)?;
+            writeln!(f, "Star imports:")?;
+            for import in self.star_imports.iter() {
+                writeln!(f, "{:?}", import.resolved_ids)?;
+            }
         }
         let mut sorted_scopes = self.scopes.iter().collect::<Vec<&SymbolTableScope>>();
         sorted_scopes.sort_by(|a, b| a.name.cmp(&b.name));

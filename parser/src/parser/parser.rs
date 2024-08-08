@@ -4,7 +4,7 @@ use core::panic;
 /// For example star expressions are defined slightly differently in python grammar and references.
 /// So there might be duplicates of both. Try to migrate the wrong names to how they are called in:
 /// https://docs.python.org/3/reference/grammar.html
-use std::vec;
+use std::{sync::Arc, vec};
 
 use miette::Result;
 
@@ -643,8 +643,8 @@ impl<'a> Parser<'a> {
                 type_params,
             })))
         } else {
-            Ok(Statement::FunctionDef(Box::new(FunctionDef {
-                node: self.finish_node_chomped(node),
+            Ok(Statement::FunctionDef(Arc::new(FunctionDef {
+                node: self.finish_node(node),
                 name,
                 args,
                 body,
@@ -707,7 +707,7 @@ impl<'a> Parser<'a> {
         self.expect(Kind::Colon)?;
         let body = self.parse_suite()?;
 
-        Ok(Statement::ClassDef(Box::new(ClassDef {
+        Ok(Statement::ClassDef(Arc::new(ClassDef {
             node: self.finish_node(node),
             name,
             bases,
