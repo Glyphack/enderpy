@@ -177,6 +177,8 @@ impl<'a> Parser<'a> {
             self.prev_nonwhitespace_token_end = self.prev_token_end;
         }
         self.cur_token = token;
+        // println!("{:?} {:?} {:?}", self.cur_token, self.to_row_col(self.cur_token.start), self.to_row_col(self.cur_token.end));
+        // println!("{}", std::backtrace::Backtrace::force_capture());
         if self.cur_kind() == Kind::Comment {
             self.advance();
         }
@@ -2863,7 +2865,7 @@ impl<'a> Parser<'a> {
         let value = self.cur_token().value.to_string();
         self.expect(Kind::Identifier)?;
         Ok(Expression::Name(Box::new(Name {
-            node: self.finish_node(node),
+            node: self.finish_node_chomped(node),
             id: value,
             parenthesized: false,
         })))
