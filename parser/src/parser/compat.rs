@@ -969,12 +969,17 @@ mod tests {
 
     #[test]
     fn test_simple_compat() {
-        let source = r#"
-def x(a: int) -> int:
-    return 1 + 1
-b = x(1)
-print(b)
+//         let source = r#"
+// def x(a: int) -> int:
+//     return 1 + 1
+// b = x(1)
+// print(b)
+// "#;
+
+        let source = r#"(a
+, b, c)
 "#;
+
         let enderpy_ast = parse_enderpy_source(source).unwrap();
         let python_ast = parse_python_source(source).unwrap();
         assert_ast_eq(&python_ast, &enderpy_ast, source);
@@ -1086,10 +1091,10 @@ print(b)
         python_parser_test_ast(&[
             "(a, b, c)",
             // TODO ast_python: Enderpy doesn't handle newlines within a nested context.
-            // "(a,
-            // b, c)",
-            // "(a
-            // , b, c)",
+            "(a,
+            b, c)",
+            "(a
+            , b, c)",
             // "(a,
             // b,
             //     c)",

@@ -173,7 +173,10 @@ impl<'a> Parser<'a> {
         }
 
         self.prev_token_end = self.cur_token.end;
-        if !matches!(self.cur_token.kind, Kind::WhiteSpace | Kind::NewLine | Kind::Dedent) {
+        if !matches!(
+            self.cur_token.kind,
+            Kind::WhiteSpace | Kind::NewLine | Kind::Dedent
+        ) {
             self.prev_nonwhitespace_token_end = self.prev_token_end;
         }
         self.cur_token = token;
@@ -2858,7 +2861,7 @@ impl<'a> Parser<'a> {
         let value = self.cur_token().value.to_string();
         self.expect(Kind::Identifier)?;
         Ok(Expression::Name(Box::new(Name {
-            node: self.finish_node(node),
+            node: self.finish_node_chomped(node),
             id: value,
             parenthesized: false,
         })))
