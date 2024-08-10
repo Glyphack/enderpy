@@ -1,13 +1,13 @@
-use std::io::Write;
-use std::convert::From;
-use std::str::FromStr;
 use miette::{bail, IntoDiagnostic, Result};
 use serde_json::Number;
 use serde_json::{json, Value};
+use std::convert::From;
+use std::io::Write;
+use std::str::FromStr;
 
-use crate::Parser;
 use crate::ast::*;
 use crate::runpython::{default_python_path, spawn_python_script_command};
+use crate::Parser;
 
 fn parse_python_source(source: &str) -> Result<Value> {
     let mut process = spawn_python_script_command(
@@ -24,7 +24,8 @@ fn parse_python_source(source: &str) -> Result<Value> {
     }
     // Get process stdout and parse result.
     let output = process.wait_with_output().into_diagnostic()?;
-    let mut ast = serde_json::from_str(String::from_utf8_lossy(&output.stdout).as_ref()).into_diagnostic()?;
+    let mut ast =
+        serde_json::from_str(String::from_utf8_lossy(&output.stdout).as_ref()).into_diagnostic()?;
     remove_unimplemented_attributes(&mut ast);
     Ok(ast)
 }
@@ -37,15 +38,15 @@ fn remove_unimplemented_attributes(value: &mut Value) {
             for (_, v) in map.iter_mut() {
                 remove_unimplemented_attributes(v);
             }
-        },
+        }
         Value::Array(vec) => {
             for v in vec.iter_mut() {
                 remove_unimplemented_attributes(v);
             }
-        },
+        }
         _ => {
             // Nothing to do for other value types.
-        },
+        }
     };
 }
 
@@ -75,19 +76,17 @@ impl<T: AsPythonCompat> AsNullablePythonCompat<T> for Option<T> {
 }
 
 macro_rules! json_python_compat_node {
-    ($name:literal, $instance:ident, $parser:ident, $other_fields:tt) => {
-        {
-            let mut node = json!($other_fields);
-            let (start_row, start_col) = $parser.to_row_col($instance.node.start);
-            let (end_row, end_col) = $parser.to_row_col($instance.node.end);
-            node["_type"] = json!($name);
-            node["lineno"] = json!(start_row + 1);
-            node["col_offset"] = json!(start_col);
-            node["end_lineno"] = json!(end_row + 1);
-            node["end_col_offset"] = json!(end_col);
-            node
-        }
-    };
+    ($name:literal, $instance:ident, $parser:ident, $other_fields:tt) => {{
+        let mut node = json!($other_fields);
+        let (start_row, start_col, end_row, end_col) =
+            $parser.to_row_col($instance.node.start, $instance.node.end);
+        node["_type"] = json!($name);
+        node["lineno"] = json!(start_row + 1);
+        node["col_offset"] = json!(start_col);
+        node["end_lineno"] = json!(end_row + 1);
+        node["end_col_offset"] = json!(end_col);
+        node
+    }};
 }
 
 impl AsPythonCompat for Module {
@@ -112,7 +111,7 @@ impl AsPythonCompat for Statement {
                     "end_col_offset": expr["end_col_offset"],
                     "value": expr,
                 })
-            },
+            }
             Statement::Import(i) => i.as_python_compat(parser),
             Statement::ImportFrom(i) => i.as_python_compat(parser),
             Statement::AssignStatement(a) => a.as_python_compat(parser),
@@ -349,10 +348,16 @@ impl AsPythonCompat for ConstantValue {
             ConstantValue::Bool(v) => json!(v),
             ConstantValue::Str(v) => json!(v),
             ConstantValue::Bytes(v) => json!(v),
-            ConstantValue::Tuple(v) => json!(v.iter().map(|cons| cons.as_python_compat(parser)).collect::<Vec<_>>()),
+            ConstantValue::Tuple(v) => json!(v
+                .iter()
+                .map(|cons| cons.as_python_compat(parser))
+                .collect::<Vec<_>>()),
             ConstantValue::Int(v) => Value::Number(Number::from_str(v).unwrap()),
             ConstantValue::Float(v) => Value::Number(Number::from_str(v).unwrap()),
-            ConstantValue::Complex { real: _real, imaginary } => json!(imaginary),
+            ConstantValue::Complex {
+                real: _real,
+                imaginary,
+            } => json!(imaginary),
         }
     }
 }
@@ -862,12 +867,18 @@ impl AsPythonCompat for MatchPattern {
         match self {
             MatchPattern::MatchValue(val) => val.as_python_compat(parser),
             MatchPattern::MatchSingleton(expr) => expr.as_python_compat(parser),
-            MatchPattern::MatchSequence(pats) => json!(pats.iter().map(|pat| pat.as_python_compat(parser)).collect::<Vec<_>>()),
+            MatchPattern::MatchSequence(pats) => json!(pats
+                .iter()
+                .map(|pat| pat.as_python_compat(parser))
+                .collect::<Vec<_>>()),
             MatchPattern::MatchStar(expr) => expr.as_python_compat(parser),
             MatchPattern::MatchMapping(map) => map.as_python_compat(parser),
             MatchPattern::MatchAs(mas) => mas.as_python_compat(parser),
             MatchPattern::MatchClass(cls) => cls.as_python_compat(parser),
-            MatchPattern::MatchOr(pats) => json!(pats.iter().map(|pat| pat.as_python_compat(parser)).collect::<Vec<_>>()),
+            MatchPattern::MatchOr(pats) => json!(pats
+                .iter()
+                .map(|pat| pat.as_python_compat(parser))
+                .collect::<Vec<_>>()),
         }
     }
 }
@@ -957,6 +968,7 @@ impl AsPythonCompat for TypeAlias {
 
 #[cfg(test)]
 mod tests {
+    use super::{parse_enderpy_source, parse_python_source};
     use assert_json_diff::assert_json_matches_no_panic;
     use serde_json::Value;
     use tabled::{
@@ -965,16 +977,15 @@ mod tests {
         settings::{Style, Width},
     };
     use terminal_size::{terminal_size, Width as TerminalWidth};
-    use super::{parse_enderpy_source, parse_python_source};
 
     #[test]
     fn test_simple_compat() {
-//         let source = r#"
-// def x(a: int) -> int:
-//     return 1 + 1
-// b = x(1)
-// print(b)
-// "#;
+        //         let source = r#"
+        // def x(a: int) -> int:
+        //     return 1 + 1
+        // b = x(1)
+        // print(b)
+        // "#;
 
         let source = r#"(a
 , b, c)
@@ -1067,7 +1078,7 @@ mod tests {
             "a and b",
             // TODO ast_python: Python parses this as a BoolOp with 3 values.
             // i.e. {"op": "or", "values": ["a", "b", "c"]}
-            // Enderpy parses this as a nested set of BoolOps. 
+            // Enderpy parses this as a nested set of BoolOps.
             // i.e. {"op": "or", "values": ["a", {"op": "or", "values": ["b", "c"]}]}
             // I'm not sure which is correct.
             // "a or b or c",
@@ -1098,8 +1109,8 @@ mod tests {
             // "(a,
             // b,
             //     c)",
-//             "(a,
-// )",
+            //             "(a,
+            // )",
             "(a, b, c,)",
         ]);
     }
@@ -1128,7 +1139,6 @@ mod tests {
     fn test_subscript() {
         python_parser_test_ast(&["a[1]", "a.b[1]"]);
     }
-
 
     #[test]
     fn parse_call() {
@@ -1178,9 +1188,9 @@ mod tests {
             // 'b')",
             // "('a'
             // 'b', 'c')",
-//             "('a'
-//                 'b'
-// 'c')",
+            //             "('a'
+            //                 'b'
+            // 'c')",
             // TODO ast_python: Python evaluates this as "ac". Enderpy creates 2 constants.
             // "f'a' 'c'",
             // TODO ast_python: Python evaluates this as "abc". Enderpy creates 3 constants.
@@ -1289,7 +1299,7 @@ except *Exception as e:
                 let test_case = std::fs::read_to_string($test_file).unwrap();
                 python_parser_test_ast(&[test_case.as_str()]);
             }
-        }
+        };
     }
 
     // parser_test!(test_functions, "test_data/inputs/functions.py");
@@ -1345,7 +1355,6 @@ except *Exception as e:
             &enderpy_ast,
             assert_json_diff::Config::new(assert_json_diff::CompareMode::Strict),
         ) {
-
             let mut table_builder = Builder::default();
             table_builder.push_record(["Python AST", "Enderpy AST"]);
             table_builder.push_record([
