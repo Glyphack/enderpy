@@ -4,10 +4,10 @@ description: "# Unindent does not match any outer indentation level\n# if True:\
 input_file: parser/test_data/inputs/indentation.py
 ---
 0,53: Comment   (Str("# Unindent does not match any outer indentation level"))
-53,54: NewLine   (None)
+53,54: NL   (None)
 54,64: Comment   (Str("# if True:"))
-64,65: NewLine   (None)
+64,65: NL   (None)
 65,79: Comment   (Str("#         pass"))
-79,80: NewLine   (None)
+79,80: NL   (None)
 80,90: Comment   (Str("#     pass"))
-90,91: NewLine   (None)
+90,91: NL   (None)

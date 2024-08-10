@@ -95,6 +95,6 @@ input_file: parser/test_data/inputs/from_import.py
 244,245: Identifier   (Str("b"))
 245,246: NewLine   (None)
 246,289: Comment   (Str("# TODO(parser): enable after error handling"))
-289,290: NewLine   (None)
+289,290: NL   (None)
 290,300: Comment   (Str("# from ..."))
-300,301: NewLine   (None)
+300,301: NL   (None)

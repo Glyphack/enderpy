@@ -1,11 +1,12 @@
 use std::{
-    fs, io,
+    fs::{self, File},
+    io::{self, Read},
     path::{Path, PathBuf},
 };
 
 use clap::Parser as ClapParser;
 use cli::{Cli, Commands};
-use enderpy_python_parser::{Lexer, Parser};
+use enderpy_python_parser::{get_row_col_position, Lexer, Parser};
 use enderpy_python_type_checker::{build::BuildManager, find_project_root, settings::Settings};
 use miette::{bail, IntoDiagnostic, Result};
 
@@ -14,7 +15,7 @@ mod cli;
 fn main() -> Result<()> {
     let cli = Cli::parse();
     match &cli.command {
-        Commands::Tokenize { file } => tokenize(file),
+        Commands::Tokenize {} => tokenize(),
         Commands::Parse { file } => parse(file),
         Commands::Check { path } => check(path),
         Commands::Watch => watch(),
@@ -70,22 +71,25 @@ fn get_typeshed_path() -> Result<PathBuf> {
     Ok(path.join("typeshed"))
 }
 
-fn tokenize(file: &PathBuf) -> Result<()> {
-    let source = fs::read_to_string(file).into_diagnostic()?;
+fn tokenize() -> Result<()> {
+    let cli = Cli::parse();
+    let mut source = String::new();
+    match cli.file {
+        Some(path) => {
+            File::open(path)
+                .into_diagnostic()?
+                .read_to_string(&mut source)
+                .into_diagnostic()?;
+        }
+        None => {
+            io::stdin().read_to_string(&mut source).into_diagnostic()?;
+        }
+    }
     let mut lexer = Lexer::new(&source);
     let tokens = lexer.lex();
     for token in tokens {
-        let (start_line_num, start_line_offset) =
-            match lexer.line_starts.binary_search(&token.start) {
-                Ok(idx) => (idx, lexer.line_starts[idx]),
-                Err(idx) => (idx - 1, lexer.line_starts[idx - 1]),
-            };
-        let start_line_column = token.start - start_line_offset;
-        let (end_line_num, end_line_offset) = match lexer.line_starts.binary_search(&token.end) {
-            Ok(idx) => (idx, lexer.line_starts[idx]),
-            Err(idx) => (idx - 1, lexer.line_starts[idx - 1]),
-        };
-        let end_line_column = token.end - end_line_offset;
+        let (start_line_num, start_line_column, end_line_num, end_line_column) =
+            get_row_col_position(token.start, token.end, &lexer.line_starts);
         println!(
             "{}-{}, {}-{}:   {} {} {} {}",
             start_line_num,

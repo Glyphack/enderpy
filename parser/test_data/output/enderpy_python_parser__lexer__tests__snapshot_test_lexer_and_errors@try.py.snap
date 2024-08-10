@@ -4,7 +4,7 @@ description: "# in some cases last price or adj price is undefined\ntry:\n    la
 input_file: parser/test_data/inputs/try.py
 ---
 0,52: Comment   (Str("# in some cases last price or adj price is undefined"))
-52,53: NewLine   (None)
+52,53: NL   (None)
 53,56: Try   (None)
 56,57: :   (None)
 57,58: NewLine   (None)
@@ -21,7 +21,7 @@ input_file: parser/test_data/inputs/try.py
 96,97: NewLine   (None)
 97,97: Dedent   (Indent(1))
 97,134: Comment   (Str("# when instead of number value is `F`"))
-134,135: NewLine   (None)
+134,135: NL   (None)
 135,141: Except   (None)
 142,143: (   (None)
 143,153: Identifier   (Str("ValueError"))
@@ -87,8 +87,8 @@ input_file: parser/test_data/inputs/try.py
 373,374: =   (None)
 375,379: None   (None)
 379,380: NewLine   (None)
-380,381: NewLine   (None)
-381,382: NewLine   (None)
+380,381: NL   (None)
+381,382: NL   (None)
 382,382: Dedent   (Indent(1))
 382,385: Try   (None)
 385,386: :   (None)

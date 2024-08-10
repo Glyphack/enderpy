@@ -61,6 +61,11 @@ pub struct Lexer<'a> {
     /// Array of all line starts offsets. Starts from line 0
     pub line_starts: Vec<u32>,
     peak_mode: bool,
+
+    /// Previous token was a Newline token
+    non_logical_line_state: bool,
+    /// Cursor at position after the indentation in line
+    indented: bool,
 }
 
 impl<'a> Lexer<'a> {
@@ -74,8 +79,10 @@ impl<'a> Lexer<'a> {
             nesting: 0,
             tokenization_mode_stack: vec![],
             next_token_is_dedent: 0,
-            line_starts: vec![],
+            line_starts: vec![0],
             peak_mode: false,
+            non_logical_line_state: true,
+            indented: false,
         }
     }
 
@@ -125,8 +132,15 @@ impl<'a> Lexer<'a> {
             return self.next_token();
         }
 
+        if kind != Kind::Comment && kind != Kind::NL && kind != Kind::Dedent {
+            self.non_logical_line_state = kind == Kind::NewLine;
+        }
         let value = self.parse_token_value(kind, start);
         let end = self.current;
+
+        if kind == Kind::NewLine || kind == Kind::NL {
+            self.line_starts.push(self.current);
+        }
 
         Token {
             kind,
@@ -143,8 +157,12 @@ impl<'a> Lexer<'a> {
         let nesting = self.nesting;
         let start_of_line = self.start_of_line;
         let next_token_is_dedent = self.next_token_is_dedent;
+        let prev_token_newline = self.non_logical_line_state;
+        let indented = self.indented;
         self.peak_mode = true;
         let token = self.next_token();
+        self.indented = indented;
+        self.non_logical_line_state = prev_token_newline;
         self.peak_mode = false;
         self.current = current;
         self.current_line = current_line;
@@ -255,10 +273,9 @@ impl<'a> Lexer<'a> {
     }
 
     fn next_kind(&mut self) -> Result<Kind, LexError> {
-        if self.start_of_line {
-            self.line_starts.push(self.current);
+        if self.start_of_line && self.nesting == 0 {
             if let Some(indent_kind) = self.match_indentation()? {
-                self.start_of_line = false; // WHY!?
+                self.start_of_line = false;
                 return Ok(indent_kind);
             }
         }
@@ -510,7 +527,11 @@ impl<'a> Lexer<'a> {
                 '\n' | '\r' => {
                     self.current_line += 1;
                     self.start_of_line = true;
-                    return Ok(Kind::NewLine);
+                    if self.nesting == 0 && (!self.non_logical_line_state) {
+                        return Ok(Kind::NewLine);
+                    } else {
+                        return Ok(Kind::NL);
+                    }
                 }
                 c if match_whitespace(c) => return Ok(Kind::WhiteSpace),
                 _ => {}
@@ -1064,15 +1085,6 @@ impl<'a> Lexer<'a> {
         }
         count
     }
-
-    pub fn to_row_col(&self, source_offset: u32) -> (u32, u32) {
-        let (line_row, line_offset) = match self.line_starts.binary_search(&source_offset) {
-            Ok(idx) => (idx, self.line_starts[idx]),
-            Err(idx) => (idx - 1, self.line_starts[idx - 1]),
-        };
-        let line_column = source_offset - line_offset;
-        (u32::try_from(line_row).unwrap(), line_column)
-    }
 }
 
 fn match_whitespace(c: char) -> bool {
@@ -1088,6 +1100,26 @@ mod tests {
     use super::{Kind, Lexer};
     use crate::error::LexError;
 
+    fn snapshot_test_lexer_and_errors(test_case: &str) {
+        let mut lexer = Lexer::new(test_case);
+        let mut tokens = vec![];
+        let mut snapshot = String::from("");
+        loop {
+            let token = lexer.next_token();
+            if token.kind == Kind::Eof {
+                break;
+            }
+            snapshot += format!("{}\n", token).as_str();
+            tokens.push(token);
+        }
+        let mut settings = insta::Settings::clone_current();
+        settings.set_snapshot_path("../../test_data/output/");
+        settings.set_description(test_case.to_string());
+        settings.set_omit_expression(true);
+        settings.bind(|| {
+            insta::assert_snapshot!(snapshot);
+        });
+    }
     fn snapshot_test_lexer(snap_name: &str, inputs: &[&str]) -> Result<(), LexError> {
         for (i, test_input) in inputs.iter().enumerate() {
             let mut lexer = Lexer::new(test_input);
@@ -1416,27 +1448,6 @@ def",
             &["\"hello", "'hello", "'''hello''", "'''hello'"],
         )
         .unwrap();
-    }
-
-    fn snapshot_test_lexer_and_errors(test_case: &str) {
-        let mut lexer = Lexer::new(test_case);
-        let mut tokens = vec![];
-        let mut snapshot = String::from("");
-        loop {
-            let token = lexer.next_token();
-            if token.kind == Kind::Eof {
-                break;
-            }
-            snapshot += format!("{}\n", token).as_str();
-            tokens.push(token);
-        }
-        let mut settings = insta::Settings::clone_current();
-        settings.set_snapshot_path("../../test_data/output/");
-        settings.set_description(test_case.to_string());
-        settings.set_omit_expression(true);
-        settings.bind(|| {
-            insta::assert_snapshot!(snapshot);
-        });
     }
 
     #[test]

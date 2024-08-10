@@ -1,8 +1,4 @@
-use miette::{bail, IntoDiagnostic, Result};
 use serde::{Deserialize, Serialize};
-use std::io::Write;
-
-use crate::runpython::{default_python_path, spawn_python_script_command};
 
 // Derived from:
 // https://github.com/python/cpython/blob/main/Lib/token.py
@@ -98,37 +94,44 @@ pub struct PythonToken {
     end: (u32, u32),
 }
 
-fn lex_python_source(source: &str) -> Result<Vec<PythonToken>> {
-    let mut process = spawn_python_script_command(
-        "parser/lex_python.py",
-        vec!["--stdin", "--output-format", "json"],
-        default_python_path()?,
-    )?;
-
-    // Get process stdin and write the input string.
-    if let Some(mut stdin) = process.stdin.take() {
-        stdin.write_all(source.as_bytes()).into_diagnostic()?;
-    } else {
-        bail!("Failed to open stdin when running `parser/lex_python.py`");
-    }
-    // Get process stdout and parse result.
-    let output = process.wait_with_output().into_diagnostic()?;
-    let python_tokens: Vec<PythonToken> =
-        serde_json::from_str(String::from_utf8_lossy(&output.stdout).as_ref()).into_diagnostic()?;
-    Ok(python_tokens)
-}
-
 #[cfg(test)]
 mod tests {
-    use super::{lex_python_source, PythonKind, PythonToken};
+
+    use super::*;
+    use crate::get_row_col_position;
     use crate::token::Kind;
     use crate::{lexer::Lexer, token::Token};
+    use miette::{bail, IntoDiagnostic, Result};
+    use std::io::Write;
     use tabled::{
         builder::Builder,
         settings::peaker::PriorityMax,
         settings::{Style, Width},
     };
+
+    use crate::runpython::{default_python_path, spawn_python_script_command};
     use terminal_size::{terminal_size, Width as TerminalWidth};
+
+    fn lex_python_source(source: &str) -> Result<Vec<PythonToken>> {
+        let mut process = spawn_python_script_command(
+            "parser/lex_python.py",
+            vec!["--stdin", "--output-format", "json"],
+            default_python_path()?,
+        )?;
+
+        // Get process stdin and write the input string.
+        if let Some(mut stdin) = process.stdin.take() {
+            stdin.write_all(source.as_bytes()).into_diagnostic()?;
+        } else {
+            bail!("Failed to open stdin when running `parser/lex_python.py`");
+        }
+        // Get process stdout and parse result.
+        let output = process.wait_with_output().into_diagnostic()?;
+        let python_tokens: Vec<PythonToken> =
+            serde_json::from_str(String::from_utf8_lossy(&output.stdout).as_ref())
+                .into_diagnostic()?;
+        Ok(python_tokens)
+    }
 
     #[test]
     fn test_simple_compat() {
@@ -168,8 +171,6 @@ print(a)
             ";",
             "@",
             "=",
-            // TODO lex_python: Python lexer chokes on single backslash.
-            // "\\",
             "#",
             "$",
             "?",
@@ -319,11 +320,9 @@ print(a)
 
     #[test]
     fn test_lex_other() {
-        python_tokenize_test_lexer(
-            &["(a,
-
-)"],
-        );
+        python_tokenize_test_lexer(&["(a,
+          
+)"]);
     }
 
     #[test]
@@ -389,6 +388,17 @@ def",
             "...",
             "def a():
     ...",
+        ]);
+    }
+
+    #[test]
+    fn test_logical_and_physical_lines() {
+        python_tokenize_test_lexer(&[
+            // This case the first line should have physical line
+            "
+a: int = 1
+print(a)
+",
         ]);
     }
 
@@ -668,9 +678,7 @@ def",
             PythonKind::FstringMiddle => enderpy_token.kind == Kind::FStringMiddle,
             PythonKind::FstringEnd => enderpy_token.kind == Kind::FStringEnd,
             PythonKind::Comment => enderpy_token.kind == Kind::Comment,
-            // In Python, this represents a line break within a single statement. We don't
-            // currently make this distinction.
-            PythonKind::NL => enderpy_token.kind == Kind::NewLine,
+            PythonKind::NL => enderpy_token.kind == Kind::NL,
             PythonKind::ErrorToken => {
                 match python_token.value.as_str() {
                     // Python 3.11 chokes on these tokens.
@@ -697,7 +705,8 @@ def",
                 || matches_python_op_token(python_token.value.as_str(), &enderpy_token.kind)
                 || matches_python_indent_dedent_token(&python_token.kind, &enderpy_token.kind)
                 || (python_token.kind == PythonKind::EndMarker && enderpy_token.kind == Kind::Eof)
-                || (python_token.value.as_str() == "\n" && enderpy_token.kind == Kind::NewLine)
+                || (python_token.value.as_str() == "\n"
+                    && (matches!(enderpy_token.kind, Kind::NewLine | Kind::NL)))
                 || python_token_value == enderpy_token_value;
         if !value_matches {
             return Some(TokenMismatch::WrongValue(
@@ -708,19 +717,8 @@ def",
             ));
         }
 
-        let (mut enderpy_start_row, enderpy_start_col) = lexer.to_row_col(enderpy_token.start);
-        let (mut enderpy_end_row, mut enderpy_end_col) = lexer.to_row_col(enderpy_token.end);
-        // Python reserves the first row for a file encoding when detokenizing, so we add one
-        // to our row values to match.
-        enderpy_start_row += 1;
-        enderpy_end_row += 1;
-        if enderpy_token.kind == Kind::NewLine {
-            // enderpy has newline tokens span from the end of the first line to the beginning of
-            // the next line.
-            // Python adds the token to the end of the first line.
-            enderpy_end_row = enderpy_start_row;
-            enderpy_end_col = enderpy_start_col + 1;
-        }
+        let (enderpy_start_row, enderpy_start_col, enderpy_end_row, enderpy_end_col) =
+            get_row_col_position(enderpy_token.start, enderpy_token.end, &lexer.line_starts);
         let python_token_start = python_token.start;
         let python_token_end = python_token.end;
         if enderpy_start_row != python_token_start.0
