@@ -11,6 +11,7 @@ use miette::Result;
 use super::{concat_string_exprs, is_at_compound_statement, is_iterable, map_unary_operator};
 use crate::{
     error::ParsingError,
+    get_row_col_position,
     lexer::Lexer,
     parser::{ast::*, extract_string_inside},
     token::{Kind, Token, TokenValue},
@@ -173,7 +174,10 @@ impl<'a> Parser<'a> {
         }
 
         self.prev_token_end = self.cur_token.end;
-        if !matches!(self.cur_token.kind, Kind::WhiteSpace | Kind::NewLine | Kind::Dedent) {
+        if !matches!(
+            self.cur_token.kind,
+            Kind::WhiteSpace | Kind::NewLine | Kind::Dedent
+        ) {
             self.prev_nonwhitespace_token_end = self.prev_token_end;
         }
         self.cur_token = token;
@@ -3503,8 +3507,8 @@ impl<'a> Parser<'a> {
         }
     }
 
-    pub fn to_row_col(&self, source_offset: u32) -> (u32, u32) {
-        self.lexer.to_row_col(source_offset)
+    pub fn to_row_col(&self, start: u32, end: u32) -> (u32, u32, u32, u32) {
+        get_row_col_position(start, end, &self.lexer.line_starts)
     }
 }
 
