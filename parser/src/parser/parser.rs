@@ -1598,11 +1598,11 @@ impl<'a> Parser<'a> {
     // https://docs.python.org/3/reference/expressions.html#assignment-expressions
     fn parse_named_expression(&mut self) -> Result<Expression, ParsingError> {
         let node = self.start_node();
+        // TODO: Maybe this walrus check is redundant
         if self.at(Kind::Identifier) && matches!(self.peek_kind()?, Kind::Walrus) {
             let identifier = self.cur_token().value.to_string();
             let mut identifier_node = self.start_node();
-            identifier_node = self.finish_node(identifier_node);
-            self.expect(Kind::Identifier)?;
+            self.bump_any();
             identifier_node = self.finish_node(identifier_node);
             if self.eat(Kind::Walrus) {
                 let value = self.parse_expression()?;
@@ -1622,7 +1622,6 @@ impl<'a> Parser<'a> {
                 parenthesized: false,
             })));
         }
-
         self.parse_expression()
     }
 
@@ -2938,14 +2937,14 @@ impl<'a> Parser<'a> {
         // it, it's a tuple
         let mut seen_comma = false;
         elements.push(first_elm);
-        while !self.at(Kind::Eof) && !self.at(Kind::RightParen) {
+        while !self.at(Kind::Eof) && !self.eat(Kind::RightParen) {
             self.expect(Kind::Comma)?;
+            seen_comma = true;
             if self.at(Kind::RightParen) {
                 break;
             }
             let expr = self.parse_starred_item()?;
             elements.push(expr);
-            seen_comma = true;
         }
         if elements.len() == 1 && !seen_comma {
             let expr = elements.pop().unwrap();
@@ -3136,16 +3135,6 @@ impl<'a> Parser<'a> {
             }
         }
     }
-
-    // fn parse_constant(
-    //     &mut self,
-    //     start: Node,
-    //     kind: Kind,
-    //     value: &TokenValue,
-    // ) -> Result<Expression, ParsingError> {
-    //     };
-    //     Ok(atom)
-    // }
 
     fn parse_comp_operator(&mut self) -> Result<ComparisonOperator, ParsingError> {
         let node = self.start_node();

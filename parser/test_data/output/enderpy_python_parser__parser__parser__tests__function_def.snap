@@ -48,7 +48,7 @@ Module {
             FunctionDef {
                 node: Node {
                     start: 15,
-                    end: 32,
+                    end: 34,
                 },
                 name: "a",
                 args: Arguments {
@@ -545,7 +545,7 @@ Module {
             AsyncFunctionDef {
                 node: Node {
                     start: 236,
-                    end: 259,
+                    end: 261,
                 },
                 name: "a",
                 args: Arguments {

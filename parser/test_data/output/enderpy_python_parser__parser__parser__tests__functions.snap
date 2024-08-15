@@ -12,7 +12,7 @@ Module {
             FunctionDef {
                 node: Node {
                     start: 0,
-                    end: 339,
+                    end: 342,
                 },
                 name: "_handle_ticker_index",
                 args: Arguments {
@@ -340,7 +340,7 @@ Module {
             FunctionDef {
                 node: Node {
                     start: 342,
-                    end: 608,
+                    end: 610,
                 },
                 name: "_extract_ticker_client_types_data",
                 args: Arguments {
@@ -671,7 +671,7 @@ Module {
             FunctionDef {
                 node: Node {
                     start: 610,
-                    end: 1151,
+                    end: 1153,
                 },
                 name: "common_process",
                 args: Arguments {

@@ -274,7 +274,6 @@ impl<'a> Lexer<'a> {
 
     fn next_kind(&mut self) -> Result<Kind, LexError> {
         if self.start_of_line && self.nesting == 0 {
-            self.line_starts.push(self.current);
             if let Some(indent_kind) = self.match_indentation()? {
                 self.start_of_line = false;
                 return Ok(indent_kind);
