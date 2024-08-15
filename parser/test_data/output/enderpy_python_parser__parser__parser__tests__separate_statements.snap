@@ -12,7 +12,7 @@ Module {
             FunctionDef {
                 node: Node {
                     start: 99,
-                    end: 143,
+                    end: 145,
                 },
                 name: "foo",
                 args: Arguments {

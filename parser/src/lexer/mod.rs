@@ -1086,10 +1086,10 @@ impl<'a> Lexer<'a> {
         }
         count
     }
+}
 
-    fn match_whitespace(c: char) -> bool {
-        c.is_whitespace() && c != '\n' && c != '\r'
-    }
+fn match_whitespace(c: char) -> bool {
+    c.is_whitespace() && c != '\n' && c != '\r'
 }
 
 #[cfg(test)]

@@ -1,6 +1,6 @@
 ---
 source: parser/src/parser/parser.rs
-description: "# in some cases last price or adj price is undefined\ntry:\n    last_price = int(price_section[2])\n# when instead of number value is `F`\nexcept (ValueError, IndexError):\n    last_price = None\ntry:\n    adj_close = int(price_section[3])\nexcept (ValueError, IndexError):\n    adj_close = None\ntry:\n    market_cap = adj_close * self.total_shares\nexcept ValueError:\n    market_cap = None\n\n\ntry:\n    async with session.get(url, headers=TRADE_DETAILS_HEADER, timeout=100) as response:\n        if response.status == 503:\n            logger.info(f\"Received 503 Service Unavailable on {date_obj}. Retrying...\")\n            retry_count += 1\n            await asyncio.sleep(1)\n        else:\n            response.raise_for_status()\n            data = await response.json()\n            logger.info(f\"Successfully fetched trade details on {date_obj} from tse\")\n            return [date_obj, pd.json_normalize(data[\"tradeHistory\"])]\nexcept (aiohttp.ClientError, asyncio.TimeoutError):\n    logger.error(f\"Request failed for {date_obj}. Retrying...\")\n    retry_count += 1\n    await asyncio.sleep(1)\n"
+description: "test file: test_data/inputs/try.py\n# in some cases last price or adj price is undefined\ntry:\n    last_price = int(price_section[2])\n# when instead of number value is `F`\nexcept (ValueError, IndexError):\n    last_price = None\ntry:\n    adj_close = int(price_section[3])\nexcept (ValueError, IndexError):\n    adj_close = None\ntry:\n    market_cap = adj_close * self.total_shares\nexcept ValueError:\n    market_cap = None\n\n\ntry:\n    async with session.get(url, headers=TRADE_DETAILS_HEADER, timeout=100) as response:\n        if response.status == 503:\n            logger.info(f\"Received 503 Service Unavailable on {date_obj}. Retrying...\")\n            retry_count += 1\n            await asyncio.sleep(1)\n        else:\n            response.raise_for_status()\n            data = await response.json()\n            logger.info(f\"Successfully fetched trade details on {date_obj} from tse\")\n            return [date_obj, pd.json_normalize(data[\"tradeHistory\"])]\nexcept (aiohttp.ClientError, asyncio.TimeoutError):\n    logger.error(f\"Request failed for {date_obj}. Retrying...\")\n    retry_count += 1\n    await asyncio.sleep(1)\n"
 ---
 Module {
     node: Node {
@@ -371,7 +371,7 @@ Module {
                     ExceptHandler {
                         node: Node {
                             start: 339,
-                            end: 379,
+                            end: 382,
                         },
                         typ: Some(
                             Name(
