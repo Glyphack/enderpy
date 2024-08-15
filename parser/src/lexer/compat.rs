@@ -322,7 +322,7 @@ print(a)
     fn test_lex_other() {
         python_tokenize_test_lexer(&["(a,
 
-)"]);
+    )"]);
     }
 
     #[test]

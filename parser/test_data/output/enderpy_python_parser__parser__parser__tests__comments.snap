@@ -51,7 +51,7 @@ Module {
             FunctionDef {
                 node: Node {
                     start: 35,
-                    end: 95,
+                    end: 94,
                 },
                 name: "b",
                 args: Arguments {
