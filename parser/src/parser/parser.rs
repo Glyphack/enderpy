@@ -2937,7 +2937,7 @@ impl<'a> Parser<'a> {
         // it, it's a tuple
         let mut seen_comma = false;
         elements.push(first_elm);
-        while !self.at(Kind::Eof) && !self.eat(Kind::RightParen) {
+        while !self.at(Kind::Eof) && !self.at(Kind::RightParen) {
             self.expect(Kind::Comma)?;
             seen_comma = true;
             if self.at(Kind::RightParen) {
@@ -2947,6 +2947,7 @@ impl<'a> Parser<'a> {
             elements.push(expr);
         }
         if elements.len() == 1 && !seen_comma {
+            self.bump(Kind::RightParen);
             let expr = elements.pop().unwrap();
             if let Expression::Name(name) = expr {
                 return Ok(Expression::Name(Box::new(Name {
