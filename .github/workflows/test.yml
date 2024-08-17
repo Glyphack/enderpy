@@ -23,8 +23,13 @@ jobs:
         with:
           rust-version: stable
           components: rustfmt, clippy
+      # Required for compatibility tests
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
       - name: Build
         run: cargo build
+
       - name: Run tests
         env:
           RUST_BACKTRACE: 1
