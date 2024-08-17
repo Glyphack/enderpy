@@ -28,7 +28,7 @@ pub struct EnderpyFile<'a> {
     pub followed: bool,
     pub path: Arc<PathBuf>,
     pub source: String,
-    pub offset_line_number: Vec<u32>,
+    pub line_starts: Vec<u32>,
     pub tree: ast::Module,
     dummy: &'a str,
 }
@@ -58,19 +58,20 @@ impl<'a> EnderpyFile<'a> {
         let source =
             std::fs::read_to_string(&path).unwrap_or_else(|_| panic!("cannot read file {path:?}"));
         let module = get_module_name(&path);
-        let mut parser = Parser::new(&source, path.to_str().unwrap());
+        let mut parser = Parser::new(&source, "");
         let tree = parser.parse().expect("parsing {path:?} failed");
-        let offset_line_number = parser.line_starts();
+        let line_starts = parser.lexer.line_starts.clone();
 
         let id = if path.ends_with("builtins.pyi") {
             symbol_table::Id(0)
         } else {
             symbol_table::Id(get_id())
         };
+
         Self {
             id,
             source,
-            offset_line_number,
+            line_starts,
             followed,
             module,
             tree,
@@ -92,7 +93,7 @@ impl<'a> EnderpyFile<'a> {
 
     /// Return source of the line number
     pub fn get_line_content(&self, line: usize) -> String {
-        let line_starts = &self.offset_line_number;
+        let line_starts = &self.line_starts;
         let line_start_offset = line_starts[line - 1] as usize;
         let line_end_offset = if line == line_starts.len() {
             self.source.len()
@@ -113,7 +114,7 @@ impl<'a> EnderpyFile<'a> {
 
     pub fn get_position(&self, start: u32, end: u32) -> Position {
         let (start_line_num, start_line_column, end_line_num, end_line_column) =
-            get_row_col_position(start, end, &self.offset_line_number);
+            get_row_col_position(start, end, &self.line_starts);
         Position {
             line: start_line_num,
             character: (end - start_line_column),

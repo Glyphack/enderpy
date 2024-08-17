@@ -12,35 +12,35 @@ Expr types in the line --->:
         List => (class) builtins.list[TypeVar[_T, ]]
 
 ---
-Line 4: a = 1
+Line 3: a = 1
 
 Expr types in the line --->:
         a => (class) int
         1 => (class) int
 
 ---
-Line 5: b = "1"
+Line 4: b = "1"
 
 Expr types in the line --->:
         b => (class) str
         "1" => (class) str
 
 ---
-Line 6: c = True
+Line 5: c = True
 
 Expr types in the line --->:
         c => (class) bool
         True => (class) bool
 
 ---
-Line 7: d = False
+Line 6: d = False
 
 Expr types in the line --->:
         d => (class) bool
         False => (class) bool
 
 ---
-Line 8: _ = a + int(b)
+Line 7: _ = a + int(b)
 
 Expr types in the line --->:
         _ => (class) int
@@ -49,7 +49,7 @@ Expr types in the line --->:
         int(b) => (class) int
 
 ---
-Line 11: _ = a + c
+Line 10: _ = a + c
 
 Expr types in the line --->:
         _ => (class) int
@@ -58,7 +58,7 @@ Expr types in the line --->:
         c => (class) bool
 
 ---
-Line 14: def func(params: List[int]) -> Dict[int, int]:
+Line 13: def func(params: List[int]) -> Dict[int, int]:
 
 Expr types in the line --->:
         def func => (function) func
@@ -71,7 +71,7 @@ Expr types in the line --->:
         int => (class) int
 
 ---
-Line 15:     return {params[0]: a}
+Line 14:     return {params[0]: a}
 
 Expr types in the line --->:
         {params[0]: a} => (class) builtins.dict[(class) builtins.list[(class) int], (class) int]
@@ -81,13 +81,13 @@ Expr types in the line --->:
         a => (class) int
 
 ---
-Line 18: class C:
+Line 17: class C:
 
 Expr types in the line --->:
         class C => (class) C
 
 ---
-Line 19:     cls_attribute = {1}
+Line 18:     cls_attribute = {1}
 
 Expr types in the line --->:
         cls_attribute => (class) builtins.set[(class) int]
@@ -95,7 +95,7 @@ Expr types in the line --->:
         1 => (class) int
 
 ---
-Line 21:     def __init__(self, x: int):
+Line 20:     def __init__(self, x: int):
 
 Expr types in the line --->:
         def __init__ => (function) __init__
@@ -104,7 +104,7 @@ Expr types in the line --->:
         int => (class) int
 
 ---
-Line 22:         print(self.cls_attribute)
+Line 21:         print(self.cls_attribute)
 
 Expr types in the line --->:
         print => (function) print
@@ -113,7 +113,7 @@ Expr types in the line --->:
         self.cls_attribute => (class) builtins.set[(class) int]
 
 ---
-Line 23:         self.x = float(x)
+Line 22:         self.x = float(x)
 
 Expr types in the line --->:
         self => Unknown
@@ -123,7 +123,7 @@ Expr types in the line --->:
         x => (class) int
 
 ---
-Line 24:         print(self.x)
+Line 23:         print(self.x)
 
 Expr types in the line --->:
         print => (function) print
@@ -132,7 +132,7 @@ Expr types in the line --->:
         self.x => (class) float
 
 ---
-Line 26:     def add(self, value: int) -> None:
+Line 25:     def add(self, value: int) -> None:
 
 Expr types in the line --->:
         def add => (function) add
@@ -142,7 +142,7 @@ Expr types in the line --->:
         None => None
 
 ---
-Line 27:         self.cls_attribute.add(value)
+Line 26:         self.cls_attribute.add(value)
 
 Expr types in the line --->:
         self.cls_attribute.add => (function) add
@@ -150,7 +150,7 @@ Expr types in the line --->:
         value => (class) int
 
 ---
-Line 29:     def get_attr(self) -> Set[int]:
+Line 28:     def get_attr(self) -> Set[int]:
 
 Expr types in the line --->:
         def get_attr => (function) get_attr
@@ -160,14 +160,14 @@ Expr types in the line --->:
         int => (class) int
 
 ---
-Line 30:         return self.cls_attribute
+Line 29:         return self.cls_attribute
 
 Expr types in the line --->:
         self => Unknown
         self.cls_attribute => (class) builtins.set[(class) int]
 
 ---
-Line 32:     def get_x(self) -> float:
+Line 31:     def get_x(self) -> float:
 
 Expr types in the line --->:
         def get_x => (function) get_x
@@ -175,14 +175,14 @@ Expr types in the line --->:
         float => (class) float
 
 ---
-Line 33:         return self.x
+Line 32:         return self.x
 
 Expr types in the line --->:
         self => Unknown
         self.x => (class) float
 
 ---
-Line 36: t = C(0)
+Line 35: t = C(0)
 
 Expr types in the line --->:
         t => (class) C
@@ -191,7 +191,7 @@ Expr types in the line --->:
         0 => (class) int
 
 ---
-Line 37: t.add(2)
+Line 36: t.add(2)
 
 Expr types in the line --->:
         t.add => (function) add
@@ -199,35 +199,35 @@ Expr types in the line --->:
         2 => (class) int
 
 ---
-Line 38: t.cls_attribute
+Line 37: t.cls_attribute
 
 Expr types in the line --->:
         t => (class) C
         t.cls_attribute => (class) builtins.set[(class) int]
 
 ---
-Line 39: t.x
+Line 38: t.x
 
 Expr types in the line --->:
         t => (class) C
         t.x => (class) float
 
 ---
-Line 40: t.get_x()
+Line 39: t.get_x()
 
 Expr types in the line --->:
         t.get_x => (function) get_x
         t.get_x() => (class) float
 
 ---
-Line 41: t.get_attr()
+Line 40: t.get_attr()
 
 Expr types in the line --->:
         t.get_attr => (function) get_attr
         t.get_attr() => (class) builtins.set[(class) int]
 
 ---
-Line 43: l = [1, 2, 3]
+Line 42: l = [1, 2, 3]
 
 Expr types in the line --->:
         l => (class) builtins.list[(class) int]
@@ -237,7 +237,7 @@ Expr types in the line --->:
         3 => (class) int
 
 ---
-Line 44: d = {"a": 1, "b": 2}
+Line 43: d = {"a": 1, "b": 2}
 
 Expr types in the line --->:
         d => (class) bool
@@ -248,7 +248,7 @@ Expr types in the line --->:
         2 => (class) int
 
 ---
-Line 45: s = {1, 2, 3}
+Line 44: s = {1, 2, 3}
 
 Expr types in the line --->:
         s => (class) builtins.set[(class) int]
@@ -258,7 +258,7 @@ Expr types in the line --->:
         3 => (class) int
 
 ---
-Line 47: l.append(4)
+Line 46: l.append(4)
 
 Expr types in the line --->:
         l.append => (function) append

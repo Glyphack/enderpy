@@ -22,7 +22,7 @@ use crate::{
 pub struct Parser<'a> {
     pub identifiers_start_offset: Vec<(u32, u32, String)>,
     pub source: &'a str,
-    lexer: Lexer<'a>,
+    pub lexer: Lexer<'a>,
     cur_token: Token,
     prev_token_end: u32,
     prev_nonwhitespace_token_end: u32,
@@ -38,9 +38,6 @@ pub struct Parser<'a> {
 
 #[allow(unused)]
 impl<'a> Parser<'a> {
-    pub fn line_starts(&self) -> Vec<u32> {
-        self.lexer.line_starts.clone()
-    }
     pub fn new(source: &'a str, path: &'a str) -> Self {
         let mut lexer = Lexer::new(source);
         let cur_token = lexer.next_token();

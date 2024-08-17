@@ -135,11 +135,7 @@ impl<'a> BuildManager<'a> {
         let module = self.get_state(path);
         let checker = self.type_check(path);
         let symbol_table = self.get_symbol_table(path);
-        let hovered_offset = module.offset_line_number[line as usize] + column;
-        let line_number = match module.offset_line_number.binary_search(&hovered_offset) {
-            Ok(index) => index,
-            Err(index) => index - 1,
-        };
+        let hovered_offset = module.line_starts[line as usize] + column;
 
         let hovered_offset_start = hovered_offset.saturating_sub(1);
         let type_info = &checker
@@ -149,7 +145,7 @@ impl<'a> BuildManager<'a> {
         let type_str = if let Some(type_info) = type_info {
             &type_info.val
         } else {
-            &PythonType::Unknown
+            return String::new();
         };
 
         format!("{type_str:}")

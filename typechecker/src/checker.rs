@@ -176,6 +176,7 @@ impl<'a> TraversalVisitor for TypeChecker<'a> {
         self.types.insert(Interval {
             start,
             stop,
+            // TODO: this is not the actual type.
             val: PythonType::Module(ModuleRef { module_id: Id(0) }),
         });
     }
@@ -263,7 +264,7 @@ impl<'a> TraversalVisitor for TypeChecker<'a> {
     fn visit_function_def(&mut self, f: &parser::ast::FunctionDef) {
         self.infer_name_type(
             &f.name,
-            f.node.start,
+            f.node.start + 4,
             f.node.start + 4 + f.name.len() as u32,
         );
         if let Some(ret_type) = &f.returns {
@@ -285,8 +286,8 @@ impl<'a> TraversalVisitor for TypeChecker<'a> {
     fn visit_async_function_def(&mut self, f: &parser::ast::AsyncFunctionDef) {
         self.infer_name_type(
             &f.name,
-            f.node.start,
-            f.node.start + 4 + f.name.len() as u32,
+            f.node.start + 9,
+            f.node.start + 9 + f.name.len() as u32,
         );
         self.type_evaluator.symbol_table.set_scope(f.node.start);
         for stmt in &f.body {
@@ -298,7 +299,7 @@ impl<'a> TraversalVisitor for TypeChecker<'a> {
     fn visit_class_def(&mut self, c: &parser::ast::ClassDef) {
         self.infer_name_type(
             &c.name,
-            c.node.start,
+            c.node.start + 6,
             c.node.start + 6 + c.name.len() as u32,
         );
 
@@ -640,7 +641,7 @@ mod tests {
                 if last_line_num < cur_line {
                     str.push_str("\n---\n");
                     let line_content = module.get_line_content(cur_line as usize);
-                    str.push_str(format!("Line {}: {}", cur_line + 1, line_content).as_str());
+                    str.push_str(format!("Line {}: {}", cur_line, line_content).as_str());
                     str.push_str("\nExpr types in the line --->:\n");
                     last_line = Some(cur_line);
                 }

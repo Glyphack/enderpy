@@ -10,13 +10,13 @@ Expr types in the line --->:
         * => Unknown
 
 ---
-Line 3: import os
+Line 2: import os
 
 Expr types in the line --->:
         os => Module
 
 ---
-Line 5: print(in_b)
+Line 4: print(in_b)
 
 Expr types in the line --->:
         print => (function) print
@@ -24,14 +24,14 @@ Expr types in the line --->:
         in_b => (class) int
 
 ---
-Line 7: os.path
+Line 6: os.path
 
 Expr types in the line --->:
         os => Module
         os.path => Module
 
 ---
-Line 8: os.path.dirname("")
+Line 7: os.path.dirname("")
 
 Expr types in the line --->:
         os.path.dirname => (function) dirname
