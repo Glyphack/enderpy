@@ -5,14 +5,14 @@ description: "test file: test_data/inputs/functions.py\ndef _handle_ticker_index
 Module {
     node: Node {
         start: 0,
-        end: 1153,
+        end: 1152,
     },
     body: [
         FunctionDef(
             FunctionDef {
                 node: Node {
                     start: 0,
-                    end: 342,
+                    end: 340,
                 },
                 name: "_handle_ticker_index",
                 args: Arguments {
@@ -101,7 +101,7 @@ Module {
                         If {
                             node: Node {
                                 start: 96,
-                                end: 320,
+                                end: 315,
                             },
                             test: Compare(
                                 Compare {
@@ -189,7 +189,7 @@ Module {
                                     If {
                                         node: Node {
                                             start: 177,
-                                            end: 320,
+                                            end: 315,
                                         },
                                         test: Compare(
                                             Compare {
@@ -340,7 +340,7 @@ Module {
             FunctionDef {
                 node: Node {
                     start: 342,
-                    end: 610,
+                    end: 609,
                 },
                 name: "_extract_ticker_client_types_data",
                 args: Arguments {
@@ -439,7 +439,7 @@ Module {
                         With {
                             node: Node {
                                 start: 468,
-                                end: 561,
+                                end: 556,
                             },
                             items: [
                                 WithItem {
@@ -671,7 +671,7 @@ Module {
             FunctionDef {
                 node: Node {
                     start: 610,
-                    end: 1153,
+                    end: 1152,
                 },
                 name: "common_process",
                 args: Arguments {
@@ -738,7 +738,7 @@ Module {
                         If {
                             node: Node {
                                 start: 663,
-                                end: 759,
+                                end: 754,
                             },
                             test: Compare(
                                 Compare {
@@ -989,7 +989,7 @@ Module {
                             value: Subscript(
                                 Subscript {
                                     node: Node {
-                                        start: 821,
+                                        start: 815,
                                         end: 863,
                                     },
                                     value: Attribute(
@@ -1244,7 +1244,7 @@ Module {
                                         Keyword {
                                             node: Node {
                                                 start: 950,
-                                                end: 973,
+                                                end: 972,
                                             },
                                             arg: Some(
                                                 "format",
@@ -1253,7 +1253,7 @@ Module {
                                                 Constant {
                                                     node: Node {
                                                         start: 957,
-                                                        end: 973,
+                                                        end: 972,
                                                     },
                                                     value: "%Y%m%d %H%M%S",
                                                 },

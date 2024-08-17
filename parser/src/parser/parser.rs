@@ -11,6 +11,7 @@ use miette::Result;
 use super::{concat_string_exprs, is_at_compound_statement, is_iterable, map_unary_operator};
 use crate::{
     error::ParsingError,
+    get_row_col_position,
     lexer::Lexer,
     parser::{ast::*, extract_string_inside},
     token::{Kind, Token, TokenValue},
@@ -24,6 +25,7 @@ pub struct Parser<'a> {
     lexer: Lexer<'a>,
     cur_token: Token,
     prev_token_end: u32,
+    prev_nonwhitespace_token_end: u32,
     // This var keeps track of how many levels deep we are in a list, tuple or set
     // expression. This is used to determine if we should parse comma separated
     // expressions as tuple or not.
@@ -61,6 +63,7 @@ impl<'a> Parser<'a> {
             lexer,
             cur_token,
             prev_token_end,
+            prev_nonwhitespace_token_end: prev_token_end,
             nested_expression_list,
             curr_line_string: String::new(),
             path,
@@ -86,10 +89,11 @@ impl<'a> Parser<'a> {
             }
         }
 
-        Ok(Module {
-            node: self.finish_node(node),
-            body,
-        })
+        let mut node = self.finish_node(node);
+        // Remove the EOF offset
+        node.end.saturating_sub(1);
+
+        Ok(Module { node, body })
     }
 
     fn start_node(&self) -> Node {
@@ -99,6 +103,10 @@ impl<'a> Parser<'a> {
 
     fn finish_node(&self, node: Node) -> Node {
         Node::new(node.start, self.prev_token_end)
+    }
+
+    fn finish_node_chomped(&self, node: Node) -> Node {
+        Node::new(node.start, self.prev_nonwhitespace_token_end)
     }
 
     pub(crate) fn cur_token(&self) -> &Token {
@@ -130,26 +138,27 @@ impl<'a> Parser<'a> {
     /// Advance if we are at `Kind`
     fn bump(&mut self, kind: Kind) {
         if self.at(kind) {
-            self.advance();
+            self.advance(true);
         }
     }
 
     /// Advance any token
     fn bump_any(&mut self) {
-        self.advance();
+        self.advance(true);
     }
 
     /// Advance and return true if we are at `Kind`, return false otherwise
     fn eat(&mut self, kind: Kind) -> bool {
         if self.at(kind) {
-            self.advance();
+            self.advance(true);
             return true;
         }
         false
     }
 
     /// Move to the next token
-    fn advance(&mut self) {
+    /// count_in_offset: if true, the offset will be increased by the length of the current token so prev_token_end is adjusted
+    fn advance(&mut self, count_in_offset: bool) {
         let token = self.lexer.next_token();
         if token.kind == Kind::Identifier {
             self.identifiers_start_offset
@@ -166,10 +175,18 @@ impl<'a> Parser<'a> {
             _ => {}
         }
 
-        self.prev_token_end = self.cur_token.end;
+        if count_in_offset {
+            self.prev_token_end = self.cur_token.end;
+        }
+        if !matches!(
+            self.cur_token.kind,
+            Kind::WhiteSpace | Kind::NewLine | Kind::Dedent
+        ) {
+            self.prev_nonwhitespace_token_end = self.prev_token_end;
+        }
         self.cur_token = token;
         if matches!(self.cur_kind(), Kind::Comment | Kind::NL) {
-            self.advance();
+            self.advance(false);
         }
         if self.nested_expression_list > 0 {
             self.consume_whitespace_and_newline();
@@ -381,7 +398,7 @@ impl<'a> Parser<'a> {
         };
 
         Ok(Statement::IfStatement(Box::new(If {
-            node: self.finish_node(node),
+            node: self.finish_node_chomped(node),
             test,
             body,
             orelse: or_else_vec,
@@ -403,7 +420,7 @@ impl<'a> Parser<'a> {
         };
 
         Ok(Statement::WhileStatement(Box::new(While {
-            node: self.finish_node(node),
+            node: self.finish_node_chomped(node),
             test,
             body,
             orelse,
@@ -466,13 +483,13 @@ impl<'a> Parser<'a> {
 
         if is_async {
             Ok(Statement::AsyncWithStatement(Box::new(AsyncWith {
-                node: self.finish_node(node),
+                node: self.finish_node_chomped(node),
                 items,
                 body,
             })))
         } else {
             Ok(Statement::WithStatement(Box::new(With {
-                node: self.finish_node(node),
+                node: self.finish_node_chomped(node),
                 items,
                 body,
             })))
@@ -544,7 +561,7 @@ impl<'a> Parser<'a> {
 
         if is_try_star {
             Ok(Statement::TryStarStatement(Box::new(TryStar {
-                node: self.finish_node(node),
+                node: self.finish_node_chomped(node),
                 body,
                 handlers,
                 orelse,
@@ -584,7 +601,7 @@ impl<'a> Parser<'a> {
             let body = self.parse_suite()?;
 
             handlers.push(ExceptHandler {
-                node: self.finish_node(node),
+                node: self.finish_node_chomped(node),
                 typ,
                 name,
                 body,
@@ -621,7 +638,7 @@ impl<'a> Parser<'a> {
         let body = self.parse_suite()?;
         if is_async {
             Ok(Statement::AsyncFunctionDef(Box::new(AsyncFunctionDef {
-                node: self.finish_node(node),
+                node: self.finish_node_chomped(node),
                 name,
                 args,
                 body,
@@ -632,7 +649,7 @@ impl<'a> Parser<'a> {
             })))
         } else {
             Ok(Statement::FunctionDef(Arc::new(FunctionDef {
-                node: self.finish_node(node),
+                node: self.finish_node_chomped(node),
                 name,
                 args,
                 body,
@@ -1565,13 +1582,14 @@ impl<'a> Parser<'a> {
 
     // https://docs.python.org/3/reference/expressions.html#conditional-expressions
     fn parse_conditional_expression(&mut self) -> Result<Expression, ParsingError> {
+        let node = self.start_node();
         let or_test = self.parse_or_test();
         if self.eat(Kind::If) {
             let test = self.parse_or_test()?;
             self.expect(Kind::Else)?;
             let or_else = self.parse_expression()?;
             return Ok(Expression::IfExp(Box::new(IfExp {
-                node: self.start_node(),
+                node: self.finish_node(node),
                 test,
                 body: or_test?,
                 orelse: or_else,
@@ -1584,11 +1602,11 @@ impl<'a> Parser<'a> {
     // https://docs.python.org/3/reference/expressions.html#assignment-expressions
     fn parse_named_expression(&mut self) -> Result<Expression, ParsingError> {
         let node = self.start_node();
+        // TODO: Maybe this walrus check is redundant
         if self.at(Kind::Identifier) && matches!(self.peek_kind()?, Kind::Walrus) {
             let identifier = self.cur_token().value.to_string();
             let mut identifier_node = self.start_node();
-            identifier_node = self.finish_node(identifier_node);
-            self.expect(Kind::Identifier)?;
+            self.bump_any();
             identifier_node = self.finish_node(identifier_node);
             if self.eat(Kind::Walrus) {
                 let value = self.parse_expression()?;
@@ -1608,7 +1626,6 @@ impl<'a> Parser<'a> {
                 parenthesized: false,
             })));
         }
-
         self.parse_expression()
     }
 
@@ -1668,6 +1685,7 @@ impl<'a> Parser<'a> {
         // The first expression we consume have three cases
         // Either an starred item https://docs.python.org/3/reference/expressions.html#grammar-token-python-grammar-starred_expression
         // or an assignment expression
+        // This is a star named expression
         let first_expr =
             if self.at(Kind::Identifier) && matches!(self.peek_kind(), Ok(Kind::Walrus)) {
                 self.parse_named_expression()?
@@ -1692,7 +1710,6 @@ impl<'a> Parser<'a> {
         }
 
         let expr = self.parse_starred_expression(node, first_expr)?;
-        self.expect(Kind::RightParen)?;
         Ok(expr)
     }
 
@@ -1970,7 +1987,7 @@ impl<'a> Parser<'a> {
     fn consume_whitespace_and_newline(&mut self) -> bool {
         let mut consumed = false;
         while matches!(self.cur_kind(), Kind::WhiteSpace | Kind::NewLine | Kind::NL) {
-            self.advance();
+            self.advance(true);
             consumed = true;
         }
         consumed
@@ -2276,7 +2293,7 @@ impl<'a> Parser<'a> {
             self.parse_attribute_ref(node, atom_or_primary)
         } else if self.at(Kind::LeftBrace) {
             // https://docs.python.org/3/reference/expressions.html#slicings
-            self.parse_subscript(node, atom_or_primary)
+            self.parse_subscript(atom_or_primary.get_node(), atom_or_primary)
         } else if self.eat(Kind::LeftParen) {
             // parse call
             // https://docs.python.org/3/reference/expressions.html#calls
@@ -2295,19 +2312,21 @@ impl<'a> Parser<'a> {
                 } else if self.at(Kind::Mul) {
                     let star_arg_node = self.start_node();
                     self.bump(Kind::Mul);
+                    let expr = self.parse_expression()?;
                     let star_arg = Expression::Starred(Box::new(Starred {
                         node: self.finish_node(star_arg_node),
-                        value: self.parse_expression()?,
+                        value: expr,
                     }));
                     positional_args.push(star_arg);
                 } else if self.at(Kind::Pow) {
                     let kwarg_node = self.start_node();
                     self.bump(Kind::Pow);
                     seen_keyword = true;
+                    let expr = self.parse_expression()?;
                     let kwarg = Keyword {
                         node: self.finish_node(kwarg_node),
                         arg: None,
-                        value: self.parse_expression()?,
+                        value: expr,
                     };
                     keyword_args.push(kwarg);
                 } else {
@@ -2847,7 +2866,7 @@ impl<'a> Parser<'a> {
         let value = self.cur_token().value.to_string();
         self.expect(Kind::Identifier)?;
         Ok(Expression::Name(Box::new(Name {
-            node: self.finish_node(node),
+            node: self.finish_node_chomped(node),
             id: value,
             parenthesized: false,
         })))
@@ -2925,14 +2944,15 @@ impl<'a> Parser<'a> {
         elements.push(first_elm);
         while !self.at(Kind::Eof) && !self.at(Kind::RightParen) {
             self.expect(Kind::Comma)?;
+            seen_comma = true;
             if self.at(Kind::RightParen) {
                 break;
             }
             let expr = self.parse_starred_item()?;
             elements.push(expr);
-            seen_comma = true;
         }
         if elements.len() == 1 && !seen_comma {
+            self.bump(Kind::RightParen);
             let expr = elements.pop().unwrap();
             if let Expression::Name(name) = expr {
                 return Ok(Expression::Name(Box::new(Name {
@@ -2944,6 +2964,7 @@ impl<'a> Parser<'a> {
                 return Ok(expr);
             }
         }
+        self.expect(Kind::RightParen)?;
         Ok(Expression::Tuple(Box::new(Tuple {
             node: self.finish_node(node),
             elements,
@@ -3121,16 +3142,6 @@ impl<'a> Parser<'a> {
         }
     }
 
-    // fn parse_constant(
-    //     &mut self,
-    //     start: Node,
-    //     kind: Kind,
-    //     value: &TokenValue,
-    // ) -> Result<Expression, ParsingError> {
-    //     };
-    //     Ok(atom)
-    // }
-
     fn parse_comp_operator(&mut self) -> Result<ComparisonOperator, ParsingError> {
         let node = self.start_node();
         let op = match self.cur_kind() {
@@ -3307,6 +3318,7 @@ impl<'a> Parser<'a> {
         } else {
             None
         };
+        let arg_node = self.finish_node(node);
         let default = if self.eat(Kind::Assign) {
             Some(self.parse_expression()?)
         } else {
@@ -3314,7 +3326,7 @@ impl<'a> Parser<'a> {
         };
         Ok((
             Arg {
-                node: self.finish_node(node),
+                node: arg_node,
                 arg,
                 annotation,
             },
@@ -3488,6 +3500,10 @@ impl<'a> Parser<'a> {
                 panic!("kind is {}", self.cur_token());
             }
         }
+    }
+
+    pub fn to_row_col(&self, start: u32, end: u32) -> (u32, u32, u32, u32) {
+        get_row_col_position(start, end, &self.lexer.line_starts)
     }
 }
 

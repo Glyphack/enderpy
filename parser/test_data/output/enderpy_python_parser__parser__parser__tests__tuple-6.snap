@@ -13,7 +13,7 @@ Module {
                 Tuple {
                     node: Node {
                         start: 0,
-                        end: 9,
+                        end: 10,
                     },
                     elements: [
                         Name(

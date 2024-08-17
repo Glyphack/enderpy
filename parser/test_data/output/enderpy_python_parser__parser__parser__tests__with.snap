@@ -284,7 +284,7 @@ Module {
             AsyncWith {
                 node: Node {
                     start: 114,
-                    end: 151,
+                    end: 150,
                 },
                 items: [
                     WithItem {
@@ -356,7 +356,7 @@ Module {
             AsyncWith {
                 node: Node {
                     start: 151,
-                    end: 200,
+                    end: 199,
                 },
                 items: [
                     WithItem {
@@ -388,7 +388,7 @@ Module {
                     WithItem {
                         node: Node {
                             start: 180,
-                            end: 187,
+                            end: 186,
                         },
                         context_expr: Name(
                             Name {
@@ -404,7 +404,7 @@ Module {
                                 Name {
                                     node: Node {
                                         start: 185,
-                                        end: 187,
+                                        end: 186,
                                     },
                                     id: "d",
                                 },

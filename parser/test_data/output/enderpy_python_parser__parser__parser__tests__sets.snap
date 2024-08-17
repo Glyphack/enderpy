@@ -1,6 +1,6 @@
 ---
 source: parser/src/parser/parser.rs
-description: "{a, b, c}\n\n{a,\nb, c}\n\n{a\n, b, c}\n\n{a,\nb,\n    c}\n\n{a,\n}\n\n{a, b, c,}\n\n{a for a in range(10)}\n\n{a for a in range(10)\n}\n\n{a for a in range(10)}\n\n{a for a in range(10)}\n\n{a for a in range(10) for b in range(10)}\n\n{a for a in range(10) for b in range(10)\n}\n\n{a for a in range(11) for b in range(10)\n}\n\n{\n    (a,b) for a in range(11) for b in range(10)\n}\n"
+description: "test file: test_data/inputs/sets.py\n{a, b, c}\n\n{a,\nb, c}\n\n{a\n, b, c}\n\n{a,\nb,\n    c}\n\n{a,\n}\n\n{a, b, c,}\n\n{a for a in range(10)}\n\n{a for a in range(10)\n}\n\n{a for a in range(10)}\n\n{a for a in range(10)}\n\n{a for a in range(10) for b in range(10)}\n\n{a for a in range(10) for b in range(10)\n}\n\n{a for a in range(11) for b in range(10)\n}\n\n{\n    (a,b) for a in range(11) for b in range(10)\n}\n"
 ---
 Module {
     node: Node {
@@ -98,7 +98,7 @@ Module {
                             Name {
                                 node: Node {
                                     start: 23,
-                                    end: 25,
+                                    end: 24,
                                 },
                                 id: "a",
                             },
@@ -313,7 +313,7 @@ Module {
                         Comprehension {
                             node: Node {
                                 start: 95,
-                                end: 114,
+                                end: 113,
                             },
                             target: Name(
                                 Name {
@@ -328,7 +328,7 @@ Module {
                                 Call {
                                     node: Node {
                                         start: 104,
-                                        end: 114,
+                                        end: 113,
                                     },
                                     func: Name(
                                         Name {
@@ -685,7 +685,7 @@ Module {
                         Comprehension {
                             node: Node {
                                 start: 211,
-                                end: 249,
+                                end: 248,
                             },
                             target: Name(
                                 Name {
@@ -700,7 +700,7 @@ Module {
                                 Call {
                                     node: Node {
                                         start: 239,
-                                        end: 249,
+                                        end: 248,
                                     },
                                     func: Name(
                                         Name {
@@ -802,7 +802,7 @@ Module {
                         Comprehension {
                             node: Node {
                                 start: 255,
-                                end: 293,
+                                end: 292,
                             },
                             target: Name(
                                 Name {
@@ -817,7 +817,7 @@ Module {
                                 Call {
                                     node: Node {
                                         start: 283,
-                                        end: 293,
+                                        end: 292,
                                     },
                                     func: Name(
                                         Name {
@@ -862,7 +862,7 @@ Module {
                         Tuple {
                             node: Node {
                                 start: 302,
-                                end: 306,
+                                end: 307,
                             },
                             elements: [
                                 Name(
@@ -938,7 +938,7 @@ Module {
                         Comprehension {
                             node: Node {
                                 start: 308,
-                                end: 346,
+                                end: 345,
                             },
                             target: Name(
                                 Name {
@@ -953,7 +953,7 @@ Module {
                                 Call {
                                     node: Node {
                                         start: 336,
-                                        end: 346,
+                                        end: 345,
                                     },
                                     func: Name(
                                         Name {

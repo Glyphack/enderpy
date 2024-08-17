@@ -1,6 +1,6 @@
 ---
 source: parser/src/parser/parser.rs
-description: "\n[a, b, c]\n\n[a,\nb, c],\n\n[a\n, b, c],\n\n[a,\nb,\n    c],\n\n[a,\n],\n\n[a, b, c,]\n\nmonth_names = ['Januari', 'Februari', 'Maart',      # These are the\n   'April',   'Mei',      'June',       # Dutch names\n   'July',    'Augustus', 'September',  # for the months\n   'October', 'November', 'December']   # of the year,\n\n[a for a in b]\n\n[a for a in b if c]\n\n[a for a in b if c if d]\n\n[a for a in b for c in d]\n\n[a for a in b if c for d in e]\n"
+description: "test file: test_data/inputs/lists.py\n\n[a, b, c]\n\n[a,\nb, c],\n\n[a\n, b, c],\n\n[a,\nb,\n    c],\n\n[a,\n],\n\n[a, b, c,]\n\nmonth_names = ['Januari', 'Februari', 'Maart',      # These are the\n   'April',   'Mei',      'June',       # Dutch names\n   'July',    'Augustus', 'September',  # for the months\n   'October', 'November', 'December']   # of the year,\n\n[a for a in b]\n\n[a for a in b if c]\n\n[a for a in b if c if d]\n\n[a for a in b for c in d]\n\n[a for a in b if c for d in e]\n"
 ---
 Module {
     node: Node {
@@ -115,7 +115,7 @@ Module {
                                         Name {
                                             node: Node {
                                                 start: 25,
-                                                end: 27,
+                                                end: 26,
                                             },
                                             id: "a",
                                         },
@@ -268,7 +268,7 @@ Module {
             Assign {
                 node: Node {
                     start: 73,
-                    end: 306,
+                    end: 289,
                 },
                 targets: [
                     Name(
@@ -285,7 +285,7 @@ Module {
                     List {
                         node: Node {
                             start: 87,
-                            end: 306,
+                            end: 289,
                         },
                         elements: [
                             Constant(

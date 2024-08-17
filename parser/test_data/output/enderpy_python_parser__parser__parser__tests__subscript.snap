@@ -1,6 +1,6 @@
 ---
 source: parser/src/parser/parser.rs
-description: "indices = list_of_key_stats[0::2]\n\nvalues = list_of_key_stats[1::2]\n\na[b]\n\na[::]\na[::step]\na[::step,]\n\na[:upper]\na[:6]\na[:upper:]\na[:upper:step]\n\na[lower:]\na[lower:upper]\na[lower:upper:]\na[lower:upper:step]\na[lower::]\n\n\na[b, c, d]\n\na[b, c:d, e]\n\n\na[b, c:d:e, f]\n"
+description: "test file: test_data/inputs/subscript.py\nindices = list_of_key_stats[0::2]\n\nvalues = list_of_key_stats[1::2]\n\na[b]\n\na[::]\na[::step]\na[::step,]\n\na[:upper]\na[:6]\na[:upper:]\na[:upper:step]\n\na[lower:]\na[lower:upper]\na[lower:upper:]\na[lower:upper:step]\na[lower::]\n\n\na[b, c, d]\n\na[b, c:d, e]\n\n\na[b, c:d:e, f]\n"
 ---
 Module {
     node: Node {

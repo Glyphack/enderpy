@@ -138,7 +138,7 @@ impl<'a> Lexer<'a> {
         let value = self.parse_token_value(kind, start);
         let end = self.current;
 
-        if kind == Kind::NewLine || kind == Kind::NL {
+        if (kind == Kind::NewLine || kind == Kind::NL) && !self.peak_mode {
             self.line_starts.push(self.current);
         }
 
@@ -935,6 +935,22 @@ impl<'a> Lexer<'a> {
                 }
             }
         }
+        if self.nesting > 0 {
+            // Don't add indent/dedent tokens when in nested context.
+            // For example, in the following example
+            // ```
+            // a = (
+            //   1
+            // )
+            // ```
+            // the indentation of "1" is completely inconsequential. To be technically correct,
+            // we'll return a whiteSpace token if any amount of whitespace was found.
+            if spaces_count > 0 {
+                return Ok(Some(Kind::WhiteSpace));
+            } else {
+                return Ok(None);
+            }
+        }
         if spaces_count == 0 {
             // When there are no spaces and only a new line
             // like the following
@@ -957,14 +973,14 @@ impl<'a> Lexer<'a> {
                     // loop over indent stack from the top and check if this element matches the
                     // new indentation level if nothing matches then it is an error
                     // do not pop the element from the stack
-                    let mut indentation_matches_outer_evel = false;
+                    let mut indentation_matches_outer_level = false;
                     for top in self.indent_stack.iter().rev() {
                         if top == &spaces_count {
-                            indentation_matches_outer_evel = true;
+                            indentation_matches_outer_level = true;
                             break;
                         }
                     }
-                    if !indentation_matches_outer_evel {
+                    if !indentation_matches_outer_level {
                         return Err(LexError::UnindentDoesNotMatchAnyOuterIndentationLevel);
                     }
                     Ok(Some(Kind::Dedent))

@@ -48,7 +48,7 @@ Module {
             FunctionDef {
                 node: Node {
                     start: 15,
-                    end: 34,
+                    end: 33,
                 },
                 name: "a",
                 args: Arguments {
@@ -346,7 +346,7 @@ Module {
                         Arg {
                             node: Node {
                                 start: 155,
-                                end: 158,
+                                end: 156,
                             },
                             arg: "b",
                             annotation: None,
@@ -354,7 +354,7 @@ Module {
                         Arg {
                             node: Node {
                                 start: 160,
-                                end: 163,
+                                end: 161,
                             },
                             arg: "c",
                             annotation: None,
@@ -382,7 +382,7 @@ Module {
                         Arg {
                             node: Node {
                                 start: 172,
-                                end: 175,
+                                end: 173,
                             },
                             arg: "f",
                             annotation: None,
@@ -545,7 +545,7 @@ Module {
             AsyncFunctionDef {
                 node: Node {
                     start: 236,
-                    end: 261,
+                    end: 260,
                 },
                 name: "a",
                 args: Arguments {
@@ -1534,7 +1534,7 @@ Module {
                 args: Arguments {
                     node: Node {
                         start: 660,
-                        end: 986,
+                        end: 985,
                     },
                     posonlyargs: [],
                     args: [],
@@ -1543,7 +1543,7 @@ Module {
                         Arg {
                             node: Node {
                                 start: 667,
-                                end: 690,
+                                end: 683,
                             },
                             arg: "eq_default",
                             annotation: Some(
@@ -1561,7 +1561,7 @@ Module {
                         Arg {
                             node: Node {
                                 start: 696,
-                                end: 723,
+                                end: 715,
                             },
                             arg: "order_default",
                             annotation: Some(
@@ -1579,7 +1579,7 @@ Module {
                         Arg {
                             node: Node {
                                 start: 729,
-                                end: 758,
+                                end: 750,
                             },
                             arg: "kw_only_default",
                             annotation: Some(
@@ -1597,7 +1597,7 @@ Module {
                         Arg {
                             node: Node {
                                 start: 764,
-                                end: 792,
+                                end: 784,
                             },
                             arg: "frozen_default",
                             annotation: Some(
@@ -1615,7 +1615,7 @@ Module {
                         Arg {
                             node: Node {
                                 start: 900,
-                                end: 965,
+                                end: 960,
                             },
                             arg: "field_specifiers",
                             annotation: Some(

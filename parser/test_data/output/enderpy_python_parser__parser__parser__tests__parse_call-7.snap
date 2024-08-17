@@ -38,7 +38,7 @@ Module {
                             Starred {
                                 node: Node {
                                     start: 18,
-                                    end: 19,
+                                    end: 20,
                                 },
                                 value: Name(
                                     Name {
@@ -92,7 +92,7 @@ Module {
                         Keyword {
                             node: Node {
                                 start: 22,
-                                end: 24,
+                                end: 25,
                             },
                             arg: None,
                             value: Name(

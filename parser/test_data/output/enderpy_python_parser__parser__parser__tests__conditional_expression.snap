@@ -12,8 +12,8 @@ Module {
             IfExp(
                 IfExp {
                     node: Node {
-                        start: 25,
-                        end: 0,
+                        start: 0,
+                        end: 25,
                     },
                     test: Name(
                         Name {
@@ -36,8 +36,8 @@ Module {
                     orelse: IfExp(
                         IfExp {
                             node: Node {
-                                start: 25,
-                                end: 0,
+                                start: 12,
+                                end: 25,
                             },
                             test: Name(
                                 Name {
