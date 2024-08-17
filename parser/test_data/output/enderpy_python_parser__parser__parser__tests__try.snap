@@ -371,7 +371,7 @@ Module {
                     ExceptHandler {
                         node: Node {
                             start: 339,
-                            end: 382,
+                            end: 380,
                         },
                         typ: Some(
                             Name(

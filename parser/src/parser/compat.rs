@@ -81,9 +81,9 @@ macro_rules! json_python_compat_node {
         let (start_row, start_col, end_row, end_col) =
             $parser.to_row_col($instance.node.start, $instance.node.end);
         node["_type"] = json!($name);
-        node["lineno"] = json!(start_row + 1);
+        node["lineno"] = json!(start_row);
         node["col_offset"] = json!(start_col);
-        node["end_lineno"] = json!(end_row + 1);
+        node["end_lineno"] = json!(end_row);
         node["end_col_offset"] = json!(end_col);
         node
     }};

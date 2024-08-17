@@ -138,7 +138,7 @@ impl<'a> Lexer<'a> {
         let value = self.parse_token_value(kind, start);
         let end = self.current;
 
-        if kind == Kind::NewLine || kind == Kind::NL {
+        if (kind == Kind::NewLine || kind == Kind::NL) && !self.peak_mode {
             self.line_starts.push(self.current);
         }
 

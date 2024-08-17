@@ -159,7 +159,7 @@ Module {
                 args: Arguments {
                     node: Node {
                         start: 83,
-                        end: 93,
+                        end: 92,
                     },
                     posonlyargs: [],
                     args: [

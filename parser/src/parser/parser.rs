@@ -89,10 +89,11 @@ impl<'a> Parser<'a> {
             }
         }
 
-        Ok(Module {
-            node: self.finish_node(node),
-            body,
-        })
+        let mut node = self.finish_node(node);
+        // Remove the EOF offset
+        node.end.saturating_sub(1);
+
+        Ok(Module { node, body })
     }
 
     fn start_node(&self) -> Node {
@@ -137,26 +138,27 @@ impl<'a> Parser<'a> {
     /// Advance if we are at `Kind`
     fn bump(&mut self, kind: Kind) {
         if self.at(kind) {
-            self.advance();
+            self.advance(true);
         }
     }
 
     /// Advance any token
     fn bump_any(&mut self) {
-        self.advance();
+        self.advance(true);
     }
 
     /// Advance and return true if we are at `Kind`, return false otherwise
     fn eat(&mut self, kind: Kind) -> bool {
         if self.at(kind) {
-            self.advance();
+            self.advance(true);
             return true;
         }
         false
     }
 
     /// Move to the next token
-    fn advance(&mut self) {
+    /// count_in_offset: if true, the offset will be increased by the length of the current token so prev_token_end is adjusted
+    fn advance(&mut self, count_in_offset: bool) {
         let token = self.lexer.next_token();
         if token.kind == Kind::Identifier {
             self.identifiers_start_offset
@@ -173,7 +175,9 @@ impl<'a> Parser<'a> {
             _ => {}
         }
 
-        self.prev_token_end = self.cur_token.end;
+        if count_in_offset {
+            self.prev_token_end = self.cur_token.end;
+        }
         if !matches!(
             self.cur_token.kind,
             Kind::WhiteSpace | Kind::NewLine | Kind::Dedent
@@ -182,7 +186,7 @@ impl<'a> Parser<'a> {
         }
         self.cur_token = token;
         if matches!(self.cur_kind(), Kind::Comment | Kind::NL) {
-            self.advance();
+            self.advance(false);
         }
         if self.nested_expression_list > 0 {
             self.consume_whitespace_and_newline();
@@ -1681,6 +1685,7 @@ impl<'a> Parser<'a> {
         // The first expression we consume have three cases
         // Either an starred item https://docs.python.org/3/reference/expressions.html#grammar-token-python-grammar-starred_expression
         // or an assignment expression
+        // This is a star named expression
         let first_expr =
             if self.at(Kind::Identifier) && matches!(self.peek_kind(), Ok(Kind::Walrus)) {
                 self.parse_named_expression()?
@@ -1982,7 +1987,7 @@ impl<'a> Parser<'a> {
     fn consume_whitespace_and_newline(&mut self) -> bool {
         let mut consumed = false;
         while matches!(self.cur_kind(), Kind::WhiteSpace | Kind::NewLine | Kind::NL) {
-            self.advance();
+            self.advance(true);
             consumed = true;
         }
         consumed

@@ -1,6 +1,6 @@
 ---
 source: parser/src/parser/parser.rs
-description: "(a for a in b)\n\n(a for a in b if c)\n\n(a for a in b if c if d)\n\n(a for a in b for c in d)\n\n(ord(c) for line in file for c in line)\n\n(x*y for x in range(10) for y in range(10) if x*y > 10)\n\nhas_explicit_annotation = isinstance(fdef.type, CallableType) and any(\n    not is_unannotated_any(t) for t in fdef.type.arg_types + [fdef.type.ret_type]\n)\n"
+description: "test file: test_data/inputs/generator_expressions.py\n(a for a in b)\n\n(a for a in b if c)\n\n(a for a in b if c if d)\n\n(a for a in b for c in d)\n\n(ord(c) for line in file for c in line)\n\n(x*y for x in range(10) for y in range(10) if x*y > 10)\n\nhas_explicit_annotation = isinstance(fdef.type, CallableType) and any(\n    not is_unannotated_any(t) for t in fdef.type.arg_types + [fdef.type.ret_type]\n)\n"
 ---
 Module {
     node: Node {
@@ -625,7 +625,7 @@ Module {
                                             Generator {
                                                 node: Node {
                                                     start: 254,
-                                                    end: 341,
+                                                    end: 340,
                                                 },
                                                 element: UnaryOp(
                                                     UnaryOperation {
@@ -671,7 +671,7 @@ Module {
                                                     Comprehension {
                                                         node: Node {
                                                             start: 289,
-                                                            end: 341,
+                                                            end: 340,
                                                         },
                                                         target: Name(
                                                             Name {
@@ -686,7 +686,7 @@ Module {
                                                             BinOp {
                                                                 node: Node {
                                                                     start: 298,
-                                                                    end: 341,
+                                                                    end: 340,
                                                                 },
                                                                 op: Add,
                                                                 left: Attribute(
@@ -720,7 +720,7 @@ Module {
                                                                     List {
                                                                         node: Node {
                                                                             start: 320,
-                                                                            end: 341,
+                                                                            end: 340,
                                                                         },
                                                                         elements: [
                                                                             Attribute(

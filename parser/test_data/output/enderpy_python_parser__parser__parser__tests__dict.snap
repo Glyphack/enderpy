@@ -1,6 +1,6 @@
 ---
 source: parser/src/parser/parser.rs
-description: "{a: b, c: d}\n\n{a: b,\nc: d},\n\n{a: b\n, c: d},\n\n{a: b,\nc: d,\n    e: f},\n\n{a: b,\n},\n\n{a: b, c: d,}\n\n{1: \"name\" for name in get_names()}\n\n{1: \"name\" for name in get_names()\n}\n\naggregated_key_stats[idx_stat] = {\n    **filter_value_NONE,\n    **filter_key_found,\n    **client_types,\n    **market_watch,\n    \"symbol\": symbol,\n    \"name\": name,\n}\n\ndi = {1: \"name\", **{2: \"name2\"}, 3: \"name3\"}\n"
+description: "test file: test_data/inputs/dict.py\n{a: b, c: d}\n\n{a: b,\nc: d},\n\n{a: b\n, c: d},\n\n{a: b,\nc: d,\n    e: f},\n\n{a: b,\n},\n\n{a: b, c: d,}\n\n{1: \"name\" for name in get_names()}\n\n{1: \"name\" for name in get_names()\n}\n\naggregated_key_stats[idx_stat] = {\n    **filter_value_NONE,\n    **filter_key_found,\n    **client_types,\n    **market_watch,\n    \"symbol\": symbol,\n    \"name\": name,\n}\n\ndi = {1: \"name\", **{2: \"name2\"}, 3: \"name3\"}\n"
 ---
 Module {
     node: Node {
@@ -157,7 +157,7 @@ Module {
                                         Name {
                                             node: Node {
                                                 start: 33,
-                                                end: 35,
+                                                end: 34,
                                             },
                                             id: "b",
                                         },
@@ -445,7 +445,7 @@ Module {
                         Comprehension {
                             node: Node {
                                 start: 144,
-                                end: 168,
+                                end: 167,
                             },
                             target: Name(
                                 Name {
@@ -460,7 +460,7 @@ Module {
                                 Call {
                                     node: Node {
                                         start: 156,
-                                        end: 168,
+                                        end: 167,
                                     },
                                     func: Name(
                                         Name {

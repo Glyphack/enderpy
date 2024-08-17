@@ -1,6 +1,6 @@
 ---
 source: parser/src/parser/parser.rs
-description: "a: int = 1\n\nb: tuple[int, int] = 1, 2\n\nc: tuple[str, int] = \"1\", 2, \n\nd: tuple[int, int] = b\n\ne: tuple[int, int]\n\nf: tuple[int, int] = e\n\ng: tuple[int,\n         int] = 1, 2\n\n(h): int = 1\n\n(\n    i\n): int = 1\n"
+description: "test file: test_data/inputs/annotated_assignment.py\na: int = 1\n\nb: tuple[int, int] = 1, 2\n\nc: tuple[str, int] = \"1\", 2, \n\nd: tuple[int, int] = b\n\ne: tuple[int, int]\n\nf: tuple[int, int] = e\n\ng: tuple[int,\n         int] = 1, 2\n\n(h): int = 1\n\n(\n    i\n): int = 1\n"
 ---
 Module {
     node: Node {
@@ -585,7 +585,7 @@ Module {
                     Name {
                         node: Node {
                             start: 194,
-                            end: 196,
+                            end: 195,
                         },
                         id: "i",
                     },
