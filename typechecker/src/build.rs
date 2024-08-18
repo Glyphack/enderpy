@@ -18,7 +18,6 @@ use crate::{
     },
     settings::Settings,
     symbol_table::{Id, SymbolTable},
-    types::PythonType,
 };
 
 #[derive(Debug)]

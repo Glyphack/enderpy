@@ -156,6 +156,7 @@ impl<'a> TypeEvaluator<'a> {
                 Ok(PythonType::Class(ClassType::new(
                     c.details.clone(),
                     vec![final_elm_type],
+                    true,
                 )))
             }
             ast::Expression::Tuple(t) => {
@@ -170,6 +171,7 @@ impl<'a> TypeEvaluator<'a> {
                 Ok(PythonType::Class(ClassType::new(
                     c.details.clone(),
                     vec![elm_type],
+                    true,
                 )))
             }
             ast::Expression::Dict(d) => {
@@ -184,6 +186,7 @@ impl<'a> TypeEvaluator<'a> {
                 Ok(PythonType::Class(ClassType::new(
                     c.details.clone(),
                     vec![key_type, value_type],
+                    true,
                 )))
             }
             ast::Expression::Set(s) => {
@@ -198,6 +201,7 @@ impl<'a> TypeEvaluator<'a> {
                 Ok(PythonType::Class(ClassType::new(
                     class_type,
                     vec![elm_type],
+                    true,
                 )))
             }
             ast::Expression::BoolOp(_) => Ok(self.get_builtin_type("bool").expect("typeshed")),
@@ -299,34 +303,9 @@ impl<'a> TypeEvaluator<'a> {
                     }
                 };
                 match value_type {
-                    PythonType::Class(c) => {
-                        let class_symbol_table_id = c.details.declaration_path.symbol_table_id;
-                        let class_symbol_table = self
-                            .imported_symbol_tables
-                            .get(&class_symbol_table_id)
-                            .unwrap();
-                        let class_scope = c.details.class_scope_id;
-                        let symbol_table_node =
-                            class_symbol_table.lookup_attribute(&a.attr, class_scope);
-
-                        match symbol_table_node {
-                            Some(node) => self.get_symbol_type(node),
-                            None => {
-                                let scope = class_symbol_table
-                                    .get_scope_by_id(class_scope)
-                                    .unwrap_or_else(|| {
-                                        panic!(
-                                            "scope {:?} not found. available scopes are {:?}",
-                                            class_scope, symbol_table.scopes,
-                                        )
-                                    });
-                                panic!(
-                                    "Attribute {:?} does not exist in scope {:?} on {:?}",
-                                    &a.attr, scope, c
-                                );
-                            }
-                        }
-                    }
+                    PythonType::Class(c) => Ok(self
+                        .lookup_on_class(symbol_table, &c, &a.attr)
+                        .expect("attribute not found on type")),
                     PythonType::Module(module) => {
                         log::debug!("module: {:?}", module);
                         let module_sym_table =
@@ -342,9 +321,35 @@ impl<'a> TypeEvaluator<'a> {
                 &b.op,
             )),
             ast::Expression::Subscript(s) => {
-                let value_type = &self.get_type(&s.value, Some(symbol_table), None)?;
-                // This only handles container types and TODO
-                Ok(value_type.clone())
+                let value_type = self.get_type(&s.value, Some(symbol_table), None)?;
+
+                let typ = match value_type {
+                    PythonType::Class(ref c) => {
+                        if !c.is_instance {
+                            return Ok(value_type);
+                        }
+                        let lookup_on_class = self.lookup_on_class(symbol_table, c, "__getitem__");
+                        match lookup_on_class {
+                            Some(PythonType::Callable(callable)) => {
+                                let ret_type = self.get_return_type_of_callable(&callable, &[]);
+                                match ret_type {
+                                    PythonType::TypeVar(ref tv) => {
+                                        let type_var_type = c.type_parameters.first().unwrap();
+                                        return Ok(type_var_type.clone());
+                                    }
+                                    _ => return Ok(ret_type),
+                                }
+                            }
+                            _ => PythonType::Unknown,
+                        }
+                    }
+                    _ => PythonType::Unknown,
+                };
+
+                if typ == PythonType::Unknown {
+                    return Ok(value_type);
+                }
+                return Ok(typ);
             }
             ast::Expression::Slice(_) => Ok(PythonType::Unknown),
             ast::Expression::Await(_) => Ok(PythonType::Unknown),
@@ -420,10 +425,11 @@ impl<'a> TypeEvaluator<'a> {
                         }
                         let type_parameters =
                             vec![self.get_annotation_type(&s.slice, symbol_table, None)];
-                        PythonType::Class(ClassType {
-                            details: class_type.details.clone(),
+                        PythonType::Class(ClassType::new(
+                            class_type.details.clone(),
                             type_parameters,
-                        })
+                            true,
+                        ))
                     }
                     // Illegal type annotation? Trying to subscript a non class type
                     Err(e) => PythonType::Unknown,
@@ -519,7 +525,11 @@ impl<'a> TypeEvaluator<'a> {
                             v.declaration_path.clone(),
                             decl_scope,
                         );
-                        Ok(PythonType::Class(ClassType::new(class_symbol, vec![])))
+                        Ok(PythonType::Class(ClassType::new(
+                            class_symbol,
+                            vec![],
+                            false,
+                        )))
                     } else {
                         Ok(var_type)
                     }
@@ -766,6 +776,7 @@ impl<'a> TypeEvaluator<'a> {
             Ok(PythonType::Class(ClassType::new(
                 class_symbol.clone(),
                 class_def_type_parameters,
+                false,
             )))
         }
     }
@@ -1070,5 +1081,26 @@ impl<'a> TypeEvaluator<'a> {
         args: &[Expression],
     ) -> PythonType {
         f_type.return_type.clone()
+    }
+
+    fn lookup_on_class(
+        &self,
+        symbol_table: &SymbolTable,
+        c: &ClassType,
+        method_name: &str,
+    ) -> Option<PythonType> {
+        dbg!(c);
+        let class_symbol_table_id = c.details.declaration_path.symbol_table_id;
+        let class_symbol_table = self
+            .imported_symbol_tables
+            .get(&class_symbol_table_id)
+            .unwrap();
+        let class_scope = c.details.class_scope_id;
+        let symbol_table_node = class_symbol_table.lookup_attribute(method_name, class_scope);
+
+        match symbol_table_node {
+            Some(node) => Some(self.get_symbol_type(node).expect("Cannot infer type")),
+            None => None,
+        }
     }
 }

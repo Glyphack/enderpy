@@ -61,7 +61,7 @@ Expr types in the line --->:
 Line 13: def func(params: List[int]) -> Dict[int, int]:
 
 Expr types in the line --->:
-        def func => (function) func
+        func => (function) func
         params: List[int] => (class) builtins.list[(class) int]
         List[int] => (class) builtins.list[TypeVar[_T, ]]
         Dict => (class) builtins.dict[TypeVar[_KT, ], TypeVar[_VT, ]]
@@ -74,9 +74,9 @@ Expr types in the line --->:
 Line 14:     return {params[0]: a}
 
 Expr types in the line --->:
-        {params[0]: a} => (class) builtins.dict[(class) builtins.list[(class) int], (class) int]
+        {params[0]: a} => (class) builtins.dict[(class) int, (class) int]
         params => (class) builtins.list[(class) int]
-        params[0] => (class) builtins.list[(class) int]
+        params[0] => (class) int
         0 => (class) int
         a => (class) int
 
@@ -84,7 +84,7 @@ Expr types in the line --->:
 Line 17: class C:
 
 Expr types in the line --->:
-        class C => (class) C
+        C => (class) C
 
 ---
 Line 18:     cls_attribute = {1}
@@ -98,7 +98,7 @@ Expr types in the line --->:
 Line 20:     def __init__(self, x: int):
 
 Expr types in the line --->:
-        def __init__ => (function) __init__
+        __init__ => (function) __init__
         self => Unknown
         x: int => (class) int
         int => (class) int
@@ -135,7 +135,7 @@ Expr types in the line --->:
 Line 25:     def add(self, value: int) -> None:
 
 Expr types in the line --->:
-        def add => (function) add
+        add => (function) add
         self => Unknown
         value: int => (class) int
         int => (class) int
@@ -153,7 +153,7 @@ Expr types in the line --->:
 Line 28:     def get_attr(self) -> Set[int]:
 
 Expr types in the line --->:
-        def get_attr => (function) get_attr
+        get_attr => (function) get_attr
         self => Unknown
         Set => (class) builtins.set[TypeVar[_T, ]]
         Set[int] => (class) builtins.set[TypeVar[_T, ]]
@@ -170,7 +170,7 @@ Expr types in the line --->:
 Line 31:     def get_x(self) -> float:
 
 Expr types in the line --->:
-        def get_x => (function) get_x
+        get_x => (function) get_x
         self => Unknown
         float => (class) float
 

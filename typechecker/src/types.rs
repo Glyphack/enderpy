@@ -115,13 +115,23 @@ pub struct ClassType {
     pub details: symbol_table::Class,
     // to represent types like `List[Int]`
     pub type_parameters: Vec<PythonType>,
+    // Whether this class is an instance or the class itself.
+    // This is determined based on:
+    // 1. If the type is inferred from annotation of a parameter or variable that is an instance
+    // 2. If the type is inferred from a class node then it's an instance
+    pub is_instance: bool,
 }
 
 impl ClassType {
-    pub fn new(details: symbol_table::Class, type_parameters: Vec<PythonType>) -> Self {
+    pub fn new(
+        details: symbol_table::Class,
+        type_parameters: Vec<PythonType>,
+        is_instance: bool,
+    ) -> Self {
         Self {
             details,
             type_parameters,
+            is_instance,
         }
     }
 
