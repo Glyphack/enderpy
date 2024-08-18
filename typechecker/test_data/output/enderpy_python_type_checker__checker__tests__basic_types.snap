@@ -99,7 +99,7 @@ Line 20:     def __init__(self, x: int):
 
 Expr types in the line --->:
         __init__ => (function) __init__
-        self => Unknown
+        self => (class) C
         x: int => (class) int
         int => (class) int
 
@@ -109,14 +109,14 @@ Line 21:         print(self.cls_attribute)
 Expr types in the line --->:
         print => (function) print
         print(self.cls_attribute) => None
-        self => Unknown
+        self => (class) C
         self.cls_attribute => (class) builtins.set[(class) int]
 
 ---
 Line 22:         self.x = float(x)
 
 Expr types in the line --->:
-        self => Unknown
+        self => (class) C
         self.x => (class) float
         float => (class) float
         float(x) => (class) float
@@ -128,7 +128,7 @@ Line 23:         print(self.x)
 Expr types in the line --->:
         print => (function) print
         print(self.x) => None
-        self => Unknown
+        self => (class) C
         self.x => (class) float
 
 ---
@@ -136,7 +136,7 @@ Line 25:     def add(self, value: int) -> None:
 
 Expr types in the line --->:
         add => (function) add
-        self => Unknown
+        self => (class) C
         value: int => (class) int
         int => (class) int
         None => None
@@ -154,7 +154,7 @@ Line 28:     def get_attr(self) -> Set[int]:
 
 Expr types in the line --->:
         get_attr => (function) get_attr
-        self => Unknown
+        self => (class) C
         Set => (class) builtins.set[TypeVar[_T, ]]
         Set[int] => (class) builtins.set[TypeVar[_T, ]]
         int => (class) int
@@ -163,7 +163,7 @@ Expr types in the line --->:
 Line 29:         return self.cls_attribute
 
 Expr types in the line --->:
-        self => Unknown
+        self => (class) C
         self.cls_attribute => (class) builtins.set[(class) int]
 
 ---
@@ -171,14 +171,14 @@ Line 31:     def get_x(self) -> float:
 
 Expr types in the line --->:
         get_x => (function) get_x
-        self => Unknown
+        self => (class) C
         float => (class) float
 
 ---
 Line 32:         return self.x
 
 Expr types in the line --->:
-        self => Unknown
+        self => (class) C
         self.x => (class) float
 
 ---

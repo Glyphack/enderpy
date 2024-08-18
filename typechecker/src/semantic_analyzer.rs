@@ -142,6 +142,7 @@ impl<'a> SemanticAnalyzer<'a> {
                     parameter_node: pos_only.clone(),
                     type_annotation: pos_only.annotation.clone(),
                     default_value,
+                    is_first: false,
                 }),
                 flags,
             );
@@ -170,6 +171,7 @@ impl<'a> SemanticAnalyzer<'a> {
                     parameter_node: arg.clone(),
                     type_annotation: arg.annotation.clone(),
                     default_value,
+                    is_first: index == 0,
                 }),
                 flags,
             );
@@ -189,6 +191,7 @@ impl<'a> SemanticAnalyzer<'a> {
                     parameter_node: arg.clone(),
                     type_annotation: arg.annotation.clone(),
                     default_value: None,
+                    is_first: false,
                 }),
                 flags,
             );
@@ -208,6 +211,7 @@ impl<'a> SemanticAnalyzer<'a> {
                     parameter_node: arg.clone(),
                     type_annotation: arg.annotation.clone(),
                     default_value: None,
+                    is_first: false,
                 }),
                 flags,
             );
@@ -227,6 +231,7 @@ impl<'a> SemanticAnalyzer<'a> {
                     parameter_node: arg.clone(),
                     type_annotation: arg.annotation.clone(),
                     default_value: None,
+                    is_first: false,
                 }),
                 flags,
             );

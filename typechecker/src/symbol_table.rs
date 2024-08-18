@@ -127,6 +127,21 @@ impl SymbolTable {
         None
     }
 
+    pub fn get_enclosing_class_scope_of_scope(&self, scope: u32) -> Option<Id> {
+        let mut scope = self.get_scope_by_id(scope)?;
+        loop {
+            if let SymbolTableType::Class(_) = scope.kind {
+                return Some(Id(scope.id));
+            }
+            scope = if let Some(parent) = self.parent_scope(scope) {
+                parent
+            } else {
+                break;
+            }
+        }
+        None
+    }
+
     pub fn current_scope_type(&self) -> &SymbolTableType {
         return &self.current_scope().kind;
     }
@@ -480,6 +495,8 @@ pub struct Parameter {
     pub parameter_node: ast::Arg,
     pub type_annotation: Option<ast::Expression>,
     pub default_value: Option<ast::Expression>,
+    // First parameter in methods have a special meaning. It can be self or cls.
+    pub is_first: bool,
 }
 
 #[derive(Debug, Clone)]

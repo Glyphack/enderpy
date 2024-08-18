@@ -581,7 +581,23 @@ impl<'a> TypeEvaluator<'a> {
                 if let Some(type_annotation) = &p.type_annotation {
                     Ok(self.get_annotation_type(type_annotation, symbol_table, Some(decl_scope)))
                 } else {
-                    // TODO: Implement self and cls parameter types
+                    if p.is_first
+                        && (p.parameter_node.arg == "self" || p.parameter_node.arg == "cls")
+                    {
+                        let class_scope = symbol_table
+                            .get_enclosing_class_scope_of_scope(decl_scope)
+                            .map(|s| symbol_table.get_scope_by_id(s.0).expect("not found"))
+                            .expect("method must be in a class");
+                        let parent_scope =
+                            symbol_table.parent_scope(class_scope).expect("no parent");
+                        let class_def = symbol_table
+                            .lookup_in_scope(&LookupSymbolRequest {
+                                name: &class_scope.name,
+                                scope: Some(parent_scope.id),
+                            })
+                            .expect("class def not found");
+                        return self.get_symbol_type(class_def);
+                    }
                     Ok(PythonType::Unknown)
                 }
             }
@@ -1089,7 +1105,6 @@ impl<'a> TypeEvaluator<'a> {
         c: &ClassType,
         method_name: &str,
     ) -> Option<PythonType> {
-        dbg!(c);
         let class_symbol_table_id = c.details.declaration_path.symbol_table_id;
         let class_symbol_table = self
             .imported_symbol_tables
@@ -1098,9 +1113,6 @@ impl<'a> TypeEvaluator<'a> {
         let class_scope = c.details.class_scope_id;
         let symbol_table_node = class_symbol_table.lookup_attribute(method_name, class_scope);
 
-        match symbol_table_node {
-            Some(node) => Some(self.get_symbol_type(node).expect("Cannot infer type")),
-            None => None,
-        }
+        symbol_table_node.map(|node| self.get_symbol_type(node).expect("Cannot infer type"))
     }
 }
