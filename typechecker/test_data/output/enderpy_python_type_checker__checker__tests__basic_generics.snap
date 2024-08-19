@@ -308,7 +308,7 @@ Line 84:     def __init__(self, value: T, name: str, logger: Logger) -> None:
 
 Expr types in the line --->:
         __init__ => (function) __init__
-        self => Unknown
+        self => (class) basic_generics.LoggedVar[TypeVar[T, ]]
         value: T => TypeVar[T, ]
         T => TypeVar[T, ]
         name: str => (class) str
@@ -321,7 +321,7 @@ Expr types in the line --->:
 Line 85:         self.name = name
 
 Expr types in the line --->:
-        self => Unknown
+        self => (class) basic_generics.LoggedVar[TypeVar[T, ]]
         self.name => (class) str
         name => (class) str
 
@@ -329,7 +329,7 @@ Expr types in the line --->:
 Line 86:         self.logger = logger
 
 Expr types in the line --->:
-        self => Unknown
+        self => (class) basic_generics.LoggedVar[TypeVar[T, ]]
         self.logger => (class) Logger
         logger => (class) Logger
 
@@ -337,7 +337,7 @@ Expr types in the line --->:
 Line 87:         self.value = value
 
 Expr types in the line --->:
-        self => Unknown
+        self => (class) basic_generics.LoggedVar[TypeVar[T, ]]
         self.value => TypeVar[T, ]
         value => TypeVar[T, ]
 
@@ -346,7 +346,7 @@ Line 89:     def set(self, new: T) -> None:
 
 Expr types in the line --->:
         set => (function) set
-        self => Unknown
+        self => (class) basic_generics.LoggedVar[TypeVar[T, ]]
         new: T => TypeVar[T, ]
         T => TypeVar[T, ]
         None => None
@@ -365,7 +365,7 @@ Expr types in the line --->:
 Line 91:         self.value = new
 
 Expr types in the line --->:
-        self => Unknown
+        self => (class) basic_generics.LoggedVar[TypeVar[T, ]]
         self.value => TypeVar[T, ]
         new => TypeVar[T, ]
 
@@ -374,7 +374,7 @@ Line 93:     def get(self) -> T:
 
 Expr types in the line --->:
         get => (function) get
-        self => Unknown
+        self => (class) basic_generics.LoggedVar[TypeVar[T, ]]
         T => TypeVar[T, ]
 
 ---
@@ -391,7 +391,7 @@ Expr types in the line --->:
 Line 95:         return self.value
 
 Expr types in the line --->:
-        self => Unknown
+        self => (class) basic_generics.LoggedVar[TypeVar[T, ]]
         self.value => TypeVar[T, ]
 
 ---
@@ -399,7 +399,7 @@ Line 97:     def log(self, message: str) -> None:
 
 Expr types in the line --->:
         log => (function) log
-        self => Unknown
+        self => (class) basic_generics.LoggedVar[TypeVar[T, ]]
         message: str => (class) str
         str => (class) str
         None => None
@@ -412,7 +412,7 @@ Expr types in the line --->:
         self.logger.info("{}: {}".format(self.name, message)) => None
         "{}: {}".format => (function) format
         "{}: {}".format(self.name, message) => (class) LiteralString
-        self => Unknown
+        self => (class) basic_generics.LoggedVar[TypeVar[T, ]]
         self.name => (class) str
         message => (class) str
 
