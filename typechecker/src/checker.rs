@@ -683,4 +683,8 @@ mod tests {
     type_eval_test!(basic_types, "test_data/inputs/basic_types.py");
     type_eval_test!(basic_generics, "test_data/inputs/basic_generics.py");
     type_eval_test!(import_star_lookup, "test_data/inputs/import_star_test/a.py");
+    type_eval_test!(
+        annotations_coroutine,
+        "test_data/inputs/conformance_tests/annotations_coroutine.py"
+    );
 }
