@@ -3,6 +3,7 @@ use std::path::PathBuf;
 use std::sync::atomic::AtomicUsize;
 use std::sync::Arc;
 
+use crate::ast_visitor::TraversalVisitor;
 use enderpy_python_parser as parser;
 use enderpy_python_parser::ast::*;
 use parser::{ast, get_row_col_position, Parser};
@@ -113,7 +114,7 @@ impl<'a> EnderpyFile<'a> {
     }
 
     pub fn get_position(&self, start: u32, end: u32) -> Position {
-        let (start_line_num, start_line_column, end_line_num, end_line_column) =
+        let (start_line_num, start_line_column, _end_line_num, _end_line_column) =
             get_row_col_position(start, end, &self.line_starts);
         Position {
             line: start_line_num,

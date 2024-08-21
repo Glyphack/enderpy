@@ -17,7 +17,6 @@ use crate::{
     token::{Kind, Token, TokenValue},
 };
 
-#[allow(unused)]
 #[derive(Debug, Clone)]
 pub struct Parser<'a> {
     pub identifiers_start_offset: Vec<(u32, u32, String)>,
@@ -32,7 +31,6 @@ pub struct Parser<'a> {
     // This is incremented when we see an opening bracket and decremented when we
     // see a closing bracket.
     nested_expression_list: u32,
-    curr_line_string: String,
     path: &'a str,
 }
 
@@ -62,7 +60,6 @@ impl<'a> Parser<'a> {
             prev_token_end,
             prev_nonwhitespace_token_end: prev_token_end,
             nested_expression_list,
-            curr_line_string: String::new(),
             path,
             identifiers_start_offset: identifiers_offset,
         }
@@ -634,7 +631,7 @@ impl<'a> Parser<'a> {
         self.expect(Kind::Colon)?;
         let body = self.parse_suite()?;
         if is_async {
-            Ok(Statement::AsyncFunctionDef(Box::new(AsyncFunctionDef {
+            Ok(Statement::AsyncFunctionDef(Arc::new(AsyncFunctionDef {
                 node: self.finish_node_chomped(node),
                 name,
                 args,

@@ -1,4 +1,5 @@
 use std::path::PathBuf;
+use std::sync::Arc;
 
 use ast::{Expression, Statement};
 use dashmap::DashMap;
@@ -261,7 +262,7 @@ impl<'a> TraversalVisitor for TypeChecker<'a> {
         }
     }
 
-    fn visit_function_def(&mut self, f: &parser::ast::FunctionDef) {
+    fn visit_function_def(&mut self, f: &Arc<parser::ast::FunctionDef>) {
         self.infer_name_type(
             &f.name,
             f.node.start + 4,
@@ -283,7 +284,7 @@ impl<'a> TraversalVisitor for TypeChecker<'a> {
         self.type_evaluator.symbol_table.revert_scope();
     }
 
-    fn visit_async_function_def(&mut self, f: &parser::ast::AsyncFunctionDef) {
+    fn visit_async_function_def(&mut self, f: &Arc<parser::ast::AsyncFunctionDef>) {
         self.infer_name_type(
             &f.name,
             f.node.start + 9,
@@ -296,7 +297,7 @@ impl<'a> TraversalVisitor for TypeChecker<'a> {
         self.type_evaluator.symbol_table.revert_scope();
     }
 
-    fn visit_class_def(&mut self, c: &parser::ast::ClassDef) {
+    fn visit_class_def(&mut self, c: &Arc<parser::ast::ClassDef>) {
         self.infer_name_type(
             &c.name,
             c.node.start + 6,

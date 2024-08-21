@@ -584,6 +584,25 @@ impl<'a> TypeEvaluator<'a> {
                     return_type: annotated_return_type,
                 })))
             }
+            Declaration::AsyncFunction(f) => {
+                let annotated_return_type =
+                    if let Some(ref type_annotation) = f.function_node.returns {
+                        self.get_annotation_type(type_annotation, symbol_table, Some(decl_scope))
+                    } else {
+                        // TODO: infer return type of function disabled because of recursive types
+                        // self.infer_function_return_type(f)
+                        PythonType::Any
+                    };
+
+                let arguments = f.function_node.args.clone();
+                let name = f.function_node.name.clone();
+
+                Ok(PythonType::Callable(Box::new(CallableType {
+                    name,
+                    arguments,
+                    return_type: annotated_return_type,
+                })))
+            }
             Declaration::Parameter(p) => {
                 if let Some(type_annotation) = &p.type_annotation {
                     Ok(self.get_annotation_type(type_annotation, symbol_table, Some(decl_scope)))

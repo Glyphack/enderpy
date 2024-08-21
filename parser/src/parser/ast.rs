@@ -81,7 +81,7 @@ pub enum Statement {
     TryStatement(Box<Try>),
     TryStarStatement(Box<TryStar>),
     FunctionDef(Arc<FunctionDef>),
-    AsyncFunctionDef(Box<AsyncFunctionDef>),
+    AsyncFunctionDef(Arc<AsyncFunctionDef>),
     ClassDef(Arc<ClassDef>),
     Match(Box<Match>),
     TypeAlias(Box<TypeAlias>),

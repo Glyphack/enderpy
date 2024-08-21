@@ -373,6 +373,7 @@ impl Display for DeclarationPath {
 pub enum Declaration {
     Variable(Variable),
     Function(Function),
+    AsyncFunction(AsyncFunction),
     Class(Class),
 
     // Alias is used for imports
@@ -391,6 +392,7 @@ impl Declaration {
         match self {
             Declaration::Variable(v) => &v.declaration_path,
             Declaration::Function(f) => &f.declaration_path,
+            Declaration::AsyncFunction(f) => &f.declaration_path,
             Declaration::Class(c) => &c.declaration_path,
             Declaration::Parameter(p) => &p.declaration_path,
             Declaration::Alias(a) => &a.declaration_path,
@@ -423,6 +425,36 @@ pub struct Function {
 }
 
 impl Function {
+    pub fn is_abstract(&self) -> bool {
+        if !self.is_method {
+            return false;
+        }
+        for decorator in self.function_node.decorator_list.iter() {
+            if let ast::Expression::Name(n) = &decorator {
+                if &n.id == "abstractmethod" {
+                    return true;
+                }
+            }
+        }
+        false
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct AsyncFunction {
+    pub declaration_path: DeclarationPath,
+    pub function_node: Arc<ast::AsyncFunctionDef>,
+    pub is_method: bool,
+    pub is_generator: bool,
+    /// return statements that are reachable in the top level function body
+    pub return_statements: Vec<ast::Return>,
+    /// yield statements that are reachable in the top level function body
+    pub yield_statements: Vec<ast::Yield>,
+    /// raise statements that are reachable in the top level function body
+    pub raise_statements: Vec<ast::Raise>,
+}
+
+impl AsyncFunction {
     pub fn is_abstract(&self) -> bool {
         if !self.is_method {
             return false;
@@ -646,6 +678,9 @@ impl Display for Declaration {
             }
             Declaration::TypeAlias(_t) => {
                 write!(f, "Type alias")
+            }
+            Declaration::AsyncFunction(_f) => {
+                write!(f, "Async function")
             }
         }
     }

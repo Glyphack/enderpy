@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use enderpy_python_parser as parser;
 use enderpy_python_parser::ast::*;
 
@@ -5,7 +7,6 @@ use enderpy_python_parser::ast::*;
 /// This is useful for visitors that only need to visit a few nodes
 /// and don't want to implement all the methods.
 /// The overridden methods must make sure to continue the traversal.
-#[allow(dead_code)]
 pub trait TraversalVisitor {
     fn visit_stmt(&mut self, s: &Statement) {
         // map all statements and call visit
@@ -40,6 +41,7 @@ pub trait TraversalVisitor {
             Statement::TypeAlias(t) => self.visit_type_alias(t),
         }
     }
+
     fn visit_expr(&mut self, e: &Expression) {
         match e {
             Expression::Constant(c) => self.visit_constant(c),
@@ -71,6 +73,7 @@ pub trait TraversalVisitor {
             Expression::FormattedValue(f) => self.visit_formatted_value(f),
         }
     }
+
     fn visit_import(&mut self, _i: &Import) {
         todo!();
     }
@@ -170,19 +173,19 @@ pub trait TraversalVisitor {
         }
     }
 
-    fn visit_function_def(&mut self, f: &parser::ast::FunctionDef) {
+    fn visit_function_def(&mut self, f: &Arc<parser::ast::FunctionDef>) {
         for stmt in &f.body {
             self.visit_stmt(stmt);
         }
     }
 
-    fn visit_async_function_def(&mut self, f: &parser::ast::AsyncFunctionDef) {
+    fn visit_async_function_def(&mut self, f: &Arc<parser::ast::AsyncFunctionDef>) {
         for stmt in &f.body {
             self.visit_stmt(stmt);
         }
     }
 
-    fn visit_class_def(&mut self, c: &parser::ast::ClassDef) {
+    fn visit_class_def(&mut self, c: &Arc<parser::ast::ClassDef>) {
         for stmt in &c.body {
             self.visit_stmt(stmt);
         }

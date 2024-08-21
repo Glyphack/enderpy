@@ -1,20 +1,19 @@
-use std::{collections::HashMap, sync::Arc};
+use std::sync::Arc;
 
 use enderpy_python_parser as parser;
 use enderpy_python_parser::ast::Expression;
 
-use parser::ast::{GetNode, Name, Statement};
+use parser::ast::{self, GetNode, Name, Statement};
 
 use crate::{
     ast_visitor::TraversalVisitor,
     build::ResolvedImports,
     file::EnderpyFile,
-    ruff_python_import_resolver::{
-        import_result::ImportResult, module_descriptor::ImportModuleDescriptor,
-    },
+    ruff_python_import_resolver::module_descriptor::ImportModuleDescriptor,
     symbol_table::{
-        Alias, Class, Declaration, DeclarationPath, Function, Parameter, SymbolFlags, SymbolTable,
-        SymbolTableNode, SymbolTableScope, SymbolTableType, TypeAlias, Variable,
+        Alias, AsyncFunction, Class, Declaration, DeclarationPath, Function, Parameter,
+        SymbolFlags, SymbolTable, SymbolTableNode, SymbolTableScope, SymbolTableType, TypeAlias,
+        Variable,
     },
 };
 
@@ -29,6 +28,13 @@ pub struct SemanticAnalyzer<'a> {
     /// import os -> imports.get("os")
     /// from os import path -> imports.get("os")
     pub imports: &'a ResolvedImports,
+    pub function_information: FunctionInformation,
+}
+
+#[derive(Debug, Clone)]
+pub struct FunctionInformation {
+    pub return_statements: Vec<ast::Return>,
+    pub yield_statements: Vec<ast::Yield>,
 }
 
 #[allow(unused)]
@@ -38,6 +44,10 @@ impl<'a> SemanticAnalyzer<'a> {
         SemanticAnalyzer {
             symbol_table: symbols,
             imports,
+            function_information: FunctionInformation {
+                return_statements: Vec::new(),
+                yield_statements: Vec::new(),
+            },
         }
     }
 
@@ -250,8 +260,8 @@ impl<'a> SemanticAnalyzer<'a> {
     }
 }
 
-impl<'a> SemanticAnalyzer<'a> {
-    pub fn visit_stmt(&mut self, s: &parser::ast::Statement) {
+impl<'a> TraversalVisitor for SemanticAnalyzer<'a> {
+    fn visit_stmt(&mut self, s: &parser::ast::Statement) {
         match s {
             parser::ast::Statement::ExpressionStatement(e) => self.visit_expr(e),
             parser::ast::Statement::Import(i) => self.visit_import(i),
@@ -499,24 +509,16 @@ impl<'a> SemanticAnalyzer<'a> {
 
         self.add_arguments_definitions(&f.args);
 
-        let mut return_statements = vec![];
-        let mut yield_statements = vec![];
-        let mut raise_statements = vec![];
+        // TODO: clone
+        let prev_function_information = self.function_information.clone();
+
         for stmt in f.body.iter() {
             self.visit_stmt(stmt);
-            match stmt {
-                parser::ast::Statement::Raise(r) => raise_statements.push(*r.clone()),
-                parser::ast::Statement::Return(r) => return_statements.push(*r.clone()),
-                parser::ast::Statement::ExpressionStatement(e) => {
-                    let Some(yield_expr) = e.as_yield_expr() else {
-                        continue;
-                    };
-
-                    yield_statements.push(*yield_expr.clone())
-                }
-                _ => (),
-            }
         }
+
+        let return_statements = std::mem::take(&mut self.function_information.return_statements);
+        let yield_statements = std::mem::take(&mut self.function_information.yield_statements);
+        self.function_information = prev_function_information;
 
         for type_parameter in &f.type_params {
             let declaration_path = DeclarationPath::new(
@@ -544,7 +546,65 @@ impl<'a> SemanticAnalyzer<'a> {
             is_generator: !yield_statements.is_empty(),
             return_statements,
             yield_statements,
-            raise_statements,
+            raise_statements: vec![],
+        });
+        let flags = SymbolFlags::empty();
+        self.create_symbol(f.name.clone(), function_declaration, flags);
+    }
+
+    fn visit_async_function_def(&mut self, f: &Arc<parser::ast::AsyncFunctionDef>) {
+        let declaration_path = DeclarationPath::new(
+            self.symbol_table.id,
+            f.node,
+            self.symbol_table.current_scope_id,
+        );
+
+        self.symbol_table.push_scope(SymbolTableScope::new(
+            SymbolTableType::Function(Arc::new(f.to_function_def())),
+            f.name.clone(),
+            f.node.start,
+            self.symbol_table.current_scope_id,
+        ));
+
+        self.add_arguments_definitions(&f.args);
+
+        // TODO: clone
+        let prev_function_information = self.function_information.clone();
+
+        for stmt in f.body.iter() {
+            self.visit_stmt(stmt);
+        }
+
+        let return_statements = std::mem::take(&mut self.function_information.return_statements);
+        let yield_statements = std::mem::take(&mut self.function_information.yield_statements);
+        self.function_information = prev_function_information;
+
+        for type_parameter in &f.type_params {
+            let declaration_path = DeclarationPath::new(
+                self.symbol_table.id,
+                type_parameter.get_node(),
+                self.symbol_table.current_scope_id,
+            );
+            let flags = SymbolFlags::empty();
+            self.create_symbol(
+                type_parameter.get_name(),
+                Declaration::TypeParameter(crate::symbol_table::TypeParameter {
+                    declaration_path,
+                    type_parameter_node: type_parameter.clone(),
+                }),
+                flags,
+            );
+        }
+        self.symbol_table.exit_scope();
+
+        let function_declaration = Declaration::AsyncFunction(AsyncFunction {
+            declaration_path,
+            function_node: f.clone(),
+            is_method: self.is_inside_class(),
+            is_generator: !yield_statements.is_empty(),
+            return_statements,
+            yield_statements,
+            raise_statements: vec![],
         });
         let flags = SymbolFlags::empty();
         self.create_symbol(f.name.clone(), function_declaration, flags);
@@ -565,16 +625,6 @@ impl<'a> SemanticAnalyzer<'a> {
             }),
             flags,
         );
-    }
-
-    fn visit_async_function_def(&mut self, _f: &parser::ast::AsyncFunctionDef) {
-        self.symbol_table.push_scope(SymbolTableScope::new(
-            SymbolTableType::Function(Arc::new(_f.to_function_def())),
-            _f.name.clone(),
-            _f.node.start,
-            self.symbol_table.current_scope_id,
-        ));
-        self.symbol_table.exit_scope();
     }
 
     fn visit_class_def(&mut self, c: &Arc<parser::ast::ClassDef>) {
@@ -662,7 +712,10 @@ impl<'a> SemanticAnalyzer<'a> {
 
     fn visit_named_expr(&mut self, _n: &parser::ast::NamedExpression) {}
 
-    fn visit_yield(&mut self, _y: &parser::ast::Yield) {}
+    // TODO: clone
+    fn visit_yield(&mut self, y: &parser::ast::Yield) {
+        self.function_information.yield_statements.push(y.clone());
+    }
 
     fn visit_yield_from(&mut self, _y: &parser::ast::YieldFrom) {}
 
@@ -739,7 +792,10 @@ impl<'a> SemanticAnalyzer<'a> {
 
     fn visit_delete(&mut self, _d: &parser::ast::Delete) {}
 
-    fn visit_return(&mut self, _r: &parser::ast::Return) {}
+    // TODO: clone
+    fn visit_return(&mut self, r: &parser::ast::Return) {
+        self.function_information.return_statements.push(r.clone());
+    }
 
     fn visit_raise(&mut self, _r: &parser::ast::Raise) {}
 
