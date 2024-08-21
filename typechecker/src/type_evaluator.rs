@@ -98,51 +98,58 @@ impl<'a> TypeEvaluator<'a> {
                 self.get_name_type(&n.id, Some(n.node.start), symbol_table, symbol_table_scope)
             }
             ast::Expression::Call(call) => {
-                let called_name = &call.func;
-                let f_type = self.get_type(called_name, Some(symbol_table), None)?;
-                if let PythonType::Callable(c) = &f_type {
-                    let return_type = self.get_return_type_of_callable(c, &call.args);
-                    Ok(return_type)
-                } else if let PythonType::Class(c) = &f_type {
-                    Ok(f_type)
-                } else if let PythonType::TypeVar(t) = &f_type {
-                    let Some(first_arg) = call.args.first() else {
-                        bail!("TypeVar must be called with a name");
-                    };
-                    let type_name = match first_arg {
-                        ast::Expression::Constant(str) => match &str.value {
-                            ast::ConstantValue::Str(s) => s,
-                            _ => panic!("TypeVar first arg must be a string"),
-                        },
-                        _ => panic!("TypeVar must be called with at least one arg"),
-                    };
-
-                    let bounds: Vec<PythonType> = call
-                        .args
-                        .iter()
-                        .skip(1)
-                        .map(|arg| {
-                            self.get_type(arg, None, None)
-                                .unwrap_or(PythonType::Unknown)
-                        })
-                        .collect();
-
-                    // Disallow specifying a single bound
-                    if bounds.len() == 1 {
-                        bail!("TypeVar must be called with at least two bounds");
+                let called_function = &call.func;
+                match called_function {
+                    ast::Expression::Subscript(subscript) => {
+                        todo!("initialized a class with type parameter type")
                     }
+                    _ => {
+                        let f_type = self.get_type(called_function, Some(symbol_table), None)?;
+                        if let PythonType::Callable(c) = &f_type {
+                            let return_type = self.get_return_type_of_callable(c, &call.args);
+                            Ok(return_type)
+                        } else if let PythonType::Class(c) = &f_type {
+                            Ok(f_type)
+                        } else if let PythonType::TypeVar(t) = &f_type {
+                            let Some(first_arg) = call.args.first() else {
+                                bail!("TypeVar must be called with a name");
+                            };
+                            let type_name = match first_arg {
+                                ast::Expression::Constant(str) => match &str.value {
+                                    ast::ConstantValue::Str(s) => s,
+                                    _ => panic!("TypeVar first arg must be a string"),
+                                },
+                                _ => panic!("TypeVar must be called with at least one arg"),
+                            };
 
-                    // Disallow specifying a type var as a bound
-                    if bounds.iter().any(|b| matches!(b, PythonType::TypeVar(_))) {
-                        bail!("TypeVar cannot be used as a bound");
+                            let bounds: Vec<PythonType> = call
+                                .args
+                                .iter()
+                                .skip(1)
+                                .map(|arg| {
+                                    self.get_type(arg, None, None)
+                                        .unwrap_or(PythonType::Unknown)
+                                })
+                                .collect();
+
+                            // Disallow specifying a single bound
+                            if bounds.len() == 1 {
+                                bail!("TypeVar must be called with at least two bounds");
+                            }
+
+                            // Disallow specifying a type var as a bound
+                            if bounds.iter().any(|b| matches!(b, PythonType::TypeVar(_))) {
+                                bail!("TypeVar cannot be used as a bound");
+                            }
+
+                            Ok(PythonType::TypeVar(TypeVar {
+                                name: type_name.to_string(),
+                                bounds,
+                            }))
+                        } else {
+                            bail!("{f_type:?} is not callable");
+                        }
                     }
-
-                    Ok(PythonType::TypeVar(TypeVar {
-                        name: type_name.to_string(),
-                        bounds,
-                    }))
-                } else {
-                    bail!("{f_type:?} is not callable");
                 }
             }
             ast::Expression::List(l) => {
