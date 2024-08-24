@@ -1,0 +1,82 @@
+---
+source: typechecker/src/checker.rs
+assertion_line: 687
+description: "1: \"\"\"\n2: Tests for annotating coroutines.\n3: \"\"\"\n4: \n5: # Specification: https://typing.readthedocs.io/en/latest/spec/annotations.html#annotating-generator-functions-and-coroutines\n6: \n7: # > Coroutines introduced in PEP 492 are annotated with the same syntax as\n8: # > ordinary functions. However, the return type annotation corresponds to\n9: # > the type of await expression, not to the coroutine type.\n10: \n11: \n12: from typing import Any, Callable, Coroutine, assert_type\n13: \n14: \n15: async def func1(ignored: int, /) -> str:\n16:     return \"spam\"\n17: \n18: \n19: assert_type(func1, Callable[[int], Coroutine[Any, Any, str]])\n20: \n21: \n22: async def func2() -> None:\n23:     x = await func1(42)\n24:     assert_type(x, str)\n"
+expression: result
+---
+Line 1: """
+Tests for annotating coroutines.
+"""
+
+Expr types in the line --->:
+        """
+Tests for annotating coroutines.
+""" => (class) str
+
+---
+Line 10: from typing import Any, Callable, Coroutine, assert_type
+
+Expr types in the line --->:
+        typing  => Module
+        Any => (class) object
+        Callable => (class) Callable
+        Coroutine => (class) typing.Coroutine[TypeVar[_ReturnT_co, ], TypeVar[_YieldT_co, ], TypeVar[_SendT_contra, ], TypeVar[_ReturnT_co, ]]
+        assert_type => (function) assert_type
+
+---
+Line 13: async def func1(ignored: int, /) -> str:
+
+Expr types in the line --->:
+         func => (function) func1
+
+---
+Line 14:     return "spam"
+
+Expr types in the line --->:
+        "spam" => (class) str
+
+---
+Line 17: assert_type(func1, Callable[[int], Coroutine[Any, Any, str]])
+
+Expr types in the line --->:
+        assert_type => (function) assert_type
+        assert_type(func1, Callable[[int], Coroutine[Any, Any, str]]) => TypeVar[_T, ]
+        func1 => (function) func1
+        Callable => (class) Callable
+        Callable[[int], Coroutine[Any, Any, str]] => (class) Callable
+        [int] => (class) builtins.list[(class) int]
+        [int], Coroutine[Any, Any, str]] => (class) builtins.tuple[Unknown]
+        int => (class) int
+        Coroutine => (class) typing.Coroutine[TypeVar[_ReturnT_co, ], TypeVar[_YieldT_co, ], TypeVar[_SendT_contra, ], TypeVar[_ReturnT_co, ]]
+        Coroutine[Any, Any, str] => (class) typing.Coroutine[TypeVar[_ReturnT_co, ], TypeVar[_YieldT_co, ], TypeVar[_SendT_contra, ], TypeVar[_ReturnT_co, ]]
+        Any => (class) object
+        Any, Any, str] => (class) builtins.tuple[Unknown]
+        Any => (class) object
+        str => (class) str
+
+---
+Line 20: async def func2() -> None:
+
+Expr types in the line --->:
+         func => (function) func2
+
+---
+Line 21:     x = await func1(42)
+
+Expr types in the line --->:
+        x => Unknown
+        await func1(42) => Unknown
+        func1 => (function) func1
+        func1(42) => (class) str
+        42 => (class) int
+
+---
+Line 22:     assert_type(x, str)
+
+Expr types in the line --->:
+        assert_type => (function) assert_type
+        assert_type(x, str) => TypeVar[_T, ]
+        x => Unknown
+        str => (class) str
+
+---
