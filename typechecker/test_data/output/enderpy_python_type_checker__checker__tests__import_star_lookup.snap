@@ -19,7 +19,7 @@ Expr types in the line --->:
 Line 4: print(in_b)
 
 Expr types in the line --->:
-        print => (function) print
+        print => (function) Callable[[(class) object, Union[(class) str, None], Union[(class) str, None], Union[Unknown, None], Unknown], None]
         print(in_b) => None
         in_b => (class) int
 
@@ -34,7 +34,7 @@ Expr types in the line --->:
 Line 7: os.path.dirname("")
 
 Expr types in the line --->:
-        os.path.dirname => (function) dirname
+        os.path.dirname => (function) Callable[[Unknown], TypeVar[AnyStr, (class) str, (class) builtins.bytes[(class) int]]]
         os.path.dirname("") => TypeVar[AnyStr, (class) str, (class) builtins.bytes[(class) int]]
         "" => (class) str
 

@@ -18,8 +18,10 @@ use super::{
 };
 use crate::{
     semantic_analyzer::get_member_access_info,
-    symbol_table::{Class, Declaration, Id, LookupSymbolRequest, SymbolTable, SymbolTableNode},
-    types::{ClassType, ModuleRef, TypeVar},
+    symbol_table::{
+        self, Class, Declaration, Id, LookupSymbolRequest, SymbolTable, SymbolTableNode,
+    },
+    types::{self, ClassType, ModuleRef, TypeVar},
 };
 
 const LITERAL_TYPE_PARAMETER_MSG: &str = "Type arguments for 'Literal' must be None, a literal value (int, bool, str, or bytes), or an enum value";
@@ -359,7 +361,16 @@ impl<'a> TypeEvaluator<'a> {
                 return Ok(typ);
             }
             ast::Expression::Slice(_) => Ok(PythonType::Unknown),
-            ast::Expression::Await(_) => Ok(PythonType::Unknown),
+            ast::Expression::Await(a) => {
+                let awaited_type =
+                    self.get_type(&a.value, Some(symbol_table), symbol_table_scope)?;
+                let typ = match awaited_type {
+                    PythonType::Coroutine(callable) => callable.return_type.clone(),
+                    _ => unimplemented!("Can other things be awaited?"),
+                };
+
+                Ok(typ)
+            }
             ast::Expression::Compare(_) => Ok(PythonType::Unknown),
             ast::Expression::Lambda(_) => Ok(PythonType::Unknown),
             ast::Expression::IfExp(_) => Ok(PythonType::Unknown),
@@ -565,44 +576,8 @@ impl<'a> TypeEvaluator<'a> {
                     Ok(PythonType::Unknown)
                 }
             }
-            Declaration::Function(f) => {
-                let annotated_return_type =
-                    if let Some(ref type_annotation) = f.function_node.returns {
-                        self.get_annotation_type(type_annotation, symbol_table, Some(decl_scope))
-                    } else {
-                        // TODO: infer return type of function disabled because of recursive types
-                        // self.infer_function_return_type(f)
-                        PythonType::Any
-                    };
-
-                let arguments = f.function_node.args.clone();
-                let name = f.function_node.name.clone();
-
-                Ok(PythonType::Callable(Box::new(CallableType {
-                    name,
-                    arguments,
-                    return_type: annotated_return_type,
-                })))
-            }
-            Declaration::AsyncFunction(f) => {
-                let annotated_return_type =
-                    if let Some(ref type_annotation) = f.function_node.returns {
-                        self.get_annotation_type(type_annotation, symbol_table, Some(decl_scope))
-                    } else {
-                        // TODO: infer return type of function disabled because of recursive types
-                        // self.infer_function_return_type(f)
-                        PythonType::Any
-                    };
-
-                let arguments = f.function_node.args.clone();
-                let name = f.function_node.name.clone();
-
-                Ok(PythonType::Callable(Box::new(CallableType {
-                    name,
-                    arguments,
-                    return_type: annotated_return_type,
-                })))
-            }
+            Declaration::Function(f) => Ok(self.get_function_type(symbol_table, f)),
+            Declaration::AsyncFunction(f) => Ok(self.get_async_function_type(symbol_table, f)),
             Declaration::Parameter(p) => {
                 if let Some(type_annotation) = &p.type_annotation {
                     Ok(self.get_annotation_type(type_annotation, symbol_table, Some(decl_scope)))
@@ -893,35 +868,23 @@ impl<'a> TypeEvaluator<'a> {
         if name == "function" {
             return None;
         }
-        let bulitins_symbol_table = &self
+        let builtins_symbol_table = &self
             .imported_symbol_tables
             .get(&Id(0))
             .expect("Builtins must exist");
         let builtin_symbol =
-            bulitins_symbol_table.lookup_in_scope(&LookupSymbolRequest { name, scope: None })?;
+            builtins_symbol_table.lookup_in_scope(&LookupSymbolRequest { name, scope: None })?;
         let decl = builtin_symbol.last_declaration();
         let found_declaration = match decl {
             Declaration::Class(c) => {
                 let decl_scope = decl.declaration_path().scope_id;
-                self.get_class_declaration_type(c, bulitins_symbol_table, decl_scope)
+                self.get_class_declaration_type(c, builtins_symbol_table, decl_scope)
                     .unwrap_or_else(|_| {
                         panic!("Error getting type for builtin class: {:?}", c.class_node)
                     })
             }
-            Declaration::Function(f) => {
-                let arguments = f.function_node.args.clone();
-                let name = f.function_node.name.clone();
-                PythonType::Callable(Box::new(CallableType {
-                    name,
-                    arguments,
-                    return_type: f.function_node.returns.clone().map_or(
-                        PythonType::Unknown,
-                        |type_annotation| {
-                            self.get_annotation_type(&type_annotation, bulitins_symbol_table, None)
-                        },
-                    ),
-                }))
-            }
+            Declaration::Function(f) => self.get_function_type(builtins_symbol_table, f),
+            Declaration::AsyncFunction(f) => self.get_async_function_type(builtins_symbol_table, f),
             _ => return None,
         };
         Some(found_declaration)
@@ -1140,5 +1103,69 @@ impl<'a> TypeEvaluator<'a> {
         let symbol_table_node = class_symbol_table.lookup_attribute(method_name, class_scope);
 
         symbol_table_node.map(|node| self.get_symbol_type(node).expect("Cannot infer type"))
+    }
+
+    // TODO(coroutine_annotation): These two are very similar. Maybe should be presented in another
+    // way. Async version only needs the return type to be a coroutine.
+    fn get_function_type(
+        &self,
+        symbol_table: &symbol_table::SymbolTable,
+        f: &symbol_table::Function,
+    ) -> PythonType {
+        let arguments = f.function_node.args.clone();
+        let mut signature = Vec::with_capacity(arguments.len());
+        for argument in arguments {
+            if let Some(type_annotation) = &argument.annotation {
+                signature.push(self.get_annotation_type(type_annotation, symbol_table, None));
+            } else {
+                signature.push(PythonType::Unknown);
+            }
+        }
+        let name = f.function_node.name.clone();
+        PythonType::Callable(Box::new(CallableType::new(
+            name,
+            signature,
+            f.function_node
+                .returns
+                .clone()
+                .map_or(PythonType::Unknown, |type_annotation| {
+                    self.get_annotation_type(&type_annotation, symbol_table, None)
+                }),
+            false,
+        )))
+    }
+
+    fn get_async_function_type(
+        &self,
+        symbol_table: &symbol_table::SymbolTable,
+        f: &symbol_table::AsyncFunction,
+    ) -> PythonType {
+        let arguments = f.function_node.args.clone();
+        let mut signature = Vec::with_capacity(arguments.len());
+        for argument in arguments {
+            if let Some(type_annotation) = &argument.annotation {
+                signature.push(self.get_annotation_type(type_annotation, symbol_table, None));
+            } else {
+                signature.push(PythonType::Unknown);
+            }
+        }
+        let name = f.function_node.name.clone();
+        let return_type = f
+            .function_node
+            .returns
+            .clone()
+            .map_or(PythonType::Unknown, |type_annotation| {
+                self.get_annotation_type(&type_annotation, symbol_table, None)
+            });
+        PythonType::Callable(Box::new(CallableType::new(
+            name,
+            signature,
+            PythonType::Coroutine(Box::new(types::CoroutineType {
+                return_type,
+                send_type: PythonType::Any,
+                yield_type: PythonType::Any,
+            })),
+            true,
+        )))
     }
 }

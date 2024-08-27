@@ -27,6 +27,7 @@ pub enum PythonType {
     /// Union type
     MultiValue(Vec<PythonType>),
     Callable(Box<CallableType>),
+    Coroutine(Box<CoroutineType>),
     Class(ClassType),
     Optional(Box<PythonType>),
     Never,
@@ -87,13 +88,27 @@ pub enum AnySource {
 #[derive(Debug, Clone)]
 pub struct CallableType {
     pub name: String,
-    pub arguments: ast::Arguments,
+    pub signature: Vec<PythonType>,
     pub return_type: PythonType,
+    pub is_async: bool,
 }
 
 impl Eq for CallableType {}
 
 impl CallableType {
+    pub fn new(
+        name: String,
+        signature: Vec<PythonType>,
+        return_type: PythonType,
+        is_async: bool,
+    ) -> Self {
+        CallableType {
+            name,
+            signature,
+            return_type,
+            is_async,
+        }
+    }
     pub fn type_equal(&self, other: &Self) -> bool {
         // TODO: add check for args too. We need to check what should be the rule for
         self.return_type.type_equal(&other.return_type)
@@ -106,6 +121,15 @@ impl PartialEq for CallableType {
         // two args to be equal
         self.return_type == other.return_type
     }
+}
+
+#[derive(Debug, Eq, PartialEq, Clone)]
+pub struct CoroutineType {
+    pub return_type: PythonType,
+    // TODO(coroutine_annotation): Any Any are send and yield type that are not implemented yet
+    // https://github.com/python/typing/issues/251
+    pub send_type: PythonType,
+    pub yield_type: PythonType,
 }
 
 #[allow(unused)]
@@ -215,11 +239,26 @@ impl Display for PythonType {
             PythonType::Module(_) => "Module",
             PythonType::Unknown => "Unknown",
             PythonType::Callable(callable_type) => {
-                let fmt = format!("(function) {}", callable_type.name.as_str());
+                let signature_str = callable_type
+                    .signature
+                    .iter()
+                    .map(|arg| arg.to_string())
+                    .collect::<Vec<String>>()
+                    .join(", ");
+                let fmt = format!(
+                    "(function) Callable[[{}], {}]",
+                    signature_str, callable_type.return_type
+                );
+                return write!(f, "{}", fmt);
+            }
+            PythonType::Coroutine(callable_type) => {
+                let fmt = format!(
+                    "Coroutine[{}, {}, {}]",
+                    callable_type.send_type, callable_type.yield_type, callable_type.return_type
+                );
                 return write!(f, "{}", fmt);
             }
             PythonType::Class(class_type) => {
-                // show it like class[args]
                 let args_str = class_type
                     .type_parameters
                     .iter()
