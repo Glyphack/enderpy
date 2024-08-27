@@ -87,13 +87,27 @@ pub enum AnySource {
 #[derive(Debug, Clone)]
 pub struct CallableType {
     pub name: String,
-    pub arguments: ast::Arguments,
+    pub signature: Vec<PythonType>,
     pub return_type: PythonType,
+    pub is_async: bool,
 }
 
 impl Eq for CallableType {}
 
 impl CallableType {
+    pub fn new(
+        name: String,
+        signature: Vec<PythonType>,
+        return_type: PythonType,
+        is_async: bool,
+    ) -> Self {
+        CallableType {
+            name,
+            signature,
+            return_type,
+            is_async,
+        }
+    }
     pub fn type_equal(&self, other: &Self) -> bool {
         // TODO: add check for args too. We need to check what should be the rule for
         self.return_type.type_equal(&other.return_type)
@@ -215,11 +229,24 @@ impl Display for PythonType {
             PythonType::Module(_) => "Module",
             PythonType::Unknown => "Unknown",
             PythonType::Callable(callable_type) => {
-                let fmt = format!("(function) {}", callable_type.name.as_str());
+                let signature_str = callable_type
+                    .signature
+                    .iter()
+                    .map(|arg| arg.to_string())
+                    .collect::<Vec<String>>()
+                    .join(", ");
+                let return_type_str = if callable_type.is_async {
+                    format!("Coroutine[Any, Any, {}]", callable_type.return_type)
+                } else {
+                    callable_type.return_type.to_string()
+                };
+                let fmt = format!(
+                    "(function) Callable[[{}], {}]",
+                    signature_str, return_type_str
+                );
                 return write!(f, "{}", fmt);
             }
             PythonType::Class(class_type) => {
-                // show it like class[args]
                 let args_str = class_type
                     .type_parameters
                     .iter()

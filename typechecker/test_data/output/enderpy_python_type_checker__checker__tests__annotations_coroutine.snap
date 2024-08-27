@@ -1,6 +1,5 @@
 ---
 source: typechecker/src/checker.rs
-assertion_line: 687
 description: "1: \"\"\"\n2: Tests for annotating coroutines.\n3: \"\"\"\n4: \n5: # Specification: https://typing.readthedocs.io/en/latest/spec/annotations.html#annotating-generator-functions-and-coroutines\n6: \n7: # > Coroutines introduced in PEP 492 are annotated with the same syntax as\n8: # > ordinary functions. However, the return type annotation corresponds to\n9: # > the type of await expression, not to the coroutine type.\n10: \n11: \n12: from typing import Any, Callable, Coroutine, assert_type\n13: \n14: \n15: async def func1(ignored: int, /) -> str:\n16:     return \"spam\"\n17: \n18: \n19: assert_type(func1, Callable[[int], Coroutine[Any, Any, str]])\n20: \n21: \n22: async def func2() -> None:\n23:     x = await func1(42)\n24:     assert_type(x, str)\n"
 expression: result
 ---
@@ -21,13 +20,13 @@ Expr types in the line --->:
         Any => (class) object
         Callable => (class) Callable
         Coroutine => (class) typing.Coroutine[TypeVar[_ReturnT_co, ], TypeVar[_YieldT_co, ], TypeVar[_SendT_contra, ], TypeVar[_ReturnT_co, ]]
-        assert_type => (function) assert_type
+        assert_type => (function) Callable[[TypeVar[_T, ], (class) object], TypeVar[_T, ]]
 
 ---
 Line 13: async def func1(ignored: int, /) -> str:
 
 Expr types in the line --->:
-         func => (function) func1
+         func => (function) Callable[[(class) int], Coroutine[Any, Any, (class) str]]
 
 ---
 Line 14:     return "spam"
@@ -39,9 +38,9 @@ Expr types in the line --->:
 Line 17: assert_type(func1, Callable[[int], Coroutine[Any, Any, str]])
 
 Expr types in the line --->:
-        assert_type => (function) assert_type
+        assert_type => (function) Callable[[TypeVar[_T, ], (class) object], TypeVar[_T, ]]
         assert_type(func1, Callable[[int], Coroutine[Any, Any, str]]) => TypeVar[_T, ]
-        func1 => (function) func1
+        func1 => (function) Callable[[(class) int], Coroutine[Any, Any, (class) str]]
         Callable => (class) Callable
         Callable[[int], Coroutine[Any, Any, str]] => (class) Callable
         [int] => (class) builtins.list[(class) int]
@@ -58,7 +57,7 @@ Expr types in the line --->:
 Line 20: async def func2() -> None:
 
 Expr types in the line --->:
-         func => (function) func2
+         func => (function) Callable[[], Coroutine[Any, Any, None]]
 
 ---
 Line 21:     x = await func1(42)
@@ -66,7 +65,7 @@ Line 21:     x = await func1(42)
 Expr types in the line --->:
         x => Unknown
         await func1(42) => Unknown
-        func1 => (function) func1
+        func1 => (function) Callable[[(class) int], Coroutine[Any, Any, (class) str]]
         func1(42) => (class) str
         42 => (class) int
 
@@ -74,7 +73,7 @@ Expr types in the line --->:
 Line 22:     assert_type(x, str)
 
 Expr types in the line --->:
-        assert_type => (function) assert_type
+        assert_type => (function) Callable[[TypeVar[_T, ], (class) object], TypeVar[_T, ]]
         assert_type(x, str) => TypeVar[_T, ]
         x => Unknown
         str => (class) str

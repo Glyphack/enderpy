@@ -653,6 +653,31 @@ pub struct Arguments {
     pub defaults: Vec<Expression>,
 }
 
+impl Arguments {
+    pub fn len(&self) -> usize {
+        self.posonlyargs.len()
+            + self.args.len()
+            + self.kwonlyargs.len()
+            + if self.vararg.is_some() { 1 } else { 0 }
+            + if self.kwarg.is_some() { 1 } else { 0 }
+    }
+}
+
+impl IntoIterator for Arguments {
+    type Item = Arg;
+    type IntoIter = std::vec::IntoIter<Self::Item>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        let mut args = self.posonlyargs;
+        args.extend(self.args);
+        if let Some(vararg) = self.vararg {
+            args.push(vararg);
+        }
+        args.extend(self.kwonlyargs);
+        args.into_iter()
+    }
+}
+
 impl std::fmt::Display for Arguments {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         let mut args = vec![];
