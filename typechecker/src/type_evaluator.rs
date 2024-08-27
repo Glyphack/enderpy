@@ -21,7 +21,7 @@ use crate::{
     symbol_table::{
         self, Class, Declaration, Id, LookupSymbolRequest, SymbolTable, SymbolTableNode,
     },
-    types::{ClassType, ModuleRef, TypeVar},
+    types::{self, ClassType, ModuleRef, TypeVar},
 };
 
 const LITERAL_TYPE_PARAMETER_MSG: &str = "Type arguments for 'Literal' must be None, a literal value (int, bool, str, or bytes), or an enum value";
@@ -108,7 +108,13 @@ impl<'a> TypeEvaluator<'a> {
                     _ => {
                         let f_type = self.get_type(called_function, Some(symbol_table), None)?;
                         if let PythonType::Callable(c) = &f_type {
-                            let return_type = self.get_return_type_of_callable(c, &call.args);
+                            // TODO(coroutine_annotation): When the function is called and it's
+                            // async then it will return the coroutine type. Not the return type.
+                            let return_type = if c.is_async {
+                                self.get_return_type_of_callable(c, &call.args)
+                            } else {
+                                c.return_type.clone()
+                            };
                             Ok(return_type)
                         } else if let PythonType::Class(c) = &f_type {
                             Ok(f_type)
@@ -365,11 +371,8 @@ impl<'a> TypeEvaluator<'a> {
                 let awaited_type =
                     self.get_type(&a.value, Some(symbol_table), symbol_table_scope)?;
                 let typ = match awaited_type {
-                    PythonType::Callable(callable) => {
-                        let ret_type = self.get_return_type_of_callable(&callable, &[]);
-                        ret_type
-                    }
-                    _ => PythonType::Unknown,
+                    PythonType::Coroutine(callable) => callable.return_type.clone(),
+                    _ => unimplemented!("Can other things be awaited?"),
                 };
 
                 Ok(typ)
@@ -1151,15 +1154,21 @@ impl<'a> TypeEvaluator<'a> {
             }
         }
         let name = f.function_node.name.clone();
+        let return_type = f
+            .function_node
+            .returns
+            .clone()
+            .map_or(PythonType::Unknown, |type_annotation| {
+                self.get_annotation_type(&type_annotation, symbol_table, None)
+            });
         PythonType::Callable(Box::new(CallableType::new(
             name,
             signature,
-            f.function_node
-                .returns
-                .clone()
-                .map_or(PythonType::Unknown, |type_annotation| {
-                    self.get_annotation_type(&type_annotation, symbol_table, None)
-                }),
+            PythonType::Coroutine(Box::new(types::CoroutineType {
+                return_type,
+                send_type: PythonType::Any,
+                yield_type: PythonType::Any,
+            })),
             true,
         )))
     }

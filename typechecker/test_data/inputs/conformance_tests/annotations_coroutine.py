@@ -18,7 +18,6 @@ async def func1(ignored: int, /) -> str:
 
 assert_type(func1, Callable[[int], Coroutine[Any, Any, str]])
 
-
 async def func2() -> None:
     x = await func1(42)
     assert_type(x, str)

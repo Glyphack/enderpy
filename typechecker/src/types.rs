@@ -27,6 +27,7 @@ pub enum PythonType {
     /// Union type
     MultiValue(Vec<PythonType>),
     Callable(Box<CallableType>),
+    Coroutine(Box<CoroutineType>),
     Class(ClassType),
     Optional(Box<PythonType>),
     Never,
@@ -120,6 +121,15 @@ impl PartialEq for CallableType {
         // two args to be equal
         self.return_type == other.return_type
     }
+}
+
+#[derive(Debug, Eq, PartialEq, Clone)]
+pub struct CoroutineType {
+    pub return_type: PythonType,
+    // TODO(coroutine_annotation): Any Any are send and yield type that are not implemented yet
+    // https://github.com/python/typing/issues/251
+    pub send_type: PythonType,
+    pub yield_type: PythonType,
 }
 
 #[allow(unused)]
@@ -235,14 +245,16 @@ impl Display for PythonType {
                     .map(|arg| arg.to_string())
                     .collect::<Vec<String>>()
                     .join(", ");
-                let return_type_str = if callable_type.is_async {
-                    format!("Coroutine[Any, Any, {}]", callable_type.return_type)
-                } else {
-                    callable_type.return_type.to_string()
-                };
                 let fmt = format!(
                     "(function) Callable[[{}], {}]",
-                    signature_str, return_type_str
+                    signature_str, callable_type.return_type
+                );
+                return write!(f, "{}", fmt);
+            }
+            PythonType::Coroutine(callable_type) => {
+                let fmt = format!(
+                    "Coroutine[{}, {}, {}]",
+                    callable_type.send_type, callable_type.yield_type, callable_type.return_type
                 );
                 return write!(f, "{}", fmt);
             }
