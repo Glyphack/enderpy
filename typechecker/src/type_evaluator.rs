@@ -108,13 +108,7 @@ impl<'a> TypeEvaluator<'a> {
                     _ => {
                         let f_type = self.get_type(called_function, Some(symbol_table), None)?;
                         if let PythonType::Callable(c) = &f_type {
-                            // TODO(coroutine_annotation): When the function is called and it's
-                            // async then it will return the coroutine type. Not the return type.
-                            let return_type = if c.is_async {
-                                self.get_return_type_of_callable(c, &call.args)
-                            } else {
-                                c.return_type.clone()
-                            };
+                            let return_type = self.get_return_type_of_callable(c, &call.args);
                             Ok(return_type)
                         } else if let PythonType::Class(c) = &f_type {
                             Ok(f_type)
@@ -1111,6 +1105,8 @@ impl<'a> TypeEvaluator<'a> {
         symbol_table_node.map(|node| self.get_symbol_type(node).expect("Cannot infer type"))
     }
 
+    // TODO(coroutine_annotation): These two are very similar. Maybe should be presented in another
+    // way. Async version only needs the return type to be a coroutine.
     fn get_function_type(
         &self,
         symbol_table: &symbol_table::SymbolTable,
