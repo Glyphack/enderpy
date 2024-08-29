@@ -71,6 +71,9 @@ pub enum TypeFlags {
     Instantiable,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct NoneType {}
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct Any {
     pub source: AnySource,
@@ -144,6 +147,8 @@ pub struct ClassType {
     // 1. If the type is inferred from annotation of a parameter or variable that is an instance
     // 2. If the type is inferred from a class node then it's an instance
     pub is_instance: bool,
+    // What types are allowed as base classes?
+    pub base_classes: Vec<ClassType>,
 }
 
 impl ClassType {
@@ -151,11 +156,13 @@ impl ClassType {
         details: symbol_table::Class,
         type_parameters: Vec<PythonType>,
         is_instance: bool,
+        base_classes: Vec<ClassType>,
     ) -> Self {
         Self {
             details,
             type_parameters,
             is_instance,
+            base_classes,
         }
     }
 

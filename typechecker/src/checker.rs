@@ -688,4 +688,8 @@ mod tests {
         annotations_coroutine,
         "test_data/inputs/conformance_tests/annotations_coroutine.py"
     );
+    type_eval_test!(
+        specialtypes_none,
+        "test_data/inputs/conformance_tests/specialtypes_none.py"
+    );
 }
