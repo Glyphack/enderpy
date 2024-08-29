@@ -1,5 +1,5 @@
 [workspace]
-members = ["parser", "enderpy", "typechecker", "lsp", "benchmark"]
+members = ["parser", "enderpy", "typechecker", "lsp", "benchmark", "compat"]
 resolver = "2"
 
 [workspace.package]
@@ -31,5 +31,3 @@ opt-level = 3
 lto = "fat"
 opt-level = 3
 # panic = "abort"
-
-

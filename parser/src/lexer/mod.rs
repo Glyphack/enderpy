@@ -1,5 +1,3 @@
-pub mod compat;
-
 use unicode_id_start::{is_id_continue, is_id_start};
 
 use crate::{
@@ -44,7 +42,7 @@ enum TokenizationMode {
 #[derive(Debug, Clone)]
 pub struct Lexer<'a> {
     /// The source code
-    source: &'a str,
+    pub source: &'a str,
     /// The current position in the source code
     current: u32,
     current_line: u16,
@@ -316,7 +314,7 @@ impl<'a> Lexer<'a> {
                 }
                 // String Literals
                 str_start @ '"' | str_start @ '\'' => {
-                    self.skip_to_str_end(str_start)?;
+                    self.consume_str(str_start)?;
                     return Ok(Kind::StringLiteral);
                 }
                 // Operators
@@ -580,7 +578,7 @@ impl<'a> Lexer<'a> {
                 Some('b') | Some('B') => match self.double_peek() {
                     Some(str_start @ '"') | Some(str_start @ '\'') => {
                         self.double_next();
-                        self.skip_to_str_end(str_start)?;
+                        self.consume_str(str_start)?;
                         return Ok(Some(Kind::RawBytes));
                     }
                     _ => {}
@@ -602,7 +600,7 @@ impl<'a> Lexer<'a> {
                 },
                 Some(str_start @ '"') | Some(str_start @ '\'') => {
                     self.next();
-                    self.skip_to_str_end(str_start)?;
+                    self.consume_str(str_start)?;
                     return Ok(Some(Kind::StringLiteral));
                 }
                 _ => {}
@@ -611,14 +609,14 @@ impl<'a> Lexer<'a> {
                 Some('r') | Some('R') => match self.double_peek() {
                     Some(str_start @ '"') | Some(str_start @ '\'') => {
                         self.double_next();
-                        self.skip_to_str_end(str_start)?;
+                        self.consume_str(str_start)?;
                         return Ok(Some(Kind::RawBytes));
                     }
                     _ => {}
                 },
                 Some(str_start @ '"') | Some(str_start @ '\'') => {
                     self.next();
-                    self.skip_to_str_end(str_start)?;
+                    self.consume_str(str_start)?;
                     return Ok(Some(Kind::Bytes));
                 }
                 _ => {}
@@ -656,7 +654,7 @@ impl<'a> Lexer<'a> {
             'u' | 'U' => match self.peek() {
                 Some(str_start @ '"') | Some(str_start @ '\'') => {
                     self.next();
-                    self.skip_to_str_end(str_start)?;
+                    self.consume_str(str_start)?;
                     return Ok(Some(Kind::Unicode));
                 }
                 _ => {}
@@ -732,7 +730,7 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    fn skip_to_str_end(&mut self, str_start: char) -> Result<(), LexError> {
+    fn consume_str(&mut self, str_start: char) -> Result<(), LexError> {
         // string start position is current position - 1 because we already consumed the
         // quote
         let _str_start_pos = self.current - 1;
@@ -743,6 +741,9 @@ impl<'a> Lexer<'a> {
         if self.peek() == Some(str_start) && self.double_peek() == Some(str_start) {
             self.next();
             while let Some(c) = self.next() {
+                if c == '\n' {
+                    self.line_starts.push(self.current);
+                }
                 if c == str_start
                     && self.peek() == Some(str_start)
                     && self.double_peek() == Some(str_start)
@@ -756,6 +757,9 @@ impl<'a> Lexer<'a> {
             }
         } else {
             while let Some(c) = self.next() {
+                if c == '\n' {
+                    self.line_starts.push(self.current);
+                }
                 if c == str_start && last_read_char != '\\' {
                     string_terminated = true;
                     break;
