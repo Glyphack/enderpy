@@ -4,8 +4,6 @@ description: "1: \"\"\"\n2: Tests the handling of builtins.None in a type annota
 expression: result
 ---
 Line 1: """
-Tests the handling of builtins.None in a type annotation.
-"""
 
 Expr types in the line --->:
         """
@@ -13,14 +11,14 @@ Tests the handling of builtins.None in a type annotation.
 """ => (class) str
 
 ---
-Line 5: from types import NoneType
+Line 7: from types import NoneType
 
 Expr types in the line --->:
         types  => Module
         NoneType => (class) NoneType
 
 ---
-Line 6: from typing import Hashable, Iterable, assert_type
+Line 8: from typing import Hashable, Iterable, assert_type
 
 Expr types in the line --->:
         typing  => Module
@@ -29,7 +27,7 @@ Expr types in the line --->:
         assert_type => (function) Callable[[TypeVar[_T, ], (class) object], TypeVar[_T, ]]
 
 ---
-Line 12: def func1(val1: None) -> None:
+Line 14: def func1(val1: None) -> None:
 
 Expr types in the line --->:
         func1 => (function) Callable[[None], None]
@@ -38,7 +36,7 @@ Expr types in the line --->:
         None => None
 
 ---
-Line 13:     assert_type(val1, None)
+Line 15:     assert_type(val1, None)
 
 Expr types in the line --->:
         assert_type => (function) Callable[[TypeVar[_T, ], (class) object], TypeVar[_T, ]]
@@ -47,20 +45,20 @@ Expr types in the line --->:
         None => None
 
 ---
-Line 14:     t1: None = None
+Line 16:     t1: None = None
 
 Expr types in the line --->:
         t1 => None
         None => None
 
 ---
-Line 15:     return None  # OK
+Line 17:     return None  # OK
 
 Expr types in the line --->:
         None => None
 
 ---
-Line 18: func1(None)  # OK
+Line 20: func1(None)  # OK
 
 Expr types in the line --->:
         func1 => (function) Callable[[None], None]
@@ -68,7 +66,7 @@ Expr types in the line --->:
         None => None
 
 ---
-Line 19: func1(type(None))  # E
+Line 21: func1(type(None))  # E
 
 Expr types in the line --->:
         func1 => (function) Callable[[None], None]
@@ -78,35 +76,35 @@ Expr types in the line --->:
         None => None
 
 ---
-Line 22: none1: Hashable = None  # OK
+Line 24: none1: Hashable = None  # OK
 
 Expr types in the line --->:
         none1 => (class) Hashable
         None => None
 
 ---
-Line 25: none2: Iterable = None  # E: not iterable
+Line 27: none2: Iterable = None  # E: not iterable
 
 Expr types in the line --->:
         none2 => (class) typing.Iterable[TypeVar[_T_co, ]]
         None => None
 
 ---
-Line 28: None.__class__  # OK
+Line 30: None.__class__  # OK
 
 Expr types in the line --->:
         None => None
         None.__class__ => (function) Callable[[Unknown], (class) builtins.type[(class) Self]]
 
 ---
-Line 29: None.__doc__  # OK
+Line 31: None.__doc__  # OK
 
 Expr types in the line --->:
         None => None
         None.__doc__ => Union[(class) str, None]
 
 ---
-Line 30: None.__eq__(0)  # OK
+Line 32: None.__eq__(0)  # OK
 
 Expr types in the line --->:
         None.__eq__ => (function) Callable[[Unknown, (class) object], (class) bool]
@@ -114,7 +112,7 @@ Expr types in the line --->:
         0 => (class) int
 
 ---
-Line 33: def func2(val1: type[None]):
+Line 35: def func2(val1: type[None]):
 
 Expr types in the line --->:
         func2 => (function) Callable[[(class) builtins.type[None]], Unknown]
@@ -122,7 +120,7 @@ Expr types in the line --->:
         type[None] => (class) type
 
 ---
-Line 34:     assert_type(val1, type[None])
+Line 36:     assert_type(val1, type[None])
 
 Expr types in the line --->:
         assert_type => (function) Callable[[TypeVar[_T, ], (class) object], TypeVar[_T, ]]
@@ -133,7 +131,7 @@ Expr types in the line --->:
         None => None
 
 ---
-Line 37: func2(None.__class__)  # OK
+Line 39: func2(None.__class__)  # OK
 
 Expr types in the line --->:
         func2 => (function) Callable[[(class) builtins.type[None]], Unknown]
@@ -142,7 +140,7 @@ Expr types in the line --->:
         None.__class__ => (function) Callable[[Unknown], (class) builtins.type[(class) Self]]
 
 ---
-Line 38: func2(type(None))  # OK
+Line 40: func2(type(None))  # OK
 
 Expr types in the line --->:
         func2 => (function) Callable[[(class) builtins.type[None]], Unknown]
@@ -152,7 +150,7 @@ Expr types in the line --->:
         None => None
 
 ---
-Line 39: func2(None)  # E: not compatible
+Line 41: func2(None)  # E: not compatible
 
 Expr types in the line --->:
         func2 => (function) Callable[[(class) builtins.type[None]], Unknown]
