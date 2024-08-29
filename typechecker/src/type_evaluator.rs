@@ -166,6 +166,7 @@ impl<'a> TypeEvaluator<'a> {
                     c.details.clone(),
                     vec![final_elm_type],
                     true,
+                    vec![],
                 )))
             }
             ast::Expression::Tuple(t) => {
@@ -181,6 +182,7 @@ impl<'a> TypeEvaluator<'a> {
                     c.details.clone(),
                     vec![elm_type],
                     true,
+                    vec![],
                 )))
             }
             ast::Expression::Dict(d) => {
@@ -196,6 +198,7 @@ impl<'a> TypeEvaluator<'a> {
                     c.details.clone(),
                     vec![key_type, value_type],
                     true,
+                    vec![],
                 )))
             }
             ast::Expression::Set(s) => {
@@ -211,6 +214,7 @@ impl<'a> TypeEvaluator<'a> {
                     class_type,
                     vec![elm_type],
                     true,
+                    vec![],
                 )))
             }
             ast::Expression::BoolOp(_) => Ok(self.get_builtin_type("bool").expect("typeshed")),
@@ -312,16 +316,43 @@ impl<'a> TypeEvaluator<'a> {
                     }
                 };
                 match value_type {
-                    PythonType::Class(c) => Ok(self
-                        .lookup_on_class(symbol_table, &c, &a.attr)
-                        .expect("attribute not found on type")),
+                    PythonType::Class(ref c) => {
+                        let attribute_on_c = self.lookup_on_class(symbol_table, &c, &a.attr);
+                        if let Some(attribute_on_c) = attribute_on_c {
+                            Ok(attribute_on_c)
+                        } else {
+                            let bases = self.get_base_classes(value_type);
+                            for base in bases {
+                                let base_class = base.expect_class();
+                                let attribute_on_base =
+                                    self.lookup_on_class(symbol_table, &base_class, &a.attr);
+                                if let Some(attribute_on_base) = attribute_on_base {
+                                    return Ok(attribute_on_base);
+                                }
+                            }
+
+                            Ok(PythonType::Unknown)
+                        }
+                    }
                     PythonType::Module(module) => {
                         log::debug!("module: {:?}", module);
                         let module_sym_table =
                             self.imported_symbol_tables.get(&module.module_id).unwrap();
                         self.get_name_type(&a.attr, None, &module_sym_table, Some(0))
                     }
-                    _ => Ok(PythonType::Unknown),
+                    _ => {
+                        let bases = self.get_base_classes(value_type);
+                        for base in bases {
+                            let base_class = base.expect_class();
+                            let attribute_on_base =
+                                self.lookup_on_class(symbol_table, &base_class, &a.attr);
+                            if let Some(attribute_on_base) = attribute_on_base {
+                                return Ok(attribute_on_base);
+                            }
+                        }
+
+                        Ok(PythonType::Unknown)
+                    }
                 }
             }
             ast::Expression::BinOp(b) => Ok(self.bin_op_result_type(
@@ -447,6 +478,7 @@ impl<'a> TypeEvaluator<'a> {
                             class_type.details.clone(),
                             type_parameters,
                             true,
+                            vec![],
                         ))
                     }
                     // Illegal type annotation? Trying to subscript a non class type
@@ -547,6 +579,7 @@ impl<'a> TypeEvaluator<'a> {
                             class_symbol,
                             vec![],
                             false,
+                            vec![],
                         )))
                     } else {
                         Ok(var_type)
@@ -739,11 +772,14 @@ impl<'a> TypeEvaluator<'a> {
             };
 
             let mut class_def_type_parameters = vec![];
+            let mut base_classes = vec![];
             for base in bases {
                 let base_type = self.get_type(base, Some(symbol_table), None);
                 let Ok(PythonType::Class(c)) = base_type else {
                     continue;
                 };
+                // TODO: Maybe unnecessary clone
+                base_classes.push(c.clone());
                 let Some(possible_type_parameter) = base.as_subscript() else {
                     class_def_type_parameters.extend(c.type_parameters);
                     continue;
@@ -794,6 +830,7 @@ impl<'a> TypeEvaluator<'a> {
                 class_symbol.clone(),
                 class_def_type_parameters,
                 false,
+                base_classes,
             )))
         }
     }
@@ -1167,5 +1204,20 @@ impl<'a> TypeEvaluator<'a> {
             })),
             true,
         )))
+    }
+
+    fn get_base_classes(&self, python_type: PythonType) -> Vec<PythonType> {
+        let mut super_classes = vec![];
+        if let PythonType::Class(c) = python_type {
+            super_classes.push(PythonType::Class(c.clone()));
+            for super_class in &c.base_classes {
+                super_classes.push(PythonType::Class(super_class.clone()));
+            }
+        }
+        let object_class = self.get_builtin_type("object").expect("object not found");
+
+        super_classes.push(object_class.clone());
+
+        super_classes
     }
 }
