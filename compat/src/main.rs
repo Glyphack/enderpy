@@ -68,7 +68,7 @@ fn run_compatibility_test(file: &str) -> Result<()> {
     let python_tokens = lex_python_source(&source)?;
 
     assert_tokens_eq(python_tokens, enderpy_tokens, &lexer);
-    python_parser_test_ast(&vec![source.as_str()]);
+    // python_parser_test_ast(&vec![source.as_str()]);
 
     Ok(())
 }

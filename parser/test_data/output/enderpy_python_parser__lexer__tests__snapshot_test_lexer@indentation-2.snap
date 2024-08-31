@@ -14,6 +14,6 @@ description: "if True:\n    if True:\n        pass\ndef"
 22,30: Indent   (Indent(1))
 30,34: Pass   (None)
 34,35: NewLine   (None)
-35,35: Dedent   (Indent(2))
+35,35: Dedent   (Indent(1))
 35,35: Dedent   (None)
 35,38: Def   (None)

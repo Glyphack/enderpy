@@ -544,6 +544,7 @@ fn matches_python_op_token(python_token_value: &str, token_kind: &Kind) -> bool 
         "}" => token_kind == &Kind::RightBracket,
         "~" => token_kind == &Kind::BitNot,
         "..." => token_kind == &Kind::Ellipsis,
+        "!" => token_kind == &Kind::Exclamation,
         _ => false,
     }
 }

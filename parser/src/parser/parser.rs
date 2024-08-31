@@ -3446,11 +3446,11 @@ impl<'a> Parser<'a> {
         if self.eat(Kind::Assign) {
             conversion = 114;
         }
-        if self.at(Kind::Identifier) {
+        if self.eat(Kind::Exclamation) {
             conversion = match self.cur_token.value.take_string().as_str() {
-                "!s" => 115,
-                "!r" => 114,
-                "!a" => 97,
+                "s" => 115,
+                "r" => 114,
+                "a" => 97,
                 _ => panic!("should not happen"),
             };
             self.bump_any();

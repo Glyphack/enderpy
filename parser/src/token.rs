@@ -113,6 +113,8 @@ pub enum Kind {
     BitAnd,     // &
     BitOr,      // |
     BitXor,     // ^
+    /// This operator is not listed in https://docs.python.org/3/reference/lexical_analysis.html#operators
+    Exclamation, // !
     /// ~
     BitNot,
     Walrus,    // :=
@@ -364,6 +366,7 @@ impl From<Kind> for &str {
             Kind::Indent => "Indent",
             Kind::Dedent => "Dedent",
             Kind::Ellipsis => "Ellipsis",
+            Kind::Exclamation => "!",
         }
     }
 }

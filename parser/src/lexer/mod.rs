@@ -58,12 +58,13 @@ pub struct Lexer<'a> {
     next_token_is_dedent: u8,
     /// Array of all line starts offsets. Starts from line 0
     pub line_starts: Vec<u32>,
-    peak_mode: bool,
+    peek_mode: bool,
 
     /// Previous token was a Newline token
     non_logical_line_state: bool,
     /// Cursor at position after the indentation in line
     indented: bool,
+    // tokens: Vec<Token>,
 }
 
 impl<'a> Lexer<'a> {
@@ -78,7 +79,7 @@ impl<'a> Lexer<'a> {
             tokenization_mode_stack: vec![],
             next_token_is_dedent: 0,
             line_starts: vec![0],
-            peak_mode: false,
+            peek_mode: false,
             non_logical_line_state: true,
             indented: false,
         }
@@ -108,7 +109,8 @@ impl<'a> Lexer<'a> {
             };
         }
 
-        let start = self.current;
+        // NOTE: for dedent we want to set the token start to the token end
+        let mut start = self.current;
         let kind = match self.next_kind() {
             Ok(kind) => kind,
             Err(e) => {
@@ -136,16 +138,22 @@ impl<'a> Lexer<'a> {
         let value = self.parse_token_value(kind, start);
         let end = self.current;
 
-        if (kind == Kind::NewLine || kind == Kind::NL) && !self.peak_mode {
+        if (kind == Kind::NewLine || kind == Kind::NL) && !self.peek_mode {
             self.line_starts.push(self.current);
         }
 
-        Token {
+        if kind == Kind::Dedent {
+            start = end
+        }
+
+        let token = Token {
             kind,
             value,
             start,
             end,
-        }
+        };
+
+        token
     }
 
     // peek_token is a side-effect free version of next_token
@@ -157,117 +165,17 @@ impl<'a> Lexer<'a> {
         let next_token_is_dedent = self.next_token_is_dedent;
         let prev_token_newline = self.non_logical_line_state;
         let indented = self.indented;
-        self.peak_mode = true;
+        self.peek_mode = true;
         let token = self.next_token();
         self.indented = indented;
         self.non_logical_line_state = prev_token_newline;
-        self.peak_mode = false;
+        self.peek_mode = false;
         self.current = current;
         self.current_line = current_line;
         self.nesting = nesting;
         self.start_of_line = start_of_line;
         self.next_token_is_dedent = next_token_is_dedent;
         token
-    }
-
-    // https://peps.python.org/pep-0701/#how-to-produce-these-new-tokens
-    fn next_fstring_token(&mut self, str_finisher: StringQuotation, _fstring_nesting: u8) -> Kind {
-        let mut read_chars = false;
-        loop {
-            let peeked_char = self.peek();
-            let double_peek = self.double_peek();
-            if peeked_char == Some('{') && peeked_char == double_peek {
-                self.next();
-                self.next();
-                read_chars = true;
-                continue;
-            }
-            if peeked_char == Some('{') && peeked_char != double_peek {
-                if read_chars {
-                    if !self.peak_mode {
-                        self.tokenization_mode_stack
-                            .push(TokenizationMode::PythonWithinFstring(self.nesting + 1));
-                    }
-                    return Kind::FStringMiddle;
-                } else {
-                    if !self.peak_mode {
-                        self.tokenization_mode_stack
-                            .push(TokenizationMode::PythonWithinFstring(self.nesting + 1));
-                    }
-                    self.next();
-                    return Kind::LeftBracket;
-                }
-            }
-
-            let Some(curr) = self.next() else {
-                panic!("eof while parsing fstring")
-            };
-            read_chars = true;
-
-            match str_finisher {
-                StringQuotation::Single => {
-                    if self.peek() == Some('\'') {
-                        return Kind::FStringMiddle;
-                    }
-                    if curr == '\'' {
-                        if !self.peak_mode {
-                            let last = self.tokenization_mode_stack.pop();
-                            assert!(matches!(last, Some(TokenizationMode::Fstring(_))))
-                        }
-                        return Kind::FStringEnd;
-                    }
-                }
-                StringQuotation::Double => {
-                    if self.peek() == Some('"') {
-                        return Kind::FStringMiddle;
-                    }
-                    if curr == '"' {
-                        if !self.peak_mode {
-                            let last = self.tokenization_mode_stack.pop();
-                            assert!(matches!(last, Some(TokenizationMode::Fstring(_))))
-                        }
-                        return Kind::FStringEnd;
-                    }
-                }
-                StringQuotation::TripleSingle => {
-                    if self.peek() == Some('\'')
-                        && self.peek() == self.double_peek()
-                        && self.peek() == self.triple_peek()
-                    {
-                        return Kind::FStringMiddle;
-                    }
-
-                    if curr == '\''
-                        && self.peek() == Some(curr)
-                        && self.peek() == self.double_peek()
-                    {
-                        if !self.peak_mode {
-                            let last = self.tokenization_mode_stack.pop();
-                            assert!(matches!(last, Some(TokenizationMode::Fstring(_))))
-                        }
-                        self.double_next();
-                        return Kind::FStringEnd;
-                    }
-                }
-                StringQuotation::TripleDouble => {
-                    if self.peek() == Some('\"')
-                        && self.peek() == self.double_peek()
-                        && self.peek() == self.triple_peek()
-                    {
-                        return Kind::FStringMiddle;
-                    }
-                    if curr == '"' && self.peek() == Some(curr) && self.peek() == self.double_peek()
-                    {
-                        if !self.peak_mode {
-                            let last = self.tokenization_mode_stack.pop();
-                            assert!(matches!(last, Some(TokenizationMode::Fstring(_))))
-                        }
-                        self.double_next();
-                        return Kind::FStringEnd;
-                    }
-                }
-            }
-        }
     }
 
     fn next_kind(&mut self) -> Result<Kind, LexError> {
@@ -294,7 +202,7 @@ impl<'a> Lexer<'a> {
                     }
                     if read_chars > 0 {
                         return Ok(Kind::FStringMiddle);
-                    } else if !self.peak_mode {
+                    } else if !self.peek_mode {
                         self.tokenization_mode_stack.pop();
                     }
                 }
@@ -413,7 +321,7 @@ impl<'a> Lexer<'a> {
                         if let Some(TokenizationMode::PythonWithinFstring(i)) =
                             self.tokenization_mode_stack.last()
                         {
-                            if self.nesting == *i && !self.peak_mode {
+                            if self.nesting == *i && !self.peek_mode {
                                 self.tokenization_mode_stack
                                     .push(TokenizationMode::FstringFormatSpecifier);
                             }
@@ -426,6 +334,7 @@ impl<'a> Lexer<'a> {
                         self.next();
                         return Ok(Kind::NotEq);
                     }
+                    return Ok(Kind::Exclamation);
                 }
                 // Delimiters
                 '(' => {
@@ -447,7 +356,7 @@ impl<'a> Lexer<'a> {
                     if self.peek() != Some('}') {
                         if let Some(mode) = self.tokenization_mode_stack.last() {
                             if matches!(mode, TokenizationMode::PythonWithinFstring(_)) {
-                                if !self.peak_mode {
+                                if !self.peek_mode {
                                     self.tokenization_mode_stack.pop();
                                 }
                                 return Ok(Kind::RightBracket);
@@ -539,6 +448,106 @@ impl<'a> Lexer<'a> {
         Ok(Kind::Eof)
     }
 
+    // https://peps.python.org/pep-0701/#how-to-produce-these-new-tokens
+    fn next_fstring_token(&mut self, str_finisher: StringQuotation, _fstring_nesting: u8) -> Kind {
+        let mut read_chars = false;
+        loop {
+            let peeked_char = self.peek();
+            let double_peek = self.double_peek();
+            if peeked_char == Some('{') && peeked_char == double_peek {
+                self.next();
+                self.next();
+                read_chars = true;
+                continue;
+            }
+            if peeked_char == Some('{') && peeked_char != double_peek {
+                if read_chars {
+                    if !self.peek_mode {
+                        self.tokenization_mode_stack
+                            .push(TokenizationMode::PythonWithinFstring(self.nesting + 1));
+                    }
+                    return Kind::FStringMiddle;
+                } else {
+                    if !self.peek_mode {
+                        self.tokenization_mode_stack
+                            .push(TokenizationMode::PythonWithinFstring(self.nesting + 1));
+                    }
+                    self.next();
+                    return Kind::LeftBracket;
+                }
+            }
+
+            let Some(curr) = self.next() else {
+                panic!("eof while parsing fstring")
+            };
+            read_chars = true;
+
+            match str_finisher {
+                StringQuotation::Single => {
+                    if self.peek() == Some('\'') {
+                        return Kind::FStringMiddle;
+                    }
+                    if curr == '\'' {
+                        if !self.peek_mode {
+                            let last = self.tokenization_mode_stack.pop();
+                            assert!(matches!(last, Some(TokenizationMode::Fstring(_))))
+                        }
+                        return Kind::FStringEnd;
+                    }
+                }
+                StringQuotation::Double => {
+                    if self.peek() == Some('"') {
+                        return Kind::FStringMiddle;
+                    }
+                    if curr == '"' {
+                        if !self.peek_mode {
+                            let last = self.tokenization_mode_stack.pop();
+                            assert!(matches!(last, Some(TokenizationMode::Fstring(_))))
+                        }
+                        return Kind::FStringEnd;
+                    }
+                }
+                StringQuotation::TripleSingle => {
+                    if self.peek() == Some('\'')
+                        && self.peek() == self.double_peek()
+                        && self.peek() == self.triple_peek()
+                    {
+                        return Kind::FStringMiddle;
+                    }
+
+                    if curr == '\''
+                        && self.peek() == Some(curr)
+                        && self.peek() == self.double_peek()
+                    {
+                        if !self.peek_mode {
+                            let last = self.tokenization_mode_stack.pop();
+                            assert!(matches!(last, Some(TokenizationMode::Fstring(_))))
+                        }
+                        self.double_next();
+                        return Kind::FStringEnd;
+                    }
+                }
+                StringQuotation::TripleDouble => {
+                    if self.peek() == Some('\"')
+                        && self.peek() == self.double_peek()
+                        && self.peek() == self.triple_peek()
+                    {
+                        return Kind::FStringMiddle;
+                    }
+                    if curr == '"' && self.peek() == Some(curr) && self.peek() == self.double_peek()
+                    {
+                        if !self.peek_mode {
+                            let last = self.tokenization_mode_stack.pop();
+                            assert!(matches!(last, Some(TokenizationMode::Fstring(_))))
+                        }
+                        self.double_next();
+                        return Kind::FStringEnd;
+                    }
+                }
+            }
+        }
+    }
+
     fn match_id_keyword(&mut self, id_start: char) -> Result<Kind, LexError> {
         if let Some(str_kind) = self.match_str(id_start)? {
             return Ok(str_kind);
@@ -587,7 +596,7 @@ impl<'a> Lexer<'a> {
                     Some(str_start @ '"') | Some(str_start @ '\'') => {
                         self.double_next();
                         let fstring_start = self.f_string_quote_count(str_start);
-                        if !self.peak_mode {
+                        if !self.peek_mode {
                             self.tokenization_mode_stack
                                 .push(TokenizationMode::Fstring((
                                     self.nesting,
@@ -626,7 +635,7 @@ impl<'a> Lexer<'a> {
                     Some(str_start @ '"') | Some(str_start @ '\'') => {
                         self.double_next();
                         let fstring_start = self.f_string_quote_count(str_start);
-                        if !self.peak_mode {
+                        if !self.peek_mode {
                             self.tokenization_mode_stack
                                 .push(TokenizationMode::Fstring((
                                     self.nesting,
@@ -640,7 +649,7 @@ impl<'a> Lexer<'a> {
                 Some(str_start @ '"') | Some(str_start @ '\'') => {
                     self.next();
                     let fstring_start = self.f_string_quote_count(str_start);
-                    if !self.peak_mode {
+                    if !self.peek_mode {
                         self.tokenization_mode_stack
                             .push(TokenizationMode::Fstring((
                                 self.nesting,
@@ -742,7 +751,9 @@ impl<'a> Lexer<'a> {
             self.next();
             while let Some(c) = self.next() {
                 if c == '\n' {
-                    self.line_starts.push(self.current);
+                    if !self.peek_mode {
+                        self.line_starts.push(self.current);
+                    }
                 }
                 if c == str_start
                     && self.peek() == Some(str_start)
@@ -758,7 +769,9 @@ impl<'a> Lexer<'a> {
         } else {
             while let Some(c) = self.next() {
                 if c == '\n' {
-                    self.line_starts.push(self.current);
+                    if !self.peek_mode {
+                        self.line_starts.push(self.current);
+                    }
                 }
                 if c == str_start && last_read_char != '\\' {
                     string_terminated = true;
@@ -987,12 +1000,35 @@ impl<'a> Lexer<'a> {
                     if !indentation_matches_outer_level {
                         return Err(LexError::UnindentDoesNotMatchAnyOuterIndentationLevel);
                     }
+                    if !self.peek_mode {
+                        let mut de_indents = 0;
+                        while let Some(top) = self.indent_stack.last() {
+                            match top.cmp(&spaces_count) {
+                                Ordering::Greater => {
+                                    self.indent_stack.pop();
+                                    de_indents += 1;
+                                }
+                                Ordering::Equal => break,
+                                // We only see a Kind::Dedent when the indentation level is less than the
+                                // top of the stack. So this should never happen and if it happens it's a
+                                // bug in code not an error for the user
+                                Ordering::Less => {
+                                    unreachable!()
+                                }
+                            }
+                        }
+                        if de_indents > 1 {
+                            // minus 1 because the dedent with actual Indent value is already added
+                            // This is super hacky and I don't like it
+                            self.next_token_is_dedent += de_indents - 1;
+                        }
+                    }
                     Ok(Some(Kind::Dedent))
                 }
                 // Returning whitespace to ignore these spaces
                 Ordering::Equal => Ok(Some(Kind::WhiteSpace)),
                 Ordering::Greater => {
-                    if !self.peak_mode {
+                    if !self.peek_mode {
                         self.indent_stack.push(spaces_count);
                     }
                     Ok(Some(Kind::Indent))
@@ -1005,7 +1041,6 @@ impl<'a> Lexer<'a> {
 
     fn parse_token_value(&mut self, kind: Kind, start: u32) -> TokenValue {
         let kind_value = &self.source[start as usize..self.current as usize];
-        use std::cmp::Ordering;
         match kind {
             Kind::Integer
             | Kind::Hexadecimal
@@ -1030,51 +1065,7 @@ impl<'a> Lexer<'a> {
             | Kind::Bytes
             | Kind::Unicode
             | Kind::Comment => TokenValue::Str(kind_value.to_string()),
-            Kind::Dedent => {
-                let mut spaces_count = 0;
-                for c in kind_value.chars() {
-                    match c {
-                        '\t' => {
-                            spaces_count += 4;
-                        }
-                        ' ' => {
-                            spaces_count += 1;
-                        }
-                        _ => {
-                            break;
-                        }
-                    }
-                }
-                let mut de_indents = 0;
-                // TODO: This is not correct. But since we don't use the value inside parser it's
-                // it's okay to do.
-                // The reason for doing this is that we don't want to modify the indent_stack in
-                // the peak mode which alters lexer state.
-                if self.peak_mode {
-                    return TokenValue::Indent(0);
-                }
-                while let Some(top) = self.indent_stack.last() {
-                    match top.cmp(&spaces_count) {
-                        Ordering::Greater => {
-                            self.indent_stack.pop();
-                            de_indents += 1;
-                        }
-                        Ordering::Equal => break,
-                        // We only see a Kind::Dedent when the indentation level is less than the
-                        // top of the stack. So this should never happen and if it happens it's a
-                        // bug in code not an error for the user
-                        Ordering::Less => {
-                            unreachable!()
-                        }
-                    }
-                }
-                if de_indents != 1 {
-                    // minus 1 because the dedent with actual Indent value is already added
-                    // This is super hacky and I don't like it
-                    self.next_token_is_dedent += de_indents - 1;
-                }
-                TokenValue::Indent(de_indents.into())
-            }
+            Kind::Dedent => TokenValue::Indent(1),
             Kind::Indent => TokenValue::Indent(1),
             Kind::Error => TokenValue::Str(kind_value.to_string()),
             _ => TokenValue::None,
