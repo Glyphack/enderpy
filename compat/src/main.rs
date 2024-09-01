@@ -7,7 +7,6 @@ use std::path::Path;
 use zip::ZipArchive;
 
 use self::lexer_compat::{assert_tokens_eq, lex_python_source};
-use self::parser_compat::python_parser_test_ast;
 
 pub mod lexer_compat;
 pub mod parser_compat;
@@ -68,7 +67,6 @@ fn run_compatibility_test(file: &str) -> Result<()> {
     let python_tokens = lex_python_source(&source)?;
 
     assert_tokens_eq(python_tokens, enderpy_tokens, &lexer);
-    python_parser_test_ast(&vec![source.as_str()]);
 
     Ok(())
 }

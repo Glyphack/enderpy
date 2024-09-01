@@ -1,8 +1,5 @@
 use is_macro::Is;
 use std::fmt::Display;
-use std::path::PathBuf;
-
-use enderpy_python_parser::ast;
 
 use crate::symbol_table::{self, Id};
 

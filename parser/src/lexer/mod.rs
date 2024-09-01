@@ -1142,7 +1142,6 @@ mod tests {
             let mut snapshot = String::from("");
             loop {
                 let token = lexer.next_token();
-                println!("{:?}", token);
                 if token.kind == Kind::Eof {
                     break;
                 }
@@ -1295,6 +1294,7 @@ mod tests {
                 "'hello'",
                 "\"\"\"hello\"\"\"",
                 "'''hello'''",
+                "'\\n    ([^ ].*)'",
             ],
         )
         .unwrap();

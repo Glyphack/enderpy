@@ -122,7 +122,7 @@ pub struct PythonToken {
 
 pub fn lex_python_source(source: &str) -> Result<Vec<PythonToken>> {
     let mut process = spawn_python_script_command(
-        "parser/lex_python.py",
+        "compat/lex_python.py",
         vec!["--stdin", "--output-format", "json"],
         default_python_path()?,
     )?;
@@ -131,7 +131,7 @@ pub fn lex_python_source(source: &str) -> Result<Vec<PythonToken>> {
     if let Some(mut stdin) = process.stdin.take() {
         stdin.write_all(source.as_bytes()).into_diagnostic()?;
     } else {
-        bail!("Failed to open stdin when running `parser/lex_python.py`");
+        bail!("Failed to open stdin when running `compat/lex_python.py`");
     }
     // Get process stdout and parse result.
     let output = process.wait_with_output().into_diagnostic()?;
@@ -166,6 +166,9 @@ pub fn assert_tokens_eq(
         } else {
             let mut python_token = python_token.unwrap();
             let mut enderpy_token = enderpy_token.unwrap();
+            // (compat_fstrings) TODO: python fstring is a bit different than enderpy.
+            // We merge multiple fstring middle tokens together and emit one token but python emits
+            // multiple fstring middle tokens. Here we skip to the end and do not check fstrings.
             if python_token.kind == PythonKind::FstringStart {
                 if enderpy_token.kind == Kind::FStringStart {
                     // Python tokenizes fstring with more tokens than needed.
@@ -191,8 +194,6 @@ pub fn assert_tokens_eq(
                 } else if is_python_fstring_mismatch(
                     &mismatch,
                     &enderpy_tokens[enderpy_index + 1..],
-                    &python_tokens[python_index + 1..],
-                    &mut python_index,
                     &mut enderpy_index, // <-- `enderpy_index` may be updated
                 ) {
                     // Nothing, but don't add the mismatch.
@@ -607,8 +608,6 @@ fn is_python_trailing_newline_mismatch(
 fn is_python_fstring_mismatch(
     mismatch: &TokenMismatch,
     remaining_tokens: &[Token],
-    remaining_python_tokens: &[PythonToken],
-    python_index: &mut usize,
     enderpy_index: &mut usize,
 ) -> bool {
     match mismatch {
@@ -630,12 +629,6 @@ fn is_python_fstring_mismatch(
             *enderpy_index += num_skipped;
             return true;
         }
-        // TokenMismatch::WrongValue(python_token, token, python_value, enderpy_value) => {
-        //     if python_value == "{" {
-        //         *python_index += 1;
-        //         return true;
-        //     }
-        // }
         _ => (),
     }
     false
@@ -875,12 +868,10 @@ def",
             "a = f\"hello\"",
             "f\"\"\"hello\"\"\"",
             "f'''hello'''",
-            // TODO lex_python: Python lexes these poorly.
-            // "f\"{{hey}}\"",
-            // "f\"oh_{{hey}}\"",
+            "f\"{{hey}}\"",
+            "f\"oh_{{hey}}\"",
             "f'a' 'c'",
-            // TODO lex_python: Python 3.11 chokes on this input.
-            // "f'hello_{f'''{a}'''}'",
+            "f'hello_{f'''{a}'''}'",
         ]);
 
         // Raw F-strings

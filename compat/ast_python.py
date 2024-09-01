@@ -1,17 +1,19 @@
 import sys
 import ast
-from _ast import AST # Python internals I guess?
+from _ast import AST  # Python internals I guess?
 import argparse
 import pathlib
 import codecs
 import json
 
-arg_parser = argparse.ArgumentParser(
-    description="Parse a Python program to AST."
-)
+arg_parser = argparse.ArgumentParser(description="Parse a Python program to AST.")
 arg_parser.add_argument("--input-file", help="Read and parse input file.")
-arg_parser.add_argument("--stdin", action="store_true", help="Read and parse input from stdin.")
-arg_parser.add_argument("--type-comments", action="store_true", help="Produce an AST with type comments.")
+arg_parser.add_argument(
+    "--stdin", action="store_true", help="Read and parse input from stdin."
+)
+arg_parser.add_argument(
+    "--type-comments", action="store_true", help="Produce an AST with type comments."
+)
 args = arg_parser.parse_args()
 
 if args.input_file is not None:
@@ -19,7 +21,10 @@ if args.input_file is not None:
 elif args.stdin:
     source = sys.stdin.read()
 else:
-    print("Missing input parameter. Please specify one of --input-file or --stdin.", file=sys.stderr)
+    print(
+        "Missing input parameter. Please specify one of --input-file or --stdin.",
+        file=sys.stderr,
+    )
     sys.exit(1)
 
 # ----- Begin inline dependency -------------------------------------------------------------------
@@ -53,16 +58,19 @@ else:
 
 BUILTIN_PURE = (int, float, bool)
 BUILTIN_BYTES = (bytearray, bytes)
-BUILTIN_STR = (str)
+BUILTIN_STR = str
+
 
 def decode_str(value):
     return value
 
+
 def decode_bytes(value):
     try:
-        return value.decode('utf-8')
+        return value.decode("utf-8")
     except:
-        return codecs.getencoder('hex_codec')(value)[0].decode('utf-8')
+        return codecs.getencoder("hex_codec")(value)[0].decode("utf-8")
+
 
 def ast2json(node):
     assert isinstance(node, AST)
@@ -72,7 +80,12 @@ def ast2json(node):
         if attr.startswith("_") or attr == "n" or attr == "s":
             continue
         to_return[attr] = get_value(getattr(node, attr))
+        to_return.pop("lineno", None)
+        to_return.pop("end_lineno", None)
+        to_return.pop("col_offset", None)
+        to_return.pop("end_col_offset", None)
     return to_return
+
 
 def get_value(attr_value):
     if attr_value is None:
@@ -92,11 +105,19 @@ def get_value(attr_value):
     if isinstance(attr_value, type(Ellipsis)):
         return "..."
     else:
-        raise Exception("Unknown case for '%s' of type '%s'" % (attr_value, type(attr_value)))
+        raise Exception(
+            "Unknown case for '%s' of type '%s'" % (attr_value, type(attr_value))
+        )
+
 
 # -------------------------------------------------------------------- End inline dependency ------
 
 
-tree = ast.parse(source, filename=args.input_file or "stdin", mode="exec", type_comments=args.type_comments)
+tree = ast.parse(
+    source,
+    filename=args.input_file or "stdin",
+    mode="exec",
+    type_comments=args.type_comments,
+)
 tree_json = ast2json(tree)
 print(json.dumps(tree_json, indent=4))

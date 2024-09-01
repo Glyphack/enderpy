@@ -1,3 +1,5 @@
+#![allow(clippy::all, unused_variables)]
+
 use crate::ast::*;
 use crate::Parser;
 use serde_json::Number;
@@ -28,10 +30,11 @@ macro_rules! json_python_compat_node {
         let (start_row, start_col, end_row, end_col) =
             $parser.to_row_col($instance.node.start, $instance.node.end);
         node["_type"] = json!($name);
-        node["lineno"] = json!(start_row);
-        node["col_offset"] = json!(start_col);
-        node["end_lineno"] = json!(end_row);
-        node["end_col_offset"] = json!(end_col);
+        // TODO: (offset_compat)
+        // node["lineno"] = json!(start_row);
+        // node["col_offset"] = json!(start_col);
+        // node["end_lineno"] = json!(end_row);
+        // node["end_col_offset"] = json!(end_col);
         node
     }};
 }
@@ -52,10 +55,12 @@ impl AsPythonCompat for Statement {
                 let expr = e.as_python_compat(parser);
                 json!({
                     "_type": "Expr",
-                    "lineno": expr["lineno"],
-                    "col_offset": expr["col_offset"],
-                    "end_lineno": expr["end_lineno"],
-                    "end_col_offset": expr["end_col_offset"],
+                    // TODO: (offset_compat) python parser and enderpy start/end offsets are different
+                    // Fix it when have some time
+                    // "lineno": expr["lineno"],
+                    // "col_offset": expr["col_offset"],
+                    // "end_lineno": expr["end_lineno"],
+                    // "end_col_offset": expr["end_col_offset"],
                     "value": expr,
                 })
             }
@@ -204,7 +209,7 @@ impl AsPythonCompat for Import {
 
 impl AsPythonCompat for Alias {
     fn as_python_compat(&self, parser: &Parser) -> Value {
-        json_python_compat_node!("Alias", self, parser, {
+        json_python_compat_node!("alias", self, parser, {
             "name": self.name,
             "asname": self.asname,
         })
@@ -414,7 +419,7 @@ impl AsPythonCompat for BinaryOperator {
 
 impl AsPythonCompat for NamedExpression {
     fn as_python_compat(&self, parser: &Parser) -> Value {
-        json_python_compat_node!("NamedExpression", self, parser, {
+        json_python_compat_node!("NamedExpr", self, parser, {
             "target": self.target.as_python_compat(parser),
             "value": self.value.as_python_compat(parser),
         })

@@ -1,3 +1,4 @@
+#![allow(clippy::all)]
 use assert_json_diff::assert_json_matches_no_panic;
 use miette::{bail, IntoDiagnostic, Result};
 use serde_json::Value;
@@ -17,7 +18,7 @@ use terminal_size::{terminal_size, Width as TerminalWidth};
 
 fn parse_python_source(source: &str) -> Result<Value> {
     let mut process = spawn_python_script_command(
-        "parser/ast_python.py",
+        "compat/ast_python.py",
         vec!["--stdin"],
         default_python_path()?,
     )?;
@@ -26,7 +27,7 @@ fn parse_python_source(source: &str) -> Result<Value> {
     if let Some(mut stdin) = process.stdin.take() {
         stdin.write_all(source.as_bytes()).into_diagnostic()?;
     } else {
-        bail!("Failed to open stdin when running `parser/ast_python.py`");
+        bail!("Failed to open stdin when running `compat/ast_python.py`");
     }
     // Get process stdout and parse result.
     let output = process.wait_with_output().into_diagnostic()?;
@@ -115,6 +116,7 @@ fn parse_enderpy_source(source: &str) -> Result<Value> {
     Ok(ast)
 }
 
+#[allow(unused_macros)]
 macro_rules! parser_test {
     ($test_name:ident, $test_file:expr) => {
         #[test]
@@ -219,11 +221,10 @@ mod tests {
         python_parser_test_ast(&[
             "a or b",
             "a and b",
-            // TODO ast_python: Python parses this as a BoolOp with 3 values.
+            // TODO: Python parses this as a BoolOp with 3 values.
             // i.e. {"op": "or", "values": ["a", "b", "c"]}
             // Enderpy parses this as a nested set of BoolOps.
             // i.e. {"op": "or", "values": ["a", {"op": "or", "values": ["b", "c"]}]}
-            // I'm not sure which is correct.
             // "a or b or c",
             "a and b or c",
         ]);
@@ -236,24 +237,22 @@ mod tests {
 
     #[test]
     fn test_named_expression() {
-        // TODO ast_python: Enderpy chokes on this.
-        // python_parser_test_ast(&["(a := b)"]);
+        python_parser_test_ast(&["(a := b)"]);
     }
 
     #[test]
     fn test_tuple() {
         python_parser_test_ast(&[
             "(a, b, c)",
-            // TODO ast_python: Enderpy doesn't handle newlines within a nested context.
             "(a,
             b, c)",
             "(a
             , b, c)",
-            // "(a,
-            // b,
-            //     c)",
-            //             "(a,
-            // )",
+            "(a,
+            b,
+                c)",
+            "(a,
+            )",
             "(a, b, c,)",
         ]);
     }
@@ -261,12 +260,6 @@ mod tests {
     #[test]
     fn test_yield_expression() {
         python_parser_test_ast(&["yield", "yield a", "yield from a"]);
-    }
-
-    #[test]
-    fn test_starred() {
-        // TODO ast_python: Enderpy chokes on this.
-        // python_parser_test_ast(&["(*a)"]);
     }
 
     #[test]
@@ -326,14 +319,13 @@ mod tests {
             "'a'   'b'",
             // TODO ast_python: Enderpy evaluates this as 'r"a"b'. This seems wrong.
             // "r'a' 'b'",
-            // TODO ast_python: Enderpy doesn't handle newlines within a nested context.
-            // "('a'
-            // 'b')",
-            // "('a'
-            // 'b', 'c')",
-            //             "('a'
-            //                 'b'
-            // 'c')",
+            "('a'
+            'b')",
+            "('a'
+            'b', 'c')",
+            "('a'
+                            'b'
+            'c')",
             // TODO ast_python: Python evaluates this as "ac". Enderpy creates 2 constants.
             // "f'a' 'c'",
             // TODO ast_python: Python evaluates this as "abc". Enderpy creates 3 constants.
@@ -351,8 +343,7 @@ mod tests {
             "f'hello_{a}'",
             "f'hello_{a} {b}'",
             "f'hello_{a} {b} {c}'",
-            // unsupported
-            // "f'hello_{f'''{a}'''}'",
+            "f'hello_{f'''{a}'''}'",
         ]);
     }
 
@@ -435,35 +426,38 @@ except *Exception as e:
         ]);
     }
 
-    // parser_test!(test_functions, "test_data/inputs/functions.py");
-    // parser_test!(test_if, "test_data/inputs/if.py");
-    // parser_test!(test_indentation, "test_data/inputs/indentation.py");
-    // parser_test!(
-    //     test_separate_statements,
-    //     "test_data/inputs/separate_statements.py"
-    // );
-    // parser_test!(test_try, "test_data/inputs/try.py");
+    parser_test!(test_functions, "../parser/test_data/inputs/functions.py");
+    parser_test!(test_if, "../parser/test_data/inputs/if.py");
+    parser_test!(
+        test_indentation,
+        "../parser/test_data/inputs/indentation.py"
+    );
+    parser_test!(
+        test_separate_statements,
+        "../parser/test_data/inputs/separate_statements.py"
+    );
+    // parser_test!(test_try, "../parser/test_data/inputs/try.py");
     // parser_test!(
     //     annotated_assignment,
-    //     "test_data/inputs/annotated_assignment.py"
+    //     "../parser/test_data/inputs/annotated_assignment.py"
     // );
-    // parser_test!(binary_op, "test_data/inputs/binary_op.py");
-    // parser_test!(class, "test_data/inputs/class.py");
-    // parser_test!(dict, "test_data/inputs/dict.py");
-    // parser_test!(test_for, "test_data/inputs/for.py");
-    // parser_test!(from_import, "test_data/inputs/from_import.py");
-    // parser_test!(function_def, "test_data/inputs/function_def.py");
+    parser_test!(binary_op, "../parser/test_data/inputs/binary_op.py");
+    parser_test!(class, "../parser/test_data/inputs/class.py");
+    // parser_test!(dict, "../parser/test_data/inputs/dict.py");
+    // parser_test!(test_for, "../parser/test_data/inputs/for.py");
+    parser_test!(from_import, "../parser/test_data/inputs/from_import.py");
+    parser_test!(function_def, "../parser/test_data/inputs/function_def.py");
     // parser_test!(
     //     generator_expressions,
-    //     "test_data/inputs/generator_expressions.py"
+    //     "../parser/test_data/inputs/generator_expressions.py"
     // );
-    // parser_test!(lists, "test_data/inputs/lists.py");
-    // parser_test!(test_match, "test_data/inputs/match.py");
-    // parser_test!(sets, "test_data/inputs/sets.py");
-    // parser_test!(string, "test_data/inputs/string.py");
-    // parser_test!(subscript, "test_data/inputs/subscript.py");
-    // parser_test!(with, "test_data/inputs/with.py");
-    // parser_test!(newlines, "test_data/inputs/newlines.py");
-    // parser_test!(comments, "test_data/inputs/comments.py");
-    // parser_test!(types_alias, "test_data/inputs/type_alias.py");
+    // parser_test!(lists, "../parser/test_data/inputs/lists.py");
+    // parser_test!(test_match, "../parser/test_data/inputs/match.py");
+    // parser_test!(sets, "../parser/test_data/inputs/sets.py");
+    // parser_test!(string, "../parser/test_data/inputs/string.py");
+    // parser_test!(subscript, "../parser/test_data/inputs/subscript.py");
+    // parser_test!(with, "../parser/test_data/inputs/with.py");
+    // parser_test!(newlines, "../parser/test_data/inputs/newlines.py");
+    parser_test!(comments, "../parser/test_data/inputs/comments.py");
+    // parser_test!(types_alias, "../parser/test_data/inputs/type_alias.py");
 }

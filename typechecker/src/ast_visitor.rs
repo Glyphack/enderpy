@@ -7,6 +7,7 @@ use enderpy_python_parser::ast::*;
 /// This is useful for visitors that only need to visit a few nodes
 /// and don't want to implement all the methods.
 /// The overridden methods must make sure to continue the traversal.
+#[allow(dead_code)]
 pub trait TraversalVisitor {
     fn visit_stmt(&mut self, s: &Statement) {
         // map all statements and call visit

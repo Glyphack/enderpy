@@ -39,7 +39,7 @@ pub struct FunctionInformation {
 
 #[allow(unused)]
 impl<'a> SemanticAnalyzer<'a> {
-    pub fn new(file: &'a EnderpyFile<'a>, imports: &'a ResolvedImports) -> Self {
+    pub fn new(file: &'a EnderpyFile, imports: &'a ResolvedImports) -> Self {
         let symbols = SymbolTable::new(&file.path, file.id);
         SemanticAnalyzer {
             symbol_table: symbols,
