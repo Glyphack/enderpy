@@ -19,3 +19,5 @@ out/
 **/dist/
 # vscode extension 
 *.vsix
+
+mypy-master/
