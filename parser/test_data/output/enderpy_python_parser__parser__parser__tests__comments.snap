@@ -5,7 +5,7 @@ description: "test file: test_data/inputs/comments.py\n# a\n# a\n\n# a\n# b\ndef
 Module {
     node: Node {
         start: 0,
-        end: 65,
+        end: 95,
     },
     body: [
         FunctionDef(
@@ -51,7 +51,7 @@ Module {
             FunctionDef {
                 node: Node {
                     start: 35,
-                    end: 65,
+                    end: 64,
                 },
                 name: "b",
                 args: Arguments {

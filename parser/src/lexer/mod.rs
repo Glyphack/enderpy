@@ -2,10 +2,11 @@ use unicode_id_start::{is_id_continue, is_id_start};
 
 use crate::{
     error::LexError,
+    get_row_col_position,
     token::{Kind, Token, TokenValue},
 };
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 enum StringQuotation {
     Single,
     Double,
@@ -46,6 +47,9 @@ pub struct Lexer<'a> {
     /// The current position in the source code
     current: u32,
     current_line: u16,
+    /// Array of all line starts offsets. Starts from line 0
+    pub line_starts: Vec<u32>,
+
     /// Keeps track of whether the lexer is at the start of a line
     start_of_line: bool,
     /// keeps track of the indentation level
@@ -56,15 +60,10 @@ pub struct Lexer<'a> {
     tokenization_mode_stack: Vec<TokenizationMode>,
     // When not zero lexer is in de indent mode
     next_token_is_dedent: u8,
-    /// Array of all line starts offsets. Starts from line 0
-    pub line_starts: Vec<u32>,
     peek_mode: bool,
 
     /// Previous token was a Newline token
     non_logical_line_state: bool,
-    /// Cursor at position after the indentation in line
-    indented: bool,
-    // tokens: Vec<Token>,
 }
 
 impl<'a> Lexer<'a> {
@@ -81,7 +80,6 @@ impl<'a> Lexer<'a> {
             line_starts: vec![0],
             peek_mode: false,
             non_logical_line_state: true,
-            indented: false,
         }
     }
 
@@ -111,9 +109,14 @@ impl<'a> Lexer<'a> {
 
         // NOTE: for dedent we want to set the token start to the token end
         let mut start = self.current;
+
         let kind = match self.next_kind() {
             Ok(kind) => kind,
             Err(e) => {
+                println!(
+                    "position {:?}",
+                    get_row_col_position(start, self.current, &self.line_starts)
+                );
                 panic!("Invalid token {e}");
             }
         };
@@ -136,11 +139,10 @@ impl<'a> Lexer<'a> {
             self.non_logical_line_state = kind == Kind::NewLine;
         }
         let value = self.parse_token_value(kind, start);
-        let end = self.current;
-
-        if (kind == Kind::NewLine || kind == Kind::NL) && !self.peek_mode {
-            self.line_starts.push(self.current);
-        }
+        let end = match kind {
+            Kind::FStringMiddle => start + value.as_str().expect("").len() as u32,
+            _ => self.current,
+        };
 
         if kind == Kind::Dedent {
             start = end
@@ -164,10 +166,8 @@ impl<'a> Lexer<'a> {
         let start_of_line = self.start_of_line;
         let next_token_is_dedent = self.next_token_is_dedent;
         let prev_token_newline = self.non_logical_line_state;
-        let indented = self.indented;
         self.peek_mode = true;
         let token = self.next_token();
-        self.indented = indented;
         self.non_logical_line_state = prev_token_newline;
         self.peek_mode = false;
         self.current = current;
@@ -353,14 +353,12 @@ impl<'a> Lexer<'a> {
                     return Ok(Kind::LeftBracket);
                 }
                 '}' => {
-                    if self.peek() != Some('}') {
-                        if let Some(mode) = self.tokenization_mode_stack.last() {
-                            if matches!(mode, TokenizationMode::PythonWithinFstring(_)) {
-                                if !self.peek_mode {
-                                    self.tokenization_mode_stack.pop();
-                                }
-                                return Ok(Kind::RightBracket);
+                    if let Some(mode) = self.tokenization_mode_stack.last() {
+                        if matches!(mode, TokenizationMode::PythonWithinFstring(_)) {
+                            if !self.peek_mode {
+                                self.tokenization_mode_stack.pop();
                             }
+                            return Ok(Kind::RightBracket);
                         }
                     }
                     return Ok(Kind::RightBracket);
@@ -451,6 +449,7 @@ impl<'a> Lexer<'a> {
     // https://peps.python.org/pep-0701/#how-to-produce-these-new-tokens
     fn next_fstring_token(&mut self, str_finisher: StringQuotation, _fstring_nesting: u8) -> Kind {
         let mut read_chars = false;
+        let mut last_read_char: Option<char> = None;
         loop {
             let peeked_char = self.peek();
             let double_peek = self.double_peek();
@@ -476,6 +475,20 @@ impl<'a> Lexer<'a> {
                     return Kind::LeftBracket;
                 }
             }
+            if last_read_char != Some('\\')
+                && self.peek() == Some('\'')
+                && read_chars
+                && str_finisher == StringQuotation::Single
+            {
+                return Kind::FStringMiddle;
+            }
+            if last_read_char != Some('\\')
+                && self.peek() == Some('"')
+                && read_chars
+                && str_finisher == StringQuotation::Double
+            {
+                return Kind::FStringMiddle;
+            }
 
             let Some(curr) = self.next() else {
                 panic!("eof while parsing fstring")
@@ -484,10 +497,10 @@ impl<'a> Lexer<'a> {
 
             match str_finisher {
                 StringQuotation::Single => {
-                    if self.peek() == Some('\'') {
+                    if curr != '\\' && self.peek() == Some('\'') {
                         return Kind::FStringMiddle;
                     }
-                    if curr == '\'' {
+                    if last_read_char != Some('\\') && curr == '\'' {
                         if !self.peek_mode {
                             let last = self.tokenization_mode_stack.pop();
                             assert!(matches!(last, Some(TokenizationMode::Fstring(_))))
@@ -545,6 +558,7 @@ impl<'a> Lexer<'a> {
                     }
                 }
             }
+            last_read_char = Some(curr);
         }
     }
 
@@ -677,6 +691,9 @@ impl<'a> Lexer<'a> {
         let c = self.peek();
         if let Some(c) = c {
             self.current += c.len_utf8() as u32;
+            if c == '\n' && !self.peek_mode {
+                self.line_starts.push(self.current);
+            }
         }
         c
     }
@@ -740,21 +757,13 @@ impl<'a> Lexer<'a> {
     }
 
     fn consume_str(&mut self, str_start: char) -> Result<(), LexError> {
-        // string start position is current position - 1 because we already consumed the
-        // quote
-        let _str_start_pos = self.current - 1;
         let mut string_terminated = false;
         let mut last_read_char = str_start;
         // Check if string starts with triple quotes
         // if string started with triple quotes, we need to read 3 characters at a time
         if self.peek() == Some(str_start) && self.double_peek() == Some(str_start) {
-            self.next();
+            self.double_next();
             while let Some(c) = self.next() {
-                if c == '\n' {
-                    if !self.peek_mode {
-                        self.line_starts.push(self.current);
-                    }
-                }
                 if c == str_start
                     && self.peek() == Some(str_start)
                     && self.double_peek() == Some(str_start)
@@ -764,20 +773,24 @@ impl<'a> Lexer<'a> {
                     self.double_next();
                     break;
                 }
-                last_read_char = c;
+                if last_read_char == '\\' && c == '\\' {
+                    last_read_char = ' ';
+                } else {
+                    last_read_char = c;
+                }
             }
         } else {
             while let Some(c) = self.next() {
-                if c == '\n' {
-                    if !self.peek_mode {
-                        self.line_starts.push(self.current);
-                    }
-                }
+                // Two consecutive backslashes cancel out
                 if c == str_start && last_read_char != '\\' {
                     string_terminated = true;
                     break;
                 }
-                last_read_char = c;
+                if last_read_char == '\\' && c == '\\' {
+                    last_read_char = ' ';
+                } else {
+                    last_read_char = c;
+                }
             }
         }
 
@@ -984,6 +997,9 @@ impl<'a> Lexer<'a> {
                 return Ok(None);
             }
         }
+        if self.peek() == Some('#') {
+            return Ok(Some(Kind::WhiteSpace));
+        }
         if let Some(top) = self.indent_stack.last() {
             match spaces_count.cmp(top) {
                 Ordering::Less => {
@@ -1058,13 +1074,17 @@ impl<'a> Lexer<'a> {
             },
             Kind::StringLiteral
             | Kind::FStringStart
-            | Kind::FStringMiddle
             | Kind::FStringEnd
             | Kind::RawBytes
             | Kind::RawFStringStart
             | Kind::Bytes
             | Kind::Unicode
             | Kind::Comment => TokenValue::Str(kind_value.to_string()),
+            Kind::FStringMiddle => {
+                let value = kind_value.replace("{{", "{");
+                let value = value.replace("}}", "}");
+                TokenValue::Str(value)
+            }
             Kind::Dedent => TokenValue::Indent(1),
             Kind::Indent => TokenValue::Indent(1),
             Kind::Error => TokenValue::Str(kind_value.to_string()),
@@ -1122,6 +1142,7 @@ mod tests {
             let mut snapshot = String::from("");
             loop {
                 let token = lexer.next_token();
+                println!("{:?}", token);
                 if token.kind == Kind::Eof {
                     break;
                 }
@@ -1431,6 +1452,15 @@ def",
                 "def a():
     ...",
             ],
+        )
+        .unwrap();
+    }
+
+    #[test]
+    fn test_fstring_escape() {
+        snapshot_test_lexer(
+            "fstring_escape",
+            &["f'Can\\'t find plugin'", "f\"{{{', '.join(dict_items)}}}\""],
         )
         .unwrap();
     }

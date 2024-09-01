@@ -28,7 +28,7 @@ pub fn get_row_col_position(start: u32, end: u32, line_starts: &[u32]) -> (u32, 
         // When end line offset is exactly on line start it means that this is the new line
         // token end offset. We want to set the new line token line number same for start and
         // end.
-        Ok(idx) => (idx - 1, line_starts[idx - 1]),
+        Ok(idx) => (start_line_num, line_starts[idx - 1]),
         Err(idx) => (idx - 1, line_starts[idx - 1]),
     };
     let end_line_column = end.saturating_sub(end_line_offset);
