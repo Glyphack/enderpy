@@ -22,7 +22,7 @@ pub enum ImportKinds<'a> {
 /// EnderpyFile<'a>holds information about the files in the analyze
 /// and methods to perform semantic analysis and type check on them
 #[derive(Clone, Debug)]
-pub struct EnderpyFile<'a> {
+pub struct EnderpyFile {
     pub id: symbol_table::Id,
     pub module: String,
     // if this source is found by following an import
@@ -31,18 +31,17 @@ pub struct EnderpyFile<'a> {
     pub source: String,
     pub line_starts: Vec<u32>,
     pub tree: ast::Module,
-    dummy: &'a str,
 }
 
-impl<'a> Eq for EnderpyFile<'a> {}
+impl<'a> Eq for EnderpyFile {}
 
-impl<'a> PartialEq for EnderpyFile<'a> {
+impl<'a> PartialEq for EnderpyFile {
     fn eq(&self, other: &Self) -> bool {
         self.id == other.id && self.path == other.path
     }
 }
 
-impl<'a> std::hash::Hash for EnderpyFile<'a> {
+impl<'a> std::hash::Hash for EnderpyFile {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         self.id.hash(state);
         self.path.hash(state);
@@ -54,7 +53,7 @@ fn get_id() -> u32 {
     COUNTER.fetch_add(1, Ordering::SeqCst) as u32
 }
 
-impl<'a> EnderpyFile<'a> {
+impl<'a> EnderpyFile {
     pub fn new(path: PathBuf, followed: bool) -> Self {
         let source =
             std::fs::read_to_string(&path).unwrap_or_else(|_| panic!("cannot read file {path:?}"));
@@ -77,7 +76,6 @@ impl<'a> EnderpyFile<'a> {
             module,
             tree,
             path: Arc::new(path),
-            dummy: "sdfsd",
         }
     }
     pub fn module_name(&self) -> String {

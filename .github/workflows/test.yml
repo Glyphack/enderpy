@@ -23,13 +23,12 @@ jobs:
         with:
           rust-version: stable
           components: rustfmt, clippy
-      # Required for compatibility tests
+      # Required for compatibility unit tests
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
       - name: Build
         run: cargo build
-
       - name: Run tests
         env:
           RUST_BACKTRACE: 1
@@ -38,6 +37,24 @@ jobs:
         run: make format-check
       - name: clippy
         run: make lint
+  compatibility-test-complete:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+      - uses: Swatinem/rust-cache@v2
+      - name: setup toolchain
+        uses: hecrj/setup-rust-action@v2
+        with:
+          rust-version: stable
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Run Compatibility Tests
+        run: |
+          cargo run -p enderpy-compat --bin enderpy-compat
+
   # coverage:
   #   name: coverage
   #   runs-on: ubuntu-latest

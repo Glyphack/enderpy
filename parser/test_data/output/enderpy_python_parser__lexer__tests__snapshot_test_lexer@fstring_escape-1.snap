@@ -1,0 +1,16 @@
+---
+source: parser/src/lexer/mod.rs
+description: "f\"{{{', '.join(dict_items)}}}\""
+---
+0,2: FStringStart   (Str("f\""))
+2,3: FstringMiddle   (Str("{"))
+4,5: {   (None)
+5,9: StringLiteral   (Str("', '"))
+9,10: .   (None)
+10,14: Identifier   (Str("join"))
+14,15: (   (None)
+15,25: Identifier   (Str("dict_items"))
+25,26: )   (None)
+26,27: }   (None)
+27,28: FstringMiddle   (Str("}"))
+29,30: FStringEnd   (Str("\""))

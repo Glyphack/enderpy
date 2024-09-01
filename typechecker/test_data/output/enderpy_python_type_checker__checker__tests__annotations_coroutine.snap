@@ -4,8 +4,6 @@ description: "1: \"\"\"\n2: Tests for annotating coroutines.\n3: \"\"\"\n4: \n5:
 expression: result
 ---
 Line 1: """
-Tests for annotating coroutines.
-"""
 
 Expr types in the line --->:
         """
@@ -13,7 +11,7 @@ Tests for annotating coroutines.
 """ => (class) str
 
 ---
-Line 10: from typing import Any, Callable, Coroutine, assert_type
+Line 12: from typing import Any, Callable, Coroutine, assert_type
 
 Expr types in the line --->:
         typing  => Module
@@ -23,19 +21,19 @@ Expr types in the line --->:
         assert_type => (function) Callable[[TypeVar[_T, ], (class) object], TypeVar[_T, ]]
 
 ---
-Line 13: async def func1(ignored: int, /) -> str:
+Line 15: async def func1(ignored: int, /) -> str:
 
 Expr types in the line --->:
          func => (function) Callable[[(class) int], Coroutine[Any, Any, (class) str]]
 
 ---
-Line 14:     return "spam"
+Line 16:     return "spam"
 
 Expr types in the line --->:
         "spam" => (class) str
 
 ---
-Line 17: assert_type(func1, Callable[[int], Coroutine[Any, Any, str]])
+Line 19: assert_type(func1, Callable[[int], Coroutine[Any, Any, str]])
 
 Expr types in the line --->:
         assert_type => (function) Callable[[TypeVar[_T, ], (class) object], TypeVar[_T, ]]
@@ -54,13 +52,13 @@ Expr types in the line --->:
         str => (class) str
 
 ---
-Line 19: async def func2() -> None:
+Line 21: async def func2() -> None:
 
 Expr types in the line --->:
          func => (function) Callable[[], Coroutine[Any, Any, None]]
 
 ---
-Line 20:     x = await func1(42)
+Line 22:     x = await func1(42)
 
 Expr types in the line --->:
         x => (class) str
@@ -70,7 +68,7 @@ Expr types in the line --->:
         42 => (class) int
 
 ---
-Line 21:     assert_type(x, str)
+Line 23:     assert_type(x, str)
 
 Expr types in the line --->:
         assert_type => (function) Callable[[TypeVar[_T, ], (class) object], TypeVar[_T, ]]

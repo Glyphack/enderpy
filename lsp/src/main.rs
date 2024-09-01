@@ -6,12 +6,12 @@ use log::LevelFilter;
 use tower_lsp::{jsonrpc::Result, lsp_types::*, Client, LanguageServer, LspService, Server};
 
 #[derive(Debug)]
-struct Backend<'a> {
+struct Backend {
     client: Client,
-    manager: BuildManager<'a>,
+    manager: BuildManager,
 }
 
-impl<'a> Backend<'a> {
+impl<'a> Backend {
     fn build(&self, path: PathBuf) {
         let root = find_project_root(&path);
         self.manager.build_one(root, &path);
@@ -20,7 +20,7 @@ impl<'a> Backend<'a> {
 }
 
 #[tower_lsp::async_trait]
-impl LanguageServer for Backend<'static> {
+impl LanguageServer for Backend {
     async fn initialize(&self, i: InitializeParams) -> Result<InitializeResult> {
         let root = match i.root_uri {
             Some(v) => v.to_file_path().unwrap_or(PathBuf::from("")),

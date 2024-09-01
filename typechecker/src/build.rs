@@ -21,8 +21,8 @@ use crate::{
 };
 
 #[derive(Debug)]
-pub struct BuildManager<'a> {
-    pub modules: DashMap<Id, EnderpyFile<'a>>,
+pub struct BuildManager {
+    pub modules: DashMap<Id, EnderpyFile>,
     pub diagnostics: DashMap<PathBuf, Vec<Diagnostic>>,
     pub symbol_tables: DashMap<Id, SymbolTable>,
     pub module_ids: DashMap<PathBuf, Id>,
@@ -31,7 +31,7 @@ pub struct BuildManager<'a> {
     host: ruff_python_resolver::host::StaticHost,
 }
 #[allow(unused)]
-impl<'a> BuildManager<'a> {
+impl<'a> BuildManager {
     pub fn new(settings: Settings) -> Self {
         let mut builder = Builder::new();
 
@@ -65,7 +65,7 @@ impl<'a> BuildManager<'a> {
         }
     }
 
-    pub fn get_state(&self, path: &Path) -> EnderpyFile<'a> {
+    pub fn get_state(&self, path: &Path) -> EnderpyFile {
         let id = self.module_ids.get(path).expect("path not found");
         let result = self.modules.get(&id).unwrap();
         return result.value().clone();
@@ -154,24 +154,23 @@ impl<'a> BuildManager<'a> {
 #[derive(Debug, Clone)]
 pub struct ResolvedImport {
     pub resolved_ids: Vec<Id>,
-    result: ImportResult,
+    _result: ImportResult,
 }
 
 pub type ResolvedImports = HashMap<ImportModuleDescriptor, Arc<ResolvedImport>>;
 
 fn gather_files<'a>(
-    mut initial_files: Vec<EnderpyFile<'a>>,
+    mut initial_files: Vec<EnderpyFile>,
     root: &Path,
     import_config: &ruff_python_resolver::config::Config,
     host: &ruff_python_resolver::host::StaticHost,
-) -> (ResolvedImports, HashSet<EnderpyFile<'a>>) {
+) -> (ResolvedImports, HashSet<EnderpyFile>) {
     let execution_environment = &execution_environment::ExecutionEnvironment {
         root: root.to_path_buf(),
         python_version: ruff_python_resolver::python_version::PythonVersion::Py312,
         python_platform: ruff_python_resolver::python_platform::PythonPlatform::Darwin,
         extra_paths: vec![],
     };
-    let mut path_to_id: HashMap<&Path, Id> = HashMap::with_capacity(initial_files.len() * 5);
     let mut new_modules = HashSet::with_capacity(initial_files.len() * 5);
     let mut import_results = HashMap::new();
     let mut seen = HashSet::new();
@@ -227,7 +226,7 @@ fn gather_files<'a>(
                 import_desc,
                 Arc::new(ResolvedImport {
                     resolved_ids,
-                    result: resolved,
+                    _result: resolved,
                 }),
             );
         }
@@ -249,7 +248,7 @@ fn gather_files<'a>(
 }
 
 fn resolve_file_imports(
-    file: &EnderpyFile<'_>,
+    file: &EnderpyFile,
     execution_environment: &ruff_python_resolver::execution_environment::ExecutionEnvironment,
     import_config: &ruff_python_resolver::config::Config,
     host: &ruff_python_resolver::host::StaticHost,
