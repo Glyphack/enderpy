@@ -244,7 +244,7 @@ fn gather_files<'a>(
             }
         }
     }
-    (import_results, new_modules.into())
+    (import_results, new_modules)
 }
 
 fn resolve_file_imports(

@@ -169,19 +169,19 @@ pub fn assert_tokens_eq(
             // (compat_fstrings) TODO: python fstring is a bit different than enderpy.
             // We merge multiple fstring middle tokens together and emit one token but python emits
             // multiple fstring middle tokens. Here we skip to the end and do not check fstrings.
-            if python_token.kind == PythonKind::FstringStart {
-                if enderpy_token.kind == Kind::FStringStart {
-                    // Python tokenizes fstring with more tokens than needed.
-                    // So let's just skip the whole fstring part. For now.
-                    // Skip until the end of the fstring.
-                    while python_token.kind != PythonKind::FstringEnd {
-                        python_index += 1;
-                        python_token = python_tokens[python_index].clone();
-                    }
-                    while enderpy_token.kind != Kind::FStringEnd {
-                        enderpy_index += 1;
-                        enderpy_token = enderpy_tokens[enderpy_index].clone()
-                    }
+            if python_token.kind == PythonKind::FstringStart
+                && enderpy_token.kind == Kind::FStringStart
+            {
+                // Python tokenizes fstring with more tokens than needed.
+                // So let's just skip the whole fstring part. For now.
+                // Skip until the end of the fstring.
+                while python_token.kind != PythonKind::FstringEnd {
+                    python_index += 1;
+                    python_token = python_tokens[python_index].clone();
+                }
+                while enderpy_token.kind != Kind::FStringEnd {
+                    enderpy_index += 1;
+                    enderpy_token = enderpy_tokens[enderpy_index].clone()
                 }
             }
             if let Some(mismatch) = check_tokens_match(python_token, enderpy_token, lexer) {

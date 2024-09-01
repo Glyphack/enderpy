@@ -317,7 +317,7 @@ impl<'a> TypeEvaluator<'a> {
                 };
                 match value_type {
                     PythonType::Class(ref c) => {
-                        let attribute_on_c = self.lookup_on_class(symbol_table, &c, &a.attr);
+                        let attribute_on_c = self.lookup_on_class(symbol_table, c, &a.attr);
                         if let Some(attribute_on_c) = attribute_on_c {
                             Ok(attribute_on_c)
                         } else {

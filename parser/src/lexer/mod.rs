@@ -148,14 +148,12 @@ impl<'a> Lexer<'a> {
             start = end
         }
 
-        let token = Token {
+        Token {
             kind,
             value,
             start,
             end,
-        };
-
-        token
+        }
     }
 
     // peek_token is a side-effect free version of next_token
