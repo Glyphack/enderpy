@@ -2,7 +2,10 @@
 #![allow(unused_variables)]
 
 use core::panic;
-use std::path::PathBuf;
+use std::{
+    panic::{catch_unwind, AssertUnwindSafe},
+    path::PathBuf,
+};
 
 use dashmap::DashMap;
 use enderpy_python_parser as parser;
@@ -436,14 +439,36 @@ impl<'a> TypeEvaluator<'a> {
                     }
                 }
             }
-            Expression::Constant(c) => {
-                if let ast::ConstantValue::None = c.value {
-                    PythonType::None
-                // Illegal type annotation should report an error
-                } else {
-                    PythonType::Unknown
+            Expression::Constant(c) => match c.value {
+                ast::ConstantValue::None => PythonType::None,
+                // TODO: (forward_annotations) Forward annotations are not
+                // completely supported.
+                // 1. Cyclic references detected
+                ast::ConstantValue::Str(ref str) => {
+                    log::error!("{}", str);
+                    let mut parser = enderpy_python_parser::Parser::new(str, "");
+                    // Wrap the parsing logic inside a `catch_unwind` block
+                    let parse_result = catch_unwind(AssertUnwindSafe(|| parser.parse()));
+
+                    let module = match parse_result {
+                        Ok(Ok(module)) => module,
+                        Ok(Err(_)) => {
+                            log::error!("parsing annotation failed");
+                            return PythonType::Unknown;
+                        }
+                        Err(_) => {
+                            log::error!("panic occurred during parsing");
+                            return PythonType::Unknown;
+                        }
+                    };
+                    let stmt = module.body.first().unwrap();
+                    let ast::Statement::ExpressionStatement(expr) = stmt else {
+                        panic!("expected expression in annotation");
+                    };
+                    self.get_annotation_type(expr, symbol_table, scope_id)
                 }
-            }
+                _ => PythonType::Unknown,
+            },
             Expression::Subscript(s) => {
                 // This is a generic type
                 let typ = self.get_type(&s.value, Some(&self.symbol_table), None);
