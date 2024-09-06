@@ -297,8 +297,8 @@ pub fn assert_tokens_eq(
         table
             .with(
                 Width::wrap(width as usize)
-                    .keep_words()
-                    .priority::<PriorityMax>(),
+                    .keep_words(true)
+                    .priority(PriorityMax),
             )
             .with(Width::increase(width as usize));
     }

@@ -13,7 +13,7 @@ license = { workspace = true }
 [dependencies]
 codspeed-criterion-compat = { workspace = true, optional = true}
 criterion.workspace = true
-reqwest = { version= "0.12.4", features = ["blocking"] }
+reqwest.workspace = true
 tokio.workspace = true
 
 enderpy_python_parser = { path = "../parser" , version = "0.1.0" }

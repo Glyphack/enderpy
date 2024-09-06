@@ -39,10 +39,7 @@ pub trait GetNode {
 
 impl From<Node> for SourceSpan {
     fn from(val: Node) -> Self {
-        Self::new(
-            SourceOffset::from(val.start as usize),
-            SourceOffset::from(val.len() as usize),
-        )
+        Self::new(SourceOffset::from(val.start as usize), val.len() as usize)
     }
 }
 

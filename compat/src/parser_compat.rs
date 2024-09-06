@@ -78,8 +78,8 @@ fn assert_ast_eq(python_ast: &Value, enderpy_ast: &Value, source: &str) {
             table
                 .with(
                     Width::wrap(width as usize)
-                        .keep_words()
-                        .priority::<PriorityMax>(),
+                        .keep_words(true)
+                        .priority(PriorityMax),
                 )
                 .with(Width::increase(width as usize));
         }
