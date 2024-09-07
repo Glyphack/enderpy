@@ -444,8 +444,10 @@ impl<'a> TypeEvaluator<'a> {
                 // TODO: (forward_annotations) Forward annotations are not
                 // completely supported.
                 // 1. Cyclic references detected
+                // 2. Module is preferred over local scope so we first check module scope and
+                //    then local scope.
+                //    https://peps.python.org/pep-0563/#backwards-compatibility
                 ast::ConstantValue::Str(ref str) => {
-                    log::error!("{}", str);
                     let mut parser = enderpy_python_parser::Parser::new(str, "");
                     // Wrap the parsing logic inside a `catch_unwind` block
                     let parse_result = catch_unwind(AssertUnwindSafe(|| parser.parse()));
@@ -461,6 +463,10 @@ impl<'a> TypeEvaluator<'a> {
                             return PythonType::Unknown;
                         }
                     };
+                    if module.body.len() != 1 {
+                        log::error!("expected 1 statement in annotation");
+                        return PythonType::Unknown;
+                    }
                     let stmt = module.body.first().unwrap();
                     let ast::Statement::ExpressionStatement(expr) = stmt else {
                         panic!("expected expression in annotation");
