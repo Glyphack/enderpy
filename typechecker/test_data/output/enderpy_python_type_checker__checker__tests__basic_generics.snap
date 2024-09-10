@@ -427,7 +427,7 @@ Expr types in the line --->:
 Line 104:     for var in vars:
 
 Expr types in the line --->:
-        vars => (function) Callable[[(class) type], Unknown]
+        vars => (class) typing.Iterable[(class) basic_generics.LoggedVar[(class) int]]
 
 ---
 Line 105:         var.set(0)

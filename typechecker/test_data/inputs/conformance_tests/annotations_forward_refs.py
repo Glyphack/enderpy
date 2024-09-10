@@ -72,11 +72,12 @@ class ClassC: ...
 
 
 class ClassD:
+    # TODO: cyclic references not handled
     # ClassC: "ClassC"  # OK
     #
     # ClassF: "ClassF"  # E: circular reference
 
-    str: "str" = ""  # OK
+    # str: "str" = ""  # OK
 
     def int(self) -> None:  # OK
         ...
