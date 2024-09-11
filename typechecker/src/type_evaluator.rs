@@ -2,7 +2,11 @@
 #![allow(unused_variables)]
 
 use core::panic;
-use std::path::PathBuf;
+use std::{
+    cell::Cell,
+    panic::{catch_unwind, AssertUnwindSafe},
+    path::PathBuf,
+};
 
 use dashmap::DashMap;
 use enderpy_python_parser as parser;
@@ -36,6 +40,26 @@ pub struct TypeEvaluator<'a> {
     pub symbol_table: SymbolTable,
     pub imported_symbol_tables: &'a DashMap<Id, SymbolTable>,
     pub ids: &'a DashMap<PathBuf, Id>,
+    flags: Cell<GetTypeFlags>,
+}
+
+bitflags::bitflags! {
+    #[repr(transparent)]
+    #[derive(Copy, Clone, Debug, Eq, PartialEq)]
+    // Defines how the type evaluation should be done at each moment.
+    pub struct GetTypeFlags: u8 {
+        /// When a annotation is in quotes then they are evaluated in deferred mode.
+        /// Defer mode does two things:
+        /// 1. Annotations can refer to symbols that are defined later in the program
+        /// 2. Annotations are resolved in a different order. Usually symbol resolving
+        ///    in python starts from the inner scope and if moves to outer scope if the
+        ///    symbol is not found. But for deferred annotations This is the order:
+        ///    - Start from the outer scope and move up until global
+        ///    - If not found search the local scope
+        ///    See more: https://peps.python.org/pep-0563/#backwards-compatibility
+        ///    An example: https://github.com/python/typing/blob/main/conformance/tests/annotations_forward_refs.py#L78
+        const DEFERRED = 1 << 0;
+    }
 }
 
 /// Struct for evaluating the type of an expression
@@ -49,6 +73,7 @@ impl<'a> TypeEvaluator<'a> {
             symbol_table,
             imported_symbol_tables,
             ids,
+            flags: Cell::new(GetTypeFlags::empty()),
         }
     }
     /// Entry point function to get type of an expression. The expression passed
@@ -94,10 +119,18 @@ impl<'a> TypeEvaluator<'a> {
                 })
             }
             ast::Expression::Name(n) => {
+                let resolved_in_file =
+                    self.get_name_type(&n.id, Some(n.node.start), symbol_table, symbol_table_scope);
+
+                if resolved_in_file.is_ok() {
+                    return resolved_in_file;
+                }
+
                 if let Some(t) = self.get_builtin_type(&n.id) {
                     return Ok(t);
+                } else {
+                    return Ok(PythonType::Unknown);
                 }
-                self.get_name_type(&n.id, Some(n.node.start), symbol_table, symbol_table_scope)
             }
             ast::Expression::Call(call) => {
                 let called_function = &call.func;
@@ -298,7 +331,7 @@ impl<'a> TypeEvaluator<'a> {
                         let symbol_table_node =
                             symbol_table.lookup_attribute(&a.attr, enclosing_parent_class.id);
                         let res = match symbol_table_node {
-                            Some(node) => self.get_symbol_type(node),
+                            Some(node) => self.get_symbol_type(node, None),
                             None => panic!("cannot find symbol table node for attribute access"),
                         };
 
@@ -423,27 +456,61 @@ impl<'a> TypeEvaluator<'a> {
         log::debug!("Getting type from annotation: {:?}", type_annotation);
         let expr_type = match type_annotation {
             Expression::Name(name) => {
-                if builtins::ALL_BUILTINS.contains(&name.id.as_str()) {
-                    return self.get_builtin_type(&name.id).expect("typeshed");
-                };
                 let typ =
                     self.get_name_type(&name.id, Some(name.node.start), symbol_table, scope_id);
                 match typ {
                     Ok(t) => t,
                     Err(e) => {
                         log::debug!("error getting type from annotation: {:?}", e);
-                        PythonType::Unknown
+                        if let Some(t) = self.get_builtin_type(&name.id) {
+                            return t;
+                        } else {
+                            return PythonType::Unknown;
+                        }
                     }
                 }
             }
-            Expression::Constant(c) => {
-                if let ast::ConstantValue::None = c.value {
-                    PythonType::None
-                // Illegal type annotation should report an error
-                } else {
-                    PythonType::Unknown
+            Expression::Constant(c) => match c.value {
+                ast::ConstantValue::None => PythonType::None,
+                // TODO: (forward_refs) Forward annotations are not
+                // completely supported.
+                // 1. Cyclic references not detected
+                // 2. Module is preferred over local scope so we first check module scope and
+                //    then local scope.
+                //    https://peps.python.org/pep-0563/#backwards-compatibility
+                ast::ConstantValue::Str(ref str) => {
+                    let mut parser = enderpy_python_parser::Parser::new(str, "");
+                    // Wrap the parsing logic inside a `catch_unwind` block
+                    let parse_result = catch_unwind(AssertUnwindSafe(|| parser.parse()));
+
+                    let module = match parse_result {
+                        Ok(Ok(module)) => module,
+                        Ok(Err(_)) => {
+                            log::error!("parsing annotation failed");
+                            return PythonType::Unknown;
+                        }
+                        Err(_) => {
+                            log::error!("panic occurred during parsing");
+                            return PythonType::Unknown;
+                        }
+                    };
+                    if module.body.len() != 1 {
+                        log::error!("expected 1 statement in annotation");
+                        return PythonType::Unknown;
+                    }
+                    let stmt = module.body.first().unwrap();
+                    let ast::Statement::ExpressionStatement(expr) = stmt else {
+                        panic!("expected expression in annotation");
+                    };
+                    let flags = self.flags.get();
+                    let new_flags = flags | GetTypeFlags::DEFERRED;
+                    self.flags.set(new_flags);
+                    let annotation_type = self.get_annotation_type(expr, symbol_table, scope_id);
+                    self.flags.set(flags);
+                    annotation_type
                 }
-            }
+                _ => PythonType::Unknown,
+            },
             Expression::Subscript(s) => {
                 // This is a generic type
                 let typ = self.get_type(&s.value, Some(&self.symbol_table), None);
@@ -523,7 +590,7 @@ impl<'a> TypeEvaluator<'a> {
 
         let find_in_current_symbol_table = symbol_table.lookup_in_scope(&lookup_request);
         if let Some(f) = find_in_current_symbol_table {
-            return self.get_symbol_type(f);
+            return self.get_symbol_type(f, position);
         };
 
         log::debug!(
@@ -541,7 +608,7 @@ impl<'a> TypeEvaluator<'a> {
                 let res = sym_table.lookup_in_scope(&lookup_request);
                 match res {
                     Some(res) => {
-                        return self.get_symbol_type(res);
+                        return self.get_symbol_type(res, position);
                     }
                     None => continue,
                 };
@@ -552,9 +619,31 @@ impl<'a> TypeEvaluator<'a> {
     }
 
     /// Get the type of a symbol node based on declarations
-    fn get_symbol_type(&self, symbol: &SymbolTableNode) -> Result<PythonType> {
+    fn get_symbol_type(
+        &self,
+        symbol: &SymbolTableNode,
+        position: Option<u32>,
+    ) -> Result<PythonType> {
         log::debug!("get_symbol_node_type: {symbol:}");
-        let decl = symbol.last_declaration();
+        let decl = {
+            let maybe_decl = if let Some(position) = position {
+                // TODO : filter declarations to what has been defined based on the position.
+                // Current problem is that only using the position is not correct because a
+                // symbol might be defined in another file and comparing positions will not help.
+                if self.flags.get().intersects(GetTypeFlags::DEFERRED) {
+                    Some(symbol.last_declaration())
+                } else {
+                    symbol.get_declaration_until_pos(position)
+                }
+            } else {
+                Some(symbol.last_declaration())
+            };
+
+            let Some(decl) = maybe_decl else {
+                bail!("Cannot find declaration");
+            };
+            decl
+        };
         let decl_scope = decl.declaration_path().scope_id;
         let symbol_table = &self
             .imported_symbol_tables
@@ -630,7 +719,7 @@ impl<'a> TypeEvaluator<'a> {
                                 scope: Some(parent_scope.id),
                             })
                             .expect("class def not found");
-                        return self.get_symbol_type(class_def);
+                        return self.get_symbol_type(class_def, position);
                     }
                     Ok(PythonType::Unknown)
                 }
@@ -686,7 +775,7 @@ impl<'a> TypeEvaluator<'a> {
                                 symbol_table_with_alias_def.lookup_in_scope(lookup)
                             {
                                 log::debug!("alias resolved to {:?}", current_symbol_lookup);
-                                return self.get_symbol_type(current_symbol_lookup);
+                                return self.get_symbol_type(current_symbol_lookup, None);
                             };
 
                             for star_import in symbol_table_with_alias_def.star_imports.iter() {
@@ -700,7 +789,8 @@ impl<'a> TypeEvaluator<'a> {
                                     let res = sym_table.lookup_in_scope(lookup);
                                     match res {
                                         Some(res) => {
-                                            return self.get_symbol_type(res);
+                                            // When resolving alias do not check for position
+                                            return self.get_symbol_type(res, None);
                                         }
                                         None => continue,
                                     };
@@ -1139,7 +1229,7 @@ impl<'a> TypeEvaluator<'a> {
         let class_scope = c.details.class_scope_id;
         let symbol_table_node = class_symbol_table.lookup_attribute(method_name, class_scope);
 
-        symbol_table_node.map(|node| self.get_symbol_type(node).expect("Cannot infer type"))
+        symbol_table_node.map(|node| self.get_symbol_type(node, None).expect("Cannot infer type"))
     }
 
     // TODO(coroutine_annotation): These two are very similar. Maybe should be presented in another

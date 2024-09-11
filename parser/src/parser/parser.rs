@@ -3807,6 +3807,7 @@ mod tests {
             "func(a, b=c, d=e, *f)",
             "func(a, b=c, d=e, *f, **g)",
             "func(a,)",
+            "eval(' '.join(map(chr, [105, 110, 116])))",
         ] {
             let mut parser = Parser::new(test_case, "");
             let program = parser.parse().expect("parsing failed");

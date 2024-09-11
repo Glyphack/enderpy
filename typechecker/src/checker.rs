@@ -692,4 +692,8 @@ mod tests {
         specialtypes_none,
         "test_data/inputs/conformance_tests/specialtypes_none.py"
     );
+    type_eval_test!(
+        annotations_forward_refs,
+        "test_data/inputs/conformance_tests/annotations_forward_refs.py"
+    );
 }
