@@ -8,7 +8,6 @@ use enderpy_python_parser::ast::{self, *};
 
 use super::{type_evaluator::TypeEvaluator, types::PythonType};
 use crate::symbol_table::Id;
-use crate::type_evaluator::GetTypeFlags;
 use crate::types::ModuleRef;
 use crate::{ast_visitor::TraversalVisitor, diagnostic::CharacterSpan, symbol_table::SymbolTable};
 use rust_lapper::{Interval, Lapper};
@@ -45,10 +44,7 @@ impl<'a> TypeChecker<'a> {
     }
 
     fn infer_expr_type(&mut self, expr: &Expression) -> PythonType {
-        let t = match self
-            .type_evaluator
-            .get_type(expr, None, None, GetTypeFlags::empty())
-        {
+        let t = match self.type_evaluator.get_type(expr, None, None) {
             Ok(t) => t,
             Err(e) => {
                 log::error!("type evaluator error: {} for expr {expr:?}", e);
@@ -72,7 +68,6 @@ impl<'a> TypeChecker<'a> {
                 None,
                 &self.type_evaluator.symbol_table,
                 Some(self.type_evaluator.symbol_table.current_scope_id),
-                GetTypeFlags::empty(),
             )
             .unwrap_or(PythonType::Unknown);
         self.types.insert(Interval {

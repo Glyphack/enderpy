@@ -127,10 +127,10 @@ Expr types in the line --->:
 Line 37: def test_concat(s: str, b: bytes, a: Any) -> None:
 
 Expr types in the line --->:
-        test_concat => (function) Callable[[(class) str, Unknown, (class) object], None]
+        test_concat => (function) Callable[[(class) str, (class) builtins.bytes[(class) int], (class) object], None]
         s: str => (class) str
         str => (class) str
-        b: bytes => Unknown
+        b: bytes => (class) builtins.bytes[(class) int]
         bytes => (class) builtins.bytes[(class) int]
         a: Any => (class) object
         Any => (class) object
@@ -151,8 +151,8 @@ Line 39:     concat(b, b)  # OK
 Expr types in the line --->:
         concat => (function) Callable[[TypeVar[AnyStr, (class) str, (class) builtins.bytes[(class) int]], TypeVar[AnyStr, (class) str, (class) builtins.bytes[(class) int]]], TypeVar[AnyStr, (class) str, (class) builtins.bytes[(class) int]]]
         concat(b, b) => TypeVar[AnyStr, (class) str, (class) builtins.bytes[(class) int]]
-        b => Unknown
-        b => Unknown
+        b => (class) builtins.bytes[(class) int]
+        b => (class) builtins.bytes[(class) int]
 
 ---
 Line 40:     concat(s, b)  # E
@@ -161,7 +161,7 @@ Expr types in the line --->:
         concat => (function) Callable[[TypeVar[AnyStr, (class) str, (class) builtins.bytes[(class) int]], TypeVar[AnyStr, (class) str, (class) builtins.bytes[(class) int]]], TypeVar[AnyStr, (class) str, (class) builtins.bytes[(class) int]]]
         concat(s, b) => TypeVar[AnyStr, (class) str, (class) builtins.bytes[(class) int]]
         s => (class) str
-        b => Unknown
+        b => (class) builtins.bytes[(class) int]
 
 ---
 Line 41:     concat(b, s)  # E
@@ -169,7 +169,7 @@ Line 41:     concat(b, s)  # E
 Expr types in the line --->:
         concat => (function) Callable[[TypeVar[AnyStr, (class) str, (class) builtins.bytes[(class) int]], TypeVar[AnyStr, (class) str, (class) builtins.bytes[(class) int]]], TypeVar[AnyStr, (class) str, (class) builtins.bytes[(class) int]]]
         concat(b, s) => TypeVar[AnyStr, (class) str, (class) builtins.bytes[(class) int]]
-        b => Unknown
+        b => (class) builtins.bytes[(class) int]
         s => (class) str
 
 ---
@@ -188,7 +188,7 @@ Expr types in the line --->:
         concat => (function) Callable[[TypeVar[AnyStr, (class) str, (class) builtins.bytes[(class) int]], TypeVar[AnyStr, (class) str, (class) builtins.bytes[(class) int]]], TypeVar[AnyStr, (class) str, (class) builtins.bytes[(class) int]]]
         concat(a, b) => TypeVar[AnyStr, (class) str, (class) builtins.bytes[(class) int]]
         a => (class) object
-        b => Unknown
+        b => (class) builtins.bytes[(class) int]
 
 ---
 Line 49: BadConstraint1 = TypeVar("BadConstraint1", str)  # E
@@ -234,10 +234,10 @@ Expr types in the line --->:
 Line 66: def test_concat_subtype(s: str, b: bytes, a: Any, m: MyStr) -> None:
 
 Expr types in the line --->:
-        test_concat_subtype => (function) Callable[[(class) str, Unknown, (class) object, (class) MyStr], None]
+        test_concat_subtype => (function) Callable[[(class) str, (class) builtins.bytes[(class) int], (class) object, (class) MyStr], None]
         s: str => (class) str
         str => (class) str
-        b: bytes => Unknown
+        b: bytes => (class) builtins.bytes[(class) int]
         bytes => (class) builtins.bytes[(class) int]
         a: Any => (class) object
         Any => (class) object
@@ -276,7 +276,7 @@ Expr types in the line --->:
         concat => (function) Callable[[TypeVar[AnyStr, (class) str, (class) builtins.bytes[(class) int]], TypeVar[AnyStr, (class) str, (class) builtins.bytes[(class) int]]], TypeVar[AnyStr, (class) str, (class) builtins.bytes[(class) int]]]
         concat(m, b) => TypeVar[AnyStr, (class) str, (class) builtins.bytes[(class) int]]
         m => (class) MyStr
-        b => Unknown
+        b => (class) builtins.bytes[(class) int]
 
 ---
 Line 81: from logging import Logger
@@ -406,7 +406,7 @@ Expr types in the line --->:
 Line 100:         self.logger.info("{}: {}".format(self.name, message))
 
 Expr types in the line --->:
-        self.logger.info => (function) Callable[[Unknown, Unknown, Unknown, (class) TypeAlias, (class) bool, (class) int, Union[(class) typing.Mapping[Unknown], None]], None]
+        self.logger.info => (function) Callable[[Unknown, (class) object, (class) object, (class) TypeAlias, (class) bool, (class) int, Union[(class) typing.Mapping[Unknown], None]], None]
         self.logger.info("{}: {}".format(self.name, message)) => None
         "{}: {}".format => (function) Callable[[(class) LiteralString, (class) LiteralString], (class) LiteralString]
         "{}: {}".format(self.name, message) => (class) LiteralString
