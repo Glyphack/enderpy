@@ -696,4 +696,8 @@ mod tests {
         annotations_forward_refs,
         "test_data/inputs/conformance_tests/annotations_forward_refs.py"
     );
+    type_eval_test!(
+        annotations_generators,
+        "test_data/inputs/conformance_tests/annotations_generators.py"
+    );
 }
