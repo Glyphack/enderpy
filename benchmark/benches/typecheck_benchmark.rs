@@ -20,8 +20,13 @@ pub fn benchmark_type_checker(c: &mut Criterion) {
     let conformance_tests = list_python_files("../typechecker/test_data/inputs/conformance_tests/");
     paths.extend(conformance_tests.iter().map(|s| s.as_str()));
     for path in paths {
+        let mut parts = path.rsplit('/').collect::<Vec<_>>();
+        parts.reverse();
+        let file_ext = parts.pop().unwrap_or_default();
+        let dir2 = parts.pop().unwrap_or_default();
+        let new_path = format!("{}/{}", dir2, file_ext);
         group.bench_with_input(
-            BenchmarkId::from_parameter(path.to_string()),
+            BenchmarkId::from_parameter(new_path.to_string()),
             &path,
             |b, path| {
                 b.iter(|| {
