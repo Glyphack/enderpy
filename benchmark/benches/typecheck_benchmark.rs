@@ -1,24 +1,24 @@
 use enderpy_python_type_checker::build::BuildManager;
 use enderpy_python_type_checker::settings::Settings;
+use std::fs;
 use std::path::PathBuf;
 use std::time::Duration;
 
 // Use criterion locally and codspeed on CI.
-#[cfg(not(codspeed))]
+#[cfg(not(feature = "codspeed"))]
 pub use criterion::*;
 
-#[cfg(not(codspeed))]
+#[cfg(not(feature = "codspeed"))]
 pub type BenchmarkGroup<'a> = criterion::BenchmarkGroup<'a, measurement::WallTime>;
 
-#[cfg(codspeed)]
+#[cfg(feature = "codspeed")]
 pub use codspeed_criterion_compat::*;
 
 pub fn benchmark_type_checker(c: &mut Criterion) {
     let mut group = c.benchmark_group("type_checker");
-    let paths = vec![
-        "test_data/types_very_fast.py",
-        "../typechecker/test_data/inputs/conformance_tests/annotations_coroutine.py",
-    ];
+    let mut paths = vec!["test_data/types_very_fast.py"];
+    let conformance_tests = list_python_files("../typechecker/test_data/inputs/conformance_tests/");
+    paths.extend(conformance_tests.iter().map(|s| s.as_str()));
     for path in paths {
         group.bench_with_input(
             BenchmarkId::from_parameter(path.to_string()),
@@ -35,6 +35,21 @@ pub fn benchmark_type_checker(c: &mut Criterion) {
             },
         );
     }
+}
+
+fn list_python_files(dir: &str) -> Vec<String> {
+    let mut paths = Vec::new();
+    if let Ok(entries) = fs::read_dir(dir) {
+        for entry in entries {
+            if let Ok(entry) = entry {
+                let path = entry.path();
+                if path.extension() == Some(std::ffi::OsStr::new("py")) {
+                    paths.push(path.to_string_lossy().into_owned());
+                }
+            }
+        }
+    }
+    paths
 }
 
 fn get_config() -> Criterion {
