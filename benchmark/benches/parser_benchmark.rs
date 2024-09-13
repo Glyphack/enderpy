@@ -7,13 +7,13 @@ use std::io::copy;
 use std::time::Duration;
 
 // Use criterion locally and codspeed on CI.
-#[cfg(not(codspeed))]
+#[cfg(not(feature = "codspeed"))]
 pub use criterion::*;
 
-#[cfg(not(codspeed))]
+#[cfg(not(feature = "codspeed"))]
 pub type BenchmarkGroup<'a> = criterion::BenchmarkGroup<'a, measurement::WallTime>;
 
-#[cfg(codspeed)]
+#[cfg(feature = "codspeed")]
 pub use codspeed_criterion_compat::*;
 
 fn try_download(path: &str, url: &str) -> String {
