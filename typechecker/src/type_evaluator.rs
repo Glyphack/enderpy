@@ -5,7 +5,7 @@ use core::panic;
 use std::{
     cell::Cell,
     panic::{catch_unwind, AssertUnwindSafe},
-    path::PathBuf,
+    path::{Path, PathBuf},
 };
 
 use dashmap::DashMap;
@@ -263,8 +263,7 @@ impl<'a> TypeEvaluator<'a> {
                     Some(ref v) => self.get_type(v, None, None)?,
                     None => PythonType::None,
                 };
-                let builtin_type = self.get_builtin_type(builtins::ITER_TYPE);
-                todo!()
+                return Ok(yield_type);
             }
             ast::Expression::YieldFrom(yf) => {
                 let yield_type = match &yf.value {
@@ -1249,6 +1248,33 @@ impl<'a> TypeEvaluator<'a> {
             }
         }
         let name = f.function_node.name.clone();
+        if !f.yield_statements.is_empty() {
+            let y = f.yield_statements.last();
+            let y = y.unwrap();
+            let y = y.value.as_ref().unwrap();
+            let yield_type = self
+                .get_type(y, Some(symbol_table), None)
+                .expect("cannot get type of yield type");
+            dbg!(&yield_type);
+            let typing_symbol_table_id = self
+                .ids
+                .get(Path::new(
+                    "/Users/sysadmin/Programming/enderpy/typeshed/stdlib/typing.pyi",
+                ))
+                .expect("typing symbol table does not exist");
+            let typing_symbol_table = self
+                .imported_symbol_tables
+                .get(&typing_symbol_table_id)
+                .expect("typing symbol table does not exist");
+            let generator_type = self
+                .get_name_type("Generator", None, &typing_symbol_table, None)
+                .expect("Generator must exist");
+            let PythonType::Class(mut generator_class) = generator_type else {
+                panic!("generator must be a class");
+            };
+            generator_class.type_parameters.push(yield_type);
+            todo!("generics not implemented");
+        }
         PythonType::Callable(Box::new(CallableType::new(
             name,
             signature,

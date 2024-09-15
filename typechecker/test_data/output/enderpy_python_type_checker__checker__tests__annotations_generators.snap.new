@@ -1,0 +1,187 @@
+---
+source: typechecker/src/checker.rs
+assertion_line: 699
+description: "1: \"\"\"\n2: Tests for annotating generators.\n3: \"\"\"\n4: \n5: # Specification: https://typing.readthedocs.io/en/latest/spec/annotations.html#annotating-generator-functions-and-coroutines\n6: \n7: # The return type of generator functions can be annotated by the generic type\n8: # Generator[yield_type, send_type, return_type] provided by typing.py module.\n9: \n10: import asyncio\n11: from typing import (\n12:     Any,\n13:     AsyncGenerator,\n14:     AsyncIterable,\n15:     AsyncIterator,\n16:     Awaitable,\n17:     Callable,\n18:     Coroutine,\n19:     Generator,\n20:     Iterable,\n21:     Iterator,\n22:     Protocol,\n23:     TypeVar,\n24:     assert_type,\n25: )\n26: \n27: T = TypeVar(\"T\")\n28: \n29: \n30: class A:\n31:     pass\n32: \n33: \n34: class B:\n35:     def should_continue(self) -> bool:\n36:         return True\n37: \n38: \n39: class C:\n40:     pass\n41: \n42: \n43: def generator1() -> Generator[A, B, C]:\n44:     cont = B()\n45:     while cont.should_continue():\n46:         yield A()\n47: \n48:     return C()\n49: \n50: \n51: # def generator2() -> Generator[A, B, C]:  # E: missing return\n52: #     cont = B()\n53: #     if cont.should_continue():\n54: #         return False  # E: incompatible return type\n55: #\n56: #     while cont.should_continue():\n57: #         yield 3  # E: incompatible yield type\n58: #\n59: #\n60: # def generator3() -> Generator[A, int, Any]:\n61: #     cont = B()\n62: #     if cont.should_continue():\n63: #         return 3\n64: #\n65: #     while cont.should_continue():\n66: #         yield 3  # E: Incompatible yield type\n67: #\n68: #\n69: # def generator4() -> Iterable[A]:\n70: #     yield A()\n71: #     return True  # E?: No return value expected\n72: #\n73: #\n74: # def generator5() -> Iterator[A]:\n75: #     yield B()  # E: incompatible yield type\n76: #\n77: #\n78: # def generator6() -> Generator[None, None, None]:\n79: #     yield\n80: #\n81: #\n82: # def generator7() -> Iterator[dict[str, int]]:\n83: #     yield {\"\": 0}  # OK\n84: #\n85: #\n86: # def generator8() -> int:  # E: incompatible return type\n87: #     yield None  # E\n88: #     return 0\n89: #\n90: #\n91: # async def generator9() -> int:  # E: incompatible return type\n92: #     yield None  # E\n93: #\n94: #\n95: # class IntIterator(Protocol):\n96: #     def __next__(self, /) -> int: ...\n97: #\n98: #\n99: # def generator15() -> IntIterator:  # OK\n100: #     yield 0\n101: #\n102: #\n103: # class AsyncIntIterator(Protocol):\n104: #     def __anext__(self, /) -> Awaitable[int]: ...\n105: #\n106: #\n107: # async def generator16() -> AsyncIntIterator:  # OK\n108: #     yield 0\n109: #\n110: #\n111: # def generator17() -> Iterator[A]:  # OK\n112: #     yield from generator17()\n113: #\n114: #\n115: # def generator18() -> Iterator[B]:\n116: #     yield from generator17()  # E: incompatible generator type\n117: #     yield from [1]  # E: incompatible generator type\n118: #\n119: #\n120: # def generator19() -> Generator[None, float, None]:  # OK\n121: #     x: float = yield\n122: #\n123: #\n124: # def generator20() -> Generator[None, int, None]:  # OK\n125: #     yield from generator19()\n126: #\n127: #\n128: # def generator21() -> Generator[None, int, None]:\n129: #     x: float = yield\n130: #\n131: #\n132: # def generator22() -> Generator[None, str, None]:\n133: #     yield from generator21()  # E: incompatible send type\n134: #\n135: #\n136: # def generator23() -> Iterable[str]:  # OK\n137: #     return\n138: #     yield \"\"  # Unreachable\n139: #\n140: #\n141: # async def generator24() -> AsyncIterable[str]:  # OK\n142: #     return\n143: #     yield \"\"  # Unreachable\n144: #\n145: #\n146: # def generator25(ints1: list[int], ints2: list[int]) -> Generator[int, None, None]:  # OK\n147: #     yield from ints1\n148: #     yield from ints2\n149: #\n150: #\n151: # async def get_data() -> list[int]:\n152: #     await asyncio.sleep(1)\n153: #     return [1, 2, 3]\n154: #\n155: #\n156: # async def generator26(nums: list[int]) -> AsyncGenerator[str, None]:\n157: #     for n in nums:\n158: #         await asyncio.sleep(1)\n159: #         yield f\"The number is {n}\"\n160: #\n161: #\n162: # async def generator27() -> AsyncGenerator[str, None]:\n163: #     data = await get_data()\n164: #     v1 = generator26(data)\n165: #     assert_type(v1, AsyncGenerator[str, None])\n166: #     return v1\n167: #\n168: #\n169: # async def generator28() -> AsyncIterator[str]:\n170: #     data = await get_data()\n171: #     v1 = generator26(data)\n172: #     assert_type(v1, AsyncGenerator[str, None])\n173: #     return v1\n174: #\n175: #\n176: # async def generator29() -> AsyncIterator[int]:\n177: #     raise NotImplementedError\n178: #\n179: #\n180: # assert_type(generator29, Callable[[], Coroutine[Any, Any, AsyncIterator[int]]])\n181: #\n182: #\n183: # async def generator30() -> AsyncIterator[int]:\n184: #     raise NotImplementedError\n185: #     yield\n186: #\n187: #\n188: # assert_type(generator30, Callable[[], AsyncIterator[int]])\n"
+expression: result
+---
+Line 1: """
+
+Expr types in the line --->:
+        """
+Tests for annotating generators.
+""" => (class) str
+
+---
+Line 10: import asyncio
+
+Expr types in the line --->:
+        asyncio => Module
+
+---
+Line 11: from typing import (
+
+Expr types in the line --->:
+        typing  => Module
+
+---
+Line 12:     Any,
+
+Expr types in the line --->:
+        Any => (class) object
+
+---
+Line 13:     AsyncGenerator,
+
+Expr types in the line --->:
+        AsyncGenerator => (class) typing.AsyncGenerator[TypeVar[_YieldT_co, ], TypeVar[_YieldT_co, ], TypeVar[_SendT_contra, ]]
+
+---
+Line 14:     AsyncIterable,
+
+Expr types in the line --->:
+        AsyncIterable => (class) typing.AsyncIterable[TypeVar[_T_co, ]]
+
+---
+Line 15:     AsyncIterator,
+
+Expr types in the line --->:
+        AsyncIterator => (class) typing.AsyncIterator[TypeVar[_T_co, ]]
+
+---
+Line 16:     Awaitable,
+
+Expr types in the line --->:
+        Awaitable => (class) typing.Awaitable[TypeVar[_T_co, ]]
+
+---
+Line 17:     Callable,
+
+Expr types in the line --->:
+        Callable => (class) Callable
+
+---
+Line 18:     Coroutine,
+
+Expr types in the line --->:
+        Coroutine => (class) typing.Coroutine[TypeVar[_ReturnT_co, ], TypeVar[_YieldT_co, ], TypeVar[_SendT_contra, ], TypeVar[_ReturnT_co, ]]
+
+---
+Line 19:     Generator,
+
+Expr types in the line --->:
+        Generator => (class) typing.Generator[TypeVar[_YieldT_co, ], TypeVar[_YieldT_co, ], TypeVar[_SendT_contra, ], TypeVar[_ReturnT_co, ]]
+
+---
+Line 20:     Iterable,
+
+Expr types in the line --->:
+        Iterable => (class) typing.Iterable[TypeVar[_T_co, ]]
+
+---
+Line 21:     Iterator,
+
+Expr types in the line --->:
+        Iterator => (class) typing.Iterator[TypeVar[_T_co, ]]
+
+---
+Line 22:     Protocol,
+
+Expr types in the line --->:
+        Protocol => (class) Protocol
+
+---
+Line 23:     TypeVar,
+
+Expr types in the line --->:
+        TypeVar => TypeVar[, ]
+
+---
+Line 24:     assert_type,
+
+Expr types in the line --->:
+        assert_type => (function) Callable[[TypeVar[_T, ], (class) object], TypeVar[_T, ]]
+
+---
+Line 27: T = TypeVar("T")
+
+Expr types in the line --->:
+        T => TypeVar[T, ]
+        TypeVar => TypeVar[, ]
+        TypeVar("T") => TypeVar[T, ]
+        "T" => (class) str
+
+---
+Line 30: class A:
+
+Expr types in the line --->:
+        A => (class) A
+
+---
+Line 34: class B:
+
+Expr types in the line --->:
+        B => (class) B
+
+---
+Line 35:     def should_continue(self) -> bool:
+
+Expr types in the line --->:
+        should_continue => (function) Callable[[Unknown], (class) bool]
+        self => (class) B
+        bool => (class) bool
+
+---
+Line 36:         return True
+
+Expr types in the line --->:
+        True => (class) bool
+
+---
+Line 39: class C:
+
+Expr types in the line --->:
+        C => (class) C
+
+---
+Line 43: def generator1() -> Generator[A, B, C]:
+
+Expr types in the line --->:
+        generator1 => (class) typing.Generator[TypeVar[_YieldT_co, ], TypeVar[_YieldT_co, ], TypeVar[_SendT_contra, ], TypeVar[_ReturnT_co, ], (class) A]
+        Generator => (class) typing.Generator[TypeVar[_YieldT_co, ], TypeVar[_YieldT_co, ], TypeVar[_SendT_contra, ], TypeVar[_ReturnT_co, ]]
+        Generator[A, B, C] => (class) typing.Generator[TypeVar[_YieldT_co, ], TypeVar[_YieldT_co, ], TypeVar[_SendT_contra, ], TypeVar[_ReturnT_co, ]]
+        A => (class) A
+        A, B, C] => (class) builtins.tuple[Unknown]
+        B => (class) B
+        C => (class) C
+
+---
+Line 44:     cont = B()
+
+Expr types in the line --->:
+        cont => (class) B
+        B => (class) B
+        B() => (class) B
+
+---
+Line 45:     while cont.should_continue():
+
+Expr types in the line --->:
+        cont.should_continue => (function) Callable[[Unknown], (class) bool]
+        cont.should_continue() => (class) bool
+
+---
+Line 46:         yield A()
+
+Expr types in the line --->:
+        yield A() => (class) A
+        A => (class) A
+        A() => (class) A
+
+---
+Line 48:     return C()
+
+Expr types in the line --->:
+        C => (class) C
+        C() => (class) C
+
+---
