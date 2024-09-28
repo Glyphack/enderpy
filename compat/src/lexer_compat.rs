@@ -610,26 +610,23 @@ fn is_python_fstring_mismatch(
     remaining_tokens: &[Token],
     enderpy_index: &mut usize,
 ) -> bool {
-    match mismatch {
-        TokenMismatch::WrongKind(python_token, enderpy_token) => {
-            if !matches!(
-                enderpy_token.kind,
-                Kind::FStringStart | Kind::RawFStringStart
-            ) || python_token.kind != PythonKind::String
-            {
-                return false;
-            }
-            let mut num_skipped = 0;
-            for token in remaining_tokens {
-                num_skipped += 1;
-                if matches!(token.kind, Kind::FStringEnd | Kind::Eof) {
-                    break;
-                }
-            }
-            *enderpy_index += num_skipped;
-            return true;
+    if let TokenMismatch::WrongKind(python_token, enderpy_token) = mismatch {
+        if !matches!(
+            enderpy_token.kind,
+            Kind::FStringStart | Kind::RawFStringStart
+        ) || python_token.kind != PythonKind::String
+        {
+            return false;
         }
-        _ => (),
+        let mut num_skipped = 0;
+        for token in remaining_tokens {
+            num_skipped += 1;
+            if matches!(token.kind, Kind::FStringEnd | Kind::Eof) {
+                break;
+            }
+        }
+        *enderpy_index += num_skipped;
+        return true;
     }
     false
 }

@@ -122,7 +122,6 @@ impl<'a> BuildManager {
             self.get_symbol_table(path),
             &self.symbol_tables,
             &self.module_ids,
-            module_to_check.clone(),
         );
         for stmt in module_to_check.tree.body.iter() {
             checker.type_check(stmt);

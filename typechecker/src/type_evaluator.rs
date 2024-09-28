@@ -11,7 +11,7 @@ use std::{
     panic::{catch_unwind, AssertUnwindSafe},
     path::PathBuf,
 };
-use tracing::{error, field::display, span, trace, Level};
+use tracing::{error, span, trace, Level};
 
 use miette::{bail, Result};
 use parser::ast::Expression;
@@ -408,8 +408,8 @@ impl<'a> TypeEvaluator<'a> {
                             let mut new_class = c.clone();
                             trace!("class {c} has no specialized params setting them {initialized_type_parameters:?}");
                             new_class.specialized = initialized_type_parameters;
-                            let specialized_class = PythonType::Class(new_class);
-                            specialized_class
+
+                            PythonType::Class(new_class)
                             // If type parameters are set then this is accessing an attribute on
                             // class.
                         } else {
@@ -668,11 +668,11 @@ impl<'a> TypeEvaluator<'a> {
         }
 
         if let Some(t) = self.get_builtin_type(name) {
-            return t;
+            t
         } else {
             trace!("Cannot find type for name {}", name);
-            return PythonType::Unknown;
-        };
+            PythonType::Unknown
+        }
     }
 
     /// Get the type of a symbol node based on declarations
@@ -1352,7 +1352,7 @@ impl<'a> TypeEvaluator<'a> {
         symbol_table: &SymbolTable,
         class_type: &ClassType,
     ) -> PythonType {
-        return PythonType::None;
+        PythonType::None
         // let lookup_on_class = self.lookup_on_class(symbol_table, class_type, "__getitem__");
         // match lookup_on_class {
         //     Some(PythonType::Callable(callable)) => {

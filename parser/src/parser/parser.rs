@@ -385,10 +385,7 @@ impl<'a> Parser<'a> {
         let or_else_vec = if let Some(val) = orelse {
             vec![Statement::IfStatement(Box::new(val))]
         } else {
-            match single_else_body {
-                Some(val) => val,
-                None => vec![],
-            }
+            single_else_body.unwrap_or_default()
         };
 
         Ok(Statement::IfStatement(Box::new(If {

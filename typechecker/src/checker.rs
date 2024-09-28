@@ -5,11 +5,8 @@ use ast::{Expression, Statement};
 use dashmap::DashMap;
 use enderpy_python_parser as parser;
 use enderpy_python_parser::ast::{self, *};
-use tracing::field::{self, display};
-use tracing::{span, Level};
 
 use super::{type_evaluator::TypeEvaluator, types::PythonType};
-use crate::file::EnderpyFile;
 use crate::symbol_table::Id;
 use crate::types::ModuleRef;
 use crate::{ast_visitor::TraversalVisitor, diagnostic::CharacterSpan, symbol_table::SymbolTable};
@@ -20,7 +17,6 @@ pub struct TypeChecker<'a> {
     pub errors: Vec<TypeCheckError>,
     pub types: Lapper<u32, PythonType>,
     type_evaluator: TypeEvaluator<'a>,
-    enderpy_file: EnderpyFile,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -35,13 +31,11 @@ impl<'a> TypeChecker<'a> {
         symbol_table: SymbolTable,
         symbol_tables: &'a DashMap<Id, SymbolTable>,
         ids: &'a DashMap<PathBuf, Id>,
-        enderpy_file: EnderpyFile,
     ) -> Self {
         TypeChecker {
             errors: vec![],
             type_evaluator: TypeEvaluator::new(symbol_table, symbol_tables, ids),
             types: Lapper::new(vec![]),
-            enderpy_file,
         }
     }
 
@@ -50,14 +44,6 @@ impl<'a> TypeChecker<'a> {
     }
 
     fn infer_expr_type(&mut self, expr: &Expression) -> PythonType {
-        let span = span!(
-            Level::TRACE,
-            "infer expression type",
-            expression = &self.enderpy_file.source
-                [expr.get_node().start as usize..expr.get_node().end as usize],
-            expr_type = field::Empty
-        );
-        let _guard = span.enter();
         let t = match self.type_evaluator.get_type(expr, None, None) {
             Ok(t) => t,
             Err(e) => {
@@ -65,7 +51,6 @@ impl<'a> TypeChecker<'a> {
                 PythonType::Unknown
             }
         };
-        span.record("expr_type", display(&t));
 
         self.types.insert(Interval {
             start: expr.get_node().start,

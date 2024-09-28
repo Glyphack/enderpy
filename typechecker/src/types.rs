@@ -200,7 +200,7 @@ impl Display for ClassType {
                 self.details.qual_name, args_str, specialized
             )
         };
-        return write!(f, "{}", fmt);
+        write!(f, "{}", fmt)
     }
 }
 

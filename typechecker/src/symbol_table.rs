@@ -580,13 +580,9 @@ impl SymbolTableNode {
 
     pub fn get_declaration_until_pos(&self, pos: u32) -> Option<&Declaration> {
         // TODO: Handle iterating declarations from last to first
-        for declaration in self.declarations.iter() {
-            if declaration.declaration_path().node.start <= pos {
-                return Some(declaration);
-            }
-        }
-
-        None
+        self.declarations
+            .iter()
+            .find(|&declaration| declaration.declaration_path().node.start <= pos)
     }
 
     pub fn declaration_until_position(&self, position: u32) -> Option<&Declaration> {
