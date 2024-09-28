@@ -18,13 +18,13 @@ Expr types in the line --->:
         Any => (class) object
         Callable => (class) Callable
         Coroutine => (class) typing.Coroutine[TypeVar[_ReturnT_co, ], TypeVar[_YieldT_co, ], TypeVar[_SendT_contra, ], TypeVar[_ReturnT_co, ]][]
-        assert_type => (function) Callable[[TypeVar[_T, ], (class) object], TypeVar[_T, ]]
+        assert_type => (function) Callable[[pos: TypeVar[_T, ], pos: (class) object], TypeVar[_T, ]]
 
 ---
 Line 14: async def func1(ignored: int, /) -> str:
 
 Expr types in the line --->:
-         func => (function) Callable[[(class) int], Coroutine[Any, Any, (class) str]]
+         func => (function) Callable[[pos_only: (class) int], Coroutine[Any, Any, (class) str]]
 
 ---
 Line 15:     return "spam"
@@ -36,9 +36,9 @@ Expr types in the line --->:
 Line 18: assert_type(func1, Callable[[int], Coroutine[Any, Any, str]])
 
 Expr types in the line --->:
-        assert_type => (function) Callable[[TypeVar[_T, ], (class) object], TypeVar[_T, ]]
-        assert_type(func1, Callable[[int], Coroutine[Any, Any, str]]) => TypeVar[_T, ]
-        func1 => (function) Callable[[(class) int], Coroutine[Any, Any, (class) str]]
+        assert_type => (function) Callable[[pos: TypeVar[_T, ], pos: (class) object], TypeVar[_T, ]]
+        assert_type(func1, Callable[[int], Coroutine[Any, Any, str]]) => (function) Callable[[pos_only: (class) int], Coroutine[Any, Any, (class) str]]
+        func1 => (function) Callable[[pos_only: (class) int], Coroutine[Any, Any, (class) str]]
         Callable => (class) Callable
         Callable[[int], Coroutine[Any, Any, str]] => (class) builtins.Callable[][(instance) builtins.list[(class) int], (class) typing.Coroutine[TypeVar[_ReturnT_co, ], TypeVar[_YieldT_co, ], TypeVar[_SendT_contra, ], TypeVar[_ReturnT_co, ]][(class) object, (class) object, (class) str]]
         [int] => (instance) builtins.list[(class) int]
@@ -63,7 +63,7 @@ Line 22:     x = await func1(42)
 Expr types in the line --->:
         x => (class) str
         await func1(42) => (class) str
-        func1 => (function) Callable[[(class) int], Coroutine[Any, Any, (class) str]]
+        func1 => (function) Callable[[pos_only: (class) int], Coroutine[Any, Any, (class) str]]
         func1(42) => Coroutine[Any, Any, (class) str]
         42 => (class) int
 
@@ -71,8 +71,8 @@ Expr types in the line --->:
 Line 23:     assert_type(x, str)
 
 Expr types in the line --->:
-        assert_type => (function) Callable[[TypeVar[_T, ], (class) object], TypeVar[_T, ]]
-        assert_type(x, str) => TypeVar[_T, ]
+        assert_type => (function) Callable[[pos: TypeVar[_T, ], pos: (class) object], TypeVar[_T, ]]
+        assert_type(x, str) => (class) str
         x => (class) str
         str => (class) str
 

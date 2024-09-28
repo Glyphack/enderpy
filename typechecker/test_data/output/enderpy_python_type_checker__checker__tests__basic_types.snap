@@ -61,8 +61,8 @@ Expr types in the line --->:
 Line 13: def func(params: List[int]) -> Dict[int, int]:
 
 Expr types in the line --->:
-        func => (function) Callable[[(class) builtins.list[TypeVar[_T, ]][(class) int]], (class) builtins.dict[TypeVar[_KT, ], TypeVar[_VT, ]][Unknown]]
-        params: List[int] => (class) builtins.list[TypeVar[_T, ]][(class) int]
+        func => (function) Callable[[pos: (class) builtins.list[TypeVar[_T, ]][(class) int]], (class) builtins.dict[TypeVar[_KT, ], TypeVar[_VT, ]][Unknown]]
+        params: List[int] => (instance) builtins.list[(class) int]
         List[int] => (class) builtins.list[TypeVar[_T, ]][(class) int]
         Dict => (class) builtins.dict[TypeVar[_KT, ], TypeVar[_VT, ]][]
         Dict[int, int] => (class) builtins.dict[TypeVar[_KT, ], TypeVar[_VT, ]][(class) int, (class) int]
@@ -75,7 +75,7 @@ Line 14:     return {params[0]: a}
 
 Expr types in the line --->:
         {params[0]: a} => (instance) builtins.dict[(class) int, (class) int]
-        params => (class) builtins.list[TypeVar[_T, ]][(class) int]
+        params => (instance) builtins.list[(class) int]
         params[0] => (class) int
         0 => (class) int
         a => (class) int
@@ -98,16 +98,16 @@ Expr types in the line --->:
 Line 20:     def __init__(self, x: int):
 
 Expr types in the line --->:
-        __init__ => (function) Callable[[Unknown, (class) int], Unknown]
+        __init__ => (function) Callable[[pos: Unknown, pos: (class) int], Unknown]
         self => (class) C
-        x: int => (class) int
+        x: int => (instance) int
         int => (class) int
 
 ---
 Line 21:         print(self.cls_attribute)
 
 Expr types in the line --->:
-        print => (function) Callable[[(class) object, Union[(class) str, None], Union[(class) str, None], Union[Unknown, None], Unknown], None]
+        print => (function) Callable[[kw_only: Union[(class) str, None], kw_only: Union[(class) str, None], kw_only: Union[Unknown, None], kw_only: Unknown, *args: (class) object], None]
         print(self.cls_attribute) => None
         self => (class) C
         self.cls_attribute => (instance) builtins.set[(class) int]
@@ -120,13 +120,13 @@ Expr types in the line --->:
         self.x => (class) float
         float => (class) float
         float(x) => (class) float
-        x => (class) int
+        x => (instance) int
 
 ---
 Line 23:         print(self.x)
 
 Expr types in the line --->:
-        print => (function) Callable[[(class) object, Union[(class) str, None], Union[(class) str, None], Union[Unknown, None], Unknown], None]
+        print => (function) Callable[[kw_only: Union[(class) str, None], kw_only: Union[(class) str, None], kw_only: Union[Unknown, None], kw_only: Unknown, *args: (class) object], None]
         print(self.x) => None
         self => (class) C
         self.x => (class) float
@@ -135,9 +135,9 @@ Expr types in the line --->:
 Line 25:     def add(self, value: int) -> None:
 
 Expr types in the line --->:
-        add => (function) Callable[[Unknown, (class) int], None]
+        add => (function) Callable[[pos: Unknown, pos: (class) int], None]
         self => (class) C
-        value: int => (class) int
+        value: int => (instance) int
         int => (class) int
         None => None
 
@@ -147,13 +147,13 @@ Line 26:         self.cls_attribute.add(value)
 Expr types in the line --->:
         self.cls_attribute.add => Unknown
         self.cls_attribute.add(value) => Unknown
-        value => (class) int
+        value => (instance) int
 
 ---
 Line 28:     def get_attr(self) -> Set[int]:
 
 Expr types in the line --->:
-        get_attr => (function) Callable[[Unknown], (class) builtins.set[TypeVar[_T, ]][(class) int]]
+        get_attr => (function) Callable[[pos: Unknown], (class) builtins.set[TypeVar[_T, ]][(class) int]]
         self => (class) C
         Set => (class) builtins.set[TypeVar[_T, ]][]
         Set[int] => (class) builtins.set[TypeVar[_T, ]][(class) int]
@@ -170,7 +170,7 @@ Expr types in the line --->:
 Line 31:     def get_x(self) -> float:
 
 Expr types in the line --->:
-        get_x => (function) Callable[[Unknown], (class) float]
+        get_x => (function) Callable[[pos: Unknown], (class) float]
         self => (class) C
         float => (class) float
 
@@ -194,7 +194,7 @@ Expr types in the line --->:
 Line 36: t.add(2)
 
 Expr types in the line --->:
-        t.add => (function) Callable[[Unknown, (class) int], None]
+        t.add => (function) Callable[[pos: Unknown, pos: (class) int], None]
         t.add(2) => None
         2 => (class) int
 
@@ -216,14 +216,14 @@ Expr types in the line --->:
 Line 39: t.get_x()
 
 Expr types in the line --->:
-        t.get_x => (function) Callable[[Unknown], (class) float]
+        t.get_x => (function) Callable[[pos: Unknown], (class) float]
         t.get_x() => (class) float
 
 ---
 Line 40: t.get_attr()
 
 Expr types in the line --->:
-        t.get_attr => (function) Callable[[Unknown], (class) builtins.set[TypeVar[_T, ]][(class) int]]
+        t.get_attr => (function) Callable[[pos: Unknown], (class) builtins.set[TypeVar[_T, ]][(class) int]]
         t.get_attr() => (class) builtins.set[TypeVar[_T, ]][(class) int]
 
 ---

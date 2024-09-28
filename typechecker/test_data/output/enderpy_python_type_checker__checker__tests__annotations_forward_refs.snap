@@ -21,25 +21,25 @@ Line 9: from typing import assert_type
 
 Expr types in the line --->:
         typing  => Module
-        assert_type => (function) Callable[[TypeVar[_T, ], (class) object], TypeVar[_T, ]]
+        assert_type => (function) Callable[[pos: TypeVar[_T, ], pos: (class) object], TypeVar[_T, ]]
 
 ---
 Line 12: def func1(
 
 Expr types in the line --->:
-        func1 => (function) Callable[[(class) ClassA, (class) builtins.list[TypeVar[_T, ]][(class) ClassA], (class) builtins.list[TypeVar[_T, ]][(class) ClassA], (class) builtins.list[TypeVar[_T, ]][Union[(class) int, (class) ClassA]]], None]
+        func1 => (function) Callable[[pos: (class) ClassA, pos: (class) builtins.list[TypeVar[_T, ]][(class) ClassA], pos: (class) builtins.list[TypeVar[_T, ]][(class) ClassA], pos: (class) builtins.list[TypeVar[_T, ]][Union[(class) int, (class) ClassA]]], None]
 
 ---
 Line 13:     p1: "ClassA", p2: "list[ClassA]", p3: list["ClassA"], p4: list["int | ClassA"]
 
 Expr types in the line --->:
-        p1: "ClassA" => (class) ClassA
+        p1: "ClassA" => (instance) ClassA
         "ClassA" => (class) ClassA
-        p2: "list[ClassA]" => (class) builtins.list[TypeVar[_T, ]][(class) ClassA]
+        p2: "list[ClassA]" => (instance) builtins.list[(class) ClassA]
         "list[ClassA]" => (class) builtins.list[TypeVar[_T, ]][(class) ClassA]
-        p3: list["ClassA"] => (class) builtins.list[TypeVar[_T, ]][(class) ClassA]
+        p3: list["ClassA"] => (instance) builtins.list[(class) ClassA]
         list["ClassA"] => (class) builtins.list[TypeVar[_T, ]][(class) ClassA]
-        p4: list["int | ClassA"] => (class) builtins.list[TypeVar[_T, ]][Union[(class) int, (class) ClassA]]
+        p4: list["int | ClassA"] => (instance) builtins.list[Union[(class) int, (class) ClassA]]
         list["int | ClassA"] => (class) builtins.list[TypeVar[_T, ]][Union[(class) int, (class) ClassA]]
 
 ---
@@ -52,18 +52,18 @@ Expr types in the line --->:
 Line 15:     assert_type(p1, ClassA)
 
 Expr types in the line --->:
-        assert_type => (function) Callable[[TypeVar[_T, ], (class) object], TypeVar[_T, ]]
-        assert_type(p1, ClassA) => TypeVar[_T, ]
-        p1 => (class) ClassA
+        assert_type => (function) Callable[[pos: TypeVar[_T, ], pos: (class) object], TypeVar[_T, ]]
+        assert_type(p1, ClassA) => (instance) ClassA
+        p1 => (instance) ClassA
         ClassA => Unknown
 
 ---
 Line 16:     assert_type(p2, list[ClassA])
 
 Expr types in the line --->:
-        assert_type => (function) Callable[[TypeVar[_T, ], (class) object], TypeVar[_T, ]]
-        assert_type(p2, list[ClassA]) => TypeVar[_T, ]
-        p2 => (class) builtins.list[TypeVar[_T, ]][(class) ClassA]
+        assert_type => (function) Callable[[pos: TypeVar[_T, ], pos: (class) object], TypeVar[_T, ]]
+        assert_type(p2, list[ClassA]) => (instance) builtins.list[(class) ClassA]
+        p2 => (instance) builtins.list[(class) ClassA]
         list => (class) builtins.list[TypeVar[_T, ]][]
         list[ClassA] => (class) builtins.list[TypeVar[_T, ]][Unknown]
         ClassA => Unknown
@@ -72,9 +72,9 @@ Expr types in the line --->:
 Line 17:     assert_type(p3, list[ClassA])
 
 Expr types in the line --->:
-        assert_type => (function) Callable[[TypeVar[_T, ], (class) object], TypeVar[_T, ]]
-        assert_type(p3, list[ClassA]) => TypeVar[_T, ]
-        p3 => (class) builtins.list[TypeVar[_T, ]][(class) ClassA]
+        assert_type => (function) Callable[[pos: TypeVar[_T, ], pos: (class) object], TypeVar[_T, ]]
+        assert_type(p3, list[ClassA]) => (instance) builtins.list[(class) ClassA]
+        p3 => (instance) builtins.list[(class) ClassA]
         list => (class) builtins.list[TypeVar[_T, ]][]
         list[ClassA] => (class) builtins.list[TypeVar[_T, ]][Unknown]
         ClassA => Unknown
@@ -83,9 +83,9 @@ Expr types in the line --->:
 Line 18:     assert_type(p4, list[ClassA | int])
 
 Expr types in the line --->:
-        assert_type => (function) Callable[[TypeVar[_T, ], (class) object], TypeVar[_T, ]]
-        assert_type(p4, list[ClassA | int]) => TypeVar[_T, ]
-        p4 => (class) builtins.list[TypeVar[_T, ]][Union[(class) int, (class) ClassA]]
+        assert_type => (function) Callable[[pos: TypeVar[_T, ], pos: (class) object], TypeVar[_T, ]]
+        assert_type(p4, list[ClassA | int]) => (instance) builtins.list[Union[(class) int, (class) ClassA]]
+        p4 => (instance) builtins.list[Union[(class) int, (class) ClassA]]
         list => (class) builtins.list[TypeVar[_T, ]][]
         list[ClassA | int] => Unknown
         ClassA => Unknown
@@ -134,7 +134,7 @@ Expr types in the line --->:
 Line 38: def invalid_annotations(
 
 Expr types in the line --->:
-        invalid_annotations => (function) Callable[[Unknown, Unknown, Unknown, Unknown, Unknown, Unknown, Unknown, Unknown, (class) int, Unknown, Unknown, Unknown, Unknown, Unknown, Module], Unknown]
+        invalid_annotations => (function) Callable[[pos: Unknown, pos: Unknown, pos: Unknown, pos: Unknown, pos: Unknown, pos: Unknown, pos: Unknown, pos: Unknown, pos: (class) int, pos: Unknown, pos: Unknown, pos: Unknown, pos: Unknown, pos: Unknown, pos: Module], Unknown]
 
 ---
 Line 39:     p1: "eval(' '.join(map(chr, [105, 110, 116])))",  # E
@@ -196,7 +196,7 @@ Expr types in the line --->:
 Line 47:     p9: "var1",  # E
 
 Expr types in the line --->:
-        p9: "var1" => (class) int
+        p9: "var1" => (instance) int
         "var1" => (class) int
 
 ---
@@ -251,7 +251,7 @@ Expr types in the line --->:
 Line 64:     def method1(self) -> ClassB:  # E: Runtime error
 
 Expr types in the line --->:
-        method1 => (function) Callable[[Unknown], (class) ClassB]
+        method1 => (function) Callable[[pos: Unknown], (class) ClassB]
         self => (class) ClassB
         ClassB => (class) ClassB
 
@@ -266,7 +266,7 @@ Expr types in the line --->:
 Line 67:     def method2(self) -> "ClassB":  # OK
 
 Expr types in the line --->:
-        method2 => (function) Callable[[Unknown], (class) ClassB]
+        method2 => (function) Callable[[pos: Unknown], (class) ClassB]
         self => (class) ClassB
         "ClassB" => (class) str
 
@@ -294,7 +294,7 @@ Expr types in the line --->:
 Line 82:     def int(self) -> None:  # OK
 
 Expr types in the line --->:
-        int => (function) Callable[[Unknown], None]
+        int => (function) Callable[[pos: Unknown], None]
         self => (class) ClassD
         None => None
 
@@ -308,21 +308,21 @@ Expr types in the line --->:
 Line 85:     x: "int" = 0  # OK
 
 Expr types in the line --->:
-        x => (function) Callable[[Unknown], None]
+        x => (function) Callable[[pos: Unknown], None]
         0 => (class) int
 
 ---
 Line 87:     y: int = 0  # E: Refers to local int, which isn't a legal type expression
 
 Expr types in the line --->:
-        y => (function) Callable[[Unknown], None]
+        y => (function) Callable[[pos: Unknown], None]
         0 => (class) int
 
 ---
 Line 89:     def __init__(self) -> None:
 
 Expr types in the line --->:
-        __init__ => (function) Callable[[Unknown], None]
+        __init__ => (function) Callable[[pos: Unknown], None]
         self => (class) ClassD
         None => None
 
@@ -339,8 +339,8 @@ Expr types in the line --->:
 Line 93: assert_type(ClassD.str, str)
 
 Expr types in the line --->:
-        assert_type => (function) Callable[[TypeVar[_T, ], (class) object], TypeVar[_T, ]]
-        assert_type(ClassD.str, str) => TypeVar[_T, ]
+        assert_type => (function) Callable[[pos: TypeVar[_T, ], pos: (class) object], TypeVar[_T, ]]
+        assert_type(ClassD.str, str) => Unknown
         ClassD => (class) ClassD
         ClassD.str => Unknown
         str => (class) str
@@ -349,11 +349,11 @@ Expr types in the line --->:
 Line 94: assert_type(ClassD.x, int)
 
 Expr types in the line --->:
-        assert_type => (function) Callable[[TypeVar[_T, ], (class) object], TypeVar[_T, ]]
-        assert_type(ClassD.x, int) => TypeVar[_T, ]
+        assert_type => (function) Callable[[pos: TypeVar[_T, ], pos: (class) object], TypeVar[_T, ]]
+        assert_type(ClassD.x, int) => (function) Callable[[pos: Unknown], None]
         ClassD => (class) ClassD
-        ClassD.x => (function) Callable[[Unknown], None]
-        int => (function) Callable[[Unknown], None]
+        ClassD.x => (function) Callable[[pos: Unknown], None]
+        int => (function) Callable[[pos: Unknown], None]
 
 ---
 Line 101: value: """

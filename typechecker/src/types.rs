@@ -88,9 +88,45 @@ pub enum AnySource {
 #[derive(Debug, Clone)]
 pub struct CallableType {
     pub name: String,
-    pub signature: Vec<PythonType>,
+    pub signature: Vec<CallableArgs>,
     pub return_type: PythonType,
     pub is_async: bool,
+}
+
+#[derive(Debug, Clone)]
+pub enum CallableArgs {
+    PositionalOnly(PythonType),
+    Positional(PythonType),
+    Keyword(PythonType),
+    Args(PythonType),
+    KwArgs(PythonType),
+    WithDefault(PythonType),
+}
+
+impl fmt::Display for CallableArgs {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            CallableArgs::PositionalOnly(ty) => write!(f, "pos_only: {}", ty),
+            CallableArgs::Positional(ty) => write!(f, "pos: {}", ty),
+            CallableArgs::Keyword(ty) => write!(f, "kw_only: {}", ty),
+            CallableArgs::Args(ty) => write!(f, "*args: {}", ty),
+            CallableArgs::KwArgs(ty) => write!(f, "**kwargs: {}", ty),
+            CallableArgs::WithDefault(ty) => write!(f, "kw_default: {} = ...", ty),
+        }
+    }
+}
+
+impl CallableArgs {
+    pub fn get_type(&self) -> &PythonType {
+        match &self {
+            CallableArgs::Args(python_type) => python_type,
+            CallableArgs::PositionalOnly(python_type) => python_type,
+            CallableArgs::Positional(python_type) => python_type,
+            CallableArgs::Keyword(python_type) => python_type,
+            CallableArgs::KwArgs(python_type) => python_type,
+            CallableArgs::WithDefault(python_type) => python_type,
+        }
+    }
 }
 
 impl Eq for CallableType {}
@@ -98,7 +134,7 @@ impl Eq for CallableType {}
 impl CallableType {
     pub fn new(
         name: String,
-        signature: Vec<PythonType>,
+        signature: Vec<CallableArgs>,
         return_type: PythonType,
         is_async: bool,
     ) -> Self {

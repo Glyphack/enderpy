@@ -24,26 +24,26 @@ def test_first(seq_int: Sequence[int], seq_str: Sequence[str]) -> None:
     assert_type(first(seq_str), str)
 
 
-# # > ``TypeVar`` supports constraining parametric types to a fixed set of
-# # > possible types
-#
-# AnyStr = TypeVar("AnyStr", str, bytes)
-#
-#
-# def concat(x: AnyStr, y: AnyStr) -> AnyStr:
-#     return x + y
-#
-#
-# def test_concat(s: str, b: bytes, a: Any) -> None:
-#     concat(s, s)  # OK
-#     concat(b, b)  # OK
-#     concat(s, b)  # E
-#     concat(b, s)  # E
-#
-#     concat(s, a)  # OK
-#     concat(a, b)  # OK
-#
-#
+# > ``TypeVar`` supports constraining parametric types to a fixed set of
+# > possible types
+
+AnyStr = TypeVar("AnyStr", str, bytes)
+
+
+def concat(x: AnyStr, y: AnyStr) -> AnyStr:
+    return x + y
+
+
+def test_concat(s: str, b: bytes, a: Any) -> None:
+    concat(s, s)  # OK
+    concat(b, b)  # OK
+    concat(s, b)  # E
+    concat(b, s)  # E
+
+    concat(s, a)  # OK
+    concat(a, b)  # OK
+
+
 # # > Specifying a single constraint is disallowed.
 #
 # BadConstraint1 = TypeVar("BadConstraint1", str)  # E
