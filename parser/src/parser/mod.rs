@@ -1,5 +1,5 @@
-pub mod ast;
 pub mod compat;
+use crate::ast;
 #[allow(clippy::module_inception)]
 pub mod parser;
 use crate::token::{Kind, Token};

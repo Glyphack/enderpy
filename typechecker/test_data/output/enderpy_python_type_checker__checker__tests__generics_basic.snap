@@ -1,0 +1,96 @@
+---
+source: typechecker/src/checker.rs
+description: "1: \"\"\"\n2: Tests for basic usage of generics.\n3: \"\"\"\n4: \n5: # Specification: https://typing.readthedocs.io/en/latest/spec/generics.html#introduction\n6: \n7: from __future__ import annotations\n8: \n9: from collections.abc import Sequence\n10: from typing import Any, Generic, TypeVar, assert_type\n11: \n12: T = TypeVar(\"T\")\n13: \n14: # > Generics can be parameterized by using a factory available in\n15: # > ``typing`` called ``TypeVar``.\n16: \n17: \n18: def first(l: Sequence[T]) -> T:\n19:     return l[0]\n20: \n21: \n22: def test_first(seq_int: Sequence[int], seq_str: Sequence[str]) -> None:\n23:     assert_type(first(seq_int), int)\n24:     assert_type(first(seq_str), str)\n25: \n26: \n27: # # > ``TypeVar`` supports constraining parametric types to a fixed set of\n28: # # > possible types\n29: #\n30: # AnyStr = TypeVar(\"AnyStr\", str, bytes)\n31: #\n32: #\n33: # def concat(x: AnyStr, y: AnyStr) -> AnyStr:\n34: #     return x + y\n35: #\n36: #\n37: # def test_concat(s: str, b: bytes, a: Any) -> None:\n38: #     concat(s, s)  # OK\n39: #     concat(b, b)  # OK\n40: #     concat(s, b)  # E\n41: #     concat(b, s)  # E\n42: #\n43: #     concat(s, a)  # OK\n44: #     concat(a, b)  # OK\n45: #\n46: #\n47: # # > Specifying a single constraint is disallowed.\n48: #\n49: # BadConstraint1 = TypeVar(\"BadConstraint1\", str)  # E\n50: #\n51: # # > Note: those types cannot be parameterized by type variables\n52: #\n53: #\n54: # class Test(Generic[T]):\n55: #     BadConstraint2 = TypeVar(\"BadConstraint2\", str, list[T])  # E\n56: #\n57: #\n58: # # > Subtypes of types constrained by a type variable should be treated\n59: # # > as their respective explicitly listed base types in the context of the\n60: # # > type variable.\n61: #\n62: #\n63: # class MyStr(str): ...\n64: #\n65: #\n66: # def test_concat_subtype(s: str, b: bytes, a: Any, m: MyStr) -> None:\n67: #     assert_type(concat(m, m), str)\n68: #     assert_type(concat(m, s), str)\n69: #     concat(m, b)  # E\n70: #\n71: #     # TODO: should these be str or Any?\n72: #     # reveal_type(concat(m, a))\n73: #     # reveal_type(concat(a, m))\n74: #\n75: #\n76: # # Specification: https://typing.readthedocs.io/en/latest/spec/generics.html#user-defined-generic-classes\n77: #\n78: # # > You can include a ``Generic`` base class to define a user-defined class\n79: # # > as generic.\n80: #\n81: # from logging import Logger\n82: # from collections.abc import Iterable\n83: #\n84: #\n85: # class LoggedVar(Generic[T]):\n86: #     def __init__(self, value: T, name: str, logger: Logger) -> None:\n87: #         self.name = name\n88: #         self.logger = logger\n89: #         self.value = value\n90: #\n91: #     def set(self, new: T) -> None:\n92: #         self.log(\"Set \" + repr(self.value))\n93: #         self.value = new\n94: #\n95: #     def get(self) -> T:\n96: #         self.log(\"Get \" + repr(self.value))\n97: #         return self.value\n98: #\n99: #     def log(self, message: str) -> None:\n100: #         self.logger.info(\"{}: {}\".format(self.name, message))\n101: #\n102: #\n103: # def zero_all_vars(vars: Iterable[LoggedVar[int]]) -> None:\n104: #     for var in vars:\n105: #         var.set(0)\n106: #         assert_type(var.get(), int)\n107: #\n108: #\n109: # # > A generic type can have any number of type variables, and type variables\n110: # # > may be constrained.\n111: #\n112: # S = TypeVar(\"S\")\n113: #\n114: #\n115: # class Pair1(Generic[T, S]): ...\n116: #\n117: #\n118: # # > Each type variable argument to ``Generic`` must be distinct.\n119: #\n120: #\n121: # class Pair2(Generic[T, T]):  # E\n122: #     ...\n123: #\n124: #\n125: # # > The ``Generic[T]`` base class is redundant in simple cases where you\n126: # # > subclass some other generic class and specify type variables for its\n127: # # > parameters.\n128: #\n129: # from collections.abc import Iterator, Mapping\n130: #\n131: #\n132: # class MyIter1(Iterator[T]): ...\n133: #\n134: #\n135: # class MyIter2(Iterator[T], Generic[T]): ...\n136: #\n137: #\n138: # def test_my_iter(m1: MyIter1[int], m2: MyIter2[int]):\n139: #     assert_type(next(m1), int)\n140: #     assert_type(next(m2), int)\n141: #\n142: #\n143: # K = TypeVar(\"K\")\n144: # V = TypeVar(\"V\")\n145: #\n146: #\n147: # class MyMap1(Mapping[K, V], Generic[K, V]): ...\n148: #\n149: #\n150: # class MyMap2(Mapping[K, V], Generic[V, K]): ...\n151: #\n152: #\n153: # def test_my_map(m1: MyMap1[str, int], m2: MyMap2[int, str]):\n154: #     assert_type(m1[\"key\"], int)\n155: #     assert_type(m2[\"key\"], int)\n156: #\n157: #     m1[0]  # E\n158: #     m2[0]  # E\n159: #\n160: #\n161: # # > You can use multiple inheritance with ``Generic``\n162: #\n163: # from collections.abc import Sized, Container\n164: #\n165: #\n166: # class LinkedList(Sized, Generic[T]): ...\n167: #\n168: #\n169: # class MyMapping(Iterable[tuple[K, V]], Container[tuple[K, V]], Generic[K, V]): ...\n170: #\n171: #\n172: # # > Subclassing a generic class without specifying type parameters assumes\n173: # # > ``Any`` for each position.  In the following example, ``MyIterable``\n174: # # > is not generic but implicitly inherits from ``Iterable[Any]``::\n175: #\n176: #\n177: # class MyIterableAny(Iterable):  # Same as Iterable[Any]\n178: #     ...\n179: #\n180: #\n181: # def test_my_iterable_any(m: MyIterableAny):\n182: #     assert_type(iter(m), Iterator[Any])\n183: #\n184: #\n185: # # > Generic metaclasses are not supported\n186: #\n187: #\n188: # class GenericMeta(type, Generic[T]): ...\n189: #\n190: #\n191: # class GenericMetaInstance(metaclass=GenericMeta[T]):  # E\n192: #     ...\n"
+expression: result
+---
+Line 1: """
+
+Expr types in the line --->:
+        """
+Tests for basic usage of generics.
+""" => (class) str
+
+---
+Line 7: from __future__ import annotations
+
+Expr types in the line --->:
+        __future__  => Module
+        annotations => (class) _Feature
+
+---
+Line 9: from collections.abc import Sequence
+
+Expr types in the line --->:
+        collections.abc  => Module
+        Sequence => (class) typing.Sequence[TypeVar[_T_co, ]][]
+
+---
+Line 10: from typing import Any, Generic, TypeVar, assert_type
+
+Expr types in the line --->:
+        typing  => Module
+        Any => (class) object
+        Generic => (class) Generic
+        TypeVar => TypeVar[, ]
+        assert_type => (function) Callable[[TypeVar[_T, ], (class) object], TypeVar[_T, ]]
+
+---
+Line 12: T = TypeVar("T")
+
+Expr types in the line --->:
+        T => TypeVar[T, ]
+        TypeVar => TypeVar[, ]
+        TypeVar("T") => TypeVar[T, ]
+        "T" => (class) str
+
+---
+Line 18: def first(l: Sequence[T]) -> T:
+
+Expr types in the line --->:
+        first => (function) Callable[[(class) typing.Sequence[TypeVar[_T_co, ]][TypeVar[T, ]]], TypeVar[T, ]]
+        l: Sequence[T] => (class) typing.Sequence[TypeVar[_T_co, ]][TypeVar[T, ]]
+        Sequence[T] => (class) typing.Sequence[TypeVar[_T_co, ]][TypeVar[T, ]]
+        T => TypeVar[T, ]
+
+---
+Line 19:     return l[0]
+
+Expr types in the line --->:
+        l => (class) typing.Sequence[TypeVar[_T_co, ]][TypeVar[T, ]]
+        l[0] => TypeVar[T, ]
+        0 => (class) int
+
+---
+Line 22: def test_first(seq_int: Sequence[int], seq_str: Sequence[str]) -> None:
+
+Expr types in the line --->:
+        test_first => (function) Callable[[(class) typing.Sequence[TypeVar[_T_co, ]][(class) int], (class) typing.Sequence[TypeVar[_T_co, ]][(class) str]], None]
+        seq_int: Sequence[int] => (class) typing.Sequence[TypeVar[_T_co, ]][(class) int]
+        Sequence[int] => (class) typing.Sequence[TypeVar[_T_co, ]][(class) int]
+        seq_str: Sequence[str] => (class) typing.Sequence[TypeVar[_T_co, ]][(class) str]
+        Sequence[str] => (class) typing.Sequence[TypeVar[_T_co, ]][(class) str]
+        None => None
+
+---
+Line 23:     assert_type(first(seq_int), int)
+
+Expr types in the line --->:
+        assert_type => (function) Callable[[TypeVar[_T, ], (class) object], TypeVar[_T, ]]
+        assert_type(first(seq_int), int) => TypeVar[_T, ]
+        first => (function) Callable[[(class) typing.Sequence[TypeVar[_T_co, ]][TypeVar[T, ]]], TypeVar[T, ]]
+        first(seq_int) => TypeVar[T, ]
+        seq_int => (class) typing.Sequence[TypeVar[_T_co, ]][(class) int]
+        int => (class) int
+
+---
+Line 24:     assert_type(first(seq_str), str)
+
+Expr types in the line --->:
+        assert_type => (function) Callable[[TypeVar[_T, ], (class) object], TypeVar[_T, ]]
+        assert_type(first(seq_str), str) => TypeVar[_T, ]
+        first => (function) Callable[[(class) typing.Sequence[TypeVar[_T_co, ]][TypeVar[T, ]]], TypeVar[T, ]]
+        first(seq_str) => TypeVar[T, ]
+        seq_str => (class) typing.Sequence[TypeVar[_T_co, ]][(class) str]
+        str => (class) str
+
+---

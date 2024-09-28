@@ -6,7 +6,7 @@ use std::{
 
 use clap::Parser as ClapParser;
 use cli::{Cli, Commands};
-use enderpy_python_parser::{get_row_col_position, Lexer, Parser};
+use enderpy_python_parser::{get_row_col_position, parser::parser::Parser, Lexer};
 use enderpy_python_type_checker::{build::BuildManager, find_project_root, settings::Settings};
 use miette::{bail, IntoDiagnostic, Result};
 

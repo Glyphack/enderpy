@@ -1,5 +1,6 @@
 use bitflags::bitflags;
 use rust_lapper::{Interval, Lapper};
+use tracing::trace;
 
 use std::fs;
 use std::path::Path;
@@ -153,7 +154,7 @@ impl SymbolTable {
         &self,
         lookup_request: &LookupSymbolRequest,
     ) -> Option<&SymbolTableNode> {
-        log::debug!(
+        trace!(
             "looking for symbol {:?} in symbol table with scopes: {:?}",
             lookup_request,
             self.file_path

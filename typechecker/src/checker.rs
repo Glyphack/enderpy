@@ -5,8 +5,11 @@ use ast::{Expression, Statement};
 use dashmap::DashMap;
 use enderpy_python_parser as parser;
 use enderpy_python_parser::ast::{self, *};
+use tracing::field::{self, display};
+use tracing::{span, Level};
 
 use super::{type_evaluator::TypeEvaluator, types::PythonType};
+use crate::file::EnderpyFile;
 use crate::symbol_table::Id;
 use crate::types::ModuleRef;
 use crate::{ast_visitor::TraversalVisitor, diagnostic::CharacterSpan, symbol_table::SymbolTable};
@@ -17,6 +20,7 @@ pub struct TypeChecker<'a> {
     pub errors: Vec<TypeCheckError>,
     pub types: Lapper<u32, PythonType>,
     type_evaluator: TypeEvaluator<'a>,
+    enderpy_file: EnderpyFile,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -31,11 +35,13 @@ impl<'a> TypeChecker<'a> {
         symbol_table: SymbolTable,
         symbol_tables: &'a DashMap<Id, SymbolTable>,
         ids: &'a DashMap<PathBuf, Id>,
+        enderpy_file: EnderpyFile,
     ) -> Self {
         TypeChecker {
             errors: vec![],
             type_evaluator: TypeEvaluator::new(symbol_table, symbol_tables, ids),
             types: Lapper::new(vec![]),
+            enderpy_file,
         }
     }
 
@@ -44,6 +50,14 @@ impl<'a> TypeChecker<'a> {
     }
 
     fn infer_expr_type(&mut self, expr: &Expression) -> PythonType {
+        let span = span!(
+            Level::TRACE,
+            "infer expression type",
+            expression = &self.enderpy_file.source
+                [expr.get_node().start as usize..expr.get_node().end as usize],
+            expr_type = field::Empty
+        );
+        let _guard = span.enter();
         let t = match self.type_evaluator.get_type(expr, None, None) {
             Ok(t) => t,
             Err(e) => {
@@ -51,6 +65,20 @@ impl<'a> TypeChecker<'a> {
                 PythonType::Unknown
             }
         };
+        span.record("expr_type", display(&t));
+
+        self.types.insert(Interval {
+            start: expr.get_node().start,
+            stop: expr.get_node().end,
+            val: t.clone(),
+        });
+        t
+    }
+
+    fn infer_annotation_type(&mut self, expr: &Expression) -> PythonType {
+        let t =
+            self.type_evaluator
+                .get_annotation_type(expr, &self.type_evaluator.symbol_table, None);
 
         self.types.insert(Interval {
             start: expr.get_node().start,
@@ -61,15 +89,12 @@ impl<'a> TypeChecker<'a> {
     }
 
     fn infer_name_type(&mut self, name: &str, start: u32, stop: u32) {
-        let name_type = self
-            .type_evaluator
-            .get_name_type(
-                name,
-                None,
-                &self.type_evaluator.symbol_table,
-                Some(self.type_evaluator.symbol_table.current_scope_id),
-            )
-            .unwrap_or(PythonType::Unknown);
+        let name_type = self.type_evaluator.get_name_type(
+            name,
+            None,
+            &self.type_evaluator.symbol_table,
+            Some(self.type_evaluator.symbol_table.current_scope_id),
+        );
         self.types.insert(Interval {
             start,
             stop,
@@ -277,7 +302,7 @@ impl<'a> TraversalVisitor for TypeChecker<'a> {
         }
         for (arg, _index) in f.args.args.iter().zip(0..) {
             if let Some(annotation) = &arg.annotation {
-                self.infer_expr_type(annotation);
+                self.infer_annotation_type(annotation);
             }
             self.infer_name_type(&arg.arg, arg.node.start, arg.node.end)
         }
@@ -648,7 +673,8 @@ mod tests {
                 }
             }
             let source_text = &module.source[r.start as usize..r.stop as usize];
-            str.push_str(&format!("        {} => {}\n", source_text, r.val))
+            let eval_result = format!("        {} => {}\n", source_text, r.val);
+            str.push_str(&eval_result);
         }
         str.push_str("\n---\n");
 
@@ -682,7 +708,10 @@ mod tests {
     }
 
     type_eval_test!(basic_types, "test_data/inputs/basic_types.py");
-    type_eval_test!(basic_generics, "test_data/inputs/basic_generics.py");
+    type_eval_test!(
+        generics_basic,
+        "test_data/inputs/conformance_tests/generics_basic.py"
+    );
     type_eval_test!(import_star_lookup, "test_data/inputs/import_star_test/a.py");
     type_eval_test!(
         annotations_coroutine,

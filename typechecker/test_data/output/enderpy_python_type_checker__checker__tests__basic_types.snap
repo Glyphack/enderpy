@@ -7,9 +7,9 @@ Line 1: from typing import Dict, Set, List
 
 Expr types in the line --->:
         typing  => Module
-        Dict => (class) builtins.dict[TypeVar[_KT, ], TypeVar[_VT, ]]
-        Set => (class) builtins.set[TypeVar[_T, ]]
-        List => (class) builtins.list[TypeVar[_T, ]]
+        Dict => (class) builtins.dict[TypeVar[_KT, ], TypeVar[_VT, ]][]
+        Set => (class) builtins.set[TypeVar[_T, ]][]
+        List => (class) builtins.list[TypeVar[_T, ]][]
 
 ---
 Line 3: a = 1
@@ -61,21 +61,21 @@ Expr types in the line --->:
 Line 13: def func(params: List[int]) -> Dict[int, int]:
 
 Expr types in the line --->:
-        func => (function) Callable[[(class) builtins.list[(class) int]], (class) builtins.dict[Unknown]]
-        params: List[int] => (class) builtins.list[(class) int]
-        List[int] => (class) builtins.list[TypeVar[_T, ]]
-        Dict => (class) builtins.dict[TypeVar[_KT, ], TypeVar[_VT, ]]
-        Dict[int, int] => (class) builtins.dict[TypeVar[_KT, ], TypeVar[_VT, ]]
+        func => (function) Callable[[(class) builtins.list[TypeVar[_T, ]][(class) int]], (class) builtins.dict[TypeVar[_KT, ], TypeVar[_VT, ]][Unknown]]
+        params: List[int] => (class) builtins.list[TypeVar[_T, ]][(class) int]
+        List[int] => (class) builtins.list[TypeVar[_T, ]][(class) int]
+        Dict => (class) builtins.dict[TypeVar[_KT, ], TypeVar[_VT, ]][]
+        Dict[int, int] => (class) builtins.dict[TypeVar[_KT, ], TypeVar[_VT, ]][(class) int, (class) int]
         int => (class) int
-        int, int] => (class) builtins.tuple[(class) int]
+        int, int] => (instance) builtins.tuple[(class) int]
         int => (class) int
 
 ---
 Line 14:     return {params[0]: a}
 
 Expr types in the line --->:
-        {params[0]: a} => (class) builtins.dict[(class) int, (class) int]
-        params => (class) builtins.list[(class) int]
+        {params[0]: a} => (instance) builtins.dict[(class) int, (class) int]
+        params => (class) builtins.list[TypeVar[_T, ]][(class) int]
         params[0] => (class) int
         0 => (class) int
         a => (class) int
@@ -90,8 +90,8 @@ Expr types in the line --->:
 Line 18:     cls_attribute = {1}
 
 Expr types in the line --->:
-        cls_attribute => (class) builtins.set[(class) int]
-        {1} => (class) builtins.set[(class) int]
+        cls_attribute => (instance) builtins.set[(class) int]
+        {1} => (instance) builtins.set[(class) int]
         1 => (class) int
 
 ---
@@ -110,7 +110,7 @@ Expr types in the line --->:
         print => (function) Callable[[(class) object, Union[(class) str, None], Union[(class) str, None], Union[Unknown, None], Unknown], None]
         print(self.cls_attribute) => None
         self => (class) C
-        self.cls_attribute => (class) builtins.set[(class) int]
+        self.cls_attribute => (instance) builtins.set[(class) int]
 
 ---
 Line 22:         self.x = float(x)
@@ -145,18 +145,18 @@ Expr types in the line --->:
 Line 26:         self.cls_attribute.add(value)
 
 Expr types in the line --->:
-        self.cls_attribute.add => (function) Callable[[Unknown, TypeVar[_T, ]], None]
-        self.cls_attribute.add(value) => None
+        self.cls_attribute.add => Unknown
+        self.cls_attribute.add(value) => Unknown
         value => (class) int
 
 ---
 Line 28:     def get_attr(self) -> Set[int]:
 
 Expr types in the line --->:
-        get_attr => (function) Callable[[Unknown], (class) builtins.set[(class) int]]
+        get_attr => (function) Callable[[Unknown], (class) builtins.set[TypeVar[_T, ]][(class) int]]
         self => (class) C
-        Set => (class) builtins.set[TypeVar[_T, ]]
-        Set[int] => (class) builtins.set[TypeVar[_T, ]]
+        Set => (class) builtins.set[TypeVar[_T, ]][]
+        Set[int] => (class) builtins.set[TypeVar[_T, ]][(class) int]
         int => (class) int
 
 ---
@@ -164,7 +164,7 @@ Line 29:         return self.cls_attribute
 
 Expr types in the line --->:
         self => (class) C
-        self.cls_attribute => (class) builtins.set[(class) int]
+        self.cls_attribute => (instance) builtins.set[(class) int]
 
 ---
 Line 31:     def get_x(self) -> float:
@@ -203,7 +203,7 @@ Line 37: t.cls_attribute
 
 Expr types in the line --->:
         t => (class) C
-        t.cls_attribute => (class) builtins.set[(class) int]
+        t.cls_attribute => (instance) builtins.set[(class) int]
 
 ---
 Line 38: t.x
@@ -223,15 +223,15 @@ Expr types in the line --->:
 Line 40: t.get_attr()
 
 Expr types in the line --->:
-        t.get_attr => (function) Callable[[Unknown], (class) builtins.set[(class) int]]
-        t.get_attr() => (class) builtins.set[(class) int]
+        t.get_attr => (function) Callable[[Unknown], (class) builtins.set[TypeVar[_T, ]][(class) int]]
+        t.get_attr() => (class) builtins.set[TypeVar[_T, ]][(class) int]
 
 ---
 Line 42: l = [1, 2, 3]
 
 Expr types in the line --->:
-        l => (class) builtins.list[(class) int]
-        [1, 2, 3] => (class) builtins.list[(class) int]
+        l => (instance) builtins.list[(class) int]
+        [1, 2, 3] => (instance) builtins.list[(class) int]
         1 => (class) int
         2 => (class) int
         3 => (class) int
@@ -241,7 +241,7 @@ Line 43: d = {"a": 1, "b": 2}
 
 Expr types in the line --->:
         d => (class) bool
-        {"a": 1, "b": 2} => (class) builtins.dict[(class) str, (class) int]
+        {"a": 1, "b": 2} => (instance) builtins.dict[(class) str, (class) int]
         "a" => (class) str
         1 => (class) int
         "b" => (class) str
@@ -251,8 +251,8 @@ Expr types in the line --->:
 Line 44: s = {1, 2, 3}
 
 Expr types in the line --->:
-        s => (class) builtins.set[(class) int]
-        {1, 2, 3} => (class) builtins.set[(class) int]
+        s => (instance) builtins.set[(class) int]
+        {1, 2, 3} => (instance) builtins.set[(class) int]
         1 => (class) int
         2 => (class) int
         3 => (class) int
@@ -261,8 +261,8 @@ Expr types in the line --->:
 Line 46: l.append(4)
 
 Expr types in the line --->:
-        l.append => (function) Callable[[Unknown, TypeVar[_T, ]], None]
-        l.append(4) => None
+        l.append => Unknown
+        l.append(4) => Unknown
         4 => (class) int
 
 ---

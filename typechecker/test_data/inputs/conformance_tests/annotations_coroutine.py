@@ -8,7 +8,6 @@ Tests for annotating coroutines.
 # > ordinary functions. However, the return type annotation corresponds to
 # > the type of await expression, not to the coroutine type.
 
-
 from typing import Any, Callable, Coroutine, assert_type
 
 
@@ -17,6 +16,7 @@ async def func1(ignored: int, /) -> str:
 
 
 assert_type(func1, Callable[[int], Coroutine[Any, Any, str]])
+
 
 async def func2() -> None:
     x = await func1(42)

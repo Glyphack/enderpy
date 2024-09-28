@@ -27,20 +27,20 @@ Expr types in the line --->:
 Line 12: def func1(
 
 Expr types in the line --->:
-        func1 => (function) Callable[[(class) ClassA, (class) builtins.list[(class) ClassA], (class) builtins.list[(class) ClassA], (class) builtins.list[Union[(class) int, (class) ClassA]]], None]
+        func1 => (function) Callable[[(class) ClassA, (class) builtins.list[TypeVar[_T, ]][(class) ClassA], (class) builtins.list[TypeVar[_T, ]][(class) ClassA], (class) builtins.list[TypeVar[_T, ]][Union[(class) int, (class) ClassA]]], None]
 
 ---
 Line 13:     p1: "ClassA", p2: "list[ClassA]", p3: list["ClassA"], p4: list["int | ClassA"]
 
 Expr types in the line --->:
         p1: "ClassA" => (class) ClassA
-        "ClassA" => (class) str
-        p2: "list[ClassA]" => (class) builtins.list[(class) ClassA]
-        "list[ClassA]" => (class) str
-        p3: list["ClassA"] => (class) builtins.list[(class) ClassA]
-        list["ClassA"] => (class) builtins.list[TypeVar[_T, ]]
-        p4: list["int | ClassA"] => (class) builtins.list[Union[(class) int, (class) ClassA]]
-        list["int | ClassA"] => (class) builtins.list[TypeVar[_T, ]]
+        "ClassA" => (class) ClassA
+        p2: "list[ClassA]" => (class) builtins.list[TypeVar[_T, ]][(class) ClassA]
+        "list[ClassA]" => (class) builtins.list[TypeVar[_T, ]][(class) ClassA]
+        p3: list["ClassA"] => (class) builtins.list[TypeVar[_T, ]][(class) ClassA]
+        list["ClassA"] => (class) builtins.list[TypeVar[_T, ]][(class) ClassA]
+        p4: list["int | ClassA"] => (class) builtins.list[TypeVar[_T, ]][Union[(class) int, (class) ClassA]]
+        list["int | ClassA"] => (class) builtins.list[TypeVar[_T, ]][Union[(class) int, (class) ClassA]]
 
 ---
 Line 14: ) -> None:
@@ -63,9 +63,9 @@ Line 16:     assert_type(p2, list[ClassA])
 Expr types in the line --->:
         assert_type => (function) Callable[[TypeVar[_T, ], (class) object], TypeVar[_T, ]]
         assert_type(p2, list[ClassA]) => TypeVar[_T, ]
-        p2 => (class) builtins.list[(class) ClassA]
-        list => (class) builtins.list[TypeVar[_T, ]]
-        list[ClassA] => (class) builtins.list[TypeVar[_T, ]]
+        p2 => (class) builtins.list[TypeVar[_T, ]][(class) ClassA]
+        list => (class) builtins.list[TypeVar[_T, ]][]
+        list[ClassA] => (class) builtins.list[TypeVar[_T, ]][Unknown]
         ClassA => Unknown
 
 ---
@@ -74,9 +74,9 @@ Line 17:     assert_type(p3, list[ClassA])
 Expr types in the line --->:
         assert_type => (function) Callable[[TypeVar[_T, ], (class) object], TypeVar[_T, ]]
         assert_type(p3, list[ClassA]) => TypeVar[_T, ]
-        p3 => (class) builtins.list[(class) ClassA]
-        list => (class) builtins.list[TypeVar[_T, ]]
-        list[ClassA] => (class) builtins.list[TypeVar[_T, ]]
+        p3 => (class) builtins.list[TypeVar[_T, ]][(class) ClassA]
+        list => (class) builtins.list[TypeVar[_T, ]][]
+        list[ClassA] => (class) builtins.list[TypeVar[_T, ]][Unknown]
         ClassA => Unknown
 
 ---
@@ -85,9 +85,9 @@ Line 18:     assert_type(p4, list[ClassA | int])
 Expr types in the line --->:
         assert_type => (function) Callable[[TypeVar[_T, ], (class) object], TypeVar[_T, ]]
         assert_type(p4, list[ClassA | int]) => TypeVar[_T, ]
-        p4 => (class) builtins.list[Union[(class) int, (class) ClassA]]
-        list => (class) builtins.list[TypeVar[_T, ]]
-        list[ClassA | int] => (class) builtins.list[TypeVar[_T, ]]
+        p4 => (class) builtins.list[TypeVar[_T, ]][Union[(class) int, (class) ClassA]]
+        list => (class) builtins.list[TypeVar[_T, ]][]
+        list[ClassA | int] => Unknown
         ClassA => Unknown
         ClassA | int => Unknown
         int => (class) int
@@ -102,7 +102,7 @@ Expr types in the line --->:
 Line 22: bad2: list[ClassA]  # E: Runtime error: requires quotes
 
 Expr types in the line --->:
-        bad2 => (class) builtins.list[Unknown]
+        bad2 => (class) builtins.list[TypeVar[_T, ]][Unknown]
 
 ---
 Line 23: bad3: "ClassA" | int  # E: Runtime error
@@ -134,112 +134,112 @@ Expr types in the line --->:
 Line 38: def invalid_annotations(
 
 Expr types in the line --->:
-        invalid_annotations => (function) Callable[[Unknown, Unknown, Unknown, Unknown, Unknown, Unknown, (class) builtins.list[Unknown], Unknown, (class) int, Unknown, Unknown, Unknown, Unknown, Unknown, Module], Unknown]
+        invalid_annotations => (function) Callable[[Unknown, Unknown, Unknown, Unknown, Unknown, Unknown, Unknown, Unknown, (class) int, Unknown, Unknown, Unknown, Unknown, Unknown, Module], Unknown]
 
 ---
 Line 39:     p1: "eval(' '.join(map(chr, [105, 110, 116])))",  # E
 
 Expr types in the line --->:
         p1: "eval(' '.join(map(chr, [105, 110, 116])))" => Unknown
-        "eval(' '.join(map(chr, [105, 110, 116])))" => (class) str
+        "eval(' '.join(map(chr, [105, 110, 116])))" => Unknown
 
 ---
 Line 40:     p2: "[int, str]",  # E
 
 Expr types in the line --->:
         p2: "[int, str]" => Unknown
-        "[int, str]" => (class) str
+        "[int, str]" => Unknown
 
 ---
 Line 41:     p3: "(int, str)",  # E
 
 Expr types in the line --->:
         p3: "(int, str)" => Unknown
-        "(int, str)" => (class) str
+        "(int, str)" => Unknown
 
 ---
 Line 42:     p4: "[int for i in range(1)]",  # E
 
 Expr types in the line --->:
         p4: "[int for i in range(1)]" => Unknown
-        "[int for i in range(1)]" => (class) str
+        "[int for i in range(1)]" => Unknown
 
 ---
 Line 43:     p5: "{}",  # E
 
 Expr types in the line --->:
         p5: "{}" => Unknown
-        "{}" => (class) str
+        "{}" => Unknown
 
 ---
 Line 44:     p6: "(lambda : int)()",  # E
 
 Expr types in the line --->:
         p6: "(lambda : int)()" => Unknown
-        "(lambda : int)()" => (class) str
+        "(lambda : int)()" => Unknown
 
 ---
 Line 45:     p7: "[int][0]",  # E
 
 Expr types in the line --->:
-        p7: "[int][0]" => (class) builtins.list[Unknown]
-        "[int][0]" => (class) str
+        p7: "[int][0]" => Unknown
+        "[int][0]" => Unknown
 
 ---
 Line 46:     p8: "int if 1 < 3 else str",  # E
 
 Expr types in the line --->:
         p8: "int if 1 < 3 else str" => Unknown
-        "int if 1 < 3 else str" => (class) str
+        "int if 1 < 3 else str" => Unknown
 
 ---
 Line 47:     p9: "var1",  # E
 
 Expr types in the line --->:
         p9: "var1" => (class) int
-        "var1" => (class) str
+        "var1" => (class) int
 
 ---
 Line 48:     p10: "True",  # E
 
 Expr types in the line --->:
         p10: "True" => Unknown
-        "True" => (class) str
+        "True" => Unknown
 
 ---
 Line 49:     p11: "1",  # E
 
 Expr types in the line --->:
         p11: "1" => Unknown
-        "1" => (class) str
+        "1" => Unknown
 
 ---
 Line 50:     p12: "-1",  # E
 
 Expr types in the line --->:
         p12: "-1" => Unknown
-        "-1" => (class) str
+        "-1" => Unknown
 
 ---
 Line 51:     p13: "int or str",  # E
 
 Expr types in the line --->:
         p13: "int or str" => Unknown
-        "int or str" => (class) str
+        "int or str" => Unknown
 
 ---
 Line 52:     p14: 'f"int"',  # E
 
 Expr types in the line --->:
         p14: 'f"int"' => Unknown
-        'f"int"' => (class) str
+        'f"int"' => Unknown
 
 ---
 Line 53:     p15: "types",  # E
 
 Expr types in the line --->:
         p15: "types" => Module
-        "types" => (class) str
+        "types" => Module
 
 ---
 Line 63: class ClassB:

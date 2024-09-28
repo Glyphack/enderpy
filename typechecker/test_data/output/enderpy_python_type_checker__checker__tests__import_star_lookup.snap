@@ -34,8 +34,8 @@ Expr types in the line --->:
 Line 7: os.path.dirname("")
 
 Expr types in the line --->:
-        os.path.dirname => (function) Callable[[Unknown], TypeVar[AnyStr, (class) str, (class) builtins.bytes[(class) int]]]
-        os.path.dirname("") => TypeVar[AnyStr, (class) str, (class) builtins.bytes[(class) int]]
+        os.path.dirname => (function) Callable[[Unknown], TypeVar[AnyStr, (class) str, (class) builtins.bytes[(class) int][]]]
+        os.path.dirname("") => TypeVar[AnyStr, (class) str, (class) builtins.bytes[(class) int][]]
         "" => (class) str
 
 ---

@@ -23,7 +23,7 @@ Line 8: from typing import Hashable, Iterable, assert_type
 Expr types in the line --->:
         typing  => Module
         Hashable => (class) Hashable
-        Iterable => (class) typing.Iterable[TypeVar[_T_co, ]]
+        Iterable => (class) typing.Iterable[TypeVar[_T_co, ]][]
         assert_type => (function) Callable[[TypeVar[_T, ], (class) object], TypeVar[_T, ]]
 
 ---
@@ -86,7 +86,7 @@ Expr types in the line --->:
 Line 27: none2: Iterable = None  # E: not iterable
 
 Expr types in the line --->:
-        none2 => (class) typing.Iterable[TypeVar[_T_co, ]]
+        none2 => (class) typing.Iterable[TypeVar[_T_co, ]][]
         None => None
 
 ---
@@ -94,7 +94,7 @@ Line 30: None.__class__  # OK
 
 Expr types in the line --->:
         None => None
-        None.__class__ => (function) Callable[[Unknown], (class) builtins.type[(class) Self]]
+        None.__class__ => (function) Callable[[Unknown], (class) builtins.type[][(class) Self]]
 
 ---
 Line 31: None.__doc__  # OK
@@ -107,17 +107,17 @@ Expr types in the line --->:
 Line 32: None.__eq__(0)  # OK
 
 Expr types in the line --->:
-        None.__eq__ => (function) Callable[[Unknown, (class) object], (class) bool]
-        None.__eq__(0) => (class) bool
+        None.__eq__ => (function) Callable[[Unknown, (class) object], Unknown]
+        None.__eq__(0) => Unknown
         0 => (class) int
 
 ---
 Line 35: def func2(val1: type[None]):
 
 Expr types in the line --->:
-        func2 => (function) Callable[[(class) builtins.type[None]], Unknown]
-        val1: type[None] => (class) builtins.type[None]
-        type[None] => (class) type
+        func2 => (function) Callable[[(class) builtins.type[][None]], Unknown]
+        val1: type[None] => (class) builtins.type[][None]
+        type[None] => (class) builtins.type[][None]
 
 ---
 Line 36:     assert_type(val1, type[None])
@@ -125,25 +125,25 @@ Line 36:     assert_type(val1, type[None])
 Expr types in the line --->:
         assert_type => (function) Callable[[TypeVar[_T, ], (class) object], TypeVar[_T, ]]
         assert_type(val1, type[None]) => TypeVar[_T, ]
-        val1 => (class) builtins.type[None]
+        val1 => (class) builtins.type[][None]
         type => (class) type
-        type[None] => (class) type
+        type[None] => Unknown
         None => None
 
 ---
 Line 39: func2(None.__class__)  # OK
 
 Expr types in the line --->:
-        func2 => (function) Callable[[(class) builtins.type[None]], Unknown]
+        func2 => (function) Callable[[(class) builtins.type[][None]], Unknown]
         func2(None.__class__) => Unknown
         None => None
-        None.__class__ => (function) Callable[[Unknown], (class) builtins.type[(class) Self]]
+        None.__class__ => (function) Callable[[Unknown], (class) builtins.type[][(class) Self]]
 
 ---
 Line 40: func2(type(None))  # OK
 
 Expr types in the line --->:
-        func2 => (function) Callable[[(class) builtins.type[None]], Unknown]
+        func2 => (function) Callable[[(class) builtins.type[][None]], Unknown]
         func2(type(None)) => Unknown
         type => (class) type
         type(None) => (class) type
@@ -153,7 +153,7 @@ Expr types in the line --->:
 Line 41: func2(None)  # E: not compatible
 
 Expr types in the line --->:
-        func2 => (function) Callable[[(class) builtins.type[None]], Unknown]
+        func2 => (function) Callable[[(class) builtins.type[][None]], Unknown]
         func2(None) => Unknown
         None => None
 

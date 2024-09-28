@@ -15,6 +15,8 @@ tempfile = "3.8.0"
 is-macro = "0.3.5"
 bitflags = "2.4.2"
 rust-lapper = "1.1.0"
+tracing.workspace = true
+tracing-subscriber.workspace = true
 
 [dev-dependencies]
 insta.workspace = true
