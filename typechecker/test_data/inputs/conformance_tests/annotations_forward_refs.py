@@ -33,6 +33,9 @@ class ClassA: ...
 var1 = 1
 
 
+# TODO: these are resolving and it's incorrect
+
+
 # The following should all generate errors because they are not legal type
 # expressions, despite being enclosed in quotes.
 def invalid_annotations(

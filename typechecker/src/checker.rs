@@ -214,6 +214,7 @@ impl<'a> TraversalVisitor for TypeChecker<'a> {
 
     fn visit_for(&mut self, f: &parser::ast::For) {
         self.visit_expr(&f.iter);
+        self.visit_expr(&f.target);
         for stmt in &f.body {
             self.visit_stmt(stmt);
         }
@@ -273,6 +274,7 @@ impl<'a> TraversalVisitor for TypeChecker<'a> {
     }
 
     fn visit_function_def(&mut self, f: &Arc<parser::ast::FunctionDef>) {
+        self.type_evaluator.symbol_table.set_scope(f.node.start);
         self.infer_name_type(
             &f.name,
             f.node.start + 4,
@@ -281,7 +283,6 @@ impl<'a> TraversalVisitor for TypeChecker<'a> {
         if let Some(ret_type) = &f.returns {
             self.visit_expr(ret_type);
         }
-        self.type_evaluator.symbol_table.set_scope(f.node.start);
         for stmt in &f.body {
             self.visit_stmt(stmt);
         }
@@ -295,12 +296,12 @@ impl<'a> TraversalVisitor for TypeChecker<'a> {
     }
 
     fn visit_async_function_def(&mut self, f: &Arc<parser::ast::AsyncFunctionDef>) {
+        self.type_evaluator.symbol_table.set_scope(f.node.start);
         self.infer_name_type(
             &f.name,
             f.node.start + 9,
             f.node.start + 9 + f.name.len() as u32,
         );
-        self.type_evaluator.symbol_table.set_scope(f.node.start);
         for stmt in &f.body {
             self.visit_stmt(stmt);
         }

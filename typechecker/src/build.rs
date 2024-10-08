@@ -37,19 +37,10 @@ impl<'a> BuildManager {
     pub fn new(settings: Settings) -> Self {
         let mut builder = Builder::new();
 
-        let log_level = match std::env::var("DEBUG") {
-            Ok(_) => log::LevelFilter::Debug,
-            _ => log::LevelFilter::Info,
-        };
         tracing_subscriber::fmt()
             .with_env_filter(EnvFilter::from_default_env())
             .with_ansi(false)
             .pretty()
-            .try_init();
-
-        builder
-            .filter(None, log_level)
-            .format_timestamp(None)
             .try_init();
 
         let mut modules = DashMap::new();

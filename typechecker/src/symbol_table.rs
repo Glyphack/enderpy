@@ -1,6 +1,5 @@
 use bitflags::bitflags;
 use rust_lapper::{Interval, Lapper};
-use tracing::trace;
 
 use std::fs;
 use std::path::Path;
@@ -50,6 +49,21 @@ impl SymbolTable {
         }
     }
 
+    pub fn is_pyi_file(&self) -> bool {
+        self.file_path.extension().unwrap_or_default() == "pyi"
+    }
+
+    pub fn get_file_name(&self) -> String {
+        return self
+            .file_path
+            .to_str()
+            .expect("cannot get file path string")
+            .split("/")
+            .last()
+            .expect("last part of the file")
+            .to_string();
+    }
+
     /// Do not use for lookup operations
     pub fn current_scope(&self) -> &SymbolTableScope {
         if let Some(scope) = self
@@ -74,6 +88,14 @@ impl SymbolTable {
         }
     }
 
+    pub fn get_parent_scope_of(&self, scope_id: u32) -> Option<&SymbolTableScope> {
+        let scope = self.get_scope_by_id(scope_id).expect("scope id is invalid");
+        if let Some(parent) = self.parent_scope(scope) {
+            Some(parent)
+        } else {
+            None
+        }
+    }
     /// Returns the parent scope of the current scope
     pub fn parent_scope(&self, scope: &SymbolTableScope) -> Option<&SymbolTableScope> {
         let parent_id = scope.parent?;
@@ -154,15 +176,16 @@ impl SymbolTable {
         &self,
         lookup_request: &LookupSymbolRequest,
     ) -> Option<&SymbolTableNode> {
-        trace!(
-            "looking for symbol {:?} in symbol table with scopes: {:?}",
-            lookup_request,
-            self.file_path
-        );
         let mut scope = match lookup_request.scope {
             Some(scope_id) => self.get_scope_by_id(scope_id).expect("no scope found"),
             None => self.current_scope(),
         };
+        tracing::debug!(
+            "looking for symbol {:?} in symbol table with scopes: {:?} starting from scope {}",
+            lookup_request,
+            self.file_path,
+            scope.name,
+        );
         loop {
             if let Some(symbol) = scope.symbols.get(lookup_request.name) {
                 // class attributes are invisible inside functions but they are available in
@@ -195,6 +218,16 @@ impl SymbolTable {
         let scope = self.scopes.iter().find(|scope| scope.start_pos == pos);
         if let Some(scope) = scope {
             self.current_scope_id = scope.id;
+        } else {
+            panic!("no scope found for position: {}", pos);
+        }
+    }
+
+    /// Returns the id of the scope starting at position
+    pub fn get_scope(&self, pos: u32) -> u32 {
+        let scope = self.scopes.iter().find(|scope| scope.start_pos == pos);
+        if let Some(scope) = scope {
+            return scope.id;
         } else {
             panic!("no scope found for position: {}", pos);
         }
@@ -253,10 +286,10 @@ impl SymbolTable {
     /// Looks up an attribute in the current scope and its parents
     /// Attributes must have symbol flags CLASS_MEMBER or INSTANCE_MEMBER
     pub(crate) fn lookup_attribute(&self, attr: &str, scope_id: u32) -> Option<&SymbolTableNode> {
-        if let Some(scope) = self.get_scope_by_id(scope_id) {
-            return scope.symbols.get(attr);
-        }
-        None
+        let scope = self
+            .get_scope_by_id(scope_id)
+            .expect("scope is in the symbol table");
+        return scope.symbols.get(attr);
     }
 }
 
@@ -409,6 +442,8 @@ pub struct Variable {
     pub type_annotation: Option<ast::Expression>,
     pub inferred_type_source: Option<ast::Expression>,
     pub is_constant: bool,
+    // Determines if this variable was introduced as part of a for statement
+    pub for_target: Option<ast::For>,
 }
 
 #[derive(Debug, Clone)]
@@ -580,9 +615,9 @@ impl SymbolTableNode {
 
     pub fn get_declaration_until_pos(&self, pos: u32) -> Option<&Declaration> {
         // TODO: Handle iterating declarations from last to first
-        self.declarations
-            .iter()
-            .find(|&declaration| declaration.declaration_path().node.start <= pos)
+        self.declarations.iter().find(|&declaration| {
+            declaration.declaration_path().node.start <= pos || declaration.is_class()
+        })
     }
 
     pub fn declaration_until_position(&self, position: u32) -> Option<&Declaration> {

@@ -93,6 +93,22 @@ pub struct CallableType {
     pub is_async: bool,
 }
 
+impl Display for CallableType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let signature_str = self
+            .signature
+            .iter()
+            .map(|arg| arg.to_string())
+            .collect::<Vec<String>>()
+            .join(", ");
+        let fmt = format!(
+            "(function) Callable ({}): {}",
+            signature_str, self.return_type
+        );
+        return write!(f, "{}", fmt);
+    }
+}
+
 #[derive(Debug, Clone)]
 pub enum CallableArgs {
     PositionalOnly(PythonType),
@@ -174,6 +190,7 @@ pub struct ClassType {
     /// The class details from the symbol table
     pub details: symbol_table::Class,
     // to represent types like `List[Int]`
+    // NOTE: This can only be type var
     pub type_parameters: Vec<PythonType>,
     // If the parameters are specialized this filed is filled.
     // This can happen when creating a class with another type var
@@ -247,6 +264,7 @@ impl Eq for ClassType {}
 pub struct InstanceType {
     pub class_type: ClassType,
     // to represent types like `List[Int]`
+    // TODO: Need to set unspecified type parameters to any
     pub specialized_type_parameters: Vec<PythonType>,
 }
 
@@ -256,6 +274,26 @@ impl InstanceType {
             class_type: class,
             specialized_type_parameters: type_parameters,
         }
+    }
+}
+
+impl Display for InstanceType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let args_str = self
+            .specialized_type_parameters
+            .iter()
+            .map(|arg| arg.to_string())
+            .collect::<Vec<String>>()
+            .join(", ");
+        let fmt = if args_str.is_empty() {
+            format!("(instance) {}", self.class_type.details.name.clone())
+        } else {
+            format!(
+                "(instance) {}[{}]",
+                self.class_type.details.qual_name, args_str
+            )
+        };
+        return write!(f, "{}", fmt);
     }
 }
 
@@ -320,17 +358,7 @@ impl Display for PythonType {
             PythonType::Module(_) => "Module",
             PythonType::Unknown => "Unknown",
             PythonType::Callable(callable_type) => {
-                let signature_str = callable_type
-                    .signature
-                    .iter()
-                    .map(|arg| arg.to_string())
-                    .collect::<Vec<String>>()
-                    .join(", ");
-                let fmt = format!(
-                    "(function) Callable[[{}], {}]",
-                    signature_str, callable_type.return_type
-                );
-                return write!(f, "{}", fmt);
+                return write!(f, "{}", callable_type);
             }
             PythonType::Coroutine(callable_type) => {
                 let fmt = format!(
@@ -343,21 +371,7 @@ impl Display for PythonType {
                 return write!(f, "{class_type}");
             }
             PythonType::Instance(class_type) => {
-                let args_str = class_type
-                    .specialized_type_parameters
-                    .iter()
-                    .map(|arg| arg.to_string())
-                    .collect::<Vec<String>>()
-                    .join(", ");
-                let fmt = if args_str.is_empty() {
-                    format!("(instance) {}", class_type.class_type.details.name.clone())
-                } else {
-                    format!(
-                        "(instance) {}[{}]",
-                        class_type.class_type.details.qual_name, args_str
-                    )
-                };
-                return write!(f, "{}", fmt);
+                return write!(f, "{class_type}");
             }
             PythonType::Never => "Never",
             PythonType::KnownValue(value) => {

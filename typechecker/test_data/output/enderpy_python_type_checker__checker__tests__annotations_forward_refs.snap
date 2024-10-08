@@ -1,6 +1,6 @@
 ---
 source: typechecker/src/checker.rs
-description: "1: \"\"\"\n2: Tests the handling of forward references in type annotations.\n3: \"\"\"\n4: \n5: # > When a type hint contains names that have not been defined yet, that\n6: # > definition may be expressed as a string literal, to be resolved later.\n7: \n8: import types\n9: from typing import assert_type\n10: \n11: \n12: def func1(\n13:     p1: \"ClassA\", p2: \"list[ClassA]\", p3: list[\"ClassA\"], p4: list[\"int | ClassA\"]\n14: ) -> None:\n15:     assert_type(p1, ClassA)\n16:     assert_type(p2, list[ClassA])\n17:     assert_type(p3, list[ClassA])\n18:     assert_type(p4, list[ClassA | int])\n19: \n20: \n21: bad1: ClassA  # E: Runtime error: requires quotes\n22: bad2: list[ClassA]  # E: Runtime error: requires quotes\n23: bad3: \"ClassA\" | int  # E: Runtime error\n24: bad4: int | \"ClassA\"  # E: Runtime error\n25: \n26: \n27: class ClassA: ...\n28: \n29: \n30: # > The string literal should contain a valid Python expression\n31: # > should be a valid code object).\n32: \n33: var1 = 1\n34: \n35: \n36: # The following should all generate errors because they are not legal type\n37: # expressions, despite being enclosed in quotes.\n38: def invalid_annotations(\n39:     p1: \"eval(' '.join(map(chr, [105, 110, 116])))\",  # E\n40:     p2: \"[int, str]\",  # E\n41:     p3: \"(int, str)\",  # E\n42:     p4: \"[int for i in range(1)]\",  # E\n43:     p5: \"{}\",  # E\n44:     p6: \"(lambda : int)()\",  # E\n45:     p7: \"[int][0]\",  # E\n46:     p8: \"int if 1 < 3 else str\",  # E\n47:     p9: \"var1\",  # E\n48:     p10: \"True\",  # E\n49:     p11: \"1\",  # E\n50:     p12: \"-1\",  # E\n51:     p13: \"int or str\",  # E\n52:     p14: 'f\"int\"',  # E\n53:     p15: \"types\",  # E\n54: ):\n55:     pass\n56: \n57: \n58: # > It should evaluate without errors once the module has been fully loaded.\n59: # > The local and global namespace in which it is evaluated should be the same\n60: # > namespaces in which default arguments to the same function would be evaluated.\n61: \n62: \n63: class ClassB:\n64:     def method1(self) -> ClassB:  # E: Runtime error\n65:         return ClassB()\n66: \n67:     def method2(self) -> \"ClassB\":  # OK\n68:         return ClassB()\n69: \n70: \n71: class ClassC: ...\n72: \n73: \n74: class ClassD:\n75:     # TODO: cyclic references not handled\n76:     # ClassC: \"ClassC\"  # OK\n77:     #\n78:     # ClassF: \"ClassF\"  # E: circular reference\n79: \n80:     # str: \"str\" = \"\"  # OK\n81: \n82:     def int(self) -> None:  # OK\n83:         ...\n84: \n85:     x: \"int\" = 0  # OK\n86: \n87:     y: int = 0  # E: Refers to local int, which isn't a legal type expression\n88: \n89:     def __init__(self) -> None:\n90:         self.ClassC = ClassC()\n91: \n92: \n93: assert_type(ClassD.str, str)\n94: assert_type(ClassD.x, int)\n95: \n96: \n97: # > If a triple quote is used, the string should be parsed as though it is implicitly\n98: # > surrounded by parentheses. This allows newline characters to be\n99: # > used within the string literal.\n100: \n101: value: \"\"\"\n102:     int |\n103:     str |\n104:     list[int]\n105: \"\"\"\n"
+description: "1: \"\"\"\n2: Tests the handling of forward references in type annotations.\n3: \"\"\"\n4: \n5: # > When a type hint contains names that have not been defined yet, that\n6: # > definition may be expressed as a string literal, to be resolved later.\n7: \n8: import types\n9: from typing import assert_type\n10: \n11: \n12: def func1(\n13:     p1: \"ClassA\", p2: \"list[ClassA]\", p3: list[\"ClassA\"], p4: list[\"int | ClassA\"]\n14: ) -> None:\n15:     assert_type(p1, ClassA)\n16:     assert_type(p2, list[ClassA])\n17:     assert_type(p3, list[ClassA])\n18:     assert_type(p4, list[ClassA | int])\n19: \n20: \n21: bad1: ClassA  # E: Runtime error: requires quotes\n22: bad2: list[ClassA]  # E: Runtime error: requires quotes\n23: bad3: \"ClassA\" | int  # E: Runtime error\n24: bad4: int | \"ClassA\"  # E: Runtime error\n25: \n26: \n27: class ClassA: ...\n28: \n29: \n30: # > The string literal should contain a valid Python expression\n31: # > should be a valid code object).\n32: \n33: var1 = 1\n34: \n35: \n36: # TODO: these are resolving and it's incorrect\n37: \n38: \n39: # The following should all generate errors because they are not legal type\n40: # expressions, despite being enclosed in quotes.\n41: def invalid_annotations(\n42:     p1: \"eval(' '.join(map(chr, [105, 110, 116])))\",  # E\n43:     p2: \"[int, str]\",  # E\n44:     p3: \"(int, str)\",  # E\n45:     p4: \"[int for i in range(1)]\",  # E\n46:     p5: \"{}\",  # E\n47:     p6: \"(lambda : int)()\",  # E\n48:     p7: \"[int][0]\",  # E\n49:     p8: \"int if 1 < 3 else str\",  # E\n50:     p9: \"var1\",  # E\n51:     p10: \"True\",  # E\n52:     p11: \"1\",  # E\n53:     p12: \"-1\",  # E\n54:     p13: \"int or str\",  # E\n55:     p14: 'f\"int\"',  # E\n56:     p15: \"types\",  # E\n57: ):\n58:     pass\n59: \n60: \n61: # > It should evaluate without errors once the module has been fully loaded.\n62: # > The local and global namespace in which it is evaluated should be the same\n63: # > namespaces in which default arguments to the same function would be evaluated.\n64: \n65: \n66: class ClassB:\n67:     def method1(self) -> ClassB:  # E: Runtime error\n68:         return ClassB()\n69: \n70:     def method2(self) -> \"ClassB\":  # OK\n71:         return ClassB()\n72: \n73: \n74: class ClassC: ...\n75: \n76: \n77: class ClassD:\n78:     # TODO: cyclic references not handled\n79:     # ClassC: \"ClassC\"  # OK\n80:     #\n81:     # ClassF: \"ClassF\"  # E: circular reference\n82: \n83:     # str: \"str\" = \"\"  # OK\n84: \n85:     def int(self) -> None:  # OK\n86:         ...\n87: \n88:     x: \"int\" = 0  # OK\n89: \n90:     y: int = 0  # E: Refers to local int, which isn't a legal type expression\n91: \n92:     def __init__(self) -> None:\n93:         self.ClassC = ClassC()\n94: \n95: \n96: assert_type(ClassD.str, str)\n97: assert_type(ClassD.x, int)\n98: \n99: \n100: # > If a triple quote is used, the string should be parsed as though it is implicitly\n101: # > surrounded by parentheses. This allows newline characters to be\n102: # > used within the string literal.\n103: \n104: value: \"\"\"\n105:     int |\n106:     str |\n107:     list[int]\n108: \"\"\"\n"
 expression: result
 ---
 Line 1: """
@@ -21,13 +21,13 @@ Line 9: from typing import assert_type
 
 Expr types in the line --->:
         typing  => Module
-        assert_type => (function) Callable[[pos: TypeVar[_T, ], pos: (class) object], TypeVar[_T, ]]
+        assert_type => (function) Callable (pos: TypeVar[_T, ], pos: (class) object): TypeVar[_T, ]
 
 ---
 Line 12: def func1(
 
 Expr types in the line --->:
-        func1 => (function) Callable[[pos: (class) ClassA, pos: (class) builtins.list[TypeVar[_T, ]][(class) ClassA], pos: (class) builtins.list[TypeVar[_T, ]][(class) ClassA], pos: (class) builtins.list[TypeVar[_T, ]][Union[(class) int, (class) ClassA]]], None]
+        func1 => (function) Callable (pos: (class) ClassA, pos: (class) builtins.list[TypeVar[_T, ]][(class) ClassA], pos: (class) builtins.list[TypeVar[_T, ]][(class) ClassA], pos: (class) builtins.list[TypeVar[_T, ]][Union[(class) int, (class) ClassA]]): None
 
 ---
 Line 13:     p1: "ClassA", p2: "list[ClassA]", p3: list["ClassA"], p4: list["int | ClassA"]
@@ -52,57 +52,57 @@ Expr types in the line --->:
 Line 15:     assert_type(p1, ClassA)
 
 Expr types in the line --->:
-        assert_type => (function) Callable[[pos: TypeVar[_T, ], pos: (class) object], TypeVar[_T, ]]
+        assert_type => (function) Callable (pos: TypeVar[_T, ], pos: (class) object): TypeVar[_T, ]
         assert_type(p1, ClassA) => (instance) ClassA
         p1 => (instance) ClassA
-        ClassA => Unknown
+        ClassA => (class) ClassA
 
 ---
 Line 16:     assert_type(p2, list[ClassA])
 
 Expr types in the line --->:
-        assert_type => (function) Callable[[pos: TypeVar[_T, ], pos: (class) object], TypeVar[_T, ]]
+        assert_type => (function) Callable (pos: TypeVar[_T, ], pos: (class) object): TypeVar[_T, ]
         assert_type(p2, list[ClassA]) => (instance) builtins.list[(class) ClassA]
         p2 => (instance) builtins.list[(class) ClassA]
         list => (class) builtins.list[TypeVar[_T, ]][]
-        list[ClassA] => (class) builtins.list[TypeVar[_T, ]][Unknown]
-        ClassA => Unknown
+        list[ClassA] => (class) builtins.list[TypeVar[_T, ]][(class) ClassA]
+        ClassA => (class) ClassA
 
 ---
 Line 17:     assert_type(p3, list[ClassA])
 
 Expr types in the line --->:
-        assert_type => (function) Callable[[pos: TypeVar[_T, ], pos: (class) object], TypeVar[_T, ]]
+        assert_type => (function) Callable (pos: TypeVar[_T, ], pos: (class) object): TypeVar[_T, ]
         assert_type(p3, list[ClassA]) => (instance) builtins.list[(class) ClassA]
         p3 => (instance) builtins.list[(class) ClassA]
         list => (class) builtins.list[TypeVar[_T, ]][]
-        list[ClassA] => (class) builtins.list[TypeVar[_T, ]][Unknown]
-        ClassA => Unknown
+        list[ClassA] => (class) builtins.list[TypeVar[_T, ]][(class) ClassA]
+        ClassA => (class) ClassA
 
 ---
 Line 18:     assert_type(p4, list[ClassA | int])
 
 Expr types in the line --->:
-        assert_type => (function) Callable[[pos: TypeVar[_T, ], pos: (class) object], TypeVar[_T, ]]
+        assert_type => (function) Callable (pos: TypeVar[_T, ], pos: (class) object): TypeVar[_T, ]
         assert_type(p4, list[ClassA | int]) => (instance) builtins.list[Union[(class) int, (class) ClassA]]
         p4 => (instance) builtins.list[Union[(class) int, (class) ClassA]]
         list => (class) builtins.list[TypeVar[_T, ]][]
-        list[ClassA | int] => Unknown
-        ClassA => Unknown
-        ClassA | int => Unknown
+        list[ClassA | int] => (class) builtins.list[TypeVar[_T, ]][(class) ClassA]
+        ClassA => (class) ClassA
+        ClassA | int => (class) ClassA
         int => (class) int
 
 ---
 Line 21: bad1: ClassA  # E: Runtime error: requires quotes
 
 Expr types in the line --->:
-        bad1 => Unknown
+        bad1 => (class) ClassA
 
 ---
 Line 22: bad2: list[ClassA]  # E: Runtime error: requires quotes
 
 Expr types in the line --->:
-        bad2 => (class) builtins.list[TypeVar[_T, ]][Unknown]
+        bad2 => (class) builtins.list[TypeVar[_T, ]][(class) ClassA]
 
 ---
 Line 23: bad3: "ClassA" | int  # E: Runtime error
@@ -131,144 +131,129 @@ Expr types in the line --->:
         1 => (class) int
 
 ---
-Line 38: def invalid_annotations(
+Line 41: def invalid_annotations(
 
 Expr types in the line --->:
-        invalid_annotations => (function) Callable[[pos: Unknown, pos: Unknown, pos: Unknown, pos: Unknown, pos: Unknown, pos: Unknown, pos: Unknown, pos: Unknown, pos: (class) int, pos: Unknown, pos: Unknown, pos: Unknown, pos: Unknown, pos: Unknown, pos: Module], Unknown]
+        invalid_annotations => (function) Callable (pos: Unknown, pos: Unknown, pos: Unknown, pos: Unknown, pos: Unknown, pos: Unknown, pos: Unknown, pos: Unknown, pos: (class) int, pos: (class) bool, pos: (class) int, pos: Unknown, pos: Unknown, pos: Unknown, pos: Module): Unknown
 
 ---
-Line 39:     p1: "eval(' '.join(map(chr, [105, 110, 116])))",  # E
+Line 42:     p1: "eval(' '.join(map(chr, [105, 110, 116])))",  # E
 
 Expr types in the line --->:
         p1: "eval(' '.join(map(chr, [105, 110, 116])))" => Unknown
         "eval(' '.join(map(chr, [105, 110, 116])))" => Unknown
 
 ---
-Line 40:     p2: "[int, str]",  # E
+Line 43:     p2: "[int, str]",  # E
 
 Expr types in the line --->:
         p2: "[int, str]" => Unknown
         "[int, str]" => Unknown
 
 ---
-Line 41:     p3: "(int, str)",  # E
+Line 44:     p3: "(int, str)",  # E
 
 Expr types in the line --->:
         p3: "(int, str)" => Unknown
         "(int, str)" => Unknown
 
 ---
-Line 42:     p4: "[int for i in range(1)]",  # E
+Line 45:     p4: "[int for i in range(1)]",  # E
 
 Expr types in the line --->:
         p4: "[int for i in range(1)]" => Unknown
         "[int for i in range(1)]" => Unknown
 
 ---
-Line 43:     p5: "{}",  # E
+Line 46:     p5: "{}",  # E
 
 Expr types in the line --->:
         p5: "{}" => Unknown
         "{}" => Unknown
 
 ---
-Line 44:     p6: "(lambda : int)()",  # E
+Line 47:     p6: "(lambda : int)()",  # E
 
 Expr types in the line --->:
         p6: "(lambda : int)()" => Unknown
         "(lambda : int)()" => Unknown
 
 ---
-Line 45:     p7: "[int][0]",  # E
+Line 48:     p7: "[int][0]",  # E
 
 Expr types in the line --->:
         p7: "[int][0]" => Unknown
         "[int][0]" => Unknown
 
 ---
-Line 46:     p8: "int if 1 < 3 else str",  # E
+Line 49:     p8: "int if 1 < 3 else str",  # E
 
 Expr types in the line --->:
         p8: "int if 1 < 3 else str" => Unknown
         "int if 1 < 3 else str" => Unknown
 
 ---
-Line 47:     p9: "var1",  # E
+Line 50:     p9: "var1",  # E
 
 Expr types in the line --->:
         p9: "var1" => (instance) int
         "var1" => (class) int
 
 ---
-Line 48:     p10: "True",  # E
+Line 51:     p10: "True",  # E
 
 Expr types in the line --->:
-        p10: "True" => Unknown
-        "True" => Unknown
+        p10: "True" => (instance) bool
+        "True" => (class) bool
 
 ---
-Line 49:     p11: "1",  # E
+Line 52:     p11: "1",  # E
 
 Expr types in the line --->:
-        p11: "1" => Unknown
-        "1" => Unknown
+        p11: "1" => (instance) int
+        "1" => (class) int
 
 ---
-Line 50:     p12: "-1",  # E
+Line 53:     p12: "-1",  # E
 
 Expr types in the line --->:
         p12: "-1" => Unknown
         "-1" => Unknown
 
 ---
-Line 51:     p13: "int or str",  # E
+Line 54:     p13: "int or str",  # E
 
 Expr types in the line --->:
         p13: "int or str" => Unknown
         "int or str" => Unknown
 
 ---
-Line 52:     p14: 'f"int"',  # E
+Line 55:     p14: 'f"int"',  # E
 
 Expr types in the line --->:
         p14: 'f"int"' => Unknown
         'f"int"' => Unknown
 
 ---
-Line 53:     p15: "types",  # E
+Line 56:     p15: "types",  # E
 
 Expr types in the line --->:
         p15: "types" => Module
         "types" => Module
 
 ---
-Line 63: class ClassB:
+Line 66: class ClassB:
 
 Expr types in the line --->:
         ClassB => (class) ClassB
 
 ---
-Line 64:     def method1(self) -> ClassB:  # E: Runtime error
+Line 67:     def method1(self) -> ClassB:  # E: Runtime error
 
 Expr types in the line --->:
-        method1 => (function) Callable[[pos: Unknown], (class) ClassB]
+        method1 => (function) Callable (pos: (class) ClassB): (class) ClassB
         self => (class) ClassB
         ClassB => (class) ClassB
-
----
-Line 65:         return ClassB()
-
-Expr types in the line --->:
-        ClassB => (class) ClassB
-        ClassB() => (class) ClassB
-
----
-Line 67:     def method2(self) -> "ClassB":  # OK
-
-Expr types in the line --->:
-        method2 => (function) Callable[[pos: Unknown], (class) ClassB]
-        self => (class) ClassB
-        "ClassB" => (class) str
 
 ---
 Line 68:         return ClassB()
@@ -278,56 +263,71 @@ Expr types in the line --->:
         ClassB() => (class) ClassB
 
 ---
-Line 71: class ClassC: ...
+Line 70:     def method2(self) -> "ClassB":  # OK
+
+Expr types in the line --->:
+        method2 => (function) Callable (pos: (class) ClassB): (class) ClassB
+        self => (class) ClassB
+        "ClassB" => (class) str
+
+---
+Line 71:         return ClassB()
+
+Expr types in the line --->:
+        ClassB => (class) ClassB
+        ClassB() => (class) ClassB
+
+---
+Line 74: class ClassC: ...
 
 Expr types in the line --->:
         ClassC => (class) ClassC
         ... => Any
 
 ---
-Line 74: class ClassD:
+Line 77: class ClassD:
 
 Expr types in the line --->:
         ClassD => (class) ClassD
 
 ---
-Line 82:     def int(self) -> None:  # OK
+Line 85:     def int(self) -> None:  # OK
 
 Expr types in the line --->:
-        int => (function) Callable[[pos: Unknown], None]
+        int => (function) Callable (pos: (class) ClassD): None
         self => (class) ClassD
         None => None
 
 ---
-Line 83:         ...
+Line 86:         ...
 
 Expr types in the line --->:
         ... => Any
 
 ---
-Line 85:     x: "int" = 0  # OK
+Line 88:     x: "int" = 0  # OK
 
 Expr types in the line --->:
-        x => (function) Callable[[pos: Unknown], None]
+        x => (function) Callable (pos: (class) ClassD): None
         0 => (class) int
 
 ---
-Line 87:     y: int = 0  # E: Refers to local int, which isn't a legal type expression
+Line 90:     y: int = 0  # E: Refers to local int, which isn't a legal type expression
 
 Expr types in the line --->:
-        y => (function) Callable[[pos: Unknown], None]
+        y => (function) Callable (pos: (class) ClassD): None
         0 => (class) int
 
 ---
-Line 89:     def __init__(self) -> None:
+Line 92:     def __init__(self) -> None:
 
 Expr types in the line --->:
-        __init__ => (function) Callable[[pos: Unknown], None]
+        __init__ => (function) Callable (pos: (class) ClassD): None
         self => (class) ClassD
         None => None
 
 ---
-Line 90:         self.ClassC = ClassC()
+Line 93:         self.ClassC = ClassC()
 
 Expr types in the line --->:
         self => (class) ClassD
@@ -336,27 +336,27 @@ Expr types in the line --->:
         ClassC() => (class) ClassC
 
 ---
-Line 93: assert_type(ClassD.str, str)
+Line 96: assert_type(ClassD.str, str)
 
 Expr types in the line --->:
-        assert_type => (function) Callable[[pos: TypeVar[_T, ], pos: (class) object], TypeVar[_T, ]]
+        assert_type => (function) Callable (pos: TypeVar[_T, ], pos: (class) object): TypeVar[_T, ]
         assert_type(ClassD.str, str) => Unknown
         ClassD => (class) ClassD
         ClassD.str => Unknown
         str => (class) str
 
 ---
-Line 94: assert_type(ClassD.x, int)
+Line 97: assert_type(ClassD.x, int)
 
 Expr types in the line --->:
-        assert_type => (function) Callable[[pos: TypeVar[_T, ], pos: (class) object], TypeVar[_T, ]]
-        assert_type(ClassD.x, int) => (function) Callable[[pos: Unknown], None]
+        assert_type => (function) Callable (pos: TypeVar[_T, ], pos: (class) object): TypeVar[_T, ]
+        assert_type(ClassD.x, int) => (function) Callable (pos: (class) ClassD): None
         ClassD => (class) ClassD
-        ClassD.x => (function) Callable[[pos: Unknown], None]
-        int => (function) Callable[[pos: Unknown], None]
+        ClassD.x => (function) Callable (pos: (class) ClassD): None
+        int => (function) Callable (pos: (class) ClassD): None
 
 ---
-Line 101: value: """
+Line 104: value: """
 
 Expr types in the line --->:
         value => Unknown

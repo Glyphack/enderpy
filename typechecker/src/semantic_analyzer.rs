@@ -72,6 +72,7 @@ impl<'a> SemanticAnalyzer<'a> {
         target: &Expression,
         value: Option<Expression>,
         type_annotation: Option<Expression>,
+        for_stmt: Option<parser::ast::For>,
     ) {
         match target {
             Expression::Name(n) => {
@@ -85,6 +86,7 @@ impl<'a> SemanticAnalyzer<'a> {
                     type_annotation,
                     inferred_type_source: value,
                     is_constant: false,
+                    for_target: for_stmt,
                 });
 
                 let mut symbol_flags = SymbolFlags::empty();
@@ -100,6 +102,7 @@ impl<'a> SemanticAnalyzer<'a> {
                         elm,
                         value.clone(),
                         type_annotation.clone(),
+                        for_stmt.clone(),
                     )
                 }
             }
@@ -122,6 +125,7 @@ impl<'a> SemanticAnalyzer<'a> {
                         type_annotation,
                         inferred_type_source: value,
                         is_constant: false,
+                        for_target: for_stmt,
                     });
 
                     self.create_symbol(a.attr.clone(), declaration, symbol_flags);
@@ -167,10 +171,7 @@ impl<'a> SemanticAnalyzer<'a> {
 
             let default_value = args
                 .defaults
-                .get(
-                    defaults_len
-                        .wrapping_sub(args.posonlyargs.len().wrapping_sub(index).wrapping_sub(1)),
-                )
+                .get(defaults_len.wrapping_sub(args.args.len().wrapping_sub(index).wrapping_sub(1)))
                 .cloned();
 
             let flags = SymbolFlags::empty();
@@ -398,7 +399,7 @@ impl<'a> TraversalVisitor for SemanticAnalyzer<'a> {
     }
 
     fn visit_for(&mut self, f: &parser::ast::For) {
-        self.create_variable_declaration_symbol(&f.target, Some(f.iter.clone()), None);
+        self.create_variable_declaration_symbol(&f.target, None, None, Some(f.clone()));
         for stmt in &f.body {
             self.visit_stmt(stmt);
         }
@@ -766,7 +767,7 @@ impl<'a> TraversalVisitor for SemanticAnalyzer<'a> {
             .targets
             .last()
             .expect("Assignment has at least one target");
-        self.create_variable_declaration_symbol(target, Some(value.clone()), None);
+        self.create_variable_declaration_symbol(target, Some(value.clone()), None, None);
 
         self.visit_expr(&assign.value);
     }
@@ -774,7 +775,12 @@ impl<'a> TraversalVisitor for SemanticAnalyzer<'a> {
     fn visit_ann_assign(&mut self, a: &parser::ast::AnnAssign) {
         let value = &a.value;
         let target = &a.target;
-        self.create_variable_declaration_symbol(target, value.clone(), Some(a.annotation.clone()));
+        self.create_variable_declaration_symbol(
+            target,
+            value.clone(),
+            Some(a.annotation.clone()),
+            None,
+        );
 
         if let Some(val) = &a.value {
             self.visit_expr(val);
@@ -818,6 +824,7 @@ pub struct MemberAccessInfo {}
 pub fn get_member_access_info(
     symbol_table: &SymbolTable,
     value: &parser::ast::Expression,
+    //TODO: This is option to use the `?` operator. Remove it
 ) -> Option<bool> {
     let name = value.as_name()?;
 
