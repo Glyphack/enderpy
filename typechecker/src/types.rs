@@ -1,7 +1,6 @@
-use is_macro::Is;
-use std::fmt::Display;
-
 use crate::symbol_table::{self, Id};
+use is_macro::Is;
+use std::fmt::{self, Display};
 
 #[derive(Debug, Clone, PartialEq, Eq, Is)]
 pub enum PythonType {
@@ -26,6 +25,7 @@ pub enum PythonType {
     Callable(Box<CallableType>),
     Coroutine(Box<CoroutineType>),
     Class(ClassType),
+    Instance(InstanceType),
     Optional(Box<PythonType>),
     Never,
     TypeVar(TypeVar),
@@ -88,9 +88,61 @@ pub enum AnySource {
 #[derive(Debug, Clone)]
 pub struct CallableType {
     pub name: String,
-    pub signature: Vec<PythonType>,
+    pub signature: Vec<CallableArgs>,
     pub return_type: PythonType,
     pub is_async: bool,
+}
+
+impl Display for CallableType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let signature_str = self
+            .signature
+            .iter()
+            .map(|arg| arg.to_string())
+            .collect::<Vec<String>>()
+            .join(", ");
+        let fmt = format!(
+            "(function) Callable ({}): {}",
+            signature_str, self.return_type
+        );
+        return write!(f, "{}", fmt);
+    }
+}
+
+#[derive(Debug, Clone)]
+pub enum CallableArgs {
+    PositionalOnly(PythonType),
+    Positional(PythonType),
+    Keyword(PythonType),
+    Args(PythonType),
+    KwArgs(PythonType),
+    WithDefault(PythonType),
+}
+
+impl fmt::Display for CallableArgs {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            CallableArgs::PositionalOnly(ty) => write!(f, "pos_only: {}", ty),
+            CallableArgs::Positional(ty) => write!(f, "pos: {}", ty),
+            CallableArgs::Keyword(ty) => write!(f, "kw_only: {}", ty),
+            CallableArgs::Args(ty) => write!(f, "*args: {}", ty),
+            CallableArgs::KwArgs(ty) => write!(f, "**kwargs: {}", ty),
+            CallableArgs::WithDefault(ty) => write!(f, "kw_default: {} = ...", ty),
+        }
+    }
+}
+
+impl CallableArgs {
+    pub fn get_type(&self) -> &PythonType {
+        match &self {
+            CallableArgs::Args(python_type) => python_type,
+            CallableArgs::PositionalOnly(python_type) => python_type,
+            CallableArgs::Positional(python_type) => python_type,
+            CallableArgs::Keyword(python_type) => python_type,
+            CallableArgs::KwArgs(python_type) => python_type,
+            CallableArgs::WithDefault(python_type) => python_type,
+        }
+    }
 }
 
 impl Eq for CallableType {}
@@ -98,7 +150,7 @@ impl Eq for CallableType {}
 impl CallableType {
     pub fn new(
         name: String,
-        signature: Vec<PythonType>,
+        signature: Vec<CallableArgs>,
         return_type: PythonType,
         is_async: bool,
     ) -> Self {
@@ -138,12 +190,11 @@ pub struct ClassType {
     /// The class details from the symbol table
     pub details: symbol_table::Class,
     // to represent types like `List[Int]`
+    // NOTE: This can only be type var
     pub type_parameters: Vec<PythonType>,
-    // Whether this class is an instance or the class itself.
-    // This is determined based on:
-    // 1. If the type is inferred from annotation of a parameter or variable that is an instance
-    // 2. If the type is inferred from a class node then it's an instance
-    pub is_instance: bool,
+    // If the parameters are specialized this filed is filled.
+    // This can happen when creating a class with another type var
+    pub specialized: Vec<PythonType>,
     // What types are allowed as base classes?
     pub base_classes: Vec<ClassType>,
 }
@@ -152,14 +203,14 @@ impl ClassType {
     pub fn new(
         details: symbol_table::Class,
         type_parameters: Vec<PythonType>,
-        is_instance: bool,
         base_classes: Vec<ClassType>,
+        specialized: Vec<PythonType>,
     ) -> Self {
         Self {
             details,
             type_parameters,
-            is_instance,
             base_classes,
+            specialized,
         }
     }
 
@@ -180,7 +231,71 @@ impl PartialEq for ClassType {
     }
 }
 
+impl Display for ClassType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let args_str = self
+            .type_parameters
+            .iter()
+            .map(|arg| arg.to_string())
+            .collect::<Vec<String>>()
+            .join(", ");
+        let specialized = self
+            .specialized
+            .iter()
+            .map(|arg| arg.to_string())
+            .collect::<Vec<String>>()
+            .join(", ");
+        let fmt = if args_str.is_empty() && specialized.is_empty() {
+            format!("(class) {}", self.details.name.clone())
+        } else {
+            format!(
+                "(class) {}[{}][{}]",
+                self.details.qual_name, args_str, specialized
+            )
+        };
+        write!(f, "{}", fmt)
+    }
+}
+
 impl Eq for ClassType {}
+
+#[allow(unused)]
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct InstanceType {
+    pub class_type: ClassType,
+    // to represent types like `List[Int]`
+    // TODO: Need to set unspecified type parameters to any
+    pub specialized_type_parameters: Vec<PythonType>,
+}
+
+impl InstanceType {
+    pub fn new(class: ClassType, type_parameters: Vec<PythonType>) -> Self {
+        Self {
+            class_type: class,
+            specialized_type_parameters: type_parameters,
+        }
+    }
+}
+
+impl Display for InstanceType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let args_str = self
+            .specialized_type_parameters
+            .iter()
+            .map(|arg| arg.to_string())
+            .collect::<Vec<String>>()
+            .join(", ");
+        let fmt = if args_str.is_empty() {
+            format!("(instance) {}", self.class_type.details.name.clone())
+        } else {
+            format!(
+                "(instance) {}[{}]",
+                self.class_type.details.qual_name, args_str
+            )
+        };
+        return write!(f, "{}", fmt);
+    }
+}
 
 #[derive(Debug, Eq, Clone)]
 pub struct TypeVar {
@@ -211,7 +326,7 @@ pub enum LiteralValue {
 }
 
 impl Display for LiteralValue {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let value_str = match self {
             LiteralValue::Bool(b) => b.to_string(),
             LiteralValue::Int(i) => i.to_string(),
@@ -236,24 +351,14 @@ pub struct ModuleRef {
 }
 
 impl Display for PythonType {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let type_str = match self {
             PythonType::None => "None",
             PythonType::Any => "Any",
             PythonType::Module(_) => "Module",
             PythonType::Unknown => "Unknown",
             PythonType::Callable(callable_type) => {
-                let signature_str = callable_type
-                    .signature
-                    .iter()
-                    .map(|arg| arg.to_string())
-                    .collect::<Vec<String>>()
-                    .join(", ");
-                let fmt = format!(
-                    "(function) Callable[[{}], {}]",
-                    signature_str, callable_type.return_type
-                );
-                return write!(f, "{}", fmt);
+                return write!(f, "{}", callable_type);
             }
             PythonType::Coroutine(callable_type) => {
                 let fmt = format!(
@@ -263,18 +368,10 @@ impl Display for PythonType {
                 return write!(f, "{}", fmt);
             }
             PythonType::Class(class_type) => {
-                let args_str = class_type
-                    .type_parameters
-                    .iter()
-                    .map(|arg| arg.to_string())
-                    .collect::<Vec<String>>()
-                    .join(", ");
-                let fmt = if args_str.is_empty() {
-                    format!("(class) {}", class_type.details.name.clone())
-                } else {
-                    format!("(class) {}[{}]", class_type.details.qual_name, args_str)
-                };
-                return write!(f, "{}", fmt);
+                return write!(f, "{class_type}");
+            }
+            PythonType::Instance(class_type) => {
+                return write!(f, "{class_type}");
             }
             PythonType::Never => "Never",
             PythonType::KnownValue(value) => {

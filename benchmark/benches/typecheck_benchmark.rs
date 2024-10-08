@@ -46,11 +46,10 @@ fn list_python_files(dir: &str) -> Vec<String> {
     let mut paths = Vec::new();
     if let Ok(entries) = fs::read_dir(dir) {
         for entry in entries {
-            if let Ok(entry) = entry {
-                let path = entry.path();
-                if path.extension() == Some(std::ffi::OsStr::new("py")) {
-                    paths.push(path.to_string_lossy().into_owned());
-                }
+            let Ok(entry) = entry else { continue };
+            let path = entry.path();
+            if path.extension() == Some(std::ffi::OsStr::new("py")) {
+                paths.push(path.to_string_lossy().into_owned());
             }
         }
     }

@@ -7,7 +7,7 @@ use std::io::Write;
 
 use crate::runpython::{default_python_path, spawn_python_script_command};
 use enderpy_python_parser::parser::compat::AsPythonCompat;
-use enderpy_python_parser::Parser;
+use enderpy_python_parser::parser::parser::Parser;
 use tabled::{
     builder::Builder,
     settings::peaker::PriorityMax,

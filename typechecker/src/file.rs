@@ -6,7 +6,7 @@ use std::sync::Arc;
 use crate::ast_visitor::TraversalVisitor;
 use enderpy_python_parser as parser;
 use enderpy_python_parser::ast::*;
-use parser::{ast, get_row_col_position, Parser};
+use parser::{ast, get_row_col_position, parser::parser::Parser};
 use std::sync::atomic::Ordering;
 
 use crate::build::ResolvedImports;

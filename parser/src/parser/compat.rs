@@ -1,7 +1,7 @@
 #![allow(clippy::all, unused_variables)]
 
 use crate::ast::*;
-use crate::Parser;
+use crate::parser::parser::Parser;
 use serde_json::Number;
 use serde_json::{json, Value};
 use std::str::FromStr;

@@ -16,6 +16,8 @@ pub type BenchmarkGroup<'a> = criterion::BenchmarkGroup<'a, measurement::WallTim
 #[cfg(feature = "codspeed")]
 pub use codspeed_criterion_compat::*;
 
+use self::parser::parser::Parser;
+
 fn try_download(path: &str, url: &str) -> String {
     let client = Client::new();
     let mut response = client.get(url).send().unwrap();

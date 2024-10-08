@@ -3,6 +3,8 @@ use std::{
     path::{Path, PathBuf},
     sync::Arc,
 };
+use tracing::{span, Level};
+use tracing_subscriber::EnvFilter;
 
 use dashmap::DashMap;
 use env_logger::Builder;
@@ -35,14 +37,10 @@ impl<'a> BuildManager {
     pub fn new(settings: Settings) -> Self {
         let mut builder = Builder::new();
 
-        let log_level = match std::env::var("DEBUG") {
-            Ok(_) => log::LevelFilter::Debug,
-            _ => log::LevelFilter::Info,
-        };
-
-        builder
-            .filter(None, log_level)
-            .format_timestamp(None)
+        tracing_subscriber::fmt()
+            .with_env_filter(EnvFilter::from_default_env())
+            .with_ansi(false)
+            .pretty()
             .try_init();
 
         let mut modules = DashMap::new();
@@ -109,6 +107,8 @@ impl<'a> BuildManager {
     pub fn type_check(&self, path: &Path) -> TypeChecker {
         let mut module_to_check = self.get_state(path);
 
+        let span = span!(Level::TRACE, "type check", path = %path.display());
+        let _guard = span.enter();
         let mut checker = TypeChecker::new(
             self.get_symbol_table(path),
             &self.symbol_tables,

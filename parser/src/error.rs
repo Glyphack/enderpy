@@ -1,7 +1,7 @@
 use miette::Diagnostic;
 use thiserror::Error;
 
-use crate::Parser;
+use crate::parser::parser::Parser;
 
 #[derive(Error, Diagnostic, Debug, Clone)]
 pub enum ParsingError {

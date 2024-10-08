@@ -60,16 +60,26 @@ impl<'a> TypeChecker<'a> {
         t
     }
 
+    fn infer_annotation_type(&mut self, expr: &Expression) -> PythonType {
+        let t =
+            self.type_evaluator
+                .get_annotation_type(expr, &self.type_evaluator.symbol_table, None);
+
+        self.types.insert(Interval {
+            start: expr.get_node().start,
+            stop: expr.get_node().end,
+            val: t.clone(),
+        });
+        t
+    }
+
     fn infer_name_type(&mut self, name: &str, start: u32, stop: u32) {
-        let name_type = self
-            .type_evaluator
-            .get_name_type(
-                name,
-                None,
-                &self.type_evaluator.symbol_table,
-                Some(self.type_evaluator.symbol_table.current_scope_id),
-            )
-            .unwrap_or(PythonType::Unknown);
+        let name_type = self.type_evaluator.get_name_type(
+            name,
+            None,
+            &self.type_evaluator.symbol_table,
+            Some(self.type_evaluator.symbol_table.current_scope_id),
+        );
         self.types.insert(Interval {
             start,
             stop,
@@ -204,6 +214,7 @@ impl<'a> TraversalVisitor for TypeChecker<'a> {
 
     fn visit_for(&mut self, f: &parser::ast::For) {
         self.visit_expr(&f.iter);
+        self.visit_expr(&f.target);
         for stmt in &f.body {
             self.visit_stmt(stmt);
         }
@@ -263,6 +274,7 @@ impl<'a> TraversalVisitor for TypeChecker<'a> {
     }
 
     fn visit_function_def(&mut self, f: &Arc<parser::ast::FunctionDef>) {
+        self.type_evaluator.symbol_table.set_scope(f.node.start);
         self.infer_name_type(
             &f.name,
             f.node.start + 4,
@@ -271,13 +283,12 @@ impl<'a> TraversalVisitor for TypeChecker<'a> {
         if let Some(ret_type) = &f.returns {
             self.visit_expr(ret_type);
         }
-        self.type_evaluator.symbol_table.set_scope(f.node.start);
         for stmt in &f.body {
             self.visit_stmt(stmt);
         }
         for (arg, _index) in f.args.args.iter().zip(0..) {
             if let Some(annotation) = &arg.annotation {
-                self.infer_expr_type(annotation);
+                self.infer_annotation_type(annotation);
             }
             self.infer_name_type(&arg.arg, arg.node.start, arg.node.end)
         }
@@ -285,12 +296,12 @@ impl<'a> TraversalVisitor for TypeChecker<'a> {
     }
 
     fn visit_async_function_def(&mut self, f: &Arc<parser::ast::AsyncFunctionDef>) {
+        self.type_evaluator.symbol_table.set_scope(f.node.start);
         self.infer_name_type(
             &f.name,
             f.node.start + 9,
             f.node.start + 9 + f.name.len() as u32,
         );
-        self.type_evaluator.symbol_table.set_scope(f.node.start);
         for stmt in &f.body {
             self.visit_stmt(stmt);
         }
@@ -648,7 +659,8 @@ mod tests {
                 }
             }
             let source_text = &module.source[r.start as usize..r.stop as usize];
-            str.push_str(&format!("        {} => {}\n", source_text, r.val))
+            let eval_result = format!("        {} => {}\n", source_text, r.val);
+            str.push_str(&eval_result);
         }
         str.push_str("\n---\n");
 
@@ -682,7 +694,10 @@ mod tests {
     }
 
     type_eval_test!(basic_types, "test_data/inputs/basic_types.py");
-    type_eval_test!(basic_generics, "test_data/inputs/basic_generics.py");
+    type_eval_test!(
+        generics_basic,
+        "test_data/inputs/conformance_tests/generics_basic.py"
+    );
     type_eval_test!(import_star_lookup, "test_data/inputs/import_star_test/a.py");
     type_eval_test!(
         annotations_coroutine,
