@@ -14,7 +14,7 @@ use crate::{
     get_row_col_position,
     lexer::Lexer,
     parser::{ast::*, extract_string_inside},
-    token::{Kind, Token, TokenValue},
+    token::{Kind, Token},
 };
 
 #[derive(Debug, Clone)]
@@ -47,7 +47,7 @@ impl<'a> Parser<'a> {
             _ => {}
         }
         let identifiers_offset = if cur_token.kind == Kind::Identifier {
-            vec![(cur_token.start, cur_token.end, cur_token.value.to_string())]
+            vec![(cur_token.start, cur_token.end, cur_token.to_string(source))]
         } else {
             vec![]
         };
@@ -155,8 +155,11 @@ impl<'a> Parser<'a> {
     fn advance(&mut self, count_in_offset: bool) {
         let token = self.lexer.next_token();
         if token.kind == Kind::Identifier {
-            self.identifiers_start_offset
-                .push((token.start, token.end, token.value.to_string()));
+            self.identifiers_start_offset.push((
+                token.start,
+                token.end,
+                token.to_string(self.source),
+            ));
         }
 
         match token.kind {
@@ -246,10 +249,7 @@ impl<'a> Parser<'a> {
             Kind::Global => self.parse_global_statement(),
             Kind::Nonlocal => self.parse_nonlocal_statement(),
             _ => {
-                if self.cur_kind() == Kind::Identifier
-                    && self.cur_token().value == TokenValue::Type
-                    && self.peek_kind()? == Kind::Identifier
-                {
+                if self.cur_kind() == Kind::Type && self.peek_kind()? == Kind::Identifier {
                     self.parse_type_alias_statement()
                 } else if self.cur_kind() == Kind::Indent {
                     let node = self.start_node();
@@ -299,9 +299,7 @@ impl<'a> Parser<'a> {
             Kind::Class => self.parse_class_definition(vec![], None),
             // match is a soft keyword
             // https://docs.python.org/3/reference/lexical_analysis.html#soft-keywords
-            Kind::Identifier if self.cur_token().value == TokenValue::Match => {
-                self.parse_match_statement()
-            }
+            Kind::Match => self.parse_match_statement(),
             Kind::Async => {
                 if matches!(self.peek_kind(), Ok(Kind::Def)) {
                     let node = self.start_node();
@@ -581,7 +579,7 @@ impl<'a> Parser<'a> {
                 None
             };
             let name = if self.eat(Kind::As) {
-                let val = Some(self.cur_token().value.to_string());
+                let val = Some(self.cur_token().to_string(self.source));
                 self.bump(Kind::Identifier);
                 val
             } else {
@@ -608,7 +606,7 @@ impl<'a> Parser<'a> {
         decorators: Vec<Expression>,
         is_async: bool,
     ) -> Result<Statement, ParsingError> {
-        let name = self.cur_token().value.to_string();
+        let name = self.cur_token().to_string(self.source);
         self.expect(Kind::Identifier)?;
         let type_params = if self.at(Kind::LeftBrace) {
             self.parse_type_parameters()?
@@ -686,7 +684,7 @@ impl<'a> Parser<'a> {
             self.start_node()
         };
         self.expect(Kind::Class)?;
-        let name = self.cur_token().value.to_string();
+        let name = self.cur_token().to_string(self.source);
         self.expect(Kind::Identifier)?;
         let type_params = if self.at(Kind::LeftBrace) {
             self.parse_type_parameters()?
@@ -823,7 +821,7 @@ impl<'a> Parser<'a> {
 
         if self.at(Kind::As) {
             let node = self.start_node();
-            let name = Some(self.cur_token().value.to_string());
+            let name = Some(self.cur_token().to_string(self.source));
             self.bump(Kind::As);
             Ok(MatchPattern::MatchAs(Box::new(MatchAs {
                 node: self.finish_node(node),
@@ -934,7 +932,7 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_capture_or_wildcard_pattern(&mut self) -> Result<MatchPattern, ParsingError> {
-        let capture_value = self.cur_token().value.to_string();
+        let capture_value = self.cur_token().to_string(self.source);
         let node = self.start_node();
         self.expect(Kind::Identifier)?;
         // TODO: should also accept as?
@@ -972,7 +970,7 @@ impl<'a> Parser<'a> {
     // in contrast to attribute parsing in primary expression
     fn parse_attr(&mut self) -> Result<Expression, ParsingError> {
         let node = self.start_node();
-        let id = self.cur_token.value.take_string();
+        let id = self.cur_token.to_string(self.source);
         let mut expr = Ok(Expression::Name(Box::new(Name {
             node: self.finish_node(node),
             id,
@@ -980,7 +978,7 @@ impl<'a> Parser<'a> {
         })));
         self.expect(Kind::Identifier);
         while self.eat(Kind::Dot) {
-            let attr_val = self.cur_token().value.to_string();
+            let attr_val = self.cur_token().to_string(self.source);
             self.expect(Kind::Identifier)?;
             expr = Ok(Expression::Attribute(Box::new(Attribute {
                 node: self.finish_node(node),
@@ -1011,7 +1009,7 @@ impl<'a> Parser<'a> {
                 break;
             }
             if self.eat(Kind::Pow) {
-                rest = Some(self.cur_token().value.to_string());
+                rest = Some(self.cur_token().to_string(self.source));
                 self.bump(Kind::Identifier);
                 // consume the trailing comma
                 self.bump(Kind::Comma);
@@ -1068,7 +1066,7 @@ impl<'a> Parser<'a> {
 
             if self.at(Kind::Identifier) && matches!(self.peek_kind(), Ok(Kind::Assign)) {
                 seen_keyword_pattern = true;
-                kwd_attrs.push(self.cur_token().value.to_string());
+                kwd_attrs.push(self.cur_token().to_string(self.source));
                 self.bump(Kind::Identifier);
                 self.bump(Kind::Assign);
                 kwd_patterns.push(self.parse_pattern()?);
@@ -1399,7 +1397,7 @@ impl<'a> Parser<'a> {
         self.bump(Kind::Global);
         let mut names = vec![];
         while self.at(Kind::Identifier) {
-            let name = self.cur_token().value.to_string();
+            let name = self.cur_token().to_string(self.source);
             names.push(name);
             self.bump(Kind::Identifier);
             if !self.eat(Kind::Comma) {
@@ -1418,7 +1416,7 @@ impl<'a> Parser<'a> {
         self.bump(Kind::Nonlocal);
         let mut names = vec![];
         while self.at(Kind::Identifier) {
-            let name = self.cur_token().value.to_string();
+            let name = self.cur_token().to_string(self.source);
             names.push(name);
             self.bump(Kind::Identifier);
             if !self.eat(Kind::Comma) {
@@ -1462,7 +1460,7 @@ impl<'a> Parser<'a> {
         if self.eat(Kind::LeftParen) {
             while self.at(Kind::Identifier) {
                 let alias_name = self.start_node();
-                let name = self.cur_token().value.to_string();
+                let name = self.cur_token().to_string(self.source);
                 self.bump(Kind::Identifier);
                 let asname = self.parse_alias(name, alias_name);
                 aliases.push(asname);
@@ -1474,7 +1472,7 @@ impl<'a> Parser<'a> {
         } else if self.at(Kind::Identifier) {
             while self.at(Kind::Identifier) {
                 let alias_name = self.start_node();
-                let name = self.cur_token().value.to_string();
+                let name = self.cur_token().to_string(self.source);
                 self.bump(Kind::Identifier);
                 let asname = self.parse_alias(name, alias_name);
                 aliases.push(asname);
@@ -1503,7 +1501,7 @@ impl<'a> Parser<'a> {
 
     fn parse_alias(&mut self, name: String, node: Node) -> Alias {
         let asname = if self.eat(Kind::As) {
-            let alias_name = self.cur_token().value.to_string();
+            let alias_name = self.cur_token().to_string(self.source);
             self.bump(Kind::Identifier);
             Some(alias_name)
         } else {
@@ -1534,11 +1532,11 @@ impl<'a> Parser<'a> {
         }
         let mut module = String::from("");
         if self.at(Kind::Identifier) {
-            module += &self.cur_token().value.to_string();
+            module += &self.cur_token().to_string(self.source);
             self.bump_any();
             while self.eat(Kind::Dot) {
                 module.push('.');
-                module.push_str(self.cur_token().value.to_string().as_str());
+                module.push_str(self.cur_token().as_str(self.source));
                 self.expect(Kind::Identifier);
             }
         }
@@ -1595,7 +1593,7 @@ impl<'a> Parser<'a> {
         let node = self.start_node();
         // TODO: Maybe this walrus check is redundant
         if self.at(Kind::Identifier) && matches!(self.peek_kind()?, Kind::Walrus) {
-            let identifier = self.cur_token().value.to_string();
+            let identifier = self.cur_token().to_string(self.source);
             let mut identifier_node = self.start_node();
             self.bump_any();
             identifier_node = self.finish_node(identifier_node);
@@ -1777,7 +1775,7 @@ impl<'a> Parser<'a> {
                     self.parse_attribute_ref(node, atom)?
                 }
                 _ => {
-                    let identifier = self.cur_token().value.to_string();
+                    let identifier = self.cur_token().to_string(self.source);
                     let mut identifier_node = self.start_node();
                     identifier_node = self.finish_node(identifier_node);
                     self.expect(Kind::Identifier)?;
@@ -2438,7 +2436,7 @@ impl<'a> Parser<'a> {
     ) -> Result<Expression, ParsingError> {
         let mut expr = Ok(value);
         while self.eat(Kind::Dot) {
-            let attr_val = self.cur_token().value.to_string();
+            let attr_val = self.cur_token().to_string(self.source);
             self.expect(Kind::Identifier)?;
             expr = Ok(Expression::Attribute(Box::new(Attribute {
                 node: self.finish_node(node),
@@ -2490,7 +2488,7 @@ impl<'a> Parser<'a> {
             let start = self.start_node();
             let mut expr = match self.cur_kind() {
                 Kind::Identifier => {
-                    let val = self.cur_token.value.take_string();
+                    let val = self.cur_token.to_string(self.source);
                     self.bump_any();
                     Expression::Name(Box::new(Name {
                         node: self.finish_node(start),
@@ -2499,7 +2497,7 @@ impl<'a> Parser<'a> {
                     }))
                 }
                 Kind::Integer => {
-                    let val = self.cur_token.value.take_string();
+                    let val = self.cur_token.to_string(self.source);
                     self.bump_any();
                     Expression::Constant(Box::new(Constant {
                         node: self.finish_node(start),
@@ -2528,7 +2526,7 @@ impl<'a> Parser<'a> {
                     }))
                 }
                 Kind::ImaginaryInteger => {
-                    let val = self.cur_token.value.take_string();
+                    let val = self.cur_token.to_string(self.source);
                     self.bump_any();
                     Expression::Constant(Box::new(Constant {
                         node: self.finish_node(start),
@@ -2539,10 +2537,9 @@ impl<'a> Parser<'a> {
                     }))
                 }
                 Kind::Bytes => {
-                    let val = self.cur_token.value.take_string();
+                    let val = self.cur_token.to_string(self.source);
                     let bytes_val = extract_string_inside(
-                        val.to_string()
-                            .strip_prefix('b')
+                        val.strip_prefix('b')
                             .expect("bytes literal must start with b")
                             .to_string(),
                     )
@@ -2554,8 +2551,8 @@ impl<'a> Parser<'a> {
                     }))
                 }
                 Kind::StringLiteral => {
-                    let val = self.cur_token.value.take_string();
-                    let string_val = extract_string_inside(val.to_string());
+                    let val = self.cur_token.to_string(self.source);
+                    let string_val = extract_string_inside(val);
                     self.bump_any();
                     Expression::Constant(Box::new(Constant {
                         node: self.finish_node(start),
@@ -2564,11 +2561,10 @@ impl<'a> Parser<'a> {
                 }
 
                 Kind::RawBytes => {
-                    let val = self.cur_token.value.take_string();
+                    let val = self.cur_token.to_string(self.source);
                     // rb or br appear in the beginning of raw bytes
                     let bytes_val =
-                        extract_string_inside(val.to_string().chars().skip(2).collect::<String>())
-                            .into_bytes();
+                        extract_string_inside(val.chars().skip(2).collect::<String>()).into_bytes();
                     self.bump_any();
                     Expression::Constant(Box::new(Constant {
                         node: self.finish_node(start),
@@ -2584,7 +2580,7 @@ impl<'a> Parser<'a> {
                     }))
                 }
                 Kind::PointFloat => {
-                    let val = self.cur_token.value.take_string();
+                    let val = self.cur_token.to_string(self.source);
                     self.bump_any();
                     Expression::Constant(Box::new(Constant {
                         node: self.finish_node(start),
@@ -2592,7 +2588,7 @@ impl<'a> Parser<'a> {
                     }))
                 }
                 Kind::ExponentFloat => {
-                    let val = self.cur_token.value.take_string();
+                    let val = self.cur_token.to_string(self.source);
                     self.bump_any();
                     Expression::Constant(Box::new(Constant {
                         node: self.finish_node(start),
@@ -2600,7 +2596,7 @@ impl<'a> Parser<'a> {
                     }))
                 }
                 Kind::ImaginaryPointFloat => {
-                    let val = self.cur_token.value.take_string();
+                    let val = self.cur_token.to_string(self.source);
                     self.bump_any();
                     Expression::Constant(Box::new(Constant {
                         node: self.finish_node(start),
@@ -2611,7 +2607,7 @@ impl<'a> Parser<'a> {
                     }))
                 }
                 Kind::ImaginaryExponentFloat => {
-                    let val = self.cur_token.value.take_string();
+                    let val = self.cur_token.to_string(self.source);
                     self.bump_any();
                     Expression::Constant(Box::new(Constant {
                         node: self.finish_node(start),
@@ -2630,7 +2626,7 @@ impl<'a> Parser<'a> {
                 }
                 // TODO: is there something for octal and Hexadecimal?
                 Kind::Octal => {
-                    let val = self.cur_token.value.take_string();
+                    let val = self.cur_token.to_string(self.source);
                     self.bump_any();
                     Expression::Constant(Box::new(Constant {
                         node: self.finish_node(start),
@@ -2638,7 +2634,7 @@ impl<'a> Parser<'a> {
                     }))
                 }
                 Kind::Hexadecimal => {
-                    let val = self.cur_token.value.take_string();
+                    let val = self.cur_token.to_string(self.source);
                     self.bump_any();
                     Expression::Constant(Box::new(Constant {
                         node: self.finish_node(start),
@@ -2648,7 +2644,7 @@ impl<'a> Parser<'a> {
                 _ => {
                     let line = self.get_offset_line_number(start.start);
                     let kind = self.cur_kind();
-                    let value = self.cur_token().value.to_string();
+                    let value = self.cur_token().to_string(self.source);
                     panic!("token {kind:?} {value:?} {start:?} is not atom");
                 }
             };
@@ -2663,7 +2659,7 @@ impl<'a> Parser<'a> {
                         let start = self.start_node();
                         let next_str = match self.cur_kind() {
                             Kind::Identifier => {
-                                let val = self.cur_token().value.to_string();
+                                let val = self.cur_token().to_string(self.source);
                                 self.bump_any();
                                 Expression::Name(Box::new(Name {
                                     node: self.finish_node(start),
@@ -2672,7 +2668,7 @@ impl<'a> Parser<'a> {
                                 }))
                             }
                             Kind::Integer => {
-                                let val = self.cur_token().value.to_string();
+                                let val = self.cur_token().to_string(self.source);
                                 self.bump_any();
                                 Expression::Constant(Box::new(Constant {
                                     node: self.finish_node(start),
@@ -2701,7 +2697,7 @@ impl<'a> Parser<'a> {
                                 }))
                             }
                             Kind::ImaginaryInteger => {
-                                let val = self.cur_token().value.to_string();
+                                let val = self.cur_token().to_string(self.source);
                                 self.bump_any();
                                 Expression::Constant(Box::new(Constant {
                                     node: self.finish_node(start),
@@ -2712,10 +2708,9 @@ impl<'a> Parser<'a> {
                                 }))
                             }
                             Kind::Bytes => {
-                                let val = &self.cur_token().value;
+                                let val = &self.cur_token().to_string(self.source);
                                 let bytes_val = extract_string_inside(
-                                    val.to_string()
-                                        .strip_prefix('b')
+                                    val.strip_prefix('b')
                                         .expect("bytes literal must start with b")
                                         .to_string(),
                                 )
@@ -2727,8 +2722,8 @@ impl<'a> Parser<'a> {
                                 }))
                             }
                             Kind::StringLiteral => {
-                                let val = &self.cur_token().value;
-                                let string_val = extract_string_inside(val.to_string());
+                                let string_val =
+                                    extract_string_inside(self.cur_token().to_string(self.source));
                                 self.bump_any();
                                 Expression::Constant(Box::new(Constant {
                                     node: self.finish_node(start),
@@ -2737,12 +2732,11 @@ impl<'a> Parser<'a> {
                             }
 
                             Kind::RawBytes => {
-                                let val = &self.cur_token().value;
+                                let val = &self.cur_token().to_string(self.source);
                                 // rb or br appear in the beginning of raw bytes
-                                let bytes_val = extract_string_inside(
-                                    val.to_string().chars().skip(2).collect::<String>(),
-                                )
-                                .into_bytes();
+                                let bytes_val =
+                                    extract_string_inside(val.chars().skip(2).collect::<String>())
+                                        .into_bytes();
                                 self.bump_any();
                                 Expression::Constant(Box::new(Constant {
                                     node: self.finish_node(start),
@@ -2758,7 +2752,7 @@ impl<'a> Parser<'a> {
                                 }))
                             }
                             Kind::PointFloat => {
-                                let val = self.cur_token().value.to_string();
+                                let val = self.cur_token().to_string(self.source);
                                 self.bump_any();
                                 Expression::Constant(Box::new(Constant {
                                     node: self.finish_node(start),
@@ -2766,7 +2760,7 @@ impl<'a> Parser<'a> {
                                 }))
                             }
                             Kind::ExponentFloat => {
-                                let val = self.cur_token().value.to_string();
+                                let val = self.cur_token().to_string(self.source);
                                 self.bump_any();
                                 Expression::Constant(Box::new(Constant {
                                     node: self.finish_node(start),
@@ -2774,7 +2768,7 @@ impl<'a> Parser<'a> {
                                 }))
                             }
                             Kind::ImaginaryPointFloat => {
-                                let val = self.cur_token().value.to_string();
+                                let val = self.cur_token().to_string(self.source);
                                 self.bump_any();
                                 Expression::Constant(Box::new(Constant {
                                     node: self.finish_node(start),
@@ -2785,7 +2779,7 @@ impl<'a> Parser<'a> {
                                 }))
                             }
                             Kind::ImaginaryExponentFloat => {
-                                let val = self.cur_token().value.to_string();
+                                let val = self.cur_token().to_string(self.source);
                                 self.bump_any();
                                 Expression::Constant(Box::new(Constant {
                                     node: self.finish_node(start),
@@ -2804,7 +2798,7 @@ impl<'a> Parser<'a> {
                             }
                             // TODO: is there something for octal and Hexadecimal?
                             Kind::Octal => {
-                                let val = self.cur_token().value.to_string();
+                                let val = self.cur_token().to_string(self.source);
                                 self.bump_any();
                                 Expression::Constant(Box::new(Constant {
                                     node: self.finish_node(start),
@@ -2812,7 +2806,7 @@ impl<'a> Parser<'a> {
                                 }))
                             }
                             Kind::Hexadecimal => {
-                                let val = self.cur_token().value.to_string();
+                                let val = self.cur_token().to_string(self.source);
                                 self.bump_any();
                                 Expression::Constant(Box::new(Constant {
                                     node: self.finish_node(start),
@@ -2822,7 +2816,7 @@ impl<'a> Parser<'a> {
                             _ => {
                                 let line = self.get_offset_line_number(start.start);
                                 let kind = self.cur_kind();
-                                let value = self.cur_token().value.to_string();
+                                let value = self.cur_token().to_string(self.source);
                                 panic!("token {kind:?} {value:?} {start:?} is not atom");
                             }
                         };
@@ -2854,7 +2848,7 @@ impl<'a> Parser<'a> {
 
     fn parse_identifier(&mut self) -> Result<Expression, ParsingError> {
         let node = self.start_node();
-        let value = self.cur_token().value.to_string();
+        let value = self.cur_token().to_string(self.source);
         self.expect(Kind::Identifier)?;
         Ok(Expression::Name(Box::new(Name {
             node: self.finish_node_chomped(node),
@@ -3193,7 +3187,7 @@ impl<'a> Parser<'a> {
 
     fn parse_keyword_item(&mut self) -> Result<Keyword, ParsingError> {
         let node = self.start_node();
-        let arg = self.cur_token().value.to_string();
+        let arg = self.cur_token().to_string(self.source);
         self.expect(Kind::Identifier);
         self.expect(Kind::Assign);
         let value = self.parse_expression()?;
@@ -3300,7 +3294,7 @@ impl<'a> Parser<'a> {
         is_lambda: bool,
     ) -> Result<(Arg, Option<Expression>), ParsingError> {
         let node = self.start_node();
-        let arg = self.cur_token().value.to_string();
+        let arg = self.cur_token().to_string(self.source);
         self.bump(Kind::Identifier);
         // Lambda parameters cannot have annotations
         let annotation = if self.at(Kind::Colon) && !is_lambda {
@@ -3350,7 +3344,7 @@ impl<'a> Parser<'a> {
             match self.cur_kind() {
                 Kind::Identifier => {
                     let node = self.start_node();
-                    let name = self.cur_token().value.to_string();
+                    let name = self.cur_token().to_string(self.source);
                     self.bump(Kind::Identifier);
                     let bound = if self.eat(Kind::Colon) {
                         Some(self.parse_expression()?)
@@ -3367,7 +3361,7 @@ impl<'a> Parser<'a> {
                     // param spec
                     let node = self.start_node();
                     self.bump(Kind::Pow);
-                    let name = self.cur_token().value.to_string();
+                    let name = self.cur_token().to_string(self.source);
                     self.bump(Kind::Identifier);
                     type_params.push(TypeParam::ParamSpec(ParamSpec {
                         node: self.finish_node(node),
@@ -3378,7 +3372,7 @@ impl<'a> Parser<'a> {
                     // type var tuple
                     let node = self.start_node();
                     self.bump(Kind::Mul);
-                    let name = self.cur_token().value.to_string();
+                    let name = self.cur_token().to_string(self.source);
                     self.bump(Kind::Identifier);
                     type_params.push(TypeParam::TypeVarTuple(TypeVarTuple {
                         node: self.finish_node(node),
@@ -3410,7 +3404,7 @@ impl<'a> Parser<'a> {
     fn parse_type_alias_statement(&mut self) -> std::result::Result<Statement, ParsingError> {
         let node = self.start_node();
         self.expect(Kind::Identifier)?;
-        let name = self.cur_token().value.to_string();
+        let name = self.cur_token().to_string(self.source);
         self.expect(Kind::Identifier)?;
         let type_params = if self.eat(Kind::LeftBrace) {
             let type_params = self.parse_type_parameters()?;
@@ -3444,7 +3438,7 @@ impl<'a> Parser<'a> {
             conversion = 114;
         }
         if self.eat(Kind::Exclamation) {
-            conversion = match self.cur_token.value.take_string().as_str() {
+            conversion = match self.cur_token.as_str(self.source) {
                 "s" => 115,
                 "r" => 114,
                 "a" => 97,
@@ -3479,7 +3473,7 @@ impl<'a> Parser<'a> {
         let node = self.start_node();
         match self.cur_kind() {
             Kind::FStringMiddle => {
-                let str_val = self.cur_token().value.to_string();
+                let str_val = self.cur_token().to_string(self.source);
                 self.bump(Kind::FStringMiddle);
                 Ok(Expression::Constant(Box::new(Constant {
                     node: self.finish_node(node),

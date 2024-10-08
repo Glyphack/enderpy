@@ -91,13 +91,12 @@ fn tokenize() -> Result<()> {
         let (start_line_num, start_line_column, end_line_num, end_line_column) =
             get_row_col_position(token.start, token.end, &lexer.line_starts);
         println!(
-            "{}-{}, {}-{}:   {} {} {} {}",
+            "{}-{}, {}-{}:   {} {} {}",
             start_line_num,
             start_line_column,
             end_line_num,
             end_line_column,
             token.kind,
-            token.value,
             token.start,
             token.end,
         );

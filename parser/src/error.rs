@@ -1,8 +1,6 @@
 use miette::Diagnostic;
 use thiserror::Error;
 
-use crate::parser::parser::Parser;
-
 #[derive(Error, Diagnostic, Debug, Clone)]
 pub enum ParsingError {
     #[error("Invalid syntax")]
@@ -14,28 +12,6 @@ pub enum ParsingError {
         #[label("span")]
         span: (usize, usize),
     },
-}
-
-impl From<Parser<'_>> for ParsingError {
-    fn from(err: Parser) -> Self {
-        let token = err.cur_token();
-        ParsingError::InvalidSyntax {
-            msg: token.value.to_string(),
-            advice: String::default(),
-            span: err.get_span_on_line(token.start, token.end),
-        }
-    }
-}
-
-impl From<&mut Parser<'_>> for ParsingError {
-    fn from(err: &mut Parser) -> Self {
-        let token = err.cur_token();
-        ParsingError::InvalidSyntax {
-            msg: token.value.to_string(),
-            advice: String::default(),
-            span: err.get_span_on_line(token.start, token.end),
-        }
-    }
 }
 
 #[derive(Error, Debug)]

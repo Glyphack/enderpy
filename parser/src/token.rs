@@ -1,23 +1,30 @@
-use core::panic;
 use std::fmt::Display;
+use std::usize;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Token {
     pub kind: Kind,
-    // Value might be deleted in the future
-    pub value: TokenValue,
     pub start: u32,
     pub end: u32,
+}
+
+impl Token {
+    pub fn as_str<'a>(&self, source: &'a str) -> &'a str {
+        return &source[self.start as usize..self.end as usize];
+    }
+
+    pub fn to_string<'a>(&self, source: &str) -> String {
+        return self.as_str(source).to_string();
+    }
 }
 
 impl Display for Token {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let kind: &str = self.kind.into();
-        let value = format!("({:?})", self.value);
         let start = self.start.to_string();
         let end = self.end.to_string();
 
-        write!(f, "{},{}: {}   {}", start, end, kind, value,)
+        write!(f, "{},{}: {}", start, end, kind)
     }
 }
 
@@ -71,6 +78,10 @@ pub enum Kind {
     While,    // while
     With,     // with
     Yield,    // yield
+
+    // Soft Keywords
+    Type,
+    Match,
 
     // String Literals
     StringLiteral,
@@ -367,6 +378,8 @@ impl From<Kind> for &str {
             Kind::Dedent => "Dedent",
             Kind::Ellipsis => "Ellipsis",
             Kind::Exclamation => "!",
+            Kind::Match => "match",
+            Kind::Type => "type",
         }
     }
 }
@@ -374,54 +387,5 @@ impl From<Kind> for &str {
 impl Display for Kind {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", Into::<&str>::into(*self))
-    }
-}
-
-#[derive(Debug, PartialEq, Clone, is_macro::Is)]
-pub enum TokenValue {
-    None,
-    Number(String),
-    Str(String),
-    Indent(usize),
-    // Soft keywords are special values
-    Type,
-    Match,
-}
-
-impl TokenValue {
-    pub fn take_string(&mut self) -> String {
-        match self {
-            TokenValue::Str(s) => std::mem::take(s),
-            TokenValue::Number(s) => std::mem::take(s),
-            _ => {
-                panic!("not a str")
-            }
-        }
-    }
-}
-
-impl Display for TokenValue {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            TokenValue::None => write!(f, "None"),
-            TokenValue::Number(n) => write!(f, "{}", n),
-            TokenValue::Str(s) => write!(f, "{}", s),
-            TokenValue::Indent(i) => write!(f, "{}", i),
-            TokenValue::Type => write!(f, "type"),
-            TokenValue::Match => write!(f, "match"),
-        }
-    }
-}
-
-impl From<TokenValue> for &str {
-    fn from(val: TokenValue) -> Self {
-        match val {
-            TokenValue::None => "None",
-            TokenValue::Number(_) => "Number",
-            TokenValue::Str(_) => "Str",
-            TokenValue::Indent(_) => "Indent",
-            TokenValue::Type => "type",
-            TokenValue::Match => "match",
-        }
     }
 }

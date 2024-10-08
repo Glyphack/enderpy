@@ -430,7 +430,7 @@ fn check_tokens_match(
     }
 
     let python_token_value = python_token.value.clone();
-    let enderpy_token_value = enderpy_token.value.to_string();
+    let enderpy_token_value = enderpy_token.to_string(lexer.source);
     // The Python tokenizer sets values in a number of places where Enderpy simply relies
     // on kind to assume value. Handle those cases here.
     let value_matches = matches_python_name_token(python_token.value.as_str(), &enderpy_token.kind)

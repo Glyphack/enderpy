@@ -3,7 +3,7 @@ use unicode_id_start::{is_id_continue, is_id_start};
 use crate::{
     error::LexError,
     get_row_col_position,
-    token::{Kind, Token, TokenValue},
+    token::{Kind, Token},
 };
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -101,7 +101,6 @@ impl<'a> Lexer<'a> {
             self.next_token_is_dedent -= 1;
             return Token {
                 kind: Kind::Dedent,
-                value: TokenValue::None,
                 start: self.current,
                 end: self.current,
             };
@@ -138,9 +137,8 @@ impl<'a> Lexer<'a> {
         if kind != Kind::Comment && kind != Kind::NL && kind != Kind::Dedent {
             self.non_logical_line_state = kind == Kind::NewLine;
         }
-        let value = self.parse_token_value(kind, start);
         let end = match kind {
-            Kind::FStringMiddle => start + value.as_str().expect("").len() as u32,
+            Kind::FStringMiddle => self.current,
             _ => self.current,
         };
 
@@ -148,12 +146,7 @@ impl<'a> Lexer<'a> {
             start = end
         }
 
-        Token {
-            kind,
-            value,
-            start,
-            end,
-        }
+        Token { kind, start, end }
     }
 
     // peek_token is a side-effect free version of next_token
@@ -1050,43 +1043,6 @@ impl<'a> Lexer<'a> {
             }
         } else {
             Ok(None)
-        }
-    }
-
-    fn parse_token_value(&mut self, kind: Kind, start: u32) -> TokenValue {
-        let kind_value = &self.source[start as usize..self.current as usize];
-        match kind {
-            Kind::Integer
-            | Kind::Hexadecimal
-            | Kind::Binary
-            | Kind::PointFloat
-            | Kind::Octal
-            | Kind::ExponentFloat
-            | Kind::ImaginaryInteger
-            | Kind::ImaginaryExponentFloat
-            | Kind::ImaginaryPointFloat => TokenValue::Number(kind_value.to_string()),
-            Kind::Identifier => match kind_value {
-                "type" => TokenValue::Type,
-                "match" => TokenValue::Match,
-                _ => TokenValue::Str(kind_value.to_string()),
-            },
-            Kind::StringLiteral
-            | Kind::FStringStart
-            | Kind::FStringEnd
-            | Kind::RawBytes
-            | Kind::RawFStringStart
-            | Kind::Bytes
-            | Kind::Unicode
-            | Kind::Comment => TokenValue::Str(kind_value.to_string()),
-            Kind::FStringMiddle => {
-                let value = kind_value.replace("{{", "{");
-                let value = value.replace("}}", "}");
-                TokenValue::Str(value)
-            }
-            Kind::Dedent => TokenValue::Indent(1),
-            Kind::Indent => TokenValue::Indent(1),
-            Kind::Error => TokenValue::Str(kind_value.to_string()),
-            _ => TokenValue::None,
         }
     }
 

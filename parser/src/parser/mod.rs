@@ -29,13 +29,14 @@ pub fn is_at_compound_statement(token: &Token) -> bool {
     }
 
     // Match is a soft keyword so it's an identifier token
-    if Kind::Identifier == token.kind && token.value.to_string() == "match" {
+    if Kind::Match == token.kind {
         return true;
     }
 
     false
 }
 
+// TODO: performance
 pub fn extract_string_inside(val: String) -> String {
     let delimiters = vec!["\"\"\"", "\"", "'''", "'"];
     let mut result = String::new();
