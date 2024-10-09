@@ -507,6 +507,8 @@ fn matches_python_name_token(python_token_value: &str, token_kind: &Kind) -> boo
         "while" => token_kind == &Kind::While,
         "with" => token_kind == &Kind::With,
         "yield" => token_kind == &Kind::Yield,
+        "match" => token_kind == &Kind::Match,
+        "type" => token_kind == &Kind::Type,
         _ => token_kind == &Kind::Identifier,
     }
 }
