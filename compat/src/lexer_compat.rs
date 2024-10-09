@@ -905,6 +905,12 @@ print(a)
         ]);
     }
 
+    // TODO: fstring middle offset is wrong in case of {{ or }}
+    #[test]
+    fn test_fstring_positions() {
+        python_tokenize_test_lexer(&["f\"{{{', '.join(dict_items)}}}\""]);
+    }
+
     #[test]
     #[should_panic]
     fn test_lex_unterminated_string_double_quotes() {
