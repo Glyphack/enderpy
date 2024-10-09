@@ -3,161 +3,161 @@ source: parser/src/lexer/mod.rs
 description: "\n[a, b, c]\n\n[a,\nb, c],\n\n[a\n, b, c],\n\n[a,\nb,\n    c],\n\n[a,\n],\n\n[a, b, c,]\n\nmonth_names = ['Januari', 'Februari', 'Maart',      # These are the\n   'April',   'Mei',      'June',       # Dutch names\n   'July',    'Augustus', 'September',  # for the months\n   'October', 'November', 'December']   # of the year,\n\n[a for a in b]\n\n[a for a in b if c]\n\n[a for a in b if c if d]\n\n[a for a in b for c in d]\n\n[a for a in b if c for d in e]\n"
 input_file: parser/test_data/inputs/lists.py
 ---
-0,1: NL   (None)
-1,2: [   (None)
-2,3: Identifier   (Str("a"))
-3,4: ,   (None)
-5,6: Identifier   (Str("b"))
-6,7: ,   (None)
-8,9: Identifier   (Str("c"))
-9,10: ]   (None)
-10,11: NewLine   (None)
-11,12: NL   (None)
-12,13: [   (None)
-13,14: Identifier   (Str("a"))
-14,15: ,   (None)
-15,16: NL   (None)
-16,17: Identifier   (Str("b"))
-17,18: ,   (None)
-19,20: Identifier   (Str("c"))
-20,21: ]   (None)
-21,22: ,   (None)
-22,23: NewLine   (None)
-23,24: NL   (None)
-24,25: [   (None)
-25,26: Identifier   (Str("a"))
-26,27: NL   (None)
-27,28: ,   (None)
-29,30: Identifier   (Str("b"))
-30,31: ,   (None)
-32,33: Identifier   (Str("c"))
-33,34: ]   (None)
-34,35: ,   (None)
-35,36: NewLine   (None)
-36,37: NL   (None)
-37,38: [   (None)
-38,39: Identifier   (Str("a"))
-39,40: ,   (None)
-40,41: NL   (None)
-41,42: Identifier   (Str("b"))
-42,43: ,   (None)
-43,44: NL   (None)
-48,49: Identifier   (Str("c"))
-49,50: ]   (None)
-50,51: ,   (None)
-51,52: NewLine   (None)
-52,53: NL   (None)
-53,54: [   (None)
-54,55: Identifier   (Str("a"))
-55,56: ,   (None)
-56,57: NL   (None)
-57,58: ]   (None)
-58,59: ,   (None)
-59,60: NewLine   (None)
-60,61: NL   (None)
-61,62: [   (None)
-62,63: Identifier   (Str("a"))
-63,64: ,   (None)
-65,66: Identifier   (Str("b"))
-66,67: ,   (None)
-68,69: Identifier   (Str("c"))
-69,70: ,   (None)
-70,71: ]   (None)
-71,72: NewLine   (None)
-72,73: NL   (None)
-73,84: Identifier   (Str("month_names"))
-85,86: =   (None)
-87,88: [   (None)
-88,97: StringLiteral   (Str("'Januari'"))
-97,98: ,   (None)
-99,109: StringLiteral   (Str("'Februari'"))
-109,110: ,   (None)
-111,118: StringLiteral   (Str("'Maart'"))
-118,119: ,   (None)
-125,140: Comment   (Str("# These are the"))
-140,141: NL   (None)
-144,151: StringLiteral   (Str("'April'"))
-151,152: ,   (None)
-155,160: StringLiteral   (Str("'Mei'"))
-160,161: ,   (None)
-167,173: StringLiteral   (Str("'June'"))
-173,174: ,   (None)
-181,194: Comment   (Str("# Dutch names"))
-194,195: NL   (None)
-198,204: StringLiteral   (Str("'July'"))
-204,205: ,   (None)
-209,219: StringLiteral   (Str("'Augustus'"))
-219,220: ,   (None)
-221,232: StringLiteral   (Str("'September'"))
-232,233: ,   (None)
-235,251: Comment   (Str("# for the months"))
-251,252: NL   (None)
-255,264: StringLiteral   (Str("'October'"))
-264,265: ,   (None)
-266,276: StringLiteral   (Str("'November'"))
-276,277: ,   (None)
-278,288: StringLiteral   (Str("'December'"))
-288,289: ]   (None)
-292,306: Comment   (Str("# of the year,"))
-306,307: NewLine   (None)
-307,308: NL   (None)
-308,309: [   (None)
-309,310: Identifier   (Str("a"))
-311,314: For   (None)
-315,316: Identifier   (Str("a"))
-317,319: In   (None)
-320,321: Identifier   (Str("b"))
-321,322: ]   (None)
-322,323: NewLine   (None)
-323,324: NL   (None)
-324,325: [   (None)
-325,326: Identifier   (Str("a"))
-327,330: For   (None)
-331,332: Identifier   (Str("a"))
-333,335: In   (None)
-336,337: Identifier   (Str("b"))
-338,340: If   (None)
-341,342: Identifier   (Str("c"))
-342,343: ]   (None)
-343,344: NewLine   (None)
-344,345: NL   (None)
-345,346: [   (None)
-346,347: Identifier   (Str("a"))
-348,351: For   (None)
-352,353: Identifier   (Str("a"))
-354,356: In   (None)
-357,358: Identifier   (Str("b"))
-359,361: If   (None)
-362,363: Identifier   (Str("c"))
-364,366: If   (None)
-367,368: Identifier   (Str("d"))
-368,369: ]   (None)
-369,370: NewLine   (None)
-370,371: NL   (None)
-371,372: [   (None)
-372,373: Identifier   (Str("a"))
-374,377: For   (None)
-378,379: Identifier   (Str("a"))
-380,382: In   (None)
-383,384: Identifier   (Str("b"))
-385,388: For   (None)
-389,390: Identifier   (Str("c"))
-391,393: In   (None)
-394,395: Identifier   (Str("d"))
-395,396: ]   (None)
-396,397: NewLine   (None)
-397,398: NL   (None)
-398,399: [   (None)
-399,400: Identifier   (Str("a"))
-401,404: For   (None)
-405,406: Identifier   (Str("a"))
-407,409: In   (None)
-410,411: Identifier   (Str("b"))
-412,414: If   (None)
-415,416: Identifier   (Str("c"))
-417,420: For   (None)
-421,422: Identifier   (Str("d"))
-423,425: In   (None)
-426,427: Identifier   (Str("e"))
-427,428: ]   (None)
-428,429: NewLine   (None)
+0,1: NL
+1,2: [
+2,3: Identifier   a
+3,4: ,
+5,6: Identifier   b
+6,7: ,
+8,9: Identifier   c
+9,10: ]
+10,11: NewLine
+11,12: NL
+12,13: [
+13,14: Identifier   a
+14,15: ,
+15,16: NL
+16,17: Identifier   b
+17,18: ,
+19,20: Identifier   c
+20,21: ]
+21,22: ,
+22,23: NewLine
+23,24: NL
+24,25: [
+25,26: Identifier   a
+26,27: NL
+27,28: ,
+29,30: Identifier   b
+30,31: ,
+32,33: Identifier   c
+33,34: ]
+34,35: ,
+35,36: NewLine
+36,37: NL
+37,38: [
+38,39: Identifier   a
+39,40: ,
+40,41: NL
+41,42: Identifier   b
+42,43: ,
+43,44: NL
+48,49: Identifier   c
+49,50: ]
+50,51: ,
+51,52: NewLine
+52,53: NL
+53,54: [
+54,55: Identifier   a
+55,56: ,
+56,57: NL
+57,58: ]
+58,59: ,
+59,60: NewLine
+60,61: NL
+61,62: [
+62,63: Identifier   a
+63,64: ,
+65,66: Identifier   b
+66,67: ,
+68,69: Identifier   c
+69,70: ,
+70,71: ]
+71,72: NewLine
+72,73: NL
+73,84: Identifier   month_names
+85,86: =
+87,88: [
+88,97: StringLiteral   'Januari'
+97,98: ,
+99,109: StringLiteral   'Februari'
+109,110: ,
+111,118: StringLiteral   'Maart'
+118,119: ,
+125,140: Comment
+140,141: NL
+144,151: StringLiteral   'April'
+151,152: ,
+155,160: StringLiteral   'Mei'
+160,161: ,
+167,173: StringLiteral   'June'
+173,174: ,
+181,194: Comment
+194,195: NL
+198,204: StringLiteral   'July'
+204,205: ,
+209,219: StringLiteral   'Augustus'
+219,220: ,
+221,232: StringLiteral   'September'
+232,233: ,
+235,251: Comment
+251,252: NL
+255,264: StringLiteral   'October'
+264,265: ,
+266,276: StringLiteral   'November'
+276,277: ,
+278,288: StringLiteral   'December'
+288,289: ]
+292,306: Comment
+306,307: NewLine
+307,308: NL
+308,309: [
+309,310: Identifier   a
+311,314: For
+315,316: Identifier   a
+317,319: In
+320,321: Identifier   b
+321,322: ]
+322,323: NewLine
+323,324: NL
+324,325: [
+325,326: Identifier   a
+327,330: For
+331,332: Identifier   a
+333,335: In
+336,337: Identifier   b
+338,340: If
+341,342: Identifier   c
+342,343: ]
+343,344: NewLine
+344,345: NL
+345,346: [
+346,347: Identifier   a
+348,351: For
+352,353: Identifier   a
+354,356: In
+357,358: Identifier   b
+359,361: If
+362,363: Identifier   c
+364,366: If
+367,368: Identifier   d
+368,369: ]
+369,370: NewLine
+370,371: NL
+371,372: [
+372,373: Identifier   a
+374,377: For
+378,379: Identifier   a
+380,382: In
+383,384: Identifier   b
+385,388: For
+389,390: Identifier   c
+391,393: In
+394,395: Identifier   d
+395,396: ]
+396,397: NewLine
+397,398: NL
+398,399: [
+399,400: Identifier   a
+401,404: For
+405,406: Identifier   a
+407,409: In
+410,411: Identifier   b
+412,414: If
+415,416: Identifier   c
+417,420: For
+421,422: Identifier   d
+423,425: In
+426,427: Identifier   e
+427,428: ]
+428,429: NewLine

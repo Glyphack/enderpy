@@ -3,71 +3,71 @@ source: parser/src/lexer/mod.rs
 description: "_ = (\n    1,\n    2,\n)\n_ = {\n    1,\n    2,\n}\n_ = [\n    1,\n    2,\n]\n\n\ndef hello(\n    a,\n    b,\n): ...\n\n\nclass A(\n    object,\n):\n    pass\n"
 input_file: parser/test_data/inputs/newlines.py
 ---
-0,1: Identifier   (Str("_"))
-2,3: =   (None)
-4,5: (   (None)
-5,6: NL   (None)
-10,11: Integer   (Number("1"))
-11,12: ,   (None)
-12,13: NL   (None)
-17,18: Integer   (Number("2"))
-18,19: ,   (None)
-19,20: NL   (None)
-20,21: )   (None)
-21,22: NewLine   (None)
-22,23: Identifier   (Str("_"))
-24,25: =   (None)
-26,27: {   (None)
-27,28: NL   (None)
-32,33: Integer   (Number("1"))
-33,34: ,   (None)
-34,35: NL   (None)
-39,40: Integer   (Number("2"))
-40,41: ,   (None)
-41,42: NL   (None)
-42,43: }   (None)
-43,44: NewLine   (None)
-44,45: Identifier   (Str("_"))
-46,47: =   (None)
-48,49: [   (None)
-49,50: NL   (None)
-54,55: Integer   (Number("1"))
-55,56: ,   (None)
-56,57: NL   (None)
-61,62: Integer   (Number("2"))
-62,63: ,   (None)
-63,64: NL   (None)
-64,65: ]   (None)
-65,66: NewLine   (None)
-66,67: NL   (None)
-67,68: NL   (None)
-68,71: Def   (None)
-72,77: Identifier   (Str("hello"))
-77,78: (   (None)
-78,79: NL   (None)
-83,84: Identifier   (Str("a"))
-84,85: ,   (None)
-85,86: NL   (None)
-90,91: Identifier   (Str("b"))
-91,92: ,   (None)
-92,93: NL   (None)
-93,94: )   (None)
-94,95: :   (None)
-96,99: Ellipsis   (None)
-99,100: NewLine   (None)
-100,101: NL   (None)
-101,102: NL   (None)
-102,107: Class   (None)
-108,109: Identifier   (Str("A"))
-109,110: (   (None)
-110,111: NL   (None)
-115,121: Identifier   (Str("object"))
-121,122: ,   (None)
-122,123: NL   (None)
-123,124: )   (None)
-124,125: :   (None)
-125,126: NewLine   (None)
-126,130: Indent   (Indent(1))
-130,134: Pass   (None)
-134,135: NewLine   (None)
-135,135: Dedent   (Indent(1))
+0,1: Identifier   _
+2,3: =
+4,5: (
+5,6: NL
+10,11: Integer   1
+11,12: ,
+12,13: NL
+17,18: Integer   2
+18,19: ,
+19,20: NL
+20,21: )
+21,22: NewLine
+22,23: Identifier   _
+24,25: =
+26,27: {
+27,28: NL
+32,33: Integer   1
+33,34: ,
+34,35: NL
+39,40: Integer   2
+40,41: ,
+41,42: NL
+42,43: }
+43,44: NewLine
+44,45: Identifier   _
+46,47: =
+48,49: [
+49,50: NL
+54,55: Integer   1
+55,56: ,
+56,57: NL
+61,62: Integer   2
+62,63: ,
+63,64: NL
+64,65: ]
+65,66: NewLine
+66,67: NL
+67,68: NL
+68,71: Def
+72,77: Identifier   hello
+77,78: (
+78,79: NL
+83,84: Identifier   a
+84,85: ,
+85,86: NL
+90,91: Identifier   b
+91,92: ,
+92,93: NL
+93,94: )
+94,95: :
+96,99: Ellipsis
+99,100: NewLine
+100,101: NL
+101,102: NL
+102,107: Class
+108,109: Identifier   A
+109,110: (
+110,111: NL
+115,121: Identifier   object
+121,122: ,
+122,123: NL
+123,124: )
+124,125: :
+125,126: NewLine
+126,130: Indent
+130,134: Pass
+134,135: NewLine
+135,135: Dedent

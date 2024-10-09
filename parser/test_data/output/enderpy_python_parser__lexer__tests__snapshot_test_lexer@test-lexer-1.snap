@@ -2,6 +2,6 @@
 source: parser/src/lexer/mod.rs
 description: a+b
 ---
-0,1: Identifier   (Str("a"))
-1,2: +   (None)
-2,3: Identifier   (Str("b"))
+0,1: Identifier   a
+1,2: +
+2,3: Identifier   b

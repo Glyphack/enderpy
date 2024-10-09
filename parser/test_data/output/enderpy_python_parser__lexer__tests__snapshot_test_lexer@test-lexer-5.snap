@@ -2,6 +2,6 @@
 source: parser/src/lexer/mod.rs
 description: if else elif
 ---
-0,2: If   (None)
-3,7: Else   (None)
-8,12: Elif   (None)
+0,2: If
+3,7: Else
+8,12: Elif

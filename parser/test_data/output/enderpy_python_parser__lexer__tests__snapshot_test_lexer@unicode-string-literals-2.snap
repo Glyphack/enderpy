@@ -2,4 +2,4 @@
 source: parser/src/lexer/mod.rs
 description: "u\"\""
 ---
-0,3: Unicode   (Str("u\"\""))
+0,3: Unicode

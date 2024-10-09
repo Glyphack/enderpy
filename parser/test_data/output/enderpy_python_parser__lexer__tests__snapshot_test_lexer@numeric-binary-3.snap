@@ -2,4 +2,4 @@
 source: parser/src/lexer/mod.rs
 description: 0b11
 ---
-0,4: Binary   (Number("0b11"))
+0,4: Binary   0b11

@@ -562,7 +562,7 @@ impl<'a> TypeEvaluator<'a> {
                 //    then local scope.
                 //    https://peps.python.org/pep-0563/#backwards-compatibility
                 ast::ConstantValue::Str(ref str) => {
-                    let mut parser = Parser::new(str, "");
+                    let mut parser = Parser::new(str);
                     // Wrap the parsing logic inside a `catch_unwind` block
                     let parse_result = catch_unwind(AssertUnwindSafe(|| parser.parse()));
 

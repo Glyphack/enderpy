@@ -1,5 +1,4 @@
 use std::fmt::Display;
-use std::usize;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Token {
@@ -10,21 +9,43 @@ pub struct Token {
 
 impl Token {
     pub fn as_str<'a>(&self, source: &'a str) -> &'a str {
-        return &source[self.start as usize..self.end as usize];
+        &source[self.start as usize..self.end as usize]
     }
 
-    pub fn to_string<'a>(&self, source: &str) -> String {
+    pub fn to_string(&self, source: &str) -> String {
         return self.as_str(source).to_string();
     }
-}
 
-impl Display for Token {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let kind: &str = self.kind.into();
-        let start = self.start.to_string();
-        let end = self.end.to_string();
+    pub fn display_token(&self, source: &str) -> String {
+        let kind = self.kind;
+        let start = self.start;
+        let end = self.end;
+        let value = self.as_str(source);
+        match self.kind {
+            Kind::Integer
+            | Kind::Binary
+            | Kind::Octal
+            | Kind::Hexadecimal
+            | Kind::PointFloat
+            | Kind::ExponentFloat
+            | Kind::ImaginaryInteger
+            | Kind::ImaginaryPointFloat
+            | Kind::ImaginaryExponentFloat
+            | Kind::StringLiteral
+            | Kind::FStringMiddle
+            | Kind::Identifier
+            | Kind::Bytes => {
+                format!("{},{}: {}   {}", start, end, kind, value)
+            }
 
-        write!(f, "{},{}: {}", start, end, kind)
+            _ => {
+                format!("{},{}: {}", start, end, kind)
+            }
+        }
+    }
+
+    pub fn can_be_identifier(&self) -> bool {
+        matches!(self.kind, Kind::Identifier | Kind::Type | Kind::Match)
     }
 }
 
@@ -245,6 +266,8 @@ impl Kind {
         | Kind::LeftBrace
         | Kind::Yield
         | Kind::Ellipsis
+        | Kind::Match
+        | Kind::Type
         | Kind::None => true,
         _ => false,
         }

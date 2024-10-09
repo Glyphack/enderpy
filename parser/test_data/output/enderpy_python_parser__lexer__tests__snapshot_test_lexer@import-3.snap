@@ -2,7 +2,7 @@
 source: parser/src/lexer/mod.rs
 description: import a from b
 ---
-0,6: Import   (None)
-7,8: Identifier   (Str("a"))
-9,13: From   (None)
-14,15: Identifier   (Str("b"))
+0,6: Import
+7,8: Identifier   a
+9,13: From
+14,15: Identifier   b

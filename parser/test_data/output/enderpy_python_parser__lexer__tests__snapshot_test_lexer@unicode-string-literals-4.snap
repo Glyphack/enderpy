@@ -2,4 +2,4 @@
 source: parser/src/lexer/mod.rs
 description: "u'hello'"
 ---
-0,8: Unicode   (Str("u'hello'"))
+0,8: Unicode

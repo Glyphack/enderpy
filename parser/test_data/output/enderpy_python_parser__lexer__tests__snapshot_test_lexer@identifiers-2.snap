@@ -2,4 +2,4 @@
 source: parser/src/lexer/mod.rs
 description: _a
 ---
-0,2: Identifier   (Str("_a"))
+0,2: Identifier   _a

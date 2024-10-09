@@ -31,12 +31,11 @@ pub struct Parser<'a> {
     // This is incremented when we see an opening bracket and decremented when we
     // see a closing bracket.
     nested_expression_list: u32,
-    path: &'a str,
 }
 
 #[allow(unused)]
 impl<'a> Parser<'a> {
-    pub fn new(source: &'a str, path: &'a str) -> Self {
+    pub fn new(source: &'a str) -> Self {
         let mut lexer = Lexer::new(source);
         let cur_token = lexer.next_token();
 
@@ -46,11 +45,12 @@ impl<'a> Parser<'a> {
             Kind::RightParen | Kind::RightBrace | Kind::RightBracket => nested_expression_list -= 1,
             _ => {}
         }
-        let identifiers_offset = if cur_token.kind == Kind::Identifier {
-            vec![(cur_token.start, cur_token.end, cur_token.to_string(source))]
-        } else {
-            vec![]
-        };
+        let identifiers_offset =
+            if matches!(cur_token.kind, Kind::Identifier | Kind::Match | Kind::Type) {
+                vec![(cur_token.start, cur_token.end, cur_token.to_string(source))]
+            } else {
+                vec![]
+            };
         let prev_token_end = 0;
 
         Self {
@@ -60,7 +60,6 @@ impl<'a> Parser<'a> {
             prev_token_end,
             prev_nonwhitespace_token_end: prev_token_end,
             nested_expression_list,
-            path,
             identifiers_start_offset: identifiers_offset,
         }
     }
@@ -126,6 +125,9 @@ impl<'a> Parser<'a> {
 
     /// Checks if the current index has token `Kind`
     fn at(&self, kind: Kind) -> bool {
+        if kind == Kind::Identifier {
+            return self.cur_token().can_be_identifier();
+        }
         self.cur_kind() == kind
     }
 
@@ -154,7 +156,7 @@ impl<'a> Parser<'a> {
     /// count_in_offset: if true, the offset will be increased by the length of the current token so prev_token_end is adjusted
     fn advance(&mut self, count_in_offset: bool) {
         let token = self.lexer.next_token();
-        if token.kind == Kind::Identifier {
+        if matches!(token.kind, Kind::Identifier | Kind::Match | Kind::Type) {
             self.identifiers_start_offset.push((
                 token.start,
                 token.end,
@@ -194,12 +196,8 @@ impl<'a> Parser<'a> {
     pub fn expect(&mut self, kind: Kind) -> Result<(), ParsingError> {
         if !self.at(kind) {
             let found = &self.cur_token;
-            let file = &self.path;
             let line = &self.get_offset_line_number(found.start);
-            panic!(
-                "Expected {:?} but found {:?} {file} line: {line:}",
-                kind, found
-            );
+            panic!("Expected {:?} but found {:?} line: {line:}", kind, found);
         }
         self.bump_any();
         Ok(())
@@ -217,11 +215,6 @@ impl<'a> Parser<'a> {
         }
         self.bump_any();
         Ok(())
-    }
-
-    fn unexpected_token_new(&mut self, node: Node, kinds: Vec<Kind>, advice: &str) -> ParsingError {
-        let token = self.cur_token();
-        panic!("Unexpected token {token:?}");
     }
 
     fn get_offset_line_number(&self, pos: u32) -> u32 {
@@ -248,30 +241,9 @@ impl<'a> Parser<'a> {
             Kind::From => self.parse_from_import_statement(),
             Kind::Global => self.parse_global_statement(),
             Kind::Nonlocal => self.parse_nonlocal_statement(),
-            _ => {
-                if self.cur_kind() == Kind::Type && self.peek_kind()? == Kind::Identifier {
-                    self.parse_type_alias_statement()
-                } else if self.cur_kind() == Kind::Indent {
-                    let node = self.start_node();
-                    let kind = self.cur_kind();
-                    return Err(self.unexpected_token_new(
-                        node,
-                        vec![
-                            Kind::Assert,
-                            Kind::Pass,
-                            Kind::Del,
-                            Kind::Return,
-                            Kind::Yield,
-                            Kind::Raise,
-                            Kind::Break,
-                            Kind::Continue,
-                            Kind::Import,
-                            Kind::From,
-                            Kind::Global,
-                            Kind::Nonlocal,
-                        ],
-                        "Unexpted indent",
-                    ));
+            other => {
+                if self.cur_kind() == Kind::Indent {
+                    panic!("Unexpected token {:?}", self.cur_token());
                 } else {
                     self.parse_assignment_or_expression_statement()
                 }
@@ -284,7 +256,7 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_compound_statement(&mut self) -> Result<Statement, ParsingError> {
-        let stmt = match self.cur_kind() {
+        match self.cur_kind() {
             Kind::If => self.parse_if_statement(),
             Kind::While => self.parse_while_statement(),
             Kind::For => self.parse_for_statement(),
@@ -297,9 +269,6 @@ impl<'a> Parser<'a> {
             }
             Kind::MatrixMul => self.parse_decorated_function_def_or_class_def(),
             Kind::Class => self.parse_class_definition(vec![], None),
-            // match is a soft keyword
-            // https://docs.python.org/3/reference/lexical_analysis.html#soft-keywords
-            Kind::Match => self.parse_match_statement(),
             Kind::Async => {
                 if matches!(self.peek_kind(), Ok(Kind::Def)) {
                     let node = self.start_node();
@@ -311,19 +280,22 @@ impl<'a> Parser<'a> {
                 } else if matches!(self.peek_kind(), Ok(Kind::With)) {
                     self.parse_with_statement()
                 } else {
-                    let node = self.start_node();
-                    let kind = self.cur_kind();
-                    self.bump_any();
                     panic!("");
                 }
             }
-            _ => {
-                let range = self.finish_node(self.start_node());
-                panic!("Expected compound statement");
+            other => {
+                // type & match are a soft keywords
+                // https://docs.python.org/3/reference/lexical_analysis.html#soft-keywords
+                let peeked = self.peek_kind()?;
+                if other == Kind::Type && peeked == Kind::Identifier {
+                    self.parse_type_alias_statement()
+                } else if other == Kind::Match && matches!(peeked, Kind::Identifier | Kind::Mul) {
+                    self.parse_match_statement()
+                } else {
+                    self.parse_assignment_or_expression_statement()
+                }
             }
-        };
-
-        stmt
+        }
     }
 
     fn err_if_statement_not_ending_in_new_line_or_semicolon(
@@ -425,7 +397,7 @@ impl<'a> Parser<'a> {
         let iter_list = self.parse_starred_list(Kind::Colon)?;
         let iter = match iter_list.len() {
             0 => {
-                return Err(self.unexpected_token_new(node, vec![], "Expected expression"));
+                panic!("Unexpected token {:?}", self.cur_token());
             }
             1 => iter_list.into_iter().next().unwrap(),
             _ => Expression::Tuple(Box::new(Tuple {
@@ -854,7 +826,7 @@ impl<'a> Parser<'a> {
             Kind::LeftParen => self.parse_sequence_pattern(),
             Kind::LeftBrace => self.parse_sequence_pattern(),
             Kind::LeftBracket => self.parse_mapping_pattern(),
-            Kind::Identifier => {
+            Kind::Match | Kind::Type | Kind::Identifier => {
                 if matches!(self.peek_kind(), Ok(Kind::Dot)) {
                     let node = self.start_node();
                     let value = self.parse_attr()?;
@@ -890,33 +862,7 @@ impl<'a> Parser<'a> {
                 },
             _ => {
                 let node = self.start_node();
-                Err(self.unexpected_token_new(
-                    node,
-                    vec![
-                        Kind::LeftParen,
-                        Kind::LeftBrace,
-                        Kind::LeftBracket,
-                        Kind::Identifier,
-                        Kind::Integer,
-                        Kind::Binary,
-                        Kind::Octal,
-                        Kind::Hexadecimal,
-                        Kind::PointFloat,
-                        Kind::ExponentFloat,
-                        Kind::ImaginaryInteger,
-                        Kind::ImaginaryPointFloat,
-                        Kind::ImaginaryExponentFloat,
-                        Kind::None,
-                        Kind::True,
-                        Kind::False,
-                        Kind::StringLiteral,
-                        Kind::RawBytes,
-                        Kind::Bytes,
-                        Kind::Minus,
-                        Kind::Plus,
-                    ],
-                    "A match pattern starts with these characters",
-                ))
+                panic!("Unexpected token {:?}", self.cur_kind());
             },
         }
     }
@@ -1039,7 +985,7 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_literal_or_value_pattern(&mut self) -> Result<MatchPattern, ParsingError> {
-        if self.cur_kind() == Kind::Identifier && !matches!(self.peek_kind(), Ok(Kind::Colon)) {
+        if self.at(Kind::Identifier) && !matches!(self.peek_kind(), Ok(Kind::Colon)) {
             let node = self.start_node();
             let value = self.parse_attr()?;
             self.parse_value_pattern(value, node)
@@ -1100,11 +1046,7 @@ impl<'a> Parser<'a> {
             self.expect(Kind::RightParen)?;
             Ok(MatchPattern::MatchSequence(pattern))
         } else {
-            Err(self.unexpected_token_new(
-                node,
-                vec![Kind::LeftBrace, Kind::LeftParen],
-                "Write a sequence pattern here",
-            ))
+            panic!("Unexpected token {:?}", self.cur_token());
         }
     }
 
@@ -1485,11 +1427,7 @@ impl<'a> Parser<'a> {
             self.bump_any();
             aliases.push(self.parse_alias("*".to_string(), node));
         } else {
-            return Err(self.unexpected_token_new(
-               import_node,
-               vec![Kind::Identifier, Kind::Mul, Kind::LeftParen],
-               "Use * for importing everything or use () to specify names to import or specify the name you want to import"
-           ));
+            panic!("Unexpected token {:?}", self.cur_token());
         }
         Ok(Statement::ImportFrom(Box::new(ImportFrom {
             node: self.finish_node(import_node),
@@ -1765,7 +1703,7 @@ impl<'a> Parser<'a> {
         let node = self.start_node();
         let mut targets = vec![];
         let target = match self.cur_kind() {
-            Kind::Identifier => match self.peek_kind() {
+            Kind::Type | Kind::Match | Kind::Identifier => match self.peek_kind() {
                 Ok(Kind::LeftBrace) => {
                     let atom = self.parse_atom()?;
                     self.parse_subscript(node, atom)?
@@ -1832,7 +1770,12 @@ impl<'a> Parser<'a> {
             // check if current kind can be start of a target
             if !matches!(
                 self.cur_kind(),
-                Kind::Identifier | Kind::LeftBrace | Kind::LeftParen | Kind::Mul
+                Kind::Match
+                    | Kind::Type
+                    | Kind::Identifier
+                    | Kind::LeftBrace
+                    | Kind::LeftParen
+                    | Kind::Mul
             ) {
                 break;
             }
@@ -2274,8 +2217,7 @@ impl<'a> Parser<'a> {
         } else if self.cur_kind().is_atom() {
             self.parse_atom()?
         } else {
-            let path = &self.path;
-            panic!("not a primary {} {path:?}", self.cur_token());
+            panic!("not a primary {:?}", self.cur_token());
         };
 
         let mut primary = if self.at(Kind::Dot) {
@@ -2487,7 +2429,7 @@ impl<'a> Parser<'a> {
             let atom_is_string = self.cur_kind().is_string();
             let start = self.start_node();
             let mut expr = match self.cur_kind() {
-                Kind::Identifier => {
+                Kind::Match | Kind::Type | Kind::Identifier => {
                     let val = self.cur_token.to_string(self.source);
                     self.bump_any();
                     Expression::Name(Box::new(Name {
@@ -2658,7 +2600,7 @@ impl<'a> Parser<'a> {
                         // TODO: duplicate code
                         let start = self.start_node();
                         let next_str = match self.cur_kind() {
-                            Kind::Identifier => {
+                            Kind::Type | Kind::Match | Kind::Identifier => {
                                 let val = self.cur_token().to_string(self.source);
                                 self.bump_any();
                                 Expression::Name(Box::new(Name {
@@ -3213,7 +3155,7 @@ impl<'a> Parser<'a> {
         let mut defaults = vec![];
 
         loop {
-            if self.is_def_parameter() {
+            if self.at(Kind::Identifier) {
                 let (param, default) = self.parse_parameter(is_lambda)?;
                 if seen_vararg {
                     kwonlyargs.push(param);
@@ -3283,12 +3225,6 @@ impl<'a> Parser<'a> {
         })
     }
 
-    fn is_def_parameter(&mut self) -> bool {
-        self.cur_kind() == Kind::Identifier
-        // && matches!(self.peek_kind(), Ok(Kind::Assign))
-        // || matches!(self.peek_kind(), Ok(Kind::Colon))
-    }
-
     fn parse_parameter(
         &mut self,
         is_lambda: bool,
@@ -3342,7 +3278,7 @@ impl<'a> Parser<'a> {
         let mut type_params = vec![];
         while !self.eat(Kind::RightBrace) {
             match self.cur_kind() {
-                Kind::Identifier => {
+                Kind::Match | Kind::Type | Kind::Identifier => {
                     let node = self.start_node();
                     let name = self.cur_token().to_string(self.source);
                     self.bump(Kind::Identifier);
@@ -3380,11 +3316,7 @@ impl<'a> Parser<'a> {
                     }));
                 }
                 _ => {
-                    return Err(self.unexpected_token_new(
-                        node,
-                        vec![Kind::Identifier, Kind::Pow, Kind::Mul, Kind::RightBracket],
-                        "",
-                    ));
+                    panic!("Unexpected token {:?}", self.cur_token());
                 }
             }
             if !self.at(Kind::RightBrace) {
@@ -3392,11 +3324,7 @@ impl<'a> Parser<'a> {
             }
         }
         if type_params.is_empty() {
-            return Err(self.unexpected_token_new(
-                node,
-                vec![Kind::Identifier, Kind::Pow, Kind::Mul],
-                "Type parameter is empty",
-            ));
+            panic!("Unexpected token {:?}", self.cur_token());
         }
         Ok(type_params)
     }
@@ -3482,7 +3410,7 @@ impl<'a> Parser<'a> {
             }
             Kind::LeftBracket => self.parse_fstring_replacement_field(),
             _ => {
-                panic!("kind is {}", self.cur_token());
+                panic!("kind is {}", self.cur_token().kind);
             }
         }
     }
@@ -3535,7 +3463,7 @@ mod tests {
             "a |= 1",
             // annotated assignment
         ] {
-            let mut parser = Parser::new(test_case, "");
+            let mut parser = Parser::new(test_case);
             let program = parser.parse().expect("parsing failed");
 
             insta::with_settings!({
@@ -3551,7 +3479,7 @@ mod tests {
     #[test]
     fn test_parse_assert_stmt() {
         for test_case in &["assert a", "assert a, b", "assert True, 'fancy message'"] {
-            let mut parser = Parser::new(test_case, "");
+            let mut parser = Parser::new(test_case);
             let program = parser.parse().expect("parsing failed");
 
             insta::with_settings!({
@@ -3567,7 +3495,7 @@ mod tests {
     #[test]
     fn test_pass_stmt() {
         for test_case in &["pass", "pass ", "pass\n"] {
-            let mut parser = Parser::new(test_case, "");
+            let mut parser = Parser::new(test_case);
             let program = parser.parse().expect("parsing failed");
 
             insta::with_settings!({
@@ -3583,7 +3511,7 @@ mod tests {
     #[test]
     fn test_parse_del_stmt() {
         for test_case in &["del a", "del a, b", "del a, b, "] {
-            let mut parser = Parser::new(test_case, "");
+            let mut parser = Parser::new(test_case);
             let program = parser.parse().expect("parsing failed");
 
             insta::with_settings!({
@@ -3599,7 +3527,7 @@ mod tests {
     #[test]
     fn parse_yield_statement() {
         for test_case in &["yield", "yield a", "yield a, b", "yield a, b, "] {
-            let mut parser = Parser::new(test_case, "");
+            let mut parser = Parser::new(test_case);
             let program = parser.parse().expect("parsing failed");
 
             insta::with_settings!({
@@ -3615,7 +3543,7 @@ mod tests {
     #[test]
     fn test_raise_statement() {
         for test_case in &["raise", "raise a", "raise a from c"] {
-            let mut parser = Parser::new(test_case, "");
+            let mut parser = Parser::new(test_case);
             let program = parser.parse().expect("parsing failed");
 
             insta::with_settings!({
@@ -3631,7 +3559,7 @@ mod tests {
     #[test]
     fn test_parse_break_continue() {
         for test_case in &["break", "continue"] {
-            let mut parser = Parser::new(test_case, "");
+            let mut parser = Parser::new(test_case);
             let program = parser.parse().expect("parsing failed");
 
             insta::with_settings!({
@@ -3647,7 +3575,7 @@ mod tests {
     #[test]
     fn test_parse_bool_op() {
         for test_case in &["a or b", "a and b", "a or b or c", "a and b or c"] {
-            let mut parser = Parser::new(test_case, "");
+            let mut parser = Parser::new(test_case);
             let program = parser.parse().expect("parsing failed");
 
             insta::with_settings!({
@@ -3663,7 +3591,7 @@ mod tests {
     #[test]
     fn test_parse_unary_op() {
         for test_case in &["not a", "+ a", "~ a", "-a"] {
-            let mut parser = Parser::new(test_case, "");
+            let mut parser = Parser::new(test_case);
             let program = parser.parse().expect("parsing failed");
 
             insta::with_settings!({
@@ -3680,7 +3608,7 @@ mod tests {
     fn test_named_expression() {
         {
             let test_case = &"(a := b)";
-            let mut parser = Parser::new(test_case, "");
+            let mut parser = Parser::new(test_case);
             let program = parser.parse().expect("parsing failed");
 
             insta::with_settings!({
@@ -3708,7 +3636,7 @@ mod tests {
 )",
             "(a, b, c,)",
         ] {
-            let mut parser = Parser::new(test_case, "");
+            let mut parser = Parser::new(test_case);
             let program = parser.parse().expect("parsing failed");
 
             insta::with_settings!({
@@ -3724,7 +3652,7 @@ mod tests {
     #[test]
     fn test_yield_expression() {
         for test_case in &["yield", "yield a", "yield from a"] {
-            let mut parser = Parser::new(test_case, "");
+            let mut parser = Parser::new(test_case);
             let program = parser.parse().expect("parsing failed");
 
             insta::with_settings!({
@@ -3741,7 +3669,7 @@ mod tests {
     fn test_starred() {
         {
             let test_case = &"(*a)";
-            let mut parser = Parser::new(test_case, "");
+            let mut parser = Parser::new(test_case);
             let program = parser.parse().expect("parsing failed");
 
             insta::with_settings!({
@@ -3758,7 +3686,7 @@ mod tests {
     fn test_await_expression() {
         {
             let test_case = &"await a";
-            let mut parser = Parser::new(test_case, "");
+            let mut parser = Parser::new(test_case);
             let program = parser.parse().expect("parsing failed");
 
             insta::with_settings!({
@@ -3774,7 +3702,7 @@ mod tests {
     #[test]
     fn test_attribute_ref() {
         for test_case in &["a.b", "a.b.c", "a.b_c", "a.b.c.d"] {
-            let mut parser = Parser::new(test_case, "");
+            let mut parser = Parser::new(test_case);
             let program = parser.parse().expect("parsing failed");
 
             insta::with_settings!({
@@ -3800,7 +3728,7 @@ mod tests {
             "func(a,)",
             "eval(' '.join(map(chr, [105, 110, 116])))",
         ] {
-            let mut parser = Parser::new(test_case, "");
+            let mut parser = Parser::new(test_case);
             let program = parser.parse().expect("parsing failed");
 
             insta::with_settings!({
@@ -3826,7 +3754,7 @@ mod tests {
             "lambda a=1 : a",
             "lambda a=1 : a,",
         ] {
-            let mut parser = Parser::new(test_case, "");
+            let mut parser = Parser::new(test_case);
             let program = parser.parse().expect("parsing failed");
 
             insta::with_settings!({
@@ -3843,7 +3771,7 @@ mod tests {
     fn test_conditional_expression() {
         {
             let test_case = &"a if b else c if d else e";
-            let mut parser = Parser::new(test_case, "");
+            let mut parser = Parser::new(test_case);
             let program = parser.parse().expect("parsing failed");
 
             insta::with_settings!({
@@ -3875,7 +3803,7 @@ mod tests {
             "'d' f'a' 'b'",
             "f'a_{1}' 'b' ",
         ] {
-            let mut parser = Parser::new(test_case, "");
+            let mut parser = Parser::new(test_case);
             let program = parser.parse().expect("parsing failed");
 
             insta::with_settings!({
@@ -3898,7 +3826,7 @@ mod tests {
             // unsupported
             // "f'hello_{f'''{a}'''}'",
         ] {
-            let mut parser = Parser::new(test_case, "");
+            let mut parser = Parser::new(test_case);
             let program = parser.parse().expect("parsing failed");
 
             insta::with_settings!({
@@ -3926,7 +3854,7 @@ mod tests {
             "a not in b",
             "a < b < c",
         ] {
-            let mut parser = Parser::new(test_case, "");
+            let mut parser = Parser::new(test_case);
             let program = parser.parse().expect("parsing failed");
 
             insta::with_settings!({
@@ -3951,7 +3879,7 @@ else:
         b = 1
 ",
         ] {
-            let mut parser = Parser::new(test_case, "");
+            let mut parser = Parser::new(test_case);
             let program = parser.parse().expect("parsing failed");
 
             insta::with_settings!({
@@ -3999,7 +3927,7 @@ except *Exception as e:
     pass
 ",
         ] {
-            let mut parser = Parser::new(test_case, "");
+            let mut parser = Parser::new(test_case);
             let program = parser.parse().expect("parsing failed");
 
             insta::with_settings!({
@@ -4021,7 +3949,7 @@ except *Exception as e:
             "a = ...",
             "... + 1",
         ] {
-            let mut parser = Parser::new(test_case, "");
+            let mut parser = Parser::new(test_case);
             let program = parser.parse().expect("parsing failed");
 
             insta::with_settings!({
@@ -4041,7 +3969,6 @@ except *Exception as e:
                 let test_case = fs::read_to_string($test_file).unwrap();
                 let mut parser = Parser::new(
                     &test_case,
-                    $test_file,
                 );
                 let program = parser.parse().expect("parsing failed");
                 let snapshot = format!("{program:#?}");

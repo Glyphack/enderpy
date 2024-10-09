@@ -2,22 +2,22 @@
 source: parser/src/lexer/mod.rs
 description: "def f(x):\n    y = z\n\n    print(y)\n"
 ---
-0,3: Def   (None)
-4,5: Identifier   (Str("f"))
-5,6: (   (None)
-6,7: Identifier   (Str("x"))
-7,8: )   (None)
-8,9: :   (None)
-9,10: NewLine   (None)
-10,14: Indent   (Indent(1))
-14,15: Identifier   (Str("y"))
-16,17: =   (None)
-18,19: Identifier   (Str("z"))
-19,20: NewLine   (None)
-20,21: NL   (None)
-25,30: Identifier   (Str("print"))
-30,31: (   (None)
-31,32: Identifier   (Str("y"))
-32,33: )   (None)
-33,34: NewLine   (None)
-34,34: Dedent   (Indent(1))
+0,3: Def
+4,5: Identifier   f
+5,6: (
+6,7: Identifier   x
+7,8: )
+8,9: :
+9,10: NewLine
+10,14: Indent
+14,15: Identifier   y
+16,17: =
+18,19: Identifier   z
+19,20: NewLine
+20,21: NL
+25,30: Identifier   print
+30,31: (
+31,32: Identifier   y
+32,33: )
+33,34: NewLine
+34,34: Dedent

@@ -3,192 +3,192 @@ source: parser/src/lexer/mod.rs
 description: "{a, b, c}\n\n{a,\nb, c}\n\n{a\n, b, c}\n\n{a,\nb,\n    c}\n\n{a,\n}\n\n{a, b, c,}\n\n{a for a in range(10)}\n\n{a for a in range(10)\n}\n\n{a for a in range(10)}\n\n{a for a in range(10)}\n\n{a for a in range(10) for b in range(10)}\n\n{a for a in range(10) for b in range(10)\n}\n\n{a for a in range(11) for b in range(10)\n}\n\n{\n    (a,b) for a in range(11) for b in range(10)\n}\n"
 input_file: parser/test_data/inputs/sets.py
 ---
-0,1: {   (None)
-1,2: Identifier   (Str("a"))
-2,3: ,   (None)
-4,5: Identifier   (Str("b"))
-5,6: ,   (None)
-7,8: Identifier   (Str("c"))
-8,9: }   (None)
-9,10: NewLine   (None)
-10,11: NL   (None)
-11,12: {   (None)
-12,13: Identifier   (Str("a"))
-13,14: ,   (None)
-14,15: NL   (None)
-15,16: Identifier   (Str("b"))
-16,17: ,   (None)
-18,19: Identifier   (Str("c"))
-19,20: }   (None)
-20,21: NewLine   (None)
-21,22: NL   (None)
-22,23: {   (None)
-23,24: Identifier   (Str("a"))
-24,25: NL   (None)
-25,26: ,   (None)
-27,28: Identifier   (Str("b"))
-28,29: ,   (None)
-30,31: Identifier   (Str("c"))
-31,32: }   (None)
-32,33: NewLine   (None)
-33,34: NL   (None)
-34,35: {   (None)
-35,36: Identifier   (Str("a"))
-36,37: ,   (None)
-37,38: NL   (None)
-38,39: Identifier   (Str("b"))
-39,40: ,   (None)
-40,41: NL   (None)
-45,46: Identifier   (Str("c"))
-46,47: }   (None)
-47,48: NewLine   (None)
-48,49: NL   (None)
-49,50: {   (None)
-50,51: Identifier   (Str("a"))
-51,52: ,   (None)
-52,53: NL   (None)
-53,54: }   (None)
-54,55: NewLine   (None)
-55,56: NL   (None)
-56,57: {   (None)
-57,58: Identifier   (Str("a"))
-58,59: ,   (None)
-60,61: Identifier   (Str("b"))
-61,62: ,   (None)
-63,64: Identifier   (Str("c"))
-64,65: ,   (None)
-65,66: }   (None)
-66,67: NewLine   (None)
-67,68: NL   (None)
-68,69: {   (None)
-69,70: Identifier   (Str("a"))
-71,74: For   (None)
-75,76: Identifier   (Str("a"))
-77,79: In   (None)
-80,85: Identifier   (Str("range"))
-85,86: (   (None)
-86,88: Integer   (Number("10"))
-88,89: )   (None)
-89,90: }   (None)
-90,91: NewLine   (None)
-91,92: NL   (None)
-92,93: {   (None)
-93,94: Identifier   (Str("a"))
-95,98: For   (None)
-99,100: Identifier   (Str("a"))
-101,103: In   (None)
-104,109: Identifier   (Str("range"))
-109,110: (   (None)
-110,112: Integer   (Number("10"))
-112,113: )   (None)
-113,114: NL   (None)
-114,115: }   (None)
-115,116: NewLine   (None)
-116,117: NL   (None)
-117,118: {   (None)
-118,119: Identifier   (Str("a"))
-120,123: For   (None)
-124,125: Identifier   (Str("a"))
-126,128: In   (None)
-129,134: Identifier   (Str("range"))
-134,135: (   (None)
-135,137: Integer   (Number("10"))
-137,138: )   (None)
-138,139: }   (None)
-139,140: NewLine   (None)
-140,141: NL   (None)
-141,142: {   (None)
-142,143: Identifier   (Str("a"))
-144,147: For   (None)
-148,149: Identifier   (Str("a"))
-150,152: In   (None)
-153,158: Identifier   (Str("range"))
-158,159: (   (None)
-159,161: Integer   (Number("10"))
-161,162: )   (None)
-162,163: }   (None)
-163,164: NewLine   (None)
-164,165: NL   (None)
-165,166: {   (None)
-166,167: Identifier   (Str("a"))
-168,171: For   (None)
-172,173: Identifier   (Str("a"))
-174,176: In   (None)
-177,182: Identifier   (Str("range"))
-182,183: (   (None)
-183,185: Integer   (Number("10"))
-185,186: )   (None)
-187,190: For   (None)
-191,192: Identifier   (Str("b"))
-193,195: In   (None)
-196,201: Identifier   (Str("range"))
-201,202: (   (None)
-202,204: Integer   (Number("10"))
-204,205: )   (None)
-205,206: }   (None)
-206,207: NewLine   (None)
-207,208: NL   (None)
-208,209: {   (None)
-209,210: Identifier   (Str("a"))
-211,214: For   (None)
-215,216: Identifier   (Str("a"))
-217,219: In   (None)
-220,225: Identifier   (Str("range"))
-225,226: (   (None)
-226,228: Integer   (Number("10"))
-228,229: )   (None)
-230,233: For   (None)
-234,235: Identifier   (Str("b"))
-236,238: In   (None)
-239,244: Identifier   (Str("range"))
-244,245: (   (None)
-245,247: Integer   (Number("10"))
-247,248: )   (None)
-248,249: NL   (None)
-249,250: }   (None)
-250,251: NewLine   (None)
-251,252: NL   (None)
-252,253: {   (None)
-253,254: Identifier   (Str("a"))
-255,258: For   (None)
-259,260: Identifier   (Str("a"))
-261,263: In   (None)
-264,269: Identifier   (Str("range"))
-269,270: (   (None)
-270,272: Integer   (Number("11"))
-272,273: )   (None)
-274,277: For   (None)
-278,279: Identifier   (Str("b"))
-280,282: In   (None)
-283,288: Identifier   (Str("range"))
-288,289: (   (None)
-289,291: Integer   (Number("10"))
-291,292: )   (None)
-292,293: NL   (None)
-293,294: }   (None)
-294,295: NewLine   (None)
-295,296: NL   (None)
-296,297: {   (None)
-297,298: NL   (None)
-302,303: (   (None)
-303,304: Identifier   (Str("a"))
-304,305: ,   (None)
-305,306: Identifier   (Str("b"))
-306,307: )   (None)
-308,311: For   (None)
-312,313: Identifier   (Str("a"))
-314,316: In   (None)
-317,322: Identifier   (Str("range"))
-322,323: (   (None)
-323,325: Integer   (Number("11"))
-325,326: )   (None)
-327,330: For   (None)
-331,332: Identifier   (Str("b"))
-333,335: In   (None)
-336,341: Identifier   (Str("range"))
-341,342: (   (None)
-342,344: Integer   (Number("10"))
-344,345: )   (None)
-345,346: NL   (None)
-346,347: }   (None)
-347,348: NewLine   (None)
+0,1: {
+1,2: Identifier   a
+2,3: ,
+4,5: Identifier   b
+5,6: ,
+7,8: Identifier   c
+8,9: }
+9,10: NewLine
+10,11: NL
+11,12: {
+12,13: Identifier   a
+13,14: ,
+14,15: NL
+15,16: Identifier   b
+16,17: ,
+18,19: Identifier   c
+19,20: }
+20,21: NewLine
+21,22: NL
+22,23: {
+23,24: Identifier   a
+24,25: NL
+25,26: ,
+27,28: Identifier   b
+28,29: ,
+30,31: Identifier   c
+31,32: }
+32,33: NewLine
+33,34: NL
+34,35: {
+35,36: Identifier   a
+36,37: ,
+37,38: NL
+38,39: Identifier   b
+39,40: ,
+40,41: NL
+45,46: Identifier   c
+46,47: }
+47,48: NewLine
+48,49: NL
+49,50: {
+50,51: Identifier   a
+51,52: ,
+52,53: NL
+53,54: }
+54,55: NewLine
+55,56: NL
+56,57: {
+57,58: Identifier   a
+58,59: ,
+60,61: Identifier   b
+61,62: ,
+63,64: Identifier   c
+64,65: ,
+65,66: }
+66,67: NewLine
+67,68: NL
+68,69: {
+69,70: Identifier   a
+71,74: For
+75,76: Identifier   a
+77,79: In
+80,85: Identifier   range
+85,86: (
+86,88: Integer   10
+88,89: )
+89,90: }
+90,91: NewLine
+91,92: NL
+92,93: {
+93,94: Identifier   a
+95,98: For
+99,100: Identifier   a
+101,103: In
+104,109: Identifier   range
+109,110: (
+110,112: Integer   10
+112,113: )
+113,114: NL
+114,115: }
+115,116: NewLine
+116,117: NL
+117,118: {
+118,119: Identifier   a
+120,123: For
+124,125: Identifier   a
+126,128: In
+129,134: Identifier   range
+134,135: (
+135,137: Integer   10
+137,138: )
+138,139: }
+139,140: NewLine
+140,141: NL
+141,142: {
+142,143: Identifier   a
+144,147: For
+148,149: Identifier   a
+150,152: In
+153,158: Identifier   range
+158,159: (
+159,161: Integer   10
+161,162: )
+162,163: }
+163,164: NewLine
+164,165: NL
+165,166: {
+166,167: Identifier   a
+168,171: For
+172,173: Identifier   a
+174,176: In
+177,182: Identifier   range
+182,183: (
+183,185: Integer   10
+185,186: )
+187,190: For
+191,192: Identifier   b
+193,195: In
+196,201: Identifier   range
+201,202: (
+202,204: Integer   10
+204,205: )
+205,206: }
+206,207: NewLine
+207,208: NL
+208,209: {
+209,210: Identifier   a
+211,214: For
+215,216: Identifier   a
+217,219: In
+220,225: Identifier   range
+225,226: (
+226,228: Integer   10
+228,229: )
+230,233: For
+234,235: Identifier   b
+236,238: In
+239,244: Identifier   range
+244,245: (
+245,247: Integer   10
+247,248: )
+248,249: NL
+249,250: }
+250,251: NewLine
+251,252: NL
+252,253: {
+253,254: Identifier   a
+255,258: For
+259,260: Identifier   a
+261,263: In
+264,269: Identifier   range
+269,270: (
+270,272: Integer   11
+272,273: )
+274,277: For
+278,279: Identifier   b
+280,282: In
+283,288: Identifier   range
+288,289: (
+289,291: Integer   10
+291,292: )
+292,293: NL
+293,294: }
+294,295: NewLine
+295,296: NL
+296,297: {
+297,298: NL
+302,303: (
+303,304: Identifier   a
+304,305: ,
+305,306: Identifier   b
+306,307: )
+308,311: For
+312,313: Identifier   a
+314,316: In
+317,322: Identifier   range
+322,323: (
+323,325: Integer   11
+325,326: )
+327,330: For
+331,332: Identifier   b
+333,335: In
+336,341: Identifier   range
+341,342: (
+342,344: Integer   10
+344,345: )
+345,346: NL
+346,347: }
+347,348: NewLine

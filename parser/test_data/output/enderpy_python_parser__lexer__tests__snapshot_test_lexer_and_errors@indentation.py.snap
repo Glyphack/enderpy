@@ -3,11 +3,11 @@ source: parser/src/lexer/mod.rs
 description: "# Unindent does not match any outer indentation level\n# if True:\n#         pass\n#     pass\n"
 input_file: parser/test_data/inputs/indentation.py
 ---
-0,53: Comment   (Str("# Unindent does not match any outer indentation level"))
-53,54: NL   (None)
-54,64: Comment   (Str("# if True:"))
-64,65: NL   (None)
-65,79: Comment   (Str("#         pass"))
-79,80: NL   (None)
-80,90: Comment   (Str("#     pass"))
-90,91: NL   (None)
+0,53: Comment
+53,54: NL
+54,64: Comment
+64,65: NL
+65,79: Comment
+79,80: NL
+80,90: Comment
+90,91: NL

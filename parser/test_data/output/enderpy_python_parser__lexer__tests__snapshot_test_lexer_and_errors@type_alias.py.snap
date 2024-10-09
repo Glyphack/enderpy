@@ -3,24 +3,24 @@ source: parser/src/lexer/mod.rs
 description: "type Alias1 = int\ntype Alias2 = str\ntype Alias3 = float\n\ntype AliasToAnotherAlias = Alias1\n"
 input_file: parser/test_data/inputs/type_alias.py
 ---
-0,4: Identifier   (Type)
-5,11: Identifier   (Str("Alias1"))
-12,13: =   (None)
-14,17: Identifier   (Str("int"))
-17,18: NewLine   (None)
-18,22: Identifier   (Type)
-23,29: Identifier   (Str("Alias2"))
-30,31: =   (None)
-32,35: Identifier   (Str("str"))
-35,36: NewLine   (None)
-36,40: Identifier   (Type)
-41,47: Identifier   (Str("Alias3"))
-48,49: =   (None)
-50,55: Identifier   (Str("float"))
-55,56: NewLine   (None)
-56,57: NL   (None)
-57,61: Identifier   (Type)
-62,81: Identifier   (Str("AliasToAnotherAlias"))
-82,83: =   (None)
-84,90: Identifier   (Str("Alias1"))
-90,91: NewLine   (None)
+0,4: type
+5,11: Identifier   Alias1
+12,13: =
+14,17: Identifier   int
+17,18: NewLine
+18,22: type
+23,29: Identifier   Alias2
+30,31: =
+32,35: Identifier   str
+35,36: NewLine
+36,40: type
+41,47: Identifier   Alias3
+48,49: =
+50,55: Identifier   float
+55,56: NewLine
+56,57: NL
+57,61: type
+62,81: Identifier   AliasToAnotherAlias
+82,83: =
+84,90: Identifier   Alias1
+90,91: NewLine

@@ -2,4 +2,4 @@
 source: parser/src/lexer/mod.rs
 description: "b\"world\""
 ---
-0,8: Bytes   (Str("b\"world\""))
+0,8: Bytes   b"world"

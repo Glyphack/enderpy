@@ -2,4 +2,4 @@
 source: parser/src/lexer/mod.rs
 description: "|="
 ---
-0,2: |=   (None)
+0,2: |=

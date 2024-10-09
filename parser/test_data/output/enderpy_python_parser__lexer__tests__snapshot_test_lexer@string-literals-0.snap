@@ -2,4 +2,4 @@
 source: parser/src/lexer/mod.rs
 description: "\"hello\"  "
 ---
-0,7: StringLiteral   (Str("\"hello\""))
+0,7: StringLiteral   "hello"

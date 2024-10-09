@@ -2,5 +2,5 @@
 source: parser/src/lexer/mod.rs
 description: "rf\"\""
 ---
-0,3: RawFString   (Str("rf\""))
-3,4: FStringEnd   (Str("\""))
+0,3: RawFString
+3,4: FStringEnd

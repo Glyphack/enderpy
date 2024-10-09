@@ -11,7 +11,7 @@ use crate::{
     parser::ast::{Expression, JoinedStr},
 };
 pub fn is_at_compound_statement(token: &Token) -> bool {
-    let kind_is_statement = match token.kind {
+    match token.kind {
         Kind::If
         | Kind::While
         | Kind::For
@@ -19,21 +19,13 @@ pub fn is_at_compound_statement(token: &Token) -> bool {
         | Kind::With
         | Kind::Def
         | Kind::Class
+        | Kind::Type
+        | Kind::Match
         // Decorator
         | Kind::MatrixMul
         | Kind::Async => true,
         _ => false,
-    };
-    if kind_is_statement {
-        return true;
     }
-
-    // Match is a soft keyword so it's an identifier token
-    if Kind::Match == token.kind {
-        return true;
-    }
-
-    false
 }
 
 // TODO: performance

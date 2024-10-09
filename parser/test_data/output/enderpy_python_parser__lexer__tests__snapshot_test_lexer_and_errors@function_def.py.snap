@@ -3,442 +3,442 @@ source: parser/src/lexer/mod.rs
 description: "def a(): pass\n\ndef a():\n    pass\n\ndef a(a, b, c): pass\n\ndef a(a, *b, **c): pass\n\ndef a(a,\nb,\nc): pass\n\n@decor\ndef a(): pass\n\n@decor\ndef f(a: 'annotation', b=1, c=2, *d, e, f=3, **g): pass\n\ndef func() -> None: pass\n\nasync def a(): pass\n\nasync def a():\n    pass\n\nasync def a(a, b, c): pass\n\ndef a[T](): pass\n\ndef a[T, U](): pass\n\ndef a[T: U](): pass\n\ndef a[T: U, V: W](): pass\n\ndef a[*T](): pass\n\ndef a[T, *U](): pass\n\ndef a[T: U, *V](): pass\n\ndef a[T: U, V: W, *X](): pass\n\ndef a[**T](): pass\n\ndef a[T, **U](): pass\n\ndef a[T: U, **V](): pass\n\ndef a[T: U, V: W, **X](): pass\n\ndef a[T, *U, **V](): pass\n\ndef a[T: U, *V, **W](): pass\n\ndef dataclass_transform(\n    *,\n    eq_default: bool = True,\n    order_default: bool = False,\n    kw_only_default: bool = False,\n    frozen_default: bool = False,  # on 3.11, runtime accepts it as part of kwargs\n    # this next annotation cannot be parsed need fix\n    field_specifiers: tuple[type[Any] | Callable[..., Any], ...] = (),\n    **kwargs: Any,\n) -> IdentityFunction: ...\n"
 input_file: parser/test_data/inputs/function_def.py
 ---
-0,3: Def   (None)
-4,5: Identifier   (Str("a"))
-5,6: (   (None)
-6,7: )   (None)
-7,8: :   (None)
-9,13: Pass   (None)
-13,14: NewLine   (None)
-14,15: NL   (None)
-15,18: Def   (None)
-19,20: Identifier   (Str("a"))
-20,21: (   (None)
-21,22: )   (None)
-22,23: :   (None)
-23,24: NewLine   (None)
-24,28: Indent   (Indent(1))
-28,32: Pass   (None)
-32,33: NewLine   (None)
-33,34: NL   (None)
-34,34: Dedent   (Indent(1))
-34,37: Def   (None)
-38,39: Identifier   (Str("a"))
-39,40: (   (None)
-40,41: Identifier   (Str("a"))
-41,42: ,   (None)
-43,44: Identifier   (Str("b"))
-44,45: ,   (None)
-46,47: Identifier   (Str("c"))
-47,48: )   (None)
-48,49: :   (None)
-50,54: Pass   (None)
-54,55: NewLine   (None)
-55,56: NL   (None)
-56,59: Def   (None)
-60,61: Identifier   (Str("a"))
-61,62: (   (None)
-62,63: Identifier   (Str("a"))
-63,64: ,   (None)
-65,66: *   (None)
-66,67: Identifier   (Str("b"))
-67,68: ,   (None)
-69,71: **   (None)
-71,72: Identifier   (Str("c"))
-72,73: )   (None)
-73,74: :   (None)
-75,79: Pass   (None)
-79,80: NewLine   (None)
-80,81: NL   (None)
-81,84: Def   (None)
-85,86: Identifier   (Str("a"))
-86,87: (   (None)
-87,88: Identifier   (Str("a"))
-88,89: ,   (None)
-89,90: NL   (None)
-90,91: Identifier   (Str("b"))
-91,92: ,   (None)
-92,93: NL   (None)
-93,94: Identifier   (Str("c"))
-94,95: )   (None)
-95,96: :   (None)
-97,101: Pass   (None)
-101,102: NewLine   (None)
-102,103: NL   (None)
-103,104: @   (None)
-104,109: Identifier   (Str("decor"))
-109,110: NewLine   (None)
-110,113: Def   (None)
-114,115: Identifier   (Str("a"))
-115,116: (   (None)
-116,117: )   (None)
-117,118: :   (None)
-119,123: Pass   (None)
-123,124: NewLine   (None)
-124,125: NL   (None)
-125,126: @   (None)
-126,131: Identifier   (Str("decor"))
-131,132: NewLine   (None)
-132,135: Def   (None)
-136,137: Identifier   (Str("f"))
-137,138: (   (None)
-138,139: Identifier   (Str("a"))
-139,140: :   (None)
-141,153: StringLiteral   (Str("'annotation'"))
-153,154: ,   (None)
-155,156: Identifier   (Str("b"))
-156,157: =   (None)
-157,158: Integer   (Number("1"))
-158,159: ,   (None)
-160,161: Identifier   (Str("c"))
-161,162: =   (None)
-162,163: Integer   (Number("2"))
-163,164: ,   (None)
-165,166: *   (None)
-166,167: Identifier   (Str("d"))
-167,168: ,   (None)
-169,170: Identifier   (Str("e"))
-170,171: ,   (None)
-172,173: Identifier   (Str("f"))
-173,174: =   (None)
-174,175: Integer   (Number("3"))
-175,176: ,   (None)
-177,179: **   (None)
-179,180: Identifier   (Str("g"))
-180,181: )   (None)
-181,182: :   (None)
-183,187: Pass   (None)
-187,188: NewLine   (None)
-188,189: NL   (None)
-189,192: Def   (None)
-193,197: Identifier   (Str("func"))
-197,198: (   (None)
-198,199: )   (None)
-200,202: ->   (None)
-203,207: None   (None)
-207,208: :   (None)
-209,213: Pass   (None)
-213,214: NewLine   (None)
-214,215: NL   (None)
-215,220: Async   (None)
-221,224: Def   (None)
-225,226: Identifier   (Str("a"))
-226,227: (   (None)
-227,228: )   (None)
-228,229: :   (None)
-230,234: Pass   (None)
-234,235: NewLine   (None)
-235,236: NL   (None)
-236,241: Async   (None)
-242,245: Def   (None)
-246,247: Identifier   (Str("a"))
-247,248: (   (None)
-248,249: )   (None)
-249,250: :   (None)
-250,251: NewLine   (None)
-251,255: Indent   (Indent(1))
-255,259: Pass   (None)
-259,260: NewLine   (None)
-260,261: NL   (None)
-261,261: Dedent   (Indent(1))
-261,266: Async   (None)
-267,270: Def   (None)
-271,272: Identifier   (Str("a"))
-272,273: (   (None)
-273,274: Identifier   (Str("a"))
-274,275: ,   (None)
-276,277: Identifier   (Str("b"))
-277,278: ,   (None)
-279,280: Identifier   (Str("c"))
-280,281: )   (None)
-281,282: :   (None)
-283,287: Pass   (None)
-287,288: NewLine   (None)
-288,289: NL   (None)
-289,292: Def   (None)
-293,294: Identifier   (Str("a"))
-294,295: [   (None)
-295,296: Identifier   (Str("T"))
-296,297: ]   (None)
-297,298: (   (None)
-298,299: )   (None)
-299,300: :   (None)
-301,305: Pass   (None)
-305,306: NewLine   (None)
-306,307: NL   (None)
-307,310: Def   (None)
-311,312: Identifier   (Str("a"))
-312,313: [   (None)
-313,314: Identifier   (Str("T"))
-314,315: ,   (None)
-316,317: Identifier   (Str("U"))
-317,318: ]   (None)
-318,319: (   (None)
-319,320: )   (None)
-320,321: :   (None)
-322,326: Pass   (None)
-326,327: NewLine   (None)
-327,328: NL   (None)
-328,331: Def   (None)
-332,333: Identifier   (Str("a"))
-333,334: [   (None)
-334,335: Identifier   (Str("T"))
-335,336: :   (None)
-337,338: Identifier   (Str("U"))
-338,339: ]   (None)
-339,340: (   (None)
-340,341: )   (None)
-341,342: :   (None)
-343,347: Pass   (None)
-347,348: NewLine   (None)
-348,349: NL   (None)
-349,352: Def   (None)
-353,354: Identifier   (Str("a"))
-354,355: [   (None)
-355,356: Identifier   (Str("T"))
-356,357: :   (None)
-358,359: Identifier   (Str("U"))
-359,360: ,   (None)
-361,362: Identifier   (Str("V"))
-362,363: :   (None)
-364,365: Identifier   (Str("W"))
-365,366: ]   (None)
-366,367: (   (None)
-367,368: )   (None)
-368,369: :   (None)
-370,374: Pass   (None)
-374,375: NewLine   (None)
-375,376: NL   (None)
-376,379: Def   (None)
-380,381: Identifier   (Str("a"))
-381,382: [   (None)
-382,383: *   (None)
-383,384: Identifier   (Str("T"))
-384,385: ]   (None)
-385,386: (   (None)
-386,387: )   (None)
-387,388: :   (None)
-389,393: Pass   (None)
-393,394: NewLine   (None)
-394,395: NL   (None)
-395,398: Def   (None)
-399,400: Identifier   (Str("a"))
-400,401: [   (None)
-401,402: Identifier   (Str("T"))
-402,403: ,   (None)
-404,405: *   (None)
-405,406: Identifier   (Str("U"))
-406,407: ]   (None)
-407,408: (   (None)
-408,409: )   (None)
-409,410: :   (None)
-411,415: Pass   (None)
-415,416: NewLine   (None)
-416,417: NL   (None)
-417,420: Def   (None)
-421,422: Identifier   (Str("a"))
-422,423: [   (None)
-423,424: Identifier   (Str("T"))
-424,425: :   (None)
-426,427: Identifier   (Str("U"))
-427,428: ,   (None)
-429,430: *   (None)
-430,431: Identifier   (Str("V"))
-431,432: ]   (None)
-432,433: (   (None)
-433,434: )   (None)
-434,435: :   (None)
-436,440: Pass   (None)
-440,441: NewLine   (None)
-441,442: NL   (None)
-442,445: Def   (None)
-446,447: Identifier   (Str("a"))
-447,448: [   (None)
-448,449: Identifier   (Str("T"))
-449,450: :   (None)
-451,452: Identifier   (Str("U"))
-452,453: ,   (None)
-454,455: Identifier   (Str("V"))
-455,456: :   (None)
-457,458: Identifier   (Str("W"))
-458,459: ,   (None)
-460,461: *   (None)
-461,462: Identifier   (Str("X"))
-462,463: ]   (None)
-463,464: (   (None)
-464,465: )   (None)
-465,466: :   (None)
-467,471: Pass   (None)
-471,472: NewLine   (None)
-472,473: NL   (None)
-473,476: Def   (None)
-477,478: Identifier   (Str("a"))
-478,479: [   (None)
-479,481: **   (None)
-481,482: Identifier   (Str("T"))
-482,483: ]   (None)
-483,484: (   (None)
-484,485: )   (None)
-485,486: :   (None)
-487,491: Pass   (None)
-491,492: NewLine   (None)
-492,493: NL   (None)
-493,496: Def   (None)
-497,498: Identifier   (Str("a"))
-498,499: [   (None)
-499,500: Identifier   (Str("T"))
-500,501: ,   (None)
-502,504: **   (None)
-504,505: Identifier   (Str("U"))
-505,506: ]   (None)
-506,507: (   (None)
-507,508: )   (None)
-508,509: :   (None)
-510,514: Pass   (None)
-514,515: NewLine   (None)
-515,516: NL   (None)
-516,519: Def   (None)
-520,521: Identifier   (Str("a"))
-521,522: [   (None)
-522,523: Identifier   (Str("T"))
-523,524: :   (None)
-525,526: Identifier   (Str("U"))
-526,527: ,   (None)
-528,530: **   (None)
-530,531: Identifier   (Str("V"))
-531,532: ]   (None)
-532,533: (   (None)
-533,534: )   (None)
-534,535: :   (None)
-536,540: Pass   (None)
-540,541: NewLine   (None)
-541,542: NL   (None)
-542,545: Def   (None)
-546,547: Identifier   (Str("a"))
-547,548: [   (None)
-548,549: Identifier   (Str("T"))
-549,550: :   (None)
-551,552: Identifier   (Str("U"))
-552,553: ,   (None)
-554,555: Identifier   (Str("V"))
-555,556: :   (None)
-557,558: Identifier   (Str("W"))
-558,559: ,   (None)
-560,562: **   (None)
-562,563: Identifier   (Str("X"))
-563,564: ]   (None)
-564,565: (   (None)
-565,566: )   (None)
-566,567: :   (None)
-568,572: Pass   (None)
-572,573: NewLine   (None)
-573,574: NL   (None)
-574,577: Def   (None)
-578,579: Identifier   (Str("a"))
-579,580: [   (None)
-580,581: Identifier   (Str("T"))
-581,582: ,   (None)
-583,584: *   (None)
-584,585: Identifier   (Str("U"))
-585,586: ,   (None)
-587,589: **   (None)
-589,590: Identifier   (Str("V"))
-590,591: ]   (None)
-591,592: (   (None)
-592,593: )   (None)
-593,594: :   (None)
-595,599: Pass   (None)
-599,600: NewLine   (None)
-600,601: NL   (None)
-601,604: Def   (None)
-605,606: Identifier   (Str("a"))
-606,607: [   (None)
-607,608: Identifier   (Str("T"))
-608,609: :   (None)
-610,611: Identifier   (Str("U"))
-611,612: ,   (None)
-613,614: *   (None)
-614,615: Identifier   (Str("V"))
-615,616: ,   (None)
-617,619: **   (None)
-619,620: Identifier   (Str("W"))
-620,621: ]   (None)
-621,622: (   (None)
-622,623: )   (None)
-623,624: :   (None)
-625,629: Pass   (None)
-629,630: NewLine   (None)
-630,631: NL   (None)
-631,634: Def   (None)
-635,654: Identifier   (Str("dataclass_transform"))
-654,655: (   (None)
-655,656: NL   (None)
-660,661: *   (None)
-661,662: ,   (None)
-662,663: NL   (None)
-667,677: Identifier   (Str("eq_default"))
-677,678: :   (None)
-679,683: Identifier   (Str("bool"))
-684,685: =   (None)
-686,690: True   (None)
-690,691: ,   (None)
-691,692: NL   (None)
-696,709: Identifier   (Str("order_default"))
-709,710: :   (None)
-711,715: Identifier   (Str("bool"))
-716,717: =   (None)
-718,723: False   (None)
-723,724: ,   (None)
-724,725: NL   (None)
-729,744: Identifier   (Str("kw_only_default"))
-744,745: :   (None)
-746,750: Identifier   (Str("bool"))
-751,752: =   (None)
-753,758: False   (None)
-758,759: ,   (None)
-759,760: NL   (None)
-764,778: Identifier   (Str("frozen_default"))
-778,779: :   (None)
-780,784: Identifier   (Str("bool"))
-785,786: =   (None)
-787,792: False   (None)
-792,793: ,   (None)
-795,842: Comment   (Str("# on 3.11, runtime accepts it as part of kwargs"))
-842,843: NL   (None)
-847,895: Comment   (Str("# this next annotation cannot be parsed need fix"))
-895,896: NL   (None)
-900,916: Identifier   (Str("field_specifiers"))
-916,917: :   (None)
-918,923: Identifier   (Str("tuple"))
-923,924: [   (None)
-924,928: Identifier   (Type)
-928,929: [   (None)
-929,932: Identifier   (Str("Any"))
-932,933: ]   (None)
-934,935: |   (None)
-936,944: Identifier   (Str("Callable"))
-944,945: [   (None)
-945,948: Ellipsis   (None)
-948,949: ,   (None)
-950,953: Identifier   (Str("Any"))
-953,954: ]   (None)
-954,955: ,   (None)
-956,959: Ellipsis   (None)
-959,960: ]   (None)
-961,962: =   (None)
-963,964: (   (None)
-964,965: )   (None)
-965,966: ,   (None)
-966,967: NL   (None)
-971,973: **   (None)
-973,979: Identifier   (Str("kwargs"))
-979,980: :   (None)
-981,984: Identifier   (Str("Any"))
-984,985: ,   (None)
-985,986: NL   (None)
-986,987: )   (None)
-988,990: ->   (None)
-991,1007: Identifier   (Str("IdentityFunction"))
-1007,1008: :   (None)
-1009,1012: Ellipsis   (None)
-1012,1013: NewLine   (None)
+0,3: Def
+4,5: Identifier   a
+5,6: (
+6,7: )
+7,8: :
+9,13: Pass
+13,14: NewLine
+14,15: NL
+15,18: Def
+19,20: Identifier   a
+20,21: (
+21,22: )
+22,23: :
+23,24: NewLine
+24,28: Indent
+28,32: Pass
+32,33: NewLine
+33,34: NL
+34,34: Dedent
+34,37: Def
+38,39: Identifier   a
+39,40: (
+40,41: Identifier   a
+41,42: ,
+43,44: Identifier   b
+44,45: ,
+46,47: Identifier   c
+47,48: )
+48,49: :
+50,54: Pass
+54,55: NewLine
+55,56: NL
+56,59: Def
+60,61: Identifier   a
+61,62: (
+62,63: Identifier   a
+63,64: ,
+65,66: *
+66,67: Identifier   b
+67,68: ,
+69,71: **
+71,72: Identifier   c
+72,73: )
+73,74: :
+75,79: Pass
+79,80: NewLine
+80,81: NL
+81,84: Def
+85,86: Identifier   a
+86,87: (
+87,88: Identifier   a
+88,89: ,
+89,90: NL
+90,91: Identifier   b
+91,92: ,
+92,93: NL
+93,94: Identifier   c
+94,95: )
+95,96: :
+97,101: Pass
+101,102: NewLine
+102,103: NL
+103,104: @
+104,109: Identifier   decor
+109,110: NewLine
+110,113: Def
+114,115: Identifier   a
+115,116: (
+116,117: )
+117,118: :
+119,123: Pass
+123,124: NewLine
+124,125: NL
+125,126: @
+126,131: Identifier   decor
+131,132: NewLine
+132,135: Def
+136,137: Identifier   f
+137,138: (
+138,139: Identifier   a
+139,140: :
+141,153: StringLiteral   'annotation'
+153,154: ,
+155,156: Identifier   b
+156,157: =
+157,158: Integer   1
+158,159: ,
+160,161: Identifier   c
+161,162: =
+162,163: Integer   2
+163,164: ,
+165,166: *
+166,167: Identifier   d
+167,168: ,
+169,170: Identifier   e
+170,171: ,
+172,173: Identifier   f
+173,174: =
+174,175: Integer   3
+175,176: ,
+177,179: **
+179,180: Identifier   g
+180,181: )
+181,182: :
+183,187: Pass
+187,188: NewLine
+188,189: NL
+189,192: Def
+193,197: Identifier   func
+197,198: (
+198,199: )
+200,202: ->
+203,207: None
+207,208: :
+209,213: Pass
+213,214: NewLine
+214,215: NL
+215,220: Async
+221,224: Def
+225,226: Identifier   a
+226,227: (
+227,228: )
+228,229: :
+230,234: Pass
+234,235: NewLine
+235,236: NL
+236,241: Async
+242,245: Def
+246,247: Identifier   a
+247,248: (
+248,249: )
+249,250: :
+250,251: NewLine
+251,255: Indent
+255,259: Pass
+259,260: NewLine
+260,261: NL
+261,261: Dedent
+261,266: Async
+267,270: Def
+271,272: Identifier   a
+272,273: (
+273,274: Identifier   a
+274,275: ,
+276,277: Identifier   b
+277,278: ,
+279,280: Identifier   c
+280,281: )
+281,282: :
+283,287: Pass
+287,288: NewLine
+288,289: NL
+289,292: Def
+293,294: Identifier   a
+294,295: [
+295,296: Identifier   T
+296,297: ]
+297,298: (
+298,299: )
+299,300: :
+301,305: Pass
+305,306: NewLine
+306,307: NL
+307,310: Def
+311,312: Identifier   a
+312,313: [
+313,314: Identifier   T
+314,315: ,
+316,317: Identifier   U
+317,318: ]
+318,319: (
+319,320: )
+320,321: :
+322,326: Pass
+326,327: NewLine
+327,328: NL
+328,331: Def
+332,333: Identifier   a
+333,334: [
+334,335: Identifier   T
+335,336: :
+337,338: Identifier   U
+338,339: ]
+339,340: (
+340,341: )
+341,342: :
+343,347: Pass
+347,348: NewLine
+348,349: NL
+349,352: Def
+353,354: Identifier   a
+354,355: [
+355,356: Identifier   T
+356,357: :
+358,359: Identifier   U
+359,360: ,
+361,362: Identifier   V
+362,363: :
+364,365: Identifier   W
+365,366: ]
+366,367: (
+367,368: )
+368,369: :
+370,374: Pass
+374,375: NewLine
+375,376: NL
+376,379: Def
+380,381: Identifier   a
+381,382: [
+382,383: *
+383,384: Identifier   T
+384,385: ]
+385,386: (
+386,387: )
+387,388: :
+389,393: Pass
+393,394: NewLine
+394,395: NL
+395,398: Def
+399,400: Identifier   a
+400,401: [
+401,402: Identifier   T
+402,403: ,
+404,405: *
+405,406: Identifier   U
+406,407: ]
+407,408: (
+408,409: )
+409,410: :
+411,415: Pass
+415,416: NewLine
+416,417: NL
+417,420: Def
+421,422: Identifier   a
+422,423: [
+423,424: Identifier   T
+424,425: :
+426,427: Identifier   U
+427,428: ,
+429,430: *
+430,431: Identifier   V
+431,432: ]
+432,433: (
+433,434: )
+434,435: :
+436,440: Pass
+440,441: NewLine
+441,442: NL
+442,445: Def
+446,447: Identifier   a
+447,448: [
+448,449: Identifier   T
+449,450: :
+451,452: Identifier   U
+452,453: ,
+454,455: Identifier   V
+455,456: :
+457,458: Identifier   W
+458,459: ,
+460,461: *
+461,462: Identifier   X
+462,463: ]
+463,464: (
+464,465: )
+465,466: :
+467,471: Pass
+471,472: NewLine
+472,473: NL
+473,476: Def
+477,478: Identifier   a
+478,479: [
+479,481: **
+481,482: Identifier   T
+482,483: ]
+483,484: (
+484,485: )
+485,486: :
+487,491: Pass
+491,492: NewLine
+492,493: NL
+493,496: Def
+497,498: Identifier   a
+498,499: [
+499,500: Identifier   T
+500,501: ,
+502,504: **
+504,505: Identifier   U
+505,506: ]
+506,507: (
+507,508: )
+508,509: :
+510,514: Pass
+514,515: NewLine
+515,516: NL
+516,519: Def
+520,521: Identifier   a
+521,522: [
+522,523: Identifier   T
+523,524: :
+525,526: Identifier   U
+526,527: ,
+528,530: **
+530,531: Identifier   V
+531,532: ]
+532,533: (
+533,534: )
+534,535: :
+536,540: Pass
+540,541: NewLine
+541,542: NL
+542,545: Def
+546,547: Identifier   a
+547,548: [
+548,549: Identifier   T
+549,550: :
+551,552: Identifier   U
+552,553: ,
+554,555: Identifier   V
+555,556: :
+557,558: Identifier   W
+558,559: ,
+560,562: **
+562,563: Identifier   X
+563,564: ]
+564,565: (
+565,566: )
+566,567: :
+568,572: Pass
+572,573: NewLine
+573,574: NL
+574,577: Def
+578,579: Identifier   a
+579,580: [
+580,581: Identifier   T
+581,582: ,
+583,584: *
+584,585: Identifier   U
+585,586: ,
+587,589: **
+589,590: Identifier   V
+590,591: ]
+591,592: (
+592,593: )
+593,594: :
+595,599: Pass
+599,600: NewLine
+600,601: NL
+601,604: Def
+605,606: Identifier   a
+606,607: [
+607,608: Identifier   T
+608,609: :
+610,611: Identifier   U
+611,612: ,
+613,614: *
+614,615: Identifier   V
+615,616: ,
+617,619: **
+619,620: Identifier   W
+620,621: ]
+621,622: (
+622,623: )
+623,624: :
+625,629: Pass
+629,630: NewLine
+630,631: NL
+631,634: Def
+635,654: Identifier   dataclass_transform
+654,655: (
+655,656: NL
+660,661: *
+661,662: ,
+662,663: NL
+667,677: Identifier   eq_default
+677,678: :
+679,683: Identifier   bool
+684,685: =
+686,690: True
+690,691: ,
+691,692: NL
+696,709: Identifier   order_default
+709,710: :
+711,715: Identifier   bool
+716,717: =
+718,723: False
+723,724: ,
+724,725: NL
+729,744: Identifier   kw_only_default
+744,745: :
+746,750: Identifier   bool
+751,752: =
+753,758: False
+758,759: ,
+759,760: NL
+764,778: Identifier   frozen_default
+778,779: :
+780,784: Identifier   bool
+785,786: =
+787,792: False
+792,793: ,
+795,842: Comment
+842,843: NL
+847,895: Comment
+895,896: NL
+900,916: Identifier   field_specifiers
+916,917: :
+918,923: Identifier   tuple
+923,924: [
+924,928: type
+928,929: [
+929,932: Identifier   Any
+932,933: ]
+934,935: |
+936,944: Identifier   Callable
+944,945: [
+945,948: Ellipsis
+948,949: ,
+950,953: Identifier   Any
+953,954: ]
+954,955: ,
+956,959: Ellipsis
+959,960: ]
+961,962: =
+963,964: (
+964,965: )
+965,966: ,
+966,967: NL
+971,973: **
+973,979: Identifier   kwargs
+979,980: :
+981,984: Identifier   Any
+984,985: ,
+985,986: NL
+986,987: )
+988,990: ->
+991,1007: Identifier   IdentityFunction
+1007,1008: :
+1009,1012: Ellipsis
+1012,1013: NewLine

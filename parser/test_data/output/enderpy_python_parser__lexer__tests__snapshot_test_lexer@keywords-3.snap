@@ -2,13 +2,13 @@
 source: parser/src/lexer/mod.rs
 description: nonlocal not or pass raise return try while with yield
 ---
-0,8: Nonlocal   (None)
-9,12: Not   (None)
-13,15: Or   (None)
-16,20: Pass   (None)
-21,26: Raise   (None)
-27,33: Return   (None)
-34,37: Try   (None)
-38,43: While   (None)
-44,48: With   (None)
-49,54: Yield   (None)
+0,8: Nonlocal
+9,12: Not
+13,15: Or
+16,20: Pass
+21,26: Raise
+27,33: Return
+34,37: Try
+38,43: While
+44,48: With
+49,54: Yield

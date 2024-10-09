@@ -2,4 +2,4 @@
 source: parser/src/lexer/mod.rs
 description: a_a_a
 ---
-0,5: Identifier   (Str("a_a_a"))
+0,5: Identifier   a_a_a

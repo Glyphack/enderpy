@@ -3,130 +3,130 @@ source: parser/src/lexer/mod.rs
 description: "(a for a in b)\n\n(a for a in b if c)\n\n(a for a in b if c if d)\n\n(a for a in b for c in d)\n\n(ord(c) for line in file for c in line)\n\n(x*y for x in range(10) for y in range(10) if x*y > 10)\n\nhas_explicit_annotation = isinstance(fdef.type, CallableType) and any(\n    not is_unannotated_any(t) for t in fdef.type.arg_types + [fdef.type.ret_type]\n)\n"
 input_file: parser/test_data/inputs/generator_expressions.py
 ---
-0,1: (   (None)
-1,2: Identifier   (Str("a"))
-3,6: For   (None)
-7,8: Identifier   (Str("a"))
-9,11: In   (None)
-12,13: Identifier   (Str("b"))
-13,14: )   (None)
-14,15: NewLine   (None)
-15,16: NL   (None)
-16,17: (   (None)
-17,18: Identifier   (Str("a"))
-19,22: For   (None)
-23,24: Identifier   (Str("a"))
-25,27: In   (None)
-28,29: Identifier   (Str("b"))
-30,32: If   (None)
-33,34: Identifier   (Str("c"))
-34,35: )   (None)
-35,36: NewLine   (None)
-36,37: NL   (None)
-37,38: (   (None)
-38,39: Identifier   (Str("a"))
-40,43: For   (None)
-44,45: Identifier   (Str("a"))
-46,48: In   (None)
-49,50: Identifier   (Str("b"))
-51,53: If   (None)
-54,55: Identifier   (Str("c"))
-56,58: If   (None)
-59,60: Identifier   (Str("d"))
-60,61: )   (None)
-61,62: NewLine   (None)
-62,63: NL   (None)
-63,64: (   (None)
-64,65: Identifier   (Str("a"))
-66,69: For   (None)
-70,71: Identifier   (Str("a"))
-72,74: In   (None)
-75,76: Identifier   (Str("b"))
-77,80: For   (None)
-81,82: Identifier   (Str("c"))
-83,85: In   (None)
-86,87: Identifier   (Str("d"))
-87,88: )   (None)
-88,89: NewLine   (None)
-89,90: NL   (None)
-90,91: (   (None)
-91,94: Identifier   (Str("ord"))
-94,95: (   (None)
-95,96: Identifier   (Str("c"))
-96,97: )   (None)
-98,101: For   (None)
-102,106: Identifier   (Str("line"))
-107,109: In   (None)
-110,114: Identifier   (Str("file"))
-115,118: For   (None)
-119,120: Identifier   (Str("c"))
-121,123: In   (None)
-124,128: Identifier   (Str("line"))
-128,129: )   (None)
-129,130: NewLine   (None)
-130,131: NL   (None)
-131,132: (   (None)
-132,133: Identifier   (Str("x"))
-133,134: *   (None)
-134,135: Identifier   (Str("y"))
-136,139: For   (None)
-140,141: Identifier   (Str("x"))
-142,144: In   (None)
-145,150: Identifier   (Str("range"))
-150,151: (   (None)
-151,153: Integer   (Number("10"))
-153,154: )   (None)
-155,158: For   (None)
-159,160: Identifier   (Str("y"))
-161,163: In   (None)
-164,169: Identifier   (Str("range"))
-169,170: (   (None)
-170,172: Integer   (Number("10"))
-172,173: )   (None)
-174,176: If   (None)
-177,178: Identifier   (Str("x"))
-178,179: *   (None)
-179,180: Identifier   (Str("y"))
-181,182: >   (None)
-183,185: Integer   (Number("10"))
-185,186: )   (None)
-186,187: NewLine   (None)
-187,188: NL   (None)
-188,211: Identifier   (Str("has_explicit_annotation"))
-212,213: =   (None)
-214,224: Identifier   (Str("isinstance"))
-224,225: (   (None)
-225,229: Identifier   (Str("fdef"))
-229,230: .   (None)
-230,234: Identifier   (Type)
-234,235: ,   (None)
-236,248: Identifier   (Str("CallableType"))
-248,249: )   (None)
-250,253: And   (None)
-254,257: Identifier   (Str("any"))
-257,258: (   (None)
-258,259: NL   (None)
-263,266: Not   (None)
-267,285: Identifier   (Str("is_unannotated_any"))
-285,286: (   (None)
-286,287: Identifier   (Str("t"))
-287,288: )   (None)
-289,292: For   (None)
-293,294: Identifier   (Str("t"))
-295,297: In   (None)
-298,302: Identifier   (Str("fdef"))
-302,303: .   (None)
-303,307: Identifier   (Type)
-307,308: .   (None)
-308,317: Identifier   (Str("arg_types"))
-318,319: +   (None)
-320,321: [   (None)
-321,325: Identifier   (Str("fdef"))
-325,326: .   (None)
-326,330: Identifier   (Type)
-330,331: .   (None)
-331,339: Identifier   (Str("ret_type"))
-339,340: ]   (None)
-340,341: NL   (None)
-341,342: )   (None)
-342,343: NewLine   (None)
+0,1: (
+1,2: Identifier   a
+3,6: For
+7,8: Identifier   a
+9,11: In
+12,13: Identifier   b
+13,14: )
+14,15: NewLine
+15,16: NL
+16,17: (
+17,18: Identifier   a
+19,22: For
+23,24: Identifier   a
+25,27: In
+28,29: Identifier   b
+30,32: If
+33,34: Identifier   c
+34,35: )
+35,36: NewLine
+36,37: NL
+37,38: (
+38,39: Identifier   a
+40,43: For
+44,45: Identifier   a
+46,48: In
+49,50: Identifier   b
+51,53: If
+54,55: Identifier   c
+56,58: If
+59,60: Identifier   d
+60,61: )
+61,62: NewLine
+62,63: NL
+63,64: (
+64,65: Identifier   a
+66,69: For
+70,71: Identifier   a
+72,74: In
+75,76: Identifier   b
+77,80: For
+81,82: Identifier   c
+83,85: In
+86,87: Identifier   d
+87,88: )
+88,89: NewLine
+89,90: NL
+90,91: (
+91,94: Identifier   ord
+94,95: (
+95,96: Identifier   c
+96,97: )
+98,101: For
+102,106: Identifier   line
+107,109: In
+110,114: Identifier   file
+115,118: For
+119,120: Identifier   c
+121,123: In
+124,128: Identifier   line
+128,129: )
+129,130: NewLine
+130,131: NL
+131,132: (
+132,133: Identifier   x
+133,134: *
+134,135: Identifier   y
+136,139: For
+140,141: Identifier   x
+142,144: In
+145,150: Identifier   range
+150,151: (
+151,153: Integer   10
+153,154: )
+155,158: For
+159,160: Identifier   y
+161,163: In
+164,169: Identifier   range
+169,170: (
+170,172: Integer   10
+172,173: )
+174,176: If
+177,178: Identifier   x
+178,179: *
+179,180: Identifier   y
+181,182: >
+183,185: Integer   10
+185,186: )
+186,187: NewLine
+187,188: NL
+188,211: Identifier   has_explicit_annotation
+212,213: =
+214,224: Identifier   isinstance
+224,225: (
+225,229: Identifier   fdef
+229,230: .
+230,234: type
+234,235: ,
+236,248: Identifier   CallableType
+248,249: )
+250,253: And
+254,257: Identifier   any
+257,258: (
+258,259: NL
+263,266: Not
+267,285: Identifier   is_unannotated_any
+285,286: (
+286,287: Identifier   t
+287,288: )
+289,292: For
+293,294: Identifier   t
+295,297: In
+298,302: Identifier   fdef
+302,303: .
+303,307: type
+307,308: .
+308,317: Identifier   arg_types
+318,319: +
+320,321: [
+321,325: Identifier   fdef
+325,326: .
+326,330: type
+330,331: .
+331,339: Identifier   ret_type
+339,340: ]
+340,341: NL
+341,342: )
+342,343: NewLine

@@ -2,18 +2,18 @@
 source: parser/src/lexer/mod.rs
 description: "if True:\n    if True:\n        pass\ndef"
 ---
-0,2: If   (None)
-3,7: True   (None)
-7,8: :   (None)
-8,9: NewLine   (None)
-9,13: Indent   (Indent(1))
-13,15: If   (None)
-16,20: True   (None)
-20,21: :   (None)
-21,22: NewLine   (None)
-22,30: Indent   (Indent(1))
-30,34: Pass   (None)
-34,35: NewLine   (None)
-35,35: Dedent   (Indent(1))
-35,35: Dedent   (None)
-35,38: Def   (None)
+0,2: If
+3,7: True
+7,8: :
+8,9: NewLine
+9,13: Indent
+13,15: If
+16,20: True
+20,21: :
+21,22: NewLine
+22,30: Indent
+30,34: Pass
+34,35: NewLine
+35,35: Dedent
+35,35: Dedent
+35,38: Def

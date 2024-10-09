@@ -1,4 +1,5 @@
 use core::panic;
+use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::path::PathBuf;
 use std::sync::atomic::AtomicUsize;
 use std::sync::Arc;
@@ -58,8 +59,18 @@ impl<'a> EnderpyFile {
         let source =
             std::fs::read_to_string(&path).unwrap_or_else(|_| panic!("cannot read file {path:?}"));
         let module = get_module_name(&path);
-        let mut parser = Parser::new(&source, "");
-        let tree = parser.parse().expect("parsing {path:?} failed");
+
+        let mut parser = Parser::new(&source);
+        let parse_result = catch_unwind(AssertUnwindSafe(|| parser.parse()));
+        let tree = match parse_result {
+            Ok(Ok(module)) => module,
+            Ok(Err(_)) => {
+                panic!("Cannot parse file : {path:?}");
+            }
+            Err(_) => {
+                panic!("Cannot parse file : {path:?}");
+            }
+        };
         let line_starts = parser.lexer.line_starts.clone();
 
         let id = if path.ends_with("builtins.pyi") {

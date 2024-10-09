@@ -110,7 +110,7 @@ fn remove_unimplemented_attributes(value: &mut Value) {
 }
 
 fn parse_enderpy_source(source: &str) -> Result<Value> {
-    let mut parser = Parser::new(source, "string");
+    let mut parser = Parser::new(source);
     let typed_ast = parser.parse().into_diagnostic()?;
     let ast = typed_ast.as_python_compat(&parser);
     Ok(ast)

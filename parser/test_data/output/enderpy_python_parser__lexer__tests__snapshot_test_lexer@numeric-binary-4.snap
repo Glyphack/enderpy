@@ -2,4 +2,4 @@
 source: parser/src/lexer/mod.rs
 description: 0b100
 ---
-0,5: Binary   (Number("0b100"))
+0,5: Binary   0b100

@@ -3,111 +3,111 @@ source: parser/src/lexer/mod.rs
 description: "for a in b:\n    pass\n\nfor a in b:\n    pass\n\nfor a in range(10):\n    a = 1\nelse:\n    b = 1\n\nfor a in range(10), range(10):\n    a = 1\n\nasync for a in b:\n    pass\n\nasync for a in b:\n    pass\n\nfor a in [1, 2, 3]:\n    pass\n"
 input_file: parser/test_data/inputs/for.py
 ---
-0,3: For   (None)
-4,5: Identifier   (Str("a"))
-6,8: In   (None)
-9,10: Identifier   (Str("b"))
-10,11: :   (None)
-11,12: NewLine   (None)
-12,16: Indent   (Indent(1))
-16,20: Pass   (None)
-20,21: NewLine   (None)
-21,22: NL   (None)
-22,22: Dedent   (Indent(1))
-22,25: For   (None)
-26,27: Identifier   (Str("a"))
-28,30: In   (None)
-31,32: Identifier   (Str("b"))
-32,33: :   (None)
-33,34: NewLine   (None)
-34,38: Indent   (Indent(1))
-38,42: Pass   (None)
-42,43: NewLine   (None)
-43,44: NL   (None)
-44,44: Dedent   (Indent(1))
-44,47: For   (None)
-48,49: Identifier   (Str("a"))
-50,52: In   (None)
-53,58: Identifier   (Str("range"))
-58,59: (   (None)
-59,61: Integer   (Number("10"))
-61,62: )   (None)
-62,63: :   (None)
-63,64: NewLine   (None)
-64,68: Indent   (Indent(1))
-68,69: Identifier   (Str("a"))
-70,71: =   (None)
-72,73: Integer   (Number("1"))
-73,74: NewLine   (None)
-74,74: Dedent   (Indent(1))
-74,78: Else   (None)
-78,79: :   (None)
-79,80: NewLine   (None)
-80,84: Indent   (Indent(1))
-84,85: Identifier   (Str("b"))
-86,87: =   (None)
-88,89: Integer   (Number("1"))
-89,90: NewLine   (None)
-90,91: NL   (None)
-91,91: Dedent   (Indent(1))
-91,94: For   (None)
-95,96: Identifier   (Str("a"))
-97,99: In   (None)
-100,105: Identifier   (Str("range"))
-105,106: (   (None)
-106,108: Integer   (Number("10"))
-108,109: )   (None)
-109,110: ,   (None)
-111,116: Identifier   (Str("range"))
-116,117: (   (None)
-117,119: Integer   (Number("10"))
-119,120: )   (None)
-120,121: :   (None)
-121,122: NewLine   (None)
-122,126: Indent   (Indent(1))
-126,127: Identifier   (Str("a"))
-128,129: =   (None)
-130,131: Integer   (Number("1"))
-131,132: NewLine   (None)
-132,133: NL   (None)
-133,133: Dedent   (Indent(1))
-133,138: Async   (None)
-139,142: For   (None)
-143,144: Identifier   (Str("a"))
-145,147: In   (None)
-148,149: Identifier   (Str("b"))
-149,150: :   (None)
-150,151: NewLine   (None)
-151,155: Indent   (Indent(1))
-155,159: Pass   (None)
-159,160: NewLine   (None)
-160,161: NL   (None)
-161,161: Dedent   (Indent(1))
-161,166: Async   (None)
-167,170: For   (None)
-171,172: Identifier   (Str("a"))
-173,175: In   (None)
-176,177: Identifier   (Str("b"))
-177,178: :   (None)
-178,179: NewLine   (None)
-179,183: Indent   (Indent(1))
-183,187: Pass   (None)
-187,188: NewLine   (None)
-188,189: NL   (None)
-189,189: Dedent   (Indent(1))
-189,192: For   (None)
-193,194: Identifier   (Str("a"))
-195,197: In   (None)
-198,199: [   (None)
-199,200: Integer   (Number("1"))
-200,201: ,   (None)
-202,203: Integer   (Number("2"))
-203,204: ,   (None)
-205,206: Integer   (Number("3"))
-206,207: ]   (None)
-207,208: :   (None)
-208,209: NewLine   (None)
-209,213: Indent   (Indent(1))
-213,217: Pass   (None)
-217,218: NewLine   (None)
-218,218: Dedent   (Indent(1))
+0,3: For
+4,5: Identifier   a
+6,8: In
+9,10: Identifier   b
+10,11: :
+11,12: NewLine
+12,16: Indent
+16,20: Pass
+20,21: NewLine
+21,22: NL
+22,22: Dedent
+22,25: For
+26,27: Identifier   a
+28,30: In
+31,32: Identifier   b
+32,33: :
+33,34: NewLine
+34,38: Indent
+38,42: Pass
+42,43: NewLine
+43,44: NL
+44,44: Dedent
+44,47: For
+48,49: Identifier   a
+50,52: In
+53,58: Identifier   range
+58,59: (
+59,61: Integer   10
+61,62: )
+62,63: :
+63,64: NewLine
+64,68: Indent
+68,69: Identifier   a
+70,71: =
+72,73: Integer   1
+73,74: NewLine
+74,74: Dedent
+74,78: Else
+78,79: :
+79,80: NewLine
+80,84: Indent
+84,85: Identifier   b
+86,87: =
+88,89: Integer   1
+89,90: NewLine
+90,91: NL
+91,91: Dedent
+91,94: For
+95,96: Identifier   a
+97,99: In
+100,105: Identifier   range
+105,106: (
+106,108: Integer   10
+108,109: )
+109,110: ,
+111,116: Identifier   range
+116,117: (
+117,119: Integer   10
+119,120: )
+120,121: :
+121,122: NewLine
+122,126: Indent
+126,127: Identifier   a
+128,129: =
+130,131: Integer   1
+131,132: NewLine
+132,133: NL
+133,133: Dedent
+133,138: Async
+139,142: For
+143,144: Identifier   a
+145,147: In
+148,149: Identifier   b
+149,150: :
+150,151: NewLine
+151,155: Indent
+155,159: Pass
+159,160: NewLine
+160,161: NL
+161,161: Dedent
+161,166: Async
+167,170: For
+171,172: Identifier   a
+173,175: In
+176,177: Identifier   b
+177,178: :
+178,179: NewLine
+179,183: Indent
+183,187: Pass
+187,188: NewLine
+188,189: NL
+189,189: Dedent
+189,192: For
+193,194: Identifier   a
+195,197: In
+198,199: [
+199,200: Integer   1
+200,201: ,
+202,203: Integer   2
+203,204: ,
+205,206: Integer   3
+206,207: ]
+207,208: :
+208,209: NewLine
+209,213: Indent
+213,217: Pass
+217,218: NewLine
+218,218: Dedent

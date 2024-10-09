@@ -137,11 +137,7 @@ impl<'a> Lexer<'a> {
         if kind != Kind::Comment && kind != Kind::NL && kind != Kind::Dedent {
             self.non_logical_line_state = kind == Kind::NewLine;
         }
-        let end = match kind {
-            Kind::FStringMiddle => self.current,
-            _ => self.current,
-        };
-
+        let end = self.current;
         if kind == Kind::Dedent {
             start = end
         }
@@ -743,6 +739,8 @@ impl<'a> Lexer<'a> {
             "while" => Kind::While,
             "with" => Kind::With,
             "yield" => Kind::Yield,
+            "match" => Kind::Match,
+            "type" => Kind::Type,
             _ => Kind::Identifier,
         }
     }
@@ -1071,15 +1069,14 @@ mod tests {
 
     fn snapshot_test_lexer_and_errors(test_case: &str) {
         let mut lexer = Lexer::new(test_case);
-        let mut tokens = vec![];
         let mut snapshot = String::from("");
         loop {
             let token = lexer.next_token();
             if token.kind == Kind::Eof {
                 break;
             }
-            snapshot += format!("{}\n", token).as_str();
-            tokens.push(token);
+            snapshot += token.display_token(test_case).as_str();
+            snapshot += "\n";
         }
         let mut settings = insta::Settings::clone_current();
         settings.set_snapshot_path("../../test_data/output/");
@@ -1092,15 +1089,14 @@ mod tests {
     fn snapshot_test_lexer(snap_name: &str, inputs: &[&str]) -> Result<(), LexError> {
         for (i, test_input) in inputs.iter().enumerate() {
             let mut lexer = Lexer::new(test_input);
-            let mut tokens = vec![];
             let mut snapshot = String::from("");
             loop {
                 let token = lexer.next_token();
                 if token.kind == Kind::Eof {
                     break;
                 }
-                snapshot += format!("{}\n", token).as_str();
-                tokens.push(token);
+                snapshot += token.display_token(test_input).as_str();
+                snapshot += "\n";
             }
             let mut settings = insta::Settings::clone_current();
             settings.set_snapshot_suffix(format!("{snap_name}-{i}"));
