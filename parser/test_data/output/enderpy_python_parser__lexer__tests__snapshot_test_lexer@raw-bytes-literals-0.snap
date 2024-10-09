@@ -2,4 +2,4 @@
 source: parser/src/lexer/mod.rs
 description: "rb\"hello\""
 ---
-0,9: RawBytes   (Str("rb\"hello\""))
+0,9: RawBytes

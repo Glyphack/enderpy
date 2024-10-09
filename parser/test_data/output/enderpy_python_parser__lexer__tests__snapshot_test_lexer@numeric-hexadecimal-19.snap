@@ -2,4 +2,4 @@
 source: parser/src/lexer/mod.rs
 description: "0xD"
 ---
-0,3: Hexadecimal   (Number("0xD"))
+0,3: Hexadecimal   0xD

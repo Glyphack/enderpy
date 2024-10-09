@@ -3,89 +3,89 @@ source: parser/src/lexer/mod.rs
 description: "with a: pass\n\nwith a as b: pass\n\nwith a as b, c as d: pass\n\nwith (a as b, c as d): pass\n\nasync with a as b: pass\n\nasync with a as b, c as d:\n    pass\n\nasync with (\n        a as b, c as d\n):\n    a = 1\n"
 input_file: parser/test_data/inputs/with.py
 ---
-0,4: With   (None)
-5,6: Identifier   (Str("a"))
-6,7: :   (None)
-8,12: Pass   (None)
-12,13: NewLine   (None)
-13,14: NL   (None)
-14,18: With   (None)
-19,20: Identifier   (Str("a"))
-21,23: As   (None)
-24,25: Identifier   (Str("b"))
-25,26: :   (None)
-27,31: Pass   (None)
-31,32: NewLine   (None)
-32,33: NL   (None)
-33,37: With   (None)
-38,39: Identifier   (Str("a"))
-40,42: As   (None)
-43,44: Identifier   (Str("b"))
-44,45: ,   (None)
-46,47: Identifier   (Str("c"))
-48,50: As   (None)
-51,52: Identifier   (Str("d"))
-52,53: :   (None)
-54,58: Pass   (None)
-58,59: NewLine   (None)
-59,60: NL   (None)
-60,64: With   (None)
-65,66: (   (None)
-66,67: Identifier   (Str("a"))
-68,70: As   (None)
-71,72: Identifier   (Str("b"))
-72,73: ,   (None)
-74,75: Identifier   (Str("c"))
-76,78: As   (None)
-79,80: Identifier   (Str("d"))
-80,81: )   (None)
-81,82: :   (None)
-83,87: Pass   (None)
-87,88: NewLine   (None)
-88,89: NL   (None)
-89,94: Async   (None)
-95,99: With   (None)
-100,101: Identifier   (Str("a"))
-102,104: As   (None)
-105,106: Identifier   (Str("b"))
-106,107: :   (None)
-108,112: Pass   (None)
-112,113: NewLine   (None)
-113,114: NL   (None)
-114,119: Async   (None)
-120,124: With   (None)
-125,126: Identifier   (Str("a"))
-127,129: As   (None)
-130,131: Identifier   (Str("b"))
-131,132: ,   (None)
-133,134: Identifier   (Str("c"))
-135,137: As   (None)
-138,139: Identifier   (Str("d"))
-139,140: :   (None)
-140,141: NewLine   (None)
-141,145: Indent   (Indent(1))
-145,149: Pass   (None)
-149,150: NewLine   (None)
-150,151: NL   (None)
-151,151: Dedent   (Indent(1))
-151,156: Async   (None)
-157,161: With   (None)
-162,163: (   (None)
-163,164: NL   (None)
-172,173: Identifier   (Str("a"))
-174,176: As   (None)
-177,178: Identifier   (Str("b"))
-178,179: ,   (None)
-180,181: Identifier   (Str("c"))
-182,184: As   (None)
-185,186: Identifier   (Str("d"))
-186,187: NL   (None)
-187,188: )   (None)
-188,189: :   (None)
-189,190: NewLine   (None)
-190,194: Indent   (Indent(1))
-194,195: Identifier   (Str("a"))
-196,197: =   (None)
-198,199: Integer   (Number("1"))
-199,200: NewLine   (None)
-200,200: Dedent   (Indent(1))
+0,4: With
+5,6: Identifier   a
+6,7: :
+8,12: Pass
+12,13: NewLine
+13,14: NL
+14,18: With
+19,20: Identifier   a
+21,23: As
+24,25: Identifier   b
+25,26: :
+27,31: Pass
+31,32: NewLine
+32,33: NL
+33,37: With
+38,39: Identifier   a
+40,42: As
+43,44: Identifier   b
+44,45: ,
+46,47: Identifier   c
+48,50: As
+51,52: Identifier   d
+52,53: :
+54,58: Pass
+58,59: NewLine
+59,60: NL
+60,64: With
+65,66: (
+66,67: Identifier   a
+68,70: As
+71,72: Identifier   b
+72,73: ,
+74,75: Identifier   c
+76,78: As
+79,80: Identifier   d
+80,81: )
+81,82: :
+83,87: Pass
+87,88: NewLine
+88,89: NL
+89,94: Async
+95,99: With
+100,101: Identifier   a
+102,104: As
+105,106: Identifier   b
+106,107: :
+108,112: Pass
+112,113: NewLine
+113,114: NL
+114,119: Async
+120,124: With
+125,126: Identifier   a
+127,129: As
+130,131: Identifier   b
+131,132: ,
+133,134: Identifier   c
+135,137: As
+138,139: Identifier   d
+139,140: :
+140,141: NewLine
+141,145: Indent
+145,149: Pass
+149,150: NewLine
+150,151: NL
+151,151: Dedent
+151,156: Async
+157,161: With
+162,163: (
+163,164: NL
+172,173: Identifier   a
+174,176: As
+177,178: Identifier   b
+178,179: ,
+180,181: Identifier   c
+182,184: As
+185,186: Identifier   d
+186,187: NL
+187,188: )
+188,189: :
+189,190: NewLine
+190,194: Indent
+194,195: Identifier   a
+196,197: =
+198,199: Integer   1
+199,200: NewLine
+200,200: Dedent

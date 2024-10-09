@@ -2,9 +2,9 @@
 source: parser/src/lexer/mod.rs
 description: "f'hello_{var}'"
 ---
-0,2: FStringStart   (Str("f'"))
-2,8: FstringMiddle   (Str("hello_"))
-8,9: {   (None)
-9,12: Identifier   (Str("var"))
-12,13: }   (None)
-13,14: FStringEnd   (Str("'"))
+0,2: FStringStart
+2,8: FstringMiddle   hello_
+8,9: {
+9,12: Identifier   var
+12,13: }
+13,14: FStringEnd

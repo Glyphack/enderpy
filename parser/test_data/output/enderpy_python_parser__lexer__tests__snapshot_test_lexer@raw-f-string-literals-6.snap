@@ -2,6 +2,6 @@
 source: parser/src/lexer/mod.rs
 description: "rf'''hello'''"
 ---
-0,5: RawFString   (Str("rf'''"))
-5,10: FstringMiddle   (Str("hello"))
-10,13: FStringEnd   (Str("'''"))
+0,5: RawFString
+5,10: FstringMiddle   hello
+10,13: FStringEnd

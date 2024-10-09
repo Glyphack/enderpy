@@ -2,4 +2,4 @@
 source: parser/src/lexer/mod.rs
 description: "\"\""
 ---
-0,2: StringLiteral   (Str("\"\""))
+0,2: StringLiteral   ""

@@ -430,7 +430,7 @@ fn check_tokens_match(
     }
 
     let python_token_value = python_token.value.clone();
-    let enderpy_token_value = enderpy_token.value.to_string();
+    let enderpy_token_value = enderpy_token.to_string(lexer.source);
     // The Python tokenizer sets values in a number of places where Enderpy simply relies
     // on kind to assume value. Handle those cases here.
     let value_matches = matches_python_name_token(python_token.value.as_str(), &enderpy_token.kind)
@@ -507,6 +507,8 @@ fn matches_python_name_token(python_token_value: &str, token_kind: &Kind) -> boo
         "while" => token_kind == &Kind::While,
         "with" => token_kind == &Kind::With,
         "yield" => token_kind == &Kind::Yield,
+        "match" => token_kind == &Kind::Match,
+        "type" => token_kind == &Kind::Type,
         _ => token_kind == &Kind::Identifier,
     }
 }
@@ -901,6 +903,12 @@ a: int = 1
 print(a)
 ",
         ]);
+    }
+
+    // TODO: fstring middle offset is wrong in case of {{ or }}
+    #[test]
+    fn test_fstring_positions() {
+        python_tokenize_test_lexer(&["f\"{{{', '.join(dict_items)}}}\""]);
     }
 
     #[test]

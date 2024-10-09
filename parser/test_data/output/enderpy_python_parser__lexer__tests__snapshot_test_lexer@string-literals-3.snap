@@ -2,6 +2,6 @@
 source: parser/src/lexer/mod.rs
 description: "a = \"hello\""
 ---
-0,1: Identifier   (Str("a"))
-2,3: =   (None)
-4,11: StringLiteral   (Str("\"hello\""))
+0,1: Identifier   a
+2,3: =
+4,11: StringLiteral   "hello"

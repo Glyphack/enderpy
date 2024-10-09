@@ -3,133 +3,133 @@ source: parser/src/lexer/mod.rs
 description: "x = \"simple text\\n\"\n\nraw = r\"raw_text\\n\"\n\ny = \"\"\"multi\"\"\"\n\nf\"{self.__class__.__name__}({self._display()!r})\"\n\nf\"{num:0.0f}{unit}\"\n\nf\"tuple argument {name[12:]}\"\n\nf\"some words {a+b:.3f} more words {c+d=} final words\"\n\nf\"{f\"{f\"{f\"{f\"{f\"{1+1}\"}\"}\"}\"}\"}\"\n\nf\"\"\"{f'''{f'{f\"{1+1}\"}'}'''}\"\"\"\n"
 input_file: parser/test_data/inputs/string.py
 ---
-0,1: Identifier   (Str("x"))
-2,3: =   (None)
-4,19: StringLiteral   (Str("\"simple text\\n\""))
-19,20: NewLine   (None)
-20,21: NL   (None)
-21,24: Identifier   (Str("raw"))
-25,26: =   (None)
-27,40: StringLiteral   (Str("r\"raw_text\\n\""))
-40,41: NewLine   (None)
-41,42: NL   (None)
-42,43: Identifier   (Str("y"))
-44,45: =   (None)
-46,57: StringLiteral   (Str("\"\"\"multi\"\"\""))
-57,58: NewLine   (None)
-58,59: NL   (None)
-59,61: FStringStart   (Str("f\""))
-61,62: {   (None)
-62,66: Identifier   (Str("self"))
-66,67: .   (None)
-67,76: Identifier   (Str("__class__"))
-76,77: .   (None)
-77,85: Identifier   (Str("__name__"))
-85,86: }   (None)
-86,87: FstringMiddle   (Str("("))
-87,88: {   (None)
-88,92: Identifier   (Str("self"))
-92,93: .   (None)
-93,101: Identifier   (Str("_display"))
-101,102: (   (None)
-102,103: )   (None)
-103,104: !   (None)
-104,105: Identifier   (Str("r"))
-105,106: }   (None)
-106,107: FstringMiddle   (Str(")"))
-107,108: FStringEnd   (Str("\""))
-108,109: NewLine   (None)
-109,110: NL   (None)
-110,112: FStringStart   (Str("f\""))
-112,113: {   (None)
-113,116: Identifier   (Str("num"))
-116,117: :   (None)
-117,121: FstringMiddle   (Str("0.0f"))
-121,122: }   (None)
-122,123: {   (None)
-123,127: Identifier   (Str("unit"))
-127,128: }   (None)
-128,129: FStringEnd   (Str("\""))
-129,130: NewLine   (None)
-130,131: NL   (None)
-131,133: FStringStart   (Str("f\""))
-133,148: FstringMiddle   (Str("tuple argument "))
-148,149: {   (None)
-149,153: Identifier   (Str("name"))
-153,154: [   (None)
-154,156: Integer   (Number("12"))
-156,157: :   (None)
-157,158: ]   (None)
-158,159: }   (None)
-159,160: FStringEnd   (Str("\""))
-160,161: NewLine   (None)
-161,162: NL   (None)
-162,164: FStringStart   (Str("f\""))
-164,175: FstringMiddle   (Str("some words "))
-175,176: {   (None)
-176,177: Identifier   (Str("a"))
-177,178: +   (None)
-178,179: Identifier   (Str("b"))
-179,180: :   (None)
-180,183: FstringMiddle   (Str(".3f"))
-183,184: }   (None)
-184,196: FstringMiddle   (Str(" more words "))
-196,197: {   (None)
-197,198: Identifier   (Str("c"))
-198,199: +   (None)
-199,200: Identifier   (Str("d"))
-200,201: =   (None)
-201,202: }   (None)
-202,214: FstringMiddle   (Str(" final words"))
-214,215: FStringEnd   (Str("\""))
-215,216: NewLine   (None)
-216,217: NL   (None)
-217,219: FStringStart   (Str("f\""))
-219,220: {   (None)
-220,222: FStringStart   (Str("f\""))
-222,223: {   (None)
-223,225: FStringStart   (Str("f\""))
-225,226: {   (None)
-226,228: FStringStart   (Str("f\""))
-228,229: {   (None)
-229,231: FStringStart   (Str("f\""))
-231,232: {   (None)
-232,234: FStringStart   (Str("f\""))
-234,235: {   (None)
-235,236: Integer   (Number("1"))
-236,237: +   (None)
-237,238: Integer   (Number("1"))
-238,239: }   (None)
-239,240: FStringEnd   (Str("\""))
-240,241: }   (None)
-241,242: FStringEnd   (Str("\""))
-242,243: }   (None)
-243,244: FStringEnd   (Str("\""))
-244,245: }   (None)
-245,246: FStringEnd   (Str("\""))
-246,247: }   (None)
-247,248: FStringEnd   (Str("\""))
-248,249: }   (None)
-249,250: FStringEnd   (Str("\""))
-250,251: NewLine   (None)
-251,252: NL   (None)
-252,256: FStringStart   (Str("f\"\"\""))
-256,257: {   (None)
-257,261: FStringStart   (Str("f'''"))
-261,262: {   (None)
-262,264: FStringStart   (Str("f'"))
-264,265: {   (None)
-265,267: FStringStart   (Str("f\""))
-267,268: {   (None)
-268,269: Integer   (Number("1"))
-269,270: +   (None)
-270,271: Integer   (Number("1"))
-271,272: }   (None)
-272,273: FStringEnd   (Str("\""))
-273,274: }   (None)
-274,275: FStringEnd   (Str("'"))
-275,276: }   (None)
-276,279: FStringEnd   (Str("'''"))
-279,280: }   (None)
-280,283: FStringEnd   (Str("\"\"\""))
-283,284: NewLine   (None)
+0,1: Identifier   x
+2,3: =
+4,19: StringLiteral   "simple text\n"
+19,20: NewLine
+20,21: NL
+21,24: Identifier   raw
+25,26: =
+27,40: StringLiteral   r"raw_text\n"
+40,41: NewLine
+41,42: NL
+42,43: Identifier   y
+44,45: =
+46,57: StringLiteral   """multi"""
+57,58: NewLine
+58,59: NL
+59,61: FStringStart
+61,62: {
+62,66: Identifier   self
+66,67: .
+67,76: Identifier   __class__
+76,77: .
+77,85: Identifier   __name__
+85,86: }
+86,87: FstringMiddle   (
+87,88: {
+88,92: Identifier   self
+92,93: .
+93,101: Identifier   _display
+101,102: (
+102,103: )
+103,104: !
+104,105: Identifier   r
+105,106: }
+106,107: FstringMiddle   )
+107,108: FStringEnd
+108,109: NewLine
+109,110: NL
+110,112: FStringStart
+112,113: {
+113,116: Identifier   num
+116,117: :
+117,121: FstringMiddle   0.0f
+121,122: }
+122,123: {
+123,127: Identifier   unit
+127,128: }
+128,129: FStringEnd
+129,130: NewLine
+130,131: NL
+131,133: FStringStart
+133,148: FstringMiddle   tuple argument 
+148,149: {
+149,153: Identifier   name
+153,154: [
+154,156: Integer   12
+156,157: :
+157,158: ]
+158,159: }
+159,160: FStringEnd
+160,161: NewLine
+161,162: NL
+162,164: FStringStart
+164,175: FstringMiddle   some words 
+175,176: {
+176,177: Identifier   a
+177,178: +
+178,179: Identifier   b
+179,180: :
+180,183: FstringMiddle   .3f
+183,184: }
+184,196: FstringMiddle    more words 
+196,197: {
+197,198: Identifier   c
+198,199: +
+199,200: Identifier   d
+200,201: =
+201,202: }
+202,214: FstringMiddle    final words
+214,215: FStringEnd
+215,216: NewLine
+216,217: NL
+217,219: FStringStart
+219,220: {
+220,222: FStringStart
+222,223: {
+223,225: FStringStart
+225,226: {
+226,228: FStringStart
+228,229: {
+229,231: FStringStart
+231,232: {
+232,234: FStringStart
+234,235: {
+235,236: Integer   1
+236,237: +
+237,238: Integer   1
+238,239: }
+239,240: FStringEnd
+240,241: }
+241,242: FStringEnd
+242,243: }
+243,244: FStringEnd
+244,245: }
+245,246: FStringEnd
+246,247: }
+247,248: FStringEnd
+248,249: }
+249,250: FStringEnd
+250,251: NewLine
+251,252: NL
+252,256: FStringStart
+256,257: {
+257,261: FStringStart
+261,262: {
+262,264: FStringStart
+264,265: {
+265,267: FStringStart
+267,268: {
+268,269: Integer   1
+269,270: +
+270,271: Integer   1
+271,272: }
+272,273: FStringEnd
+273,274: }
+274,275: FStringEnd
+275,276: }
+276,279: FStringEnd
+279,280: }
+280,283: FStringEnd
+283,284: NewLine

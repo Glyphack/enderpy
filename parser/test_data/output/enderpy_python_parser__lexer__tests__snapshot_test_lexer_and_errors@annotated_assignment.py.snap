@@ -3,107 +3,107 @@ source: parser/src/lexer/mod.rs
 description: "a: int = 1\n\nb: tuple[int, int] = 1, 2\n\nc: tuple[str, int] = \"1\", 2, \n\nd: tuple[int, int] = b\n\ne: tuple[int, int]\n\nf: tuple[int, int] = e\n\ng: tuple[int,\n         int] = 1, 2\n\n(h): int = 1\n\n(\n    i\n): int = 1\n"
 input_file: parser/test_data/inputs/annotated_assignment.py
 ---
-0,1: Identifier   (Str("a"))
-1,2: :   (None)
-3,6: Identifier   (Str("int"))
-7,8: =   (None)
-9,10: Integer   (Number("1"))
-10,11: NewLine   (None)
-11,12: NL   (None)
-12,13: Identifier   (Str("b"))
-13,14: :   (None)
-15,20: Identifier   (Str("tuple"))
-20,21: [   (None)
-21,24: Identifier   (Str("int"))
-24,25: ,   (None)
-26,29: Identifier   (Str("int"))
-29,30: ]   (None)
-31,32: =   (None)
-33,34: Integer   (Number("1"))
-34,35: ,   (None)
-36,37: Integer   (Number("2"))
-37,38: NewLine   (None)
-38,39: NL   (None)
-39,40: Identifier   (Str("c"))
-40,41: :   (None)
-42,47: Identifier   (Str("tuple"))
-47,48: [   (None)
-48,51: Identifier   (Str("str"))
-51,52: ,   (None)
-53,56: Identifier   (Str("int"))
-56,57: ]   (None)
-58,59: =   (None)
-60,63: StringLiteral   (Str("\"1\""))
-63,64: ,   (None)
-65,66: Integer   (Number("2"))
-66,67: ,   (None)
-68,69: NewLine   (None)
-69,70: NL   (None)
-70,71: Identifier   (Str("d"))
-71,72: :   (None)
-73,78: Identifier   (Str("tuple"))
-78,79: [   (None)
-79,82: Identifier   (Str("int"))
-82,83: ,   (None)
-84,87: Identifier   (Str("int"))
-87,88: ]   (None)
-89,90: =   (None)
-91,92: Identifier   (Str("b"))
-92,93: NewLine   (None)
-93,94: NL   (None)
-94,95: Identifier   (Str("e"))
-95,96: :   (None)
-97,102: Identifier   (Str("tuple"))
-102,103: [   (None)
-103,106: Identifier   (Str("int"))
-106,107: ,   (None)
-108,111: Identifier   (Str("int"))
-111,112: ]   (None)
-112,113: NewLine   (None)
-113,114: NL   (None)
-114,115: Identifier   (Str("f"))
-115,116: :   (None)
-117,122: Identifier   (Str("tuple"))
-122,123: [   (None)
-123,126: Identifier   (Str("int"))
-126,127: ,   (None)
-128,131: Identifier   (Str("int"))
-131,132: ]   (None)
-133,134: =   (None)
-135,136: Identifier   (Str("e"))
-136,137: NewLine   (None)
-137,138: NL   (None)
-138,139: Identifier   (Str("g"))
-139,140: :   (None)
-141,146: Identifier   (Str("tuple"))
-146,147: [   (None)
-147,150: Identifier   (Str("int"))
-150,151: ,   (None)
-151,152: NL   (None)
-161,164: Identifier   (Str("int"))
-164,165: ]   (None)
-166,167: =   (None)
-168,169: Integer   (Number("1"))
-169,170: ,   (None)
-171,172: Integer   (Number("2"))
-172,173: NewLine   (None)
-173,174: NL   (None)
-174,175: (   (None)
-175,176: Identifier   (Str("h"))
-176,177: )   (None)
-177,178: :   (None)
-179,182: Identifier   (Str("int"))
-183,184: =   (None)
-185,186: Integer   (Number("1"))
-186,187: NewLine   (None)
-187,188: NL   (None)
-188,189: (   (None)
-189,190: NL   (None)
-194,195: Identifier   (Str("i"))
-195,196: NL   (None)
-196,197: )   (None)
-197,198: :   (None)
-199,202: Identifier   (Str("int"))
-203,204: =   (None)
-205,206: Integer   (Number("1"))
-206,207: NewLine   (None)
+0,1: Identifier   a
+1,2: :
+3,6: Identifier   int
+7,8: =
+9,10: Integer   1
+10,11: NewLine
+11,12: NL
+12,13: Identifier   b
+13,14: :
+15,20: Identifier   tuple
+20,21: [
+21,24: Identifier   int
+24,25: ,
+26,29: Identifier   int
+29,30: ]
+31,32: =
+33,34: Integer   1
+34,35: ,
+36,37: Integer   2
+37,38: NewLine
+38,39: NL
+39,40: Identifier   c
+40,41: :
+42,47: Identifier   tuple
+47,48: [
+48,51: Identifier   str
+51,52: ,
+53,56: Identifier   int
+56,57: ]
+58,59: =
+60,63: StringLiteral   "1"
+63,64: ,
+65,66: Integer   2
+66,67: ,
+68,69: NewLine
+69,70: NL
+70,71: Identifier   d
+71,72: :
+73,78: Identifier   tuple
+78,79: [
+79,82: Identifier   int
+82,83: ,
+84,87: Identifier   int
+87,88: ]
+89,90: =
+91,92: Identifier   b
+92,93: NewLine
+93,94: NL
+94,95: Identifier   e
+95,96: :
+97,102: Identifier   tuple
+102,103: [
+103,106: Identifier   int
+106,107: ,
+108,111: Identifier   int
+111,112: ]
+112,113: NewLine
+113,114: NL
+114,115: Identifier   f
+115,116: :
+117,122: Identifier   tuple
+122,123: [
+123,126: Identifier   int
+126,127: ,
+128,131: Identifier   int
+131,132: ]
+133,134: =
+135,136: Identifier   e
+136,137: NewLine
+137,138: NL
+138,139: Identifier   g
+139,140: :
+141,146: Identifier   tuple
+146,147: [
+147,150: Identifier   int
+150,151: ,
+151,152: NL
+161,164: Identifier   int
+164,165: ]
+166,167: =
+168,169: Integer   1
+169,170: ,
+171,172: Integer   2
+172,173: NewLine
+173,174: NL
+174,175: (
+175,176: Identifier   h
+176,177: )
+177,178: :
+179,182: Identifier   int
+183,184: =
+185,186: Integer   1
+186,187: NewLine
+187,188: NL
+188,189: (
+189,190: NL
+194,195: Identifier   i
+195,196: NL
+196,197: )
+197,198: :
+199,202: Identifier   int
+203,204: =
+205,206: Integer   1
+206,207: NewLine

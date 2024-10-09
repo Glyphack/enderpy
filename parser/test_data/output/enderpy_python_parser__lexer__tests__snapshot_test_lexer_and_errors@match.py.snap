@@ -3,240 +3,240 @@ source: parser/src/lexer/mod.rs
 description: "match a:\n    case 1:\n        pass\n\nmatch a:\n    case 1 | 2:\n        pass\n\nmatch a.b:\n    case 1:\n        pass\n\nmatch a:\n    case None:\n        pass\n    case True:\n        pass\n    case False:\n        pass\n    case -1:\n        pass\n    case 1.0:\n        pass\n    case _:\n        pass\n\nmatch a:\n    case a.b:\n        pass\n    case a:\n        pass\n\nmatch a:\n    case (a, b):\n        pass\n    case {1: _ ,2: _}:\n        pass\n    case {**rest}:\n        pass\n\nmatch x:\n    case Point2D(0, 0):\n        pass\n    case Point3D(x=0, y=0, z=0):\n        pass\n\nmatch x:\n    case [a, b, c]:\n        pass\n"
 input_file: parser/test_data/inputs/match.py
 ---
-0,5: Identifier   (Match)
-6,7: Identifier   (Str("a"))
-7,8: :   (None)
-8,9: NewLine   (None)
-9,13: Indent   (Indent(1))
-13,17: Identifier   (Str("case"))
-18,19: Integer   (Number("1"))
-19,20: :   (None)
-20,21: NewLine   (None)
-21,29: Indent   (Indent(1))
-29,33: Pass   (None)
-33,34: NewLine   (None)
-34,35: NL   (None)
-35,35: Dedent   (Indent(1))
-35,35: Dedent   (None)
-35,40: Identifier   (Match)
-41,42: Identifier   (Str("a"))
-42,43: :   (None)
-43,44: NewLine   (None)
-44,48: Indent   (Indent(1))
-48,52: Identifier   (Str("case"))
-53,54: Integer   (Number("1"))
-55,56: |   (None)
-57,58: Integer   (Number("2"))
-58,59: :   (None)
-59,60: NewLine   (None)
-60,68: Indent   (Indent(1))
-68,72: Pass   (None)
-72,73: NewLine   (None)
-73,74: NL   (None)
-74,74: Dedent   (Indent(1))
-74,74: Dedent   (None)
-74,79: Identifier   (Match)
-80,81: Identifier   (Str("a"))
-81,82: .   (None)
-82,83: Identifier   (Str("b"))
-83,84: :   (None)
-84,85: NewLine   (None)
-85,89: Indent   (Indent(1))
-89,93: Identifier   (Str("case"))
-94,95: Integer   (Number("1"))
-95,96: :   (None)
-96,97: NewLine   (None)
-97,105: Indent   (Indent(1))
-105,109: Pass   (None)
-109,110: NewLine   (None)
-110,111: NL   (None)
-111,111: Dedent   (Indent(1))
-111,111: Dedent   (None)
-111,116: Identifier   (Match)
-117,118: Identifier   (Str("a"))
-118,119: :   (None)
-119,120: NewLine   (None)
-120,124: Indent   (Indent(1))
-124,128: Identifier   (Str("case"))
-129,133: None   (None)
-133,134: :   (None)
-134,135: NewLine   (None)
-135,143: Indent   (Indent(1))
-143,147: Pass   (None)
-147,148: NewLine   (None)
-152,152: Dedent   (Indent(1))
-152,156: Identifier   (Str("case"))
-157,161: True   (None)
-161,162: :   (None)
-162,163: NewLine   (None)
-163,171: Indent   (Indent(1))
-171,175: Pass   (None)
-175,176: NewLine   (None)
-180,180: Dedent   (Indent(1))
-180,184: Identifier   (Str("case"))
-185,190: False   (None)
-190,191: :   (None)
-191,192: NewLine   (None)
-192,200: Indent   (Indent(1))
-200,204: Pass   (None)
-204,205: NewLine   (None)
-209,209: Dedent   (Indent(1))
-209,213: Identifier   (Str("case"))
-214,215: -   (None)
-215,216: Integer   (Number("1"))
-216,217: :   (None)
-217,218: NewLine   (None)
-218,226: Indent   (Indent(1))
-226,230: Pass   (None)
-230,231: NewLine   (None)
-235,235: Dedent   (Indent(1))
-235,239: Identifier   (Str("case"))
-240,243: PointFloat   (Number("1.0"))
-243,244: :   (None)
-244,245: NewLine   (None)
-245,253: Indent   (Indent(1))
-253,257: Pass   (None)
-257,258: NewLine   (None)
-262,262: Dedent   (Indent(1))
-262,266: Identifier   (Str("case"))
-267,268: Identifier   (Str("_"))
-268,269: :   (None)
-269,270: NewLine   (None)
-270,278: Indent   (Indent(1))
-278,282: Pass   (None)
-282,283: NewLine   (None)
-283,284: NL   (None)
-284,284: Dedent   (Indent(1))
-284,284: Dedent   (None)
-284,289: Identifier   (Match)
-290,291: Identifier   (Str("a"))
-291,292: :   (None)
-292,293: NewLine   (None)
-293,297: Indent   (Indent(1))
-297,301: Identifier   (Str("case"))
-302,303: Identifier   (Str("a"))
-303,304: .   (None)
-304,305: Identifier   (Str("b"))
-305,306: :   (None)
-306,307: NewLine   (None)
-307,315: Indent   (Indent(1))
-315,319: Pass   (None)
-319,320: NewLine   (None)
-324,324: Dedent   (Indent(1))
-324,328: Identifier   (Str("case"))
-329,330: Identifier   (Str("a"))
-330,331: :   (None)
-331,332: NewLine   (None)
-332,340: Indent   (Indent(1))
-340,344: Pass   (None)
-344,345: NewLine   (None)
-345,346: NL   (None)
-346,346: Dedent   (Indent(1))
-346,346: Dedent   (None)
-346,351: Identifier   (Match)
-352,353: Identifier   (Str("a"))
-353,354: :   (None)
-354,355: NewLine   (None)
-355,359: Indent   (Indent(1))
-359,363: Identifier   (Str("case"))
-364,365: (   (None)
-365,366: Identifier   (Str("a"))
-366,367: ,   (None)
-368,369: Identifier   (Str("b"))
-369,370: )   (None)
-370,371: :   (None)
-371,372: NewLine   (None)
-372,380: Indent   (Indent(1))
-380,384: Pass   (None)
-384,385: NewLine   (None)
-389,389: Dedent   (Indent(1))
-389,393: Identifier   (Str("case"))
-394,395: {   (None)
-395,396: Integer   (Number("1"))
-396,397: :   (None)
-398,399: Identifier   (Str("_"))
-400,401: ,   (None)
-401,402: Integer   (Number("2"))
-402,403: :   (None)
-404,405: Identifier   (Str("_"))
-405,406: }   (None)
-406,407: :   (None)
-407,408: NewLine   (None)
-408,416: Indent   (Indent(1))
-416,420: Pass   (None)
-420,421: NewLine   (None)
-425,425: Dedent   (Indent(1))
-425,429: Identifier   (Str("case"))
-430,431: {   (None)
-431,433: **   (None)
-433,437: Identifier   (Str("rest"))
-437,438: }   (None)
-438,439: :   (None)
-439,440: NewLine   (None)
-440,448: Indent   (Indent(1))
-448,452: Pass   (None)
-452,453: NewLine   (None)
-453,454: NL   (None)
-454,454: Dedent   (Indent(1))
-454,454: Dedent   (None)
-454,459: Identifier   (Match)
-460,461: Identifier   (Str("x"))
-461,462: :   (None)
-462,463: NewLine   (None)
-463,467: Indent   (Indent(1))
-467,471: Identifier   (Str("case"))
-472,479: Identifier   (Str("Point2D"))
-479,480: (   (None)
-480,481: Integer   (Number("0"))
-481,482: ,   (None)
-483,484: Integer   (Number("0"))
-484,485: )   (None)
-485,486: :   (None)
-486,487: NewLine   (None)
-487,495: Indent   (Indent(1))
-495,499: Pass   (None)
-499,500: NewLine   (None)
-504,504: Dedent   (Indent(1))
-504,508: Identifier   (Str("case"))
-509,516: Identifier   (Str("Point3D"))
-516,517: (   (None)
-517,518: Identifier   (Str("x"))
-518,519: =   (None)
-519,520: Integer   (Number("0"))
-520,521: ,   (None)
-522,523: Identifier   (Str("y"))
-523,524: =   (None)
-524,525: Integer   (Number("0"))
-525,526: ,   (None)
-527,528: Identifier   (Str("z"))
-528,529: =   (None)
-529,530: Integer   (Number("0"))
-530,531: )   (None)
-531,532: :   (None)
-532,533: NewLine   (None)
-533,541: Indent   (Indent(1))
-541,545: Pass   (None)
-545,546: NewLine   (None)
-546,547: NL   (None)
-547,547: Dedent   (Indent(1))
-547,547: Dedent   (None)
-547,552: Identifier   (Match)
-553,554: Identifier   (Str("x"))
-554,555: :   (None)
-555,556: NewLine   (None)
-556,560: Indent   (Indent(1))
-560,564: Identifier   (Str("case"))
-565,566: [   (None)
-566,567: Identifier   (Str("a"))
-567,568: ,   (None)
-569,570: Identifier   (Str("b"))
-570,571: ,   (None)
-572,573: Identifier   (Str("c"))
-573,574: ]   (None)
-574,575: :   (None)
-575,576: NewLine   (None)
-576,584: Indent   (Indent(1))
-584,588: Pass   (None)
-588,589: NewLine   (None)
-589,589: Dedent   (Indent(1))
-589,589: Dedent   (None)
+0,5: match
+6,7: Identifier   a
+7,8: :
+8,9: NewLine
+9,13: Indent
+13,17: Identifier   case
+18,19: Integer   1
+19,20: :
+20,21: NewLine
+21,29: Indent
+29,33: Pass
+33,34: NewLine
+34,35: NL
+35,35: Dedent
+35,35: Dedent
+35,40: match
+41,42: Identifier   a
+42,43: :
+43,44: NewLine
+44,48: Indent
+48,52: Identifier   case
+53,54: Integer   1
+55,56: |
+57,58: Integer   2
+58,59: :
+59,60: NewLine
+60,68: Indent
+68,72: Pass
+72,73: NewLine
+73,74: NL
+74,74: Dedent
+74,74: Dedent
+74,79: match
+80,81: Identifier   a
+81,82: .
+82,83: Identifier   b
+83,84: :
+84,85: NewLine
+85,89: Indent
+89,93: Identifier   case
+94,95: Integer   1
+95,96: :
+96,97: NewLine
+97,105: Indent
+105,109: Pass
+109,110: NewLine
+110,111: NL
+111,111: Dedent
+111,111: Dedent
+111,116: match
+117,118: Identifier   a
+118,119: :
+119,120: NewLine
+120,124: Indent
+124,128: Identifier   case
+129,133: None
+133,134: :
+134,135: NewLine
+135,143: Indent
+143,147: Pass
+147,148: NewLine
+152,152: Dedent
+152,156: Identifier   case
+157,161: True
+161,162: :
+162,163: NewLine
+163,171: Indent
+171,175: Pass
+175,176: NewLine
+180,180: Dedent
+180,184: Identifier   case
+185,190: False
+190,191: :
+191,192: NewLine
+192,200: Indent
+200,204: Pass
+204,205: NewLine
+209,209: Dedent
+209,213: Identifier   case
+214,215: -
+215,216: Integer   1
+216,217: :
+217,218: NewLine
+218,226: Indent
+226,230: Pass
+230,231: NewLine
+235,235: Dedent
+235,239: Identifier   case
+240,243: PointFloat   1.0
+243,244: :
+244,245: NewLine
+245,253: Indent
+253,257: Pass
+257,258: NewLine
+262,262: Dedent
+262,266: Identifier   case
+267,268: Identifier   _
+268,269: :
+269,270: NewLine
+270,278: Indent
+278,282: Pass
+282,283: NewLine
+283,284: NL
+284,284: Dedent
+284,284: Dedent
+284,289: match
+290,291: Identifier   a
+291,292: :
+292,293: NewLine
+293,297: Indent
+297,301: Identifier   case
+302,303: Identifier   a
+303,304: .
+304,305: Identifier   b
+305,306: :
+306,307: NewLine
+307,315: Indent
+315,319: Pass
+319,320: NewLine
+324,324: Dedent
+324,328: Identifier   case
+329,330: Identifier   a
+330,331: :
+331,332: NewLine
+332,340: Indent
+340,344: Pass
+344,345: NewLine
+345,346: NL
+346,346: Dedent
+346,346: Dedent
+346,351: match
+352,353: Identifier   a
+353,354: :
+354,355: NewLine
+355,359: Indent
+359,363: Identifier   case
+364,365: (
+365,366: Identifier   a
+366,367: ,
+368,369: Identifier   b
+369,370: )
+370,371: :
+371,372: NewLine
+372,380: Indent
+380,384: Pass
+384,385: NewLine
+389,389: Dedent
+389,393: Identifier   case
+394,395: {
+395,396: Integer   1
+396,397: :
+398,399: Identifier   _
+400,401: ,
+401,402: Integer   2
+402,403: :
+404,405: Identifier   _
+405,406: }
+406,407: :
+407,408: NewLine
+408,416: Indent
+416,420: Pass
+420,421: NewLine
+425,425: Dedent
+425,429: Identifier   case
+430,431: {
+431,433: **
+433,437: Identifier   rest
+437,438: }
+438,439: :
+439,440: NewLine
+440,448: Indent
+448,452: Pass
+452,453: NewLine
+453,454: NL
+454,454: Dedent
+454,454: Dedent
+454,459: match
+460,461: Identifier   x
+461,462: :
+462,463: NewLine
+463,467: Indent
+467,471: Identifier   case
+472,479: Identifier   Point2D
+479,480: (
+480,481: Integer   0
+481,482: ,
+483,484: Integer   0
+484,485: )
+485,486: :
+486,487: NewLine
+487,495: Indent
+495,499: Pass
+499,500: NewLine
+504,504: Dedent
+504,508: Identifier   case
+509,516: Identifier   Point3D
+516,517: (
+517,518: Identifier   x
+518,519: =
+519,520: Integer   0
+520,521: ,
+522,523: Identifier   y
+523,524: =
+524,525: Integer   0
+525,526: ,
+527,528: Identifier   z
+528,529: =
+529,530: Integer   0
+530,531: )
+531,532: :
+532,533: NewLine
+533,541: Indent
+541,545: Pass
+545,546: NewLine
+546,547: NL
+547,547: Dedent
+547,547: Dedent
+547,552: match
+553,554: Identifier   x
+554,555: :
+555,556: NewLine
+556,560: Indent
+560,564: Identifier   case
+565,566: [
+566,567: Identifier   a
+567,568: ,
+569,570: Identifier   b
+570,571: ,
+572,573: Identifier   c
+573,574: ]
+574,575: :
+575,576: NewLine
+576,584: Indent
+584,588: Pass
+588,589: NewLine
+589,589: Dedent
+589,589: Dedent

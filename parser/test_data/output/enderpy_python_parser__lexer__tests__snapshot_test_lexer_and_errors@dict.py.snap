@@ -3,162 +3,162 @@ source: parser/src/lexer/mod.rs
 description: "{a: b, c: d}\n\n{a: b,\nc: d},\n\n{a: b\n, c: d},\n\n{a: b,\nc: d,\n    e: f},\n\n{a: b,\n},\n\n{a: b, c: d,}\n\n{1: \"name\" for name in get_names()}\n\n{1: \"name\" for name in get_names()\n}\n\naggregated_key_stats[idx_stat] = {\n    **filter_value_NONE,\n    **filter_key_found,\n    **client_types,\n    **market_watch,\n    \"symbol\": symbol,\n    \"name\": name,\n}\n\ndi = {1: \"name\", **{2: \"name2\"}, 3: \"name3\"}\n"
 input_file: parser/test_data/inputs/dict.py
 ---
-0,1: {   (None)
-1,2: Identifier   (Str("a"))
-2,3: :   (None)
-4,5: Identifier   (Str("b"))
-5,6: ,   (None)
-7,8: Identifier   (Str("c"))
-8,9: :   (None)
-10,11: Identifier   (Str("d"))
-11,12: }   (None)
-12,13: NewLine   (None)
-13,14: NL   (None)
-14,15: {   (None)
-15,16: Identifier   (Str("a"))
-16,17: :   (None)
-18,19: Identifier   (Str("b"))
-19,20: ,   (None)
-20,21: NL   (None)
-21,22: Identifier   (Str("c"))
-22,23: :   (None)
-24,25: Identifier   (Str("d"))
-25,26: }   (None)
-26,27: ,   (None)
-27,28: NewLine   (None)
-28,29: NL   (None)
-29,30: {   (None)
-30,31: Identifier   (Str("a"))
-31,32: :   (None)
-33,34: Identifier   (Str("b"))
-34,35: NL   (None)
-35,36: ,   (None)
-37,38: Identifier   (Str("c"))
-38,39: :   (None)
-40,41: Identifier   (Str("d"))
-41,42: }   (None)
-42,43: ,   (None)
-43,44: NewLine   (None)
-44,45: NL   (None)
-45,46: {   (None)
-46,47: Identifier   (Str("a"))
-47,48: :   (None)
-49,50: Identifier   (Str("b"))
-50,51: ,   (None)
-51,52: NL   (None)
-52,53: Identifier   (Str("c"))
-53,54: :   (None)
-55,56: Identifier   (Str("d"))
-56,57: ,   (None)
-57,58: NL   (None)
-62,63: Identifier   (Str("e"))
-63,64: :   (None)
-65,66: Identifier   (Str("f"))
-66,67: }   (None)
-67,68: ,   (None)
-68,69: NewLine   (None)
-69,70: NL   (None)
-70,71: {   (None)
-71,72: Identifier   (Str("a"))
-72,73: :   (None)
-74,75: Identifier   (Str("b"))
-75,76: ,   (None)
-76,77: NL   (None)
-77,78: }   (None)
-78,79: ,   (None)
-79,80: NewLine   (None)
-80,81: NL   (None)
-81,82: {   (None)
-82,83: Identifier   (Str("a"))
-83,84: :   (None)
-85,86: Identifier   (Str("b"))
-86,87: ,   (None)
-88,89: Identifier   (Str("c"))
-89,90: :   (None)
-91,92: Identifier   (Str("d"))
-92,93: ,   (None)
-93,94: }   (None)
-94,95: NewLine   (None)
-95,96: NL   (None)
-96,97: {   (None)
-97,98: Integer   (Number("1"))
-98,99: :   (None)
-100,106: StringLiteral   (Str("\"name\""))
-107,110: For   (None)
-111,115: Identifier   (Str("name"))
-116,118: In   (None)
-119,128: Identifier   (Str("get_names"))
-128,129: (   (None)
-129,130: )   (None)
-130,131: }   (None)
-131,132: NewLine   (None)
-132,133: NL   (None)
-133,134: {   (None)
-134,135: Integer   (Number("1"))
-135,136: :   (None)
-137,143: StringLiteral   (Str("\"name\""))
-144,147: For   (None)
-148,152: Identifier   (Str("name"))
-153,155: In   (None)
-156,165: Identifier   (Str("get_names"))
-165,166: (   (None)
-166,167: )   (None)
-167,168: NL   (None)
-168,169: }   (None)
-169,170: NewLine   (None)
-170,171: NL   (None)
-171,191: Identifier   (Str("aggregated_key_stats"))
-191,192: [   (None)
-192,200: Identifier   (Str("idx_stat"))
-200,201: ]   (None)
-202,203: =   (None)
-204,205: {   (None)
-205,206: NL   (None)
-210,212: **   (None)
-212,229: Identifier   (Str("filter_value_NONE"))
-229,230: ,   (None)
-230,231: NL   (None)
-235,237: **   (None)
-237,253: Identifier   (Str("filter_key_found"))
-253,254: ,   (None)
-254,255: NL   (None)
-259,261: **   (None)
-261,273: Identifier   (Str("client_types"))
-273,274: ,   (None)
-274,275: NL   (None)
-279,281: **   (None)
-281,293: Identifier   (Str("market_watch"))
-293,294: ,   (None)
-294,295: NL   (None)
-299,307: StringLiteral   (Str("\"symbol\""))
-307,308: :   (None)
-309,315: Identifier   (Str("symbol"))
-315,316: ,   (None)
-316,317: NL   (None)
-321,327: StringLiteral   (Str("\"name\""))
-327,328: :   (None)
-329,333: Identifier   (Str("name"))
-333,334: ,   (None)
-334,335: NL   (None)
-335,336: }   (None)
-336,337: NewLine   (None)
-337,338: NL   (None)
-338,340: Identifier   (Str("di"))
-341,342: =   (None)
-343,344: {   (None)
-344,345: Integer   (Number("1"))
-345,346: :   (None)
-347,353: StringLiteral   (Str("\"name\""))
-353,354: ,   (None)
-355,357: **   (None)
-357,358: {   (None)
-358,359: Integer   (Number("2"))
-359,360: :   (None)
-361,368: StringLiteral   (Str("\"name2\""))
-368,369: }   (None)
-369,370: ,   (None)
-371,372: Integer   (Number("3"))
-372,373: :   (None)
-374,381: StringLiteral   (Str("\"name3\""))
-381,382: }   (None)
-382,383: NewLine   (None)
+0,1: {
+1,2: Identifier   a
+2,3: :
+4,5: Identifier   b
+5,6: ,
+7,8: Identifier   c
+8,9: :
+10,11: Identifier   d
+11,12: }
+12,13: NewLine
+13,14: NL
+14,15: {
+15,16: Identifier   a
+16,17: :
+18,19: Identifier   b
+19,20: ,
+20,21: NL
+21,22: Identifier   c
+22,23: :
+24,25: Identifier   d
+25,26: }
+26,27: ,
+27,28: NewLine
+28,29: NL
+29,30: {
+30,31: Identifier   a
+31,32: :
+33,34: Identifier   b
+34,35: NL
+35,36: ,
+37,38: Identifier   c
+38,39: :
+40,41: Identifier   d
+41,42: }
+42,43: ,
+43,44: NewLine
+44,45: NL
+45,46: {
+46,47: Identifier   a
+47,48: :
+49,50: Identifier   b
+50,51: ,
+51,52: NL
+52,53: Identifier   c
+53,54: :
+55,56: Identifier   d
+56,57: ,
+57,58: NL
+62,63: Identifier   e
+63,64: :
+65,66: Identifier   f
+66,67: }
+67,68: ,
+68,69: NewLine
+69,70: NL
+70,71: {
+71,72: Identifier   a
+72,73: :
+74,75: Identifier   b
+75,76: ,
+76,77: NL
+77,78: }
+78,79: ,
+79,80: NewLine
+80,81: NL
+81,82: {
+82,83: Identifier   a
+83,84: :
+85,86: Identifier   b
+86,87: ,
+88,89: Identifier   c
+89,90: :
+91,92: Identifier   d
+92,93: ,
+93,94: }
+94,95: NewLine
+95,96: NL
+96,97: {
+97,98: Integer   1
+98,99: :
+100,106: StringLiteral   "name"
+107,110: For
+111,115: Identifier   name
+116,118: In
+119,128: Identifier   get_names
+128,129: (
+129,130: )
+130,131: }
+131,132: NewLine
+132,133: NL
+133,134: {
+134,135: Integer   1
+135,136: :
+137,143: StringLiteral   "name"
+144,147: For
+148,152: Identifier   name
+153,155: In
+156,165: Identifier   get_names
+165,166: (
+166,167: )
+167,168: NL
+168,169: }
+169,170: NewLine
+170,171: NL
+171,191: Identifier   aggregated_key_stats
+191,192: [
+192,200: Identifier   idx_stat
+200,201: ]
+202,203: =
+204,205: {
+205,206: NL
+210,212: **
+212,229: Identifier   filter_value_NONE
+229,230: ,
+230,231: NL
+235,237: **
+237,253: Identifier   filter_key_found
+253,254: ,
+254,255: NL
+259,261: **
+261,273: Identifier   client_types
+273,274: ,
+274,275: NL
+279,281: **
+281,293: Identifier   market_watch
+293,294: ,
+294,295: NL
+299,307: StringLiteral   "symbol"
+307,308: :
+309,315: Identifier   symbol
+315,316: ,
+316,317: NL
+321,327: StringLiteral   "name"
+327,328: :
+329,333: Identifier   name
+333,334: ,
+334,335: NL
+335,336: }
+336,337: NewLine
+337,338: NL
+338,340: Identifier   di
+341,342: =
+343,344: {
+344,345: Integer   1
+345,346: :
+347,353: StringLiteral   "name"
+353,354: ,
+355,357: **
+357,358: {
+358,359: Integer   2
+359,360: :
+361,368: StringLiteral   "name2"
+368,369: }
+369,370: ,
+371,372: Integer   3
+372,373: :
+374,381: StringLiteral   "name3"
+381,382: }
+382,383: NewLine

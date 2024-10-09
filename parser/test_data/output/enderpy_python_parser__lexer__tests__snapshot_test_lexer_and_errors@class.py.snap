@@ -3,255 +3,255 @@ source: parser/src/lexer/mod.rs
 description: "class a: pass\n\nclass a():\n    pass\n\nclass a(b, c): pass\n\nclass a(b, *c, **d): pass\n\nclass a(b,\nc,\nd): pass\n\n@decor\nclass a: pass\n\nclass a[T]: pass\n\nclass a[T, U]: pass\n\nclass a[T: U]: pass\n\nclass a[T: U, V: W]: pass\n\nclass a[*T]: pass\n\nclass a[T, *U]: pass\n\nclass a[T: U, *V]: pass\n\nclass a[T: U, V: W, *X]: pass\n\nclass a[**T]: pass\n\nclass a[T, **U]: pass\n\nclass a[T: U, **V]: pass\n\nclass a[T: U, V: W, **X]: pass\n\nclass a[T, *U, **V]: pass\n\nclass a[T: U, *V, **W]: pass\n"
 input_file: parser/test_data/inputs/class.py
 ---
-0,5: Class   (None)
-6,7: Identifier   (Str("a"))
-7,8: :   (None)
-9,13: Pass   (None)
-13,14: NewLine   (None)
-14,15: NL   (None)
-15,20: Class   (None)
-21,22: Identifier   (Str("a"))
-22,23: (   (None)
-23,24: )   (None)
-24,25: :   (None)
-25,26: NewLine   (None)
-26,30: Indent   (Indent(1))
-30,34: Pass   (None)
-34,35: NewLine   (None)
-35,36: NL   (None)
-36,36: Dedent   (Indent(1))
-36,41: Class   (None)
-42,43: Identifier   (Str("a"))
-43,44: (   (None)
-44,45: Identifier   (Str("b"))
-45,46: ,   (None)
-47,48: Identifier   (Str("c"))
-48,49: )   (None)
-49,50: :   (None)
-51,55: Pass   (None)
-55,56: NewLine   (None)
-56,57: NL   (None)
-57,62: Class   (None)
-63,64: Identifier   (Str("a"))
-64,65: (   (None)
-65,66: Identifier   (Str("b"))
-66,67: ,   (None)
-68,69: *   (None)
-69,70: Identifier   (Str("c"))
-70,71: ,   (None)
-72,74: **   (None)
-74,75: Identifier   (Str("d"))
-75,76: )   (None)
-76,77: :   (None)
-78,82: Pass   (None)
-82,83: NewLine   (None)
-83,84: NL   (None)
-84,89: Class   (None)
-90,91: Identifier   (Str("a"))
-91,92: (   (None)
-92,93: Identifier   (Str("b"))
-93,94: ,   (None)
-94,95: NL   (None)
-95,96: Identifier   (Str("c"))
-96,97: ,   (None)
-97,98: NL   (None)
-98,99: Identifier   (Str("d"))
-99,100: )   (None)
-100,101: :   (None)
-102,106: Pass   (None)
-106,107: NewLine   (None)
-107,108: NL   (None)
-108,109: @   (None)
-109,114: Identifier   (Str("decor"))
-114,115: NewLine   (None)
-115,120: Class   (None)
-121,122: Identifier   (Str("a"))
-122,123: :   (None)
-124,128: Pass   (None)
-128,129: NewLine   (None)
-129,130: NL   (None)
-130,135: Class   (None)
-136,137: Identifier   (Str("a"))
-137,138: [   (None)
-138,139: Identifier   (Str("T"))
-139,140: ]   (None)
-140,141: :   (None)
-142,146: Pass   (None)
-146,147: NewLine   (None)
-147,148: NL   (None)
-148,153: Class   (None)
-154,155: Identifier   (Str("a"))
-155,156: [   (None)
-156,157: Identifier   (Str("T"))
-157,158: ,   (None)
-159,160: Identifier   (Str("U"))
-160,161: ]   (None)
-161,162: :   (None)
-163,167: Pass   (None)
-167,168: NewLine   (None)
-168,169: NL   (None)
-169,174: Class   (None)
-175,176: Identifier   (Str("a"))
-176,177: [   (None)
-177,178: Identifier   (Str("T"))
-178,179: :   (None)
-180,181: Identifier   (Str("U"))
-181,182: ]   (None)
-182,183: :   (None)
-184,188: Pass   (None)
-188,189: NewLine   (None)
-189,190: NL   (None)
-190,195: Class   (None)
-196,197: Identifier   (Str("a"))
-197,198: [   (None)
-198,199: Identifier   (Str("T"))
-199,200: :   (None)
-201,202: Identifier   (Str("U"))
-202,203: ,   (None)
-204,205: Identifier   (Str("V"))
-205,206: :   (None)
-207,208: Identifier   (Str("W"))
-208,209: ]   (None)
-209,210: :   (None)
-211,215: Pass   (None)
-215,216: NewLine   (None)
-216,217: NL   (None)
-217,222: Class   (None)
-223,224: Identifier   (Str("a"))
-224,225: [   (None)
-225,226: *   (None)
-226,227: Identifier   (Str("T"))
-227,228: ]   (None)
-228,229: :   (None)
-230,234: Pass   (None)
-234,235: NewLine   (None)
-235,236: NL   (None)
-236,241: Class   (None)
-242,243: Identifier   (Str("a"))
-243,244: [   (None)
-244,245: Identifier   (Str("T"))
-245,246: ,   (None)
-247,248: *   (None)
-248,249: Identifier   (Str("U"))
-249,250: ]   (None)
-250,251: :   (None)
-252,256: Pass   (None)
-256,257: NewLine   (None)
-257,258: NL   (None)
-258,263: Class   (None)
-264,265: Identifier   (Str("a"))
-265,266: [   (None)
-266,267: Identifier   (Str("T"))
-267,268: :   (None)
-269,270: Identifier   (Str("U"))
-270,271: ,   (None)
-272,273: *   (None)
-273,274: Identifier   (Str("V"))
-274,275: ]   (None)
-275,276: :   (None)
-277,281: Pass   (None)
-281,282: NewLine   (None)
-282,283: NL   (None)
-283,288: Class   (None)
-289,290: Identifier   (Str("a"))
-290,291: [   (None)
-291,292: Identifier   (Str("T"))
-292,293: :   (None)
-294,295: Identifier   (Str("U"))
-295,296: ,   (None)
-297,298: Identifier   (Str("V"))
-298,299: :   (None)
-300,301: Identifier   (Str("W"))
-301,302: ,   (None)
-303,304: *   (None)
-304,305: Identifier   (Str("X"))
-305,306: ]   (None)
-306,307: :   (None)
-308,312: Pass   (None)
-312,313: NewLine   (None)
-313,314: NL   (None)
-314,319: Class   (None)
-320,321: Identifier   (Str("a"))
-321,322: [   (None)
-322,324: **   (None)
-324,325: Identifier   (Str("T"))
-325,326: ]   (None)
-326,327: :   (None)
-328,332: Pass   (None)
-332,333: NewLine   (None)
-333,334: NL   (None)
-334,339: Class   (None)
-340,341: Identifier   (Str("a"))
-341,342: [   (None)
-342,343: Identifier   (Str("T"))
-343,344: ,   (None)
-345,347: **   (None)
-347,348: Identifier   (Str("U"))
-348,349: ]   (None)
-349,350: :   (None)
-351,355: Pass   (None)
-355,356: NewLine   (None)
-356,357: NL   (None)
-357,362: Class   (None)
-363,364: Identifier   (Str("a"))
-364,365: [   (None)
-365,366: Identifier   (Str("T"))
-366,367: :   (None)
-368,369: Identifier   (Str("U"))
-369,370: ,   (None)
-371,373: **   (None)
-373,374: Identifier   (Str("V"))
-374,375: ]   (None)
-375,376: :   (None)
-377,381: Pass   (None)
-381,382: NewLine   (None)
-382,383: NL   (None)
-383,388: Class   (None)
-389,390: Identifier   (Str("a"))
-390,391: [   (None)
-391,392: Identifier   (Str("T"))
-392,393: :   (None)
-394,395: Identifier   (Str("U"))
-395,396: ,   (None)
-397,398: Identifier   (Str("V"))
-398,399: :   (None)
-400,401: Identifier   (Str("W"))
-401,402: ,   (None)
-403,405: **   (None)
-405,406: Identifier   (Str("X"))
-406,407: ]   (None)
-407,408: :   (None)
-409,413: Pass   (None)
-413,414: NewLine   (None)
-414,415: NL   (None)
-415,420: Class   (None)
-421,422: Identifier   (Str("a"))
-422,423: [   (None)
-423,424: Identifier   (Str("T"))
-424,425: ,   (None)
-426,427: *   (None)
-427,428: Identifier   (Str("U"))
-428,429: ,   (None)
-430,432: **   (None)
-432,433: Identifier   (Str("V"))
-433,434: ]   (None)
-434,435: :   (None)
-436,440: Pass   (None)
-440,441: NewLine   (None)
-441,442: NL   (None)
-442,447: Class   (None)
-448,449: Identifier   (Str("a"))
-449,450: [   (None)
-450,451: Identifier   (Str("T"))
-451,452: :   (None)
-453,454: Identifier   (Str("U"))
-454,455: ,   (None)
-456,457: *   (None)
-457,458: Identifier   (Str("V"))
-458,459: ,   (None)
-460,462: **   (None)
-462,463: Identifier   (Str("W"))
-463,464: ]   (None)
-464,465: :   (None)
-466,470: Pass   (None)
-470,471: NewLine   (None)
+0,5: Class
+6,7: Identifier   a
+7,8: :
+9,13: Pass
+13,14: NewLine
+14,15: NL
+15,20: Class
+21,22: Identifier   a
+22,23: (
+23,24: )
+24,25: :
+25,26: NewLine
+26,30: Indent
+30,34: Pass
+34,35: NewLine
+35,36: NL
+36,36: Dedent
+36,41: Class
+42,43: Identifier   a
+43,44: (
+44,45: Identifier   b
+45,46: ,
+47,48: Identifier   c
+48,49: )
+49,50: :
+51,55: Pass
+55,56: NewLine
+56,57: NL
+57,62: Class
+63,64: Identifier   a
+64,65: (
+65,66: Identifier   b
+66,67: ,
+68,69: *
+69,70: Identifier   c
+70,71: ,
+72,74: **
+74,75: Identifier   d
+75,76: )
+76,77: :
+78,82: Pass
+82,83: NewLine
+83,84: NL
+84,89: Class
+90,91: Identifier   a
+91,92: (
+92,93: Identifier   b
+93,94: ,
+94,95: NL
+95,96: Identifier   c
+96,97: ,
+97,98: NL
+98,99: Identifier   d
+99,100: )
+100,101: :
+102,106: Pass
+106,107: NewLine
+107,108: NL
+108,109: @
+109,114: Identifier   decor
+114,115: NewLine
+115,120: Class
+121,122: Identifier   a
+122,123: :
+124,128: Pass
+128,129: NewLine
+129,130: NL
+130,135: Class
+136,137: Identifier   a
+137,138: [
+138,139: Identifier   T
+139,140: ]
+140,141: :
+142,146: Pass
+146,147: NewLine
+147,148: NL
+148,153: Class
+154,155: Identifier   a
+155,156: [
+156,157: Identifier   T
+157,158: ,
+159,160: Identifier   U
+160,161: ]
+161,162: :
+163,167: Pass
+167,168: NewLine
+168,169: NL
+169,174: Class
+175,176: Identifier   a
+176,177: [
+177,178: Identifier   T
+178,179: :
+180,181: Identifier   U
+181,182: ]
+182,183: :
+184,188: Pass
+188,189: NewLine
+189,190: NL
+190,195: Class
+196,197: Identifier   a
+197,198: [
+198,199: Identifier   T
+199,200: :
+201,202: Identifier   U
+202,203: ,
+204,205: Identifier   V
+205,206: :
+207,208: Identifier   W
+208,209: ]
+209,210: :
+211,215: Pass
+215,216: NewLine
+216,217: NL
+217,222: Class
+223,224: Identifier   a
+224,225: [
+225,226: *
+226,227: Identifier   T
+227,228: ]
+228,229: :
+230,234: Pass
+234,235: NewLine
+235,236: NL
+236,241: Class
+242,243: Identifier   a
+243,244: [
+244,245: Identifier   T
+245,246: ,
+247,248: *
+248,249: Identifier   U
+249,250: ]
+250,251: :
+252,256: Pass
+256,257: NewLine
+257,258: NL
+258,263: Class
+264,265: Identifier   a
+265,266: [
+266,267: Identifier   T
+267,268: :
+269,270: Identifier   U
+270,271: ,
+272,273: *
+273,274: Identifier   V
+274,275: ]
+275,276: :
+277,281: Pass
+281,282: NewLine
+282,283: NL
+283,288: Class
+289,290: Identifier   a
+290,291: [
+291,292: Identifier   T
+292,293: :
+294,295: Identifier   U
+295,296: ,
+297,298: Identifier   V
+298,299: :
+300,301: Identifier   W
+301,302: ,
+303,304: *
+304,305: Identifier   X
+305,306: ]
+306,307: :
+308,312: Pass
+312,313: NewLine
+313,314: NL
+314,319: Class
+320,321: Identifier   a
+321,322: [
+322,324: **
+324,325: Identifier   T
+325,326: ]
+326,327: :
+328,332: Pass
+332,333: NewLine
+333,334: NL
+334,339: Class
+340,341: Identifier   a
+341,342: [
+342,343: Identifier   T
+343,344: ,
+345,347: **
+347,348: Identifier   U
+348,349: ]
+349,350: :
+351,355: Pass
+355,356: NewLine
+356,357: NL
+357,362: Class
+363,364: Identifier   a
+364,365: [
+365,366: Identifier   T
+366,367: :
+368,369: Identifier   U
+369,370: ,
+371,373: **
+373,374: Identifier   V
+374,375: ]
+375,376: :
+377,381: Pass
+381,382: NewLine
+382,383: NL
+383,388: Class
+389,390: Identifier   a
+390,391: [
+391,392: Identifier   T
+392,393: :
+394,395: Identifier   U
+395,396: ,
+397,398: Identifier   V
+398,399: :
+400,401: Identifier   W
+401,402: ,
+403,405: **
+405,406: Identifier   X
+406,407: ]
+407,408: :
+409,413: Pass
+413,414: NewLine
+414,415: NL
+415,420: Class
+421,422: Identifier   a
+422,423: [
+423,424: Identifier   T
+424,425: ,
+426,427: *
+427,428: Identifier   U
+428,429: ,
+430,432: **
+432,433: Identifier   V
+433,434: ]
+434,435: :
+436,440: Pass
+440,441: NewLine
+441,442: NL
+442,447: Class
+448,449: Identifier   a
+449,450: [
+450,451: Identifier   T
+451,452: :
+453,454: Identifier   U
+454,455: ,
+456,457: *
+457,458: Identifier   V
+458,459: ,
+460,462: **
+462,463: Identifier   W
+463,464: ]
+464,465: :
+466,470: Pass
+470,471: NewLine

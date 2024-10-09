@@ -2,7 +2,7 @@
 source: parser/src/lexer/mod.rs
 description: "f'a' 'c'"
 ---
-0,2: FStringStart   (Str("f'"))
-2,3: FstringMiddle   (Str("a"))
-3,4: FStringEnd   (Str("'"))
-5,8: StringLiteral   (Str("'c'"))
+0,2: FStringStart
+2,3: FstringMiddle   a
+3,4: FStringEnd
+5,8: StringLiteral   'c'

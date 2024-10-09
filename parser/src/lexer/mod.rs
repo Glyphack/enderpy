@@ -3,7 +3,7 @@ use unicode_id_start::{is_id_continue, is_id_start};
 use crate::{
     error::LexError,
     get_row_col_position,
-    token::{Kind, Token, TokenValue},
+    token::{Kind, Token},
 };
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -101,7 +101,6 @@ impl<'a> Lexer<'a> {
             self.next_token_is_dedent -= 1;
             return Token {
                 kind: Kind::Dedent,
-                value: TokenValue::None,
                 start: self.current,
                 end: self.current,
             };
@@ -138,22 +137,12 @@ impl<'a> Lexer<'a> {
         if kind != Kind::Comment && kind != Kind::NL && kind != Kind::Dedent {
             self.non_logical_line_state = kind == Kind::NewLine;
         }
-        let value = self.parse_token_value(kind, start);
-        let end = match kind {
-            Kind::FStringMiddle => start + value.as_str().expect("").len() as u32,
-            _ => self.current,
-        };
-
+        let end = self.current;
         if kind == Kind::Dedent {
             start = end
         }
 
-        Token {
-            kind,
-            value,
-            start,
-            end,
-        }
+        Token { kind, start, end }
     }
 
     // peek_token is a side-effect free version of next_token
@@ -750,6 +739,8 @@ impl<'a> Lexer<'a> {
             "while" => Kind::While,
             "with" => Kind::With,
             "yield" => Kind::Yield,
+            "match" => Kind::Match,
+            "type" => Kind::Type,
             _ => Kind::Identifier,
         }
     }
@@ -1053,43 +1044,6 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    fn parse_token_value(&mut self, kind: Kind, start: u32) -> TokenValue {
-        let kind_value = &self.source[start as usize..self.current as usize];
-        match kind {
-            Kind::Integer
-            | Kind::Hexadecimal
-            | Kind::Binary
-            | Kind::PointFloat
-            | Kind::Octal
-            | Kind::ExponentFloat
-            | Kind::ImaginaryInteger
-            | Kind::ImaginaryExponentFloat
-            | Kind::ImaginaryPointFloat => TokenValue::Number(kind_value.to_string()),
-            Kind::Identifier => match kind_value {
-                "type" => TokenValue::Type,
-                "match" => TokenValue::Match,
-                _ => TokenValue::Str(kind_value.to_string()),
-            },
-            Kind::StringLiteral
-            | Kind::FStringStart
-            | Kind::FStringEnd
-            | Kind::RawBytes
-            | Kind::RawFStringStart
-            | Kind::Bytes
-            | Kind::Unicode
-            | Kind::Comment => TokenValue::Str(kind_value.to_string()),
-            Kind::FStringMiddle => {
-                let value = kind_value.replace("{{", "{");
-                let value = value.replace("}}", "}");
-                TokenValue::Str(value)
-            }
-            Kind::Dedent => TokenValue::Indent(1),
-            Kind::Indent => TokenValue::Indent(1),
-            Kind::Error => TokenValue::Str(kind_value.to_string()),
-            _ => TokenValue::None,
-        }
-    }
-
     fn f_string_quote_count(&mut self, str_start: char) -> u8 {
         let mut count = 1;
         if self.peek() == Some(str_start) && self.double_peek() == Some(str_start) {
@@ -1115,15 +1069,14 @@ mod tests {
 
     fn snapshot_test_lexer_and_errors(test_case: &str) {
         let mut lexer = Lexer::new(test_case);
-        let mut tokens = vec![];
         let mut snapshot = String::from("");
         loop {
             let token = lexer.next_token();
             if token.kind == Kind::Eof {
                 break;
             }
-            snapshot += format!("{}\n", token).as_str();
-            tokens.push(token);
+            snapshot += token.display_token(test_case).as_str();
+            snapshot += "\n";
         }
         let mut settings = insta::Settings::clone_current();
         settings.set_snapshot_path("../../test_data/output/");
@@ -1136,15 +1089,14 @@ mod tests {
     fn snapshot_test_lexer(snap_name: &str, inputs: &[&str]) -> Result<(), LexError> {
         for (i, test_input) in inputs.iter().enumerate() {
             let mut lexer = Lexer::new(test_input);
-            let mut tokens = vec![];
             let mut snapshot = String::from("");
             loop {
                 let token = lexer.next_token();
                 if token.kind == Kind::Eof {
                     break;
                 }
-                snapshot += format!("{}\n", token).as_str();
-                tokens.push(token);
+                snapshot += token.display_token(test_input).as_str();
+                snapshot += "\n";
             }
             let mut settings = insta::Settings::clone_current();
             settings.set_snapshot_suffix(format!("{snap_name}-{i}"));

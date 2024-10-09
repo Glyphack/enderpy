@@ -2,6 +2,6 @@
 source: parser/src/lexer/mod.rs
 description: "rf\"hello\""
 ---
-0,3: RawFString   (Str("rf\""))
-3,8: FstringMiddle   (Str("hello"))
-8,9: FStringEnd   (Str("\""))
+0,3: RawFString
+3,8: FstringMiddle   hello
+8,9: FStringEnd

@@ -2,17 +2,17 @@
 source: parser/src/lexer/mod.rs
 description: "if a:\n\n    f = c\n\n    # Path: test_local.py\n"
 ---
-0,2: If   (None)
-3,4: Identifier   (Str("a"))
-4,5: :   (None)
-5,6: NewLine   (None)
-6,7: NL   (None)
-7,11: Indent   (Indent(1))
-11,12: Identifier   (Str("f"))
-13,14: =   (None)
-15,16: Identifier   (Str("c"))
-16,17: NewLine   (None)
-17,18: NL   (None)
-22,43: Comment   (Str("# Path: test_local.py"))
-43,44: NL   (None)
-44,44: Dedent   (Indent(1))
+0,2: If
+3,4: Identifier   a
+4,5: :
+5,6: NewLine
+6,7: NL
+7,11: Indent
+11,12: Identifier   f
+13,14: =
+15,16: Identifier   c
+16,17: NewLine
+17,18: NL
+22,43: Comment
+43,44: NL
+44,44: Dedent

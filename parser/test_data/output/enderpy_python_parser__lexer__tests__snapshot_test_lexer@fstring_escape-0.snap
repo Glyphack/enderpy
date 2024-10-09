@@ -2,6 +2,6 @@
 source: parser/src/lexer/mod.rs
 description: "f'Can\\'t find plugin'"
 ---
-0,2: FStringStart   (Str("f'"))
-2,20: FstringMiddle   (Str("Can\\'t find plugin"))
-20,21: FStringEnd   (Str("'"))
+0,2: FStringStart
+2,20: FstringMiddle   Can\'t find plugin
+20,21: FStringEnd

@@ -3,239 +3,239 @@ source: parser/src/lexer/mod.rs
 description: "# in some cases last price or adj price is undefined\ntry:\n    last_price = int(price_section[2])\n# when instead of number value is `F`\nexcept (ValueError, IndexError):\n    last_price = None\ntry:\n    adj_close = int(price_section[3])\nexcept (ValueError, IndexError):\n    adj_close = None\ntry:\n    market_cap = adj_close * self.total_shares\nexcept ValueError:\n    market_cap = None\n\n\ntry:\n    async with session.get(url, headers=TRADE_DETAILS_HEADER, timeout=100) as response:\n        if response.status == 503:\n            logger.info(f\"Received 503 Service Unavailable on {date_obj}. Retrying...\")\n            retry_count += 1\n            await asyncio.sleep(1)\n        else:\n            response.raise_for_status()\n            data = await response.json()\n            logger.info(f\"Successfully fetched trade details on {date_obj} from tse\")\n            return [date_obj, pd.json_normalize(data[\"tradeHistory\"])]\nexcept (aiohttp.ClientError, asyncio.TimeoutError):\n    logger.error(f\"Request failed for {date_obj}. Retrying...\")\n    retry_count += 1\n    await asyncio.sleep(1)\n"
 input_file: parser/test_data/inputs/try.py
 ---
-0,52: Comment   (Str("# in some cases last price or adj price is undefined"))
-52,53: NL   (None)
-53,56: Try   (None)
-56,57: :   (None)
-57,58: NewLine   (None)
-58,62: Indent   (Indent(1))
-62,72: Identifier   (Str("last_price"))
-73,74: =   (None)
-75,78: Identifier   (Str("int"))
-78,79: (   (None)
-79,92: Identifier   (Str("price_section"))
-92,93: [   (None)
-93,94: Integer   (Number("2"))
-94,95: ]   (None)
-95,96: )   (None)
-96,97: NewLine   (None)
-97,134: Comment   (Str("# when instead of number value is `F`"))
-134,135: NL   (None)
-135,135: Dedent   (Indent(1))
-135,141: Except   (None)
-142,143: (   (None)
-143,153: Identifier   (Str("ValueError"))
-153,154: ,   (None)
-155,165: Identifier   (Str("IndexError"))
-165,166: )   (None)
-166,167: :   (None)
-167,168: NewLine   (None)
-168,172: Indent   (Indent(1))
-172,182: Identifier   (Str("last_price"))
-183,184: =   (None)
-185,189: None   (None)
-189,190: NewLine   (None)
-190,190: Dedent   (Indent(1))
-190,193: Try   (None)
-193,194: :   (None)
-194,195: NewLine   (None)
-195,199: Indent   (Indent(1))
-199,208: Identifier   (Str("adj_close"))
-209,210: =   (None)
-211,214: Identifier   (Str("int"))
-214,215: (   (None)
-215,228: Identifier   (Str("price_section"))
-228,229: [   (None)
-229,230: Integer   (Number("3"))
-230,231: ]   (None)
-231,232: )   (None)
-232,233: NewLine   (None)
-233,233: Dedent   (Indent(1))
-233,239: Except   (None)
-240,241: (   (None)
-241,251: Identifier   (Str("ValueError"))
-251,252: ,   (None)
-253,263: Identifier   (Str("IndexError"))
-263,264: )   (None)
-264,265: :   (None)
-265,266: NewLine   (None)
-266,270: Indent   (Indent(1))
-270,279: Identifier   (Str("adj_close"))
-280,281: =   (None)
-282,286: None   (None)
-286,287: NewLine   (None)
-287,287: Dedent   (Indent(1))
-287,290: Try   (None)
-290,291: :   (None)
-291,292: NewLine   (None)
-292,296: Indent   (Indent(1))
-296,306: Identifier   (Str("market_cap"))
-307,308: =   (None)
-309,318: Identifier   (Str("adj_close"))
-319,320: *   (None)
-321,325: Identifier   (Str("self"))
-325,326: .   (None)
-326,338: Identifier   (Str("total_shares"))
-338,339: NewLine   (None)
-339,339: Dedent   (Indent(1))
-339,345: Except   (None)
-346,356: Identifier   (Str("ValueError"))
-356,357: :   (None)
-357,358: NewLine   (None)
-358,362: Indent   (Indent(1))
-362,372: Identifier   (Str("market_cap"))
-373,374: =   (None)
-375,379: None   (None)
-379,380: NewLine   (None)
-380,381: NL   (None)
-381,382: NL   (None)
-382,382: Dedent   (Indent(1))
-382,385: Try   (None)
-385,386: :   (None)
-386,387: NewLine   (None)
-387,391: Indent   (Indent(1))
-391,396: Async   (None)
-397,401: With   (None)
-402,409: Identifier   (Str("session"))
-409,410: .   (None)
-410,413: Identifier   (Str("get"))
-413,414: (   (None)
-414,417: Identifier   (Str("url"))
-417,418: ,   (None)
-419,426: Identifier   (Str("headers"))
-426,427: =   (None)
-427,447: Identifier   (Str("TRADE_DETAILS_HEADER"))
-447,448: ,   (None)
-449,456: Identifier   (Str("timeout"))
-456,457: =   (None)
-457,460: Integer   (Number("100"))
-460,461: )   (None)
-462,464: As   (None)
-465,473: Identifier   (Str("response"))
-473,474: :   (None)
-474,475: NewLine   (None)
-475,483: Indent   (Indent(1))
-483,485: If   (None)
-486,494: Identifier   (Str("response"))
-494,495: .   (None)
-495,501: Identifier   (Str("status"))
-502,504: ==   (None)
-505,508: Integer   (Number("503"))
-508,509: :   (None)
-509,510: NewLine   (None)
-510,522: Indent   (Indent(1))
-522,528: Identifier   (Str("logger"))
-528,529: .   (None)
-529,533: Identifier   (Str("info"))
-533,534: (   (None)
-534,536: FStringStart   (Str("f\""))
-536,572: FstringMiddle   (Str("Received 503 Service Unavailable on "))
-572,573: {   (None)
-573,581: Identifier   (Str("date_obj"))
-581,582: }   (None)
-582,595: FstringMiddle   (Str(". Retrying..."))
-595,596: FStringEnd   (Str("\""))
-596,597: )   (None)
-597,598: NewLine   (None)
-610,621: Identifier   (Str("retry_count"))
-622,624: +=   (None)
-625,626: Integer   (Number("1"))
-626,627: NewLine   (None)
-639,644: Await   (None)
-645,652: Identifier   (Str("asyncio"))
-652,653: .   (None)
-653,658: Identifier   (Str("sleep"))
-658,659: (   (None)
-659,660: Integer   (Number("1"))
-660,661: )   (None)
-661,662: NewLine   (None)
-670,670: Dedent   (Indent(1))
-670,674: Else   (None)
-674,675: :   (None)
-675,676: NewLine   (None)
-676,688: Indent   (Indent(1))
-688,696: Identifier   (Str("response"))
-696,697: .   (None)
-697,713: Identifier   (Str("raise_for_status"))
-713,714: (   (None)
-714,715: )   (None)
-715,716: NewLine   (None)
-728,732: Identifier   (Str("data"))
-733,734: =   (None)
-735,740: Await   (None)
-741,749: Identifier   (Str("response"))
-749,750: .   (None)
-750,754: Identifier   (Str("json"))
-754,755: (   (None)
-755,756: )   (None)
-756,757: NewLine   (None)
-769,775: Identifier   (Str("logger"))
-775,776: .   (None)
-776,780: Identifier   (Str("info"))
-780,781: (   (None)
-781,783: FStringStart   (Str("f\""))
-783,821: FstringMiddle   (Str("Successfully fetched trade details on "))
-821,822: {   (None)
-822,830: Identifier   (Str("date_obj"))
-830,831: }   (None)
-831,840: FstringMiddle   (Str(" from tse"))
-840,841: FStringEnd   (Str("\""))
-841,842: )   (None)
-842,843: NewLine   (None)
-855,861: Return   (None)
-862,863: [   (None)
-863,871: Identifier   (Str("date_obj"))
-871,872: ,   (None)
-873,875: Identifier   (Str("pd"))
-875,876: .   (None)
-876,890: Identifier   (Str("json_normalize"))
-890,891: (   (None)
-891,895: Identifier   (Str("data"))
-895,896: [   (None)
-896,910: StringLiteral   (Str("\"tradeHistory\""))
-910,911: ]   (None)
-911,912: )   (None)
-912,913: ]   (None)
-913,914: NewLine   (None)
-914,914: Dedent   (Indent(1))
-914,914: Dedent   (None)
-914,914: Dedent   (None)
-914,920: Except   (None)
-921,922: (   (None)
-922,929: Identifier   (Str("aiohttp"))
-929,930: .   (None)
-930,941: Identifier   (Str("ClientError"))
-941,942: ,   (None)
-943,950: Identifier   (Str("asyncio"))
-950,951: .   (None)
-951,963: Identifier   (Str("TimeoutError"))
-963,964: )   (None)
-964,965: :   (None)
-965,966: NewLine   (None)
-966,970: Indent   (Indent(1))
-970,976: Identifier   (Str("logger"))
-976,977: .   (None)
-977,982: Identifier   (Str("error"))
-982,983: (   (None)
-983,985: FStringStart   (Str("f\""))
-985,1004: FstringMiddle   (Str("Request failed for "))
-1004,1005: {   (None)
-1005,1013: Identifier   (Str("date_obj"))
-1013,1014: }   (None)
-1014,1027: FstringMiddle   (Str(". Retrying..."))
-1027,1028: FStringEnd   (Str("\""))
-1028,1029: )   (None)
-1029,1030: NewLine   (None)
-1034,1045: Identifier   (Str("retry_count"))
-1046,1048: +=   (None)
-1049,1050: Integer   (Number("1"))
-1050,1051: NewLine   (None)
-1055,1060: Await   (None)
-1061,1068: Identifier   (Str("asyncio"))
-1068,1069: .   (None)
-1069,1074: Identifier   (Str("sleep"))
-1074,1075: (   (None)
-1075,1076: Integer   (Number("1"))
-1076,1077: )   (None)
-1077,1078: NewLine   (None)
-1078,1078: Dedent   (Indent(1))
+0,52: Comment
+52,53: NL
+53,56: Try
+56,57: :
+57,58: NewLine
+58,62: Indent
+62,72: Identifier   last_price
+73,74: =
+75,78: Identifier   int
+78,79: (
+79,92: Identifier   price_section
+92,93: [
+93,94: Integer   2
+94,95: ]
+95,96: )
+96,97: NewLine
+97,134: Comment
+134,135: NL
+135,135: Dedent
+135,141: Except
+142,143: (
+143,153: Identifier   ValueError
+153,154: ,
+155,165: Identifier   IndexError
+165,166: )
+166,167: :
+167,168: NewLine
+168,172: Indent
+172,182: Identifier   last_price
+183,184: =
+185,189: None
+189,190: NewLine
+190,190: Dedent
+190,193: Try
+193,194: :
+194,195: NewLine
+195,199: Indent
+199,208: Identifier   adj_close
+209,210: =
+211,214: Identifier   int
+214,215: (
+215,228: Identifier   price_section
+228,229: [
+229,230: Integer   3
+230,231: ]
+231,232: )
+232,233: NewLine
+233,233: Dedent
+233,239: Except
+240,241: (
+241,251: Identifier   ValueError
+251,252: ,
+253,263: Identifier   IndexError
+263,264: )
+264,265: :
+265,266: NewLine
+266,270: Indent
+270,279: Identifier   adj_close
+280,281: =
+282,286: None
+286,287: NewLine
+287,287: Dedent
+287,290: Try
+290,291: :
+291,292: NewLine
+292,296: Indent
+296,306: Identifier   market_cap
+307,308: =
+309,318: Identifier   adj_close
+319,320: *
+321,325: Identifier   self
+325,326: .
+326,338: Identifier   total_shares
+338,339: NewLine
+339,339: Dedent
+339,345: Except
+346,356: Identifier   ValueError
+356,357: :
+357,358: NewLine
+358,362: Indent
+362,372: Identifier   market_cap
+373,374: =
+375,379: None
+379,380: NewLine
+380,381: NL
+381,382: NL
+382,382: Dedent
+382,385: Try
+385,386: :
+386,387: NewLine
+387,391: Indent
+391,396: Async
+397,401: With
+402,409: Identifier   session
+409,410: .
+410,413: Identifier   get
+413,414: (
+414,417: Identifier   url
+417,418: ,
+419,426: Identifier   headers
+426,427: =
+427,447: Identifier   TRADE_DETAILS_HEADER
+447,448: ,
+449,456: Identifier   timeout
+456,457: =
+457,460: Integer   100
+460,461: )
+462,464: As
+465,473: Identifier   response
+473,474: :
+474,475: NewLine
+475,483: Indent
+483,485: If
+486,494: Identifier   response
+494,495: .
+495,501: Identifier   status
+502,504: ==
+505,508: Integer   503
+508,509: :
+509,510: NewLine
+510,522: Indent
+522,528: Identifier   logger
+528,529: .
+529,533: Identifier   info
+533,534: (
+534,536: FStringStart
+536,572: FstringMiddle   Received 503 Service Unavailable on 
+572,573: {
+573,581: Identifier   date_obj
+581,582: }
+582,595: FstringMiddle   . Retrying...
+595,596: FStringEnd
+596,597: )
+597,598: NewLine
+610,621: Identifier   retry_count
+622,624: +=
+625,626: Integer   1
+626,627: NewLine
+639,644: Await
+645,652: Identifier   asyncio
+652,653: .
+653,658: Identifier   sleep
+658,659: (
+659,660: Integer   1
+660,661: )
+661,662: NewLine
+670,670: Dedent
+670,674: Else
+674,675: :
+675,676: NewLine
+676,688: Indent
+688,696: Identifier   response
+696,697: .
+697,713: Identifier   raise_for_status
+713,714: (
+714,715: )
+715,716: NewLine
+728,732: Identifier   data
+733,734: =
+735,740: Await
+741,749: Identifier   response
+749,750: .
+750,754: Identifier   json
+754,755: (
+755,756: )
+756,757: NewLine
+769,775: Identifier   logger
+775,776: .
+776,780: Identifier   info
+780,781: (
+781,783: FStringStart
+783,821: FstringMiddle   Successfully fetched trade details on 
+821,822: {
+822,830: Identifier   date_obj
+830,831: }
+831,840: FstringMiddle    from tse
+840,841: FStringEnd
+841,842: )
+842,843: NewLine
+855,861: Return
+862,863: [
+863,871: Identifier   date_obj
+871,872: ,
+873,875: Identifier   pd
+875,876: .
+876,890: Identifier   json_normalize
+890,891: (
+891,895: Identifier   data
+895,896: [
+896,910: StringLiteral   "tradeHistory"
+910,911: ]
+911,912: )
+912,913: ]
+913,914: NewLine
+914,914: Dedent
+914,914: Dedent
+914,914: Dedent
+914,920: Except
+921,922: (
+922,929: Identifier   aiohttp
+929,930: .
+930,941: Identifier   ClientError
+941,942: ,
+943,950: Identifier   asyncio
+950,951: .
+951,963: Identifier   TimeoutError
+963,964: )
+964,965: :
+965,966: NewLine
+966,970: Indent
+970,976: Identifier   logger
+976,977: .
+977,982: Identifier   error
+982,983: (
+983,985: FStringStart
+985,1004: FstringMiddle   Request failed for 
+1004,1005: {
+1005,1013: Identifier   date_obj
+1013,1014: }
+1014,1027: FstringMiddle   . Retrying...
+1027,1028: FStringEnd
+1028,1029: )
+1029,1030: NewLine
+1034,1045: Identifier   retry_count
+1046,1048: +=
+1049,1050: Integer   1
+1050,1051: NewLine
+1055,1060: Await
+1061,1068: Identifier   asyncio
+1068,1069: .
+1069,1074: Identifier   sleep
+1074,1075: (
+1075,1076: Integer   1
+1076,1077: )
+1077,1078: NewLine
+1078,1078: Dedent

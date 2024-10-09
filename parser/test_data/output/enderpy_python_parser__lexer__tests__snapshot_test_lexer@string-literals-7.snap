@@ -2,4 +2,4 @@
 source: parser/src/lexer/mod.rs
 description: "'\\n    ([^ ].*)'"
 ---
-0,16: StringLiteral   (Str("'\\n    ([^ ].*)'"))
+0,16: StringLiteral   '\n    ([^ ].*)'

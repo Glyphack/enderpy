@@ -2,4 +2,4 @@
 source: parser/src/lexer/mod.rs
 description: "#"
 ---
-0,1: Comment   (Str("#"))
+0,1: Comment

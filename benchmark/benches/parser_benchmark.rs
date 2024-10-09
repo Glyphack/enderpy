@@ -56,7 +56,7 @@ pub fn benchmark_parser(c: &mut Criterion) {
             &source,
             |b, source| {
                 b.iter(|| {
-                    let mut parser = Parser::new(source, path);
+                    let mut parser = Parser::new(source);
                     parser.parse().unwrap();
 
                     0

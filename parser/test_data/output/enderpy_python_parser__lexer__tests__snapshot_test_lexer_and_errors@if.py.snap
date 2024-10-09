@@ -3,160 +3,160 @@ source: parser/src/lexer/mod.rs
 description: "if a:\n    pass\n\nif a:\n\n    pass\n\nif a: pass\n\nif a:\n    pass;pass\n\nif a is b:\n            pass\n\nif a is b:\n                pass\nelif a is c:\n                pass\n\nif a is b:\n                pass\nelif a is c:\n                pass\nelse:\n                pass\n\n\nif a:\n    a = 1\nif a:\n    b = 1\n\nif self.adjust:\n    if True:\n        print(\"adjust is True and adjusted_daily_records_csv_path exists\")\n    else:\n        print(\"adjust is True\")\nelse:\n    print(\"adjust is False\")\n"
 input_file: parser/test_data/inputs/if.py
 ---
-0,2: If   (None)
-3,4: Identifier   (Str("a"))
-4,5: :   (None)
-5,6: NewLine   (None)
-6,10: Indent   (Indent(1))
-10,14: Pass   (None)
-14,15: NewLine   (None)
-15,16: NL   (None)
-16,16: Dedent   (Indent(1))
-16,18: If   (None)
-19,20: Identifier   (Str("a"))
-20,21: :   (None)
-21,22: NewLine   (None)
-22,23: NL   (None)
-23,27: Indent   (Indent(1))
-27,31: Pass   (None)
-31,32: NewLine   (None)
-32,33: NL   (None)
-33,33: Dedent   (Indent(1))
-33,35: If   (None)
-36,37: Identifier   (Str("a"))
-37,38: :   (None)
-39,43: Pass   (None)
-43,44: NewLine   (None)
-44,45: NL   (None)
-45,47: If   (None)
-48,49: Identifier   (Str("a"))
-49,50: :   (None)
-50,51: NewLine   (None)
-51,55: Indent   (Indent(1))
-55,59: Pass   (None)
-59,60: ;   (None)
-60,64: Pass   (None)
-64,65: NewLine   (None)
-65,66: NL   (None)
-66,66: Dedent   (Indent(1))
-66,68: If   (None)
-69,70: Identifier   (Str("a"))
-71,73: Is   (None)
-74,75: Identifier   (Str("b"))
-75,76: :   (None)
-76,77: NewLine   (None)
-77,89: Indent   (Indent(1))
-89,93: Pass   (None)
-93,94: NewLine   (None)
-94,95: NL   (None)
-95,95: Dedent   (Indent(1))
-95,97: If   (None)
-98,99: Identifier   (Str("a"))
-100,102: Is   (None)
-103,104: Identifier   (Str("b"))
-104,105: :   (None)
-105,106: NewLine   (None)
-106,122: Indent   (Indent(1))
-122,126: Pass   (None)
-126,127: NewLine   (None)
-127,127: Dedent   (Indent(1))
-127,131: Elif   (None)
-132,133: Identifier   (Str("a"))
-134,136: Is   (None)
-137,138: Identifier   (Str("c"))
-138,139: :   (None)
-139,140: NewLine   (None)
-140,156: Indent   (Indent(1))
-156,160: Pass   (None)
-160,161: NewLine   (None)
-161,162: NL   (None)
-162,162: Dedent   (Indent(1))
-162,164: If   (None)
-165,166: Identifier   (Str("a"))
-167,169: Is   (None)
-170,171: Identifier   (Str("b"))
-171,172: :   (None)
-172,173: NewLine   (None)
-173,189: Indent   (Indent(1))
-189,193: Pass   (None)
-193,194: NewLine   (None)
-194,194: Dedent   (Indent(1))
-194,198: Elif   (None)
-199,200: Identifier   (Str("a"))
-201,203: Is   (None)
-204,205: Identifier   (Str("c"))
-205,206: :   (None)
-206,207: NewLine   (None)
-207,223: Indent   (Indent(1))
-223,227: Pass   (None)
-227,228: NewLine   (None)
-228,228: Dedent   (Indent(1))
-228,232: Else   (None)
-232,233: :   (None)
-233,234: NewLine   (None)
-234,250: Indent   (Indent(1))
-250,254: Pass   (None)
-254,255: NewLine   (None)
-255,256: NL   (None)
-256,257: NL   (None)
-257,257: Dedent   (Indent(1))
-257,259: If   (None)
-260,261: Identifier   (Str("a"))
-261,262: :   (None)
-262,263: NewLine   (None)
-263,267: Indent   (Indent(1))
-267,268: Identifier   (Str("a"))
-269,270: =   (None)
-271,272: Integer   (Number("1"))
-272,273: NewLine   (None)
-273,273: Dedent   (Indent(1))
-273,275: If   (None)
-276,277: Identifier   (Str("a"))
-277,278: :   (None)
-278,279: NewLine   (None)
-279,283: Indent   (Indent(1))
-283,284: Identifier   (Str("b"))
-285,286: =   (None)
-287,288: Integer   (Number("1"))
-288,289: NewLine   (None)
-289,290: NL   (None)
-290,290: Dedent   (Indent(1))
-290,292: If   (None)
-293,297: Identifier   (Str("self"))
-297,298: .   (None)
-298,304: Identifier   (Str("adjust"))
-304,305: :   (None)
-305,306: NewLine   (None)
-306,310: Indent   (Indent(1))
-310,312: If   (None)
-313,317: True   (None)
-317,318: :   (None)
-318,319: NewLine   (None)
-319,327: Indent   (Indent(1))
-327,332: Identifier   (Str("print"))
-332,333: (   (None)
-333,392: StringLiteral   (Str("\"adjust is True and adjusted_daily_records_csv_path exists\""))
-392,393: )   (None)
-393,394: NewLine   (None)
-398,398: Dedent   (Indent(1))
-398,402: Else   (None)
-402,403: :   (None)
-403,404: NewLine   (None)
-404,412: Indent   (Indent(1))
-412,417: Identifier   (Str("print"))
-417,418: (   (None)
-418,434: StringLiteral   (Str("\"adjust is True\""))
-434,435: )   (None)
-435,436: NewLine   (None)
-436,436: Dedent   (Indent(1))
-436,436: Dedent   (None)
-436,440: Else   (None)
-440,441: :   (None)
-441,442: NewLine   (None)
-442,446: Indent   (Indent(1))
-446,451: Identifier   (Str("print"))
-451,452: (   (None)
-452,469: StringLiteral   (Str("\"adjust is False\""))
-469,470: )   (None)
-470,471: NewLine   (None)
-471,471: Dedent   (Indent(1))
+0,2: If
+3,4: Identifier   a
+4,5: :
+5,6: NewLine
+6,10: Indent
+10,14: Pass
+14,15: NewLine
+15,16: NL
+16,16: Dedent
+16,18: If
+19,20: Identifier   a
+20,21: :
+21,22: NewLine
+22,23: NL
+23,27: Indent
+27,31: Pass
+31,32: NewLine
+32,33: NL
+33,33: Dedent
+33,35: If
+36,37: Identifier   a
+37,38: :
+39,43: Pass
+43,44: NewLine
+44,45: NL
+45,47: If
+48,49: Identifier   a
+49,50: :
+50,51: NewLine
+51,55: Indent
+55,59: Pass
+59,60: ;
+60,64: Pass
+64,65: NewLine
+65,66: NL
+66,66: Dedent
+66,68: If
+69,70: Identifier   a
+71,73: Is
+74,75: Identifier   b
+75,76: :
+76,77: NewLine
+77,89: Indent
+89,93: Pass
+93,94: NewLine
+94,95: NL
+95,95: Dedent
+95,97: If
+98,99: Identifier   a
+100,102: Is
+103,104: Identifier   b
+104,105: :
+105,106: NewLine
+106,122: Indent
+122,126: Pass
+126,127: NewLine
+127,127: Dedent
+127,131: Elif
+132,133: Identifier   a
+134,136: Is
+137,138: Identifier   c
+138,139: :
+139,140: NewLine
+140,156: Indent
+156,160: Pass
+160,161: NewLine
+161,162: NL
+162,162: Dedent
+162,164: If
+165,166: Identifier   a
+167,169: Is
+170,171: Identifier   b
+171,172: :
+172,173: NewLine
+173,189: Indent
+189,193: Pass
+193,194: NewLine
+194,194: Dedent
+194,198: Elif
+199,200: Identifier   a
+201,203: Is
+204,205: Identifier   c
+205,206: :
+206,207: NewLine
+207,223: Indent
+223,227: Pass
+227,228: NewLine
+228,228: Dedent
+228,232: Else
+232,233: :
+233,234: NewLine
+234,250: Indent
+250,254: Pass
+254,255: NewLine
+255,256: NL
+256,257: NL
+257,257: Dedent
+257,259: If
+260,261: Identifier   a
+261,262: :
+262,263: NewLine
+263,267: Indent
+267,268: Identifier   a
+269,270: =
+271,272: Integer   1
+272,273: NewLine
+273,273: Dedent
+273,275: If
+276,277: Identifier   a
+277,278: :
+278,279: NewLine
+279,283: Indent
+283,284: Identifier   b
+285,286: =
+287,288: Integer   1
+288,289: NewLine
+289,290: NL
+290,290: Dedent
+290,292: If
+293,297: Identifier   self
+297,298: .
+298,304: Identifier   adjust
+304,305: :
+305,306: NewLine
+306,310: Indent
+310,312: If
+313,317: True
+317,318: :
+318,319: NewLine
+319,327: Indent
+327,332: Identifier   print
+332,333: (
+333,392: StringLiteral   "adjust is True and adjusted_daily_records_csv_path exists"
+392,393: )
+393,394: NewLine
+398,398: Dedent
+398,402: Else
+402,403: :
+403,404: NewLine
+404,412: Indent
+412,417: Identifier   print
+417,418: (
+418,434: StringLiteral   "adjust is True"
+434,435: )
+435,436: NewLine
+436,436: Dedent
+436,436: Dedent
+436,440: Else
+440,441: :
+441,442: NewLine
+442,446: Indent
+446,451: Identifier   print
+451,452: (
+452,469: StringLiteral   "adjust is False"
+469,470: )
+470,471: NewLine
+471,471: Dedent

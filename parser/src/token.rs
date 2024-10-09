@@ -1,23 +1,56 @@
-use core::panic;
 use std::fmt::Display;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Token {
     pub kind: Kind,
-    // Value might be deleted in the future
-    pub value: TokenValue,
     pub start: u32,
     pub end: u32,
 }
 
-impl Display for Token {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let kind: &str = self.kind.into();
-        let value = format!("({:?})", self.value);
-        let start = self.start.to_string();
-        let end = self.end.to_string();
+impl Token {
+    pub fn as_str<'a>(&self, source: &'a str) -> &'a str {
+        &source[self.start as usize..self.end as usize]
+    }
 
-        write!(f, "{},{}: {}   {}", start, end, kind, value,)
+    pub fn to_string(&self, source: &str) -> String {
+        return self.as_str(source).to_string();
+    }
+
+    pub fn display_token(&self, source: &str) -> String {
+        let kind = self.kind;
+        let start = self.start;
+        let end = self.end;
+        match self.kind {
+            Kind::Integer
+            | Kind::Binary
+            | Kind::Octal
+            | Kind::Hexadecimal
+            | Kind::PointFloat
+            | Kind::ExponentFloat
+            | Kind::ImaginaryInteger
+            | Kind::ImaginaryPointFloat
+            | Kind::ImaginaryExponentFloat
+            | Kind::StringLiteral
+            | Kind::FStringMiddle
+            | Kind::Identifier
+            | Kind::Bytes => {
+                let value = self.as_str(source);
+                if kind == Kind::FStringMiddle {
+                    let new_value = value.replace("{{", "{").replace("}}", "}");
+                    format!("{},{}: {}   {}", start, end, kind, new_value)
+                } else {
+                    format!("{},{}: {}   {}", start, end, kind, value)
+                }
+            }
+
+            _ => {
+                format!("{},{}: {}", start, end, kind)
+            }
+        }
+    }
+
+    pub fn can_be_identifier(&self) -> bool {
+        matches!(self.kind, Kind::Identifier | Kind::Type | Kind::Match)
     }
 }
 
@@ -71,6 +104,10 @@ pub enum Kind {
     While,    // while
     With,     // with
     Yield,    // yield
+
+    // Soft Keywords
+    Type,
+    Match,
 
     // String Literals
     StringLiteral,
@@ -234,6 +271,8 @@ impl Kind {
         | Kind::LeftBrace
         | Kind::Yield
         | Kind::Ellipsis
+        | Kind::Match
+        | Kind::Type
         | Kind::None => true,
         _ => false,
         }
@@ -367,6 +406,8 @@ impl From<Kind> for &str {
             Kind::Dedent => "Dedent",
             Kind::Ellipsis => "Ellipsis",
             Kind::Exclamation => "!",
+            Kind::Match => "match",
+            Kind::Type => "type",
         }
     }
 }
@@ -374,54 +415,5 @@ impl From<Kind> for &str {
 impl Display for Kind {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", Into::<&str>::into(*self))
-    }
-}
-
-#[derive(Debug, PartialEq, Clone, is_macro::Is)]
-pub enum TokenValue {
-    None,
-    Number(String),
-    Str(String),
-    Indent(usize),
-    // Soft keywords are special values
-    Type,
-    Match,
-}
-
-impl TokenValue {
-    pub fn take_string(&mut self) -> String {
-        match self {
-            TokenValue::Str(s) => std::mem::take(s),
-            TokenValue::Number(s) => std::mem::take(s),
-            _ => {
-                panic!("not a str")
-            }
-        }
-    }
-}
-
-impl Display for TokenValue {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            TokenValue::None => write!(f, "None"),
-            TokenValue::Number(n) => write!(f, "{}", n),
-            TokenValue::Str(s) => write!(f, "{}", s),
-            TokenValue::Indent(i) => write!(f, "{}", i),
-            TokenValue::Type => write!(f, "type"),
-            TokenValue::Match => write!(f, "match"),
-        }
-    }
-}
-
-impl From<TokenValue> for &str {
-    fn from(val: TokenValue) -> Self {
-        match val {
-            TokenValue::None => "None",
-            TokenValue::Number(_) => "Number",
-            TokenValue::Str(_) => "Str",
-            TokenValue::Indent(_) => "Indent",
-            TokenValue::Type => "type",
-            TokenValue::Match => "match",
-        }
     }
 }
