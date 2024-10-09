@@ -20,7 +20,6 @@ impl Token {
         let kind = self.kind;
         let start = self.start;
         let end = self.end;
-        let value = self.as_str(source);
         match self.kind {
             Kind::Integer
             | Kind::Binary
@@ -35,7 +34,13 @@ impl Token {
             | Kind::FStringMiddle
             | Kind::Identifier
             | Kind::Bytes => {
-                format!("{},{}: {}   {}", start, end, kind, value)
+                let value = self.as_str(source);
+                if kind == Kind::FStringMiddle {
+                    let new_value = value.replace("{{", "{").replace("}}", "}");
+                    format!("{},{}: {}   {}", start, end, kind, new_value)
+                } else {
+                    format!("{},{}: {}   {}", start, end, kind, value)
+                }
             }
 
             _ => {

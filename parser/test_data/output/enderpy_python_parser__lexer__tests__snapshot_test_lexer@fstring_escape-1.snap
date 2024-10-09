@@ -3,7 +3,7 @@ source: parser/src/lexer/mod.rs
 description: "f\"{{{', '.join(dict_items)}}}\""
 ---
 0,2: FStringStart
-2,4: FstringMiddle   {{
+2,4: FstringMiddle   {
 4,5: {
 5,9: StringLiteral   ', '
 9,10: .
@@ -12,5 +12,5 @@ description: "f\"{{{', '.join(dict_items)}}}\""
 15,25: Identifier   dict_items
 25,26: )
 26,27: }
-27,29: FstringMiddle   }}
+27,29: FstringMiddle   }
 29,30: FStringEnd

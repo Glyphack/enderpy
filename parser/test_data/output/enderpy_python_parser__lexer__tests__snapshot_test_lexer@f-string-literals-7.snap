@@ -3,5 +3,5 @@ source: parser/src/lexer/mod.rs
 description: "f\"{{hey}}\""
 ---
 0,2: FStringStart
-2,9: FstringMiddle   {{hey}}
+2,9: FstringMiddle   {hey}
 9,10: FStringEnd
