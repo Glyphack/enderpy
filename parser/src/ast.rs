@@ -13,6 +13,12 @@ pub struct Node {
     pub end: u32,
 }
 
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)] // #[serde(tag = "type")]
+pub struct TextRange {
+    pub start: u32,
+    pub end: u32,
+}
+
 impl fmt::Display for Node {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "({}, {})", self.start, self.end)
@@ -342,45 +348,26 @@ pub struct Constant {
     pub value: ConstantValue,
 }
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Debug)]
 pub enum ConstantValue {
     None,
     Ellipsis,
-    Bool(bool),
-    Str(String),
-    Bytes(Vec<u8>),
-    Tuple(Vec<Constant>),
+    Bool,
+    Str,
+    Bytes,
+    Tuple,
     // Numbers are string because we don't care about the value rn.
-    Int(String),
-    Float(String),
-    Complex { real: String, imaginary: String },
+    Int,
+    Float,
+    Complex,
 }
-impl fmt::Debug for ConstantValue {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            ConstantValue::None => write!(f, "None"),
-            ConstantValue::Ellipsis => write!(f, "..."),
-            ConstantValue::Bool(b) => write!(f, "{}", b),
-            ConstantValue::Str(s) => {
-                if s.starts_with("r\"") || s.starts_with("R\"") {
-                    let mut s = s.chars().skip(1).collect::<String>();
-                    s = s.chars().take(s.len() - 1).collect::<String>();
 
-                    s = s.chars().skip(1).collect::<String>();
-
-                    return write!(f, "{:?}", s);
-                }
-
-                write!(f, "\"{}\"", s)
-            }
-            ConstantValue::Bytes(b) => write!(f, "{:?}", b),
-            ConstantValue::Tuple(t) => write!(f, "{:?}", t),
-            ConstantValue::Int(i) => write!(f, "{}", i),
-            ConstantValue::Float(fl) => write!(f, "{}", fl),
-            ConstantValue::Complex { real, imaginary } => write!(f, "{}+{}j", real, imaginary),
-        }
+impl Constant {
+    pub fn get_value<'a>(&self, source: &'a str) -> &'a str {
+        return &source[self.node.start as usize..self.node.end as usize];
     }
 }
+
 #[derive(Debug, Clone)]
 pub struct List {
     pub node: Node,

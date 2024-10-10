@@ -106,7 +106,6 @@ fn tokenize() -> Result<()> {
 
 fn parse(file: &PathBuf) -> Result<()> {
     let source = fs::read_to_string(file).into_diagnostic()?;
-    let file_path = file.to_str().unwrap_or("");
     let mut parser = Parser::new(&source);
     let ast = parser.parse();
     println!("{:#?}", ast);

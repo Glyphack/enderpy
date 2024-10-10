@@ -102,16 +102,16 @@ impl<'a> TypeEvaluator<'a> {
                 let typ = match &c.value {
                     // Constants are not literals unless they are explicitly
                     // typing.readthedocs.io/en/latest/spec/literal.html#backwards-compatibility
-                    ast::ConstantValue::Int(_) => self.get_builtin_type("int"),
-                    ast::ConstantValue::Float(_) => self.get_builtin_type("float"),
-                    ast::ConstantValue::Str(_) => self.get_builtin_type("str"),
-                    ast::ConstantValue::Bool(_) => self.get_builtin_type("bool"),
+                    ast::ConstantValue::Int => self.get_builtin_type("int"),
+                    ast::ConstantValue::Float => self.get_builtin_type("float"),
+                    ast::ConstantValue::Str => self.get_builtin_type("str"),
+                    ast::ConstantValue::Bool => self.get_builtin_type("bool"),
                     ast::ConstantValue::None => Some(PythonType::None),
-                    ast::ConstantValue::Bytes(_) => self.get_builtin_type("bytes"),
+                    ast::ConstantValue::Bytes => self.get_builtin_type("bytes"),
                     ast::ConstantValue::Ellipsis => Some(PythonType::Any),
                     // TODO: implement
-                    ast::ConstantValue::Tuple(_) => Some(PythonType::Unknown),
-                    ast::ConstantValue::Complex { real, imaginary } => Some(PythonType::Unknown),
+                    ast::ConstantValue::Tuple => Some(PythonType::Unknown),
+                    ast::ConstantValue::Complex => Some(PythonType::Unknown),
                 };
                 Ok(match typ {
                     Some(t) => t,
@@ -145,7 +145,7 @@ impl<'a> TypeEvaluator<'a> {
                             };
                             let type_name = match first_arg {
                                 ast::Expression::Constant(str) => match &str.value {
-                                    ast::ConstantValue::Str(s) => s,
+                                    ast::ConstantValue::Str => str.get_value(""),
                                     _ => panic!("TypeVar first arg must be a string"),
                                 },
                                 _ => panic!("TypeVar must be called with at least one arg"),
@@ -561,8 +561,8 @@ impl<'a> TypeEvaluator<'a> {
                 // 2. Module is preferred over local scope so we first check module scope and
                 //    then local scope.
                 //    https://peps.python.org/pep-0563/#backwards-compatibility
-                ast::ConstantValue::Str(ref str) => {
-                    let mut parser = Parser::new(str);
+                ast::ConstantValue::Str => {
+                    let mut parser = Parser::new("");
                     // Wrap the parsing logic inside a `catch_unwind` block
                     let parse_result = catch_unwind(AssertUnwindSafe(|| parser.parse()));
 
@@ -1320,47 +1320,48 @@ impl<'a> TypeEvaluator<'a> {
         let val = match expr {
             Expression::Constant(c) => {
                 match c.value.clone() {
-                    ast::ConstantValue::Bool(b) => LiteralValue::Bool(b),
-                    ast::ConstantValue::Int(i) => LiteralValue::Int(i),
-                    ast::ConstantValue::Float(f) => LiteralValue::Float(f),
-                    ast::ConstantValue::Str(s) => LiteralValue::Str(s),
-                    ast::ConstantValue::Bytes(b) => LiteralValue::Bytes(b),
+                    ast::ConstantValue::Bool => LiteralValue::Bool,
+                    ast::ConstantValue::Int => LiteralValue::Int,
+                    ast::ConstantValue::Float => LiteralValue::Float,
+                    ast::ConstantValue::Str => LiteralValue::Str,
+                    ast::ConstantValue::Bytes => LiteralValue::Bytes,
                     ast::ConstantValue::None => LiteralValue::None,
                     // Tuple is illegal if it has parentheses, otherwise it's allowed and the output
                     // a multiValued type Currently even mypy does not support
                     // this, who am I to do it? https://mypy-play.net/?mypy=latest&python=3.10&gist=0df0421d5c85f3b75f65a51cae8616ce
-                    ast::ConstantValue::Tuple(t) => {
-                        if t.len() == 1 {
-                            match t[0].value.clone() {
-                                ast::ConstantValue::Bool(b) => LiteralValue::Bool(b),
-                                ast::ConstantValue::Int(i) => LiteralValue::Int(i),
-                                ast::ConstantValue::Float(f) => LiteralValue::Float(f),
-                                ast::ConstantValue::Str(s) => LiteralValue::Str(s),
-                                ast::ConstantValue::Bytes(b) => LiteralValue::Bytes(b),
-                                ast::ConstantValue::None => LiteralValue::None,
-                                _ => panic!("Tuple type with illegal parameter"),
-                            }
-                        } else {
-                            let literal_values = t
-                                .iter()
-                                .map(|c| match c.value.clone() {
-                                    ast::ConstantValue::Bool(b) => LiteralValue::Bool(b),
-                                    ast::ConstantValue::Int(i) => LiteralValue::Int(i),
-                                    ast::ConstantValue::Float(f) => LiteralValue::Float(f),
-                                    ast::ConstantValue::Str(s) => LiteralValue::Str(s),
-                                    ast::ConstantValue::Bytes(b) => LiteralValue::Bytes(b),
-                                    ast::ConstantValue::None => LiteralValue::None,
-                                    _ => panic!("Tuple type with illegal parameter"),
-                                })
-                                .collect();
-                            return literal_values;
-                        }
+                    ast::ConstantValue::Tuple => {
+                        LiteralValue::Int
+                        // if t.len() == 1 {
+                        //     match t[0].value.clone() {
+                        //         ast::ConstantValue::Bool => LiteralValue::Bool,
+                        //         ast::ConstantValue::Int => LiteralValue::Int,
+                        //         ast::ConstantValue::Float => LiteralValue::Float,
+                        //         ast::ConstantValue::Str => LiteralValue::Str,
+                        //         ast::ConstantValue::Bytes => LiteralValue::Bytes,
+                        //         ast::ConstantValue::None => LiteralValue::None,
+                        //         _ => panic!("Tuple type with illegal parameter"),
+                        //     }
+                        // } else {
+                        //     let literal_values = t
+                        //         .iter()
+                        //         .map(|c| match c.value {
+                        //             ast::ConstantValue::Bool => LiteralValue::Bool,
+                        //             ast::ConstantValue::Int => LiteralValue::Int,
+                        //             ast::ConstantValue::Float => LiteralValue::Float,
+                        //             ast::ConstantValue::Str => LiteralValue::Str,
+                        //             ast::ConstantValue::Bytes => LiteralValue::Bytes,
+                        //             ast::ConstantValue::None => LiteralValue::None,
+                        //             _ => panic!("Tuple type with illegal parameter"),
+                        //         })
+                        //         .collect();
+                        //     return literal_values;
+                        // }
                     }
                     // Illegal parameter
                     ast::ConstantValue::Ellipsis => {
                         panic!("Literal type with ellipsis value is not supported")
                     }
-                    ast::ConstantValue::Complex { real, imaginary } => {
+                    ast::ConstantValue::Complex => {
                         panic!("Literal type with complex value is not supported")
                     }
                 }
@@ -1371,7 +1372,7 @@ impl<'a> TypeEvaluator<'a> {
                     Expression::Name(n) => &n.id,
                     _ => panic!("Literal type with attribute value can only be a name"),
                 };
-                LiteralValue::Str(value.to_string())
+                LiteralValue::Str
             }
             Expression::Subscript(s) => {
                 match &s.value {
