@@ -7,6 +7,7 @@ use enderpy_python_parser as parser;
 use enderpy_python_parser::ast::{self, *};
 
 use super::{type_evaluator::TypeEvaluator, types::PythonType};
+use crate::file::EnderpyFile;
 use crate::symbol_table::Id;
 use crate::types::ModuleRef;
 use crate::{ast_visitor::TraversalVisitor, diagnostic::CharacterSpan, symbol_table::SymbolTable};
@@ -28,13 +29,14 @@ pub struct TypeCheckError {
 #[allow(unused)]
 impl<'a> TypeChecker<'a> {
     pub fn new(
+        file: &'a EnderpyFile,
         symbol_table: SymbolTable,
         symbol_tables: &'a DashMap<Id, SymbolTable>,
         ids: &'a DashMap<PathBuf, Id>,
     ) -> Self {
         TypeChecker {
             errors: vec![],
-            type_evaluator: TypeEvaluator::new(symbol_table, symbol_tables, ids),
+            type_evaluator: TypeEvaluator::new(file, symbol_table, symbol_tables, ids),
             types: Lapper::new(vec![]),
         }
     }
@@ -629,7 +631,8 @@ mod tests {
         let root = &PathBuf::from("");
         manager.build(root);
         manager.build_one(root, &path);
-        let checker = manager.type_check(&path);
+        let module = manager.get_state(&path);
+        let checker = manager.type_check(&path, &module);
         let module = manager.get_state(&path);
 
         let result = checker.types;

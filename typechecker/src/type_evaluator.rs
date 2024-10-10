@@ -23,10 +23,10 @@ use super::{
     },
 };
 use crate::{
+    file::EnderpyFile,
     semantic_analyzer::get_member_access_info,
     symbol_table::{
         self, Class, Declaration, Id, LookupSymbolRequest, SymbolTable, SymbolTableNode,
-        TypeParameter,
     },
     types::CallableArgs,
 };
@@ -40,6 +40,7 @@ const SPECIAL_FORM: &str = "_SpecialForm";
 #[derive(Clone, Debug)]
 pub struct TypeEvaluator<'a> {
     // TODO: make this a reference to the symbol table in the checker
+    pub file: &'a EnderpyFile,
     pub symbol_table: SymbolTable,
     pub imported_symbol_tables: &'a DashMap<Id, SymbolTable>,
     pub ids: &'a DashMap<PathBuf, Id>,
@@ -68,12 +69,14 @@ bitflags::bitflags! {
 /// Struct for evaluating the type of an expression
 impl<'a> TypeEvaluator<'a> {
     pub fn new(
+        file: &'a EnderpyFile,
         symbol_table: SymbolTable,
         imported_symbol_tables: &'a DashMap<Id, SymbolTable>,
         ids: &'a DashMap<PathBuf, Id>,
     ) -> Self {
         TypeEvaluator {
             symbol_table,
+            file,
             imported_symbol_tables,
             ids,
             flags: Cell::new(GetTypeFlags::empty()),
@@ -145,7 +148,7 @@ impl<'a> TypeEvaluator<'a> {
                             };
                             let type_name = match first_arg {
                                 ast::Expression::Constant(str) => match &str.value {
-                                    ast::ConstantValue::Str => str.get_value(""),
+                                    ast::ConstantValue::Str => str.get_value(&self.file.source),
                                     _ => panic!("TypeVar first arg must be a string"),
                                 },
                                 _ => panic!("TypeVar must be called with at least one arg"),
@@ -562,7 +565,7 @@ impl<'a> TypeEvaluator<'a> {
                 //    then local scope.
                 //    https://peps.python.org/pep-0563/#backwards-compatibility
                 ast::ConstantValue::Str => {
-                    let mut parser = Parser::new("");
+                    let mut parser = Parser::new(&self.file.source);
                     // Wrap the parsing logic inside a `catch_unwind` block
                     let parse_result = catch_unwind(AssertUnwindSafe(|| parser.parse()));
 

@@ -126,7 +126,8 @@ fn check(path: &Path) -> Result<()> {
     let build_manager = BuildManager::new(settings);
     build_manager.build(root);
     build_manager.build_one(root, path);
-    build_manager.type_check(path);
+    let file = build_manager.get_state(path);
+    build_manager.type_check(path, &file);
 
     if build_manager.diagnostics.is_empty() {
         println!("zero errors");

@@ -104,12 +104,13 @@ impl<'a> BuildManager {
 
     // Performs type checking passes over the code
     // This step happens after the binding phase
-    pub fn type_check(&self, path: &Path) -> TypeChecker {
+    pub fn type_check(&'a self, path: &Path, file: &'a EnderpyFile) -> TypeChecker<'a> {
         let mut module_to_check = self.get_state(path);
 
         let span = span!(Level::TRACE, "type check", path = %path.display());
         let _guard = span.enter();
         let mut checker = TypeChecker::new(
+            file,
             self.get_symbol_table(path),
             &self.symbol_tables,
             &self.module_ids,
@@ -132,7 +133,7 @@ impl<'a> BuildManager {
 
     pub fn get_hover_information(&self, path: &Path, line: u32, column: u32) -> String {
         let module = self.get_state(path);
-        let checker = self.type_check(path);
+        let checker = self.type_check(path, &module);
         let symbol_table = self.get_symbol_table(path);
         let hovered_offset = module.line_starts[line as usize] + column;
 

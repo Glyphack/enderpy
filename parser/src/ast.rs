@@ -364,7 +364,7 @@ pub enum ConstantValue {
 
 impl Constant {
     pub fn get_value<'a>(&self, source: &'a str) -> &'a str {
-        return &source[self.node.start as usize..self.node.end as usize];
+        &source[self.node.start as usize..self.node.end as usize]
     }
 }
 
