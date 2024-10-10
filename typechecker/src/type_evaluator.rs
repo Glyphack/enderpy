@@ -107,7 +107,7 @@ impl<'a> TypeEvaluator<'a> {
                     // typing.readthedocs.io/en/latest/spec/literal.html#backwards-compatibility
                     ast::ConstantValue::Int => self.get_builtin_type("int"),
                     ast::ConstantValue::Float => self.get_builtin_type("float"),
-                    ast::ConstantValue::Str => self.get_builtin_type("str"),
+                    ast::ConstantValue::Str(_) => self.get_builtin_type("str"),
                     ast::ConstantValue::Bool => self.get_builtin_type("bool"),
                     ast::ConstantValue::None => Some(PythonType::None),
                     ast::ConstantValue::Bytes => self.get_builtin_type("bytes"),
@@ -148,7 +148,7 @@ impl<'a> TypeEvaluator<'a> {
                             };
                             let type_name = match first_arg {
                                 ast::Expression::Constant(str) => match &str.value {
-                                    ast::ConstantValue::Str => str.get_value(&self.file.source),
+                                    ast::ConstantValue::Str(s) => s,
                                     _ => panic!("TypeVar first arg must be a string"),
                                 },
                                 _ => panic!("TypeVar must be called with at least one arg"),
@@ -564,8 +564,8 @@ impl<'a> TypeEvaluator<'a> {
                 // 2. Module is preferred over local scope so we first check module scope and
                 //    then local scope.
                 //    https://peps.python.org/pep-0563/#backwards-compatibility
-                ast::ConstantValue::Str => {
-                    let mut parser = Parser::new(&self.file.source);
+                ast::ConstantValue::Str(ref s) => {
+                    let mut parser = Parser::new(s);
                     // Wrap the parsing logic inside a `catch_unwind` block
                     let parse_result = catch_unwind(AssertUnwindSafe(|| parser.parse()));
 
@@ -1326,7 +1326,7 @@ impl<'a> TypeEvaluator<'a> {
                     ast::ConstantValue::Bool => LiteralValue::Bool,
                     ast::ConstantValue::Int => LiteralValue::Int,
                     ast::ConstantValue::Float => LiteralValue::Float,
-                    ast::ConstantValue::Str => LiteralValue::Str,
+                    ast::ConstantValue::Str(_) => LiteralValue::Str,
                     ast::ConstantValue::Bytes => LiteralValue::Bytes,
                     ast::ConstantValue::None => LiteralValue::None,
                     // Tuple is illegal if it has parentheses, otherwise it's allowed and the output

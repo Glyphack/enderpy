@@ -2495,7 +2495,7 @@ impl<'a> Parser<'a> {
                     self.bump_any();
                     Expression::Constant(Box::new(Constant {
                         node: self.finish_node(start),
-                        value: ConstantValue::Str,
+                        value: ConstantValue::Str(string_val),
                     }))
                 }
 
@@ -2657,7 +2657,7 @@ impl<'a> Parser<'a> {
                                 self.bump_any();
                                 Expression::Constant(Box::new(Constant {
                                     node: self.finish_node(start),
-                                    value: ConstantValue::Str,
+                                    value: ConstantValue::Str(string_val),
                                 }))
                             }
 
@@ -3387,7 +3387,7 @@ impl<'a> Parser<'a> {
                 self.bump(Kind::FStringMiddle);
                 Ok(Expression::Constant(Box::new(Constant {
                     node: self.finish_node(node),
-                    value: ConstantValue::Str,
+                    value: ConstantValue::Str(str_val),
                 })))
             }
             Kind::LeftBracket => self.parse_fstring_replacement_field(),

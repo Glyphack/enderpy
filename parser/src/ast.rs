@@ -353,7 +353,7 @@ pub enum ConstantValue {
     None,
     Ellipsis,
     Bool,
-    Str,
+    Str(String),
     Bytes,
     Tuple,
     // Numbers are string because we don't care about the value rn.

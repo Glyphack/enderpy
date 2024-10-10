@@ -64,10 +64,10 @@ pub fn concat_string_exprs(lhs: Expression, rhs: Expression) -> Result<Expressio
                 end: rhs.node.end,
             };
             let concatnated_string = match (lhs.value, rhs.value) {
-                (ConstantValue::Str, ConstantValue::Str) => {
+                (ConstantValue::Str(s), ConstantValue::Str(s2)) => {
                     Expression::Constant(Box::new(Constant {
                         node,
-                        value: ConstantValue::Str,
+                        value: ConstantValue::Str(s + s2.as_str()),
                     }))
                 }
                 (ConstantValue::Bytes, ConstantValue::Bytes) => {
@@ -100,10 +100,10 @@ pub fn concat_string_exprs(lhs: Expression, rhs: Expression) -> Result<Expressio
         (Expression::JoinedStr(fstring_lhs), Expression::Constant(const_rhs)) => {
             let mut values = fstring_lhs.values;
             match const_rhs.value {
-                ConstantValue::Str => {
+                ConstantValue::Str(s) => {
                     values.push(Expression::Constant(Box::new(Constant {
                         node: const_rhs.node,
-                        value: ConstantValue::Str,
+                        value: ConstantValue::Str(s),
                     })));
                 }
                 ConstantValue::Bytes => {
@@ -121,9 +121,9 @@ pub fn concat_string_exprs(lhs: Expression, rhs: Expression) -> Result<Expressio
         }
         (Expression::Constant(const_lhs), Expression::JoinedStr(fstring_rhs)) => {
             let const_expr = match const_lhs.value {
-                ConstantValue::Str => Expression::Constant(Box::new(Constant {
+                ConstantValue::Str(s) => Expression::Constant(Box::new(Constant {
                     node: const_lhs.node,
-                    value: ConstantValue::Str,
+                    value: ConstantValue::Str(s),
                 })),
                 ConstantValue::Bytes => {
                     panic!("Cannot concat string and bytes");
