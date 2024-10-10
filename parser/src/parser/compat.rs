@@ -287,30 +287,8 @@ impl AsPythonCompat for Name {
 impl AsPythonCompat for Constant {
     fn as_python_compat(&self, parser: &Parser) -> Value {
         json_python_compat_node!("Constant", self, parser, {
-            "value": self.value.as_python_compat(parser),
+            "value": json!(self.get_value(parser.source)),
         })
-    }
-}
-
-impl AsPythonCompat for ConstantValue {
-    fn as_python_compat(&self, parser: &Parser) -> Value {
-        match self {
-            ConstantValue::None => json!(null),
-            ConstantValue::Ellipsis => json!("..."),
-            ConstantValue::Bool(v) => json!(v),
-            ConstantValue::Str(v) => json!(v),
-            ConstantValue::Bytes(v) => json!(v),
-            ConstantValue::Tuple(v) => json!(v
-                .iter()
-                .map(|cons| cons.as_python_compat(parser))
-                .collect::<Vec<_>>()),
-            ConstantValue::Int(v) => Value::Number(Number::from_str(v).unwrap()),
-            ConstantValue::Float(v) => Value::Number(Number::from_str(v).unwrap()),
-            ConstantValue::Complex {
-                real: _real,
-                imaginary,
-            } => json!(imaginary),
-        }
     }
 }
 

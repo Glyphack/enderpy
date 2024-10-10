@@ -317,31 +317,17 @@ pub struct KnownValue {
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub enum LiteralValue {
-    Bool(bool),
-    Int(String),
-    Float(String),
-    Str(String),
+    Bool,
+    Int,
+    Float,
+    Str,
     None,
-    Bytes(Vec<u8>),
+    Bytes,
 }
 
 impl Display for LiteralValue {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let value_str = match self {
-            LiteralValue::Bool(b) => b.to_string(),
-            LiteralValue::Int(i) => i.to_string(),
-            LiteralValue::Float(f) => f.to_string(),
-            LiteralValue::Str(s) => s.to_string(),
-            LiteralValue::None => "None".to_string(),
-            LiteralValue::Bytes(b) => {
-                for byte in b {
-                    write!(f, "{:02x}", byte)?;
-                }
-                return Ok(());
-            }
-        };
-
-        write!(f, "{}", value_str)
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "")
     }
 }
 
