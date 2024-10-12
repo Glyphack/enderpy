@@ -1,6 +1,5 @@
 pub mod compat;
-use crate::ast;
-#[allow(clippy::module_inception)]
+use crate::ast::{self, QuoteType};
 pub mod parser;
 use crate::token::{Kind, Token};
 use ast::{Node, UnaryOperator};
@@ -64,10 +63,10 @@ pub fn concat_string_exprs(lhs: Expression, rhs: Expression) -> Result<Expressio
                 end: rhs.node.end,
             };
             let concatnated_string = match (lhs.value, rhs.value) {
-                (ConstantValue::Str(s), ConstantValue::Str(s2)) => {
+                (ConstantValue::Str(_), ConstantValue::Str(_)) => {
                     Expression::Constant(Box::new(Constant {
                         node,
-                        value: ConstantValue::Str(s + s2.as_str()),
+                        value: ConstantValue::Str(QuoteType::Concat),
                     }))
                 }
                 (ConstantValue::Bytes, ConstantValue::Bytes) => {
@@ -102,7 +101,10 @@ pub fn concat_string_exprs(lhs: Expression, rhs: Expression) -> Result<Expressio
             match const_rhs.value {
                 ConstantValue::Str(s) => {
                     values.push(Expression::Constant(Box::new(Constant {
-                        node: const_rhs.node,
+                        node: Node {
+                            start: fstring_lhs.node.start,
+                            end: const_rhs.node.end,
+                        },
                         value: ConstantValue::Str(s),
                     })));
                 }
@@ -121,9 +123,12 @@ pub fn concat_string_exprs(lhs: Expression, rhs: Expression) -> Result<Expressio
         }
         (Expression::Constant(const_lhs), Expression::JoinedStr(fstring_rhs)) => {
             let const_expr = match const_lhs.value {
-                ConstantValue::Str(s) => Expression::Constant(Box::new(Constant {
-                    node: const_lhs.node,
-                    value: ConstantValue::Str(s),
+                ConstantValue::Str(_) => Expression::Constant(Box::new(Constant {
+                    node: Node {
+                        start: const_lhs.node.start,
+                        end: fstring_rhs.node.end,
+                    },
+                    value: ConstantValue::Str(QuoteType::Concat),
                 })),
                 ConstantValue::Bytes => {
                     panic!("Cannot concat string and bytes");

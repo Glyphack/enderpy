@@ -2457,14 +2457,14 @@ impl<'a> Parser<'a> {
                     self.bump_any();
                     Expression::Constant(Box::new(Constant {
                         node: self.finish_node(start),
-                        value: ConstantValue::Bool,
+                        value: ConstantValue::Bool(true),
                     }))
                 }
                 Kind::False => {
                     self.bump_any();
                     Expression::Constant(Box::new(Constant {
                         node: self.finish_node(start),
-                        value: ConstantValue::Bool,
+                        value: ConstantValue::Bool(false),
                     }))
                 }
                 Kind::ImaginaryInteger => {
@@ -2490,12 +2490,11 @@ impl<'a> Parser<'a> {
                     }))
                 }
                 Kind::StringLiteral => {
-                    let val = self.cur_token.to_string(self.source);
-                    let string_val = extract_string_inside(val);
+                    let val = self.cur_token.as_str(self.source);
                     self.bump_any();
                     Expression::Constant(Box::new(Constant {
                         node: self.finish_node(start),
-                        value: ConstantValue::Str(string_val),
+                        value: ConstantValue::Str(QuoteType::from(val)),
                     }))
                 }
 
@@ -2619,14 +2618,14 @@ impl<'a> Parser<'a> {
                                 self.bump_any();
                                 Expression::Constant(Box::new(Constant {
                                     node: self.finish_node(start),
-                                    value: ConstantValue::Bool,
+                                    value: ConstantValue::Bool(true),
                                 }))
                             }
                             Kind::False => {
                                 self.bump_any();
                                 Expression::Constant(Box::new(Constant {
                                     node: self.finish_node(start),
-                                    value: ConstantValue::Bool,
+                                    value: ConstantValue::Bool(true),
                                 }))
                             }
                             Kind::ImaginaryInteger => {
@@ -2652,12 +2651,11 @@ impl<'a> Parser<'a> {
                                 }))
                             }
                             Kind::StringLiteral => {
-                                let string_val =
-                                    extract_string_inside(self.cur_token().to_string(self.source));
+                                let val = self.cur_token().as_str(self.source);
                                 self.bump_any();
                                 Expression::Constant(Box::new(Constant {
                                     node: self.finish_node(start),
-                                    value: ConstantValue::Str(string_val),
+                                    value: ConstantValue::Str(QuoteType::from(val)),
                                 }))
                             }
 
@@ -3383,11 +3381,11 @@ impl<'a> Parser<'a> {
         let node = self.start_node();
         match self.cur_kind() {
             Kind::FStringMiddle => {
-                let str_val = self.cur_token().to_string(self.source);
+                let val = self.cur_token().as_str(self.source);
                 self.bump(Kind::FStringMiddle);
                 Ok(Expression::Constant(Box::new(Constant {
                     node: self.finish_node(node),
-                    value: ConstantValue::Str(str_val),
+                    value: ConstantValue::Str(QuoteType::from(val)),
                 })))
             }
             Kind::LeftBracket => self.parse_fstring_replacement_field(),

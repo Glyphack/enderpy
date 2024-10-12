@@ -352,14 +352,35 @@ pub struct Constant {
 pub enum ConstantValue {
     None,
     Ellipsis,
-    Bool,
-    Str(String),
+    Bool(bool),
+    // If the string start with triple quotes or single
+    // true => triple
+    // false => single
+    Str(QuoteType),
+    // Str,
     Bytes,
     Tuple,
     // Numbers are string because we don't care about the value rn.
     Int,
     Float,
     Complex,
+}
+
+#[derive(Clone, PartialEq, Debug)]
+pub enum QuoteType {
+    Single,
+    Triple,
+    // When this string was created because two strings were concatenated
+    Concat,
+}
+
+impl From<&str> for QuoteType {
+    fn from(value: &str) -> Self {
+        if value.starts_with("\"\"\"") || value.starts_with("'''") {
+            return Self::Triple;
+        }
+        Self::Single
+    }
 }
 
 impl Constant {
@@ -644,6 +665,10 @@ impl Arguments {
             + self.kwonlyargs.len()
             + if self.vararg.is_some() { 1 } else { 0 }
             + if self.kwarg.is_some() { 1 } else { 0 }
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
     }
 }
 

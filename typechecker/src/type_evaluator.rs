@@ -108,7 +108,7 @@ impl<'a> TypeEvaluator<'a> {
                     ast::ConstantValue::Int => self.get_builtin_type("int"),
                     ast::ConstantValue::Float => self.get_builtin_type("float"),
                     ast::ConstantValue::Str(_) => self.get_builtin_type("str"),
-                    ast::ConstantValue::Bool => self.get_builtin_type("bool"),
+                    ast::ConstantValue::Bool(_) => self.get_builtin_type("bool"),
                     ast::ConstantValue::None => Some(PythonType::None),
                     ast::ConstantValue::Bytes => self.get_builtin_type("bytes"),
                     ast::ConstantValue::Ellipsis => Some(PythonType::Any),
@@ -147,10 +147,15 @@ impl<'a> TypeEvaluator<'a> {
                                 bail!("TypeVar must be called with a name");
                             };
                             let type_name = match first_arg {
-                                ast::Expression::Constant(str) => match &str.value {
-                                    ast::ConstantValue::Str(s) => s,
-                                    _ => panic!("TypeVar first arg must be a string"),
-                                },
+                                ast::Expression::Constant(ref str_const) => {
+                                    match &str_const.value {
+                                        ast::ConstantValue::Str(_) => {
+                                            todo!("fill source");
+                                            str_const.get_value("")
+                                        }
+                                        _ => panic!("TypeVar first arg must be a string"),
+                                    }
+                                }
                                 _ => panic!("TypeVar must be called with at least one arg"),
                             };
 
@@ -556,7 +561,7 @@ impl<'a> TypeEvaluator<'a> {
                 // TODO: Reject this type if the name refers to a variable.
                 self.get_name_type(&name.id, Some(name.node.start), symbol_table, scope_id)
             }
-            Expression::Constant(c) => match c.value {
+            Expression::Constant(ref c) => match c.value {
                 ast::ConstantValue::None => PythonType::None,
                 // TODO: (forward_refs) Forward annotations are not
                 // completely supported.
@@ -564,8 +569,9 @@ impl<'a> TypeEvaluator<'a> {
                 // 2. Module is preferred over local scope so we first check module scope and
                 //    then local scope.
                 //    https://peps.python.org/pep-0563/#backwards-compatibility
-                ast::ConstantValue::Str(ref s) => {
-                    let mut parser = Parser::new(s);
+                ast::ConstantValue::Str(_) => {
+                    todo!("fill source");
+                    let mut parser = Parser::new(c.get_value(""));
                     // Wrap the parsing logic inside a `catch_unwind` block
                     let parse_result = catch_unwind(AssertUnwindSafe(|| parser.parse()));
 
@@ -1323,7 +1329,7 @@ impl<'a> TypeEvaluator<'a> {
         let val = match expr {
             Expression::Constant(c) => {
                 match c.value.clone() {
-                    ast::ConstantValue::Bool => LiteralValue::Bool,
+                    ast::ConstantValue::Bool(_) => LiteralValue::Bool,
                     ast::ConstantValue::Int => LiteralValue::Int,
                     ast::ConstantValue::Float => LiteralValue::Float,
                     ast::ConstantValue::Str(_) => LiteralValue::Str,

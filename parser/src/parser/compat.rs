@@ -1,10 +1,6 @@
-#![allow(clippy::all, unused_variables)]
-
 use crate::ast::*;
 use crate::parser::parser::Parser;
-use serde_json::Number;
 use serde_json::{json, Value};
-use std::str::FromStr;
 
 pub trait AsPythonCompat {
     fn as_python_compat(&self, parser: &Parser) -> Value;
