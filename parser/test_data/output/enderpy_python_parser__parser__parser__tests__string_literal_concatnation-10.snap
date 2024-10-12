@@ -20,9 +20,11 @@ Module {
                             Constant {
                                 node: Node {
                                     start: 0,
-                                    end: 3,
+                                    end: 8,
                                 },
-                                value: "d",
+                                value: Str(
+                                    Concat,
+                                ),
                             },
                         ),
                         Constant(
@@ -31,7 +33,9 @@ Module {
                                     start: 6,
                                     end: 7,
                                 },
-                                value: "a",
+                                value: Str(
+                                    Single,
+                                ),
                             },
                         ),
                         Constant(
@@ -40,7 +44,9 @@ Module {
                                     start: 9,
                                     end: 12,
                                 },
-                                value: "b",
+                                value: Str(
+                                    Single,
+                                ),
                             },
                         ),
                     ],

@@ -232,7 +232,7 @@ impl<'a> ImportCollector<'a> {
                     self.visit_stmt(s);
                 }
             }
-            Statement::Match(m) => {
+            Statement::MatchStmt(m) => {
                 for case in &m.cases {
                     for stmt in &case.body {
                         self.visit_stmt(stmt);

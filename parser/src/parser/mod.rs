@@ -102,7 +102,7 @@ pub fn concat_string_exprs(lhs: Expression, rhs: Expression) -> Result<Expressio
                 ConstantValue::Str(s) => {
                     values.push(Expression::Constant(Box::new(Constant {
                         node: Node {
-                            start: fstring_lhs.node.start,
+                            start: const_rhs.node.start,
                             end: const_rhs.node.end,
                         },
                         value: ConstantValue::Str(s),

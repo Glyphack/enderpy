@@ -436,7 +436,7 @@ Module {
                                         start: 198,
                                         end: 199,
                                     },
-                                    value: 1,
+                                    value: Int,
                                 },
                             ),
                         },

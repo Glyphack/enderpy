@@ -310,7 +310,7 @@ Module {
                             orelse: [],
                         },
                     ),
-                    Return(
+                    ReturnStmt(
                         Return {
                             node: Node {
                                 start: 320,
@@ -549,7 +549,7 @@ Module {
                                                                     start: 554,
                                                                     end: 555,
                                                                 },
-                                                                value: 5,
+                                                                value: Int,
                                                             },
                                                         ),
                                                     },
@@ -620,7 +620,9 @@ Module {
                                                     start: 588,
                                                     end: 591,
                                                 },
-                                                value: ";",
+                                                value: Str(
+                                                    Single,
+                                                ),
                                             },
                                         ),
                                     ],
@@ -631,7 +633,7 @@ Module {
                             ),
                         },
                     ),
-                    Return(
+                    ReturnStmt(
                         Return {
                             node: Node {
                                 start: 597,
@@ -787,14 +789,14 @@ Module {
                                                     start: 677,
                                                     end: 678,
                                                 },
-                                                value: 0,
+                                                value: Int,
                                             },
                                         ),
                                     ],
                                 },
                             ),
                             body: [
-                                Return(
+                                ReturnStmt(
                                     Return {
                                         node: Node {
                                             start: 688,
@@ -959,7 +961,9 @@ Module {
                                                     start: 800,
                                                     end: 804,
                                                 },
-                                                value: true,
+                                                value: Bool(
+                                                    true,
+                                                ),
                                             },
                                         ),
                                     },
@@ -1115,7 +1119,9 @@ Module {
                                                     start: 871,
                                                     end: 881,
                                                 },
-                                                value: "datetime",
+                                                value: Str(
+                                                    Single,
+                                                ),
                                             },
                                         ),
                                     },
@@ -1175,7 +1181,9 @@ Module {
                                                                     start: 916,
                                                                     end: 919,
                                                                 },
-                                                                value: " ",
+                                                                value: Str(
+                                                                    Single,
+                                                                ),
                                                             },
                                                         ),
                                                     },
@@ -1213,7 +1221,9 @@ Module {
                                                                                     start: 925,
                                                                                     end: 935,
                                                                                 },
-                                                                                value: "datetime",
+                                                                                value: Str(
+                                                                                    Single,
+                                                                                ),
                                                                             },
                                                                         ),
                                                                     },
@@ -1255,7 +1265,9 @@ Module {
                                                         start: 957,
                                                         end: 972,
                                                     },
-                                                    value: "%Y%m%d %H%M%S",
+                                                    value: Str(
+                                                        Single,
+                                                    ),
                                                 },
                                             ),
                                         },
@@ -1321,7 +1333,9 @@ Module {
                                                                 start: 1004,
                                                                 end: 1014,
                                                             },
-                                                            value: "datetime",
+                                                            value: Str(
+                                                                Single,
+                                                            ),
                                                         },
                                                     ),
                                                     Constant(
@@ -1330,7 +1344,9 @@ Module {
                                                                 start: 1016,
                                                                 end: 1023,
                                                             },
-                                                            value: "depth",
+                                                            value: Str(
+                                                                Single,
+                                                            ),
                                                         },
                                                     ),
                                                 ],
@@ -1359,7 +1375,9 @@ Module {
                                                                     start: 1037,
                                                                     end: 1041,
                                                                 },
-                                                                value: true,
+                                                                value: Bool(
+                                                                    true,
+                                                                ),
                                                             },
                                                         ),
                                                         Constant(
@@ -1368,7 +1386,9 @@ Module {
                                                                     start: 1043,
                                                                     end: 1047,
                                                                 },
-                                                                value: true,
+                                                                value: Bool(
+                                                                    true,
+                                                                ),
                                                             },
                                                         ),
                                                     ],
@@ -1414,7 +1434,9 @@ Module {
                                                 start: 1067,
                                                 end: 1077,
                                             },
-                                            value: "datetime",
+                                            value: Str(
+                                                Single,
+                                            ),
                                         },
                                     ),
                                 ],
@@ -1433,7 +1455,9 @@ Module {
                                                     start: 1087,
                                                     end: 1091,
                                                 },
-                                                value: true,
+                                                value: Bool(
+                                                    true,
+                                                ),
                                             },
                                         ),
                                     },
@@ -1491,7 +1515,9 @@ Module {
                                                                 start: 1114,
                                                                 end: 1121,
                                                             },
-                                                            value: "refID",
+                                                            value: Str(
+                                                                Single,
+                                                            ),
                                                         },
                                                     ),
                                                 ],
@@ -1512,7 +1538,9 @@ Module {
                                                     start: 1132,
                                                     end: 1136,
                                                 },
-                                                value: true,
+                                                value: Bool(
+                                                    true,
+                                                ),
                                             },
                                         ),
                                     },
@@ -1522,7 +1550,7 @@ Module {
                             },
                         ),
                     ),
-                    Return(
+                    ReturnStmt(
                         Return {
                             node: Node {
                                 start: 1142,

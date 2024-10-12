@@ -1,23 +1,22 @@
-use std::path::PathBuf;
 use std::sync::Arc;
 
 use ast::{Expression, Statement};
-use dashmap::DashMap;
 use enderpy_python_parser as parser;
 use enderpy_python_parser::ast::{self, *};
 
 use super::{type_evaluator::TypeEvaluator, types::PythonType};
-use crate::file::EnderpyFile;
-use crate::symbol_table::Id;
+use crate::build::BuildManager;
+use crate::symbol_table::{self, Id};
 use crate::types::ModuleRef;
-use crate::{ast_visitor::TraversalVisitor, diagnostic::CharacterSpan, symbol_table::SymbolTable};
+use crate::{ast_visitor::TraversalVisitor, diagnostic::CharacterSpan};
 use rust_lapper::{Interval, Lapper};
 
 #[derive(Clone, Debug)]
 pub struct TypeChecker<'a> {
-    pub errors: Vec<TypeCheckError>,
     pub types: Lapper<u32, PythonType>,
+    id: Id,
     type_evaluator: TypeEvaluator<'a>,
+    build_manager: &'a BuildManager,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -28,15 +27,11 @@ pub struct TypeCheckError {
 
 #[allow(unused)]
 impl<'a> TypeChecker<'a> {
-    pub fn new(
-        file: &'a EnderpyFile,
-        symbol_table: SymbolTable,
-        symbol_tables: &'a DashMap<Id, SymbolTable>,
-        ids: &'a DashMap<PathBuf, Id>,
-    ) -> Self {
+    pub fn new(id: Id, build_manager: &'a BuildManager) -> Self {
         TypeChecker {
-            errors: vec![],
-            type_evaluator: TypeEvaluator::new(file, symbol_table, symbol_tables, ids),
+            type_evaluator: TypeEvaluator::new(build_manager),
+            id,
+            build_manager,
             types: Lapper::new(vec![]),
         }
     }
@@ -46,13 +41,18 @@ impl<'a> TypeChecker<'a> {
     }
 
     fn infer_expr_type(&mut self, expr: &Expression) -> PythonType {
-        let t = match self.type_evaluator.get_type(expr, None, None) {
-            Ok(t) => t,
-            Err(e) => {
-                log::error!("type evaluator error: {} for expr {expr:?}", e);
-                PythonType::Unknown
-            }
-        };
+        let symbol_table = self.build_manager.symbol_tables.get(&self.id).unwrap();
+        let t =
+            match self
+                .type_evaluator
+                .get_type(expr, &symbol_table, symbol_table.current_scope_id)
+            {
+                Ok(t) => t,
+                Err(e) => {
+                    log::error!("type evaluator error: {} for expr {expr:?}", e);
+                    PythonType::Unknown
+                }
+            };
 
         self.types.insert(Interval {
             start: expr.get_node().start,
@@ -63,9 +63,12 @@ impl<'a> TypeChecker<'a> {
     }
 
     fn infer_annotation_type(&mut self, expr: &Expression) -> PythonType {
-        let t =
-            self.type_evaluator
-                .get_annotation_type(expr, &self.type_evaluator.symbol_table, None);
+        let symbol_table = self.build_manager.symbol_tables.get(&self.id).unwrap();
+        let t = self.type_evaluator.get_annotation_type(
+            expr,
+            &symbol_table,
+            symbol_table.current_scope_id,
+        );
 
         self.types.insert(Interval {
             start: expr.get_node().start,
@@ -76,11 +79,12 @@ impl<'a> TypeChecker<'a> {
     }
 
     fn infer_name_type(&mut self, name: &str, start: u32, stop: u32) {
+        let symbol_table = self.build_manager.symbol_tables.get(&self.id).unwrap();
         let name_type = self.type_evaluator.get_name_type(
             name,
             None,
-            &self.type_evaluator.symbol_table,
-            Some(self.type_evaluator.symbol_table.current_scope_id),
+            &symbol_table,
+            symbol_table.current_scope_id,
         );
         self.types.insert(Interval {
             start,
@@ -89,18 +93,49 @@ impl<'a> TypeChecker<'a> {
         });
     }
 
-    fn make_error(&mut self, msg: &str, start: u32, end: u32) {
-        let error = TypeCheckError {
-            msg: msg.to_string(),
-            span: CharacterSpan(start as usize, end as usize),
-        };
-        // check error doesn't already exist
-        for e in &self.errors {
-            if e == &error {
-                return;
+    fn enter_scope(&self, pos: u32) {
+        let mut symbol_table = self.build_manager.symbol_tables.get_mut(&self.id).unwrap();
+        symbol_table.set_scope(pos);
+    }
+
+    fn leave_scope(&self) {
+        let mut symbol_table = self.build_manager.symbol_tables.get_mut(&self.id).unwrap();
+        symbol_table.revert_scope();
+    }
+
+    pub fn dump_types(&self) -> String {
+        // sort result by key
+        let file = self.build_manager.files.get(&self.id).unwrap();
+        let mut str = String::new();
+        let mut last_line = None;
+
+        for r in self.types.iter() {
+            let pos = file.get_position(r.start, r.stop);
+            let cur_line = pos.line;
+
+            if last_line.is_none() {
+                let line_content = file.get_line_content(cur_line as usize);
+                str.push_str(format!("Line {}: {}", cur_line, line_content).as_str());
+                str.push_str("\nExpr types in the line --->:\n");
+                last_line = Some(cur_line);
             }
+            // So we also print the first line
+            if let Some(last_line_num) = last_line {
+                if last_line_num < cur_line {
+                    str.push_str("\n---\n");
+                    let line_content = file.get_line_content(cur_line as usize);
+                    str.push_str(format!("Line {}: {}", cur_line, line_content).as_str());
+                    str.push_str("\nExpr types in the line --->:\n");
+                    last_line = Some(cur_line);
+                }
+            }
+            let source_text = &file.source[r.start as usize..r.stop as usize];
+            let eval_result = format!("        {} => {}\n", source_text, r.val);
+            str.push_str(&eval_result);
         }
-        self.errors.push(error);
+        str.push_str("\n---\n");
+
+        str
     }
 }
 #[allow(unused)]
@@ -117,10 +152,10 @@ impl<'a> TraversalVisitor for TypeChecker<'a> {
             Statement::Assert(a) => self.visit_assert(a),
             Statement::Pass(p) => self.visit_pass(p),
             Statement::Delete(d) => self.visit_delete(d),
-            Statement::Return(r) => self.visit_return(r),
+            Statement::ReturnStmt(r) => self.visit_return(r),
             Statement::Raise(r) => self.visit_raise(r),
-            Statement::Break(b) => self.visit_break(b),
-            Statement::Continue(c) => self.visit_continue(c),
+            Statement::BreakStmt(b) => self.visit_break(b),
+            Statement::ContinueStmt(c) => self.visit_continue(c),
             Statement::Global(g) => self.visit_global(g),
             Statement::Nonlocal(n) => self.visit_nonlocal(n),
             Statement::IfStatement(i) => self.visit_if(i),
@@ -131,7 +166,7 @@ impl<'a> TraversalVisitor for TypeChecker<'a> {
             Statement::TryStarStatement(t) => self.visit_try_star(t),
             Statement::FunctionDef(f) => self.visit_function_def(f),
             Statement::ClassDef(c) => self.visit_class_def(c),
-            Statement::Match(m) => self.visit_match(m),
+            Statement::MatchStmt(m) => self.visit_match(m),
             Statement::AsyncForStatement(f) => self.visit_async_for(f),
             Statement::AsyncWithStatement(w) => self.visit_async_with(w),
             Statement::AsyncFunctionDef(f) => self.visit_async_function_def(f),
@@ -276,7 +311,7 @@ impl<'a> TraversalVisitor for TypeChecker<'a> {
     }
 
     fn visit_function_def(&mut self, f: &Arc<parser::ast::FunctionDef>) {
-        self.type_evaluator.symbol_table.set_scope(f.node.start);
+        self.enter_scope(f.node.start);
         self.infer_name_type(
             &f.name,
             f.node.start + 4,
@@ -294,11 +329,12 @@ impl<'a> TraversalVisitor for TypeChecker<'a> {
             }
             self.infer_name_type(&arg.arg, arg.node.start, arg.node.end)
         }
-        self.type_evaluator.symbol_table.revert_scope();
+
+        self.leave_scope();
     }
 
     fn visit_async_function_def(&mut self, f: &Arc<parser::ast::AsyncFunctionDef>) {
-        self.type_evaluator.symbol_table.set_scope(f.node.start);
+        self.enter_scope(f.node.start);
         self.infer_name_type(
             &f.name,
             f.node.start + 9,
@@ -307,7 +343,7 @@ impl<'a> TraversalVisitor for TypeChecker<'a> {
         for stmt in &f.body {
             self.visit_stmt(stmt);
         }
-        self.type_evaluator.symbol_table.revert_scope();
+        self.leave_scope();
     }
 
     fn visit_class_def(&mut self, c: &Arc<parser::ast::ClassDef>) {
@@ -317,7 +353,7 @@ impl<'a> TraversalVisitor for TypeChecker<'a> {
             c.node.start + 6 + c.name.len() as u32,
         );
 
-        self.type_evaluator.symbol_table.set_scope(c.node.start);
+        self.enter_scope(c.node.start);
         for base in &c.bases {
             self.visit_expr(base);
         }
@@ -331,7 +367,7 @@ impl<'a> TraversalVisitor for TypeChecker<'a> {
             self.visit_expr(&keyword.value);
         }
 
-        self.type_evaluator.symbol_table.revert_scope();
+        self.leave_scope();
     }
 
     fn visit_match(&mut self, m: &parser::ast::Match) {
@@ -631,43 +667,10 @@ mod tests {
         let root = &PathBuf::from("");
         manager.build(root);
         manager.build_one(root, &path);
-        let module = manager.get_state(&path);
-        let checker = manager.type_check(&path, &module);
-        let module = manager.get_state(&path);
-
-        let result = checker.types;
-
-        // sort result by key
-        let mut str = String::new();
-        let mut last_line = None;
-
-        for r in result {
-            let pos = module.get_position(r.start, r.stop);
-            let cur_line = pos.line;
-
-            if last_line.is_none() {
-                let line_content = module.get_line_content(cur_line as usize);
-                str.push_str(format!("Line {}: {}", cur_line, line_content).as_str());
-                str.push_str("\nExpr types in the line --->:\n");
-                last_line = Some(cur_line);
-            }
-            // So we also print the first line
-            if let Some(last_line_num) = last_line {
-                if last_line_num < cur_line {
-                    str.push_str("\n---\n");
-                    let line_content = module.get_line_content(cur_line as usize);
-                    str.push_str(format!("Line {}: {}", cur_line, line_content).as_str());
-                    str.push_str("\nExpr types in the line --->:\n");
-                    last_line = Some(cur_line);
-                }
-            }
-            let source_text = &module.source[r.start as usize..r.stop as usize];
-            let eval_result = format!("        {} => {}\n", source_text, r.val);
-            str.push_str(&eval_result);
-        }
-        str.push_str("\n---\n");
-
-        str
+        let id = manager.paths.get(&path).unwrap();
+        let file = manager.files.get(&id).unwrap();
+        let checker = manager.type_check(&path, &file);
+        checker.dump_types()
     }
 
     macro_rules! type_eval_test {

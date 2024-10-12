@@ -22,7 +22,9 @@ Module {
                                     start: 2,
                                     end: 4,
                                 },
-                                value: "a_",
+                                value: Str(
+                                    Single,
+                                ),
                             },
                         ),
                         FormattedValue(
@@ -37,7 +39,7 @@ Module {
                                             start: 5,
                                             end: 6,
                                         },
-                                        value: 1,
+                                        value: Int,
                                     },
                                 ),
                                 conversion: -1,
@@ -50,7 +52,9 @@ Module {
                                     start: 9,
                                     end: 12,
                                 },
-                                value: "b",
+                                value: Str(
+                                    Single,
+                                ),
                             },
                         ),
                     ],

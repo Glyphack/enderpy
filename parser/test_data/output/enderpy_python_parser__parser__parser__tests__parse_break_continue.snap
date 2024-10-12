@@ -8,7 +8,7 @@ Module {
         end: 5,
     },
     body: [
-        Break(
+        BreakStmt(
             Break {
                 node: Node {
                     start: 0,

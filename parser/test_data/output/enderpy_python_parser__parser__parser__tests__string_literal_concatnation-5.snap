@@ -15,7 +15,9 @@ Module {
                         start: 1,
                         end: 20,
                     },
-                    value: "ab",
+                    value: Str(
+                        Concat,
+                    ),
                 },
             ),
         ),

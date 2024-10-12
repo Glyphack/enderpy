@@ -18,7 +18,7 @@ pub enum PythonType {
     /// are declaring that foo must be exactly equal to 3 and no other value.
     /// In type inference the values are not assumed to be literals unless they
     /// are explicitly declared as such.
-    KnownValue(KnownValue),
+    LiteralValue(KnownValue),
     Module(ModuleRef),
     /// Union type
     MultiValue(Vec<PythonType>),
@@ -27,7 +27,6 @@ pub enum PythonType {
     Class(ClassType),
     Instance(InstanceType),
     Optional(Box<PythonType>),
-    Never,
     TypeVar(TypeVar),
 }
 
@@ -37,8 +36,7 @@ impl PythonType {
             (PythonType::None, PythonType::None) => true,
             (PythonType::Unknown, PythonType::Unknown) => true,
             (PythonType::Any, PythonType::Any) => true,
-            (PythonType::Never, PythonType::Never) => true,
-            (PythonType::KnownValue(v1), PythonType::KnownValue(v2)) => v1 == v2,
+            (PythonType::LiteralValue(v1), PythonType::LiteralValue(v2)) => v1 == v2,
             (PythonType::MultiValue(m1), PythonType::MultiValue(m2)) => {
                 if m1.len() != m2.len() {
                     return false;
@@ -301,6 +299,9 @@ impl Display for InstanceType {
 pub struct TypeVar {
     pub name: String,
     pub bounds: Vec<PythonType>,
+    // TODO: We need to store the declaration path for types this is just to make it work for type
+    // vars.
+    pub decl_id: Id,
 }
 
 impl PartialEq for TypeVar {
@@ -359,8 +360,7 @@ impl Display for PythonType {
             PythonType::Instance(class_type) => {
                 return write!(f, "{class_type}");
             }
-            PythonType::Never => "Never",
-            PythonType::KnownValue(value) => {
+            PythonType::LiteralValue(value) => {
                 let value = format!("{}", value.literal_value);
                 return write!(f, "Literal[{}]", value);
             }

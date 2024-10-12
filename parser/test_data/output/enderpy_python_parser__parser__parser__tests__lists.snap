@@ -294,7 +294,9 @@ Module {
                                         start: 88,
                                         end: 97,
                                     },
-                                    value: "Januari",
+                                    value: Str(
+                                        Single,
+                                    ),
                                 },
                             ),
                             Constant(
@@ -303,7 +305,9 @@ Module {
                                         start: 99,
                                         end: 109,
                                     },
-                                    value: "Februari",
+                                    value: Str(
+                                        Single,
+                                    ),
                                 },
                             ),
                             Constant(
@@ -312,7 +316,9 @@ Module {
                                         start: 111,
                                         end: 118,
                                     },
-                                    value: "Maart",
+                                    value: Str(
+                                        Single,
+                                    ),
                                 },
                             ),
                             Constant(
@@ -321,7 +327,9 @@ Module {
                                         start: 144,
                                         end: 151,
                                     },
-                                    value: "April",
+                                    value: Str(
+                                        Single,
+                                    ),
                                 },
                             ),
                             Constant(
@@ -330,7 +338,9 @@ Module {
                                         start: 155,
                                         end: 160,
                                     },
-                                    value: "Mei",
+                                    value: Str(
+                                        Single,
+                                    ),
                                 },
                             ),
                             Constant(
@@ -339,7 +349,9 @@ Module {
                                         start: 167,
                                         end: 173,
                                     },
-                                    value: "June",
+                                    value: Str(
+                                        Single,
+                                    ),
                                 },
                             ),
                             Constant(
@@ -348,7 +360,9 @@ Module {
                                         start: 198,
                                         end: 204,
                                     },
-                                    value: "July",
+                                    value: Str(
+                                        Single,
+                                    ),
                                 },
                             ),
                             Constant(
@@ -357,7 +371,9 @@ Module {
                                         start: 209,
                                         end: 219,
                                     },
-                                    value: "Augustus",
+                                    value: Str(
+                                        Single,
+                                    ),
                                 },
                             ),
                             Constant(
@@ -366,7 +382,9 @@ Module {
                                         start: 221,
                                         end: 232,
                                     },
-                                    value: "September",
+                                    value: Str(
+                                        Single,
+                                    ),
                                 },
                             ),
                             Constant(
@@ -375,7 +393,9 @@ Module {
                                         start: 255,
                                         end: 264,
                                     },
-                                    value: "October",
+                                    value: Str(
+                                        Single,
+                                    ),
                                 },
                             ),
                             Constant(
@@ -384,7 +404,9 @@ Module {
                                         start: 266,
                                         end: 276,
                                     },
-                                    value: "November",
+                                    value: Str(
+                                        Single,
+                                    ),
                                 },
                             ),
                             Constant(
@@ -393,7 +415,9 @@ Module {
                                         start: 278,
                                         end: 288,
                                     },
-                                    value: "December",
+                                    value: Str(
+                                        Single,
+                                    ),
                                 },
                             ),
                         ],

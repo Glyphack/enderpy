@@ -43,7 +43,9 @@ Module {
                                                     start: 5,
                                                     end: 8,
                                                 },
-                                                value: " ",
+                                                value: Str(
+                                                    Single,
+                                                ),
                                             },
                                         ),
                                         attr: "join",
@@ -88,7 +90,7 @@ Module {
                                                                         start: 24,
                                                                         end: 27,
                                                                     },
-                                                                    value: 105,
+                                                                    value: Int,
                                                                 },
                                                             ),
                                                             Constant(
@@ -97,7 +99,7 @@ Module {
                                                                         start: 29,
                                                                         end: 32,
                                                                     },
-                                                                    value: 110,
+                                                                    value: Int,
                                                                 },
                                                             ),
                                                             Constant(
@@ -106,7 +108,7 @@ Module {
                                                                         start: 34,
                                                                         end: 37,
                                                                     },
-                                                                    value: 116,
+                                                                    value: Int,
                                                                 },
                                                             ),
                                                         ],

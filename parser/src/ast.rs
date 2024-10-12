@@ -1,4 +1,5 @@
 use is_macro::Is;
+use std::borrow::Cow;
 use std::fmt::{self};
 use std::sync::Arc;
 
@@ -58,7 +59,7 @@ pub struct Module {
 }
 
 // Use box to reduce the enum size
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Is)]
 pub enum Statement {
     AssignStatement(Box<Assign>),
     AnnAssignStatement(Box<AnnAssign>),
@@ -67,10 +68,10 @@ pub enum Statement {
     Assert(Box<Assert>),
     Pass(Box<Pass>),
     Delete(Box<Delete>),
-    Return(Box<Return>),
+    ReturnStmt(Box<Return>),
     Raise(Box<Raise>),
-    Break(Box<Break>),
-    Continue(Box<Continue>),
+    BreakStmt(Box<Break>),
+    ContinueStmt(Box<Continue>),
     Import(Box<Import>),
     ImportFrom(Box<ImportFrom>),
     Global(Box<Global>),
@@ -86,7 +87,7 @@ pub enum Statement {
     FunctionDef(Arc<FunctionDef>),
     AsyncFunctionDef(Arc<AsyncFunctionDef>),
     ClassDef(Arc<ClassDef>),
-    Match(Box<Match>),
+    MatchStmt(Box<Match>),
     TypeAlias(Box<TypeAlias>),
 }
 
@@ -100,10 +101,10 @@ impl GetNode for Statement {
             Statement::Assert(s) => s.node,
             Statement::Pass(s) => s.node,
             Statement::Delete(s) => s.node,
-            Statement::Return(s) => s.node,
+            Statement::ReturnStmt(s) => s.node,
             Statement::Raise(s) => s.node,
-            Statement::Break(s) => s.node,
-            Statement::Continue(s) => s.node,
+            Statement::BreakStmt(s) => s.node,
+            Statement::ContinueStmt(s) => s.node,
             Statement::Import(s) => s.node,
             Statement::ImportFrom(s) => s.node,
             Statement::Global(s) => s.node,
@@ -119,7 +120,7 @@ impl GetNode for Statement {
             Statement::FunctionDef(s) => s.node,
             Statement::AsyncFunctionDef(s) => s.node,
             Statement::ClassDef(s) => s.node,
-            Statement::Match(s) => s.node,
+            Statement::MatchStmt(s) => s.node,
             Statement::TypeAlias(s) => s.node,
         }
     }
@@ -348,6 +349,80 @@ pub struct Constant {
     pub value: ConstantValue,
 }
 
+impl Constant {
+    pub fn get_value<'a>(&self, source: &'a str) -> Cow<'a, str> {
+        match &self.value {
+            ConstantValue::Str(quote_type) => match quote_type {
+                QuoteType::Single => Cow::Borrowed(
+                    &source[(self.node.start + 1) as usize..(self.node.end - 1) as usize],
+                ),
+                QuoteType::Triple => Cow::Borrowed(
+                    &source[(self.node.start + 3) as usize..(self.node.end - 3) as usize],
+                ),
+                QuoteType::Concat => {
+                    let input = &source[(self.node.start) as usize..(self.node.end) as usize];
+                    let mut result = String::new();
+                    let mut chars = input.chars().peekable();
+
+                    while let Some(c) = chars.next() {
+                        let quote_type = match c {
+                            '\'' => {
+                                if chars.peek() == Some(&'\'') && chars.nth(1) == Some('\'') {
+                                    // Triple single quote
+                                    "'''"
+                                } else {
+                                    // Single quote
+                                    "'"
+                                }
+                            }
+                            '"' => {
+                                if chars.peek() == Some(&'"') && chars.nth(1) == Some('"') {
+                                    // Triple double quote
+                                    "\"\"\""
+                                } else {
+                                    // Double quote
+                                    "\""
+                                }
+                            }
+                            _ => continue, // Ignore any non-quote characters
+                        };
+
+                        // Extract content between quotes
+                        let mut content = String::new();
+                        let mut quote_ending = quote_type.chars().peekable();
+
+                        for next_char in chars.by_ref() {
+                            // Check for quote ending
+                            if Some(&next_char) == quote_ending.peek() {
+                                quote_ending.next();
+                                if quote_ending.peek().is_none() {
+                                    break; // End of the string literal
+                                }
+                            } else {
+                                content.push(next_char);
+                                quote_ending = quote_type.chars().peekable(); // Reset the ending check
+                            }
+                        }
+
+                        // Concatenate the cleaned-up string
+                        result.push_str(&content);
+                    }
+
+                    Cow::Owned(result)
+                }
+            },
+            ConstantValue::Bool(b) => {
+                if *b {
+                    Cow::Borrowed("true")
+                } else {
+                    Cow::Borrowed("false")
+                }
+            }
+            _ => todo!("Call the parser and get the value"),
+        }
+    }
+}
+
 #[derive(Clone, PartialEq, Debug)]
 pub enum ConstantValue {
     None,
@@ -380,12 +455,6 @@ impl From<&str> for QuoteType {
             return Self::Triple;
         }
         Self::Single
-    }
-}
-
-impl Constant {
-    pub fn get_value<'a>(&self, source: &'a str) -> &'a str {
-        &source[self.node.start as usize..self.node.end as usize]
     }
 }
 

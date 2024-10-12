@@ -22,7 +22,9 @@ Module {
                                     start: 2,
                                     end: 3,
                                 },
-                                value: "a",
+                                value: Str(
+                                    Single,
+                                ),
                             },
                         ),
                     ],

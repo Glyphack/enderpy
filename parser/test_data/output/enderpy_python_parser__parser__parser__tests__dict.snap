@@ -361,7 +361,7 @@ Module {
                                 start: 97,
                                 end: 98,
                             },
-                            value: 1,
+                            value: Int,
                         },
                     ),
                     value: Constant(
@@ -370,7 +370,9 @@ Module {
                                 start: 100,
                                 end: 106,
                             },
-                            value: "name",
+                            value: Str(
+                                Single,
+                            ),
                         },
                     ),
                     generators: [
@@ -429,7 +431,7 @@ Module {
                                 start: 134,
                                 end: 135,
                             },
-                            value: 1,
+                            value: Int,
                         },
                     ),
                     value: Constant(
@@ -438,7 +440,9 @@ Module {
                                 start: 137,
                                 end: 143,
                             },
-                            value: "name",
+                            value: Str(
+                                Single,
+                            ),
                         },
                     ),
                     generators: [
@@ -531,7 +535,9 @@ Module {
                                         start: 299,
                                         end: 307,
                                     },
-                                    value: "symbol",
+                                    value: Str(
+                                        Single,
+                                    ),
                                 },
                             ),
                             Constant(
@@ -540,7 +546,9 @@ Module {
                                         start: 321,
                                         end: 327,
                                     },
-                                    value: "name",
+                                    value: Str(
+                                        Single,
+                                    ),
                                 },
                             ),
                         ],
@@ -634,7 +642,7 @@ Module {
                                         start: 344,
                                         end: 345,
                                     },
-                                    value: 1,
+                                    value: Int,
                                 },
                             ),
                             Constant(
@@ -643,7 +651,7 @@ Module {
                                         start: 371,
                                         end: 372,
                                     },
-                                    value: 3,
+                                    value: Int,
                                 },
                             ),
                         ],
@@ -654,7 +662,9 @@ Module {
                                         start: 347,
                                         end: 353,
                                     },
-                                    value: "name",
+                                    value: Str(
+                                        Single,
+                                    ),
                                 },
                             ),
                             Dict(
@@ -670,7 +680,7 @@ Module {
                                                     start: 358,
                                                     end: 359,
                                                 },
-                                                value: 2,
+                                                value: Int,
                                             },
                                         ),
                                     ],
@@ -681,7 +691,9 @@ Module {
                                                     start: 361,
                                                     end: 368,
                                                 },
-                                                value: "name2",
+                                                value: Str(
+                                                    Single,
+                                                ),
                                             },
                                         ),
                                     ],
@@ -693,7 +705,9 @@ Module {
                                         start: 374,
                                         end: 381,
                                     },
-                                    value: "name3",
+                                    value: Str(
+                                        Single,
+                                    ),
                                 },
                             ),
                         ],

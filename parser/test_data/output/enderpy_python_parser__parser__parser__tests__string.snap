@@ -31,7 +31,9 @@ Module {
                             start: 4,
                             end: 19,
                         },
-                        value: "simple text\n",
+                        value: Str(
+                            Single,
+                        ),
                     },
                 ),
             },
@@ -59,7 +61,9 @@ Module {
                             start: 27,
                             end: 40,
                         },
-                        value: "raw_text\\n",
+                        value: Str(
+                            Single,
+                        ),
                     },
                 ),
             },
@@ -87,7 +91,9 @@ Module {
                             start: 46,
                             end: 57,
                         },
-                        value: "multi",
+                        value: Str(
+                            Triple,
+                        ),
                     },
                 ),
             },
@@ -143,7 +149,9 @@ Module {
                                     start: 86,
                                     end: 87,
                                 },
-                                value: "(",
+                                value: Str(
+                                    Single,
+                                ),
                             },
                         ),
                         FormattedValue(
@@ -192,7 +200,9 @@ Module {
                                     start: 106,
                                     end: 107,
                                 },
-                                value: ")",
+                                value: Str(
+                                    Single,
+                                ),
                             },
                         ),
                     ],
@@ -237,7 +247,9 @@ Module {
                                                             start: 117,
                                                             end: 121,
                                                         },
-                                                        value: "0.0f",
+                                                        value: Str(
+                                                            Single,
+                                                        ),
                                                     },
                                                 ),
                                             ],
@@ -283,7 +295,9 @@ Module {
                                     start: 133,
                                     end: 148,
                                 },
-                                value: "tuple argument ",
+                                value: Str(
+                                    Single,
+                                ),
                             },
                         ),
                         FormattedValue(
@@ -320,7 +334,7 @@ Module {
                                                                 start: 154,
                                                                 end: 156,
                                                             },
-                                                            value: 12,
+                                                            value: Int,
                                                         },
                                                     ),
                                                 ),
@@ -352,7 +366,9 @@ Module {
                                     start: 164,
                                     end: 175,
                                 },
-                                value: "some words ",
+                                value: Str(
+                                    Single,
+                                ),
                             },
                         ),
                         FormattedValue(
@@ -403,7 +419,9 @@ Module {
                                                             start: 180,
                                                             end: 183,
                                                         },
-                                                        value: ".3f",
+                                                        value: Str(
+                                                            Single,
+                                                        ),
                                                     },
                                                 ),
                                             ],
@@ -418,7 +436,9 @@ Module {
                                     start: 184,
                                     end: 196,
                                 },
-                                value: " more words ",
+                                value: Str(
+                                    Single,
+                                ),
                             },
                         ),
                         FormattedValue(
@@ -464,7 +484,9 @@ Module {
                                     start: 202,
                                     end: 214,
                                 },
-                                value: " final words",
+                                value: Str(
+                                    Single,
+                                ),
                             },
                         ),
                     ],
@@ -563,7 +585,7 @@ Module {
                                                                                                                                                         start: 235,
                                                                                                                                                         end: 236,
                                                                                                                                                     },
-                                                                                                                                                    value: 1,
+                                                                                                                                                    value: Int,
                                                                                                                                                 },
                                                                                                                                             ),
                                                                                                                                             right: Constant(
@@ -572,7 +594,7 @@ Module {
                                                                                                                                                         start: 237,
                                                                                                                                                         end: 238,
                                                                                                                                                     },
-                                                                                                                                                    value: 1,
+                                                                                                                                                    value: Int,
                                                                                                                                                 },
                                                                                                                                             ),
                                                                                                                                         },
@@ -686,7 +708,7 @@ Module {
                                                                                                                 start: 268,
                                                                                                                 end: 269,
                                                                                                             },
-                                                                                                            value: 1,
+                                                                                                            value: Int,
                                                                                                         },
                                                                                                     ),
                                                                                                     right: Constant(
@@ -695,7 +717,7 @@ Module {
                                                                                                                 start: 270,
                                                                                                                 end: 271,
                                                                                                             },
-                                                                                                            value: 1,
+                                                                                                            value: Int,
                                                                                                         },
                                                                                                     ),
                                                                                                 },

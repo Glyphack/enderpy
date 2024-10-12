@@ -7,12 +7,10 @@ use tracing::{span, Level};
 use tracing_subscriber::EnvFilter;
 
 use dashmap::DashMap;
-use env_logger::Builder;
 use log::debug;
 
 use crate::{
     checker::TypeChecker,
-    diagnostic::Diagnostic,
     file::{EnderpyFile, ImportKinds},
     ruff_python_import_resolver::{
         self as ruff_python_resolver, config::Config, execution_environment,
@@ -24,10 +22,9 @@ use crate::{
 
 #[derive(Debug)]
 pub struct BuildManager {
-    pub modules: DashMap<Id, EnderpyFile>,
-    pub diagnostics: DashMap<PathBuf, Vec<Diagnostic>>,
+    pub files: DashMap<Id, EnderpyFile>,
     pub symbol_tables: DashMap<Id, SymbolTable>,
-    pub module_ids: DashMap<PathBuf, Id>,
+    pub paths: DashMap<PathBuf, Id>,
     pub settings: Settings,
     import_config: Config,
     host: ruff_python_resolver::host::StaticHost,
@@ -35,8 +32,6 @@ pub struct BuildManager {
 #[allow(unused)]
 impl<'a> BuildManager {
     pub fn new(settings: Settings) -> Self {
-        let mut builder = Builder::new();
-
         tracing_subscriber::fmt()
             .with_env_filter(EnvFilter::from_default_env())
             .with_ansi(false)
@@ -53,20 +48,13 @@ impl<'a> BuildManager {
         let host = ruff_python_resolver::host::StaticHost::new(vec![]);
 
         BuildManager {
-            modules,
+            files: modules,
             settings,
-            diagnostics: DashMap::new(),
             symbol_tables: DashMap::new(),
-            module_ids: DashMap::new(),
+            paths: DashMap::new(),
             import_config,
             host,
         }
-    }
-
-    pub fn get_state(&self, path: &Path) -> EnderpyFile {
-        let id = self.module_ids.get(path).expect("path not found");
-        let result = self.modules.get(&id).unwrap();
-        return result.value().clone();
     }
 
     // Entry point to analyze the program
@@ -75,13 +63,13 @@ impl<'a> BuildManager {
         let builtins_file = self.settings.typeshed_path.join("stdlib/builtins.pyi");
         let builtins = EnderpyFile::new(builtins_file, true);
         let (imports, mut new_modules) =
-            gather_files(vec![builtins], root, &self.import_config, &self.host);
+            gather_imports(vec![builtins], root, &self.import_config, &self.host);
         log::debug!("Imports resolved");
         for mut module in new_modules {
             let sym_table = module.populate_symbol_table(&imports);
             self.symbol_tables.insert(module.id, sym_table);
-            self.module_ids.insert(module.path.to_path_buf(), module.id);
-            self.modules.insert(module.id, module);
+            self.paths.insert(module.path.to_path_buf(), module.id);
+            self.files.insert(module.id, module);
         }
         log::debug!("Prebuild finished");
     }
@@ -91,13 +79,13 @@ impl<'a> BuildManager {
         debug!("building {file:?}");
         let enderpy_file = EnderpyFile::new(file.to_path_buf(), false);
         let (imports, mut new_modules) =
-            gather_files(vec![enderpy_file], root, &self.import_config, &self.host);
+            gather_imports(vec![enderpy_file], root, &self.import_config, &self.host);
         log::debug!("Imports resolved");
         for mut module in new_modules {
             let sym_table = module.populate_symbol_table(&imports);
             self.symbol_tables.insert(module.id, sym_table);
-            self.module_ids.insert(module.path.to_path_buf(), module.id);
-            self.modules.insert(module.id, module);
+            self.paths.insert(module.path.to_path_buf(), module.id);
+            self.files.insert(module.id, module);
         }
         log::debug!("Symbol tables populated");
     }
@@ -105,24 +93,20 @@ impl<'a> BuildManager {
     // Performs type checking passes over the code
     // This step happens after the binding phase
     pub fn type_check(&'a self, path: &Path, file: &'a EnderpyFile) -> TypeChecker<'a> {
-        let mut module_to_check = self.get_state(path);
+        let id = self.paths.get(path).unwrap();
+        let file = self.files.get(&id).unwrap();
 
         let span = span!(Level::TRACE, "type check", path = %path.display());
         let _guard = span.enter();
-        let mut checker = TypeChecker::new(
-            file,
-            self.get_symbol_table(path),
-            &self.symbol_tables,
-            &self.module_ids,
-        );
-        for stmt in module_to_check.tree.body.iter() {
+        let mut checker = TypeChecker::new(*id, &self);
+        for stmt in file.tree.body.iter() {
             checker.type_check(stmt);
         }
         checker
     }
 
     pub fn get_symbol_table(&self, path: &Path) -> SymbolTable {
-        let module_id = self.module_ids.get(path).expect("incorrect ID");
+        let module_id = self.paths.get(path).expect("incorrect ID");
         let symbol_table = self.symbol_tables.get(module_id.value());
 
         return symbol_table
@@ -132,10 +116,10 @@ impl<'a> BuildManager {
     }
 
     pub fn get_hover_information(&self, path: &Path, line: u32, column: u32) -> String {
-        let module = self.get_state(path);
-        let checker = self.type_check(path, &module);
+        let file = self.files.get(&self.paths.get(path).unwrap()).unwrap();
+        let checker = self.type_check(path, &file);
         let symbol_table = self.get_symbol_table(path);
-        let hovered_offset = module.line_starts[line as usize] + column;
+        let hovered_offset = file.line_starts[line as usize] + column;
 
         let hovered_offset_start = hovered_offset.saturating_sub(1);
         let type_info = &checker
@@ -160,7 +144,7 @@ pub struct ResolvedImport {
 
 pub type ResolvedImports = HashMap<ImportModuleDescriptor, Arc<ResolvedImport>>;
 
-fn gather_files<'a>(
+fn gather_imports<'a>(
     mut initial_files: Vec<EnderpyFile>,
     root: &Path,
     import_config: &ruff_python_resolver::config::Config,

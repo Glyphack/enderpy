@@ -1,6 +1,6 @@
 ---
 source: typechecker/src/checker.rs
-description: "1: \"\"\"\n2: Tests the handling of builtins.None in a type annotation.\n3: \"\"\"\n4: \n5: # Specification: https://typing.readthedocs.io/en/latest/spec/special-types.html#none\n6: \n7: from types import NoneType\n8: from typing import Hashable, Iterable, assert_type\n9: \n10: \n11: # > When used in a type hint, the expression None is considered equivalent to type(None).\n12: \n13: \n14: def func1(val1: None) -> None:\n15:     assert_type(val1, None)\n16:     t1: None = None\n17:     return None  # OK\n18: \n19: \n20: func1(None)  # OK\n21: func1(type(None))  # E\n22: \n23: # None is hashable\n24: none1: Hashable = None  # OK\n25: \n26: # None is not iterable\n27: none2: Iterable = None  # E: not iterable\n28: \n29: \n30: None.__class__  # OK\n31: None.__doc__  # OK\n32: None.__eq__(0)  # OK\n33: \n34: \n35: def func2(val1: type[None]):\n36:     assert_type(val1, type[None])\n37: \n38: \n39: func2(None.__class__)  # OK\n40: func2(type(None))  # OK\n41: func2(None)  # E: not compatible\n"
+description: "1: \"\"\"\n2: Tests the handling of builtins.None in a type annotation.\n3: \"\"\"\n4: \n5: # Specification: https://typing.readthedocs.io/en/latest/spec/special-types.html#none\n6: \n7: from types import NoneType\n8: from typing import Hashable, Iterable, assert_type\n9: \n10: \n11: # > When used in a type hint, the expression None is considered equivalent to type(None).\n12: \n13: \n14: def func1(val1: None) -> None:\n15:     assert_type(val1, None)\n16:     t1: None = None\n17:     return None  # OK\n18: \n19: \n20: func1(None)  # OK\n21: func1(type(None))  # E\n22: \n23: # None is hashable\n24: none1: Hashable = None  # OK\n25: \n26: # None is not iterable\n27: none2: Iterable = None  # E: not iterable\n28: \n29: \n30: None.__class__  # OK\n31: # TODO: Union type\n32: None.__doc__  # OK\n33: None.__eq__(0)  # OK\n34: \n35: \n36: def func2(val1: type[None]):\n37:     assert_type(val1, type[None])\n38: \n39: \n40: func2(None.__class__)  # OK\n41: func2(type(None))  # OK\n42: func2(None)  # E: not compatible\n"
 expression: result
 ---
 Line 1: """
@@ -97,14 +97,14 @@ Expr types in the line --->:
         None.__class__ => (function) Callable (pos: (class) object): (class) builtins.type[][(class) Self]
 
 ---
-Line 31: None.__doc__  # OK
+Line 32: None.__doc__  # OK
 
 Expr types in the line --->:
         None => None
-        None.__doc__ => Union[(class) str, None]
+        None.__doc__ => Unknown
 
 ---
-Line 32: None.__eq__(0)  # OK
+Line 33: None.__eq__(0)  # OK
 
 Expr types in the line --->:
         None.__eq__ => (function) Callable (pos: (class) object, pos: (class) object): (class) bool
@@ -112,7 +112,7 @@ Expr types in the line --->:
         0 => (class) int
 
 ---
-Line 35: def func2(val1: type[None]):
+Line 36: def func2(val1: type[None]):
 
 Expr types in the line --->:
         func2 => (function) Callable (pos: (class) builtins.type[][None]): Unknown
@@ -120,7 +120,7 @@ Expr types in the line --->:
         type[None] => (class) builtins.type[][None]
 
 ---
-Line 36:     assert_type(val1, type[None])
+Line 37:     assert_type(val1, type[None])
 
 Expr types in the line --->:
         assert_type => (function) Callable (pos: TypeVar[_T, ], pos: (class) object): TypeVar[_T, ]
@@ -131,7 +131,7 @@ Expr types in the line --->:
         None => None
 
 ---
-Line 39: func2(None.__class__)  # OK
+Line 40: func2(None.__class__)  # OK
 
 Expr types in the line --->:
         func2 => (function) Callable (pos: (class) builtins.type[][None]): Unknown
@@ -140,7 +140,7 @@ Expr types in the line --->:
         None.__class__ => (function) Callable (pos: (class) object): (class) builtins.type[][(class) Self]
 
 ---
-Line 40: func2(type(None))  # OK
+Line 41: func2(type(None))  # OK
 
 Expr types in the line --->:
         func2 => (function) Callable (pos: (class) builtins.type[][None]): Unknown
@@ -150,7 +150,7 @@ Expr types in the line --->:
         None => None
 
 ---
-Line 41: func2(None)  # E: not compatible
+Line 42: func2(None)  # E: not compatible
 
 Expr types in the line --->:
         func2 => (function) Callable (pos: (class) builtins.type[][None]): Unknown

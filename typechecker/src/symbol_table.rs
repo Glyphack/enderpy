@@ -15,17 +15,18 @@ pub struct Id(pub u32);
 
 #[derive(Debug, Clone)]
 pub struct SymbolTable {
+    pub id: Id,
     // Sub tables are scopes inside the current scope
     // after building symbol table is finished this only contains the most outer scope
     pub scopes: Vec<SymbolTableScope>,
 
-    prev_scope_id: Option<u32>,
     pub current_scope_id: u32,
+    prev_scope_id: Option<u32>,
 
     pub file_path: PathBuf,
-    pub scope_starts: Lapper<u32, u32>,
+    // Mapping from offset to where the scope starts
+    pub scope_start_offset: Lapper<u32, u32>,
     pub star_imports: Vec<Arc<ResolvedImport>>,
-    pub id: Id,
 }
 
 impl SymbolTable {
@@ -43,7 +44,7 @@ impl SymbolTable {
             current_scope_id: 0,
             prev_scope_id: None,
             file_path: file_path.to_path_buf(),
-            scope_starts: Lapper::new(vec![global_scope_interval]),
+            scope_start_offset: Lapper::new(vec![global_scope_interval]),
             star_imports: vec![],
             id,
         }
@@ -172,22 +173,16 @@ impl SymbolTable {
     /// search for symbol in that scope
     /// if not found search in parent scope continue until found or no parent scope.
     /// returns the symbol and the scope id where it was found
-    pub fn lookup_in_scope(
-        &self,
-        lookup_request: &LookupSymbolRequest,
-    ) -> Option<&SymbolTableNode> {
-        let mut scope = match lookup_request.scope {
-            Some(scope_id) => self.get_scope_by_id(scope_id).expect("no scope found"),
-            None => self.current_scope(),
-        };
+    pub fn lookup_in_scope(&self, name: &str, scope_id: u32) -> Option<&SymbolTableNode> {
+        let mut scope = self.get_scope_by_id(scope_id).expect("no scope found");
         tracing::debug!(
             "looking for symbol {:?} in symbol table with scopes: {:?} starting from scope {}",
-            lookup_request,
+            name,
             self.file_path,
             scope.name,
         );
         loop {
-            if let Some(symbol) = scope.symbols.get(lookup_request.name) {
+            if let Some(symbol) = scope.symbols.get(name) {
                 // class attributes are invisible inside functions but they are available in
                 // the class body
                 if (!symbol.flags.contains(SymbolFlags::INSTANCE_MEMBER)
@@ -247,7 +242,7 @@ impl SymbolTable {
 
     pub fn exit_scope(&mut self) {
         let current_scope = self.current_scope();
-        self.scope_starts.insert(Interval {
+        self.scope_start_offset.insert(Interval {
             start: current_scope.start_pos,
             stop: 0,
             val: current_scope.id,
@@ -594,12 +589,6 @@ pub struct Alias {
 pub struct TypeAlias {
     pub declaration_path: DeclarationPath,
     pub type_alias_node: ast::TypeAlias,
-}
-
-#[derive(Clone, Debug)]
-pub struct LookupSymbolRequest<'a> {
-    pub name: &'a str,
-    pub scope: Option<u32>,
 }
 
 impl SymbolTableNode {

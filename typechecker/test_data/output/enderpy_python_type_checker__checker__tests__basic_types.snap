@@ -107,7 +107,7 @@ Expr types in the line --->:
 Line 21:         print(self.cls_attribute)
 
 Expr types in the line --->:
-        print => (function) Callable (kw_only: Union[(class) str, None], kw_only: Union[(class) str, None], kw_only: Union[Unknown, None], kw_only: Literal[false], *args: (class) object): None
+        print => (function) Callable (kw_only: Unknown, kw_only: Unknown, kw_only: Unknown, kw_only: Literal[], *args: (class) object): None
         print(self.cls_attribute) => None
         self => (class) C
         self.cls_attribute => (instance) builtins.set[(class) int]
@@ -126,7 +126,7 @@ Expr types in the line --->:
 Line 23:         print(self.x)
 
 Expr types in the line --->:
-        print => (function) Callable (kw_only: Union[(class) str, None], kw_only: Union[(class) str, None], kw_only: Union[Unknown, None], kw_only: Literal[false], *args: (class) object): None
+        print => (function) Callable (kw_only: Unknown, kw_only: Unknown, kw_only: Unknown, kw_only: Literal[], *args: (class) object): None
         print(self.x) => None
         self => (class) C
         self.x => (class) float
