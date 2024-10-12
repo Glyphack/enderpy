@@ -6,7 +6,7 @@ use enderpy_python_parser::ast::{self, *};
 
 use super::{type_evaluator::TypeEvaluator, types::PythonType};
 use crate::build::BuildManager;
-use crate::symbol_table::{self, Id};
+use crate::symbol_table::Id;
 use crate::types::ModuleRef;
 use crate::{ast_visitor::TraversalVisitor, diagnostic::CharacterSpan};
 use rust_lapper::{Interval, Lapper};

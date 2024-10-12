@@ -131,7 +131,6 @@ macro_rules! parser_test {
 // Mostly matching the offsets and names
 #[cfg(test)]
 mod tests {
-    use super::*;
 
     //     #[test]
     //     fn test_simple_compat() {

@@ -98,7 +98,7 @@ impl<'a> BuildManager {
 
         let span = span!(Level::TRACE, "type check", path = %path.display());
         let _guard = span.enter();
-        let mut checker = TypeChecker::new(*id, &self);
+        let mut checker = TypeChecker::new(*id, self);
         for stmt in file.tree.body.iter() {
             checker.type_check(stmt);
         }

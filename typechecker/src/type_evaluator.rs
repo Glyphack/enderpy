@@ -707,7 +707,7 @@ impl<'a> TypeEvaluator<'a> {
             symbol_table.file_path,
         );
 
-        let find_in_current_symbol_table = symbol_table.lookup_in_scope(&name, scope_id);
+        let find_in_current_symbol_table = symbol_table.lookup_in_scope(name, scope_id);
         if let Some(f) = find_in_current_symbol_table {
             return self.get_symbol_type(f, symbol_table, position);
         };
@@ -722,7 +722,7 @@ impl<'a> TypeEvaluator<'a> {
             for id in star_import.resolved_ids.iter() {
                 let star_import_sym_table = self.build_manager.symbol_tables.get(id).unwrap();
                 // In the star import we can only lookup the global scope
-                let res = star_import_sym_table.lookup_in_scope(&name, 0);
+                let res = star_import_sym_table.lookup_in_scope(name, 0);
                 match res {
                     Some(res) => {
                         return self.get_symbol_type(res, symbol_table, position);
@@ -1172,7 +1172,7 @@ impl<'a> TypeEvaluator<'a> {
         let found_declaration = match decl {
             Declaration::Class(c) => {
                 let decl_scope = decl.declaration_path().scope_id;
-                self.get_class_declaration_type(&c, builtins_symbol_table, decl_scope)
+                self.get_class_declaration_type(c, builtins_symbol_table, decl_scope)
                     .unwrap_or_else(|_| {
                         panic!("Error getting type for builtin class: {:?}", c.class_node)
                     })
@@ -1699,14 +1699,14 @@ impl<'a> TypeEvaluator<'a> {
 
                 let mut new_class = class_type.clone();
                 new_class.specialized = resolved;
-                return PythonType::Class(new_class);
+                PythonType::Class(new_class)
             }
             PythonType::Instance(instance_type) => todo!(),
             PythonType::Optional(python_type) => todo!(),
             PythonType::TypeVar(type_var) => {
                 let name = type_var.name.as_str();
                 let mut index: Option<usize> = None;
-                for (i, tp) in type_parameters.into_iter().enumerate() {
+                for (i, tp) in type_parameters.iter().enumerate() {
                     let PythonType::TypeVar(ref tp) = tp else {
                         continue;
                     };
@@ -1720,8 +1720,8 @@ impl<'a> TypeEvaluator<'a> {
                 }
 
                 error!("Did not find type parameter {name}");
-                return python_type.clone();
+                python_type.clone()
             }
-        };
+        }
     }
 }

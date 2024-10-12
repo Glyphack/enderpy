@@ -222,7 +222,7 @@ impl SymbolTable {
     pub fn get_scope(&self, pos: u32) -> u32 {
         let scope = self.scopes.iter().find(|scope| scope.start_pos == pos);
         if let Some(scope) = scope {
-            return scope.id;
+            scope.id
         } else {
             panic!("no scope found for position: {}", pos);
         }

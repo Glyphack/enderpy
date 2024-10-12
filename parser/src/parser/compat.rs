@@ -1,3 +1,4 @@
+#![allow(unused_variables)]
 use crate::ast::*;
 use crate::parser::parser::Parser;
 use serde_json::{json, Value};

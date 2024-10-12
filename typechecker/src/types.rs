@@ -103,7 +103,7 @@ impl Display for CallableType {
             "(function) Callable ({}): {}",
             signature_str, self.return_type
         );
-        return write!(f, "{}", fmt);
+        write!(f, "{}", fmt)
     }
 }
 
@@ -291,7 +291,7 @@ impl Display for InstanceType {
                 self.class_type.details.qual_name, args_str
             )
         };
-        return write!(f, "{}", fmt);
+        write!(f, "{}", fmt)
     }
 }
 
