@@ -14,7 +14,10 @@ Module {
                     start: 0,
                     end: 13,
                 },
-                name: "a",
+                name: TextRange {
+                    start: 6,
+                    end: 7,
+                },
                 bases: [],
                 keywords: [],
                 body: [
@@ -37,7 +40,10 @@ Module {
                     start: 15,
                     end: 36,
                 },
-                name: "a",
+                name: TextRange {
+                    start: 21,
+                    end: 22,
+                },
                 bases: [],
                 keywords: [],
                 body: [
@@ -60,7 +66,10 @@ Module {
                     start: 36,
                     end: 55,
                 },
-                name: "a",
+                name: TextRange {
+                    start: 42,
+                    end: 43,
+                },
                 bases: [
                     Name(
                         Name {
@@ -102,7 +111,10 @@ Module {
                     start: 57,
                     end: 82,
                 },
-                name: "a",
+                name: TextRange {
+                    start: 63,
+                    end: 64,
+                },
                 bases: [
                     Name(
                         Name {
@@ -169,7 +181,10 @@ Module {
                     start: 84,
                     end: 106,
                 },
-                name: "a",
+                name: TextRange {
+                    start: 90,
+                    end: 91,
+                },
                 bases: [
                     Name(
                         Name {
@@ -220,7 +235,10 @@ Module {
                     start: 108,
                     end: 128,
                 },
-                name: "a",
+                name: TextRange {
+                    start: 121,
+                    end: 122,
+                },
                 bases: [],
                 keywords: [],
                 body: [
@@ -253,7 +271,10 @@ Module {
                     start: 130,
                     end: 146,
                 },
-                name: "a",
+                name: TextRange {
+                    start: 136,
+                    end: 137,
+                },
                 bases: [],
                 keywords: [],
                 body: [
@@ -287,7 +308,10 @@ Module {
                     start: 148,
                     end: 167,
                 },
-                name: "a",
+                name: TextRange {
+                    start: 154,
+                    end: 155,
+                },
                 bases: [],
                 keywords: [],
                 body: [
@@ -331,7 +355,10 @@ Module {
                     start: 169,
                     end: 188,
                 },
-                name: "a",
+                name: TextRange {
+                    start: 175,
+                    end: 176,
+                },
                 bases: [],
                 keywords: [],
                 body: [
@@ -375,7 +402,10 @@ Module {
                     start: 190,
                     end: 215,
                 },
-                name: "a",
+                name: TextRange {
+                    start: 196,
+                    end: 197,
+                },
                 bases: [],
                 keywords: [],
                 body: [
@@ -439,7 +469,10 @@ Module {
                     start: 217,
                     end: 234,
                 },
-                name: "a",
+                name: TextRange {
+                    start: 223,
+                    end: 224,
+                },
                 bases: [],
                 keywords: [],
                 body: [
@@ -472,7 +505,10 @@ Module {
                     start: 236,
                     end: 256,
                 },
-                name: "a",
+                name: TextRange {
+                    start: 242,
+                    end: 243,
+                },
                 bases: [],
                 keywords: [],
                 body: [
@@ -515,7 +551,10 @@ Module {
                     start: 258,
                     end: 281,
                 },
-                name: "a",
+                name: TextRange {
+                    start: 264,
+                    end: 265,
+                },
                 bases: [],
                 keywords: [],
                 body: [
@@ -568,7 +607,10 @@ Module {
                     start: 283,
                     end: 312,
                 },
-                name: "a",
+                name: TextRange {
+                    start: 289,
+                    end: 290,
+                },
                 bases: [],
                 keywords: [],
                 body: [
@@ -641,7 +683,10 @@ Module {
                     start: 314,
                     end: 332,
                 },
-                name: "a",
+                name: TextRange {
+                    start: 320,
+                    end: 321,
+                },
                 bases: [],
                 keywords: [],
                 body: [
@@ -674,7 +719,10 @@ Module {
                     start: 334,
                     end: 355,
                 },
-                name: "a",
+                name: TextRange {
+                    start: 340,
+                    end: 341,
+                },
                 bases: [],
                 keywords: [],
                 body: [
@@ -717,7 +765,10 @@ Module {
                     start: 357,
                     end: 381,
                 },
-                name: "a",
+                name: TextRange {
+                    start: 363,
+                    end: 364,
+                },
                 bases: [],
                 keywords: [],
                 body: [
@@ -770,7 +821,10 @@ Module {
                     start: 383,
                     end: 413,
                 },
-                name: "a",
+                name: TextRange {
+                    start: 389,
+                    end: 390,
+                },
                 bases: [],
                 keywords: [],
                 body: [
@@ -843,7 +897,10 @@ Module {
                     start: 415,
                     end: 440,
                 },
-                name: "a",
+                name: TextRange {
+                    start: 421,
+                    end: 422,
+                },
                 bases: [],
                 keywords: [],
                 body: [
@@ -895,7 +952,10 @@ Module {
                     start: 442,
                     end: 470,
                 },
-                name: "a",
+                name: TextRange {
+                    start: 448,
+                    end: 449,
+                },
                 bases: [],
                 keywords: [],
                 body: [

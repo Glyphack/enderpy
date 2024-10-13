@@ -334,6 +334,12 @@ pub struct Name {
     pub parenthesized: bool,
 }
 
+impl Name {
+    pub fn get_value<'a>(&self, source: &'a str) -> &'a str {
+        &source[(self.node.start) as usize..(self.node.end) as usize]
+    }
+}
+
 impl fmt::Debug for Name {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("Name")
@@ -956,12 +962,18 @@ impl AsyncFunctionDef {
 #[derive(Debug, Clone)]
 pub struct ClassDef {
     pub node: Node,
-    pub name: String,
+    pub name: TextRange,
     pub bases: Vec<Expression>,
     pub keywords: Vec<Keyword>,
     pub body: Vec<Statement>,
     pub decorator_list: Vec<Expression>,
     pub type_params: Vec<TypeParam>,
+}
+
+impl ClassDef {
+    pub fn name<'a>(&self, source: &'a str) -> &'a str {
+        &source[(self.name.start) as usize..(self.name.end) as usize]
+    }
 }
 
 // https://docs.python.org/3/library/ast.html#ast.Match

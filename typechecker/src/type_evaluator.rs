@@ -78,8 +78,6 @@ impl<'a> TypeEvaluator<'a> {
         symbol_table: &SymbolTable,
         scope_id: u32,
     ) -> Result<PythonType> {
-        let span = span!(Level::DEBUG, "Get type of expression", expr =?expr);
-        let _guard = span.enter();
         let r = match expr {
             ast::Expression::Constant(c) => {
                 let typ = match &c.value {
@@ -102,6 +100,9 @@ impl<'a> TypeEvaluator<'a> {
                 })
             }
             ast::Expression::Name(n) => {
+                if n.id == "PathLike" {
+                    dbg!(expr);
+                }
                 Ok(self.get_name_type(&n.id, Some(n.node.start), symbol_table, scope_id))
             }
             ast::Expression::Call(call) => {
@@ -324,7 +325,13 @@ impl<'a> TypeEvaluator<'a> {
                 // }
                 // Case 1
                 // This is self or cls
-                if get_member_access_info(symbol_table, &a.value).is_some() {
+                let source = &self
+                    .build_manager
+                    .files
+                    .get(&symbol_table.id)
+                    .unwrap()
+                    .source;
+                if get_member_access_info(symbol_table, &a.value, source).is_some() {
                     let enclosing_parent_class = symbol_table.get_enclosing_class_scope();
                     if let Some(enclosing_parent_class) = enclosing_parent_class {
                         let symbol_table_node =
@@ -939,18 +946,19 @@ impl<'a> TypeEvaluator<'a> {
                         trace!("import result {:?}", import_result);
                         for id in import_result.resolved_ids.iter() {
                             trace!("checking path {:?}", id);
-                            let Some(symbol_table_with_alias_def) =
-                                self.build_manager.symbol_tables.get(id)
-                            else {
-                                panic!(
-                                    " symbol table id {:?} with not found in import {:?}",
-                                    id, import_result
-                                );
-                            };
+                            let symbol_table_with_alias_def =
+                                self.build_manager.symbol_tables.get(id).unwrap();
 
                             if let Some(symbol_table_file_name) =
                                 symbol_table_with_alias_def.file_path.file_stem()
                             {
+                                // if what is imported is the whole file.
+                                // e.g.
+                                // pkg/
+                                //  mod1.py
+                                //  __init__.py
+                                //
+                                // from pkg import mod1
                                 if symbol_table_file_name
                                     .to_str()
                                     .is_some_and(|s| s == name.as_str())
@@ -969,13 +977,15 @@ impl<'a> TypeEvaluator<'a> {
                                 continue;
                             }
 
+                            let alias_symbol_table_name =
+                                symbol_table_with_alias_def.get_file_name();
                             if let Some(current_symbol_lookup) =
                                 symbol_table_with_alias_def.lookup_in_scope(name, 0)
                             {
                                 trace!("alias resolved to {:?}", current_symbol_lookup);
                                 return self.get_symbol_type(
                                     current_symbol_lookup,
-                                    symbol_table,
+                                    &symbol_table_with_alias_def,
                                     None,
                                 );
                             };
@@ -990,10 +1000,13 @@ impl<'a> TypeEvaluator<'a> {
                                         panic!("symbol table of star import not found at {:?}", id);
                                     };
                                     let res = sym_table.lookup_in_scope(name, 0);
+                                    // TODO: if an import in the other module imports the previous
+                                    // module again as * import then don't come back to the module
+                                    // that started the import. Don't know the correct way to
+                                    // handle this.
                                     match res {
                                         Some(res) => {
-                                            // When resolving alias do not check for position
-                                            return self.get_symbol_type(res, symbol_table, None);
+                                            return self.get_symbol_type(res, &sym_table, None);
                                         }
                                         None => continue,
                                     };

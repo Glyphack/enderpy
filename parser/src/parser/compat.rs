@@ -276,7 +276,7 @@ impl AsPythonCompat for Expression {
 impl AsPythonCompat for Name {
     fn as_python_compat(&self, parser: &Parser) -> Value {
         json_python_compat_node!("Name", self, parser, {
-            "id": self.id,
+            "id": "TODO",
         })
     }
 }
@@ -732,7 +732,7 @@ impl AsPythonCompat for ExceptHandler {
 impl AsPythonCompat for FunctionDef {
     fn as_python_compat(&self, parser: &Parser) -> Value {
         json_python_compat_node!("FunctionDef", self, parser, {
-            "name": self.name,
+            // "name": self.name,
             "args": self.args.as_python_compat(parser),
             "body": self.body.iter().map(|stmt| stmt.as_python_compat(parser)).collect::<Vec<_>>(),
             "decorator_list": self.decorator_list.iter().map(|expr| expr.as_python_compat(parser)).collect::<Vec<_>>(),
@@ -760,7 +760,7 @@ impl AsPythonCompat for AsyncFunctionDef {
 impl AsPythonCompat for ClassDef {
     fn as_python_compat(&self, parser: &Parser) -> Value {
         json_python_compat_node!("ClassDef", self, parser, {
-            "name": self.name,
+            // "name": self.name,
             "bases": self.bases.iter().map(|expr| expr.as_python_compat(parser)).collect::<Vec<_>>(),
             "keywords": self.keywords.iter().map(|kw| kw.as_python_compat(parser)).collect::<Vec<_>>(),
             "body": self.body.iter().map(|stmt| stmt.as_python_compat(parser)).collect::<Vec<_>>(),

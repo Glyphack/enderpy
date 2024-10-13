@@ -183,8 +183,6 @@ impl SymbolTable {
         );
         loop {
             if let Some(symbol) = scope.symbols.get(name) {
-                // class attributes are invisible inside functions but they are available in
-                // the class body
                 if (!symbol.flags.contains(SymbolFlags::INSTANCE_MEMBER)
                     && !symbol.flags.contains(SymbolFlags::CLASS_MEMBER))
                     || scope.kind.is_class()
@@ -455,21 +453,7 @@ pub struct Function {
     pub raise_statements: Vec<ast::Raise>,
 }
 
-impl Function {
-    pub fn is_abstract(&self) -> bool {
-        if !self.is_method {
-            return false;
-        }
-        for decorator in self.function_node.decorator_list.iter() {
-            if let ast::Expression::Name(n) = &decorator {
-                if &n.id == "abstractmethod" {
-                    return true;
-                }
-            }
-        }
-        false
-    }
-}
+impl Function {}
 
 #[derive(Debug, Clone)]
 pub struct AsyncFunction {
@@ -483,22 +467,6 @@ pub struct AsyncFunction {
     pub yield_statements: Vec<ast::Yield>,
     /// raise statements that are reachable in the top level function body
     pub raise_statements: Vec<ast::Raise>,
-}
-
-impl AsyncFunction {
-    pub fn is_abstract(&self) -> bool {
-        if !self.is_method {
-            return false;
-        }
-        for decorator in self.function_node.decorator_list.iter() {
-            if let ast::Expression::Name(n) = &decorator {
-                if &n.id == "abstractmethod" {
-                    return true;
-                }
-            }
-        }
-        false
-    }
 }
 
 #[derive(Debug, Clone)]
@@ -520,11 +488,13 @@ impl Class {
         class_node: Arc<ast::ClassDef>,
         declaration_path: DeclarationPath,
         class_scope_id: u32,
+        // TODO: remove only to use text range here
+        name: &str,
     ) -> Self {
         module_name.push('.');
-        let qual_name = module_name + &class_node.name;
+        let qual_name = module_name + name;
         Class {
-            name: class_node.name.clone(),
+            name: name.to_string(),
             declaration_path,
             special: false,
             qual_name,

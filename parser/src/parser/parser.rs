@@ -656,7 +656,10 @@ impl<'a> Parser<'a> {
             self.start_node()
         };
         self.expect(Kind::Class)?;
-        let name = self.cur_token().to_string(self.source);
+        let name_range = TextRange {
+            start: self.cur_token().start,
+            end: self.cur_token().end,
+        };
         self.expect(Kind::Identifier)?;
         let type_params = if self.at(Kind::LeftBrace) {
             self.parse_type_parameters()?
@@ -675,7 +678,7 @@ impl<'a> Parser<'a> {
 
         Ok(Statement::ClassDef(Arc::new(ClassDef {
             node: self.finish_node(node),
-            name,
+            name: name_range,
             bases,
             keywords,
             body,

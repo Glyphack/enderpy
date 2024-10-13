@@ -211,7 +211,10 @@ Module {
                     start: 102,
                     end: 135,
                 },
-                name: "A",
+                name: TextRange {
+                    start: 108,
+                    end: 109,
+                },
                 bases: [
                     Name(
                         Name {
