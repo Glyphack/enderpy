@@ -15,7 +15,9 @@ impl<'a> Backend {
     fn build(&self, path: PathBuf) {
         let root = find_project_root(&path);
         self.manager.build_one(root, &path);
-        self.manager.type_check(&path);
+        let file_id = self.manager.paths.get(&path).unwrap();
+        let file = self.manager.files.get(&file_id).unwrap();
+        self.manager.type_check(&path, &file);
     }
 }
 

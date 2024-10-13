@@ -38,7 +38,7 @@ Module {
                                         start: 4,
                                         end: 5,
                                     },
-                                    value: 1,
+                                    value: Int,
                                 },
                             ),
                             Constant(
@@ -47,7 +47,7 @@ Module {
                                         start: 7,
                                         end: 8,
                                     },
-                                    value: 2,
+                                    value: Int,
                                 },
                             ),
                         ],

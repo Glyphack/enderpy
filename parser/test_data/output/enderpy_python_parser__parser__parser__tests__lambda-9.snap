@@ -49,7 +49,7 @@ Module {
                                                     start: 9,
                                                     end: 10,
                                                 },
-                                                value: 1,
+                                                value: Int,
                                             },
                                         ),
                                     ],

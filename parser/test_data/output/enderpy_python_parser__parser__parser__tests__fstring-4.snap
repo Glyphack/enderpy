@@ -22,7 +22,9 @@ Module {
                                     start: 2,
                                     end: 8,
                                 },
-                                value: "hello_",
+                                value: Str(
+                                    Single,
+                                ),
                             },
                         ),
                         FormattedValue(
@@ -50,7 +52,9 @@ Module {
                                     start: 11,
                                     end: 12,
                                 },
-                                value: " ",
+                                value: Str(
+                                    Single,
+                                ),
                             },
                         ),
                         FormattedValue(
@@ -78,7 +82,9 @@ Module {
                                     start: 15,
                                     end: 16,
                                 },
-                                value: " ",
+                                value: Str(
+                                    Single,
+                                ),
                             },
                         ),
                         FormattedValue(

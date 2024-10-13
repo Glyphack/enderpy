@@ -20,6 +20,7 @@ use crate::{
 #[allow(unused)]
 pub struct SemanticAnalyzer<'a> {
     pub symbol_table: SymbolTable,
+    pub file: &'a EnderpyFile,
     /// Map of module name to import result
     /// The imports inside the file are resolved by this map and
     /// no other imports are resolved
@@ -42,6 +43,7 @@ impl<'a> SemanticAnalyzer<'a> {
     pub fn new(file: &'a EnderpyFile, imports: &'a ResolvedImports) -> Self {
         let symbols = SymbolTable::new(&file.path, file.id);
         SemanticAnalyzer {
+            file,
             symbol_table: symbols,
             imports,
             function_information: FunctionInformation {
@@ -107,7 +109,8 @@ impl<'a> SemanticAnalyzer<'a> {
                 }
             }
             Expression::Attribute(a) => {
-                let member_access_info = get_member_access_info(&self.symbol_table, &a.value);
+                let member_access_info =
+                    get_member_access_info(&self.symbol_table, &a.value, &self.file.source);
                 let symbol_flags = if member_access_info.is_some_and(|x| x) {
                     SymbolFlags::INSTANCE_MEMBER
                 } else {
@@ -273,10 +276,10 @@ impl<'a> TraversalVisitor for SemanticAnalyzer<'a> {
             parser::ast::Statement::Assert(a) => self.visit_assert(a),
             parser::ast::Statement::Pass(p) => self.visit_pass(p),
             parser::ast::Statement::Delete(d) => self.visit_delete(d),
-            parser::ast::Statement::Return(r) => self.visit_return(r),
+            parser::ast::Statement::ReturnStmt(r) => self.visit_return(r),
             parser::ast::Statement::Raise(r) => self.visit_raise(r),
-            parser::ast::Statement::Break(b) => self.visit_break(b),
-            parser::ast::Statement::Continue(c) => self.visit_continue(c),
+            parser::ast::Statement::BreakStmt(b) => self.visit_break(b),
+            parser::ast::Statement::ContinueStmt(c) => self.visit_continue(c),
             parser::ast::Statement::Global(g) => self.visit_global(g),
             parser::ast::Statement::Nonlocal(n) => self.visit_nonlocal(n),
             parser::ast::Statement::IfStatement(i) => self.visit_if(i),
@@ -287,7 +290,7 @@ impl<'a> TraversalVisitor for SemanticAnalyzer<'a> {
             parser::ast::Statement::TryStarStatement(t) => self.visit_try_star(t),
             parser::ast::Statement::FunctionDef(f) => self.visit_function_def(f),
             parser::ast::Statement::ClassDef(c) => self.visit_class_def(c),
-            parser::ast::Statement::Match(m) => self.visit_match(m),
+            parser::ast::Statement::MatchStmt(m) => self.visit_match(m),
             Statement::AsyncForStatement(f) => self.visit_async_for(f),
             Statement::AsyncWithStatement(w) => self.visit_async_with(w),
             Statement::AsyncFunctionDef(f) => self.visit_async_function_def(f),
@@ -629,9 +632,10 @@ impl<'a> TraversalVisitor for SemanticAnalyzer<'a> {
     }
 
     fn visit_class_def(&mut self, c: &Arc<parser::ast::ClassDef>) {
+        let name = c.name(&self.file.source);
         self.symbol_table.push_scope(SymbolTableScope::new(
             SymbolTableType::Class(c.clone()),
-            c.name.clone(),
+            name.to_string(),
             c.node.start,
             self.symbol_table.current_scope_id,
         ));
@@ -676,9 +680,10 @@ impl<'a> TraversalVisitor for SemanticAnalyzer<'a> {
             Arc::clone(c),
             class_declaration_path,
             class_body_scope_id,
+            name,
         ));
         let flags = SymbolFlags::empty();
-        self.create_symbol(c.name.clone(), class_declaration, flags);
+        self.create_symbol(name.to_string(), class_declaration, flags);
     }
 
     fn visit_match(&mut self, m: &parser::ast::Match) {
@@ -824,6 +829,7 @@ pub struct MemberAccessInfo {}
 pub fn get_member_access_info(
     symbol_table: &SymbolTable,
     value: &parser::ast::Expression,
+    source: &str,
     //TODO: This is option to use the `?` operator. Remove it
 ) -> Option<bool> {
     let name = value.as_name()?;
@@ -857,7 +863,7 @@ pub fn get_member_access_info(
     }
 
     // e.g. "MyClass.x = 1"
-    if value_name == enclosing_class.name.as_str() || is_class_member {
+    if value_name == enclosing_class.name(source) || is_class_member {
         Some(false)
     } else {
         Some(true)

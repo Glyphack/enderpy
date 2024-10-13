@@ -656,7 +656,10 @@ impl<'a> Parser<'a> {
             self.start_node()
         };
         self.expect(Kind::Class)?;
-        let name = self.cur_token().to_string(self.source);
+        let name_range = TextRange {
+            start: self.cur_token().start,
+            end: self.cur_token().end,
+        };
         self.expect(Kind::Identifier)?;
         let type_params = if self.at(Kind::LeftBrace) {
             self.parse_type_parameters()?
@@ -675,7 +678,7 @@ impl<'a> Parser<'a> {
 
         Ok(Statement::ClassDef(Arc::new(ClassDef {
             node: self.finish_node(node),
-            name,
+            name: name_range,
             bases,
             keywords,
             body,
@@ -697,7 +700,7 @@ impl<'a> Parser<'a> {
         let cases = self.parse_cases()?;
         self.expect_any(vec![Kind::Dedent, Kind::Eof])?;
 
-        Ok(Statement::Match(Box::new(Match {
+        Ok(Statement::MatchStmt(Box::new(Match {
             node: self.finish_node(node),
             subject,
             cases,
@@ -1288,7 +1291,7 @@ impl<'a> Parser<'a> {
         } else {
             Some(self.parse_expression_list()?)
         };
-        Ok(Statement::Return(Box::new(Return {
+        Ok(Statement::ReturnStmt(Box::new(Return {
             node: self.finish_node(node),
             value,
         })))
@@ -1319,7 +1322,7 @@ impl<'a> Parser<'a> {
     fn parse_break_statement(&mut self) -> Result<Statement, ParsingError> {
         let node = self.start_node();
         self.bump(Kind::Break);
-        Ok(Statement::Break(Box::new(Break {
+        Ok(Statement::BreakStmt(Box::new(Break {
             node: self.finish_node(node),
         })))
     }
@@ -1328,7 +1331,7 @@ impl<'a> Parser<'a> {
     fn parse_continue_statement(&mut self) -> Result<Statement, ParsingError> {
         let node = self.start_node();
         self.bump(Kind::Continue);
-        Ok(Statement::Continue(Box::new(Continue {
+        Ok(Statement::ContinueStmt(Box::new(Continue {
             node: self.finish_node(node),
         })))
     }
@@ -2443,7 +2446,7 @@ impl<'a> Parser<'a> {
                     self.bump_any();
                     Expression::Constant(Box::new(Constant {
                         node: self.finish_node(start),
-                        value: ConstantValue::Int(val),
+                        value: ConstantValue::Int,
                     }))
                 }
                 Kind::None => {
@@ -2472,10 +2475,7 @@ impl<'a> Parser<'a> {
                     self.bump_any();
                     Expression::Constant(Box::new(Constant {
                         node: self.finish_node(start),
-                        value: ConstantValue::Complex {
-                            real: "0".to_string(),
-                            imaginary: val,
-                        },
+                        value: ConstantValue::Complex,
                     }))
                 }
                 Kind::Bytes => {
@@ -2489,16 +2489,15 @@ impl<'a> Parser<'a> {
                     self.bump_any();
                     Expression::Constant(Box::new(Constant {
                         node: self.finish_node(start),
-                        value: ConstantValue::Bytes(bytes_val),
+                        value: ConstantValue::Bytes,
                     }))
                 }
                 Kind::StringLiteral => {
-                    let val = self.cur_token.to_string(self.source);
-                    let string_val = extract_string_inside(val);
+                    let val = self.cur_token.as_str(self.source);
                     self.bump_any();
                     Expression::Constant(Box::new(Constant {
                         node: self.finish_node(start),
-                        value: ConstantValue::Str(string_val),
+                        value: ConstantValue::Str(QuoteType::from(val)),
                     }))
                 }
 
@@ -2510,7 +2509,7 @@ impl<'a> Parser<'a> {
                     self.bump_any();
                     Expression::Constant(Box::new(Constant {
                         node: self.finish_node(start),
-                        value: ConstantValue::Bytes(bytes_val),
+                        value: ConstantValue::Bytes,
                     }))
                 }
                 Kind::FStringStart => {
@@ -2526,7 +2525,7 @@ impl<'a> Parser<'a> {
                     self.bump_any();
                     Expression::Constant(Box::new(Constant {
                         node: self.finish_node(start),
-                        value: ConstantValue::Float(val),
+                        value: ConstantValue::Float,
                     }))
                 }
                 Kind::ExponentFloat => {
@@ -2534,7 +2533,7 @@ impl<'a> Parser<'a> {
                     self.bump_any();
                     Expression::Constant(Box::new(Constant {
                         node: self.finish_node(start),
-                        value: ConstantValue::Float(val),
+                        value: ConstantValue::Float,
                     }))
                 }
                 Kind::ImaginaryPointFloat => {
@@ -2542,10 +2541,7 @@ impl<'a> Parser<'a> {
                     self.bump_any();
                     Expression::Constant(Box::new(Constant {
                         node: self.finish_node(start),
-                        value: ConstantValue::Complex {
-                            real: "0".to_string(),
-                            imaginary: val,
-                        },
+                        value: ConstantValue::Complex,
                     }))
                 }
                 Kind::ImaginaryExponentFloat => {
@@ -2553,10 +2549,7 @@ impl<'a> Parser<'a> {
                     self.bump_any();
                     Expression::Constant(Box::new(Constant {
                         node: self.finish_node(start),
-                        value: ConstantValue::Complex {
-                            real: "0".to_string(),
-                            imaginary: val,
-                        },
+                        value: ConstantValue::Complex,
                     }))
                 }
                 Kind::Ellipsis => {
@@ -2572,7 +2565,7 @@ impl<'a> Parser<'a> {
                     self.bump_any();
                     Expression::Constant(Box::new(Constant {
                         node: self.finish_node(start),
-                        value: ConstantValue::Int(val),
+                        value: ConstantValue::Int,
                     }))
                 }
                 Kind::Hexadecimal => {
@@ -2580,7 +2573,7 @@ impl<'a> Parser<'a> {
                     self.bump_any();
                     Expression::Constant(Box::new(Constant {
                         node: self.finish_node(start),
-                        value: ConstantValue::Int(val),
+                        value: ConstantValue::Int,
                     }))
                 }
                 _ => {
@@ -2614,7 +2607,7 @@ impl<'a> Parser<'a> {
                                 self.bump_any();
                                 Expression::Constant(Box::new(Constant {
                                     node: self.finish_node(start),
-                                    value: ConstantValue::Int(val),
+                                    value: ConstantValue::Int,
                                 }))
                             }
                             Kind::None => {
@@ -2635,7 +2628,7 @@ impl<'a> Parser<'a> {
                                 self.bump_any();
                                 Expression::Constant(Box::new(Constant {
                                     node: self.finish_node(start),
-                                    value: ConstantValue::Bool(false),
+                                    value: ConstantValue::Bool(true),
                                 }))
                             }
                             Kind::ImaginaryInteger => {
@@ -2643,10 +2636,7 @@ impl<'a> Parser<'a> {
                                 self.bump_any();
                                 Expression::Constant(Box::new(Constant {
                                     node: self.finish_node(start),
-                                    value: ConstantValue::Complex {
-                                        real: "0".to_string(),
-                                        imaginary: val,
-                                    },
+                                    value: ConstantValue::Complex,
                                 }))
                             }
                             Kind::Bytes => {
@@ -2660,16 +2650,15 @@ impl<'a> Parser<'a> {
                                 self.bump_any();
                                 Expression::Constant(Box::new(Constant {
                                     node: self.finish_node(start),
-                                    value: ConstantValue::Bytes(bytes_val),
+                                    value: ConstantValue::Bytes,
                                 }))
                             }
                             Kind::StringLiteral => {
-                                let string_val =
-                                    extract_string_inside(self.cur_token().to_string(self.source));
+                                let val = self.cur_token().as_str(self.source);
                                 self.bump_any();
                                 Expression::Constant(Box::new(Constant {
                                     node: self.finish_node(start),
-                                    value: ConstantValue::Str(string_val),
+                                    value: ConstantValue::Str(QuoteType::from(val)),
                                 }))
                             }
 
@@ -2682,7 +2671,7 @@ impl<'a> Parser<'a> {
                                 self.bump_any();
                                 Expression::Constant(Box::new(Constant {
                                     node: self.finish_node(start),
-                                    value: ConstantValue::Bytes(bytes_val),
+                                    value: ConstantValue::Bytes,
                                 }))
                             }
                             Kind::FStringStart => {
@@ -2698,7 +2687,7 @@ impl<'a> Parser<'a> {
                                 self.bump_any();
                                 Expression::Constant(Box::new(Constant {
                                     node: self.finish_node(start),
-                                    value: ConstantValue::Float(val),
+                                    value: ConstantValue::Float,
                                 }))
                             }
                             Kind::ExponentFloat => {
@@ -2706,7 +2695,7 @@ impl<'a> Parser<'a> {
                                 self.bump_any();
                                 Expression::Constant(Box::new(Constant {
                                     node: self.finish_node(start),
-                                    value: ConstantValue::Float(val),
+                                    value: ConstantValue::Float,
                                 }))
                             }
                             Kind::ImaginaryPointFloat => {
@@ -2714,10 +2703,7 @@ impl<'a> Parser<'a> {
                                 self.bump_any();
                                 Expression::Constant(Box::new(Constant {
                                     node: self.finish_node(start),
-                                    value: ConstantValue::Complex {
-                                        real: "0".to_string(),
-                                        imaginary: val,
-                                    },
+                                    value: ConstantValue::Complex,
                                 }))
                             }
                             Kind::ImaginaryExponentFloat => {
@@ -2725,10 +2711,7 @@ impl<'a> Parser<'a> {
                                 self.bump_any();
                                 Expression::Constant(Box::new(Constant {
                                     node: self.finish_node(start),
-                                    value: ConstantValue::Complex {
-                                        real: "0".to_string(),
-                                        imaginary: val,
-                                    },
+                                    value: ConstantValue::Complex,
                                 }))
                             }
                             Kind::Ellipsis => {
@@ -2744,7 +2727,7 @@ impl<'a> Parser<'a> {
                                 self.bump_any();
                                 Expression::Constant(Box::new(Constant {
                                     node: self.finish_node(start),
-                                    value: ConstantValue::Int(val),
+                                    value: ConstantValue::Int,
                                 }))
                             }
                             Kind::Hexadecimal => {
@@ -2752,7 +2735,7 @@ impl<'a> Parser<'a> {
                                 self.bump_any();
                                 Expression::Constant(Box::new(Constant {
                                     node: self.finish_node(start),
-                                    value: ConstantValue::Int(val),
+                                    value: ConstantValue::Int,
                                 }))
                             }
                             _ => {
@@ -3401,11 +3384,11 @@ impl<'a> Parser<'a> {
         let node = self.start_node();
         match self.cur_kind() {
             Kind::FStringMiddle => {
-                let str_val = self.cur_token().to_string(self.source);
+                let val = self.cur_token().as_str(self.source);
                 self.bump(Kind::FStringMiddle);
                 Ok(Expression::Constant(Box::new(Constant {
                     node: self.finish_node(node),
-                    value: ConstantValue::Str(str_val),
+                    value: ConstantValue::Str(QuoteType::from(val)),
                 })))
             }
             Kind::LeftBracket => self.parse_fstring_replacement_field(),
@@ -3959,6 +3942,32 @@ except *Exception as e:
                 }, {
                     assert_debug_snapshot!(program);
             });
+        }
+    }
+
+    #[test]
+    fn test_constant_value_get_source() {
+        for source in &[
+            "\"hello\"",
+            "'hello'",
+            "'''hello'''",
+            "\"\"\"hello\"\"\"",
+            "'he' \"\"\"l\"\"\" \"l\" 'o'",
+        ] {
+            let mut parser = Parser::new(source);
+            let module = parser.parse().unwrap();
+
+            let constant_value = module
+                .body
+                .first()
+                .unwrap()
+                .clone()
+                .expect_expression_statement()
+                .expect_constant();
+
+            let value = constant_value.get_value(source);
+            dbg!(&value);
+            assert!(value.eq("hello"));
         }
     }
 

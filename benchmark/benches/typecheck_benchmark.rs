@@ -33,7 +33,9 @@ pub fn benchmark_type_checker(c: &mut Criterion) {
                     let builder = BuildManager::new(Settings::test_settings());
                     let file_path = PathBuf::from(path);
                     builder.build_one(&PathBuf::from("../../"), &file_path);
-                    builder.type_check(&file_path);
+                    let id = builder.paths.get(&file_path).unwrap();
+                    let file = builder.files.get(&id).unwrap();
+                    builder.type_check(&file_path, &file);
 
                     0
                 });

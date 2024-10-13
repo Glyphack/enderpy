@@ -1,6 +1,5 @@
 pub mod compat;
-use crate::ast;
-#[allow(clippy::module_inception)]
+use crate::ast::{self, QuoteType};
 pub mod parser;
 use crate::token::{Kind, Token};
 use ast::{Node, UnaryOperator};
@@ -64,23 +63,22 @@ pub fn concat_string_exprs(lhs: Expression, rhs: Expression) -> Result<Expressio
                 end: rhs.node.end,
             };
             let concatnated_string = match (lhs.value, rhs.value) {
-                (ConstantValue::Str(lhs_val), ConstantValue::Str(rhs_val)) => {
+                (ConstantValue::Str(_), ConstantValue::Str(_)) => {
                     Expression::Constant(Box::new(Constant {
                         node,
-                        value: ConstantValue::Str(lhs_val + &rhs_val),
+                        value: ConstantValue::Str(QuoteType::Concat),
                     }))
                 }
-                (ConstantValue::Bytes(mut lhs), ConstantValue::Bytes(rhs)) => {
-                    lhs.append(&mut rhs.clone());
+                (ConstantValue::Bytes, ConstantValue::Bytes) => {
                     Expression::Constant(Box::new(Constant {
                         node,
-                        value: ConstantValue::Bytes(lhs),
+                        value: ConstantValue::Bytes,
                     }))
                 }
-                (ConstantValue::Bytes(_lhs), _) => {
+                (ConstantValue::Bytes, _) => {
                     panic!("Cannot concat bytes and string");
                 }
-                (_, ConstantValue::Bytes(_rhs)) => {
+                (_, ConstantValue::Bytes) => {
                     panic!("Can only concat bytes with other bytes");
                 }
                 _ => panic!("Cannot concat string"),
@@ -101,13 +99,16 @@ pub fn concat_string_exprs(lhs: Expression, rhs: Expression) -> Result<Expressio
         (Expression::JoinedStr(fstring_lhs), Expression::Constant(const_rhs)) => {
             let mut values = fstring_lhs.values;
             match const_rhs.value {
-                ConstantValue::Str(rhs_val) => {
+                ConstantValue::Str(s) => {
                     values.push(Expression::Constant(Box::new(Constant {
-                        node: const_rhs.node,
-                        value: ConstantValue::Str(rhs_val),
+                        node: Node {
+                            start: const_rhs.node.start,
+                            end: const_rhs.node.end,
+                        },
+                        value: ConstantValue::Str(s),
                     })));
                 }
-                ConstantValue::Bytes(_) => {
+                ConstantValue::Bytes => {
                     panic!("Cannot concat string and bytes");
                 }
                 _ => panic!("Cannot concat string"),
@@ -122,11 +123,14 @@ pub fn concat_string_exprs(lhs: Expression, rhs: Expression) -> Result<Expressio
         }
         (Expression::Constant(const_lhs), Expression::JoinedStr(fstring_rhs)) => {
             let const_expr = match const_lhs.value {
-                ConstantValue::Str(rhs_val) => Expression::Constant(Box::new(Constant {
-                    node: const_lhs.node,
-                    value: ConstantValue::Str(rhs_val),
+                ConstantValue::Str(_) => Expression::Constant(Box::new(Constant {
+                    node: Node {
+                        start: const_lhs.node.start,
+                        end: fstring_rhs.node.end,
+                    },
+                    value: ConstantValue::Str(QuoteType::Concat),
                 })),
-                ConstantValue::Bytes(_) => {
+                ConstantValue::Bytes => {
                     panic!("Cannot concat string and bytes");
                 }
                 _ => panic!("Cannot concat string"),

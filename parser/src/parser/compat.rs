@@ -1,10 +1,7 @@
-#![allow(clippy::all, unused_variables)]
-
+#![allow(unused_variables)]
 use crate::ast::*;
 use crate::parser::parser::Parser;
-use serde_json::Number;
 use serde_json::{json, Value};
-use std::str::FromStr;
 
 pub trait AsPythonCompat {
     fn as_python_compat(&self, parser: &Parser) -> Value;
@@ -72,10 +69,10 @@ impl AsPythonCompat for Statement {
             Statement::Assert(a) => a.as_python_compat(parser),
             Statement::Pass(p) => p.as_python_compat(parser),
             Statement::Delete(d) => d.as_python_compat(parser),
-            Statement::Return(r) => r.as_python_compat(parser),
+            Statement::ReturnStmt(r) => r.as_python_compat(parser),
             Statement::Raise(r) => r.as_python_compat(parser),
-            Statement::Break(b) => b.as_python_compat(parser),
-            Statement::Continue(c) => c.as_python_compat(parser),
+            Statement::BreakStmt(b) => b.as_python_compat(parser),
+            Statement::ContinueStmt(c) => c.as_python_compat(parser),
             Statement::Global(g) => g.as_python_compat(parser),
             Statement::Nonlocal(n) => n.as_python_compat(parser),
             Statement::IfStatement(i) => i.as_python_compat(parser),
@@ -86,7 +83,7 @@ impl AsPythonCompat for Statement {
             Statement::TryStarStatement(t) => t.as_python_compat(parser),
             Statement::FunctionDef(f) => f.as_python_compat(parser),
             Statement::ClassDef(c) => c.as_python_compat(parser),
-            Statement::Match(m) => m.as_python_compat(parser),
+            Statement::MatchStmt(m) => m.as_python_compat(parser),
             Statement::AsyncForStatement(f) => f.as_python_compat(parser),
             Statement::AsyncWithStatement(w) => w.as_python_compat(parser),
             Statement::AsyncFunctionDef(f) => f.as_python_compat(parser),
@@ -279,7 +276,7 @@ impl AsPythonCompat for Expression {
 impl AsPythonCompat for Name {
     fn as_python_compat(&self, parser: &Parser) -> Value {
         json_python_compat_node!("Name", self, parser, {
-            "id": self.id,
+            "id": "TODO",
         })
     }
 }
@@ -287,30 +284,8 @@ impl AsPythonCompat for Name {
 impl AsPythonCompat for Constant {
     fn as_python_compat(&self, parser: &Parser) -> Value {
         json_python_compat_node!("Constant", self, parser, {
-            "value": self.value.as_python_compat(parser),
+            "value": json!(self.get_value(parser.source)),
         })
-    }
-}
-
-impl AsPythonCompat for ConstantValue {
-    fn as_python_compat(&self, parser: &Parser) -> Value {
-        match self {
-            ConstantValue::None => json!(null),
-            ConstantValue::Ellipsis => json!("..."),
-            ConstantValue::Bool(v) => json!(v),
-            ConstantValue::Str(v) => json!(v),
-            ConstantValue::Bytes(v) => json!(v),
-            ConstantValue::Tuple(v) => json!(v
-                .iter()
-                .map(|cons| cons.as_python_compat(parser))
-                .collect::<Vec<_>>()),
-            ConstantValue::Int(v) => Value::Number(Number::from_str(v).unwrap()),
-            ConstantValue::Float(v) => Value::Number(Number::from_str(v).unwrap()),
-            ConstantValue::Complex {
-                real: _real,
-                imaginary,
-            } => json!(imaginary),
-        }
     }
 }
 
@@ -757,7 +732,7 @@ impl AsPythonCompat for ExceptHandler {
 impl AsPythonCompat for FunctionDef {
     fn as_python_compat(&self, parser: &Parser) -> Value {
         json_python_compat_node!("FunctionDef", self, parser, {
-            "name": self.name,
+            // "name": self.name,
             "args": self.args.as_python_compat(parser),
             "body": self.body.iter().map(|stmt| stmt.as_python_compat(parser)).collect::<Vec<_>>(),
             "decorator_list": self.decorator_list.iter().map(|expr| expr.as_python_compat(parser)).collect::<Vec<_>>(),
@@ -785,7 +760,7 @@ impl AsPythonCompat for AsyncFunctionDef {
 impl AsPythonCompat for ClassDef {
     fn as_python_compat(&self, parser: &Parser) -> Value {
         json_python_compat_node!("ClassDef", self, parser, {
-            "name": self.name,
+            // "name": self.name,
             "bases": self.bases.iter().map(|expr| expr.as_python_compat(parser)).collect::<Vec<_>>(),
             "keywords": self.keywords.iter().map(|kw| kw.as_python_compat(parser)).collect::<Vec<_>>(),
             "body": self.body.iter().map(|stmt| stmt.as_python_compat(parser)).collect::<Vec<_>>(),

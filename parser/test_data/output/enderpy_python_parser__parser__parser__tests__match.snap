@@ -8,7 +8,7 @@ Module {
         end: 589,
     },
     body: [
-        Match(
+        MatchStmt(
             Match {
                 node: Node {
                     start: 0,
@@ -41,7 +41,7 @@ Module {
                                             start: 18,
                                             end: 19,
                                         },
-                                        value: 1,
+                                        value: Int,
                                     },
                                 ),
                             },
@@ -61,7 +61,7 @@ Module {
                 ],
             },
         ),
-        Match(
+        MatchStmt(
             Match {
                 node: Node {
                     start: 35,
@@ -96,7 +96,7 @@ Module {
                                                     start: 53,
                                                     end: 54,
                                                 },
-                                                value: 1,
+                                                value: Int,
                                             },
                                         ),
                                     },
@@ -113,7 +113,7 @@ Module {
                                                     start: 57,
                                                     end: 58,
                                                 },
-                                                value: 2,
+                                                value: Int,
                                             },
                                         ),
                                     },
@@ -135,7 +135,7 @@ Module {
                 ],
             },
         ),
-        Match(
+        MatchStmt(
             Match {
                 node: Node {
                     start: 74,
@@ -177,7 +177,7 @@ Module {
                                             start: 94,
                                             end: 95,
                                         },
-                                        value: 1,
+                                        value: Int,
                                     },
                                 ),
                             },
@@ -197,7 +197,7 @@ Module {
                 ],
             },
         ),
-        Match(
+        MatchStmt(
             Match {
                 node: Node {
                     start: 111,
@@ -264,7 +264,9 @@ Module {
                                             start: 157,
                                             end: 161,
                                         },
-                                        value: true,
+                                        value: Bool(
+                                            true,
+                                        ),
                                     },
                                 ),
                             },
@@ -298,7 +300,9 @@ Module {
                                             start: 185,
                                             end: 190,
                                         },
-                                        value: false,
+                                        value: Bool(
+                                            false,
+                                        ),
                                     },
                                 ),
                             },
@@ -339,7 +343,7 @@ Module {
                                                     start: 215,
                                                     end: 216,
                                                 },
-                                                value: 1,
+                                                value: Int,
                                             },
                                         ),
                                     },
@@ -375,7 +379,7 @@ Module {
                                             start: 240,
                                             end: 243,
                                         },
-                                        value: 1.0,
+                                        value: Float,
                                     },
                                 ),
                             },
@@ -422,7 +426,7 @@ Module {
                 ],
             },
         ),
-        Match(
+        MatchStmt(
             Match {
                 node: Node {
                     start: 284,
@@ -513,7 +517,7 @@ Module {
                 ],
             },
         ),
-        Match(
+        MatchStmt(
             Match {
                 node: Node {
                     start: 346,
@@ -592,7 +596,7 @@ Module {
                                                 start: 395,
                                                 end: 396,
                                             },
-                                            value: 1,
+                                            value: Int,
                                         },
                                     ),
                                     Constant(
@@ -601,7 +605,7 @@ Module {
                                                 start: 401,
                                                 end: 402,
                                             },
-                                            value: 2,
+                                            value: Int,
                                         },
                                     ),
                                 ],
@@ -675,7 +679,7 @@ Module {
                 ],
             },
         ),
-        Match(
+        MatchStmt(
             Match {
                 node: Node {
                     start: 454,
@@ -724,7 +728,7 @@ Module {
                                                         start: 480,
                                                         end: 481,
                                                     },
-                                                    value: 0,
+                                                    value: Int,
                                                 },
                                             ),
                                         },
@@ -741,7 +745,7 @@ Module {
                                                         start: 483,
                                                         end: 484,
                                                     },
-                                                    value: 0,
+                                                    value: Int,
                                                 },
                                             ),
                                         },
@@ -802,7 +806,7 @@ Module {
                                                         start: 519,
                                                         end: 520,
                                                     },
-                                                    value: 0,
+                                                    value: Int,
                                                 },
                                             ),
                                         },
@@ -819,7 +823,7 @@ Module {
                                                         start: 524,
                                                         end: 525,
                                                     },
-                                                    value: 0,
+                                                    value: Int,
                                                 },
                                             ),
                                         },
@@ -836,7 +840,7 @@ Module {
                                                         start: 529,
                                                         end: 530,
                                                     },
-                                                    value: 0,
+                                                    value: Int,
                                                 },
                                             ),
                                         },
@@ -859,7 +863,7 @@ Module {
                 ],
             },
         ),
-        Match(
+        MatchStmt(
             Match {
                 node: Node {
                     start: 547,

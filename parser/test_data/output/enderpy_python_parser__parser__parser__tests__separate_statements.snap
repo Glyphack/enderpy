@@ -52,7 +52,7 @@ Module {
                                         start: 118,
                                         end: 119,
                                     },
-                                    value: 1,
+                                    value: Int,
                                 },
                             ),
                         },
@@ -80,12 +80,12 @@ Module {
                                         start: 125,
                                         end: 126,
                                     },
-                                    value: 2,
+                                    value: Int,
                                 },
                             ),
                         },
                     ),
-                    Return(
+                    ReturnStmt(
                         Return {
                             node: Node {
                                 start: 131,
@@ -150,7 +150,7 @@ Module {
                     defaults: [],
                 },
                 body: [
-                    Return(
+                    ReturnStmt(
                         Return {
                             node: Node {
                                 start: 226,

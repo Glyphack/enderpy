@@ -28,6 +28,7 @@ none2: Iterable = None  # E: not iterable
 
 
 None.__class__  # OK
+# TODO: Union type
 None.__doc__  # OK
 None.__eq__(0)  # OK
 

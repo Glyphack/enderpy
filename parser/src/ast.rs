@@ -1,4 +1,5 @@
 use is_macro::Is;
+use std::borrow::Cow;
 use std::fmt::{self};
 use std::sync::Arc;
 
@@ -10,6 +11,12 @@ pub struct Node {
     pub start: u32,
 
     /// End offset in source
+    pub end: u32,
+}
+
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)] // #[serde(tag = "type")]
+pub struct TextRange {
+    pub start: u32,
     pub end: u32,
 }
 
@@ -52,7 +59,7 @@ pub struct Module {
 }
 
 // Use box to reduce the enum size
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Is)]
 pub enum Statement {
     AssignStatement(Box<Assign>),
     AnnAssignStatement(Box<AnnAssign>),
@@ -61,10 +68,10 @@ pub enum Statement {
     Assert(Box<Assert>),
     Pass(Box<Pass>),
     Delete(Box<Delete>),
-    Return(Box<Return>),
+    ReturnStmt(Box<Return>),
     Raise(Box<Raise>),
-    Break(Box<Break>),
-    Continue(Box<Continue>),
+    BreakStmt(Box<Break>),
+    ContinueStmt(Box<Continue>),
     Import(Box<Import>),
     ImportFrom(Box<ImportFrom>),
     Global(Box<Global>),
@@ -80,7 +87,7 @@ pub enum Statement {
     FunctionDef(Arc<FunctionDef>),
     AsyncFunctionDef(Arc<AsyncFunctionDef>),
     ClassDef(Arc<ClassDef>),
-    Match(Box<Match>),
+    MatchStmt(Box<Match>),
     TypeAlias(Box<TypeAlias>),
 }
 
@@ -94,10 +101,10 @@ impl GetNode for Statement {
             Statement::Assert(s) => s.node,
             Statement::Pass(s) => s.node,
             Statement::Delete(s) => s.node,
-            Statement::Return(s) => s.node,
+            Statement::ReturnStmt(s) => s.node,
             Statement::Raise(s) => s.node,
-            Statement::Break(s) => s.node,
-            Statement::Continue(s) => s.node,
+            Statement::BreakStmt(s) => s.node,
+            Statement::ContinueStmt(s) => s.node,
             Statement::Import(s) => s.node,
             Statement::ImportFrom(s) => s.node,
             Statement::Global(s) => s.node,
@@ -113,7 +120,7 @@ impl GetNode for Statement {
             Statement::FunctionDef(s) => s.node,
             Statement::AsyncFunctionDef(s) => s.node,
             Statement::ClassDef(s) => s.node,
-            Statement::Match(s) => s.node,
+            Statement::MatchStmt(s) => s.node,
             Statement::TypeAlias(s) => s.node,
         }
     }
@@ -327,6 +334,12 @@ pub struct Name {
     pub parenthesized: bool,
 }
 
+impl Name {
+    pub fn get_value<'a>(&self, source: &'a str) -> &'a str {
+        &source[(self.node.start) as usize..(self.node.end) as usize]
+    }
+}
+
 impl fmt::Debug for Name {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("Name")
@@ -342,45 +355,115 @@ pub struct Constant {
     pub value: ConstantValue,
 }
 
-#[derive(Clone, PartialEq)]
+impl Constant {
+    pub fn get_value<'a>(&self, source: &'a str) -> Cow<'a, str> {
+        match &self.value {
+            ConstantValue::Str(quote_type) => match quote_type {
+                QuoteType::Single => Cow::Borrowed(
+                    &source[(self.node.start + 1) as usize..(self.node.end - 1) as usize],
+                ),
+                QuoteType::Triple => Cow::Borrowed(
+                    &source[(self.node.start + 3) as usize..(self.node.end - 3) as usize],
+                ),
+                QuoteType::Concat => {
+                    let input = &source[(self.node.start) as usize..(self.node.end) as usize];
+                    let mut result = String::new();
+                    let mut chars = input.chars().peekable();
+
+                    while let Some(c) = chars.next() {
+                        let quote_type = match c {
+                            '\'' => {
+                                if chars.peek() == Some(&'\'') && chars.nth(1) == Some('\'') {
+                                    // Triple single quote
+                                    "'''"
+                                } else {
+                                    // Single quote
+                                    "'"
+                                }
+                            }
+                            '"' => {
+                                if chars.peek() == Some(&'"') && chars.nth(1) == Some('"') {
+                                    // Triple double quote
+                                    "\"\"\""
+                                } else {
+                                    // Double quote
+                                    "\""
+                                }
+                            }
+                            _ => continue, // Ignore any non-quote characters
+                        };
+
+                        // Extract content between quotes
+                        let mut content = String::new();
+                        let mut quote_ending = quote_type.chars().peekable();
+
+                        for next_char in chars.by_ref() {
+                            // Check for quote ending
+                            if Some(&next_char) == quote_ending.peek() {
+                                quote_ending.next();
+                                if quote_ending.peek().is_none() {
+                                    break; // End of the string literal
+                                }
+                            } else {
+                                content.push(next_char);
+                                quote_ending = quote_type.chars().peekable(); // Reset the ending check
+                            }
+                        }
+
+                        // Concatenate the cleaned-up string
+                        result.push_str(&content);
+                    }
+
+                    Cow::Owned(result)
+                }
+            },
+            ConstantValue::Bool(b) => {
+                if *b {
+                    Cow::Borrowed("true")
+                } else {
+                    Cow::Borrowed("false")
+                }
+            }
+            _ => todo!("Call the parser and get the value"),
+        }
+    }
+}
+
+#[derive(Clone, PartialEq, Debug)]
 pub enum ConstantValue {
     None,
     Ellipsis,
     Bool(bool),
-    Str(String),
-    Bytes(Vec<u8>),
-    Tuple(Vec<Constant>),
+    // If the string start with triple quotes or single
+    // true => triple
+    // false => single
+    Str(QuoteType),
+    // Str,
+    Bytes,
+    Tuple,
     // Numbers are string because we don't care about the value rn.
-    Int(String),
-    Float(String),
-    Complex { real: String, imaginary: String },
+    Int,
+    Float,
+    Complex,
 }
-impl fmt::Debug for ConstantValue {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            ConstantValue::None => write!(f, "None"),
-            ConstantValue::Ellipsis => write!(f, "..."),
-            ConstantValue::Bool(b) => write!(f, "{}", b),
-            ConstantValue::Str(s) => {
-                if s.starts_with("r\"") || s.starts_with("R\"") {
-                    let mut s = s.chars().skip(1).collect::<String>();
-                    s = s.chars().take(s.len() - 1).collect::<String>();
 
-                    s = s.chars().skip(1).collect::<String>();
+#[derive(Clone, PartialEq, Debug)]
+pub enum QuoteType {
+    Single,
+    Triple,
+    // When this string was created because two strings were concatenated
+    Concat,
+}
 
-                    return write!(f, "{:?}", s);
-                }
-
-                write!(f, "\"{}\"", s)
-            }
-            ConstantValue::Bytes(b) => write!(f, "{:?}", b),
-            ConstantValue::Tuple(t) => write!(f, "{:?}", t),
-            ConstantValue::Int(i) => write!(f, "{}", i),
-            ConstantValue::Float(fl) => write!(f, "{}", fl),
-            ConstantValue::Complex { real, imaginary } => write!(f, "{}+{}j", real, imaginary),
+impl From<&str> for QuoteType {
+    fn from(value: &str) -> Self {
+        if value.starts_with("\"\"\"") || value.starts_with("'''") {
+            return Self::Triple;
         }
+        Self::Single
     }
 }
+
 #[derive(Debug, Clone)]
 pub struct List {
     pub node: Node,
@@ -658,6 +741,10 @@ impl Arguments {
             + if self.vararg.is_some() { 1 } else { 0 }
             + if self.kwarg.is_some() { 1 } else { 0 }
     }
+
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
 }
 
 impl IntoIterator for Arguments {
@@ -875,12 +962,18 @@ impl AsyncFunctionDef {
 #[derive(Debug, Clone)]
 pub struct ClassDef {
     pub node: Node,
-    pub name: String,
+    pub name: TextRange,
     pub bases: Vec<Expression>,
     pub keywords: Vec<Keyword>,
     pub body: Vec<Statement>,
     pub decorator_list: Vec<Expression>,
     pub type_params: Vec<TypeParam>,
+}
+
+impl ClassDef {
+    pub fn name<'a>(&self, source: &'a str) -> &'a str {
+        &source[(self.name.start) as usize..(self.name.end) as usize]
+    }
 }
 
 // https://docs.python.org/3/library/ast.html#ast.Match

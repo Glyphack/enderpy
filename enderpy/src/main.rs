@@ -106,7 +106,6 @@ fn tokenize() -> Result<()> {
 
 fn parse(file: &PathBuf) -> Result<()> {
     let source = fs::read_to_string(file).into_diagnostic()?;
-    let file_path = file.to_str().unwrap_or("");
     let mut parser = Parser::new(&source);
     let ast = parser.parse();
     println!("{:#?}", ast);
@@ -127,22 +126,10 @@ fn check(path: &Path) -> Result<()> {
     let build_manager = BuildManager::new(settings);
     build_manager.build(root);
     build_manager.build_one(root, path);
-    build_manager.type_check(path);
-
-    if build_manager.diagnostics.is_empty() {
-        println!("zero errors");
-    }
-
-    for diag in build_manager.diagnostics.iter() {
-        for err in diag.value() {
-            println!(
-                "{:#?}: line {}: {}",
-                diag.key(),
-                err.range.start.line,
-                err.body
-            );
-        }
-    }
+    let id = build_manager.paths.get(path).unwrap();
+    let file = build_manager.files.get(&id).unwrap();
+    let checker = build_manager.type_check(path, &file);
+    print!("{}", checker.dump_types());
 
     Ok(())
 }

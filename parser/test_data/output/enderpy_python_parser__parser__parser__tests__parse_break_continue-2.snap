@@ -8,7 +8,7 @@ Module {
         end: 8,
     },
     body: [
-        Continue(
+        ContinueStmt(
             Continue {
                 node: Node {
                     start: 0,
