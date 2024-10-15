@@ -24,6 +24,7 @@ reqwest = { version = "0.12.7", features = ["blocking"] }
 dashmap = "6.0"
 tracing = "0.1.40"
 tracing-subscriber = {version = "0.3.18", features = ["env-filter"]}
+fxhash = "0.2.1"
 
 [profile.dev.package.insta]
 opt-level = 3

@@ -20,6 +20,7 @@ unicode-id-start = "1.2"
 miette.workspace = true
 thiserror = "1.0.40"
 is-macro = "0.3.6"
+fxhash.workspace = true
 
 [dev-dependencies]
 codspeed-criterion-compat.workspace = true

@@ -1,11 +1,11 @@
-use std::collections::HashMap;
+use fxhash::FxHashMap;
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 pub struct StrId(u32);
 
 #[derive(Default, Debug, Clone)]
 pub struct Interner {
-    map: HashMap<String, StrId>,
+    map: FxHashMap<String, StrId>,
     vec: Vec<String>,
 }
 impl Interner {
