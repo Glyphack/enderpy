@@ -117,7 +117,22 @@ impl<'a> SemanticAnalyzer<'a> {
                     SymbolFlags::CLASS_MEMBER
                 };
 
-                if self.function_assigns_attribute(&self.symbol_table) {
+                let function_assigns_attribute = if let Some(function_def) =
+                    self.symbol_table.current_scope().kind.as_function()
+                {
+                    // TODO: some python usual names to be interned
+                    if self.file.interner.lookup(function_def.name) == "__init__"
+                        || self.file.interner.lookup(function_def.name) == "__new__"
+                    {
+                        true
+                    } else {
+                        false
+                    }
+                } else {
+                    false
+                };
+
+                if function_assigns_attribute {
                     let declaration_path = DeclarationPath::new(
                         self.symbol_table.id,
                         a.node,
@@ -250,17 +265,6 @@ impl<'a> SemanticAnalyzer<'a> {
                 flags,
             );
         }
-    }
-
-    /// Returns true if the current function assigns an attribute to an object
-    /// Functions like __init__ and __new__ are considered to assign attributes
-    fn function_assigns_attribute(&self, symbol_table: &SymbolTable) -> bool {
-        if let Some(function_def) = symbol_table.current_scope().kind.as_function() {
-            if function_def.name == "__init__" || function_def.name == "__new__" {
-                return true;
-            }
-        }
-        false
     }
 }
 
@@ -506,7 +510,7 @@ impl<'a> TraversalVisitor for SemanticAnalyzer<'a> {
         }
         self.symbol_table.push_scope(SymbolTableScope::new(
             crate::symbol_table::SymbolTableType::Function(Arc::clone(f)),
-            f.name.clone(),
+            self.file.interner.lookup(f.name).to_owned(),
             f.node.start,
             self.symbol_table.current_scope_id,
         ));
@@ -553,7 +557,11 @@ impl<'a> TraversalVisitor for SemanticAnalyzer<'a> {
             raise_statements: vec![],
         });
         let flags = SymbolFlags::empty();
-        self.create_symbol(f.name.clone(), function_declaration, flags);
+        self.create_symbol(
+            self.file.interner.lookup(f.name).to_owned(),
+            function_declaration,
+            flags,
+        );
     }
 
     fn visit_async_function_def(&mut self, f: &Arc<parser::ast::AsyncFunctionDef>) {
@@ -565,7 +573,7 @@ impl<'a> TraversalVisitor for SemanticAnalyzer<'a> {
 
         self.symbol_table.push_scope(SymbolTableScope::new(
             SymbolTableType::Function(Arc::new(f.to_function_def())),
-            f.name.clone(),
+            self.file.interner.lookup(f.name).to_owned(),
             f.node.start,
             self.symbol_table.current_scope_id,
         ));
@@ -611,7 +619,11 @@ impl<'a> TraversalVisitor for SemanticAnalyzer<'a> {
             raise_statements: vec![],
         });
         let flags = SymbolFlags::empty();
-        self.create_symbol(f.name.clone(), function_declaration, flags);
+        self.create_symbol(
+            self.file.interner.lookup(f.name).to_string(),
+            function_declaration,
+            flags,
+        );
     }
 
     fn visit_type_alias(&mut self, t: &parser::ast::TypeAlias) {
@@ -631,11 +643,11 @@ impl<'a> TraversalVisitor for SemanticAnalyzer<'a> {
         );
     }
 
+    // TODO: here I'm looking up the name 3 times because of immutable borrow
     fn visit_class_def(&mut self, c: &Arc<parser::ast::ClassDef>) {
-        let name = self.file.interner.lookup(c.name);
         self.symbol_table.push_scope(SymbolTableScope::new(
             SymbolTableType::Class(c.clone()),
-            name.to_owned(),
+            self.file.interner.lookup(c.name).to_owned(),
             c.node.start,
             self.symbol_table.current_scope_id,
         ));
@@ -680,10 +692,14 @@ impl<'a> TraversalVisitor for SemanticAnalyzer<'a> {
             Arc::clone(c),
             class_declaration_path,
             class_body_scope_id,
-            name,
+            self.file.interner.lookup(c.name),
         ));
         let flags = SymbolFlags::empty();
-        self.create_symbol(name.to_string(), class_declaration, flags);
+        self.create_symbol(
+            self.file.interner.lookup(c.name).to_string(),
+            class_declaration,
+            flags,
+        );
     }
 
     fn visit_match(&mut self, m: &parser::ast::Match) {

@@ -581,7 +581,7 @@ impl<'a> Parser<'a> {
         decorators: Vec<Expression>,
         is_async: bool,
     ) -> Result<Statement, ParsingError> {
-        let name = self.cur_token().to_string(self.source);
+        let name = self.interner.intern(self.cur_token().as_str(self.source));
         self.expect(Kind::Identifier)?;
         let type_params = if self.at(Kind::LeftBrace) {
             self.parse_type_parameters()?
@@ -601,28 +601,30 @@ impl<'a> Parser<'a> {
         self.expect(Kind::Colon)?;
         let body = self.parse_suite()?;
         if is_async {
-            Ok(Statement::AsyncFunctionDef(Arc::new(AsyncFunctionDef {
-                node: self.finish_node_chomped(node),
-                name,
-                args,
-                body,
-                decorator_list: decorators,
-                returns: return_type,
-                type_comment: None,
-                type_params,
-            })))
+            Ok(Statement::AsyncFunctionDef(Arc::new(
+                AsyncFunctionDef::new(
+                    self.finish_node_chomped(node),
+                    name,
+                    args,
+                    body,
+                    decorators,
+                    return_type,
+                    None,
+                    type_params,
+                ),
+            )))
         } else {
-            Ok(Statement::FunctionDef(Arc::new(FunctionDef {
-                node: self.finish_node_chomped(node),
+            Ok(Statement::FunctionDef(Arc::new(FunctionDef::new(
+                self.finish_node_chomped(node),
                 name,
                 args,
                 body,
-                decorator_list: decorators,
-                returns: return_type,
+                decorators,
+                return_type,
                 // TODO: type comment
-                type_comment: None,
+                None,
                 type_params,
-            })))
+            ))))
         }
     }
 
@@ -659,9 +661,7 @@ impl<'a> Parser<'a> {
             self.start_node()
         };
         self.expect(Kind::Class)?;
-        let name = self
-            .interner
-            .intern(&self.source[self.cur_token().start as usize..self.cur_token().end as usize]);
+        let name = self.interner.intern(self.cur_token().as_str(self.source));
         self.expect(Kind::Identifier)?;
         let type_params = if self.at(Kind::LeftBrace) {
             self.parse_type_parameters()?

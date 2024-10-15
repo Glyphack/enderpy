@@ -1,6 +1,7 @@
 use fxhash::FxHashMap;
+use serde::Serialize;
 
-#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash, Serialize)]
 pub struct StrId(u32);
 
 #[derive(Default, Debug, Clone)]

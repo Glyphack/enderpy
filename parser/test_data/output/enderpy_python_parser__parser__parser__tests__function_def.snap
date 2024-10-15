@@ -14,7 +14,9 @@ Module {
                     start: 0,
                     end: 13,
                 },
-                name: "a",
+                name: StrId(
+                    0,
+                ),
                 args: Arguments {
                     node: Node {
                         start: 6,
@@ -50,7 +52,9 @@ Module {
                     start: 15,
                     end: 33,
                 },
-                name: "a",
+                name: StrId(
+                    0,
+                ),
                 args: Arguments {
                     node: Node {
                         start: 21,
@@ -86,7 +90,9 @@ Module {
                     start: 34,
                     end: 54,
                 },
-                name: "a",
+                name: StrId(
+                    0,
+                ),
                 args: Arguments {
                     node: Node {
                         start: 40,
@@ -147,7 +153,9 @@ Module {
                     start: 56,
                     end: 79,
                 },
-                name: "a",
+                name: StrId(
+                    0,
+                ),
                 args: Arguments {
                     node: Node {
                         start: 62,
@@ -210,7 +218,9 @@ Module {
                     start: 81,
                     end: 101,
                 },
-                name: "a",
+                name: StrId(
+                    0,
+                ),
                 args: Arguments {
                     node: Node {
                         start: 87,
@@ -271,7 +281,9 @@ Module {
                     start: 103,
                     end: 123,
                 },
-                name: "a",
+                name: StrId(
+                    0,
+                ),
                 args: Arguments {
                     node: Node {
                         start: 116,
@@ -317,7 +329,9 @@ Module {
                     start: 125,
                     end: 187,
                 },
-                name: "f",
+                name: StrId(
+                    1,
+                ),
                 args: Arguments {
                     node: Node {
                         start: 138,
@@ -467,7 +481,9 @@ Module {
                     start: 189,
                     end: 213,
                 },
-                name: "func",
+                name: StrId(
+                    2,
+                ),
                 args: Arguments {
                     node: Node {
                         start: 198,
@@ -513,7 +529,9 @@ Module {
                     start: 215,
                     end: 234,
                 },
-                name: "a",
+                name: StrId(
+                    0,
+                ),
                 args: Arguments {
                     node: Node {
                         start: 227,
@@ -549,7 +567,9 @@ Module {
                     start: 236,
                     end: 260,
                 },
-                name: "a",
+                name: StrId(
+                    0,
+                ),
                 args: Arguments {
                     node: Node {
                         start: 248,
@@ -585,7 +605,9 @@ Module {
                     start: 261,
                     end: 287,
                 },
-                name: "a",
+                name: StrId(
+                    0,
+                ),
                 args: Arguments {
                     node: Node {
                         start: 273,
@@ -646,7 +668,9 @@ Module {
                     start: 289,
                     end: 305,
                 },
-                name: "a",
+                name: StrId(
+                    0,
+                ),
                 args: Arguments {
                     node: Node {
                         start: 298,
@@ -693,7 +717,9 @@ Module {
                     start: 307,
                     end: 326,
                 },
-                name: "a",
+                name: StrId(
+                    0,
+                ),
                 args: Arguments {
                     node: Node {
                         start: 319,
@@ -750,7 +776,9 @@ Module {
                     start: 328,
                     end: 347,
                 },
-                name: "a",
+                name: StrId(
+                    0,
+                ),
                 args: Arguments {
                     node: Node {
                         start: 340,
@@ -807,7 +835,9 @@ Module {
                     start: 349,
                     end: 374,
                 },
-                name: "a",
+                name: StrId(
+                    0,
+                ),
                 args: Arguments {
                     node: Node {
                         start: 367,
@@ -884,7 +914,9 @@ Module {
                     start: 376,
                     end: 393,
                 },
-                name: "a",
+                name: StrId(
+                    0,
+                ),
                 args: Arguments {
                     node: Node {
                         start: 386,
@@ -930,7 +962,9 @@ Module {
                     start: 395,
                     end: 415,
                 },
-                name: "a",
+                name: StrId(
+                    0,
+                ),
                 args: Arguments {
                     node: Node {
                         start: 408,
@@ -986,7 +1020,9 @@ Module {
                     start: 417,
                     end: 440,
                 },
-                name: "a",
+                name: StrId(
+                    0,
+                ),
                 args: Arguments {
                     node: Node {
                         start: 433,
@@ -1052,7 +1088,9 @@ Module {
                     start: 442,
                     end: 471,
                 },
-                name: "a",
+                name: StrId(
+                    0,
+                ),
                 args: Arguments {
                     node: Node {
                         start: 464,
@@ -1138,7 +1176,9 @@ Module {
                     start: 473,
                     end: 491,
                 },
-                name: "a",
+                name: StrId(
+                    0,
+                ),
                 args: Arguments {
                     node: Node {
                         start: 484,
@@ -1184,7 +1224,9 @@ Module {
                     start: 493,
                     end: 514,
                 },
-                name: "a",
+                name: StrId(
+                    0,
+                ),
                 args: Arguments {
                     node: Node {
                         start: 507,
@@ -1240,7 +1282,9 @@ Module {
                     start: 516,
                     end: 540,
                 },
-                name: "a",
+                name: StrId(
+                    0,
+                ),
                 args: Arguments {
                     node: Node {
                         start: 533,
@@ -1306,7 +1350,9 @@ Module {
                     start: 542,
                     end: 572,
                 },
-                name: "a",
+                name: StrId(
+                    0,
+                ),
                 args: Arguments {
                     node: Node {
                         start: 565,
@@ -1392,7 +1438,9 @@ Module {
                     start: 574,
                     end: 599,
                 },
-                name: "a",
+                name: StrId(
+                    0,
+                ),
                 args: Arguments {
                     node: Node {
                         start: 592,
@@ -1457,7 +1505,9 @@ Module {
                     start: 601,
                     end: 629,
                 },
-                name: "a",
+                name: StrId(
+                    0,
+                ),
                 args: Arguments {
                     node: Node {
                         start: 622,
@@ -1532,7 +1582,9 @@ Module {
                     start: 631,
                     end: 1012,
                 },
-                name: "dataclass_transform",
+                name: StrId(
+                    3,
+                ),
                 args: Arguments {
                     node: Node {
                         start: 660,

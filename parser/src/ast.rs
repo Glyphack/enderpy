@@ -923,7 +923,7 @@ pub struct ExceptHandler {
 #[derive(Debug, Clone)]
 pub struct FunctionDef {
     pub node: Node,
-    pub name: String,
+    pub name: StrId,
     pub args: Arguments,
     pub body: Vec<Statement>,
     pub decorator_list: Vec<Expression>,
@@ -936,7 +936,7 @@ pub struct FunctionDef {
 #[derive(Debug, Clone)]
 pub struct AsyncFunctionDef {
     pub node: Node,
-    pub name: String,
+    pub name: StrId,
     pub args: Arguments,
     pub body: Vec<Statement>,
     pub decorator_list: Vec<Expression>,
@@ -946,10 +946,32 @@ pub struct AsyncFunctionDef {
 }
 
 impl AsyncFunctionDef {
+    #[allow(clippy::too_many_arguments)]
+    pub fn new(
+        node: Node,
+        name: StrId,
+        args: Arguments,
+        body: Vec<Statement>,
+        decorator_list: Vec<Expression>,
+        returns: Option<Expression>,
+        type_comment: Option<&str>,
+        type_params: Vec<TypeParam>,
+    ) -> Self {
+        Self {
+            node,
+            name,
+            args,
+            body,
+            decorator_list,
+            returns,
+            type_comment: type_comment.map(|s| s.to_owned()),
+            type_params,
+        }
+    }
     pub fn to_function_def(&self) -> FunctionDef {
         FunctionDef {
             node: self.node,
-            name: self.name.clone(),
+            name: self.name,
             args: self.args.clone(),
             body: self.body.clone(),
             decorator_list: self.decorator_list.clone(),
@@ -1608,7 +1630,7 @@ impl FunctionDef {
     #[allow(clippy::too_many_arguments)]
     pub fn new(
         node: Node,
-        name: &str,
+        name: StrId,
         args: Arguments,
         body: Vec<Statement>,
         decorator_list: Vec<Expression>,
@@ -1618,31 +1640,7 @@ impl FunctionDef {
     ) -> Self {
         Self {
             node,
-            name: name.to_owned(),
-            args,
-            body,
-            decorator_list,
-            returns,
-            type_comment: type_comment.map(|s| s.to_owned()),
-            type_params,
-        }
-    }
-}
-impl AsyncFunctionDef {
-    #[allow(clippy::too_many_arguments)]
-    pub fn new(
-        node: Node,
-        name: &str,
-        args: Arguments,
-        body: Vec<Statement>,
-        decorator_list: Vec<Expression>,
-        returns: Option<Expression>,
-        type_comment: Option<&str>,
-        type_params: Vec<TypeParam>,
-    ) -> Self {
-        Self {
-            node,
-            name: name.to_owned(),
+            name,
             args,
             body,
             decorator_list,

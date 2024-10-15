@@ -14,7 +14,9 @@ Module {
                     start: 99,
                     end: 144,
                 },
-                name: "foo",
+                name: StrId(
+                    0,
+                ),
                 args: Arguments {
                     node: Node {
                         start: 107,
@@ -135,7 +137,9 @@ Module {
                     start: 145,
                     end: 239,
                 },
-                name: "bar",
+                name: StrId(
+                    1,
+                ),
                 args: Arguments {
                     node: Node {
                         start: 153,

@@ -155,7 +155,9 @@ Module {
                     start: 68,
                     end: 99,
                 },
-                name: "hello",
+                name: StrId(
+                    0,
+                ),
                 args: Arguments {
                     node: Node {
                         start: 83,
@@ -212,7 +214,7 @@ Module {
                     end: 135,
                 },
                 name: StrId(
-                    0,
+                    1,
                 ),
                 bases: [
                     Name(

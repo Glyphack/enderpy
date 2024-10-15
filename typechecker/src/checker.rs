@@ -311,12 +311,10 @@ impl<'a> TraversalVisitor for TypeChecker<'a> {
     }
 
     fn visit_function_def(&mut self, f: &Arc<parser::ast::FunctionDef>) {
+        let file = &self.build_manager.files.get(&self.id).unwrap();
         self.enter_scope(f.node.start);
-        self.infer_name_type(
-            &f.name,
-            f.node.start + 4,
-            f.node.start + 4 + f.name.len() as u32,
-        );
+        let name = file.interner.lookup(f.name);
+        self.infer_name_type(name, f.node.start + 4, f.node.start + 4 + name.len() as u32);
         if let Some(ret_type) = &f.returns {
             self.visit_expr(ret_type);
         }
@@ -334,12 +332,10 @@ impl<'a> TraversalVisitor for TypeChecker<'a> {
     }
 
     fn visit_async_function_def(&mut self, f: &Arc<parser::ast::AsyncFunctionDef>) {
+        let file = &self.build_manager.files.get(&self.id).unwrap();
         self.enter_scope(f.node.start);
-        self.infer_name_type(
-            &f.name,
-            f.node.start + 9,
-            f.node.start + 9 + f.name.len() as u32,
-        );
+        let name = file.interner.lookup(f.name);
+        self.infer_name_type(name, f.node.start + 9, f.node.start + 9 + name.len() as u32);
         for stmt in &f.body {
             self.visit_stmt(stmt);
         }

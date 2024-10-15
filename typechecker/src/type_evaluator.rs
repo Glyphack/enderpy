@@ -1632,8 +1632,13 @@ impl<'a> TypeEvaluator<'a> {
                 .map_or(PythonType::Unknown, |type_annotation| {
                     self.get_annotation_type(&type_annotation, symbol_table, arguments_scope_id)
                 });
+        let file = self
+            .build_manager
+            .files
+            .get(&f.declaration_path.symbol_table_id)
+            .unwrap();
         PythonType::Callable(Box::new(CallableType::new(
-            name,
+            file.interner.lookup(name).to_string(),
             signature,
             return_type,
             false,
@@ -1656,8 +1661,14 @@ impl<'a> TypeEvaluator<'a> {
             .map_or(PythonType::Unknown, |type_annotation| {
                 self.get_annotation_type(&type_annotation, symbol_table, scope_id)
             });
+
+        let file = self
+            .build_manager
+            .files
+            .get(&f.declaration_path.symbol_table_id)
+            .unwrap();
         PythonType::Callable(Box::new(CallableType::new(
-            name,
+            file.interner.lookup(name).to_string(),
             signature,
             PythonType::Coroutine(Box::new(types::CoroutineType {
                 return_type,
