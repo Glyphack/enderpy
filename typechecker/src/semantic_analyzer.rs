@@ -110,7 +110,7 @@ impl<'a> SemanticAnalyzer<'a> {
             }
             Expression::Attribute(a) => {
                 let member_access_info =
-                    get_member_access_info(&self.symbol_table, &a.value, &self.file.source);
+                    get_member_access_info(&self.symbol_table, &self.file, &a.value);
                 let symbol_flags = if member_access_info.is_some_and(|x| x) {
                     SymbolFlags::INSTANCE_MEMBER
                 } else {
@@ -632,10 +632,10 @@ impl<'a> TraversalVisitor for SemanticAnalyzer<'a> {
     }
 
     fn visit_class_def(&mut self, c: &Arc<parser::ast::ClassDef>) {
-        let name = c.name(&self.file.source);
+        let name = self.file.interner.lookup(c.name);
         self.symbol_table.push_scope(SymbolTableScope::new(
             SymbolTableType::Class(c.clone()),
-            name.to_string(),
+            name.to_owned(),
             c.node.start,
             self.symbol_table.current_scope_id,
         ));
@@ -828,8 +828,8 @@ pub struct MemberAccessInfo {}
 // or true if the member is an instance member and false if it is a class member
 pub fn get_member_access_info(
     symbol_table: &SymbolTable,
+    file: &EnderpyFile,
     value: &parser::ast::Expression,
-    source: &str,
     //TODO: This is option to use the `?` operator. Remove it
 ) -> Option<bool> {
     let name = value.as_name()?;
@@ -863,7 +863,7 @@ pub fn get_member_access_info(
     }
 
     // e.g. "MyClass.x = 1"
-    if value_name == enclosing_class.name(source) || is_class_member {
+    if value_name == file.interner.lookup(enclosing_class.name) || is_class_member {
         Some(false)
     } else {
         Some(true)

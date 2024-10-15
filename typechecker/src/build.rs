@@ -13,8 +13,8 @@ use crate::{
     checker::TypeChecker,
     file::{EnderpyFile, ImportKinds},
     ruff_python_import_resolver::{
-        self as ruff_python_resolver, config::Config, execution_environment,
-        import_result::ImportResult, module_descriptor::ImportModuleDescriptor, resolver,
+        self as ruff_python_resolver, execution_environment, import_result::ImportResult,
+        module_descriptor::ImportModuleDescriptor, resolver,
     },
     settings::Settings,
     symbol_table::{Id, SymbolTable},
@@ -26,7 +26,7 @@ pub struct BuildManager {
     pub symbol_tables: DashMap<Id, SymbolTable>,
     pub paths: DashMap<PathBuf, Id>,
     pub settings: Settings,
-    import_config: Config,
+    import_config: ruff_python_resolver::config::Config,
     host: ruff_python_resolver::host::StaticHost,
 }
 #[allow(unused)]
@@ -39,7 +39,7 @@ impl<'a> BuildManager {
             .try_init();
 
         let mut modules = DashMap::new();
-        let import_config = Config {
+        let import_config = ruff_python_resolver::config::Config {
             typeshed_path: Some(settings.typeshed_path.clone()),
             stub_path: None,
             venv_path: None,

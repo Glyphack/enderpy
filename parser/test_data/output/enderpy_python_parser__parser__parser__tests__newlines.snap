@@ -211,10 +211,9 @@ Module {
                     start: 102,
                     end: 135,
                 },
-                name: TextRange {
-                    start: 108,
-                    end: 109,
-                },
+                name: StrId(
+                    0,
+                ),
                 bases: [
                     Name(
                         Name {

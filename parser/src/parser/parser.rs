@@ -12,6 +12,7 @@ use super::{concat_string_exprs, is_at_compound_statement, is_iterable, map_unar
 use crate::{
     error::ParsingError,
     get_row_col_position,
+    intern::Interner,
     lexer::Lexer,
     parser::{ast::*, extract_string_inside},
     token::{Kind, Token},
@@ -22,6 +23,7 @@ pub struct Parser<'a> {
     pub identifiers_start_offset: Vec<(u32, u32, String)>,
     pub source: &'a str,
     pub lexer: Lexer<'a>,
+    pub interner: Interner,
     cur_token: Token,
     prev_token_end: u32,
     prev_nonwhitespace_token_end: u32,
@@ -61,6 +63,7 @@ impl<'a> Parser<'a> {
             prev_nonwhitespace_token_end: prev_token_end,
             nested_expression_list,
             identifiers_start_offset: identifiers_offset,
+            interner: Interner::default(),
         }
     }
 
@@ -86,7 +89,7 @@ impl<'a> Parser<'a> {
         // Remove the EOF offset
         node.end.saturating_sub(1);
 
-        Ok(Module { node, body })
+        Ok(Module::new(node, body))
     }
 
     fn start_node(&self) -> Node {
@@ -656,10 +659,9 @@ impl<'a> Parser<'a> {
             self.start_node()
         };
         self.expect(Kind::Class)?;
-        let name_range = TextRange {
-            start: self.cur_token().start,
-            end: self.cur_token().end,
-        };
+        let name = self
+            .interner
+            .intern(&self.source[self.cur_token().start as usize..self.cur_token().end as usize]);
         self.expect(Kind::Identifier)?;
         let type_params = if self.at(Kind::LeftBrace) {
             self.parse_type_parameters()?
@@ -676,15 +678,15 @@ impl<'a> Parser<'a> {
         self.expect(Kind::Colon)?;
         let body = self.parse_suite()?;
 
-        Ok(Statement::ClassDef(Arc::new(ClassDef {
-            node: self.finish_node(node),
-            name: name_range,
+        Ok(Statement::ClassDef(Arc::new(ClassDef::new(
+            self.finish_node(node),
+            name,
             bases,
             keywords,
             body,
-            decorator_list: decorators,
+            decorators,
             type_params,
-        })))
+        ))))
     }
 
     // https://peps.python.org/pep-0622/#appendix-a-full-grammar

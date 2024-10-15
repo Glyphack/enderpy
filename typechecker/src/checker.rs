@@ -347,9 +347,9 @@ impl<'a> TraversalVisitor for TypeChecker<'a> {
     }
 
     fn visit_class_def(&mut self, c: &Arc<parser::ast::ClassDef>) {
-        let source = &self.build_manager.files.get(&self.id).unwrap().source;
-        let name = c.name(source);
-        self.infer_name_type(name, c.name.start, c.name.end);
+        let file = &self.build_manager.files.get(&self.id).unwrap();
+        let name = file.interner.lookup(c.name);
+        self.infer_name_type(name, c.node.start + 6, c.node.start + 6 + name.len() as u32);
 
         self.enter_scope(c.node.start);
         for base in &c.bases {

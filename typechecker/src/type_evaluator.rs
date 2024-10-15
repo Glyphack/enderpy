@@ -325,13 +325,8 @@ impl<'a> TypeEvaluator<'a> {
                 // }
                 // Case 1
                 // This is self or cls
-                let source = &self
-                    .build_manager
-                    .files
-                    .get(&symbol_table.id)
-                    .unwrap()
-                    .source;
-                if get_member_access_info(symbol_table, &a.value, source).is_some() {
+                let file = &self.build_manager.files.get(&symbol_table.id).unwrap();
+                if get_member_access_info(symbol_table, file, &a.value).is_some() {
                     let enclosing_parent_class = symbol_table.get_enclosing_class_scope();
                     if let Some(enclosing_parent_class) = enclosing_parent_class {
                         let symbol_table_node =

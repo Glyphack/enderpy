@@ -5,6 +5,8 @@ use std::sync::Arc;
 
 use miette::{SourceOffset, SourceSpan};
 
+use crate::intern::StrId;
+
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)] // #[serde(tag = "type")]
 pub struct Node {
     /// Start offset in source
@@ -962,18 +964,12 @@ impl AsyncFunctionDef {
 #[derive(Debug, Clone)]
 pub struct ClassDef {
     pub node: Node,
-    pub name: TextRange,
+    pub name: StrId,
     pub bases: Vec<Expression>,
     pub keywords: Vec<Keyword>,
     pub body: Vec<Statement>,
     pub decorator_list: Vec<Expression>,
     pub type_params: Vec<TypeParam>,
-}
-
-impl ClassDef {
-    pub fn name<'a>(&self, source: &'a str) -> &'a str {
-        &source[(self.name.start) as usize..(self.name.end) as usize]
-    }
 }
 
 // https://docs.python.org/3/library/ast.html#ast.Match
@@ -1094,11 +1090,702 @@ pub struct TypeAlias {
     pub value: Expression,
 }
 
-#[cfg(target_pointer_width = "64")]
-#[test]
-fn no_bloat_enum_sizes() {
-    use crate::ast::*;
-    use std::mem::size_of;
-    assert_eq!(size_of::<Statement>(), 16);
-    assert_eq!(size_of::<Expression>(), 16);
+impl Module {
+    pub fn new(node: Node, body: Vec<Statement>) -> Self {
+        Self { node, body }
+    }
+}
+impl Assign {
+    pub fn new(node: Node, targets: Vec<Expression>, value: Expression) -> Self {
+        Self {
+            node,
+            targets,
+            value,
+        }
+    }
+}
+impl AnnAssign {
+    pub fn new(
+        node: Node,
+        target: Expression,
+        annotation: Expression,
+        value: Option<Expression>,
+        simple: bool,
+    ) -> Self {
+        Self {
+            node,
+            target,
+            annotation,
+            value,
+            simple,
+        }
+    }
+}
+impl AugAssign {
+    pub fn new(node: Node, target: Expression, op: AugAssignOp, value: Expression) -> Self {
+        Self {
+            node,
+            target,
+            op,
+            value,
+        }
+    }
+}
+impl Assert {
+    pub fn new(node: Node, test: Expression, msg: Option<Expression>) -> Self {
+        Self { node, test, msg }
+    }
+}
+impl Pass {
+    pub fn new(node: Node) -> Self {
+        Self { node }
+    }
+}
+impl Delete {
+    pub fn new(node: Node, targets: Vec<Expression>) -> Self {
+        Self { node, targets }
+    }
+}
+impl Return {
+    pub fn new(node: Node, value: Option<Expression>) -> Self {
+        Self { node, value }
+    }
+}
+impl Raise {
+    pub fn new(node: Node, exc: Option<Expression>, cause: Option<Expression>) -> Self {
+        Self { node, exc, cause }
+    }
+}
+impl Break {
+    pub fn new(node: Node) -> Self {
+        Self { node }
+    }
+}
+impl Continue {
+    pub fn new(node: Node) -> Self {
+        Self { node }
+    }
+}
+impl Import {
+    pub fn new(node: Node, names: Vec<Alias>) -> Self {
+        Self { node, names }
+    }
+}
+impl Alias {
+    pub fn new(node: Node, name: &str, asname: Option<&str>) -> Self {
+        Self {
+            node,
+            name: name.to_owned(),
+            asname: asname.map(|s| s.to_owned()),
+        }
+    }
+}
+impl ImportFrom {
+    pub fn new(node: Node, module: &str, names: Vec<Alias>, level: usize) -> Self {
+        Self {
+            node,
+            module: module.to_owned(),
+            names,
+            level,
+        }
+    }
+}
+impl Global {
+    pub fn new(node: Node, names: Vec<String>) -> Self {
+        Self { node, names }
+    }
+}
+impl Nonlocal {
+    pub fn new(node: Node, names: Vec<String>) -> Self {
+        Self { node, names }
+    }
+}
+impl Name {
+    pub fn new(node: Node, id: &str, parenthesized: bool) -> Self {
+        Self {
+            node,
+            id: id.to_owned(),
+            parenthesized,
+        }
+    }
+}
+impl Constant {
+    pub fn new(node: Node, value: ConstantValue) -> Self {
+        Self { node, value }
+    }
+}
+impl List {
+    pub fn new(node: Node, elements: Vec<Expression>) -> Self {
+        Self { node, elements }
+    }
+}
+impl Tuple {
+    pub fn new(node: Node, elements: Vec<Expression>) -> Self {
+        Self { node, elements }
+    }
+}
+impl Dict {
+    pub fn new(node: Node, keys: Vec<Expression>, values: Vec<Expression>) -> Self {
+        Self { node, keys, values }
+    }
+}
+impl Set {
+    pub fn new(node: Node, elements: Vec<Expression>) -> Self {
+        Self { node, elements }
+    }
+}
+impl BoolOperation {
+    pub fn new(node: Node, op: BooleanOperator, values: Vec<Expression>) -> Self {
+        Self { node, op, values }
+    }
+}
+impl UnaryOperation {
+    pub fn new(node: Node, op: UnaryOperator, operand: Expression) -> Self {
+        Self { node, op, operand }
+    }
+}
+impl BinOp {
+    pub fn new(node: Node, op: BinaryOperator, left: Expression, right: Expression) -> Self {
+        Self {
+            node,
+            op,
+            left,
+            right,
+        }
+    }
+}
+impl NamedExpression {
+    pub fn new(node: Node, target: Expression, value: Expression) -> Self {
+        Self {
+            node,
+            target,
+            value,
+        }
+    }
+}
+impl Yield {
+    pub fn new(node: Node, value: Option<Expression>) -> Self {
+        Self { node, value }
+    }
+}
+impl YieldFrom {
+    pub fn new(node: Node, value: Expression) -> Self {
+        Self { node, value }
+    }
+}
+impl Starred {
+    pub fn new(node: Node, value: Expression) -> Self {
+        Self { node, value }
+    }
+}
+impl Generator {
+    pub fn new(node: Node, element: Expression, generators: Vec<Comprehension>) -> Self {
+        Self {
+            node,
+            element,
+            generators,
+        }
+    }
+}
+impl ListComp {
+    pub fn new(node: Node, element: Expression, generators: Vec<Comprehension>) -> Self {
+        Self {
+            node,
+            element,
+            generators,
+        }
+    }
+}
+impl SetComp {
+    pub fn new(node: Node, element: Expression, generators: Vec<Comprehension>) -> Self {
+        Self {
+            node,
+            element,
+            generators,
+        }
+    }
+}
+impl DictComp {
+    pub fn new(
+        node: Node,
+        key: Expression,
+        value: Expression,
+        generators: Vec<Comprehension>,
+    ) -> Self {
+        Self {
+            node,
+            key,
+            value,
+            generators,
+        }
+    }
+}
+impl Comprehension {
+    pub fn new(
+        node: Node,
+        target: Expression,
+        iter: Expression,
+        ifs: Vec<Expression>,
+        is_async: bool,
+    ) -> Self {
+        Self {
+            node,
+            target,
+            iter,
+            ifs,
+            is_async,
+        }
+    }
+}
+impl Attribute {
+    pub fn new(node: Node, value: Expression, attr: &str) -> Self {
+        Self {
+            node,
+            value,
+            attr: attr.to_owned(),
+        }
+    }
+}
+impl Subscript {
+    pub fn new(node: Node, value: Expression, slice: Expression) -> Self {
+        Self { node, value, slice }
+    }
+}
+impl Slice {
+    pub fn new(
+        node: Node,
+        lower: Option<Expression>,
+        upper: Option<Expression>,
+        step: Option<Expression>,
+    ) -> Self {
+        Self {
+            node,
+            lower,
+            upper,
+            step,
+        }
+    }
+}
+impl Call {
+    pub fn new(
+        node: Node,
+        func: Expression,
+        args: Vec<Expression>,
+        keywords: Vec<Keyword>,
+        starargs: Option<Expression>,
+        kwargs: Option<Expression>,
+    ) -> Self {
+        Self {
+            node,
+            func,
+            args,
+            keywords,
+            starargs,
+            kwargs,
+        }
+    }
+}
+impl Keyword {
+    pub fn new(node: Node, arg: Option<&str>, value: Expression) -> Self {
+        Self {
+            node,
+            arg: arg.map(|s| s.to_owned()),
+            value,
+        }
+    }
+}
+impl Await {
+    pub fn new(node: Node, value: Expression) -> Self {
+        Self { node, value }
+    }
+}
+impl Compare {
+    pub fn new(
+        node: Node,
+        left: Expression,
+        ops: Vec<ComparisonOperator>,
+        comparators: Vec<Expression>,
+    ) -> Self {
+        Self {
+            node,
+            left,
+            ops,
+            comparators,
+        }
+    }
+}
+impl Lambda {
+    pub fn new(node: Node, args: Arguments, body: Expression) -> Self {
+        Self { node, args, body }
+    }
+}
+impl Arguments {
+    #[allow(clippy::too_many_arguments)]
+    pub fn new(
+        node: Node,
+        posonlyargs: Vec<Arg>,
+        args: Vec<Arg>,
+        vararg: Option<Arg>,
+        kwonlyargs: Vec<Arg>,
+        kw_defaults: Vec<Option<Expression>>,
+        kwarg: Option<Arg>,
+        defaults: Vec<Expression>,
+    ) -> Self {
+        Self {
+            node,
+            posonlyargs,
+            args,
+            vararg,
+            kwonlyargs,
+            kw_defaults,
+            kwarg,
+            defaults,
+        }
+    }
+}
+impl Arg {
+    pub fn new(node: Node, arg: &str, annotation: Option<Expression>) -> Self {
+        Self {
+            node,
+            arg: arg.to_owned(),
+            annotation,
+        }
+    }
+}
+impl IfExp {
+    pub fn new(node: Node, test: Expression, body: Expression, orelse: Expression) -> Self {
+        Self {
+            node,
+            test,
+            body,
+            orelse,
+        }
+    }
+}
+impl FormattedValue {
+    pub fn new(
+        node: Node,
+        value: Expression,
+        conversion: i32,
+        format_spec: Option<Expression>,
+    ) -> Self {
+        Self {
+            node,
+            value,
+            conversion,
+            format_spec,
+        }
+    }
+}
+impl JoinedStr {
+    pub fn new(node: Node, values: Vec<Expression>) -> Self {
+        Self { node, values }
+    }
+}
+impl If {
+    pub fn new(node: Node, test: Expression, body: Vec<Statement>, orelse: Vec<Statement>) -> Self {
+        Self {
+            node,
+            test,
+            body,
+            orelse,
+        }
+    }
+}
+impl While {
+    pub fn new(node: Node, test: Expression, body: Vec<Statement>, orelse: Vec<Statement>) -> Self {
+        Self {
+            node,
+            test,
+            body,
+            orelse,
+        }
+    }
+}
+impl For {
+    pub fn new(
+        node: Node,
+        target: Expression,
+        iter: Expression,
+        body: Vec<Statement>,
+        orelse: Vec<Statement>,
+    ) -> Self {
+        Self {
+            node,
+            target,
+            iter,
+            body,
+            orelse,
+        }
+    }
+}
+impl AsyncFor {
+    pub fn new(
+        node: Node,
+        target: Expression,
+        iter: Expression,
+        body: Vec<Statement>,
+        orelse: Vec<Statement>,
+    ) -> Self {
+        Self {
+            node,
+            target,
+            iter,
+            body,
+            orelse,
+        }
+    }
+}
+impl With {
+    pub fn new(node: Node, items: Vec<WithItem>, body: Vec<Statement>) -> Self {
+        Self { node, items, body }
+    }
+}
+impl AsyncWith {
+    pub fn new(node: Node, items: Vec<WithItem>, body: Vec<Statement>) -> Self {
+        Self { node, items, body }
+    }
+}
+impl WithItem {
+    pub fn new(node: Node, context_expr: Expression, optional_vars: Option<Expression>) -> Self {
+        Self {
+            node,
+            context_expr,
+            optional_vars,
+        }
+    }
+}
+impl Try {
+    pub fn new(
+        node: Node,
+        body: Vec<Statement>,
+        handlers: Vec<ExceptHandler>,
+        orelse: Vec<Statement>,
+        finalbody: Vec<Statement>,
+    ) -> Self {
+        Self {
+            node,
+            body,
+            handlers,
+            orelse,
+            finalbody,
+        }
+    }
+}
+impl TryStar {
+    pub fn new(
+        node: Node,
+        body: Vec<Statement>,
+        handlers: Vec<ExceptHandler>,
+        orelse: Vec<Statement>,
+        finalbody: Vec<Statement>,
+    ) -> Self {
+        Self {
+            node,
+            body,
+            handlers,
+            orelse,
+            finalbody,
+        }
+    }
+}
+impl ExceptHandler {
+    pub fn new(
+        node: Node,
+        typ: Option<Expression>,
+        name: Option<&str>,
+        body: Vec<Statement>,
+    ) -> Self {
+        Self {
+            node,
+            typ,
+            name: name.map(|s| s.to_owned()),
+            body,
+        }
+    }
+}
+impl FunctionDef {
+    #[allow(clippy::too_many_arguments)]
+    pub fn new(
+        node: Node,
+        name: &str,
+        args: Arguments,
+        body: Vec<Statement>,
+        decorator_list: Vec<Expression>,
+        returns: Option<Expression>,
+        type_comment: Option<&str>,
+        type_params: Vec<TypeParam>,
+    ) -> Self {
+        Self {
+            node,
+            name: name.to_owned(),
+            args,
+            body,
+            decorator_list,
+            returns,
+            type_comment: type_comment.map(|s| s.to_owned()),
+            type_params,
+        }
+    }
+}
+impl AsyncFunctionDef {
+    #[allow(clippy::too_many_arguments)]
+    pub fn new(
+        node: Node,
+        name: &str,
+        args: Arguments,
+        body: Vec<Statement>,
+        decorator_list: Vec<Expression>,
+        returns: Option<Expression>,
+        type_comment: Option<&str>,
+        type_params: Vec<TypeParam>,
+    ) -> Self {
+        Self {
+            node,
+            name: name.to_owned(),
+            args,
+            body,
+            decorator_list,
+            returns,
+            type_comment: type_comment.map(|s| s.to_owned()),
+            type_params,
+        }
+    }
+}
+impl ClassDef {
+    pub fn new(
+        node: Node,
+        name: StrId,
+        bases: Vec<Expression>,
+        keywords: Vec<Keyword>,
+        body: Vec<Statement>,
+        decorator_list: Vec<Expression>,
+        type_params: Vec<TypeParam>,
+    ) -> Self {
+        Self {
+            node,
+            name,
+            bases,
+            keywords,
+            body,
+            decorator_list,
+            type_params,
+        }
+    }
+}
+impl Match {
+    pub fn new(node: Node, subject: Expression, cases: Vec<MatchCase>) -> Self {
+        Self {
+            node,
+            subject,
+            cases,
+        }
+    }
+}
+impl MatchCase {
+    pub fn new(
+        node: Node,
+        pattern: MatchPattern,
+        guard: Option<Expression>,
+        body: Vec<Statement>,
+    ) -> Self {
+        Self {
+            node,
+            pattern,
+            guard,
+            body,
+        }
+    }
+}
+impl MatchValue {
+    pub fn new(node: Node, value: Expression) -> Self {
+        Self { node, value }
+    }
+}
+impl MatchAs {
+    pub fn new(node: Node, name: Option<&str>, pattern: Option<MatchPattern>) -> Self {
+        Self {
+            node,
+            name: name.map(|s| s.to_owned()),
+            pattern,
+        }
+    }
+}
+impl MatchMapping {
+    pub fn new(
+        node: Node,
+        keys: Vec<Expression>,
+        patterns: Vec<MatchPattern>,
+        rest: Option<&str>,
+    ) -> Self {
+        Self {
+            node,
+            keys,
+            patterns,
+            rest: rest.map(|s| s.to_owned()),
+        }
+    }
+}
+impl MatchClass {
+    pub fn new(
+        node: Node,
+        cls: Expression,
+        patterns: Vec<MatchPattern>,
+        kwd_attrs: Vec<String>,
+        kwd_patterns: Vec<MatchPattern>,
+    ) -> Self {
+        Self {
+            node,
+            cls,
+            patterns,
+            kwd_attrs,
+            kwd_patterns,
+        }
+    }
+}
+impl TypeVar {
+    pub fn new(node: Node, name: &str, bound: Option<Expression>) -> Self {
+        Self {
+            node,
+            name: name.to_owned(),
+            bound,
+        }
+    }
+}
+impl ParamSpec {
+    pub fn new(node: Node, name: &str) -> Self {
+        Self {
+            node,
+            name: name.to_owned(),
+        }
+    }
+}
+impl TypeVarTuple {
+    pub fn new(node: Node, name: &str) -> Self {
+        Self {
+            node,
+            name: name.to_owned(),
+        }
+    }
+}
+impl TypeAlias {
+    pub fn new(node: Node, name: &str, type_params: Vec<TypeParam>, value: Expression) -> Self {
+        Self {
+            node,
+            name: name.to_owned(),
+            type_params,
+            value,
+        }
+    }
+}
+
+mod tests {
+    #[cfg(target_pointer_width = "64")]
+    #[test]
+    fn no_bloat_enum_sizes() {
+        use crate::ast::*;
+        use std::mem::size_of;
+        assert_eq!(size_of::<Statement>(), 16);
+        assert_eq!(size_of::<Expression>(), 16);
+    }
 }

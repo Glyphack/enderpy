@@ -14,10 +14,9 @@ Module {
                     start: 0,
                     end: 13,
                 },
-                name: TextRange {
-                    start: 6,
-                    end: 7,
-                },
+                name: StrId(
+                    0,
+                ),
                 bases: [],
                 keywords: [],
                 body: [
@@ -40,10 +39,9 @@ Module {
                     start: 15,
                     end: 36,
                 },
-                name: TextRange {
-                    start: 21,
-                    end: 22,
-                },
+                name: StrId(
+                    0,
+                ),
                 bases: [],
                 keywords: [],
                 body: [
@@ -66,10 +64,9 @@ Module {
                     start: 36,
                     end: 55,
                 },
-                name: TextRange {
-                    start: 42,
-                    end: 43,
-                },
+                name: StrId(
+                    0,
+                ),
                 bases: [
                     Name(
                         Name {
@@ -111,10 +108,9 @@ Module {
                     start: 57,
                     end: 82,
                 },
-                name: TextRange {
-                    start: 63,
-                    end: 64,
-                },
+                name: StrId(
+                    0,
+                ),
                 bases: [
                     Name(
                         Name {
@@ -181,10 +177,9 @@ Module {
                     start: 84,
                     end: 106,
                 },
-                name: TextRange {
-                    start: 90,
-                    end: 91,
-                },
+                name: StrId(
+                    0,
+                ),
                 bases: [
                     Name(
                         Name {
@@ -235,10 +230,9 @@ Module {
                     start: 108,
                     end: 128,
                 },
-                name: TextRange {
-                    start: 121,
-                    end: 122,
-                },
+                name: StrId(
+                    0,
+                ),
                 bases: [],
                 keywords: [],
                 body: [
@@ -271,10 +265,9 @@ Module {
                     start: 130,
                     end: 146,
                 },
-                name: TextRange {
-                    start: 136,
-                    end: 137,
-                },
+                name: StrId(
+                    0,
+                ),
                 bases: [],
                 keywords: [],
                 body: [
@@ -308,10 +301,9 @@ Module {
                     start: 148,
                     end: 167,
                 },
-                name: TextRange {
-                    start: 154,
-                    end: 155,
-                },
+                name: StrId(
+                    0,
+                ),
                 bases: [],
                 keywords: [],
                 body: [
@@ -355,10 +347,9 @@ Module {
                     start: 169,
                     end: 188,
                 },
-                name: TextRange {
-                    start: 175,
-                    end: 176,
-                },
+                name: StrId(
+                    0,
+                ),
                 bases: [],
                 keywords: [],
                 body: [
@@ -402,10 +393,9 @@ Module {
                     start: 190,
                     end: 215,
                 },
-                name: TextRange {
-                    start: 196,
-                    end: 197,
-                },
+                name: StrId(
+                    0,
+                ),
                 bases: [],
                 keywords: [],
                 body: [
@@ -469,10 +459,9 @@ Module {
                     start: 217,
                     end: 234,
                 },
-                name: TextRange {
-                    start: 223,
-                    end: 224,
-                },
+                name: StrId(
+                    0,
+                ),
                 bases: [],
                 keywords: [],
                 body: [
@@ -505,10 +494,9 @@ Module {
                     start: 236,
                     end: 256,
                 },
-                name: TextRange {
-                    start: 242,
-                    end: 243,
-                },
+                name: StrId(
+                    0,
+                ),
                 bases: [],
                 keywords: [],
                 body: [
@@ -551,10 +539,9 @@ Module {
                     start: 258,
                     end: 281,
                 },
-                name: TextRange {
-                    start: 264,
-                    end: 265,
-                },
+                name: StrId(
+                    0,
+                ),
                 bases: [],
                 keywords: [],
                 body: [
@@ -607,10 +594,9 @@ Module {
                     start: 283,
                     end: 312,
                 },
-                name: TextRange {
-                    start: 289,
-                    end: 290,
-                },
+                name: StrId(
+                    0,
+                ),
                 bases: [],
                 keywords: [],
                 body: [
@@ -683,10 +669,9 @@ Module {
                     start: 314,
                     end: 332,
                 },
-                name: TextRange {
-                    start: 320,
-                    end: 321,
-                },
+                name: StrId(
+                    0,
+                ),
                 bases: [],
                 keywords: [],
                 body: [
@@ -719,10 +704,9 @@ Module {
                     start: 334,
                     end: 355,
                 },
-                name: TextRange {
-                    start: 340,
-                    end: 341,
-                },
+                name: StrId(
+                    0,
+                ),
                 bases: [],
                 keywords: [],
                 body: [
@@ -765,10 +749,9 @@ Module {
                     start: 357,
                     end: 381,
                 },
-                name: TextRange {
-                    start: 363,
-                    end: 364,
-                },
+                name: StrId(
+                    0,
+                ),
                 bases: [],
                 keywords: [],
                 body: [
@@ -821,10 +804,9 @@ Module {
                     start: 383,
                     end: 413,
                 },
-                name: TextRange {
-                    start: 389,
-                    end: 390,
-                },
+                name: StrId(
+                    0,
+                ),
                 bases: [],
                 keywords: [],
                 body: [
@@ -897,10 +879,9 @@ Module {
                     start: 415,
                     end: 440,
                 },
-                name: TextRange {
-                    start: 421,
-                    end: 422,
-                },
+                name: StrId(
+                    0,
+                ),
                 bases: [],
                 keywords: [],
                 body: [
@@ -952,10 +933,9 @@ Module {
                     start: 442,
                     end: 470,
                 },
-                name: TextRange {
-                    start: 448,
-                    end: 449,
-                },
+                name: StrId(
+                    0,
+                ),
                 bases: [],
                 keywords: [],
                 body: [
