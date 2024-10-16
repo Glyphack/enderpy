@@ -8,6 +8,7 @@ use parser::parser::parser::Parser;
 use std::{
     cell::Cell,
     panic::{catch_unwind, AssertUnwindSafe},
+    sync::Arc,
 };
 use tracing::{error, instrument, span, trace, Level};
 
@@ -23,7 +24,7 @@ use super::{
 use crate::{
     build::BuildManager,
     semantic_analyzer::get_member_access_info,
-    symbol_table::{self, Class, Declaration, Id, SymbolTable, SymbolTableNode},
+    symbol_table::{self, Class, Declaration, DeclarationPath, Id, SymbolTable, SymbolTableNode},
     types::CallableArgs,
 };
 
@@ -358,11 +359,7 @@ impl<'a> TypeEvaluator<'a> {
                         }
                     }
                     PythonType::Module(module) => {
-                        let module_sym_table = self
-                            .build_manager
-                            .symbol_tables
-                            .get(&module.module_id)
-                            .unwrap();
+                        let module_sym_table = self.get_symbol_table(&module.module_id);
                         Ok(self.get_name_type(&a.attr, None, &module_sym_table, 0))
                     }
                     // Anything you perform a get attribute on should at least resolve using object
@@ -722,7 +719,7 @@ impl<'a> TypeEvaluator<'a> {
         for star_import in symbol_table.star_imports.iter() {
             trace!("checking star imports {:?}", star_import);
             for id in star_import.resolved_ids.iter() {
-                let star_import_sym_table = self.build_manager.symbol_tables.get(id).unwrap();
+                let star_import_sym_table = self.get_symbol_table(id);
                 // In the star import we can only lookup the global scope
                 let res = star_import_sym_table.lookup_in_scope(name, 0);
                 match res {
@@ -781,16 +778,12 @@ impl<'a> TypeEvaluator<'a> {
             decl
         };
         let decl_scope = decl.declaration_path().scope_id;
-        let symbol_table = &self
-            .build_manager
-            .symbol_tables
-            .get(&decl.declaration_path().symbol_table_id)
-            .unwrap();
+        let symbol_table = self.get_dec_symbol_table(decl.declaration_path());
         let result = match decl {
             Declaration::Variable(v) => {
                 if let Some(type_annotation) = &v.type_annotation {
                     let var_type =
-                        self.get_annotation_type(type_annotation, symbol_table, decl_scope);
+                        self.get_annotation_type(type_annotation, &symbol_table, decl_scope);
 
                     if type_annotation
                         .as_name()
@@ -824,7 +817,7 @@ impl<'a> TypeEvaluator<'a> {
                     if let Some(b_type) = builtin_type {
                         b_type
                     } else {
-                        self.get_type(source, symbol_table, decl_scope)
+                        self.get_type(source, &symbol_table, decl_scope)
                             .unwrap_or(PythonType::Unknown)
                     }
                 // If the variable was created using a for statement e.g. `a` in: for a in []:
@@ -836,12 +829,12 @@ impl<'a> TypeEvaluator<'a> {
                         }
                     }
                     let iter_type = self
-                        .get_type(&for_stmt.iter, symbol_table, decl_scope)
+                        .get_type(&for_stmt.iter, &symbol_table, decl_scope)
                         .unwrap_or_else(|_| panic!("iterating over unknown {:?}", for_stmt));
                     match iter_type {
                         PythonType::Instance(instance_type) => {
                             let iter_method = match self.lookup_on_class(
-                                symbol_table,
+                                &symbol_table,
                                 &instance_type.class_type,
                                 "__iter__",
                             ) {
@@ -862,7 +855,7 @@ impl<'a> TypeEvaluator<'a> {
                             };
 
                             let next_method = match self.lookup_on_class(
-                                symbol_table,
+                                &symbol_table,
                                 &iter_method_type,
                                 "__next__",
                             ) {
@@ -888,7 +881,7 @@ impl<'a> TypeEvaluator<'a> {
             }
             Declaration::Function(f) => {
                 self.get_function_type(
-                    symbol_table,
+                    &symbol_table,
                     f,
                     // to be able to get the function signature correctly we use the scope id of the
                     // function. Since parameters are defined in that scope.
@@ -896,14 +889,14 @@ impl<'a> TypeEvaluator<'a> {
                 )
             }
             Declaration::AsyncFunction(f) => self.get_async_function_type(
-                symbol_table,
+                &symbol_table,
                 f,
                 symbol_table.get_scope(f.function_node.node.start),
             ),
             Declaration::Parameter(p) => {
                 if let Some(type_annotation) = &p.type_annotation {
                     let annotated_type =
-                        self.get_annotation_type(type_annotation, symbol_table, decl_scope);
+                        self.get_annotation_type(type_annotation, &symbol_table, decl_scope);
                     if let PythonType::Class(ref c) = annotated_type {
                         let instance_type = InstanceType::new(c.clone(), c.specialized.clone());
                         PythonType::Instance(instance_type)
@@ -923,7 +916,7 @@ impl<'a> TypeEvaluator<'a> {
                         let class_def = symbol_table
                             .lookup_in_scope(&class_scope.name, parent_scope.id)
                             .expect("class def not found");
-                        return self.get_symbol_type(class_def, symbol_table, position);
+                        return self.get_symbol_type(class_def, &symbol_table, position);
                     }
                     PythonType::Unknown
                 }
@@ -941,8 +934,7 @@ impl<'a> TypeEvaluator<'a> {
                         trace!("import result {:?}", import_result);
                         for id in import_result.resolved_ids.iter() {
                             trace!("checking path {:?}", id);
-                            let symbol_table_with_alias_def =
-                                self.build_manager.symbol_tables.get(id).unwrap();
+                            let symbol_table_with_alias_def = self.get_symbol_table(id);
 
                             if let Some(symbol_table_file_name) =
                                 symbol_table_with_alias_def.file_path.file_stem()
@@ -989,19 +981,19 @@ impl<'a> TypeEvaluator<'a> {
                                 trace!("checking star imports {:?}", star_import);
                                 for id in star_import.resolved_ids.iter() {
                                     trace!("checking path {:?}", id);
-                                    let star_import_sym_table =
-                                        self.build_manager.symbol_tables.get(id);
-                                    let Some(sym_table) = star_import_sym_table else {
-                                        panic!("symbol table of star import not found at {:?}", id);
-                                    };
-                                    let res = sym_table.lookup_in_scope(name, 0);
+                                    let star_import_sym_table = self.get_symbol_table(id);
+                                    let res = star_import_sym_table.lookup_in_scope(name, 0);
                                     // TODO: if an import in the other module imports the previous
                                     // module again as * import then don't come back to the module
                                     // that started the import. Don't know the correct way to
                                     // handle this.
                                     match res {
                                         Some(res) => {
-                                            return self.get_symbol_type(res, &sym_table, None);
+                                            return self.get_symbol_type(
+                                                res,
+                                                &star_import_sym_table,
+                                                None,
+                                            );
                                         }
                                         None => continue,
                                     };
@@ -1027,7 +1019,7 @@ impl<'a> TypeEvaluator<'a> {
             Declaration::TypeParameter(_) => PythonType::Unknown,
             Declaration::TypeAlias(_) => PythonType::Unknown,
             Declaration::Class(c) => self
-                .get_class_declaration_type(c, symbol_table, decl_scope)
+                .get_class_declaration_type(c, &symbol_table, decl_scope)
                 .unwrap_or(PythonType::Unknown),
         };
 
@@ -1170,26 +1162,22 @@ impl<'a> TypeEvaluator<'a> {
         if name == "function" {
             return None;
         }
-        let builtins_symbol_table = &self
-            .build_manager
-            .symbol_tables
-            .get(&Id(0))
-            .expect("Builtins must exist");
+        let builtins_symbol_table = self.get_symbol_table(&Id(0));
         let builtin_symbol = builtins_symbol_table.lookup_in_scope(name, 0)?;
         let decl = builtin_symbol.last_declaration();
         let found_declaration = match decl {
             Declaration::Class(c) => {
                 let decl_scope = decl.declaration_path().scope_id;
-                self.get_class_declaration_type(c, builtins_symbol_table, decl_scope)
+                self.get_class_declaration_type(c, &builtins_symbol_table, decl_scope)
                     .unwrap_or_else(|_| {
                         panic!("Error getting type for builtin class: {:?}", c.class_node)
                     })
             }
             Declaration::Function(f) => {
-                self.get_function_type(builtins_symbol_table, f, decl.declaration_path().scope_id)
+                self.get_function_type(&builtins_symbol_table, f, decl.declaration_path().scope_id)
             }
             Declaration::AsyncFunction(f) => self.get_async_function_type(
-                builtins_symbol_table,
+                &builtins_symbol_table,
                 f,
                 decl.declaration_path().scope_id,
             ),
@@ -1503,12 +1491,7 @@ impl<'a> TypeEvaluator<'a> {
         c: &ClassType,
         method_name: &str,
     ) -> Option<PythonType> {
-        let class_symbol_table_id = c.details.declaration_path.symbol_table_id;
-        let class_symbol_table = self
-            .build_manager
-            .symbol_tables
-            .get(&class_symbol_table_id)
-            .unwrap();
+        let class_symbol_table = self.get_dec_symbol_table(&c.details.declaration_path);
         let class_scope = c.details.class_scope_id;
         // TODO: Probably should implement mro here
         // Try to find on the class and it's base classes.
@@ -1517,9 +1500,8 @@ impl<'a> TypeEvaluator<'a> {
         if symbol.is_none() {
             for base in bases {
                 let base_class = base.expect_class();
-                let class_symbol_table_id = base_class.details.declaration_path.symbol_table_id;
-                let get_symbol_table = self.build_manager.symbol_tables.get(&class_symbol_table_id);
-                let class_symbol_table = get_symbol_table.unwrap();
+                let class_symbol_table =
+                    self.get_dec_symbol_table(&base_class.details.declaration_path);
                 if let Some(attribute_on_base) = class_symbol_table
                     .lookup_attribute(method_name, base_class.details.class_scope_id)
                 {
@@ -1742,5 +1724,14 @@ impl<'a> TypeEvaluator<'a> {
                 python_type.clone()
             }
         }
+    }
+
+    fn get_dec_symbol_table(&self, decl_path: &DeclarationPath) -> Arc<SymbolTable> {
+        let table_id = decl_path.symbol_table_id;
+        return self.build_manager.get_symbol_table_by_id(&table_id);
+    }
+
+    fn get_symbol_table(&self, id: &Id) -> Arc<SymbolTable> {
+        return self.build_manager.get_symbol_table_by_id(id);
     }
 }

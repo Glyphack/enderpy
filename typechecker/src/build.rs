@@ -1,7 +1,7 @@
 use std::{
     collections::{HashMap, HashSet},
     path::{Path, PathBuf},
-    sync::Arc,
+    sync::{Arc, RwLockWriteGuard},
 };
 use tracing::{span, Level};
 use tracing_subscriber::EnvFilter;
@@ -23,7 +23,7 @@ use crate::{
 #[derive(Debug)]
 pub struct BuildManager {
     pub files: DashMap<Id, EnderpyFile>,
-    pub symbol_tables: DashMap<Id, SymbolTable>,
+    pub symbol_tables: DashMap<Id, Arc<SymbolTable>>,
     pub paths: DashMap<PathBuf, Id>,
     pub settings: Settings,
     import_config: ruff_python_resolver::config::Config,
@@ -67,7 +67,7 @@ impl<'a> BuildManager {
         log::debug!("Imports resolved");
         for mut module in new_modules {
             let sym_table = module.populate_symbol_table(&imports);
-            self.symbol_tables.insert(module.id, sym_table);
+            self.symbol_tables.insert(module.id, Arc::new(sym_table));
             self.paths.insert(module.path.to_path_buf(), module.id);
             self.files.insert(module.id, module);
         }
@@ -83,7 +83,7 @@ impl<'a> BuildManager {
         log::debug!("Imports resolved");
         for mut module in new_modules {
             let sym_table = module.populate_symbol_table(&imports);
-            self.symbol_tables.insert(module.id, sym_table);
+            self.symbol_tables.insert(module.id, Arc::new(sym_table));
             self.paths.insert(module.path.to_path_buf(), module.id);
             self.files.insert(module.id, module);
         }
@@ -105,10 +105,13 @@ impl<'a> BuildManager {
         checker
     }
 
-    pub fn get_symbol_table(&self, path: &Path) -> SymbolTable {
+    pub fn get_symbol_table_by_path(&'a self, path: &Path) -> Arc<SymbolTable> {
         let module_id = self.paths.get(path).expect("incorrect ID");
-        let symbol_table = self.symbol_tables.get(module_id.value());
+        return self.get_symbol_table_by_id(&module_id);
+    }
 
+    pub fn get_symbol_table_by_id(&'a self, id: &Id) -> Arc<SymbolTable> {
+        let symbol_table = self.symbol_tables.get_mut(id);
         return symbol_table
             .expect("symbol table not found")
             .value()
@@ -118,7 +121,7 @@ impl<'a> BuildManager {
     pub fn get_hover_information(&self, path: &Path, line: u32, column: u32) -> String {
         let file = self.files.get(&self.paths.get(path).unwrap()).unwrap();
         let checker = self.type_check(path, &file);
-        let symbol_table = self.get_symbol_table(path);
+        let symbol_table = self.get_symbol_table_by_path(path);
         let hovered_offset = file.line_starts[line as usize] + column;
 
         let hovered_offset_start = hovered_offset.saturating_sub(1);
@@ -291,7 +294,7 @@ mod tests {
                 manager.build(root);
                 manager.build_one(root, &path);
 
-                let symbol_table = manager.get_symbol_table(&path);
+                let symbol_table = manager.get_symbol_table_by_path(&path);
 
                 let result = format!("{}", symbol_table);
                 let mut settings = insta::Settings::clone_current();

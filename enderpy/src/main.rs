@@ -33,7 +33,7 @@ fn symbols(path: &Path) -> Result<()> {
     manager.build(root);
     manager.build_one(root, path);
 
-    println!("{}", manager.get_symbol_table(path));
+    println!("{}", manager.get_symbol_table_by_path(path));
 
     Ok(())
 }

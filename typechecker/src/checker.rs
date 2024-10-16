@@ -18,6 +18,8 @@ pub struct TypeChecker<'a> {
     id: Id,
     type_evaluator: TypeEvaluator<'a>,
     build_manager: &'a BuildManager,
+    current_scope: u32,
+    prev_scope: u32,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -34,6 +36,8 @@ impl<'a> TypeChecker<'a> {
             id,
             build_manager,
             types: Lapper::new(vec![]),
+            current_scope: 0,
+            prev_scope: 0,
         }
     }
 
@@ -42,18 +46,17 @@ impl<'a> TypeChecker<'a> {
     }
 
     fn infer_expr_type(&mut self, expr: &Expression) -> PythonType {
-        let symbol_table = self.build_manager.symbol_tables.get(&self.id).unwrap();
-        let t =
-            match self
-                .type_evaluator
-                .get_type(expr, &symbol_table, symbol_table.current_scope_id)
-            {
-                Ok(t) => t,
-                Err(e) => {
-                    log::error!("type evaluator error: {} for expr {expr:?}", e);
-                    PythonType::Unknown
-                }
-            };
+        let symbol_table = self.build_manager.get_symbol_table_by_id(&self.id);
+        let t = match self
+            .type_evaluator
+            .get_type(expr, &symbol_table, self.current_scope)
+        {
+            Ok(t) => t,
+            Err(e) => {
+                log::error!("type evaluator error: {} for expr {expr:?}", e);
+                PythonType::Unknown
+            }
+        };
 
         self.types.insert(Interval {
             start: expr.get_node().start,
@@ -64,12 +67,10 @@ impl<'a> TypeChecker<'a> {
     }
 
     fn infer_annotation_type(&mut self, expr: &Expression) -> PythonType {
-        let symbol_table = self.build_manager.symbol_tables.get(&self.id).unwrap();
-        let t = self.type_evaluator.get_annotation_type(
-            expr,
-            &symbol_table,
-            symbol_table.current_scope_id,
-        );
+        let symbol_table = self.build_manager.get_symbol_table_by_id(&self.id);
+        let t = self
+            .type_evaluator
+            .get_annotation_type(expr, &symbol_table, self.current_scope);
 
         self.types.insert(Interval {
             start: expr.get_node().start,
@@ -80,13 +81,10 @@ impl<'a> TypeChecker<'a> {
     }
 
     fn infer_name_type(&mut self, name: &str, start: u32, stop: u32) {
-        let symbol_table = self.build_manager.symbol_tables.get(&self.id).unwrap();
-        let name_type = self.type_evaluator.get_name_type(
-            name,
-            None,
-            &symbol_table,
-            symbol_table.current_scope_id,
-        );
+        let symbol_table = self.build_manager.get_symbol_table_by_id(&self.id);
+        let name_type =
+            self.type_evaluator
+                .get_name_type(name, None, &symbol_table, self.current_scope);
         self.types.insert(Interval {
             start,
             stop,
@@ -94,14 +92,14 @@ impl<'a> TypeChecker<'a> {
         });
     }
 
-    fn enter_scope(&self, pos: u32) {
-        let mut symbol_table = self.build_manager.symbol_tables.get_mut(&self.id).unwrap();
-        symbol_table.set_scope(pos);
+    fn enter_scope(&mut self, pos: u32) {
+        let symbol_table = self.build_manager.get_symbol_table_by_id(&self.id);
+        self.prev_scope = self.current_scope;
+        self.current_scope = symbol_table.get_scope(pos);
     }
 
-    fn leave_scope(&self) {
-        let mut symbol_table = self.build_manager.symbol_tables.get_mut(&self.id).unwrap();
-        symbol_table.revert_scope();
+    fn leave_scope(&mut self) {
+        self.current_scope = self.prev_scope;
     }
 
     pub fn dump_types(&self) -> String {
