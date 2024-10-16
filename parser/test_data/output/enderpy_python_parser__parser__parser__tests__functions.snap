@@ -14,9 +14,7 @@ Module {
                     start: 0,
                     end: 340,
                 },
-                name: StrId(
-                    0,
-                ),
+                name: _handle_ticker_index,
                 args: Arguments {
                     node: Node {
                         start: 25,
@@ -344,9 +342,7 @@ Module {
                     start: 342,
                     end: 609,
                 },
-                name: StrId(
-                    1,
-                ),
+                name: _extract_ticker_client_types_data,
                 args: Arguments {
                     node: Node {
                         start: 380,
@@ -679,9 +675,7 @@ Module {
                     start: 610,
                     end: 1152,
                 },
-                name: StrId(
-                    2,
-                ),
+                name: common_process,
                 args: Arguments {
                     node: Node {
                         start: 629,

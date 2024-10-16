@@ -1,27 +1,71 @@
+use std::fmt::{Debug, Display};
+
 use fxhash::FxHashMap;
 use serde::Serialize;
+use std::mem;
 
-#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash, Serialize)]
+use crate::parser::parser::intern_lookup;
+
+#[derive(Clone, Copy, Eq, PartialEq, Hash, Serialize)]
 pub struct StrId(pub u32);
 
-#[derive(Default, Debug, Clone)]
+impl Debug for StrId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", intern_lookup(*self))
+    }
+}
+
+impl Display for StrId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
 pub struct Interner {
-    map: FxHashMap<String, StrId>,
-    vec: Vec<String>,
+    map: FxHashMap<&'static str, StrId>,
+    vec: Vec<&'static str>,
+    buf: String,
+    full: Vec<String>,
 }
 impl Interner {
-    pub fn intern(&mut self, name: &str) -> StrId {
-        if let Some(&idx) = self.map.get(name) {
-            return idx;
+    pub fn with_capacity(cap: usize) -> Interner {
+        let cap = cap.next_power_of_two();
+        Interner {
+            map: FxHashMap::default(),
+            vec: Vec::new(),
+            buf: String::with_capacity(cap),
+            full: Vec::new(),
         }
-        let idx = self.map.len() as u32;
-        self.map.insert(name.to_owned(), StrId(idx));
-        self.vec.push(name.to_owned());
-        debug_assert!(self.lookup(StrId(idx)) == name);
-        debug_assert!(self.intern(name) == StrId(idx));
-        StrId(idx)
     }
-    pub fn lookup(&self, idx: StrId) -> &str {
-        self.vec[idx.0 as usize].as_str()
+    pub fn intern(&mut self, name: &str) -> StrId {
+        if let Some(&id) = self.map.get(name) {
+            return id;
+        }
+        let name = unsafe { self.alloc(name) };
+        let id = self.map.len() as u32;
+        self.map.insert(name, StrId(id));
+        self.vec.push(name);
+        debug_assert!(self.lookup(StrId(id)) == name);
+        debug_assert!(self.intern(name) == StrId(id));
+
+        StrId(id)
+    }
+    pub fn lookup(&self, id: StrId) -> &'static str {
+        self.vec[id.0 as usize]
+    }
+    unsafe fn alloc(&mut self, name: &str) -> &'static str {
+        let cap = self.buf.capacity();
+        if cap < self.buf.len() + name.len() {
+            let new_cap = (cap.max(name.len()) + 1).next_power_of_two();
+            let new_buf = String::with_capacity(new_cap);
+            let old_buf = mem::replace(&mut self.buf, new_buf);
+            self.full.push(old_buf);
+        }
+        let interned = {
+            let start = self.buf.len();
+            self.buf.push_str(name);
+            &self.buf[start..]
+        };
+        &*(interned as *const str)
     }
 }

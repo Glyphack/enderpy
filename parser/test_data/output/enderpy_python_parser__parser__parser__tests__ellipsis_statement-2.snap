@@ -14,9 +14,7 @@ Module {
                     start: 0,
                     end: 16,
                 },
-                name: StrId(
-                    0,
-                ),
+                name: a,
                 args: Arguments {
                     node: Node {
                         start: 6,

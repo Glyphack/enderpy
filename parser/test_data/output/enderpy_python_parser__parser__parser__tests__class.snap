@@ -14,9 +14,7 @@ Module {
                     start: 0,
                     end: 13,
                 },
-                name: StrId(
-                    0,
-                ),
+                name: a,
                 bases: [],
                 keywords: [],
                 body: [
@@ -39,9 +37,7 @@ Module {
                     start: 15,
                     end: 36,
                 },
-                name: StrId(
-                    0,
-                ),
+                name: a,
                 bases: [],
                 keywords: [],
                 body: [
@@ -64,9 +60,7 @@ Module {
                     start: 36,
                     end: 55,
                 },
-                name: StrId(
-                    0,
-                ),
+                name: a,
                 bases: [
                     Name(
                         Name {
@@ -108,9 +102,7 @@ Module {
                     start: 57,
                     end: 82,
                 },
-                name: StrId(
-                    0,
-                ),
+                name: a,
                 bases: [
                     Name(
                         Name {
@@ -177,9 +169,7 @@ Module {
                     start: 84,
                     end: 106,
                 },
-                name: StrId(
-                    0,
-                ),
+                name: a,
                 bases: [
                     Name(
                         Name {
@@ -230,9 +220,7 @@ Module {
                     start: 108,
                     end: 128,
                 },
-                name: StrId(
-                    0,
-                ),
+                name: a,
                 bases: [],
                 keywords: [],
                 body: [
@@ -265,9 +253,7 @@ Module {
                     start: 130,
                     end: 146,
                 },
-                name: StrId(
-                    0,
-                ),
+                name: a,
                 bases: [],
                 keywords: [],
                 body: [
@@ -301,9 +287,7 @@ Module {
                     start: 148,
                     end: 167,
                 },
-                name: StrId(
-                    0,
-                ),
+                name: a,
                 bases: [],
                 keywords: [],
                 body: [
@@ -347,9 +331,7 @@ Module {
                     start: 169,
                     end: 188,
                 },
-                name: StrId(
-                    0,
-                ),
+                name: a,
                 bases: [],
                 keywords: [],
                 body: [
@@ -393,9 +375,7 @@ Module {
                     start: 190,
                     end: 215,
                 },
-                name: StrId(
-                    0,
-                ),
+                name: a,
                 bases: [],
                 keywords: [],
                 body: [
@@ -459,9 +439,7 @@ Module {
                     start: 217,
                     end: 234,
                 },
-                name: StrId(
-                    0,
-                ),
+                name: a,
                 bases: [],
                 keywords: [],
                 body: [
@@ -494,9 +472,7 @@ Module {
                     start: 236,
                     end: 256,
                 },
-                name: StrId(
-                    0,
-                ),
+                name: a,
                 bases: [],
                 keywords: [],
                 body: [
@@ -539,9 +515,7 @@ Module {
                     start: 258,
                     end: 281,
                 },
-                name: StrId(
-                    0,
-                ),
+                name: a,
                 bases: [],
                 keywords: [],
                 body: [
@@ -594,9 +568,7 @@ Module {
                     start: 283,
                     end: 312,
                 },
-                name: StrId(
-                    0,
-                ),
+                name: a,
                 bases: [],
                 keywords: [],
                 body: [
@@ -669,9 +641,7 @@ Module {
                     start: 314,
                     end: 332,
                 },
-                name: StrId(
-                    0,
-                ),
+                name: a,
                 bases: [],
                 keywords: [],
                 body: [
@@ -704,9 +674,7 @@ Module {
                     start: 334,
                     end: 355,
                 },
-                name: StrId(
-                    0,
-                ),
+                name: a,
                 bases: [],
                 keywords: [],
                 body: [
@@ -749,9 +717,7 @@ Module {
                     start: 357,
                     end: 381,
                 },
-                name: StrId(
-                    0,
-                ),
+                name: a,
                 bases: [],
                 keywords: [],
                 body: [
@@ -804,9 +770,7 @@ Module {
                     start: 383,
                     end: 413,
                 },
-                name: StrId(
-                    0,
-                ),
+                name: a,
                 bases: [],
                 keywords: [],
                 body: [
@@ -879,9 +843,7 @@ Module {
                     start: 415,
                     end: 440,
                 },
-                name: StrId(
-                    0,
-                ),
+                name: a,
                 bases: [],
                 keywords: [],
                 body: [
@@ -933,9 +895,7 @@ Module {
                     start: 442,
                     end: 470,
                 },
-                name: StrId(
-                    0,
-                ),
+                name: a,
                 bases: [],
                 keywords: [],
                 body: [

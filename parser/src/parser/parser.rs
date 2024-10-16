@@ -4,7 +4,10 @@ use core::panic;
 /// For example star expressions are defined slightly differently in python grammar and references.
 /// So there might be duplicates of both. Try to migrate the wrong names to how they are called in:
 /// https://docs.python.org/3/reference/grammar.html
-use std::{cell::OnceCell, sync::Arc, vec};
+use std::{
+    sync::{Arc, OnceLock, RwLock},
+    vec,
+};
 
 use miette::Result;
 
@@ -12,18 +15,23 @@ use super::{concat_string_exprs, is_at_compound_statement, is_iterable, map_unar
 use crate::{
     error::ParsingError,
     get_row_col_position,
-    intern::Interner,
+    intern::{Interner, StrId},
     lexer::Lexer,
     parser::{ast::*, extract_string_inside},
     token::{Kind, Token},
 };
-static mut INTERNER: OnceCell<Interner> = OnceCell::new();
+static INTERNER: OnceLock<RwLock<Interner>> = OnceLock::new();
 
-pub fn interner() -> &'static mut Interner {
-    unsafe {
-        INTERNER.get_or_init(Interner::default);
-        return INTERNER.get_mut().unwrap();
-    }
+pub fn intern_lookup(s: StrId) -> &'static str {
+    let val = INTERNER.get_or_init(|| RwLock::new(Interner::with_capacity(100)));
+    let v2 = val.read().unwrap();
+    v2.lookup(s)
+}
+
+pub fn intern(s: &str) -> StrId {
+    let val = INTERNER.get_or_init(|| RwLock::new(Interner::with_capacity(100)));
+    let mut v2 = val.write().unwrap();
+    v2.intern(s)
 }
 
 #[derive(Debug)]
@@ -31,7 +39,6 @@ pub struct Parser<'a> {
     pub identifiers_start_offset: Vec<(u32, u32, String)>,
     pub source: &'a str,
     pub lexer: Lexer<'a>,
-    pub interner: &'a mut Interner,
     cur_token: Token,
     prev_token_end: u32,
     prev_nonwhitespace_token_end: u32,
@@ -71,7 +78,6 @@ impl<'a> Parser<'a> {
             prev_nonwhitespace_token_end: prev_token_end,
             nested_expression_list,
             identifiers_start_offset: identifiers_offset,
-            interner: interner(),
         }
     }
 
@@ -589,7 +595,7 @@ impl<'a> Parser<'a> {
         decorators: Vec<Expression>,
         is_async: bool,
     ) -> Result<Statement, ParsingError> {
-        let name = self.interner.intern(self.cur_token().as_str(self.source));
+        let name = intern(self.cur_token().as_str(self.source));
         self.expect(Kind::Identifier)?;
         let type_params = if self.at(Kind::LeftBrace) {
             self.parse_type_parameters()?
@@ -669,7 +675,7 @@ impl<'a> Parser<'a> {
             self.start_node()
         };
         self.expect(Kind::Class)?;
-        let name = self.interner.intern(self.cur_token().as_str(self.source));
+        let name = intern(self.cur_token().as_str(self.source));
         self.expect(Kind::Identifier)?;
         let type_params = if self.at(Kind::LeftBrace) {
             self.parse_type_parameters()?

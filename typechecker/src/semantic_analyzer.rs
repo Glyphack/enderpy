@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use enderpy_python_parser::ast::Expression;
-use enderpy_python_parser::parser::parser::interner;
+use enderpy_python_parser::parser::parser::intern_lookup;
 use enderpy_python_parser::{self as parser};
 
 use parser::ast::{self, GetNode, Name, Statement};
@@ -122,8 +122,8 @@ impl<'a> SemanticAnalyzer<'a> {
                     self.symbol_table.current_scope().kind.as_function()
                 {
                     // TODO: some python usual names to be interned
-                    if interner().lookup(function_def.name) == "__init__"
-                        || interner().lookup(function_def.name) == "__new__"
+                    if intern_lookup(function_def.name) == "__init__"
+                        || intern_lookup(function_def.name) == "__new__"
                     {
                         true
                     } else {
@@ -511,7 +511,7 @@ impl<'a> TraversalVisitor for SemanticAnalyzer<'a> {
         }
         self.symbol_table.push_scope(SymbolTableScope::new(
             crate::symbol_table::SymbolTableType::Function(Arc::clone(f)),
-            interner().lookup(f.name).to_owned(),
+            intern_lookup(f.name).to_owned(),
             f.node.start,
             self.symbol_table.current_scope_id,
         ));
@@ -559,7 +559,7 @@ impl<'a> TraversalVisitor for SemanticAnalyzer<'a> {
         });
         let flags = SymbolFlags::empty();
         self.create_symbol(
-            interner().lookup(f.name).to_owned(),
+            intern_lookup(f.name).to_owned(),
             function_declaration,
             flags,
         );
@@ -574,7 +574,7 @@ impl<'a> TraversalVisitor for SemanticAnalyzer<'a> {
 
         self.symbol_table.push_scope(SymbolTableScope::new(
             SymbolTableType::Function(Arc::new(f.to_function_def())),
-            interner().lookup(f.name).to_owned(),
+            intern_lookup(f.name).to_owned(),
             f.node.start,
             self.symbol_table.current_scope_id,
         ));
@@ -621,7 +621,7 @@ impl<'a> TraversalVisitor for SemanticAnalyzer<'a> {
         });
         let flags = SymbolFlags::empty();
         self.create_symbol(
-            interner().lookup(f.name).to_string(),
+            intern_lookup(f.name).to_string(),
             function_declaration,
             flags,
         );
@@ -648,7 +648,7 @@ impl<'a> TraversalVisitor for SemanticAnalyzer<'a> {
     fn visit_class_def(&mut self, c: &Arc<parser::ast::ClassDef>) {
         self.symbol_table.push_scope(SymbolTableScope::new(
             SymbolTableType::Class(c.clone()),
-            interner().lookup(c.name).to_owned(),
+            intern_lookup(c.name).to_owned(),
             c.node.start,
             self.symbol_table.current_scope_id,
         ));
@@ -693,14 +693,10 @@ impl<'a> TraversalVisitor for SemanticAnalyzer<'a> {
             Arc::clone(c),
             class_declaration_path,
             class_body_scope_id,
-            interner().lookup(c.name),
+            intern_lookup(c.name),
         ));
         let flags = SymbolFlags::empty();
-        self.create_symbol(
-            interner().lookup(c.name).to_string(),
-            class_declaration,
-            flags,
-        );
+        self.create_symbol(intern_lookup(c.name).to_string(), class_declaration, flags);
     }
 
     fn visit_match(&mut self, m: &parser::ast::Match) {
@@ -880,7 +876,7 @@ pub fn get_member_access_info(
     }
 
     // e.g. "MyClass.x = 1"
-    if value_name == interner().lookup(enclosing_class.name) || is_class_member {
+    if value_name == intern_lookup(enclosing_class.name) || is_class_member {
         Some(false)
     } else {
         Some(true)
