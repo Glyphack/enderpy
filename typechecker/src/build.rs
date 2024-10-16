@@ -173,7 +173,7 @@ fn gather_imports<'a>(
             execution_environment,
             import_config,
             host,
-            // &import_results,
+            &import_results,
         );
         new_modules.insert(module);
         for (import_desc, mut resolved) in resolved_imports {
@@ -240,6 +240,7 @@ fn resolve_file_imports(
     execution_environment: &ruff_python_resolver::execution_environment::ExecutionEnvironment,
     import_config: &ruff_python_resolver::config::Config,
     host: &ruff_python_resolver::host::StaticHost,
+    resolved_imports: &ResolvedImports,
 ) -> HashMap<ImportModuleDescriptor, ImportResult> {
     let mut imports = HashMap::new();
     debug!("resolving imports for file {:?}", file.path);
@@ -256,6 +257,9 @@ fn resolve_file_imports(
         };
 
         for import_desc in import_descriptions {
+            if resolved_imports.contains_key(&import_desc) {
+                continue;
+            }
             // TODO: Cache non relative imports
             let resolved = match false {
                 true => continue,
