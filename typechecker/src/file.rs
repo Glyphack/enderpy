@@ -11,8 +11,8 @@ use parser::{ast, get_row_col_position, parser::parser::Parser};
 use std::sync::atomic::Ordering;
 
 use crate::build::ResolvedImports;
+use crate::symbol_table;
 use crate::{diagnostic::Position, semantic_analyzer::SemanticAnalyzer, symbol_table::SymbolTable};
-use crate::{get_module_name, symbol_table};
 
 #[derive(Clone, Debug)]
 pub enum ImportKinds<'a> {
@@ -25,7 +25,6 @@ pub enum ImportKinds<'a> {
 #[derive(Clone, Debug)]
 pub struct EnderpyFile {
     pub id: symbol_table::Id,
-    pub module: String,
     // if this source is found by following an import
     pub followed: bool,
     pub path: Arc<PathBuf>,
@@ -58,7 +57,6 @@ impl<'a> EnderpyFile {
     pub fn new(path: PathBuf, followed: bool) -> Self {
         let source =
             std::fs::read_to_string(&path).unwrap_or_else(|_| panic!("cannot read file {path:?}"));
-        let module = get_module_name(&path);
 
         let mut parser = Parser::new(&source);
         let parse_result = catch_unwind(AssertUnwindSafe(|| parser.parse()));
@@ -71,7 +69,7 @@ impl<'a> EnderpyFile {
                 panic!("Cannot parse file : {path:?}");
             }
         };
-        let line_starts = parser.lexer.line_starts.clone();
+        let line_starts = parser.lexer.line_starts;
 
         let id = if path.ends_with("builtins.pyi") {
             symbol_table::Id(0)
@@ -84,13 +82,9 @@ impl<'a> EnderpyFile {
             source,
             line_starts,
             followed,
-            module,
             tree,
             path: Arc::new(path),
         }
-    }
-    pub fn module_name(&self) -> String {
-        self.module.clone()
     }
 
     pub fn path(&self) -> PathBuf {

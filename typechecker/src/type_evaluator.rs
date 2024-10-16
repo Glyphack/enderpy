@@ -327,7 +327,7 @@ impl<'a> TypeEvaluator<'a> {
                 // Case 1
                 // This is self or cls
                 let file = &self.build_manager.files.get(&symbol_table.id).unwrap();
-                if get_member_access_info(symbol_table, file, &a.value).is_some() {
+                if get_member_access_info(symbol_table, &a.value).is_some() {
                     let enclosing_parent_class = symbol_table.get_enclosing_class_scope();
                     if let Some(enclosing_parent_class) = enclosing_parent_class {
                         let symbol_table_node =
@@ -1604,7 +1604,7 @@ impl<'a> TypeEvaluator<'a> {
     ) -> PythonType {
         // TODO: handle default values
 
-        let name = f.function_node.name.clone();
+        let name = f.function_node.name;
         let signature =
             self.get_function_signature(&f.function_node.args, symbol_table, arguments_scope_id);
         let return_type =
@@ -1634,7 +1634,7 @@ impl<'a> TypeEvaluator<'a> {
         scope_id: u32,
     ) -> PythonType {
         let arguments = f.function_node.args.clone();
-        let name = f.function_node.name.clone();
+        let name = f.function_node.name;
         let signature = self.get_function_signature(&f.function_node.args, symbol_table, scope_id);
         let return_type = f
             .function_node

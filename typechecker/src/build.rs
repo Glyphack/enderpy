@@ -1,7 +1,7 @@
 use std::{
     collections::{HashMap, HashSet},
     path::{Path, PathBuf},
-    sync::{Arc, RwLockWriteGuard},
+    sync::Arc,
 };
 use tracing::{span, Level};
 use tracing_subscriber::EnvFilter;

@@ -110,8 +110,7 @@ impl<'a> SemanticAnalyzer<'a> {
                 }
             }
             Expression::Attribute(a) => {
-                let member_access_info =
-                    get_member_access_info(&self.symbol_table, &self.file, &a.value);
+                let member_access_info = get_member_access_info(&self.symbol_table, &a.value);
                 let symbol_flags = if member_access_info.is_some_and(|x| x) {
                     SymbolFlags::INSTANCE_MEMBER
                 } else {
@@ -122,13 +121,8 @@ impl<'a> SemanticAnalyzer<'a> {
                     self.symbol_table.current_scope().kind.as_function()
                 {
                     // TODO: some python usual names to be interned
-                    if intern_lookup(function_def.name) == "__init__"
+                    intern_lookup(function_def.name) == "__init__"
                         || intern_lookup(function_def.name) == "__new__"
-                    {
-                        true
-                    } else {
-                        false
-                    }
                 } else {
                     false
                 };
@@ -841,7 +835,6 @@ pub struct MemberAccessInfo {}
 // or true if the member is an instance member and false if it is a class member
 pub fn get_member_access_info(
     symbol_table: &SymbolTable,
-    file: &EnderpyFile,
     value: &parser::ast::Expression,
     //TODO: This is option to use the `?` operator. Remove it
 ) -> Option<bool> {
