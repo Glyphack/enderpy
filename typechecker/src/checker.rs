@@ -3,6 +3,7 @@ use std::sync::Arc;
 use ast::{Expression, Statement};
 use enderpy_python_parser as parser;
 use enderpy_python_parser::ast::{self, *};
+use enderpy_python_parser::parser::parser::interner;
 
 use super::{type_evaluator::TypeEvaluator, types::PythonType};
 use crate::build::BuildManager;
@@ -313,7 +314,7 @@ impl<'a> TraversalVisitor for TypeChecker<'a> {
     fn visit_function_def(&mut self, f: &Arc<parser::ast::FunctionDef>) {
         let file = &self.build_manager.files.get(&self.id).unwrap();
         self.enter_scope(f.node.start);
-        let name = file.interner.lookup(f.name);
+        let name = interner().lookup(f.name);
         self.infer_name_type(name, f.node.start + 4, f.node.start + 4 + name.len() as u32);
         if let Some(ret_type) = &f.returns {
             self.visit_expr(ret_type);
@@ -334,7 +335,7 @@ impl<'a> TraversalVisitor for TypeChecker<'a> {
     fn visit_async_function_def(&mut self, f: &Arc<parser::ast::AsyncFunctionDef>) {
         let file = &self.build_manager.files.get(&self.id).unwrap();
         self.enter_scope(f.node.start);
-        let name = file.interner.lookup(f.name);
+        let name = interner().lookup(f.name);
         self.infer_name_type(name, f.node.start + 9, f.node.start + 9 + name.len() as u32);
         for stmt in &f.body {
             self.visit_stmt(stmt);
@@ -344,7 +345,7 @@ impl<'a> TraversalVisitor for TypeChecker<'a> {
 
     fn visit_class_def(&mut self, c: &Arc<parser::ast::ClassDef>) {
         let file = &self.build_manager.files.get(&self.id).unwrap();
-        let name = file.interner.lookup(c.name);
+        let name = interner().lookup(c.name);
         self.infer_name_type(name, c.node.start + 6, c.node.start + 6 + name.len() as u32);
 
         self.enter_scope(c.node.start);

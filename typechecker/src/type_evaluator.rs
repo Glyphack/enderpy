@@ -2,7 +2,7 @@
 #![allow(unused_variables)]
 
 use core::panic;
-use enderpy_python_parser::{self as parser};
+use enderpy_python_parser::{self as parser, parser::parser::interner};
 use parser::ast;
 use parser::parser::parser::Parser;
 use std::{
@@ -1638,7 +1638,7 @@ impl<'a> TypeEvaluator<'a> {
             .get(&f.declaration_path.symbol_table_id)
             .unwrap();
         PythonType::Callable(Box::new(CallableType::new(
-            file.interner.lookup(name).to_string(),
+            interner().lookup(name).to_string(),
             signature,
             return_type,
             false,
@@ -1668,7 +1668,7 @@ impl<'a> TypeEvaluator<'a> {
             .get(&f.declaration_path.symbol_table_id)
             .unwrap();
         PythonType::Callable(Box::new(CallableType::new(
-            file.interner.lookup(name).to_string(),
+            interner().lookup(name).to_string(),
             signature,
             PythonType::Coroutine(Box::new(types::CoroutineType {
                 return_type,

@@ -4,7 +4,7 @@ use core::panic;
 /// For example star expressions are defined slightly differently in python grammar and references.
 /// So there might be duplicates of both. Try to migrate the wrong names to how they are called in:
 /// https://docs.python.org/3/reference/grammar.html
-use std::{sync::Arc, vec};
+use std::{cell::OnceCell, sync::Arc, vec};
 
 use miette::Result;
 
@@ -17,13 +17,21 @@ use crate::{
     parser::{ast::*, extract_string_inside},
     token::{Kind, Token},
 };
+static mut INTERNER: OnceCell<Interner> = OnceCell::new();
 
-#[derive(Debug, Clone)]
+pub fn interner() -> &'static mut Interner {
+    unsafe {
+        INTERNER.get_or_init(Interner::default);
+        return INTERNER.get_mut().unwrap();
+    }
+}
+
+#[derive(Debug)]
 pub struct Parser<'a> {
     pub identifiers_start_offset: Vec<(u32, u32, String)>,
     pub source: &'a str,
     pub lexer: Lexer<'a>,
-    pub interner: Interner,
+    pub interner: &'a mut Interner,
     cur_token: Token,
     prev_token_end: u32,
     prev_nonwhitespace_token_end: u32,
@@ -63,7 +71,7 @@ impl<'a> Parser<'a> {
             prev_nonwhitespace_token_end: prev_token_end,
             nested_expression_list,
             identifiers_start_offset: identifiers_offset,
-            interner: Interner::default(),
+            interner: interner(),
         }
     }
 

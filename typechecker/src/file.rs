@@ -7,7 +7,6 @@ use std::sync::Arc;
 use crate::ast_visitor::TraversalVisitor;
 use enderpy_python_parser as parser;
 use enderpy_python_parser::ast::*;
-use enderpy_python_parser::intern::Interner;
 use parser::{ast, get_row_col_position, parser::parser::Parser};
 use std::sync::atomic::Ordering;
 
@@ -33,7 +32,6 @@ pub struct EnderpyFile {
     pub source: String,
     pub line_starts: Vec<u32>,
     pub tree: ast::Module,
-    pub interner: Interner,
 }
 
 impl<'a> Eq for EnderpyFile {}
@@ -74,7 +72,6 @@ impl<'a> EnderpyFile {
             }
         };
         let line_starts = parser.lexer.line_starts.clone();
-        let interner = parser.interner;
 
         let id = if path.ends_with("builtins.pyi") {
             symbol_table::Id(0)
@@ -90,7 +87,6 @@ impl<'a> EnderpyFile {
             module,
             tree,
             path: Arc::new(path),
-            interner,
         }
     }
     pub fn module_name(&self) -> String {
