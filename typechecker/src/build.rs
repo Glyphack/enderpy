@@ -13,8 +13,8 @@ use crate::{
     checker::TypeChecker,
     file::{EnderpyFile, ImportKinds},
     ruff_python_import_resolver::{
-        self as ruff_python_resolver, config::Config, execution_environment,
-        import_result::ImportResult, module_descriptor::ImportModuleDescriptor, resolver,
+        self as ruff_python_resolver, execution_environment, import_result::ImportResult,
+        module_descriptor::ImportModuleDescriptor, resolver,
     },
     settings::Settings,
     symbol_table::{Id, SymbolTable},
@@ -23,10 +23,10 @@ use crate::{
 #[derive(Debug)]
 pub struct BuildManager {
     pub files: DashMap<Id, EnderpyFile>,
-    pub symbol_tables: DashMap<Id, SymbolTable>,
+    pub symbol_tables: DashMap<Id, Arc<SymbolTable>>,
     pub paths: DashMap<PathBuf, Id>,
     pub settings: Settings,
-    import_config: Config,
+    import_config: ruff_python_resolver::config::Config,
     host: ruff_python_resolver::host::StaticHost,
 }
 #[allow(unused)]
@@ -39,7 +39,7 @@ impl<'a> BuildManager {
             .try_init();
 
         let mut modules = DashMap::new();
-        let import_config = Config {
+        let import_config = ruff_python_resolver::config::Config {
             typeshed_path: Some(settings.typeshed_path.clone()),
             stub_path: None,
             venv_path: None,
@@ -67,7 +67,7 @@ impl<'a> BuildManager {
         log::debug!("Imports resolved");
         for mut module in new_modules {
             let sym_table = module.populate_symbol_table(&imports);
-            self.symbol_tables.insert(module.id, sym_table);
+            self.symbol_tables.insert(module.id, Arc::new(sym_table));
             self.paths.insert(module.path.to_path_buf(), module.id);
             self.files.insert(module.id, module);
         }
@@ -83,7 +83,7 @@ impl<'a> BuildManager {
         log::debug!("Imports resolved");
         for mut module in new_modules {
             let sym_table = module.populate_symbol_table(&imports);
-            self.symbol_tables.insert(module.id, sym_table);
+            self.symbol_tables.insert(module.id, Arc::new(sym_table));
             self.paths.insert(module.path.to_path_buf(), module.id);
             self.files.insert(module.id, module);
         }
@@ -105,10 +105,13 @@ impl<'a> BuildManager {
         checker
     }
 
-    pub fn get_symbol_table(&self, path: &Path) -> SymbolTable {
+    pub fn get_symbol_table_by_path(&'a self, path: &Path) -> Arc<SymbolTable> {
         let module_id = self.paths.get(path).expect("incorrect ID");
-        let symbol_table = self.symbol_tables.get(module_id.value());
+        return self.get_symbol_table_by_id(&module_id);
+    }
 
+    pub fn get_symbol_table_by_id(&'a self, id: &Id) -> Arc<SymbolTable> {
+        let symbol_table = self.symbol_tables.get_mut(id);
         return symbol_table
             .expect("symbol table not found")
             .value()
@@ -118,7 +121,7 @@ impl<'a> BuildManager {
     pub fn get_hover_information(&self, path: &Path, line: u32, column: u32) -> String {
         let file = self.files.get(&self.paths.get(path).unwrap()).unwrap();
         let checker = self.type_check(path, &file);
-        let symbol_table = self.get_symbol_table(path);
+        let symbol_table = self.get_symbol_table_by_path(path);
         let hovered_offset = file.line_starts[line as usize] + column;
 
         let hovered_offset_start = hovered_offset.saturating_sub(1);
@@ -170,7 +173,7 @@ fn gather_imports<'a>(
             execution_environment,
             import_config,
             host,
-            // &import_results,
+            &import_results,
         );
         new_modules.insert(module);
         for (import_desc, mut resolved) in resolved_imports {
@@ -237,6 +240,7 @@ fn resolve_file_imports(
     execution_environment: &ruff_python_resolver::execution_environment::ExecutionEnvironment,
     import_config: &ruff_python_resolver::config::Config,
     host: &ruff_python_resolver::host::StaticHost,
+    resolved_imports: &ResolvedImports,
 ) -> HashMap<ImportModuleDescriptor, ImportResult> {
     let mut imports = HashMap::new();
     debug!("resolving imports for file {:?}", file.path);
@@ -253,6 +257,9 @@ fn resolve_file_imports(
         };
 
         for import_desc in import_descriptions {
+            if resolved_imports.contains_key(&import_desc) {
+                continue;
+            }
             // TODO: Cache non relative imports
             let resolved = match false {
                 true => continue,
@@ -291,7 +298,7 @@ mod tests {
                 manager.build(root);
                 manager.build_one(root, &path);
 
-                let symbol_table = manager.get_symbol_table(&path);
+                let symbol_table = manager.get_symbol_table_by_path(&path);
 
                 let result = format!("{}", symbol_table);
                 let mut settings = insta::Settings::clone_current();

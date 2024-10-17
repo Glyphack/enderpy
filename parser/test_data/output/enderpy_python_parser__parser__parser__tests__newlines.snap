@@ -155,7 +155,7 @@ Module {
                     start: 68,
                     end: 99,
                 },
-                name: "hello",
+                name: hello,
                 args: Arguments {
                     node: Node {
                         start: 83,
@@ -211,10 +211,7 @@ Module {
                     start: 102,
                     end: 135,
                 },
-                name: TextRange {
-                    start: 108,
-                    end: 109,
-                },
+                name: A,
                 bases: [
                     Name(
                         Name {

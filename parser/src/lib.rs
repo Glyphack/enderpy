@@ -5,6 +5,7 @@ pub mod parser;
 pub use crate::lexer::Lexer;
 
 pub mod error;
+pub mod intern;
 pub mod token;
 
 pub fn get_row_col_position(start: u32, end: u32, line_starts: &[u32]) -> (u32, u32, u32, u32) {

@@ -1,7 +1,8 @@
 use std::sync::Arc;
 
-use enderpy_python_parser as parser;
 use enderpy_python_parser::ast::Expression;
+use enderpy_python_parser::parser::parser::intern_lookup;
+use enderpy_python_parser::{self as parser};
 
 use parser::ast::{self, GetNode, Name, Statement};
 
@@ -109,15 +110,24 @@ impl<'a> SemanticAnalyzer<'a> {
                 }
             }
             Expression::Attribute(a) => {
-                let member_access_info =
-                    get_member_access_info(&self.symbol_table, &a.value, &self.file.source);
+                let member_access_info = get_member_access_info(&self.symbol_table, &a.value);
                 let symbol_flags = if member_access_info.is_some_and(|x| x) {
                     SymbolFlags::INSTANCE_MEMBER
                 } else {
                     SymbolFlags::CLASS_MEMBER
                 };
 
-                if self.function_assigns_attribute(&self.symbol_table) {
+                let function_assigns_attribute = if let Some(function_def) =
+                    self.symbol_table.current_scope().kind.as_function()
+                {
+                    // TODO: some python usual names to be interned
+                    intern_lookup(function_def.name) == "__init__"
+                        || intern_lookup(function_def.name) == "__new__"
+                } else {
+                    false
+                };
+
+                if function_assigns_attribute {
                     let declaration_path = DeclarationPath::new(
                         self.symbol_table.id,
                         a.node,
@@ -250,17 +260,6 @@ impl<'a> SemanticAnalyzer<'a> {
                 flags,
             );
         }
-    }
-
-    /// Returns true if the current function assigns an attribute to an object
-    /// Functions like __init__ and __new__ are considered to assign attributes
-    fn function_assigns_attribute(&self, symbol_table: &SymbolTable) -> bool {
-        if let Some(function_def) = symbol_table.current_scope().kind.as_function() {
-            if function_def.name == "__init__" || function_def.name == "__new__" {
-                return true;
-            }
-        }
-        false
     }
 }
 
@@ -506,7 +505,7 @@ impl<'a> TraversalVisitor for SemanticAnalyzer<'a> {
         }
         self.symbol_table.push_scope(SymbolTableScope::new(
             crate::symbol_table::SymbolTableType::Function(Arc::clone(f)),
-            f.name.clone(),
+            intern_lookup(f.name).to_owned(),
             f.node.start,
             self.symbol_table.current_scope_id,
         ));
@@ -553,7 +552,11 @@ impl<'a> TraversalVisitor for SemanticAnalyzer<'a> {
             raise_statements: vec![],
         });
         let flags = SymbolFlags::empty();
-        self.create_symbol(f.name.clone(), function_declaration, flags);
+        self.create_symbol(
+            intern_lookup(f.name).to_owned(),
+            function_declaration,
+            flags,
+        );
     }
 
     fn visit_async_function_def(&mut self, f: &Arc<parser::ast::AsyncFunctionDef>) {
@@ -565,7 +568,7 @@ impl<'a> TraversalVisitor for SemanticAnalyzer<'a> {
 
         self.symbol_table.push_scope(SymbolTableScope::new(
             SymbolTableType::Function(Arc::new(f.to_function_def())),
-            f.name.clone(),
+            intern_lookup(f.name).to_owned(),
             f.node.start,
             self.symbol_table.current_scope_id,
         ));
@@ -611,7 +614,11 @@ impl<'a> TraversalVisitor for SemanticAnalyzer<'a> {
             raise_statements: vec![],
         });
         let flags = SymbolFlags::empty();
-        self.create_symbol(f.name.clone(), function_declaration, flags);
+        self.create_symbol(
+            intern_lookup(f.name).to_string(),
+            function_declaration,
+            flags,
+        );
     }
 
     fn visit_type_alias(&mut self, t: &parser::ast::TypeAlias) {
@@ -631,11 +638,11 @@ impl<'a> TraversalVisitor for SemanticAnalyzer<'a> {
         );
     }
 
+    // TODO: here I'm looking up the name 3 times because of immutable borrow
     fn visit_class_def(&mut self, c: &Arc<parser::ast::ClassDef>) {
-        let name = c.name(&self.file.source);
         self.symbol_table.push_scope(SymbolTableScope::new(
             SymbolTableType::Class(c.clone()),
-            name.to_string(),
+            intern_lookup(c.name).to_owned(),
             c.node.start,
             self.symbol_table.current_scope_id,
         ));
@@ -680,10 +687,10 @@ impl<'a> TraversalVisitor for SemanticAnalyzer<'a> {
             Arc::clone(c),
             class_declaration_path,
             class_body_scope_id,
-            name,
+            intern_lookup(c.name),
         ));
         let flags = SymbolFlags::empty();
-        self.create_symbol(name.to_string(), class_declaration, flags);
+        self.create_symbol(intern_lookup(c.name).to_string(), class_declaration, flags);
     }
 
     fn visit_match(&mut self, m: &parser::ast::Match) {
@@ -829,7 +836,6 @@ pub struct MemberAccessInfo {}
 pub fn get_member_access_info(
     symbol_table: &SymbolTable,
     value: &parser::ast::Expression,
-    source: &str,
     //TODO: This is option to use the `?` operator. Remove it
 ) -> Option<bool> {
     let name = value.as_name()?;
@@ -863,7 +869,7 @@ pub fn get_member_access_info(
     }
 
     // e.g. "MyClass.x = 1"
-    if value_name == enclosing_class.name(source) || is_class_member {
+    if value_name == intern_lookup(enclosing_class.name) || is_class_member {
         Some(false)
     } else {
         Some(true)

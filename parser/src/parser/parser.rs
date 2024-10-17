@@ -4,7 +4,10 @@ use core::panic;
 /// For example star expressions are defined slightly differently in python grammar and references.
 /// So there might be duplicates of both. Try to migrate the wrong names to how they are called in:
 /// https://docs.python.org/3/reference/grammar.html
-use std::{sync::Arc, vec};
+use std::{
+    sync::{Arc, OnceLock, RwLock},
+    vec,
+};
 
 use miette::Result;
 
@@ -12,12 +15,26 @@ use super::{concat_string_exprs, is_at_compound_statement, is_iterable, map_unar
 use crate::{
     error::ParsingError,
     get_row_col_position,
+    intern::{Interner, StrId},
     lexer::Lexer,
     parser::{ast::*, extract_string_inside},
     token::{Kind, Token},
 };
+static INTERNER: OnceLock<RwLock<Interner>> = OnceLock::new();
 
-#[derive(Debug, Clone)]
+pub fn intern_lookup(s: StrId) -> &'static str {
+    let val = INTERNER.get_or_init(|| RwLock::new(Interner::with_capacity(100)));
+    let v2 = val.read().unwrap();
+    v2.lookup(s)
+}
+
+pub fn intern(s: &str) -> StrId {
+    let val = INTERNER.get_or_init(|| RwLock::new(Interner::with_capacity(100)));
+    let mut v2 = val.write().unwrap();
+    v2.intern(s)
+}
+
+#[derive(Debug)]
 pub struct Parser<'a> {
     pub identifiers_start_offset: Vec<(u32, u32, String)>,
     pub source: &'a str,
@@ -86,7 +103,7 @@ impl<'a> Parser<'a> {
         // Remove the EOF offset
         node.end.saturating_sub(1);
 
-        Ok(Module { node, body })
+        Ok(Module::new(node, body))
     }
 
     fn start_node(&self) -> Node {
@@ -578,7 +595,7 @@ impl<'a> Parser<'a> {
         decorators: Vec<Expression>,
         is_async: bool,
     ) -> Result<Statement, ParsingError> {
-        let name = self.cur_token().to_string(self.source);
+        let name = intern(self.cur_token().as_str(self.source));
         self.expect(Kind::Identifier)?;
         let type_params = if self.at(Kind::LeftBrace) {
             self.parse_type_parameters()?
@@ -598,28 +615,30 @@ impl<'a> Parser<'a> {
         self.expect(Kind::Colon)?;
         let body = self.parse_suite()?;
         if is_async {
-            Ok(Statement::AsyncFunctionDef(Arc::new(AsyncFunctionDef {
-                node: self.finish_node_chomped(node),
-                name,
-                args,
-                body,
-                decorator_list: decorators,
-                returns: return_type,
-                type_comment: None,
-                type_params,
-            })))
+            Ok(Statement::AsyncFunctionDef(Arc::new(
+                AsyncFunctionDef::new(
+                    self.finish_node_chomped(node),
+                    name,
+                    args,
+                    body,
+                    decorators,
+                    return_type,
+                    None,
+                    type_params,
+                ),
+            )))
         } else {
-            Ok(Statement::FunctionDef(Arc::new(FunctionDef {
-                node: self.finish_node_chomped(node),
+            Ok(Statement::FunctionDef(Arc::new(FunctionDef::new(
+                self.finish_node_chomped(node),
                 name,
                 args,
                 body,
-                decorator_list: decorators,
-                returns: return_type,
+                decorators,
+                return_type,
                 // TODO: type comment
-                type_comment: None,
+                None,
                 type_params,
-            })))
+            ))))
         }
     }
 
@@ -656,10 +675,7 @@ impl<'a> Parser<'a> {
             self.start_node()
         };
         self.expect(Kind::Class)?;
-        let name_range = TextRange {
-            start: self.cur_token().start,
-            end: self.cur_token().end,
-        };
+        let name = intern(self.cur_token().as_str(self.source));
         self.expect(Kind::Identifier)?;
         let type_params = if self.at(Kind::LeftBrace) {
             self.parse_type_parameters()?
@@ -676,15 +692,15 @@ impl<'a> Parser<'a> {
         self.expect(Kind::Colon)?;
         let body = self.parse_suite()?;
 
-        Ok(Statement::ClassDef(Arc::new(ClassDef {
-            node: self.finish_node(node),
-            name: name_range,
+        Ok(Statement::ClassDef(Arc::new(ClassDef::new(
+            self.finish_node(node),
+            name,
             bases,
             keywords,
             body,
-            decorator_list: decorators,
+            decorators,
             type_params,
-        })))
+        ))))
     }
 
     // https://peps.python.org/pep-0622/#appendix-a-full-grammar

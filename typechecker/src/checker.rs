@@ -3,6 +3,7 @@ use std::sync::Arc;
 use ast::{Expression, Statement};
 use enderpy_python_parser as parser;
 use enderpy_python_parser::ast::{self, *};
+use enderpy_python_parser::parser::parser::intern_lookup;
 
 use super::{type_evaluator::TypeEvaluator, types::PythonType};
 use crate::build::BuildManager;
@@ -17,6 +18,8 @@ pub struct TypeChecker<'a> {
     id: Id,
     type_evaluator: TypeEvaluator<'a>,
     build_manager: &'a BuildManager,
+    current_scope: u32,
+    prev_scope: u32,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -33,6 +36,8 @@ impl<'a> TypeChecker<'a> {
             id,
             build_manager,
             types: Lapper::new(vec![]),
+            current_scope: 0,
+            prev_scope: 0,
         }
     }
 
@@ -41,18 +46,17 @@ impl<'a> TypeChecker<'a> {
     }
 
     fn infer_expr_type(&mut self, expr: &Expression) -> PythonType {
-        let symbol_table = self.build_manager.symbol_tables.get(&self.id).unwrap();
-        let t =
-            match self
-                .type_evaluator
-                .get_type(expr, &symbol_table, symbol_table.current_scope_id)
-            {
-                Ok(t) => t,
-                Err(e) => {
-                    log::error!("type evaluator error: {} for expr {expr:?}", e);
-                    PythonType::Unknown
-                }
-            };
+        let symbol_table = self.build_manager.get_symbol_table_by_id(&self.id);
+        let t = match self
+            .type_evaluator
+            .get_type(expr, &symbol_table, self.current_scope)
+        {
+            Ok(t) => t,
+            Err(e) => {
+                log::error!("type evaluator error: {} for expr {expr:?}", e);
+                PythonType::Unknown
+            }
+        };
 
         self.types.insert(Interval {
             start: expr.get_node().start,
@@ -63,12 +67,10 @@ impl<'a> TypeChecker<'a> {
     }
 
     fn infer_annotation_type(&mut self, expr: &Expression) -> PythonType {
-        let symbol_table = self.build_manager.symbol_tables.get(&self.id).unwrap();
-        let t = self.type_evaluator.get_annotation_type(
-            expr,
-            &symbol_table,
-            symbol_table.current_scope_id,
-        );
+        let symbol_table = self.build_manager.get_symbol_table_by_id(&self.id);
+        let t = self
+            .type_evaluator
+            .get_annotation_type(expr, &symbol_table, self.current_scope);
 
         self.types.insert(Interval {
             start: expr.get_node().start,
@@ -79,13 +81,10 @@ impl<'a> TypeChecker<'a> {
     }
 
     fn infer_name_type(&mut self, name: &str, start: u32, stop: u32) {
-        let symbol_table = self.build_manager.symbol_tables.get(&self.id).unwrap();
-        let name_type = self.type_evaluator.get_name_type(
-            name,
-            None,
-            &symbol_table,
-            symbol_table.current_scope_id,
-        );
+        let symbol_table = self.build_manager.get_symbol_table_by_id(&self.id);
+        let name_type =
+            self.type_evaluator
+                .get_name_type(name, None, &symbol_table, self.current_scope);
         self.types.insert(Interval {
             start,
             stop,
@@ -93,14 +92,14 @@ impl<'a> TypeChecker<'a> {
         });
     }
 
-    fn enter_scope(&self, pos: u32) {
-        let mut symbol_table = self.build_manager.symbol_tables.get_mut(&self.id).unwrap();
-        symbol_table.set_scope(pos);
+    fn enter_scope(&mut self, pos: u32) {
+        let symbol_table = self.build_manager.get_symbol_table_by_id(&self.id);
+        self.prev_scope = self.current_scope;
+        self.current_scope = symbol_table.get_scope(pos);
     }
 
-    fn leave_scope(&self) {
-        let mut symbol_table = self.build_manager.symbol_tables.get_mut(&self.id).unwrap();
-        symbol_table.revert_scope();
+    fn leave_scope(&mut self) {
+        self.current_scope = self.prev_scope;
     }
 
     pub fn dump_types(&self) -> String {
@@ -311,12 +310,10 @@ impl<'a> TraversalVisitor for TypeChecker<'a> {
     }
 
     fn visit_function_def(&mut self, f: &Arc<parser::ast::FunctionDef>) {
+        let file = &self.build_manager.files.get(&self.id).unwrap();
         self.enter_scope(f.node.start);
-        self.infer_name_type(
-            &f.name,
-            f.node.start + 4,
-            f.node.start + 4 + f.name.len() as u32,
-        );
+        let name = intern_lookup(f.name);
+        self.infer_name_type(name, f.node.start + 4, f.node.start + 4 + name.len() as u32);
         if let Some(ret_type) = &f.returns {
             self.visit_expr(ret_type);
         }
@@ -334,12 +331,10 @@ impl<'a> TraversalVisitor for TypeChecker<'a> {
     }
 
     fn visit_async_function_def(&mut self, f: &Arc<parser::ast::AsyncFunctionDef>) {
+        let file = &self.build_manager.files.get(&self.id).unwrap();
         self.enter_scope(f.node.start);
-        self.infer_name_type(
-            &f.name,
-            f.node.start + 9,
-            f.node.start + 9 + f.name.len() as u32,
-        );
+        let name = intern_lookup(f.name);
+        self.infer_name_type(name, f.node.start + 9, f.node.start + 9 + name.len() as u32);
         for stmt in &f.body {
             self.visit_stmt(stmt);
         }
@@ -347,9 +342,9 @@ impl<'a> TraversalVisitor for TypeChecker<'a> {
     }
 
     fn visit_class_def(&mut self, c: &Arc<parser::ast::ClassDef>) {
-        let source = &self.build_manager.files.get(&self.id).unwrap().source;
-        let name = c.name(source);
-        self.infer_name_type(name, c.name.start, c.name.end);
+        let file = &self.build_manager.files.get(&self.id).unwrap();
+        let name = intern_lookup(c.name);
+        self.infer_name_type(name, c.node.start + 6, c.node.start + 6 + name.len() as u32);
 
         self.enter_scope(c.node.start);
         for base in &c.bases {

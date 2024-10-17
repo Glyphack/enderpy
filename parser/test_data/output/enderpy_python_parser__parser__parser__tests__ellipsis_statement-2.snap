@@ -14,7 +14,7 @@ Module {
                     start: 0,
                     end: 16,
                 },
-                name: "a",
+                name: a,
                 args: Arguments {
                     node: Node {
                         start: 6,
