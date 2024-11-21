@@ -1,7 +1,7 @@
 use std::path::Path;
 
-mod ast_visitor;
-mod file;
+pub mod ast_visitor;
+pub mod file;
 mod ruff_python_import_resolver;
 mod symbol_table;
 
@@ -11,7 +11,7 @@ pub mod diagnostic;
 pub mod semantic_analyzer;
 pub mod settings;
 pub mod type_evaluator;
-mod types;
+pub mod types;
 
 pub(crate) mod builtins {
     pub const LIST_TYPE: &str = "list";

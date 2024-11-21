@@ -23,6 +23,8 @@ pub enum Commands {
     },
     /// Type check
     Check { path: PathBuf },
+    /// Translate to C++
+    Translate { path: PathBuf },
     ///  Symbol table
     Symbols { path: PathBuf },
 
