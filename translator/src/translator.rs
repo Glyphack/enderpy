@@ -1,10 +1,11 @@
 use std::sync::Arc;
 use enderpy_python_parser::ast::{self, *};
+use enderpy_python_parser::parser::parser::intern_lookup;
 use std::error::Error;
 use std::fmt::Write;
 use log::warn;
 
-use enderpy_python_type_checker::{ast_visitor::TraversalVisitor, file::EnderpyFile, checker::TypeChecker, types::PythonType};
+use enderpy_python_type_checker::{types, ast_visitor::TraversalVisitor, file::EnderpyFile, checker::TypeChecker, types::PythonType};
 
 #[derive(Clone, Debug)]
 pub struct CppTranslator<'a> {
@@ -33,6 +34,15 @@ impl<'a> CppTranslator<'a> {
     pub fn write_indent(&mut self) {
         write!(self.output, "{}", "  ".repeat(self.indent_level));
     }
+
+    fn check_type(&self, node: &Node, typ: &PythonType) {
+        assert!(
+            self.checker.get_type(node) == *typ,
+            "type error at {}, expected {} got {}",
+            self.file.get_position(node.start, node.end),
+            typ, self.checker.get_type(node)
+        );
+    }
 }
 
 impl<'a> TraversalVisitor for CppTranslator<'a> {
@@ -42,7 +52,10 @@ impl<'a> TraversalVisitor for CppTranslator<'a> {
             Statement::ExpressionStatement(e) => self.visit_expr(e),
             Statement::Import(i) => self.visit_import(i),
             Statement::ImportFrom(i) => self.visit_import_from(i),
-            Statement::AssignStatement(a) => self.visit_assign(a),
+            Statement::AssignStatement(a) => {
+                self.visit_assign(a);
+                writeln!(self.output, ";");
+            },
             Statement::AnnAssignStatement(a) => self.visit_ann_assign(a),
             Statement::AugAssignStatement(a) => self.visit_aug_assign(a),
             Statement::Assert(a) => self.visit_assert(a),
@@ -107,10 +120,10 @@ impl<'a> TraversalVisitor for CppTranslator<'a> {
             ConstantValue::None => write!(self.output, "None"),
             ConstantValue::Ellipsis => write!(self.output, "..."),
             ConstantValue::Bool(_) => write!(self.output, "bool"),
-            ConstantValue::Str(_) => write!(self.output, "{}", constant.get_value(&self.file.source).to_string()),
+            ConstantValue::Str(_) => write!(self.output, "\"{}\"", constant.get_value(&self.file.source).to_string()),
             ConstantValue::Bytes => write!(self.output, "bytes"),
             ConstantValue::Tuple => write!(self.output, "tuple"),
-            ConstantValue::Int => write!(self.output, "int"),
+            ConstantValue::Int => write!(self.output, "{}", constant.get_value(&self.file.source).to_string()),
             ConstantValue::Float => write!(self.output, "float"),
             ConstantValue::Complex => write!(self.output, "complex"),
             /*
@@ -159,20 +172,63 @@ impl<'a> TraversalVisitor for CppTranslator<'a> {
     }
 
     fn visit_call(&mut self, c: &Call) {
+        let typ = self.checker.get_type(&c.func.get_node());
         self.visit_expr(&c.func);
         write!(self.output, "(");
-        for arg in &c.args {
-            self.visit_expr(arg);
+        match typ {
+            PythonType::Callable(callable) => {
+                let mut num_pos_args = 0;
+                // First check all the positional args
+                for (i, arg) in callable.signature.iter().enumerate() {
+                    match arg {
+                        types::CallableArgs::Args(t) => {
+                            self.check_type(&c.args[i].get_node(), t);
+                            num_pos_args = i;
+                        },
+                        types::CallableArgs::Positional(t) => {
+                            break;
+                        },
+                        _ => {}
+                    }
+                }
+                // Then check all the star args if there are any
+                if num_pos_args < c.args.len() {
+                    write!(self.output, "{{");
+                    for (i, arg) in c.args[num_pos_args..].iter().enumerate() {
+                        self.check_type(&arg.get_node(), callable.signature[num_pos_args].get_type());
+                        if i != 0 {
+                            write!(self.output, ", ");
+                        }
+                        self.visit_expr(arg);
+                    }
+                    write!(self.output, "}}");
+                }
+            },
+            _ => {}
         }
-        for keyword in &c.keywords {
-            self.visit_expr(&keyword.value);
-        }
+        // for keyword in &c.keywords {
+        //     self.visit_expr(&keyword.value);
+        // }
         write!(self.output, ")");
     }
 
     fn visit_attribute(&mut self, attribute: &Attribute) {
         self.visit_expr(&attribute.value);
         write!(self.output, "::{}", attribute.attr);
+    }
+
+    fn visit_function_def(&mut self, f: &Arc<FunctionDef>) {
+        write!(self.output, "void {}(", intern_lookup(f.name));
+        for arg in f.args.args.iter() {
+            write!(self.output, "{} {}", python_type_to_cpp(&self.checker.get_type(&arg.node)), arg.arg);
+        }
+        writeln!(self.output, ") {{");
+        self.indent_level += 1;
+        for stmt in &f.body {
+            self.visit_stmt(stmt);
+        }
+        self.indent_level -= 1;
+        writeln!(self.output, "}}");
     }
 }
 
@@ -181,153 +237,9 @@ fn python_type_to_cpp(python_type: &PythonType) -> String {
         PythonType::Class(c) => {
             c.details.name.clone()
         },
-        _ => String::from("<unknown type>")
+        PythonType::Instance(i) => {
+            i.class_type.details.name.clone()
+        },
+        _ => String::from(format!("<unknown type {}>", python_type))
     }
 }
-
-/*
-impl CppTranslator {
-    fn new() -> Self {
-        CppTranslator::default()
-    }
-
-    fn translate_ast(&mut self, ast: &ast::Mod) -> Result<String, Box<dyn Error>> {
-        match ast {
-	    ast::Mod::Module(ast::ModModule { body, .. }) => {
-	        for stmt in body.iter() {
-		    self.translate_stmt(stmt)?;
-		}
-	    },
-	    ast::Mod::Interactive(_) => {
-	    },
-	    ast::Mod::FunctionType(_) => {
-	    },
-	    ast::Mod::Expression(_) => {
-	    },
-	}
-        
-        Ok(self.output.clone())
-    }
-
-    fn translate_constant(&mut self, constant: &ast::Constant) -> Result<String, Box<dyn Error>> {
-        match constant {
-            ast::Constant::Int(n) => Ok(n.to_string()),
-            ast::Constant::Float(f) => Ok(f.to_string()),
-            ast::Constant::Complex { real, imag } => Ok(format!("{}+{}j", real, imag)),
-            ast::Constant::Str(s) => Ok(format!("\"{}\"", s)),
-            ast::Constant::Bool(b) => Ok(b.to_string()),
-            ast::Constant::None => Ok("None".to_string()),
-            ast::Constant::Tuple(elements) => {
-                let tuple_elements: Vec<String> = elements
-                    .iter()
-                    .map(|elem| self.translate_constant(elem))
-                    .collect::<Result<Vec<String>, _>>()?;
-                Ok(format!("({})", tuple_elements.join(", ")))
-            },
-            ast::Constant::Ellipsis => Ok("...".to_string()),
-            ast::Constant::Bytes(bytes) => Ok(format!("b\"{}\"", String::from_utf8_lossy(bytes))),
-        }
-    }
-
-    fn translate_expr(&mut self, expr: &ast::Expr) -> Result<String, Box<dyn Error>> {
-        match expr {
-            ast::Expr::BoolOp(_) => {},
-            ast::Expr::NamedExpr(_) => {},
-            ast::Expr::BinOp(_) => {},
-            ast::Expr::UnaryOp(_) => {},
-            ast::Expr::Lambda(_) => {},
-            ast::Expr::IfExp(_) => {},
-            ast::Expr::Dict(_) => {},
-            ast::Expr::Set(_) => {},
-            ast::Expr::ListComp(_) => {},
-            ast::Expr::SetComp(_) => {},
-            ast::Expr::DictComp(_) => {},
-            ast::Expr::GeneratorExp(_) => {},
-            ast::Expr::Await(_) => {},
-            ast::Expr::Yield(_) => {},
-            ast::Expr::YieldFrom(_) => {},
-            ast::Expr::Compare(_) => {},
-            ast::Expr::Call(_) => {},
-            ast::Expr::FormattedValue(_) => {},
-            ast::Expr::JoinedStr(_) => {},
-            ast::Expr::Constant(c) => {
-	        let s = self.translate_constant(&c.value)?;
-	        write!(self.output, "{}", s);
-	    },
-            ast::Expr::Attribute(_) => {},
-            ast::Expr::Subscript(_) => {},
-            ast::Expr::Starred(_) => {},
-            ast::Expr::Name(name) => {
-	        write!(self.output, "{}", name.id);
-	    },
-            ast::Expr::List(_) => {},
-            ast::Expr::Tuple(_) => {},
-            ast::Expr::Slice(_) => {},
-	}
-	Ok(self.output.clone())
-    }
-
-    fn translate_stmt(&mut self, stmt: &ast::Stmt) -> Result<String, Box<dyn Error>> {
-        match stmt {
-	    ast::Stmt::Assign(assign) => {
-	        self.write_indent()?;
-	        self.translate_expr(&assign.targets[0])?;
-	        write!(self.output, " = ");
-		self.translate_expr(&assign.value)?;
-		write!(self.output, "\n");
-	    },
-	    ast::Stmt::FunctionDef(function) => {
-	        writeln!(self.output, "void {}() {{", function.name.to_string());
-		self.indent_level += 1;
-		for stmt in function.body.iter() {
-                    self.translate_stmt(stmt)?;
-                }
-		self.indent_level -= 1;
-		writeln!(self.output, "}}");
-	    },
-	    ast::Stmt::AsyncFunctionDef(_) => {},
-    	    ast::Stmt::ClassDef(_) => {},
-    	    ast::Stmt::Return(_) => {},
-    	    ast::Stmt::Delete(_) => {},
-    	    ast::Stmt::TypeAlias(_) => {},
-    	    ast::Stmt::AugAssign(_) => {},
-    	    ast::Stmt::AnnAssign(_) => {},
-    	    ast::Stmt::For(_) => {},
-    	    ast::Stmt::AsyncFor(_) => {},
-    	    ast::Stmt::While(_) => {},
-    	    ast::Stmt::If(_) => {},
-    	    ast::Stmt::With(_) => {},
-    	    ast::Stmt::AsyncWith(_) => {},
-    	    ast::Stmt::Match(_) => {},
-    	    ast::Stmt::Raise(_) => {},
-    	    ast::Stmt::Try(_) => {},
-    	    ast::Stmt::TryStar(_) => {},
-    	    ast::Stmt::Assert(_) => {},
-    	    ast::Stmt::Import(imp) => {
-	        if imp.names[0].name.to_string() == "torch" {
-		    writeln!(self.output, "#include <torch/torch.h>");
-		}
-	    },
-    	    ast::Stmt::ImportFrom(_) => {},
-    	    ast::Stmt::Global(_) => {},
-    	    ast::Stmt::Nonlocal(_) => {},
-    	    ast::Stmt::Expr(_) => {},
-    	    ast::Stmt::Pass(_) => {},
-    	    ast::Stmt::Break(_) => {},
-    	    ast::Stmt::Continue(_) => {},
-	}
-	Ok(self.output.clone())
-    }
-
-    fn write_indent(&mut self) -> Result<(), Box<dyn Error>> {
-        write!(self.output, "{}", "  ".repeat(self.indent_level))?;
-        Ok(())
-    }
-}
-
-pub fn python_to_cpp(python_ast: &ast::Mod) -> Result<String, Box<dyn Error>> {
-    let mut translator = CppTranslator::new();
-    translator.translate_ast(python_ast)
-}
-
-*/

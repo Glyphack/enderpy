@@ -136,6 +136,15 @@ impl<'a> TypeChecker<'a> {
 
         str
     }
+
+    pub fn get_type(&self, node: &ast::Node) -> PythonType {
+        for r in self.types.find(node.start, node.end) {
+            if r.start == node.start && r.stop == node.end {
+                return r.val.clone();
+            }
+        }
+        return PythonType::Unknown;
+    }
 }
 #[allow(unused)]
 impl<'a> TraversalVisitor for TypeChecker<'a> {
