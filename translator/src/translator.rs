@@ -13,6 +13,8 @@ pub struct CppTranslator<'a> {
     indent_level: usize,
     checker: Arc<TypeChecker<'a>>,
     file: &'a EnderpyFile,
+    current_scope: u32,
+    prev_scope: u32,
 }
 
 impl<'a> CppTranslator<'a> {
@@ -22,6 +24,8 @@ impl<'a> CppTranslator<'a> {
             indent_level: 0,
             checker: checker,
             file: file,
+            current_scope: 0,
+            prev_scope: 0,
         }
     }
 
@@ -42,6 +46,16 @@ impl<'a> CppTranslator<'a> {
             self.file.get_position(node.start, node.end),
             typ, self.checker.get_type(node)
         );
+    }
+
+    fn enter_scope(&mut self, pos: u32) {
+        let symbol_table = self.checker.get_symbol_table();
+        self.prev_scope = self.current_scope;
+        self.current_scope = symbol_table.get_scope(pos);
+    }
+
+    fn leave_scope(&mut self) {
+        self.current_scope = self.prev_scope;
     }
 }
 
@@ -147,14 +161,22 @@ impl<'a> TraversalVisitor for CppTranslator<'a> {
     }
 
     fn visit_assign(&mut self, a: &Assign) {
+        let symbol_table = self.checker.get_symbol_table();
         for target in &a.targets {
             // let type = self.checker.types.
             match target {
                 Expression::Name(n) => {
-                    // This loop should only iterate once
-                    for t in self.checker.types.find(n.node.start, n.node.end) {
-                        write!(self.output, "{} ", python_type_to_cpp(&t.val));
-                    }
+                    let node = symbol_table.lookup_in_scope(&n.id, self.current_scope);
+                    match node {
+                        Some(node) => {
+                            let path = node.declarations[0].declaration_path();
+                            if path.node == n.node {
+                                let typ = self.checker.get_type(&n.node);
+                                write!(self.output, "{} ", python_type_to_cpp(&typ));
+                            }
+                        },
+                        None => {},
+                    };
                     self.visit_name(n);
                 },
                 _ => {
@@ -225,6 +247,7 @@ impl<'a> TraversalVisitor for CppTranslator<'a> {
     }
 
     fn visit_function_def(&mut self, f: &Arc<FunctionDef>) {
+        self.enter_scope(f.node.start);
         write!(self.output, "void {}(", intern_lookup(f.name));
         for arg in f.args.args.iter() {
             write!(self.output, "{} {}", python_type_to_cpp(&self.checker.get_type(&arg.node)), arg.arg);
@@ -236,6 +259,7 @@ impl<'a> TraversalVisitor for CppTranslator<'a> {
         }
         self.indent_level -= 1;
         writeln!(self.output, "}}");
+        self.leave_scope();
     }
 
     fn visit_for(&mut self, f: &For) {

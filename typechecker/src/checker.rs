@@ -7,7 +7,7 @@ use enderpy_python_parser::parser::parser::intern_lookup;
 
 use super::{type_evaluator::TypeEvaluator, types::PythonType};
 use crate::build::BuildManager;
-use crate::symbol_table::Id;
+use crate::symbol_table::{Id, SymbolTable};
 use crate::types::ModuleRef;
 use crate::{ast_visitor::TraversalVisitor, diagnostic::CharacterSpan};
 use rust_lapper::{Interval, Lapper};
@@ -144,6 +144,10 @@ impl<'a> TypeChecker<'a> {
             }
         }
         return PythonType::Unknown;
+    }
+
+    pub fn get_symbol_table(&self) -> Arc<SymbolTable> {
+        return self.build_manager.get_symbol_table_by_id(&self.id);
     }
 }
 #[allow(unused)]
