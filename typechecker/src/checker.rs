@@ -465,8 +465,10 @@ impl<'a> TraversalVisitor for TypeChecker<'a> {
     }
 
     fn visit_bin_op(&mut self, b: &BinOp) {
-        let l_type = self.infer_expr_type(&b.left);
-        let r_type = self.infer_expr_type(&b.right);
+        // let l_type = self.infer_expr_type(&b.left);
+        self.visit_expr(&b.left);
+        // let r_type = self.infer_expr_type(&b.right);
+        self.visit_expr(&b.right);
     }
 
     fn visit_named_expr(&mut self, _n: &NamedExpression) {

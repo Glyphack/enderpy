@@ -151,7 +151,6 @@ impl<'a> TraversalVisitor for CppTranslator<'a> {
             // let type = self.checker.types.
             match target {
                 Expression::Name(n) => {
-                    println!("XXX {}", n.node.start);
                     // This loop should only iterate once
                     for t in self.checker.types.find(n.node.start, n.node.end) {
                         write!(self.output, "{} ", python_type_to_cpp(&t.val));
@@ -169,6 +168,12 @@ impl<'a> TraversalVisitor for CppTranslator<'a> {
 
     fn visit_name(&mut self, name: &Name) {
         write!(self.output, "{}", name.id);
+    }
+
+    fn visit_bin_op(&mut self, b: &BinOp) {
+        self.visit_expr(&b.left);
+        write!(self.output, " {} ", &b.op);
+        self.visit_expr(&b.right);
     }
 
     fn visit_call(&mut self, c: &Call) {
@@ -204,7 +209,9 @@ impl<'a> TraversalVisitor for CppTranslator<'a> {
                     write!(self.output, "}}");
                 }
             },
-            _ => {}
+            _ => {
+                println!("Shouldn't hit this code path");
+            }
         }
         // for keyword in &c.keywords {
         //     self.visit_expr(&keyword.value);
@@ -228,6 +235,39 @@ impl<'a> TraversalVisitor for CppTranslator<'a> {
             self.visit_stmt(stmt);
         }
         self.indent_level -= 1;
+        writeln!(self.output, "}}");
+    }
+
+    fn visit_for(&mut self, f: &For) {
+        let mut bound = None;
+        match &f.iter {
+            Expression::Call(c) => {
+                match &c.func {
+                    Expression::Name(n) => {
+                        if n.id == "range" {
+                            bound = Some(c.args[0].clone());
+                        }
+                    }
+                    _ => {}
+                }
+            },
+            _ => {}
+        }
+        write!(self.output, "for(int ");
+        self.visit_expr(&f.target);
+        write!(self.output, " = 0; ");
+        self.visit_expr(&f.target);
+        write!(self.output, " < ");
+        self.visit_expr(&bound.unwrap());
+        write!(self.output, "; ++");
+        self.visit_expr(&f.target);
+        writeln!(self.output, ") {{");
+        self.indent_level += 1;
+        for stmt in &f.body {
+            self.visit_stmt(stmt);
+        }
+        self.indent_level -= 1;
+        self.write_indent();
         writeln!(self.output, "}}");
     }
 }

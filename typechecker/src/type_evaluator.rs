@@ -869,9 +869,39 @@ impl<'a> TypeEvaluator<'a> {
                                 &iter_method_type.type_parameters,
                                 &iter_method_type.specialized,
                             )
-                        }
+                        },
+                        PythonType::Class(class_type) => {
+                            let iter_method = match self.lookup_on_class(
+                                &symbol_table,
+                                &class_type,
+                                "__iter__",
+                            ) {
+                                Some(PythonType::Callable(c)) => c,
+                                Some(other) => panic!("iter method was not callable: {}", other),
+                                None => panic!("next method not found"),
+                            };
+                            let Some(iter_method_type) = &iter_method.return_type.class()
+                            else {
+                                panic!("iter method return type is not class");
+                            };
+                            let next_method = match self.lookup_on_class(
+                                &symbol_table,
+                                &iter_method_type,
+                                "__next__",
+                            ) {
+                                Some(PythonType::Callable(c)) => c,
+                                Some(other) => panic!("next method was not callable: {}", other),
+                                None => panic!("next method not found"),
+                            };
+                            self.resolve_generics(
+                               &next_method.return_type,
+                               &iter_method_type.type_parameters,
+                               &iter_method_type.specialized,
+                            )
+                            // PythonType::Unknown
+                        },
                         _ => {
-                            error!("iterating over a {} is not defined", iter_type);
+                            error!("iterating over a {:?} is not defined", iter_type);
                             PythonType::Unknown
                         }
                     }
