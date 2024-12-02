@@ -429,6 +429,9 @@ impl Constant {
             ConstantValue::Int => Cow::Borrowed(
                 &source[self.node.start as usize..self.node.end as usize],
             ),
+            ConstantValue::Float => Cow::Borrowed(
+                &source[self.node.start as usize..self.node.end as usize],
+            ),
             _ => todo!("Call the parser and get the value"),
         }
     }

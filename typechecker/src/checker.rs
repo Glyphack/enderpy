@@ -146,8 +146,9 @@ impl<'a> TypeChecker<'a> {
         return PythonType::Unknown;
     }
 
-    pub fn get_symbol_table(&self) -> Arc<SymbolTable> {
-        return self.build_manager.get_symbol_table_by_id(&self.id);
+    pub fn get_symbol_table(&self, id: Option<Id>) -> Arc<SymbolTable> {
+        let id = id.unwrap_or(self.id);
+        return self.build_manager.get_symbol_table_by_id(&id);
     }
 }
 #[allow(unused)]

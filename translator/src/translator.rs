@@ -6,6 +6,7 @@ use std::fmt::Write;
 use log::warn;
 
 use enderpy_python_type_checker::{types, ast_visitor::TraversalVisitor, file::EnderpyFile, checker::TypeChecker, types::PythonType};
+use enderpy_python_type_checker::{get_module_name, symbol_table};
 
 #[derive(Clone, Debug)]
 pub struct CppTranslator<'a> {
@@ -49,13 +50,43 @@ impl<'a> CppTranslator<'a> {
     }
 
     fn enter_scope(&mut self, pos: u32) {
-        let symbol_table = self.checker.get_symbol_table();
+        let symbol_table = self.checker.get_symbol_table(None);
         self.prev_scope = self.current_scope;
         self.current_scope = symbol_table.get_scope(pos);
     }
 
     fn leave_scope(&mut self) {
         self.current_scope = self.prev_scope;
+    }
+
+    fn python_type_to_cpp(&self, python_type: &PythonType) -> String {
+        let details;
+        match python_type {
+            PythonType::Class(c) => {
+                details = &c.details;
+            },
+            PythonType::Instance(i) => {
+                details = &i.class_type.details;
+            },
+            _ => {
+                return String::from(format!("<unknown type {}>", python_type));
+            }
+        };
+        // If the current symbol table already contains details.name,
+        // we do not need to qualify it, otherwise qualify it with the module name,
+        // unless it is a builtin type in which case we do not qualify it.
+        let symbol_table = self.checker.get_symbol_table(None);
+        match symbol_table.lookup_in_scope(&details.name, self.current_scope) {
+            Some(_) => details.name.to_string(),
+            None => {
+                let symbol_table = self.checker.get_symbol_table(Some(details.declaration_path.symbol_table_id));
+                if symbol_table.file_path.as_path().ends_with("builtins.pyi") {
+                    details.name.to_string()
+                } else {
+                    format!("{}::{}", get_module_name(symbol_table.file_path.as_path()), &details.name)
+                }
+            }
+        }
     }
 }
 
@@ -138,7 +169,7 @@ impl<'a> TraversalVisitor for CppTranslator<'a> {
             ConstantValue::Bytes => write!(self.output, "bytes"),
             ConstantValue::Tuple => write!(self.output, "tuple"),
             ConstantValue::Int => write!(self.output, "{}", constant.get_value(&self.file.source).to_string()),
-            ConstantValue::Float => write!(self.output, "float"),
+            ConstantValue::Float => write!(self.output, "{}", constant.get_value(&self.file.source).to_string()),
             ConstantValue::Complex => write!(self.output, "complex"),
             /*
             Constant::Tuple(elements) => {
@@ -161,7 +192,7 @@ impl<'a> TraversalVisitor for CppTranslator<'a> {
     }
 
     fn visit_assign(&mut self, a: &Assign) {
-        let symbol_table = self.checker.get_symbol_table();
+        let symbol_table = self.checker.get_symbol_table(None);
         for target in &a.targets {
             // let type = self.checker.types.
             match target {
@@ -172,7 +203,7 @@ impl<'a> TraversalVisitor for CppTranslator<'a> {
                             let path = node.declarations[0].declaration_path();
                             if path.node == n.node {
                                 let typ = self.checker.get_type(&n.node);
-                                write!(self.output, "{} ", python_type_to_cpp(&typ));
+                                write!(self.output, "{} ", self.python_type_to_cpp(&typ));
                             }
                         },
                         None => {},
@@ -210,6 +241,10 @@ impl<'a> TraversalVisitor for CppTranslator<'a> {
                     match arg {
                         types::CallableArgs::Args(t) => {
                             self.check_type(&c.args[i].get_node(), t);
+                            if i != 0 {
+                                write!(self.output, ", ");
+                            }
+                            self.visit_expr(&c.args[i]);
                             num_pos_args = i;
                         },
                         types::CallableArgs::Positional(t) => {
@@ -243,14 +278,38 @@ impl<'a> TraversalVisitor for CppTranslator<'a> {
 
     fn visit_attribute(&mut self, attribute: &Attribute) {
         self.visit_expr(&attribute.value);
-        write!(self.output, "::{}", attribute.attr);
+        match &attribute.value {
+            Expression::Name(n) =>  {
+                let symbol_table = self.checker.get_symbol_table(None);
+                match symbol_table.lookup_in_scope(&n.id, self.current_scope) {
+                    Some(entry) => {
+                        match entry.last_declaration() {
+                            symbol_table::Declaration::Alias(a) => {
+                                write!(self.output, "::{}", attribute.attr);
+                                return
+                            },
+                            _ => {}
+                        }
+                    },
+                    None => {},
+                }
+            },
+            _ => {}
+        }
+        write!(self.output, ".{}", attribute.attr);
+    }
+
+    fn visit_return(&mut self, _r: &Return) {
     }
 
     fn visit_function_def(&mut self, f: &Arc<FunctionDef>) {
         self.enter_scope(f.node.start);
         write!(self.output, "void {}(", intern_lookup(f.name));
-        for arg in f.args.args.iter() {
-            write!(self.output, "{} {}", python_type_to_cpp(&self.checker.get_type(&arg.node)), arg.arg);
+        for (i, arg) in f.args.args.iter().enumerate() {
+            if i != 0 {
+                write!(self.output, ", ");
+            }
+            write!(self.output, "{} {}", self.python_type_to_cpp(&self.checker.get_type(&arg.node)), arg.arg);
         }
         writeln!(self.output, ") {{");
         self.indent_level += 1;
@@ -296,14 +355,3 @@ impl<'a> TraversalVisitor for CppTranslator<'a> {
     }
 }
 
-fn python_type_to_cpp(python_type: &PythonType) -> String {
-    match python_type {
-        PythonType::Class(c) => {
-            c.details.name.clone()
-        },
-        PythonType::Instance(i) => {
-            i.class_type.details.name.clone()
-        },
-        _ => String::from(format!("<unknown type {}>", python_type))
-    }
-}

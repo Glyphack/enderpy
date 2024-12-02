@@ -22,6 +22,7 @@ use super::{
     },
 };
 use crate::{
+    get_module_name,
     build::BuildManager,
     semantic_analyzer::get_member_access_info,
     symbol_table::{self, Class, Declaration, DeclarationPath, Id, SymbolTable, SymbolTableNode},
@@ -676,7 +677,18 @@ impl<'a> TypeEvaluator<'a> {
                     // TODO: check if other binary operators are allowed
                     _ => todo!(),
                 }
-            }
+            },
+            Expression::Attribute(a) => {
+                match &a.value {
+                    Expression::Name(n) => {
+                        let Some(typ) = self.lookup_on_module(symbol_table, scope_id, &n.id, &a.attr) else {
+                            return PythonType::Unknown;
+                        };
+                        return typ;
+                    },
+                    _ => todo!(),
+                };
+            },
             _ => PythonType::Unknown,
         };
 
@@ -1034,15 +1046,20 @@ impl<'a> TypeEvaluator<'a> {
                         PythonType::Unknown
                     }
                     None => {
-                        let Some(ref resolved_import) = a.import_result else {
-                            trace!("import result not found");
-                            return PythonType::Unknown;
-                        };
-
-                        let module_id = resolved_import.resolved_ids.first().unwrap();
-                        return PythonType::Module(ModuleRef {
-                            module_id: *module_id,
-                        });
+                        match &a.import_node {
+                            Some(i) => {
+                                let module_name = &i.names[0].name;
+                                let Some(module_symbol_table) = self.get_symbol_table_for_module(&a, module_name) else {
+                                    return PythonType::Unknown;
+                                };
+                                return PythonType::Module(ModuleRef {
+                                    module_id: module_symbol_table.id,
+                                });
+                            },
+                            None => {
+                                return PythonType::Unknown;
+                            }
+                        }
                     }
                 }
             }
@@ -1545,6 +1562,39 @@ impl<'a> TypeEvaluator<'a> {
         }
 
         symbol.map(|node| self.get_symbol_type(node, symbol_table, None))
+    }
+
+    /// Find a type inside a Python module
+    fn lookup_on_module(
+        &self,
+        symbol_table: &SymbolTable,
+        scope_id: u32,
+        module_name: &str,
+        attr: &str,
+    ) -> Option<PythonType> {
+        // See if the module is in the symbol table
+        let symbol_table_entry = symbol_table.lookup_in_scope(module_name, scope_id)?;
+        match symbol_table_entry.last_declaration() {
+            Declaration::Alias(a) => {
+                let module_symbol_table = self.get_symbol_table_for_module(&a, module_name)?;
+                return Some(self.get_name_type(attr, None, &module_symbol_table, 0));
+            }
+            _ => {}
+        };
+        None
+    }
+
+    fn get_symbol_table_for_module(&self, alias: &symbol_table::Alias, module_name: &str) -> Option<Arc<SymbolTable>> {
+        let Some(ref resolved_import) = alias.import_result else {
+            return None;
+        };
+        for id in resolved_import.resolved_ids.iter() {
+            let module_symbol_table = self.get_symbol_table(id);
+            if module_name == get_module_name(module_symbol_table.file_path.as_path()) {
+                return Some(module_symbol_table);
+            }
+        }
+        return None;
     }
 
     fn get_function_signature(
