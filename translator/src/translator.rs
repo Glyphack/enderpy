@@ -1,4 +1,5 @@
 use std::sync::Arc;
+use std::collections::HashMap;
 use enderpy_python_parser::ast::{self, *};
 use enderpy_python_parser::parser::parser::intern_lookup;
 use std::error::Error;
@@ -16,6 +17,9 @@ pub struct CppTranslator<'a> {
     file: &'a EnderpyFile,
     current_scope: u32,
     prev_scope: u32,
+    // Member variables of the current class
+    class_members: HashMap<String, String>,
+    in_constructor: bool,
 }
 
 impl<'a> CppTranslator<'a> {
@@ -27,6 +31,8 @@ impl<'a> CppTranslator<'a> {
             file: file,
             current_scope: 0,
             prev_scope: 0,
+            class_members: HashMap::new(),
+            in_constructor: false,
         }
     }
 
@@ -106,7 +112,10 @@ impl<'a> TraversalVisitor for CppTranslator<'a> {
             Statement::Assert(a) => self.visit_assert(a),
             Statement::Pass(p) => self.visit_pass(p),
             Statement::Delete(d) => self.visit_delete(d),
-            Statement::ReturnStmt(r) => self.visit_return(r),
+            Statement::ReturnStmt(r) => {
+                self.visit_return(r);
+                writeln!(self.output, ";");
+            },
             Statement::Raise(r) => self.visit_raise(r),
             Statement::BreakStmt(b) => self.visit_break(b),
             Statement::ContinueStmt(c) => self.visit_continue(c),
@@ -210,6 +219,14 @@ impl<'a> TraversalVisitor for CppTranslator<'a> {
                     };
                     self.visit_name(n);
                 },
+                Expression::Attribute(attr) => {
+                    if let Expression::Name(n) = &attr.value {
+                        if n.id == "self" {
+                            self.class_members.insert(attr.attr.clone(), self.python_type_to_cpp(&self.checker.get_type(&a.value.get_node())));
+                        }
+                    }
+                    self.visit_expr(target);
+                }
                 _ => {
                     self.visit_expr(target);
                 }
@@ -230,16 +247,48 @@ impl<'a> TraversalVisitor for CppTranslator<'a> {
     }
 
     fn visit_call(&mut self, c: &Call) {
-        let typ = self.checker.get_type(&c.func.get_node());
+        let mut typ = self.checker.get_type(&c.func.get_node());
         self.visit_expr(&c.func);
         write!(self.output, "(");
+        // In case c.func is a class instance, we need to use the __call__ method
+        // of that instance instead -- we fix this here.
+        if let PythonType::Instance(i) = &typ {
+            let symbol_table = self.checker.get_symbol_table(None);
+            typ = self.checker.type_evaluator.lookup_on_class(&symbol_table, &i.class_type, "__call__").expect("instance type not callable").clone();
+            let PythonType::Callable(old_callable) = typ else {
+                panic!("XXX");
+            };
+            let callable_type = types::CallableType::new(
+                old_callable.name,
+                old_callable.signature[1..].to_vec(),
+                old_callable.return_type,
+                old_callable.is_async,
+            );
+            typ = PythonType::Callable(Box::new(callable_type));
+        }
+        // In case c.func is a class, we need to use the type signature of the
+        // __init__ method.
+        if let PythonType::Class(c) = &typ {
+            let symbol_table = self.checker.get_symbol_table(None);
+            typ = self.checker.type_evaluator.lookup_on_class(&symbol_table, &c, "__init__").expect("class currently needs an __init__ method").clone();
+            let PythonType::Callable(old_callable) = typ else {
+                panic!("XXX");
+            };
+            let callable_type = types::CallableType::new(
+                old_callable.name,
+                old_callable.signature[1..].to_vec(),
+                old_callable.return_type,
+                old_callable.is_async,
+            );
+            typ = PythonType::Callable(Box::new(callable_type));
+        }
         match typ {
             PythonType::Callable(callable) => {
                 let mut num_pos_args = 0;
                 // First check all the positional args
                 for (i, arg) in callable.signature.iter().enumerate() {
                     match arg {
-                        types::CallableArgs::Args(t) => {
+                        types::CallableArgs::Positional(t) => {
                             self.check_type(&c.args[i].get_node(), t);
                             if i != 0 {
                                 write!(self.output, ", ");
@@ -247,17 +296,17 @@ impl<'a> TraversalVisitor for CppTranslator<'a> {
                             self.visit_expr(&c.args[i]);
                             num_pos_args = i;
                         },
-                        types::CallableArgs::Positional(t) => {
+                        types::CallableArgs::Args(t) => {
                             break;
                         },
                         _ => {}
                     }
                 }
                 // Then check all the star args if there are any
-                if num_pos_args < c.args.len() {
+                if num_pos_args + 1 < c.args.len() {
                     write!(self.output, "{{");
                     for (i, arg) in c.args[num_pos_args..].iter().enumerate() {
-                        self.check_type(&arg.get_node(), callable.signature[num_pos_args].get_type());
+                        self.check_type(&arg.get_node(), callable.signature[num_pos_args+i].get_type());
                         if i != 0 {
                             write!(self.output, ", ");
                         }
@@ -299,12 +348,31 @@ impl<'a> TraversalVisitor for CppTranslator<'a> {
         write!(self.output, ".{}", attribute.attr);
     }
 
-    fn visit_return(&mut self, _r: &Return) {
+    fn visit_return(&mut self, r: &Return) {
+        write!(self.output, "return ");
+        if let Some(value) = &r.value {
+            self.visit_expr(value);
+        }
     }
 
     fn visit_function_def(&mut self, f: &Arc<FunctionDef>) {
         self.enter_scope(f.node.start);
-        write!(self.output, "void {}(", intern_lookup(f.name));
+        let mut name = intern_lookup(f.name).to_string();
+        if name == "__init__" {
+            // In this case, the function is a constructor and in
+            // C++ needs to be named the same as the class. We achieve
+            // this by naming it after the type of the "self" argument
+            // of __init__.
+            name = self.python_type_to_cpp(&self.checker.get_type(&f.args.args[0].node));
+            self.class_members = HashMap::new();
+            self.in_constructor = true;
+        }
+        if let Some(ret) = &f.returns {
+            let return_type = self.python_type_to_cpp(&self.checker.get_type(&ret.get_node()));
+            write!(self.output, "{} {}(", return_type, name);
+        } else {
+            write!(self.output, "void {}(", name);
+        }
         for (i, arg) in f.args.args.iter().enumerate() {
             if i != 0 {
                 write!(self.output, ", ");
@@ -313,10 +381,37 @@ impl<'a> TraversalVisitor for CppTranslator<'a> {
         }
         writeln!(self.output, ") {{");
         self.indent_level += 1;
+        // If this is an instance method, introduce "self"
+        self.write_indent();
+        writeln!(self.output, "auto& self = *this;");
         for stmt in &f.body {
             self.visit_stmt(stmt);
         }
         self.indent_level -= 1;
+        self.write_indent();
+        writeln!(self.output, "}}");
+        self.leave_scope();
+    }
+
+    fn visit_class_def(&mut self, c: &Arc<ClassDef>) {
+        let name = intern_lookup(c.name);
+        writeln!(self.output, "class {} {{", name);
+        self.enter_scope(c.node.start);
+        self.indent_level += 1;
+        for stmt in &c.body {
+            self.visit_stmt(stmt);
+        }
+        self.indent_level -= 1;
+        // print class member variables
+        self.write_indent();
+        writeln!(self.output, "private:");
+        // TODO: Want to move this out, not clone it
+        for (key, value) in self.class_members.clone() {
+            self.write_indent();
+            writeln!(self.output, "  {} {};", value, key);
+        }
+        self.class_members = HashMap::new();
+        self.write_indent();
         writeln!(self.output, "}}");
         self.leave_scope();
     }

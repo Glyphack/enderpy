@@ -16,7 +16,7 @@ use rust_lapper::{Interval, Lapper};
 pub struct TypeChecker<'a> {
     pub types: Lapper<u32, PythonType>,
     id: Id,
-    type_evaluator: TypeEvaluator<'a>,
+    pub type_evaluator: TypeEvaluator<'a>,
     build_manager: &'a BuildManager,
     current_scope: u32,
     prev_scope: u32,

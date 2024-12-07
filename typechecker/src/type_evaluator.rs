@@ -60,6 +60,13 @@ bitflags::bitflags! {
     }
 }
 
+fn class_type_to_instance_type(class_type: PythonType) -> PythonType {
+    let PythonType::Class(c) = class_type else {
+        return PythonType::Unknown;
+    };
+    PythonType::Instance(types::InstanceType::new(c.clone(), [].to_vec()))
+}
+
 /// Struct for evaluating the type of an expression
 impl<'a> TypeEvaluator<'a> {
     pub fn new(build_manager: &'a BuildManager) -> Self {
@@ -85,12 +92,12 @@ impl<'a> TypeEvaluator<'a> {
                 let typ = match &c.value {
                     // Constants are not literals unless they are explicitly
                     // typing.readthedocs.io/en/latest/spec/literal.html#backwards-compatibility
-                    ast::ConstantValue::Int => self.get_builtin_type("int"),
-                    ast::ConstantValue::Float => self.get_builtin_type("float"),
-                    ast::ConstantValue::Str(_) => self.get_builtin_type("str"),
-                    ast::ConstantValue::Bool(_) => self.get_builtin_type("bool"),
+                    ast::ConstantValue::Int => self.get_builtin_type("int").map(class_type_to_instance_type),
+                    ast::ConstantValue::Float => self.get_builtin_type("float").map(class_type_to_instance_type),
+                    ast::ConstantValue::Str(_) => self.get_builtin_type("str").map(class_type_to_instance_type),
+                    ast::ConstantValue::Bool(_) => self.get_builtin_type("bool").map(class_type_to_instance_type),
                     ast::ConstantValue::None => Some(PythonType::None),
-                    ast::ConstantValue::Bytes => self.get_builtin_type("bytes"),
+                    ast::ConstantValue::Bytes => self.get_builtin_type("bytes").map(class_type_to_instance_type),
                     ast::ConstantValue::Ellipsis => Some(PythonType::Any),
                     // TODO: implement
                     ast::ConstantValue::Tuple => Some(PythonType::Unknown),
@@ -123,8 +130,21 @@ impl<'a> TypeEvaluator<'a> {
                                 scope_id,
                             );
                             Ok(return_type)
+                        } else if let PythonType::Instance(i) = &called_type {
+                            // This executes the __call__ method of the instance
+                            let Some(PythonType::Callable(c)) = self.lookup_on_class(symbol_table, &i.class_type, "__call__") else {
+                                bail!("If you call an instance, it must have a __call__ method");
+                            };
+                            let return_type = self.get_return_type_of_callable(
+                                &c,
+                                &call.args,
+                                symbol_table,
+                                scope_id,
+                            );
+                            Ok(return_type)
                         } else if let PythonType::Class(c) = &called_type {
-                            Ok(called_type)
+                            // This instantiates the class
+                            Ok(PythonType::Instance(types::InstanceType::new(c.clone(), [].to_vec())))
                         } else if let PythonType::TypeVar(t) = &called_type {
                             let Some(first_arg) = call.args.first() else {
                                 bail!("TypeVar must be called with a name");
@@ -552,7 +572,7 @@ impl<'a> TypeEvaluator<'a> {
         let expr_type = match type_annotation {
             Expression::Name(name) => {
                 // TODO: Reject this type if the name refers to a variable.
-                self.get_name_type(&name.id, Some(name.node.start), symbol_table, scope_id)
+                return class_type_to_instance_type(self.get_name_type(&name.id, Some(name.node.start), symbol_table, scope_id));
             }
             Expression::Constant(ref c) => match c.value {
                 ast::ConstantValue::None => PythonType::None,
@@ -684,7 +704,7 @@ impl<'a> TypeEvaluator<'a> {
                         let Some(typ) = self.lookup_on_module(symbol_table, scope_id, &n.id, &a.attr) else {
                             return PythonType::Unknown;
                         };
-                        return typ;
+                        return class_type_to_instance_type(typ);
                     },
                     _ => todo!(),
                 };
@@ -1532,7 +1552,7 @@ impl<'a> TypeEvaluator<'a> {
         ret_type
     }
 
-    fn lookup_on_class(
+    pub fn lookup_on_class(
         &self,
         symbol_table: &SymbolTable,
         c: &ClassType,
