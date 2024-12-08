@@ -40,12 +40,22 @@ impl<'a> CppTranslator<'a> {
         }
     }
 
-    pub fn write_indent(&mut self) {
+    fn emit<S: AsRef<str>>(&mut self, s: S) {
+        self.output += s.as_ref();
+    }
+
+    fn emit_indent(&mut self) {
         self.emit("  ".repeat(self.indent_level));
     }
 
-    fn emit<S: AsRef<str>>(&mut self, s: S) {
-        self.output += s.as_ref();
+    fn emit_type(&mut self, node: &ast::Node) {
+        let cpp_type = self.get_cpp_type(node);
+        self.emit(cpp_type);
+    }
+
+    fn get_cpp_type(&mut self, node: &ast::Node) -> String {
+        let typ = self.checker.get_type(node);
+        return self.python_type_to_cpp(&typ);
     }
 
     fn check_type(&self, node: &Node, typ: &PythonType) {
@@ -100,7 +110,7 @@ impl<'a> CppTranslator<'a> {
 
 impl<'a> TraversalVisitor for CppTranslator<'a> {
     fn visit_stmt(&mut self, s: &ast::Statement) {
-        self.write_indent();
+        self.emit_indent();
         match s {
             Statement::ExpressionStatement(e) => self.visit_expr(e),
             Statement::Import(i) => self.visit_import(i),
@@ -213,8 +223,7 @@ impl<'a> TraversalVisitor for CppTranslator<'a> {
                         Some(node) => {
                             let path = node.declarations[0].declaration_path();
                             if path.node == n.node {
-                                let typ = self.checker.get_type(&n.node);
-                                self.emit(self.python_type_to_cpp(&typ));
+                                self.emit_type(&n.node);
                             }
                         },
                         None => {},
@@ -224,7 +233,8 @@ impl<'a> TraversalVisitor for CppTranslator<'a> {
                 Expression::Attribute(attr) => {
                     if let Expression::Name(n) = &attr.value {
                         if n.id == "self" {
-                            self.class_members.insert(attr.attr.clone(), self.python_type_to_cpp(&self.checker.get_type(&a.value.get_node())));
+                            let cpp_type = self.get_cpp_type(&a.value.get_node());
+                            self.class_members.insert(attr.attr.clone(), cpp_type);
                         }
                     }
                     self.visit_expr(target);
@@ -364,12 +374,12 @@ impl<'a> TraversalVisitor for CppTranslator<'a> {
             // C++ needs to be named the same as the class. We achieve
             // this by naming it after the type of the "self" argument
             // of __init__.
-            name = self.python_type_to_cpp(&self.checker.get_type(&f.args.args[0].node));
+            name = self.get_cpp_type(&f.args.args[0].node);
             self.class_members = HashMap::new();
             self.in_constructor = true;
         }
         if let Some(ret) = &f.returns {
-            let return_type = self.python_type_to_cpp(&self.checker.get_type(&ret.get_node()));
+            let return_type = self.get_cpp_type(&ret.get_node());
             self.emit(format!("{} {}(", return_type, name));
         } else {
             if self.in_constructor {
@@ -388,18 +398,19 @@ impl<'a> TraversalVisitor for CppTranslator<'a> {
             if i != 0 {
                 self.emit(", ");
             }
-            self.emit(format!("{} {}", self.python_type_to_cpp(&self.checker.get_type(&arg.node)), arg.arg));
+            self.emit_type(&arg.node);
+            self.emit(format!(" {}", arg.arg));
         }
         self.emit(") {\n");
         self.indent_level += 1;
         // If this is an instance method, introduce "self"
-        self.write_indent();
+        self.emit_indent();
         self.emit("auto& self = *this;\n");
         for stmt in &f.body {
             self.visit_stmt(stmt);
         }
         self.indent_level -= 1;
-        self.write_indent();
+        self.emit_indent();
         self.emit("}\n");
         self.in_constructor = false;
         self.leave_scope();
@@ -408,7 +419,7 @@ impl<'a> TraversalVisitor for CppTranslator<'a> {
     fn visit_class_def(&mut self, c: &Arc<ClassDef>) {
         let name = intern_lookup(c.name);
         self.emit(format!("class {} {{\n", name));
-        self.write_indent();
+        self.emit_indent();
         self.emit("public:\n");
         self.enter_scope(c.node.start);
         self.indent_level += 1;
@@ -417,15 +428,15 @@ impl<'a> TraversalVisitor for CppTranslator<'a> {
         }
         self.indent_level -= 1;
         // print class member variables
-        self.write_indent();
+        self.emit_indent();
         self.emit("private:\n");
         // TODO: Want to move this out, not clone it
         for (key, value) in self.class_members.clone() {
-            self.write_indent();
+            self.emit_indent();
             self.emit(format!("  {} {};\n", value, key));
         }
         self.class_members = HashMap::new();
-        self.write_indent();
+        self.emit_indent();
         self.emit("};\n");
         self.leave_scope();
     }
@@ -459,7 +470,7 @@ impl<'a> TraversalVisitor for CppTranslator<'a> {
             self.visit_stmt(stmt);
         }
         self.indent_level -= 1;
-        self.write_indent();
+        self.emit_indent();
         self.emit("}\n");
     }
 }
