@@ -15,8 +15,10 @@ pub struct CppTranslator<'a> {
     file: &'a EnderpyFile,
     current_scope: u32,
     prev_scope: u32,
-    // Member variables of the current class
+    // Member variables of the current class, map from name to type
     class_members: HashMap<String, String>,
+    // Whether we are currently inside a __init__ method
+    // and therefore need to record member variables
     in_constructor: bool,
 }
 
@@ -49,11 +51,10 @@ impl<'a> CppTranslator<'a> {
     }
 
     fn emit_type(&mut self, node: &ast::Node) {
-        let cpp_type = self.get_cpp_type(node);
-        self.emit(cpp_type);
+        self.emit(self.get_cpp_type(node));
     }
 
-    fn get_cpp_type(&mut self, node: &ast::Node) -> String {
+    fn get_cpp_type(&self, node: &ast::Node) -> String {
         let typ = self.checker.get_type(node);
         return self.python_type_to_cpp(&typ);
     }
@@ -215,13 +216,13 @@ impl<'a> TraversalVisitor for CppTranslator<'a> {
     fn visit_assign(&mut self, a: &Assign) {
         let symbol_table = self.checker.get_symbol_table(None);
         for target in &a.targets {
-            // let type = self.checker.types.
             match target {
                 Expression::Name(n) => {
                     let node = symbol_table.lookup_in_scope(&n.id, self.current_scope);
                     match node {
                         Some(node) => {
                             let path = node.declarations[0].declaration_path();
+                            // If this is the place where the name was defined, also emit its type
                             if path.node == n.node {
                                 self.emit_type(&n.node);
                             }
