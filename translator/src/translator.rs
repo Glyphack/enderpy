@@ -2,9 +2,7 @@ use std::sync::Arc;
 use std::collections::HashMap;
 use enderpy_python_parser::ast::{self, *};
 use enderpy_python_parser::parser::parser::intern_lookup;
-use std::error::Error;
 use std::fmt::Write;
-use log::warn;
 
 use enderpy_python_type_checker::{types, ast_visitor::TraversalVisitor, file::EnderpyFile, checker::TypeChecker, types::PythonType};
 use enderpy_python_type_checker::{get_module_name, symbol_table};
@@ -296,7 +294,7 @@ impl<'a> TraversalVisitor for CppTranslator<'a> {
                             self.visit_expr(&c.args[i]);
                             num_pos_args = i;
                         },
-                        types::CallableArgs::Args(t) => {
+                        types::CallableArgs::Args(_t) => {
                             break;
                         },
                         _ => {}
@@ -333,7 +331,7 @@ impl<'a> TraversalVisitor for CppTranslator<'a> {
                 match symbol_table.lookup_in_scope(&n.id, self.current_scope) {
                     Some(entry) => {
                         match entry.last_declaration() {
-                            symbol_table::Declaration::Alias(a) => {
+                            symbol_table::Declaration::Alias(_a) => {
                                 write!(self.output, "::{}", attribute.attr);
                                 return
                             },
