@@ -374,7 +374,13 @@ impl<'a> TraversalVisitor for CppTranslator<'a> {
                 write!(self.output, "void {}(", name);
             }
         }
-        for (i, arg) in f.args.args.iter().enumerate() {
+        // Filter out "self" arg (first arg of a Python method),
+        // since in C++ the "this" arg is implicit.
+        // TODO: This will also filter out random args called "self" --
+        // instead we should check if we are in a class definition and then
+        // only filter the first argument called "self".
+        let args = f.args.args.iter().filter(|arg| arg.arg != "self");
+        for (i, arg) in args.enumerate() {
             if i != 0 {
                 write!(self.output, ", ");
             }
