@@ -1,8 +1,8 @@
 use std::sync::Arc;
 use std::collections::HashMap;
+
 use enderpy_python_parser::ast::{self, *};
 use enderpy_python_parser::parser::parser::intern_lookup;
-use std::fmt::Write;
 
 use enderpy_python_type_checker::{types, ast_visitor::TraversalVisitor, file::EnderpyFile, checker::TypeChecker, types::PythonType};
 use enderpy_python_type_checker::{get_module_name, symbol_table};
@@ -41,7 +41,11 @@ impl<'a> CppTranslator<'a> {
     }
 
     pub fn write_indent(&mut self) {
-        write!(self.output, "{}", "  ".repeat(self.indent_level));
+        self.emit("  ".repeat(self.indent_level));
+    }
+
+    fn emit<S: AsRef<str>>(&mut self, s: S) {
+        self.output += s.as_ref();
     }
 
     fn check_type(&self, node: &Node, typ: &PythonType) {
@@ -103,7 +107,7 @@ impl<'a> TraversalVisitor for CppTranslator<'a> {
             Statement::ImportFrom(i) => self.visit_import_from(i),
             Statement::AssignStatement(a) => {
                 self.visit_assign(a);
-                writeln!(self.output, ";");
+                self.emit(";\n");
             },
             Statement::AnnAssignStatement(a) => self.visit_ann_assign(a),
             Statement::AugAssignStatement(a) => self.visit_aug_assign(a),
@@ -112,7 +116,7 @@ impl<'a> TraversalVisitor for CppTranslator<'a> {
             Statement::Delete(d) => self.visit_delete(d),
             Statement::ReturnStmt(r) => {
                 self.visit_return(r);
-                writeln!(self.output, ";");
+                self.emit(";\n");
             },
             Statement::Raise(r) => self.visit_raise(r),
             Statement::BreakStmt(b) => self.visit_break(b),
@@ -169,15 +173,15 @@ impl<'a> TraversalVisitor for CppTranslator<'a> {
 
     fn visit_constant(&mut self, constant: &Constant) {
         match constant.value {
-            ConstantValue::None => write!(self.output, "None"),
-            ConstantValue::Ellipsis => write!(self.output, "..."),
-            ConstantValue::Bool(_) => write!(self.output, "bool"),
-            ConstantValue::Str(_) => write!(self.output, "\"{}\"", constant.get_value(&self.file.source).to_string()),
-            ConstantValue::Bytes => write!(self.output, "bytes"),
-            ConstantValue::Tuple => write!(self.output, "tuple"),
-            ConstantValue::Int => write!(self.output, "{}", constant.get_value(&self.file.source).to_string()),
-            ConstantValue::Float => write!(self.output, "{}", constant.get_value(&self.file.source).to_string()),
-            ConstantValue::Complex => write!(self.output, "complex"),
+            ConstantValue::None => self.emit("None"),
+            ConstantValue::Ellipsis => self.emit("..."),
+            ConstantValue::Bool(_) => self.emit("bool"),
+            ConstantValue::Str(_) => self.emit(constant.get_value(&self.file.source)),
+            ConstantValue::Bytes => self.emit("bytes"),
+            ConstantValue::Tuple => self.emit("tuple"),
+            ConstantValue::Int => self.emit(constant.get_value(&self.file.source)),
+            ConstantValue::Float => self.emit(constant.get_value(&self.file.source)),
+            ConstantValue::Complex => self.emit("complex"),
             /*
             Constant::Tuple(elements) => {
                 let tuple_elements: Vec<String> = elements
@@ -193,7 +197,7 @@ impl<'a> TraversalVisitor for CppTranslator<'a> {
     fn visit_import(&mut self, import: &Import) {
         for name in import.names.iter() {
             if name.name == "torch" {
-                writeln!(self.output, "#include <torch/torch.h>");
+                self.emit("#include <torch/torch.h>\n");
             }
         }
     }
@@ -210,7 +214,7 @@ impl<'a> TraversalVisitor for CppTranslator<'a> {
                             let path = node.declarations[0].declaration_path();
                             if path.node == n.node {
                                 let typ = self.checker.get_type(&n.node);
-                                write!(self.output, "{} ", self.python_type_to_cpp(&typ));
+                                self.emit(self.python_type_to_cpp(&typ));
                             }
                         },
                         None => {},
@@ -230,24 +234,24 @@ impl<'a> TraversalVisitor for CppTranslator<'a> {
                 }
             }
         }
-        write!(self.output, " = ");
+        self.emit(" = ");
         self.visit_expr(&a.value);
     }
 
     fn visit_name(&mut self, name: &Name) {
-        write!(self.output, "{}", name.id);
+        self.emit(name.id.clone());
     }
 
     fn visit_bin_op(&mut self, b: &BinOp) {
         self.visit_expr(&b.left);
-        write!(self.output, " {} ", &b.op);
+        self.emit(b.op.to_string());
         self.visit_expr(&b.right);
     }
 
     fn visit_call(&mut self, c: &Call) {
         let mut typ = self.checker.get_type(&c.func.get_node());
         self.visit_expr(&c.func);
-        write!(self.output, "(");
+        self.emit("(");
         // In case c.func is a class instance, we need to use the __call__ method
         // of that instance instead -- we fix this here.
         if let PythonType::Instance(i) = &typ {
@@ -289,7 +293,7 @@ impl<'a> TraversalVisitor for CppTranslator<'a> {
                         types::CallableArgs::Positional(t) => {
                             self.check_type(&c.args[i].get_node(), t);
                             if i != 0 {
-                                write!(self.output, ", ");
+                                self.emit(", ");
                             }
                             self.visit_expr(&c.args[i]);
                             num_pos_args = num_pos_args + 1;
@@ -301,15 +305,15 @@ impl<'a> TraversalVisitor for CppTranslator<'a> {
                 }
                 // Then check all the star args if there are any
                 if c.args.len() > num_pos_args {
-                    write!(self.output, "{{");
+                    self.emit("{");
                     for (i, arg) in c.args[num_pos_args..].iter().enumerate() {
                         self.check_type(&arg.get_node(), callable.signature[num_pos_args].get_type());
                         if i != 0 {
-                            write!(self.output, ", ");
+                            self.emit(", ");
                         }
                         self.visit_expr(arg);
                     }
-                    write!(self.output, "}}");
+                    self.emit("}");
                 }
             },
             _ => {
@@ -319,7 +323,7 @@ impl<'a> TraversalVisitor for CppTranslator<'a> {
         // for keyword in &c.keywords {
         //     self.visit_expr(&keyword.value);
         // }
-        write!(self.output, ")");
+        self.emit(")");
     }
 
     fn visit_attribute(&mut self, attribute: &Attribute) {
@@ -331,7 +335,7 @@ impl<'a> TraversalVisitor for CppTranslator<'a> {
                     Some(entry) => {
                         match entry.last_declaration() {
                             symbol_table::Declaration::Alias(_a) => {
-                                write!(self.output, "::{}", attribute.attr);
+                                self.emit(format!("::{}", &attribute.attr));
                                 return
                             },
                             _ => {}
@@ -342,11 +346,11 @@ impl<'a> TraversalVisitor for CppTranslator<'a> {
             },
             _ => {}
         }
-        write!(self.output, ".{}", attribute.attr);
+        self.emit(format!(".{}", attribute.attr));
     }
 
     fn visit_return(&mut self, r: &Return) {
-        write!(self.output, "return ");
+        self.emit("return ");
         if let Some(value) = &r.value {
             self.visit_expr(value);
         }
@@ -366,12 +370,12 @@ impl<'a> TraversalVisitor for CppTranslator<'a> {
         }
         if let Some(ret) = &f.returns {
             let return_type = self.python_type_to_cpp(&self.checker.get_type(&ret.get_node()));
-            write!(self.output, "{} {}(", return_type, name);
+            self.emit(format!("{} {}(", return_type, name));
         } else {
             if self.in_constructor {
-                write!(self.output, "{}(", name);
+                self.emit(format!("{}(", name));
             } else {
-                write!(self.output, "void {}(", name);
+                self.emit(format!("void {}(", name));
             }
         }
         // Filter out "self" arg (first arg of a Python method),
@@ -382,30 +386,30 @@ impl<'a> TraversalVisitor for CppTranslator<'a> {
         let args = f.args.args.iter().filter(|arg| arg.arg != "self");
         for (i, arg) in args.enumerate() {
             if i != 0 {
-                write!(self.output, ", ");
+                self.emit(", ");
             }
-            write!(self.output, "{} {}", self.python_type_to_cpp(&self.checker.get_type(&arg.node)), arg.arg);
+            self.emit(format!("{} {}", self.python_type_to_cpp(&self.checker.get_type(&arg.node)), arg.arg));
         }
-        writeln!(self.output, ") {{");
+        self.emit(") {\n");
         self.indent_level += 1;
         // If this is an instance method, introduce "self"
         self.write_indent();
-        writeln!(self.output, "auto& self = *this;");
+        self.emit("auto& self = *this;\n");
         for stmt in &f.body {
             self.visit_stmt(stmt);
         }
         self.indent_level -= 1;
         self.write_indent();
-        writeln!(self.output, "}}");
+        self.emit("}\n");
         self.in_constructor = false;
         self.leave_scope();
     }
 
     fn visit_class_def(&mut self, c: &Arc<ClassDef>) {
         let name = intern_lookup(c.name);
-        writeln!(self.output, "class {} {{", name);
+        self.emit(format!("class {} {{\n", name));
         self.write_indent();
-        writeln!(self.output, "public:");
+        self.emit("public:\n");
         self.enter_scope(c.node.start);
         self.indent_level += 1;
         for stmt in &c.body {
@@ -414,15 +418,15 @@ impl<'a> TraversalVisitor for CppTranslator<'a> {
         self.indent_level -= 1;
         // print class member variables
         self.write_indent();
-        writeln!(self.output, "private:");
+        self.emit("private:\n");
         // TODO: Want to move this out, not clone it
         for (key, value) in self.class_members.clone() {
             self.write_indent();
-            writeln!(self.output, "  {} {};", value, key);
+            self.emit(format!("  {} {};\n", value, key));
         }
         self.class_members = HashMap::new();
         self.write_indent();
-        writeln!(self.output, "}};");
+        self.emit("};\n");
         self.leave_scope();
     }
 
@@ -441,22 +445,22 @@ impl<'a> TraversalVisitor for CppTranslator<'a> {
             },
             _ => {}
         }
-        write!(self.output, "for(int ");
+        self.emit("for(int ");
         self.visit_expr(&f.target);
-        write!(self.output, " = 0; ");
+        self.emit(" = 0; ");
         self.visit_expr(&f.target);
-        write!(self.output, " < ");
+        self.emit(" < ");
         self.visit_expr(&bound.unwrap());
-        write!(self.output, "; ++");
+        self.emit("; ++");
         self.visit_expr(&f.target);
-        writeln!(self.output, ") {{");
+        self.emit(") {\n");
         self.indent_level += 1;
         for stmt in &f.body {
             self.visit_stmt(stmt);
         }
         self.indent_level -= 1;
         self.write_indent();
-        writeln!(self.output, "}}");
+        self.emit("}\n");
     }
 }
 
