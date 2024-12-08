@@ -292,19 +292,18 @@ impl<'a> TraversalVisitor for CppTranslator<'a> {
                                 write!(self.output, ", ");
                             }
                             self.visit_expr(&c.args[i]);
-                            num_pos_args = i;
+                            num_pos_args = num_pos_args + 1;
                         },
-                        types::CallableArgs::Args(_t) => {
+                        _ => {
                             break;
-                        },
-                        _ => {}
+                        }
                     }
                 }
                 // Then check all the star args if there are any
-                if num_pos_args + 1 < c.args.len() {
+                if c.args.len() > num_pos_args {
                     write!(self.output, "{{");
                     for (i, arg) in c.args[num_pos_args..].iter().enumerate() {
-                        self.check_type(&arg.get_node(), callable.signature[num_pos_args+i].get_type());
+                        self.check_type(&arg.get_node(), callable.signature[num_pos_args].get_type());
                         if i != 0 {
                             write!(self.output, ", ");
                         }
@@ -369,7 +368,11 @@ impl<'a> TraversalVisitor for CppTranslator<'a> {
             let return_type = self.python_type_to_cpp(&self.checker.get_type(&ret.get_node()));
             write!(self.output, "{} {}(", return_type, name);
         } else {
-            write!(self.output, "void {}(", name);
+            if self.in_constructor {
+                write!(self.output, "{}(", name);
+            } else {
+                write!(self.output, "void {}(", name);
+            }
         }
         for (i, arg) in f.args.args.iter().enumerate() {
             if i != 0 {
@@ -388,12 +391,15 @@ impl<'a> TraversalVisitor for CppTranslator<'a> {
         self.indent_level -= 1;
         self.write_indent();
         writeln!(self.output, "}}");
+        self.in_constructor = false;
         self.leave_scope();
     }
 
     fn visit_class_def(&mut self, c: &Arc<ClassDef>) {
         let name = intern_lookup(c.name);
         writeln!(self.output, "class {} {{", name);
+        self.write_indent();
+        writeln!(self.output, "public:");
         self.enter_scope(c.node.start);
         self.indent_level += 1;
         for stmt in &c.body {
@@ -410,7 +416,7 @@ impl<'a> TraversalVisitor for CppTranslator<'a> {
         }
         self.class_members = HashMap::new();
         self.write_indent();
-        writeln!(self.output, "}}");
+        writeln!(self.output, "}};");
         self.leave_scope();
     }
 
