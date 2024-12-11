@@ -1,5 +1,7 @@
 use std::fmt::Display;
 
+use crate::ast::BinaryOperator;
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct Token {
     pub kind: Kind,
@@ -214,18 +216,18 @@ impl Kind {
         matches!(self, Kind::Not | Kind::BitNot | Kind::Minus | Kind::Plus)
     }
 
-    pub fn is_bin_arithmetic_op(&self) -> bool {
-        matches!(
-            self,
-            Kind::Plus
-                | Kind::Minus
-                | Kind::Mul
-                | Kind::MatrixMul
-                | Kind::Div
-                | Kind::Mod
-                | Kind::Pow
-                | Kind::IntDiv
-        )
+    pub fn bin_op_precedence(&self) -> Option<(BinaryOperator, u8, u8)> {
+        match self {
+            Kind::Plus => Some((BinaryOperator::Add, 9, 0)),
+            Kind::Minus => Some((BinaryOperator::Sub, 9, 0)),
+            Kind::Mul => Some((BinaryOperator::Mult, 10, 0)),
+            Kind::MatrixMul => Some((BinaryOperator::MatMult, 10, 0)),
+            Kind::Div => Some((BinaryOperator::Div, 10, 0)),
+            Kind::Mod => Some((BinaryOperator::Mod, 10, 0)),
+            Kind::Pow => Some((BinaryOperator::Pow, 10, 0)),
+            Kind::IntDiv => Some((BinaryOperator::FloorDiv, 10, 0)),
+            _ => None,
+        }
     }
 
     pub fn is_comparison_operator(&self) -> bool {
