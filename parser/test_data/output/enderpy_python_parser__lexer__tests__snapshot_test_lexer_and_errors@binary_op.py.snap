@@ -1,6 +1,6 @@
 ---
 source: parser/src/lexer/mod.rs
-description: "1 + 2\n\n1 - 2\n\n1 * 2\n\n1 / 2\n\n1 // 2\n\n1 % 2\n\n1**2\n\n1 << 2\n\n1 >> 2\n\n1 & 2\n\n1 ^ 2\n\n1 | 2\n\n1 | 2 | 3\n\n1 @ 2\n\n1 + 2 * 3\n\n1 * 2 + 3\n\n1 ^ 2 + 3\n\n3 + (1 + 2) * 3\n"
+description: "1 + 2\n\n1 - 2\n\n1 * 2\n\n1 / 2\n\n1 // 2\n\n1 % 2\n\n1**2\n\n1 << 2\n\n1 >> 2\n\n1 & 2\n\n1 ^ 2\n\n1 | 2\n\n1 | 2 | 3\n\n1 @ 2\n\n1 + 2 * 3\n\n1 * 2 + 3\n\n1 ^ 2 + 3\n\n3 + (1 + 2) * 3\n\n(3 + 1) * 2**3 + 1\n"
 input_file: parser/test_data/inputs/binary_op.py
 ---
 0,1: Integer   1
@@ -106,3 +106,16 @@ input_file: parser/test_data/inputs/binary_op.py
 149,150: *
 151,152: Integer   3
 152,153: NewLine
+153,154: NL
+154,155: (
+155,156: Integer   3
+157,158: +
+159,160: Integer   1
+160,161: )
+162,163: *
+164,165: Integer   2
+165,167: **
+167,168: Integer   3
+169,170: +
+171,172: Integer   1
+172,173: NewLine
