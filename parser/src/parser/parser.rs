@@ -889,7 +889,7 @@ impl<'a> Parser<'a> {
     // https://docs.python.org/3/reference/compound_stmts.html#literal-patterns
     fn parse_literal_pattern(&mut self) -> Result<MatchPattern, ParsingError> {
         let node = self.start_node();
-        let value = self.parse_binary_arithmetic_operation()?;
+        let value = self.parse_binary_arithmetic_operation(0)?;
         Ok(MatchPattern::MatchValue(MatchValue {
             node: self.finish_node(node),
             value,
@@ -2146,7 +2146,7 @@ impl<'a> Parser<'a> {
     // https://docs.python.org/3/reference/expressions.html#shifting-operations
     fn parse_shift_expr(&mut self) -> Result<Expression, ParsingError> {
         let node = self.start_node();
-        let mut arith_expr = self.parse_binary_arithmetic_operation()?;
+        let mut arith_expr = self.parse_binary_arithmetic_operation(0)?;
         if self.at(Kind::LeftShift) || self.at(Kind::RightShift) {
             let op = if self.eat(Kind::LeftShift) {
                 BinaryOperator::LShift
@@ -2154,7 +2154,7 @@ impl<'a> Parser<'a> {
                 self.bump(Kind::RightShift);
                 BinaryOperator::RShift
             };
-            let lhs = self.parse_binary_arithmetic_operation()?;
+            let lhs = self.parse_binary_arithmetic_operation(0)?;
             arith_expr = Expression::BinOp(Box::new(BinOp {
                 node: self.finish_node(node),
                 op,
@@ -2166,12 +2166,24 @@ impl<'a> Parser<'a> {
     }
 
     // https://docs.python.org/3/reference/expressions.html#binary-arithmetic-operations
-    fn parse_binary_arithmetic_operation(&mut self) -> Result<Expression, ParsingError> {
+    //
+    fn parse_binary_arithmetic_operation(
+        &mut self,
+        min_precedence: u8,
+    ) -> Result<Expression, ParsingError> {
         let node = self.start_node();
         let mut lhs = self.parse_unary_arithmetic_operation()?;
-        while self.cur_kind().is_bin_arithmetic_op() {
-            let op = self.parse_bin_arithmetic_op()?;
-            let rhs = self.parse_unary_arithmetic_operation()?;
+        while let Some((op, precedence, associativity)) = self.cur_kind().bin_op_precedence() {
+            if precedence < min_precedence {
+                break;
+            }
+            self.bump_any();
+            let next_precedence = match associativity {
+                0 => precedence + 1,
+                1 => precedence,
+                _ => unreachable!(),
+            };
+            let rhs = self.parse_binary_arithmetic_operation(next_precedence)?;
             lhs = Expression::BinOp(Box::new(BinOp {
                 node: self.finish_node(node),
                 op,

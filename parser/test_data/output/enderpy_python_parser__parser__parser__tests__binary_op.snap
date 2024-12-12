@@ -1,11 +1,11 @@
 ---
 source: parser/src/parser/parser.rs
-description: "test file: test_data/inputs/binary_op.py\n1 + 2\n\n1 - 2\n\n1 * 2\n\n1 / 2\n\n1 // 2\n\n1 % 2\n\n1 ** 2\n\n1 << 2\n\n1 >> 2\n\n1 & 2\n\n1 ^ 2\n\n1 | 2\n\n1 | 2 | 3\n\n1 @ 2\n"
+description: "test file: test_data/inputs/binary_op.py\n1 + 2\n\n1 - 2\n\n1 * 2\n\n1 / 2\n\n1 // 2\n\n1 % 2\n\n1**2\n\n1 << 2\n\n1 >> 2\n\n1 & 2\n\n1 ^ 2\n\n1 | 2\n\n1 | 2 | 3\n\n1 @ 2\n\n1 + 2 * 3\n\n1 * 2 + 3\n\n1 ^ 2 + 3\n\n3 + (1 + 2) * 3\n\n(3 + 1) * 2**3 + 1\n"
 ---
 Module {
     node: Node {
         start: 0,
-        end: 105,
+        end: 173,
     },
     body: [
         ExpressionStatement(
@@ -187,7 +187,7 @@ Module {
                 BinOp {
                     node: Node {
                         start: 43,
-                        end: 49,
+                        end: 47,
                     },
                     op: Pow,
                     left: Constant(
@@ -202,8 +202,8 @@ Module {
                     right: Constant(
                         Constant {
                             node: Node {
-                                start: 48,
-                                end: 49,
+                                start: 46,
+                                end: 47,
                             },
                             value: Int,
                         },
@@ -215,15 +215,15 @@ Module {
             BinOp(
                 BinOp {
                     node: Node {
-                        start: 51,
-                        end: 57,
+                        start: 49,
+                        end: 55,
                     },
                     op: LShift,
                     left: Constant(
                         Constant {
                             node: Node {
-                                start: 51,
-                                end: 52,
+                                start: 49,
+                                end: 50,
                             },
                             value: Int,
                         },
@@ -231,8 +231,8 @@ Module {
                     right: Constant(
                         Constant {
                             node: Node {
-                                start: 56,
-                                end: 57,
+                                start: 54,
+                                end: 55,
                             },
                             value: Int,
                         },
@@ -244,15 +244,15 @@ Module {
             BinOp(
                 BinOp {
                     node: Node {
-                        start: 59,
-                        end: 65,
+                        start: 57,
+                        end: 63,
                     },
                     op: RShift,
                     left: Constant(
                         Constant {
                             node: Node {
-                                start: 59,
-                                end: 60,
+                                start: 57,
+                                end: 58,
                             },
                             value: Int,
                         },
@@ -260,8 +260,8 @@ Module {
                     right: Constant(
                         Constant {
                             node: Node {
-                                start: 64,
-                                end: 65,
+                                start: 62,
+                                end: 63,
                             },
                             value: Int,
                         },
@@ -273,15 +273,15 @@ Module {
             BinOp(
                 BinOp {
                     node: Node {
-                        start: 67,
-                        end: 72,
+                        start: 65,
+                        end: 70,
                     },
                     op: BitAnd,
                     left: Constant(
                         Constant {
                             node: Node {
-                                start: 67,
-                                end: 68,
+                                start: 65,
+                                end: 66,
                             },
                             value: Int,
                         },
@@ -289,8 +289,8 @@ Module {
                     right: Constant(
                         Constant {
                             node: Node {
-                                start: 71,
-                                end: 72,
+                                start: 69,
+                                end: 70,
                             },
                             value: Int,
                         },
@@ -302,15 +302,15 @@ Module {
             BinOp(
                 BinOp {
                     node: Node {
-                        start: 74,
-                        end: 79,
+                        start: 72,
+                        end: 77,
                     },
                     op: BitXor,
                     left: Constant(
                         Constant {
                             node: Node {
-                                start: 74,
-                                end: 75,
+                                start: 72,
+                                end: 73,
                             },
                             value: Int,
                         },
@@ -318,8 +318,8 @@ Module {
                     right: Constant(
                         Constant {
                             node: Node {
-                                start: 78,
-                                end: 79,
+                                start: 76,
+                                end: 77,
                             },
                             value: Int,
                         },
@@ -331,15 +331,15 @@ Module {
             BinOp(
                 BinOp {
                     node: Node {
-                        start: 81,
-                        end: 86,
+                        start: 79,
+                        end: 84,
                     },
                     op: BitOr,
                     left: Constant(
                         Constant {
                             node: Node {
-                                start: 81,
-                                end: 82,
+                                start: 79,
+                                end: 80,
                             },
                             value: Int,
                         },
@@ -347,8 +347,8 @@ Module {
                     right: Constant(
                         Constant {
                             node: Node {
-                                start: 85,
-                                end: 86,
+                                start: 83,
+                                end: 84,
                             },
                             value: Int,
                         },
@@ -360,22 +360,22 @@ Module {
             BinOp(
                 BinOp {
                     node: Node {
-                        start: 88,
-                        end: 97,
+                        start: 86,
+                        end: 95,
                     },
                     op: BitOr,
                     left: BinOp(
                         BinOp {
                             node: Node {
-                                start: 88,
-                                end: 93,
+                                start: 86,
+                                end: 91,
                             },
                             op: BitOr,
                             left: Constant(
                                 Constant {
                                     node: Node {
-                                        start: 88,
-                                        end: 89,
+                                        start: 86,
+                                        end: 87,
                                     },
                                     value: Int,
                                 },
@@ -383,8 +383,8 @@ Module {
                             right: Constant(
                                 Constant {
                                     node: Node {
-                                        start: 92,
-                                        end: 93,
+                                        start: 90,
+                                        end: 91,
                                     },
                                     value: Int,
                                 },
@@ -394,8 +394,8 @@ Module {
                     right: Constant(
                         Constant {
                             node: Node {
-                                start: 96,
-                                end: 97,
+                                start: 94,
+                                end: 95,
                             },
                             value: Int,
                         },
@@ -407,15 +407,15 @@ Module {
             BinOp(
                 BinOp {
                     node: Node {
-                        start: 99,
-                        end: 104,
+                        start: 97,
+                        end: 102,
                     },
                     op: MatMult,
                     left: Constant(
                         Constant {
                             node: Node {
-                                start: 99,
-                                end: 100,
+                                start: 97,
+                                end: 98,
                             },
                             value: Int,
                         },
@@ -423,8 +423,297 @@ Module {
                     right: Constant(
                         Constant {
                             node: Node {
-                                start: 103,
-                                end: 104,
+                                start: 101,
+                                end: 102,
+                            },
+                            value: Int,
+                        },
+                    ),
+                },
+            ),
+        ),
+        ExpressionStatement(
+            BinOp(
+                BinOp {
+                    node: Node {
+                        start: 104,
+                        end: 113,
+                    },
+                    op: Add,
+                    left: Constant(
+                        Constant {
+                            node: Node {
+                                start: 104,
+                                end: 105,
+                            },
+                            value: Int,
+                        },
+                    ),
+                    right: BinOp(
+                        BinOp {
+                            node: Node {
+                                start: 108,
+                                end: 113,
+                            },
+                            op: Mult,
+                            left: Constant(
+                                Constant {
+                                    node: Node {
+                                        start: 108,
+                                        end: 109,
+                                    },
+                                    value: Int,
+                                },
+                            ),
+                            right: Constant(
+                                Constant {
+                                    node: Node {
+                                        start: 112,
+                                        end: 113,
+                                    },
+                                    value: Int,
+                                },
+                            ),
+                        },
+                    ),
+                },
+            ),
+        ),
+        ExpressionStatement(
+            BinOp(
+                BinOp {
+                    node: Node {
+                        start: 115,
+                        end: 124,
+                    },
+                    op: Add,
+                    left: BinOp(
+                        BinOp {
+                            node: Node {
+                                start: 115,
+                                end: 120,
+                            },
+                            op: Mult,
+                            left: Constant(
+                                Constant {
+                                    node: Node {
+                                        start: 115,
+                                        end: 116,
+                                    },
+                                    value: Int,
+                                },
+                            ),
+                            right: Constant(
+                                Constant {
+                                    node: Node {
+                                        start: 119,
+                                        end: 120,
+                                    },
+                                    value: Int,
+                                },
+                            ),
+                        },
+                    ),
+                    right: Constant(
+                        Constant {
+                            node: Node {
+                                start: 123,
+                                end: 124,
+                            },
+                            value: Int,
+                        },
+                    ),
+                },
+            ),
+        ),
+        ExpressionStatement(
+            BinOp(
+                BinOp {
+                    node: Node {
+                        start: 126,
+                        end: 135,
+                    },
+                    op: BitXor,
+                    left: Constant(
+                        Constant {
+                            node: Node {
+                                start: 126,
+                                end: 127,
+                            },
+                            value: Int,
+                        },
+                    ),
+                    right: BinOp(
+                        BinOp {
+                            node: Node {
+                                start: 130,
+                                end: 135,
+                            },
+                            op: Add,
+                            left: Constant(
+                                Constant {
+                                    node: Node {
+                                        start: 130,
+                                        end: 131,
+                                    },
+                                    value: Int,
+                                },
+                            ),
+                            right: Constant(
+                                Constant {
+                                    node: Node {
+                                        start: 134,
+                                        end: 135,
+                                    },
+                                    value: Int,
+                                },
+                            ),
+                        },
+                    ),
+                },
+            ),
+        ),
+        ExpressionStatement(
+            BinOp(
+                BinOp {
+                    node: Node {
+                        start: 137,
+                        end: 152,
+                    },
+                    op: Add,
+                    left: Constant(
+                        Constant {
+                            node: Node {
+                                start: 137,
+                                end: 138,
+                            },
+                            value: Int,
+                        },
+                    ),
+                    right: BinOp(
+                        BinOp {
+                            node: Node {
+                                start: 141,
+                                end: 152,
+                            },
+                            op: Mult,
+                            left: BinOp(
+                                BinOp {
+                                    node: Node {
+                                        start: 142,
+                                        end: 147,
+                                    },
+                                    op: Add,
+                                    left: Constant(
+                                        Constant {
+                                            node: Node {
+                                                start: 142,
+                                                end: 143,
+                                            },
+                                            value: Int,
+                                        },
+                                    ),
+                                    right: Constant(
+                                        Constant {
+                                            node: Node {
+                                                start: 146,
+                                                end: 147,
+                                            },
+                                            value: Int,
+                                        },
+                                    ),
+                                },
+                            ),
+                            right: Constant(
+                                Constant {
+                                    node: Node {
+                                        start: 151,
+                                        end: 152,
+                                    },
+                                    value: Int,
+                                },
+                            ),
+                        },
+                    ),
+                },
+            ),
+        ),
+        ExpressionStatement(
+            BinOp(
+                BinOp {
+                    node: Node {
+                        start: 154,
+                        end: 172,
+                    },
+                    op: Add,
+                    left: BinOp(
+                        BinOp {
+                            node: Node {
+                                start: 154,
+                                end: 168,
+                            },
+                            op: Mult,
+                            left: BinOp(
+                                BinOp {
+                                    node: Node {
+                                        start: 155,
+                                        end: 160,
+                                    },
+                                    op: Add,
+                                    left: Constant(
+                                        Constant {
+                                            node: Node {
+                                                start: 155,
+                                                end: 156,
+                                            },
+                                            value: Int,
+                                        },
+                                    ),
+                                    right: Constant(
+                                        Constant {
+                                            node: Node {
+                                                start: 159,
+                                                end: 160,
+                                            },
+                                            value: Int,
+                                        },
+                                    ),
+                                },
+                            ),
+                            right: BinOp(
+                                BinOp {
+                                    node: Node {
+                                        start: 164,
+                                        end: 168,
+                                    },
+                                    op: Pow,
+                                    left: Constant(
+                                        Constant {
+                                            node: Node {
+                                                start: 164,
+                                                end: 165,
+                                            },
+                                            value: Int,
+                                        },
+                                    ),
+                                    right: Constant(
+                                        Constant {
+                                            node: Node {
+                                                start: 167,
+                                                end: 168,
+                                            },
+                                            value: Int,
+                                        },
+                                    ),
+                                },
+                            ),
+                        },
+                    ),
+                    right: Constant(
+                        Constant {
+                            node: Node {
+                                start: 171,
+                                end: 172,
                             },
                             value: Int,
                         },

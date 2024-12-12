@@ -1,6 +1,6 @@
 ---
 source: parser/src/lexer/mod.rs
-description: "1 + 2\n\n1 - 2\n\n1 * 2\n\n1 / 2\n\n1 // 2\n\n1 % 2\n\n1 ** 2\n\n1 << 2\n\n1 >> 2\n\n1 & 2\n\n1 ^ 2\n\n1 | 2\n\n1 | 2 | 3\n\n1 @ 2\n"
+description: "1 + 2\n\n1 - 2\n\n1 * 2\n\n1 / 2\n\n1 // 2\n\n1 % 2\n\n1**2\n\n1 << 2\n\n1 >> 2\n\n1 & 2\n\n1 ^ 2\n\n1 | 2\n\n1 | 2 | 3\n\n1 @ 2\n\n1 + 2 * 3\n\n1 * 2 + 3\n\n1 ^ 2 + 3\n\n3 + (1 + 2) * 3\n\n(3 + 1) * 2**3 + 1\n"
 input_file: parser/test_data/inputs/binary_op.py
 ---
 0,1: Integer   1
@@ -34,43 +34,88 @@ input_file: parser/test_data/inputs/binary_op.py
 41,42: NewLine
 42,43: NL
 43,44: Integer   1
-45,47: **
-48,49: Integer   2
-49,50: NewLine
-50,51: NL
-51,52: Integer   1
-53,55: <<
-56,57: Integer   2
-57,58: NewLine
-58,59: NL
-59,60: Integer   1
-61,63: >>
-64,65: Integer   2
-65,66: NewLine
-66,67: NL
-67,68: Integer   1
-69,70: &
-71,72: Integer   2
-72,73: NewLine
-73,74: NL
-74,75: Integer   1
-76,77: ^
-78,79: Integer   2
-79,80: NewLine
-80,81: NL
-81,82: Integer   1
-83,84: |
-85,86: Integer   2
-86,87: NewLine
-87,88: NL
-88,89: Integer   1
-90,91: |
-92,93: Integer   2
-94,95: |
-96,97: Integer   3
-97,98: NewLine
-98,99: NL
-99,100: Integer   1
-101,102: @
-103,104: Integer   2
-104,105: NewLine
+44,46: **
+46,47: Integer   2
+47,48: NewLine
+48,49: NL
+49,50: Integer   1
+51,53: <<
+54,55: Integer   2
+55,56: NewLine
+56,57: NL
+57,58: Integer   1
+59,61: >>
+62,63: Integer   2
+63,64: NewLine
+64,65: NL
+65,66: Integer   1
+67,68: &
+69,70: Integer   2
+70,71: NewLine
+71,72: NL
+72,73: Integer   1
+74,75: ^
+76,77: Integer   2
+77,78: NewLine
+78,79: NL
+79,80: Integer   1
+81,82: |
+83,84: Integer   2
+84,85: NewLine
+85,86: NL
+86,87: Integer   1
+88,89: |
+90,91: Integer   2
+92,93: |
+94,95: Integer   3
+95,96: NewLine
+96,97: NL
+97,98: Integer   1
+99,100: @
+101,102: Integer   2
+102,103: NewLine
+103,104: NL
+104,105: Integer   1
+106,107: +
+108,109: Integer   2
+110,111: *
+112,113: Integer   3
+113,114: NewLine
+114,115: NL
+115,116: Integer   1
+117,118: *
+119,120: Integer   2
+121,122: +
+123,124: Integer   3
+124,125: NewLine
+125,126: NL
+126,127: Integer   1
+128,129: ^
+130,131: Integer   2
+132,133: +
+134,135: Integer   3
+135,136: NewLine
+136,137: NL
+137,138: Integer   3
+139,140: +
+141,142: (
+142,143: Integer   1
+144,145: +
+146,147: Integer   2
+147,148: )
+149,150: *
+151,152: Integer   3
+152,153: NewLine
+153,154: NL
+154,155: (
+155,156: Integer   3
+157,158: +
+159,160: Integer   1
+160,161: )
+162,163: *
+164,165: Integer   2
+165,167: **
+167,168: Integer   3
+169,170: +
+171,172: Integer   1
+172,173: NewLine
