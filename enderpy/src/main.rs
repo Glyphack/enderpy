@@ -2,12 +2,14 @@ use std::{
     fs::{self, File},
     io::{self, Read},
     path::{Path, PathBuf},
+    sync::Arc,
 };
 
 use clap::Parser as ClapParser;
 use cli::{Cli, Commands};
 use enderpy_python_parser::{get_row_col_position, parser::parser::Parser, Lexer};
 use enderpy_python_type_checker::{build::BuildManager, find_project_root, settings::Settings};
+use corepy_python_translator::translator::CppTranslator;
 use miette::{bail, IntoDiagnostic, Result};
 
 mod cli;
@@ -18,6 +20,7 @@ fn main() -> Result<()> {
         Commands::Tokenize {} => tokenize(),
         Commands::Parse { file } => parse(file),
         Commands::Check { path } => check(path),
+        Commands::Translate { path } => translate(path),
         Commands::Watch => watch(),
         Commands::Symbols { path } => symbols(path),
     }
@@ -131,6 +134,33 @@ fn check(path: &Path) -> Result<()> {
     let checker = build_manager.type_check(path, &file);
     print!("{}", checker.dump_types());
 
+    Ok(())
+}
+
+fn translate(path: &Path) -> Result<()> {
+    if path.is_dir() {
+        bail!("Path must be a file");
+    }
+    let root = find_project_root(path);
+    let python_executable = Some(get_python_executable()?);
+    let typeshed_path = get_typeshed_path()?;
+    let settings = Settings {
+        typeshed_path,
+        python_executable,
+    };
+    let build_manager = BuildManager::new(settings);
+    build_manager.build(root);
+    build_manager.build_one(root, path);
+    let id = build_manager.paths.get(path).unwrap();
+    let file = build_manager.files.get(&id).unwrap();
+    let checker = Arc::new(build_manager.type_check(path, &file));
+    let mut translator = CppTranslator::new(checker.clone(), &file);
+    translator.translate();
+    println!("{:?}", file.tree);
+    println!("====");
+    println!("{}", translator.output);
+    println!("====");
+    print!("{}", checker.clone().dump_types());
     Ok(())
 }
 

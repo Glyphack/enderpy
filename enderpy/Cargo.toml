@@ -10,5 +10,6 @@ edition = "2021"
 [dependencies]
 enderpy_python_parser = { path = "../parser" , version = "0.1.0" }
 enderpy_python_type_checker = { path = "../typechecker" , version = "0.1.0" }
+corepy_python_translator = { path = "../translator", version = "0.1.0" }
 clap = { version = "4.5.17", features = ["derive"] }
 miette.workspace = true

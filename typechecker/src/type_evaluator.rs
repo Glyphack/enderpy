@@ -22,6 +22,7 @@ use super::{
     },
 };
 use crate::{
+    get_module_name,
     build::BuildManager,
     semantic_analyzer::get_member_access_info,
     symbol_table::{self, Class, Declaration, DeclarationPath, Id, SymbolTable, SymbolTableNode},
@@ -59,6 +60,13 @@ bitflags::bitflags! {
     }
 }
 
+fn class_type_to_instance_type(class_type: PythonType) -> PythonType {
+    let PythonType::Class(c) = class_type else {
+        return PythonType::Unknown;
+    };
+    PythonType::Instance(types::InstanceType::new(c.clone(), [].to_vec()))
+}
+
 /// Struct for evaluating the type of an expression
 impl<'a> TypeEvaluator<'a> {
     pub fn new(build_manager: &'a BuildManager) -> Self {
@@ -84,12 +92,12 @@ impl<'a> TypeEvaluator<'a> {
                 let typ = match &c.value {
                     // Constants are not literals unless they are explicitly
                     // typing.readthedocs.io/en/latest/spec/literal.html#backwards-compatibility
-                    ast::ConstantValue::Int => self.get_builtin_type("int"),
-                    ast::ConstantValue::Float => self.get_builtin_type("float"),
-                    ast::ConstantValue::Str(_) => self.get_builtin_type("str"),
-                    ast::ConstantValue::Bool(_) => self.get_builtin_type("bool"),
+                    ast::ConstantValue::Int => self.get_builtin_type("int").map(class_type_to_instance_type),
+                    ast::ConstantValue::Float => self.get_builtin_type("float").map(class_type_to_instance_type),
+                    ast::ConstantValue::Str(_) => self.get_builtin_type("str").map(class_type_to_instance_type),
+                    ast::ConstantValue::Bool(_) => self.get_builtin_type("bool").map(class_type_to_instance_type),
                     ast::ConstantValue::None => Some(PythonType::None),
-                    ast::ConstantValue::Bytes => self.get_builtin_type("bytes"),
+                    ast::ConstantValue::Bytes => self.get_builtin_type("bytes").map(class_type_to_instance_type),
                     ast::ConstantValue::Ellipsis => Some(PythonType::Any),
                     // TODO: implement
                     ast::ConstantValue::Tuple => Some(PythonType::Unknown),
@@ -122,8 +130,21 @@ impl<'a> TypeEvaluator<'a> {
                                 scope_id,
                             );
                             Ok(return_type)
+                        } else if let PythonType::Instance(i) = &called_type {
+                            // This executes the __call__ method of the instance
+                            let Some(PythonType::Callable(c)) = self.lookup_on_class(symbol_table, &i.class_type, "__call__") else {
+                                bail!("If you call an instance, it must have a __call__ method");
+                            };
+                            let return_type = self.get_return_type_of_callable(
+                                &c,
+                                &call.args,
+                                symbol_table,
+                                scope_id,
+                            );
+                            Ok(return_type)
                         } else if let PythonType::Class(c) = &called_type {
-                            Ok(called_type)
+                            // This instantiates the class
+                            Ok(PythonType::Instance(types::InstanceType::new(c.clone(), [].to_vec())))
                         } else if let PythonType::TypeVar(t) = &called_type {
                             let Some(first_arg) = call.args.first() else {
                                 bail!("TypeVar must be called with a name");
@@ -551,7 +572,7 @@ impl<'a> TypeEvaluator<'a> {
         let expr_type = match type_annotation {
             Expression::Name(name) => {
                 // TODO: Reject this type if the name refers to a variable.
-                self.get_name_type(&name.id, Some(name.node.start), symbol_table, scope_id)
+                return class_type_to_instance_type(self.get_name_type(&name.id, Some(name.node.start), symbol_table, scope_id));
             }
             Expression::Constant(ref c) => match c.value {
                 ast::ConstantValue::None => PythonType::None,
@@ -676,7 +697,18 @@ impl<'a> TypeEvaluator<'a> {
                     // TODO: check if other binary operators are allowed
                     _ => todo!(),
                 }
-            }
+            },
+            Expression::Attribute(a) => {
+                match &a.value {
+                    Expression::Name(n) => {
+                        let Some(typ) = self.lookup_on_module(symbol_table, scope_id, &n.id, &a.attr) else {
+                            return PythonType::Unknown;
+                        };
+                        return class_type_to_instance_type(typ);
+                    },
+                    _ => todo!(),
+                };
+            },
             _ => PythonType::Unknown,
         };
 
@@ -869,9 +901,39 @@ impl<'a> TypeEvaluator<'a> {
                                 &iter_method_type.type_parameters,
                                 &iter_method_type.specialized,
                             )
-                        }
+                        },
+                        PythonType::Class(class_type) => {
+                            let iter_method = match self.lookup_on_class(
+                                &symbol_table,
+                                &class_type,
+                                "__iter__",
+                            ) {
+                                Some(PythonType::Callable(c)) => c,
+                                Some(other) => panic!("iter method was not callable: {}", other),
+                                None => panic!("next method not found"),
+                            };
+                            let Some(iter_method_type) = &iter_method.return_type.class()
+                            else {
+                                panic!("iter method return type is not class");
+                            };
+                            let next_method = match self.lookup_on_class(
+                                &symbol_table,
+                                &iter_method_type,
+                                "__next__",
+                            ) {
+                                Some(PythonType::Callable(c)) => c,
+                                Some(other) => panic!("next method was not callable: {}", other),
+                                None => panic!("next method not found"),
+                            };
+                            self.resolve_generics(
+                               &next_method.return_type,
+                               &iter_method_type.type_parameters,
+                               &iter_method_type.specialized,
+                            )
+                            // PythonType::Unknown
+                        },
                         _ => {
-                            error!("iterating over a {} is not defined", iter_type);
+                            error!("iterating over a {:?} is not defined", iter_type);
                             PythonType::Unknown
                         }
                     }
@@ -1004,15 +1066,20 @@ impl<'a> TypeEvaluator<'a> {
                         PythonType::Unknown
                     }
                     None => {
-                        let Some(ref resolved_import) = a.import_result else {
-                            trace!("import result not found");
-                            return PythonType::Unknown;
-                        };
-
-                        let module_id = resolved_import.resolved_ids.first().unwrap();
-                        return PythonType::Module(ModuleRef {
-                            module_id: *module_id,
-                        });
+                        match &a.import_node {
+                            Some(i) => {
+                                let module_name = &i.names[0].name;
+                                let Some(module_symbol_table) = self.get_symbol_table_for_module(&a, module_name) else {
+                                    return PythonType::Unknown;
+                                };
+                                return PythonType::Module(ModuleRef {
+                                    module_id: module_symbol_table.id,
+                                });
+                            },
+                            None => {
+                                return PythonType::Unknown;
+                            }
+                        }
                     }
                 }
             }
@@ -1485,7 +1552,7 @@ impl<'a> TypeEvaluator<'a> {
         ret_type
     }
 
-    fn lookup_on_class(
+    pub fn lookup_on_class(
         &self,
         symbol_table: &SymbolTable,
         c: &ClassType,
@@ -1515,6 +1582,39 @@ impl<'a> TypeEvaluator<'a> {
         }
 
         symbol.map(|node| self.get_symbol_type(node, symbol_table, None))
+    }
+
+    /// Find a type inside a Python module
+    fn lookup_on_module(
+        &self,
+        symbol_table: &SymbolTable,
+        scope_id: u32,
+        module_name: &str,
+        attr: &str,
+    ) -> Option<PythonType> {
+        // See if the module is in the symbol table
+        let symbol_table_entry = symbol_table.lookup_in_scope(module_name, scope_id)?;
+        match symbol_table_entry.last_declaration() {
+            Declaration::Alias(a) => {
+                let module_symbol_table = self.get_symbol_table_for_module(&a, module_name)?;
+                return Some(self.get_name_type(attr, None, &module_symbol_table, 0));
+            }
+            _ => {}
+        };
+        None
+    }
+
+    fn get_symbol_table_for_module(&self, alias: &symbol_table::Alias, module_name: &str) -> Option<Arc<SymbolTable>> {
+        let Some(ref resolved_import) = alias.import_result else {
+            return None;
+        };
+        for id in resolved_import.resolved_ids.iter() {
+            let module_symbol_table = self.get_symbol_table(id);
+            if module_name == get_module_name(module_symbol_table.file_path.as_path()) {
+                return Some(module_symbol_table);
+            }
+        }
+        return None;
     }
 
     fn get_function_signature(

@@ -7,7 +7,7 @@ use enderpy_python_parser::parser::parser::intern_lookup;
 
 use super::{type_evaluator::TypeEvaluator, types::PythonType};
 use crate::build::BuildManager;
-use crate::symbol_table::Id;
+use crate::symbol_table::{Id, SymbolTable};
 use crate::types::ModuleRef;
 use crate::{ast_visitor::TraversalVisitor, diagnostic::CharacterSpan};
 use rust_lapper::{Interval, Lapper};
@@ -16,7 +16,7 @@ use rust_lapper::{Interval, Lapper};
 pub struct TypeChecker<'a> {
     pub types: Lapper<u32, PythonType>,
     id: Id,
-    type_evaluator: TypeEvaluator<'a>,
+    pub type_evaluator: TypeEvaluator<'a>,
     build_manager: &'a BuildManager,
     current_scope: u32,
     prev_scope: u32,
@@ -135,6 +135,20 @@ impl<'a> TypeChecker<'a> {
         str.push_str("\n---\n");
 
         str
+    }
+
+    pub fn get_type(&self, node: &ast::Node) -> PythonType {
+        for r in self.types.find(node.start, node.end) {
+            if r.start == node.start && r.stop == node.end {
+                return r.val.clone();
+            }
+        }
+        return PythonType::Unknown;
+    }
+
+    pub fn get_symbol_table(&self, id: Option<Id>) -> Arc<SymbolTable> {
+        let id = id.unwrap_or(self.id);
+        return self.build_manager.get_symbol_table_by_id(&id);
     }
 }
 #[allow(unused)]
@@ -456,8 +470,10 @@ impl<'a> TraversalVisitor for TypeChecker<'a> {
     }
 
     fn visit_bin_op(&mut self, b: &BinOp) {
-        let l_type = self.infer_expr_type(&b.left);
-        let r_type = self.infer_expr_type(&b.right);
+        // let l_type = self.infer_expr_type(&b.left);
+        self.visit_expr(&b.left);
+        // let r_type = self.infer_expr_type(&b.right);
+        self.visit_expr(&b.right);
     }
 
     fn visit_named_expr(&mut self, _n: &NamedExpression) {

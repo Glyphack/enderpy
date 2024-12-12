@@ -1,9 +1,9 @@
 use std::path::Path;
 
-mod ast_visitor;
-mod file;
+pub mod ast_visitor;
+pub mod file;
 mod ruff_python_import_resolver;
-mod symbol_table;
+pub mod symbol_table;
 
 pub mod build;
 pub mod checker;
@@ -11,7 +11,7 @@ pub mod diagnostic;
 pub mod semantic_analyzer;
 pub mod settings;
 pub mod type_evaluator;
-mod types;
+pub mod types;
 
 pub(crate) mod builtins {
     pub const LIST_TYPE: &str = "list";
@@ -40,5 +40,16 @@ pub fn find_project_root(path: &Path) -> &Path {
 }
 
 pub fn get_module_name(path: &Path) -> String {
-    path.to_str().unwrap().replace(['/', '\\'], ".")
+    // First we strip .pyi and / or __init__.pyi from the end
+    let mut s = path.to_str().unwrap();
+    s = match s.strip_suffix("/__init__.pyi") {
+        Some(new) => new,
+        None => s
+    };
+    s = match s.strip_suffix(".pyi") {
+        Some(new) => new,
+        None => s
+    };
+    // And then we replace the slashes with .
+    s.replace(['/', '\\'], ".")
 }
